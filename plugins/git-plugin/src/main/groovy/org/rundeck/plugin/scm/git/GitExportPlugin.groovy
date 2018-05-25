@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -8,10 +24,13 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
+import org.rundeck.plugin.scm.git.exp.actions.FetchAction
 import org.rundeck.plugin.scm.git.exp.actions.PushAction
 import org.rundeck.plugin.scm.git.exp.actions.SynchAction
 import org.rundeck.plugin.scm.git.exp.actions.TagAction
@@ -28,6 +47,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     public static final String PROJECT_PUSH_ACTION_ID = "project-push"
     public static final String PROJECT_TAG_ACTION_ID = "tag-commit"
     public static final String PROJECT_SYNCH_ACTION_ID = "project-synch"
+    public static final String PROJECT_FETCH_ACTION_ID = "project-fetch"
 
 
     String format = SERIALIZE_FORMAT
@@ -65,6 +85,11 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                         "Synch with Remote",
                         "Synch incoming changes from Remote"
                 ),
+                (PROJECT_FETCH_ACTION_ID) : new FetchAction(
+                        PROJECT_FETCH_ACTION_ID,
+                        "Fetch Remote Changes",
+                        "Fetch changes from Remote for local comparison"
+                ),
                 (PROJECT_TAG_ACTION_ID)   : new TagAction(
                         PROJECT_TAG_ACTION_ID,
                         "Create Tag",
@@ -101,6 +126,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     void cleanup() {
         git?.close()
+    }
+
+    @Override
+    void totalClean(){
+        File base = new File(config.dir)
+        base?.deleteDir()
     }
 
 
@@ -156,7 +187,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             } else if (status.state == SynchState.REFRESH_NEEDED) {
                 //need to fast forward
                 actionRefs PROJECT_SYNCH_ACTION_ID
-            } else {
+            } else if(!config.shouldFetchAutomatically()){
+                actionRefs PROJECT_FETCH_ACTION_ID
+            }else{
                 null
             }
         } else {
@@ -167,7 +200,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     ScmExportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context, true)
+        return getStatusInternal(context, config.shouldFetchAutomatically())
     }
 
 
@@ -183,6 +216,19 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
                 logger.debug("Failed fetch from the repository: ${e.message}", e)
+            }
+            if(config.shouldPullAutomatically()){
+                try{
+                    def pullResult = gitPull(context)
+                    if(pullResult.successful){
+                        logger.debug(pullResult.mergeResult?.toString())
+                    }
+                } catch (Exception e) {
+                    msgs << "Automatic pull from the repository failed: ${e.message}"
+                    logger.error("Failed automatic pull from the repository: ${e.message}")
+                    logger.debug("Failed automatic pull from the repository: ${e.message}", e)
+                }
+
             }
         }
 
@@ -232,14 +278,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference) {
         File origfile = mapper.fileForJob(event.originalJobReference)
-        File outfile = mapper.fileForJob(event.jobReference)
+        File outfile = mapper.fileForJob(exportReference)
         String origPath = null
         log.debug("Job event (${event}), writing to path: ${outfile}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
-                def status = refreshJobStatus(event.jobReference, origPath, false)
-                jobStateMap.remove(event.jobReference.id)
+                def status = refreshJobStatus(exportReference, origPath, false)
+                jobStateMap.remove(exportReference.id)
                 return createJobStatus(status, jobActionsForStatus(status))
                 break;
 
@@ -251,7 +297,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     origfile.delete()
                 }
                 try {
-                    serialize(exportReference, format, outfile)
+                    serialize(exportReference, format, config.exportPreserve, config.exportOriginal, outfile)
                 } catch (Throwable t) {
                     getLogger().warn("Could not serialize job: ${t}", t)
                 }
@@ -268,10 +314,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String ident = createStatusCacheIdent(job, commit)
 
         if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-            log.debug("hasJobStatusCached(${ident}): FOUND")
+            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
             return jobStateMap[job.id]
         }
-        log.debug("hasJobStatusCached(${ident}): (no)")
+        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -295,13 +341,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-
-
         if (job instanceof JobExportReference && doSerialize) {
-            serialize(job, format)
+            serialize(job, format, config.exportPreserve, config.exportOriginal)
         }
-
-
 
         def statusb = git.status().addPath(path)
         if (originalPath) {
@@ -386,13 +428,27 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     JobState getJobStatus(final JobExportReference job, final String originalPath) {
-        log.debug("getJobStatus(${job.id},${originalPath})")
+        log.debug("getJobStatus(${job.id},${originalPath}): ${job}")
         if (!inited) {
             return null
         }
         def status = hasJobStatusCached(job, originalPath)
         if (!status) {
             status = refreshJobStatus(job, originalPath)
+        }
+
+        return createJobStatus(status, jobActionsForStatus(status))
+    }
+
+    @Override
+    JobState getJobStatus(final JobExportReference job, final String originalPath, final boolean serialize) {
+        log.debug("getJobStatus(${job.id},${originalPath}): ${job}, serialize ${serialize}")
+        if (!inited) {
+            return null
+        }
+        def status = hasJobStatusCached(job, originalPath)
+        if (!status) {
+            status = refreshJobStatus(job, originalPath,serialize)
         }
         return createJobStatus(status, jobActionsForStatus(status))
     }
@@ -418,7 +474,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     ScmDiffResult getFileDiff(final JobExportReference job, final String originalPath) throws ScmPluginException {
         def file = getLocalFileForJob(job)
         def path = originalPath ?: relativePath(job)
-        serialize(job, format)
+        serialize(job, format, config.exportPreserve, config.exportOriginal)
 
         def id = lookupId(getHead(), path)
         if (!id) {
@@ -435,6 +491,59 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                                  modified: diffs > 0,
                                  actions: availableActions
         )
+    }
+
+
+    Map clusterFixJobs(final List<JobExportReference> jobs){
+        def retSt = [:]
+        retSt.deleted = []
+        retSt.restored = []
+        def toPull = false
+        jobs.each { job ->
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            def commitId = lastCommitForPath(getRelativePathForJob(job))
+            def path = getRelativePathForJob(job)
+            if(storedCommitId != null && commitId == null){
+                //file to delete-pull
+                git.rm().addFilepattern(path).call()
+                toPull = true
+                retSt.deleted.add(path)
+            }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                git.checkout().addPath(path).call()
+                toPull = true
+                retSt.restored.add(job)
+            }
+        }
+        Status status = git.status().call()
+        if (status.isClean()) {
+            //behind branch on deleted job
+            def bstat = BranchTrackingStatus.of(repo, branch)
+            if (bstat && bstat.behindCount > 0) {
+                toPull = true
+                retSt.behind = true
+            }
+        }
+        if(toPull){
+            retSt.pull = true
+            try{
+                git.pull().call()
+            }catch (JGitInternalException e){
+                retSt.error=e
+            }catch(GitAPIException e){
+                retSt.error = e
+                log.info(e)
+            }
+        }
+
+        try{
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+        }catch (ScmPluginException e){
+            retSt.error = e
+        }
+
+        retSt
     }
 
 

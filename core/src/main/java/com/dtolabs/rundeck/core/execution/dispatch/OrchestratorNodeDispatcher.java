@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -54,8 +53,6 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Ashley Taylor
  */
 public class OrchestratorNodeDispatcher implements NodeDispatcher {
-    public static final String ORCHESTRATOR_DATA = "orchestratorData";
-    
     private Framework framework;
 
     public OrchestratorNodeDispatcher(Framework framework) {
@@ -111,7 +108,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
-        final HashSet<String> nodeNames = new HashSet<String>();
+        final HashSet<String> nodeNames = new HashSet<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
 
         context.getExecutionListener().log(3,
@@ -119,22 +116,21 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
             + context.getThreadCount()
             + ")");
         //to not have 2 orchestrator within one run when it processed the inner node
-        Map<String,String> orchestratorData = new HashMap<String, String>();
-        context.getDataContext().put(ORCHESTRATOR_DATA, orchestratorData);
+
         boolean success = false;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<>(
+                rankAscending ? comparator : Collections.reverseOrder(comparator));
 
         orderedNodes.addAll(nodes1);
         
-        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<INodeEntry, Callable<NodeStepResult>>();
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>();
         for (final INodeEntry node: orderedNodes) {
             final Callable<NodeStepResult> tocall;
             if (null != item) {
@@ -143,7 +139,12 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
                 tocall = dispatchableCallable(context, toDispatch, resultMap, node, failureMap);
             }
             nodeNames.add(node.getNodename());
-            context.getExecutionListener().log(3, "Create task for node: " + node.getNodename());
+            context
+                .getExecutionListener()
+                .log(
+                    3,
+                    "Create " + (null != item ? "dispatched step" : "dispatchable workflow") + " for node: " + node.getNodename()
+                );
             executions.put(node, tocall);
         }
         if (null != failedListener) {
@@ -153,7 +154,16 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         
         
         Orchestrator orchestrator = plugin.createOrchestrator(context, orderedNodes);
-        OrchestratorNodeProcessor processor = new OrchestratorNodeProcessor(context.getThreadCount(), keepgoing, orchestrator, executions);
+        OrchestratorNodeProcessor
+            processor =
+            OrchestratorNodeProcessor
+                .builder()
+                .threadCount(context.getThreadCount())
+                .keepgoing(keepgoing)
+                .orchestrator(orchestrator)
+                .executions(executions)
+                .cancelOnInterrupt(true)
+                .build();
         
         try {
             success = processor.execute();
@@ -162,6 +172,12 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
             if (!keepgoing) {
                 throw new DispatcherException(e);
             }
+        }
+        if (processor.isInterrupted()) {
+            if (!keepgoing) {
+                throw new DispatcherException("Node dispatcher cancelled on interrupt");
+            }
+            context.getExecutionListener().log(0, "Node dispatcher cancelled on interrupt");
         }
         //evaluate the failed nodes
         if (failureMap.size() > 0) {

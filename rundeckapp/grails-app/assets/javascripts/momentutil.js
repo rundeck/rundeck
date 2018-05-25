@@ -1,40 +1,48 @@
-//= require moment-min
 /*
- Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+//= require moment.min
+
  var MomentUtil =(function(){
-     var self=  {
+     return {
 
     duration : function (start, end) {
         return (end?moment(end):moment()).diff(moment(start));
     },
 
     formatTime : function (text, format) {
-        var time = moment(text);
-
+        var time = moment.isMoment(text) ? text : moment(text);
         if (text && time.isValid()) {
             return time.format(format);
         } else {
             return '';
         }
     },
+         formatTimeUTC: function (text, format) {
+             "use strict";
+             return MomentUtil.formatTime(moment.utc(text), format);
+         },
     formatTimeSimple : function (text) {
-        return self.formatTime(text, 'h:mm:ss a');
+        return MomentUtil.formatTime(text, 'h:mm:ss a');
     },
+         formatTimeSimpleUTC: function (text) {
+             return MomentUtil.formatTimeUTC(text, 'h:mm:ss a');
+         },
     formatTimeAtDate : function (text) {
-        var time = moment(text);
+        var time = moment.isMoment(text) ? text : moment(text);
         if (!text || !time.isValid()) {
             return '';
         }
@@ -51,11 +59,16 @@
         } else if (since.asWeeks() < 1) {
             return time.format('ddd h:mm a');
         } else if (time.year() != now.year()) {
-            return time.format('MMM do YYYY h a');
+            return time.format('MMM Do YYYY h a');
         } else {
-            return time.format('M/d ha');
+            return time.format('M/D ha');
         }
     },
+         formatTimeAtDateUTC: function (text) {
+             "use strict";
+
+             return MomentUtil.formatTimeAtDate(moment.utc(text));
+         },
     formatDurationSimple : function (ms) {
         if (ms < 0) {
             return '';
@@ -109,6 +122,4 @@
         return duration.humanize();
     }
 };
-     return self;
-
 })();

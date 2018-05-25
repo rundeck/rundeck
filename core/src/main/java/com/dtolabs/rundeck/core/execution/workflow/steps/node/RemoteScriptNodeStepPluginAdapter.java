@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -25,19 +24,20 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.plugins.AbstractDescribableScriptPlugin;
-import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
@@ -48,7 +48,6 @@ import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +60,7 @@ import java.util.Map;
  */
 class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable {
 
+    private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
@@ -75,6 +75,14 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
     public RemoteScriptNodeStepPluginAdapter(final RemoteScriptNodeStepPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    public ScriptFileNodeStepUtils getScriptUtils() {
+        return scriptUtils;
+    }
+
+    public void setScriptUtils(ScriptFileNodeStepUtils scriptUtils) {
+        this.scriptUtils = scriptUtils;
     }
 
     static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
@@ -96,8 +104,15 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    false
+            );
         }
         final String providerName = item.getNodeStepType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
@@ -108,7 +123,6 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
         Description description = getDescription();
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
-
         final GeneratedScript script;
         try {
             script = plugin.generateScript(pluginContext, config, node);
@@ -130,12 +144,12 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                         .build(),
                 node,
                 script,
-                DataContextUtils.resolve(context.getDataContext(), "job", "execid"),
+                context.getDataContextObject().resolve("job", "execid"),
                 providerName
         );
     }
 
-    public static NodeStepResult executeRemoteScript(
+    public NodeStepResult executeRemoteScript(
             final StepExecutionContext context,
             final INodeEntry node,
             final GeneratedScript script,
@@ -144,6 +158,10 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
     )
         throws NodeStepException {
         final ExecutionService executionService = context.getFramework().getExecutionService();
+        boolean expandTokens = true;
+        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
+            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
+        }
 
 
         if (null != script.getCommand()) {
@@ -168,41 +186,37 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             );
             final String filepath; //result file path
             try {
-                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node,destpath);
+                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node, destpath);
             } catch (FileCopierException e) {
                 throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
             }
-            return ScriptFileNodeStepExecutor.executeRemoteScript(context,
-                                                                  context.getFramework(),
-                                                                  node,
-                                                                  script.getArgs(),
-                                                                  filepath);
+            return scriptUtils.executeRemoteScript(
+                    context,
+                    context.getFramework(),
+                    node,
+                    script.getArgs(),
+                    filepath
+            );
         } else if (script instanceof FileBasedGeneratedScript) {
             final FileBasedGeneratedScript fileScript = (FileBasedGeneratedScript) script;
-            final String filepath; //result file path
-
-            File scriptFile = fileScript.getScriptFile();
-            String destpath = BaseFileCopier.generateRemoteFilepathForNode(
+            //merge any config context data
+            StepExecutionContext newcontext =
+                    fileScript.getConfigData() != null
+                    ? ExecutionContextImpl.builder(context).mergeContext("config", fileScript.getConfigData()).build()
+                    : context;
+            return scriptUtils.executeScriptFile(
+                    newcontext,
                     node,
-                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                    context.getFramework(),
-                    scriptFile.getName(),
+                    null,
+                    fileScript.getScriptFile().getAbsolutePath(),
+                    null,
                     fileScript.getFileExtension(),
-                    ident
+                    fileScript.getArgs(),
+                    fileScript.getScriptInterpreter(),
+                    fileScript.isInterpreterArgsQuoted(),
+                    executionService,
+                    expandTokens
             );
-            try {
-                filepath = executionService.fileCopyFile(context, scriptFile, node, destpath);
-            } catch (FileCopierException e) {
-                throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
-            }
-            return ScriptFileNodeStepExecutor.executeRemoteScript(context,
-                                                                  context.getFramework(),
-                                                                  node,
-                                                                  script.getArgs(),
-                                                                  filepath,
-                                                                  fileScript.getScriptInterpreter(),
-                                                                  fileScript.isInterpreterArgsQuoted());
-
         } else {
             return new NodeStepResultImpl(null,
                                           StepFailureReason.ConfigurationFailure,

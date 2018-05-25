@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
@@ -5,7 +21,9 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
-    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
+    <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
+    <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
+    <title><g:message code="gui.menu.Nodes"/> - <g:enc>${projectLabel}</g:enc></title>
     <asset:javascript src="framework/nodes.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="nodeFiltersKOTest.js"/>
@@ -124,7 +142,7 @@
                             </a>
                         </li>
                         <li class="divider" ></li>
-                        <g:if test="${g.executionMode(is:'active')}">
+                        <g:if test="${g.executionMode(is:'active',project:params.project)}">
 
                             <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
                                 <a href="#" data-bind="${run_authorized?'click: runCommand':''}"

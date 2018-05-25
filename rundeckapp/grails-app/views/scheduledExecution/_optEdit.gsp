@@ -1,20 +1,21 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
-<%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
 <%--
    _optEdit.gsp
 
@@ -43,7 +44,81 @@
 
         <div class="form-group">
 
-            <label for="optname_${rkey}" class="col-sm-2 control-label    ${hasErrors(bean:option,field:'name','has-error')}"><g:message code="form.option.name.label" /></label>
+            <label for="opttype_${rkey}" class="col-sm-2 control-label    ${hasErrors(
+                    bean: option,
+                    field: 'optionType',
+                    'has-error'
+            )}">
+                <g:message code="form.option.type.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <g:select
+                        data-bind="value: optionType"
+                        name="optionType"
+                        class="form-control "
+                        value="${option?.optionType}"
+                        optionKey="key"
+                        optionValue="value"
+                    from="${[
+                    [key:'',value:message(code:'form.option.optionType.text.label')],
+                    [key:'file',value:message(code:'form.option.optionType.file.label')],
+                    ]
+                    }"
+                        id="opttype_${rkey}">
+                </g:select>
+            </div>
+        </div>
+        <!-- ko if: isFileType()-->
+        <div class="form-group">
+            <div class="col-sm-10 col-sm-offset-2">
+                <g:if test="${fileUploadPluginDescription}">
+                    <stepplugin:pluginIcon service="FileUploadPluginService"
+                                           name="${fileUploadPluginDescription.name}"
+                                           width="16px"
+                                           height="16px">
+                        <i class="rdicon icon-small plugin"></i>
+                    </stepplugin:pluginIcon>
+                    <stepplugin:message
+                            service="FileUploadPluginService"
+                            name="${fileUploadPluginDescription.name}"
+                            code="plugin.title"
+                            default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
+                    <span class="text-muted"><g:render template="/scheduledExecution/description"
+                                                       model="[description:
+                                                                       stepplugin.messageText(
+                                                                               service: 'FileUploadPluginService',
+                                                                               name: fileUploadPluginDescription.name,
+                                                                               code: 'plugin.description',
+                                                                               default: fileUploadPluginDescription.description
+                                                                       ),
+                                                               textCss    : '',
+                                                               mode       : 'hidden', rkey: g.rkey()]"/></span>
+
+                    <g:if test="${fileUploadPluginDescription?.properties}">
+                        <g:set var="prefix" value="${'configMap.'}"/>
+                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                service:'FileUploadPluginService',
+                                provider:fileUploadPluginDescription.name,
+                                properties:fileUploadPluginDescription?.properties,
+                                report: configMapValidate,
+                                prefix:prefix,
+                                values:option?.configMap,
+                                fieldnamePrefix:prefix,
+                                origfieldnamePrefix:'orig.' + prefix,
+                                allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                        ]}"/>
+                    </g:if>
+                </g:if>
+            </div>
+        </div>
+        <!-- /ko -->
+        <div class="form-group">
+
+            <label for="optname_${rkey}"
+                   class="col-sm-2 control-label    ${hasErrors(bean: option, field: 'name', 'has-error')}"><g:message
+                    code="form.option.name.label"/></label>
+
             <div class="col-sm-10">
                 <g:textField
                         data-bind="value: name, valueUpdate: 'keyup'"
@@ -52,10 +127,27 @@
                         value="${option?.name}"
                         size="40"
                         placeholder="Option Name"
-                        id="optname_${rkey}"
+                        id="optname_${rkey}"/>
+            </div>
+        </div>
+        <div class="form-group">
+
+            <label for="optlabel_${rkey}"
+                   class="col-sm-2 control-label    ${hasErrors(bean: option, field: 'label', 'has-error')}"><g:message
+                    code="form.option.label.label"/></label>
+
+            <div class="col-sm-10">
+                <input type="text"
+                       class="form-control"
+                       name="label"
+                       id="opt_label"
+                       value="${enc(attr:option?.label)}"
+                       size="40"
+                       placeholder="Option Label"
                 />
             </div>
         </div>
+
         <div class="form-group ${hasErrors(bean: option, field: 'description', 'has-error')}">
 
             <label class="col-sm-2 control-label" for="optdesc_${rkey}" ><g:message code="form.option.description.label" /></label>
@@ -84,12 +176,15 @@
                 </g:javascript>
             </div>
         </div>
-        <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')}">
+        <!-- ko if: !isFileType() -->
+        <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
+             style="${wdgt.styleVisible(unless:option?.defaultStoragePath||option?.isDate || option?.secureInput || option?.secureExposed)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
                                    class="form-control"
                                    name="defaultValue"
+                                   id="opt_defaultValue"
                                    value="${enc(attr:option?.defaultValue)}"
                                    size="40"
                                    placeholder="Default value"
@@ -139,6 +234,17 @@
                     </span>
                 </div>
 
+                <wdgt:eventHandler for="defaultStoragePath_${storagePathKey}" state="unempty" inline="true" oneway="true" frequency="2" >
+                    <wdgt:action target="enforcedType_none" check="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_disabled" visible="false"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="true"/>
+                    <wdgt:action targetSelector="#opt_defaultValue" clear="true"/>
+                </wdgt:eventHandler>
+                <wdgt:eventHandler for="defaultStoragePath_${storagePathKey}" state="empty" inline="true" oneway="true" frequency="2" >
+                    <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                    <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                </wdgt:eventHandler>
             </div>
         </div>
 
@@ -150,11 +256,35 @@
 
                     <div class="radio">
                         <label>
-                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput}" id="inputplain_${rkey}"/>
+                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
                             <g:message code="form.option.secureInput.false.label"/>
                         </label>
                     </div>
 
+                    <div class="radio">
+                        <label>
+                                <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
+                            <g:message code="form.option.date.label"/>
+                        </label>
+                        <span class="text-muted">
+                            <g:message code="form.option.date.description"/>
+                        </span>
+                    </div>
+                    <div class="opt_date_enabled" style="${wdgt.styleVisible(if:option?.isDate)}">
+                        <label>
+                            <g:message code="form.option.dateFormat.title" />
+                            <g:textField name="dateFormat"
+                                         class="form-control"
+                                         value="${option?.dateFormat}"
+                                         size="60"
+                                         placeholder="MM/DD/YYYY hh:mm a"
+
+                            />
+                        </label>
+                        <span class="text-muted">
+                        <g:markdown><g:message code="form.option.dateFormat.description.md" /></g:markdown>
+                        </span>
+                    </div>
 
                     <div class="radio">
                         <label>
@@ -190,29 +320,50 @@
                     <g:message code="form.option.secureInput.description"/>
                 </div>
             </div>
-    
+
+            <%-- TODO replace with OptionEdit knockout bindings --%>
             <wdgt:eventHandler for="sectrue_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action target="mvfalse_${rkey}" check="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="secexpfalse_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="inputplain_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                <wdgt:action targetSelector="#defaultStoragePath_${storagePathKey}" clear="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
+            </wdgt:eventHandler>
+            <wdgt:eventHandler for="inputdate_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                <wdgt:action targetSelector="#defaultStoragePath_${storagePathKey}" clear="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="false"/>
             </wdgt:eventHandler>
 
         </div>
-        <div class="form-group">
+        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
             <div class="col-sm-10">
                 <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
@@ -295,12 +446,13 @@
                 </wdgt:eventHandler>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
                     <label>
                         <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
+                            id="enforcedType_none"
                                  class="evnonregex"/>
                         <g:message code="none" />
                     </label>
@@ -308,7 +460,9 @@
                 </div>
                 <div class="radio">
                     <label class="${hasErrors(bean:option,field:'enforced','fieldError')}">
-                        <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"/>
+                        <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
+                                 id="enforcedType_enforced"
+                        />
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
@@ -341,6 +495,7 @@
                 <wdgt:action target="vregex_${rkey}" visible="false"/>
             </wdgt:eventHandler>
         </div>
+        <!-- /ko -->
         <div class="form-group">
             <label class="col-sm-2 control-label"><g:message code="Option.required.label" /></label>
             <div class="col-sm-10">
@@ -361,7 +516,8 @@
                 </div>
             </div>
         </div>
-        <div class="row form-inline">
+        <!-- ko if: !isFileType() -->
+        <div class="form-group">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
                 <g:message code="form.option.multivalued.label" />
             </label>
@@ -383,23 +539,37 @@
                     <div class="help-block obs_multivalued_false" style="${wdgt.styleVisible(if: !option || !option.multivalued)}">
                         <g:message code="form.option.multivalued.description"/>
                     </div>
-                    <div class="form-group obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
-                    <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
-                            <div class="input-group-addon">
-                                <g:message code="form.option.delimiter.label" />
-                            </div>
-                            <input type="text"
-                                   name="delimiter"
-                                   value="${enc(attr:option?.delimiter)}"
-                                   size="5"
-                                    class="form-control"
-                                   id="vdelimiter_${enc(attr:rkey)}"
-                            />
+                    <div class=" obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
+                        <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
+                                <div class="input-group-addon">
+                                    <g:message code="form.option.delimiter.label" />
+                                </div>
+                                <input type="text"
+                                       name="delimiter"
+                                       value="${enc(attr:option?.delimiter)}"
+                                       size="5"
+                                        class="form-control"
+                                       id="vdelimiter_${enc(attr:rkey)}"
+                                />
 
-                    </div>
+                        </div>
                         <span class="help-block">
                             <g:message code="form.option.delimiter.description"/>
                         </span>
+
+                    </div>
+                    <div class=" obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
+                        <div class=" ${hasErrors(bean: option, field: 'multivalueAllSelected', 'has-error')}">
+
+
+                            <div class="checkbox">
+                                <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
+                                    <g:checkBox name="multivalueAllSelected" value="true" checked="${option?.multivalueAllSelected}" id="mvalltrue_${rkey}"/>
+                                    <g:message code="form.option.multivalueAllSelected.label" />
+                                </label>
+                            </div>
+                        </div>
+
 
                     </div>
 
@@ -423,7 +593,8 @@
                 </div>
             </div>
         </div>
-    <section id="preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name)}" class="section-separator-solo" data-bind="visible: name">
+        <!-- /ko -->
+    <section id="preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name)}" class="section-separator-solo" data-bind="visible: name() && !isFileType()">
         <div  class="row">
             <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10 opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
@@ -442,6 +613,45 @@
             <div class="col-sm-10 opt_sec_nexp_enabled" style="${wdgt.styleVisible(if: option?.secureInput && !option?.secureExposed)}">
                 <span class="warn note"><g:message code="form.option.usage.secureAuth.message"/></span>
             </div>
+        </div>
+    </section>
+    <section id="file_preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name && option?.optionType=='file')}" class="section-separator-solo" data-bind="visible: name() && isFileType()">
+        <div  class="row">
+            <label class="col-sm-2 control-label"><g:message code="usage" /></label>
+            <div class="col-sm-10" >
+                <span class="text-info"><g:message code="form.option.usage.file.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>@</code>
+                </div>
+
+                <span class="text-info"><g:message code="form.option.usage.file.fileName.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileFileNameBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>.fileName}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>.fileName@</code>
+                </div>
+                <span class="text-info"><g:message code="form.option.usage.file.sha.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileShaBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>.sha}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>.sha@</code>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -474,7 +684,7 @@
     </div>
 <g:javascript>
                 fireWhenReady('optedit_${enc(js: rkey)}',function(){
-                    var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}'});
+                    var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
                     ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
                 });
 </g:javascript>

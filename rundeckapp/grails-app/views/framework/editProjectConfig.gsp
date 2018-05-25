@@ -21,10 +21,11 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="configure"/>
+    <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code:'configuration')}"/>
     <title><g:message code="project.config.editor.title" default="Edit Project Configuration File"/></title>
 
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
@@ -45,7 +46,11 @@
 </head>
 
 <body>
-
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
 
     <div class="row">
         <g:form action="saveProjectConfig" method="post"
@@ -55,10 +60,17 @@
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">
-                        <span class="h3">
+                        <span class="panel-title">
                             <g:message code="project.config.edit.message"
                                        default="Edit Project Configuration File"/>: <g:enc>${params.project ?: request.project}</g:enc>
                     </span>
+                    <g:link controller="framework" action="editProject"
+                            params="[project: params.project ?: request.project]"
+                            class="pull-right panel-title"
+                            >
+                        <g:icon name="edit"/>
+                        <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
+                    </g:link>
                 </div>
                 <div class="panel-body">
                     <div class="help-block">
@@ -85,6 +97,6 @@
         </g:form>
     </div>
 
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>
 </html>

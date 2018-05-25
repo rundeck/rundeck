@@ -1,11 +1,11 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,32 +41,394 @@ function jobWasEdited(){
         jobEdittedHandler();
     }
 }
-
+var _jobOptionData = [];
+function _optionData(data) {
+    _jobOptionData = data || [];
+}
+function _addOption(data) {
+    "use strict";
+    _jobOptionData.push(data);
+}
+function _removeOptionName(name) {
+    "use strict";
+    var findname = function (e) {
+        return e.name === name;
+    };
+    var found = _jobOptionData.findIndex(findname);
+    if (found >= 0) {
+        _jobOptionData.splice(found, 1);
+    }
+}
+var _VAR_DATA = {
+    job: [],
+    node: [],
+    eh: [],
+    globals: []
+};
+function _jobGlobalVarData() {
+    "use strict";
+    if (_VAR_DATA['globals'].length < 1) {
+        var globdata = loadJsonData('globalVarData');
+        if (globdata) {
+            globdata.each(function (e) {
+                _VAR_DATA['globals'].push({
+                    key: 'globals.' + e,
+                    category: 'Global Vars'
+                });
+            });
+        }
+    }
+    return _VAR_DATA['globals'];
+}
+function _jobVarData() {
+    if (_VAR_DATA['job'].length < 1) {
+        var jobdata = {
+            'id': {title: 'Job ID'},
+            'execid': {title: 'Execution ID'},
+            'executionType': {title: 'Execution Type'},
+            'name': {title: 'Job Name'},
+            'group': {title: 'Job Group'},
+            'username': {title: 'Name of user executing the job'},
+            'project': {title: 'Project name'},
+            'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
+            'user.email': {title: 'Email of user executing the job'},
+            'retryAttempt': {title: 'Retry attempt number'},
+            'retryInitialExecId': {title: 'Retry Original Execution ID'},
+            'wasRetry': {title: 'True if execution is a retry'},
+            'threadcount': {title: 'Job Threadcount'},
+            'filter': {title: 'Job Node Filter Query'}
+        };
+        ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter','retryInitialExecId'].each(function (e) {
+            _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
+        });
+    }
+    return _VAR_DATA['job'];
+}
+function _jobNodeData() {
+    "use strict";
+    if (_VAR_DATA['node'].length < 1) {
+        var nodedata = {
+            'name': {title: 'Node Name'},
+            'hostname': {title: 'Node Hostname'},
+            'username': {title: 'Node username'},
+            'description': {title: 'Node description'},
+            'tags': {title: 'Node tags'},
+            'os-name': {title: 'OS Name'},
+            'os-family': {title: 'OS Family'},
+            'os-arch': {title: 'OS Architecture'},
+            'os-version': {title: 'OS Version'}
+        };
+        ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
+            _VAR_DATA['node'].push({
+                key: 'node.' + e,
+                category: 'Node',
+                title: nodedata[e].title,
+                desc: '(only available in node step context)'
+            });
+        });
+    }
+    return _VAR_DATA['node'];
+}
+function _jobEhData() {
+    "use strict";
+    if (_VAR_DATA['eh'].length < 1) {
+        var ehdata = {
+            'message': {title: 'Error Message'},
+            'resultCode': {title: 'Result Code', desc: 'Exit code from an execution (if available)'},
+            'failedNodes': {title: 'Failed Nodes List'},
+            'reason': {title: 'Error Reason', desc: 'A code indicating the reason the step failed'}
+        };
+        ['message', 'resultCode', 'failedNodes', 'reason'].each(function (e) {
+            _VAR_DATA['eh'].push({
+                key: 'result.' + e,
+                category: 'Error Handler',
+                title: ehdata[e].title,
+                desc: ehdata[e].desc
+            });
+        });
+    }
+    return _VAR_DATA['eh'];
+}
 /**
  * After loading WF item edit form in the list, update input and apply ACE editor
- * @param item
+ * @param item li item
+ * @param iseh true if error handler
+ * @param isnodestep true if node step
  */
-function postLoadItemEdit(item){
+function postLoadItemEdit(item, iseh, isnodestep) {
     var liitem = jQuery(item);
-    liitem.find('input[type=text]').each(function (ndx,elem) {
+    liitem.find('input[type=text]').each(function (ndx, elem) {
         elem.observe('keypress', noenter);
     });
-    if(liitem.find('input[type=text]').length>0){
+    if (liitem.find('input[type=text]').length > 0) {
         liitem.find('input[type=text]')[0].focus();
     }
-    liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+    isnodestep = isnodestep || liitem.data('wfitemnodestep');
+    var calcnodestep = function () {
+        //look for radio button for nodeStep
+        var find = liitem.find('input[name=nodeStep][type=radio]:checked');
+        if (find.length) {
+            return find.val() == 'true';
+        }
+        return isnodestep;
+    };
+    addWfAutocomplete(liitem, iseh, calcnodestep, function (elem) {
+        return jQuery(elem).hasClass('_wfscriptitem');
+    }, function (elem, editor) {
+        var isscriptStep = jQuery(elem).hasClass('_wfscriptitem');
+        if (isscriptStep) {
+            var key = liitem.find('._wfiedit').data('rkey');
+            if (key) {
+                workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
+                    setAceSyntaxMode(val, editor);
+                });
+            }
+        }
+    }, function (elem) {
+        var obj = jQuery(elem);
+        if (obj.hasClass('context_env_autocomplete')) {
+            var key = liitem.find('._wfiedit').data('rkey');
+            return (key && workflowEditor.scriptSteps()[key] && workflowEditor.scriptSteps()[key].guessAceMode() || 'sh');
+        }
+        return null;
+    });
 }
 
+function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
+    var baseVarData = [].concat(_jobVarData());
+    baseVarData = baseVarData.concat(_jobGlobalVarData());
+
+
+    var baseNodeData = [];
+
+    //special error-handler vars
+
+    if (iseh) {
+        baseVarData = baseVarData.concat(_jobEhData());
+    }
+
+    var mkenv = function (name) {
+        return ('RD_' + name ).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+    };
+    var varmodes = {
+        sh: function (name) {
+            return '$' + mkenv(name);
+        },
+        powershell: function (name) {
+            return '$env:' + mkenv(name);
+        },
+        batchfile: function (name) {
+            return '%' + mkenv(name) + '%';
+        }
+    };
+    var autovarfunc = function (prefix, suffix, mode) {
+        prefix = prefix || '${';
+        suffix = suffix || '}';
+        var mkvar = function (name) {
+            return prefix + name + suffix;
+        };
+        var expvars = [];
+        var data = [].concat(baseVarData);
+
+        if (isnodestepfunc && isnodestepfunc()) {
+            data = data.concat(_jobNodeData());
+        }
+
+        var mkmodevar = (varmodes[mode] || varmodes['sh']);
+        for (var i = 0; i < data.length; i++) {
+            expvars.push({value: mkvar(data[i].key), data: data[i]});
+            if (mode) {
+                expvars.push({value: mkmodevar(data[i].key), data: data[i]});
+            }
+        }
+        for (var x = 0; x < _jobOptionData.length; x++) {
+            expvars.push({
+                value: mkvar('option.' + _jobOptionData[x].name),
+                data: {
+                    category: 'Options',
+                    title: 'Option value',
+                    desc: 'For option: ' + _jobOptionData[x].name
+                }
+            });
+            if(_jobOptionData[x].multivalued == true){
+                expvars.push({
+                    value: mkvar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                    data: {
+                        category: 'Options',
+                        title: 'Option Delimeter value',
+                        desc: 'For option: ' + _jobOptionData[x].name
+                    }
+                });
+            }
+            if (mode) {
+                expvars.push({
+                    value: mkmodevar('option.' + _jobOptionData[x].name),
+                    data: {
+                        category: 'Options',
+                        title: 'Option value',
+                        desc: 'For option: ' + _jobOptionData[x].name
+                    }
+                });
+
+                if(_jobOptionData[x].multivalued == true){
+                    expvars.push({
+                        value: mkmodevar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                        data: {
+                            category: 'Options',
+                            title: 'Option value',
+                            desc: 'For option: ' + _jobOptionData[x].name
+                        }
+                    });
+                }
+            }
+            if (_jobOptionData[x].type == 'file') {
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name),
+                    data: {
+                        category: 'File Option',
+                        title: 'The local file path',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name + '.fileName'),
+                    data: {
+                        category: 'File Option',
+                        title: 'The original File name',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name + '.sha'),
+                    data: {
+                        category: 'File Option',
+                        title: 'The file contents SHA256 value',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+
+                if (mode) {
+                    expvars.push({
+                        value: mkmodevar('file.' + _jobOptionData[x].name),
+                        data: {
+                            category: 'File Option',
+                            title: 'The local file path',
+                            desc: 'For file option: ' + _jobOptionData[x].name
+                        }
+                    });
+                    expvars.push({
+                        value: mkmodevar('file.' + _jobOptionData[x].name + '.fileName'),
+                        data: {
+                            category: 'File Option',
+                            title: 'The original File name',
+                            desc: 'For file option:' + _jobOptionData[x].name
+                        }
+                    });
+                    expvars.push({
+                        value: mkmodevar('file.' + _jobOptionData[x].name + '.sha'),
+                        data: {
+                            category: 'File Option',
+                            title: 'The file contents SHA256 value',
+                            desc: 'For file option: ' + _jobOptionData[x].name
+                        }
+                    });
+                }
+            }
+        }
+        return expvars;
+    };
+    liitem.find('textarea.apply_ace').each(function (ndx, elem) {
+        var isscriptStep = istextareatemplatemode && istextareatemplatemode(elem);
+        var editor = _addAceTextarea(elem, null, function (editor, session, pos, prefix) {
+            "use strict";
+            var aceSyntaxMode = getAceSyntaxMode(editor);
+            var vals = isscriptStep ? autovarfunc('@', '@', aceSyntaxMode) : autovarfunc(null, null, aceSyntaxMode);
+            return vals.map(function (ea) {
+                "use strict";
+                //ace text editor lang tools completer format
+                return {
+                    name: ea.value,
+                    value: ea.value,
+                    score: 1,
+                    meta: ea.data && ea.data.category || null,
+                    title: ea.data && ea.data.title || null,
+                    desc: ea.data && ea.data.desc || null,
+                    type: 'rdvar'
+                };
+            });
+        });
+        acetexteditorcallback && acetexteditorcallback(elem, editor);
+    });
+    liitem.find('.context_env_autocomplete,.context_var_autocomplete').each(function (i, elem) {
+        var obj = jQuery(elem);
+        var autoenvmode = gettextfieldenvmode && gettextfieldenvmode(elem) || null;
+        obj.devbridgeAutocomplete({
+            delimiter: /( |(?=\$))/,
+            tabDisabled: true,
+            lookup: function (q, callback) {
+                var query = q.toLowerCase();
+                var results = jQuery.grep(autovarfunc(null, null, autoenvmode), function (suggestion) {
+                    "use strict";
+                    return suggestion.value.toLowerCase().indexOf(query) !== -1
+                });
+                callback({suggestions: results});
+            },
+            groupBy: 'category',
+            formatResult: function (suggestion, currentValue) {
+                "use strict";
+                if (suggestion.data.title) {
+                    return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+                }
+                return jQuery.Autocomplete.formatResult(suggestion, currentValue)
+            }
+        })
+    });
+}
+function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
+    "use strict";
+    var currentProject = jQuery('#schedEditFrameworkProject').val();
+    jQuery("#" + nameid).devbridgeAutocomplete({
+        minChars: 0,
+        deferRequestBy: 500,
+        lookup: function (q, callback) {
+            var project = projid && jQuery('#' + projid).val() || currentProject;
+            var results = jQuery.ajax({
+                url: _genUrl(appLinks.menuJobSearchJson, {jobFilter: q, project: project, runAuthRequired: true}),
+                success: function (data, x) {
+                    callback({
+                        suggestions: jQuery.map(data, function (item) {
+                            return {value: item.name, data: item};
+                        })
+                    });
+                }
+            });
+        },
+        onSelect: function (selected) {
+            //set group from selected job
+            jQuery('#' + groupid).val(selected.data.group);
+            //set uuid
+            jQuery('#' + uuid).val(selected.data.id);
+        }
+    });
+}
+var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
+    if(_iseditting){
+        return;
+    }
     jobWasEdited();
     var params = {num:num, isErrorHandler:isErrorHandler?true:false,key:key};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
-        _hideWFItemControls();
-        postLoadItemEdit('#wfli_' + key);
+        _hideWFItemControls(key);
+        postLoadItemEdit('#wfli_' + key, isErrorHandler);
     });
+}
+
+function _wficopy(key,num,isErrorHandler) {
+    _ajaxWFAction(appLinks.workflowCopy,{num:num,edit:true});
 }
 
 function _wfiview(key,num,isErrorHandler) {
@@ -91,9 +453,13 @@ function _wfisave(key,num, formelem,iseh) {
                 _showWFItemControls();
                 if (iseh) {
                     _hideWFItemControlsAddEH(num);
+                    if (litem.parent().closest('li').find('.wfitem.jobtype').size() > 0) {
+                        //disable the config button
+                        _disableWFItemControlsConfigButton(num)
+                    }
                 }
             }else{
-                postLoadItemEdit('#wfli_' + key);
+                postLoadItemEdit('#wfli_' + key, iseh);
             }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
@@ -107,7 +473,7 @@ function _wfiaddnew(type,nodestep) {
     }
     clearHtml('wfnewitem');
     jQuery('#wfnewtypes').hide();
-    _hideWFItemControls();
+    _hideWFItemControls('new');
     var wfcontent = jQuery('#workflowContent');
     var olist = wfcontent.find('ol').first();
     var num = wfcontent.find('ol > li').length;
@@ -131,13 +497,19 @@ function _wfiaddnew(type,nodestep) {
     olist.append(parentli);
     newitemElem = parentli.find('span').first()[0];
     jQuery(newitemElem).attr('id', 'wfli_' + num);
+    jQuery(newitemElem).data('wfitemnodestep', nodestep);
     jQuery(newitemElem).load(_genUrl(appLinks.workflowEdit,params),function(){
-        postLoadItemEdit('#wfli_' + num);
+        postLoadItemEdit('#wfli_' + num, false, nodestep ? true : false);
     });
 }
 
-function _addAceTextarea(textarea){
-    _setupAceTextareaEditor(textarea,function(){jobWasEdited();});
+function _addAceTextarea(textarea, callback, ext) {
+    return _setupAceTextareaEditor(textarea, function (e) {
+        jobWasEdited();
+        if (callback) {
+            callback(e);
+        }
+    }, ext);
 }
 function _wfisavenew(formelem) {
     jobWasEdited();
@@ -188,9 +560,10 @@ function _evtNewStepCancel(evt){
     jQuery('#wfnewbutton').show();
 }
 
-function _hideWFItemControls() {
+function _hideWFItemControls(item) {
     jQuery('#workflowContent').find('span.wfitemcontrols').hide();
     jQuery('#wfundoredo,#wfnewbutton').hide();
+    _iseditting=item;
 }
 function _updateEmptyMessage() {
     var x = jQuery('#workflowContent').find('ol li');
@@ -204,12 +577,17 @@ function _showWFItemControls() {
     jQuery('#workflowContent').find('span.wfitemcontrols').show();
     jQuery('#wfundoredo,#wfnewbutton').show();
     _updateWFUndoRedo();
-    _enableDragdrop();
+    _enableWFDragdrop();
     _updateEmptyMessage();
+    _iseditting=null;
 }
 function _hideWFItemControlsAddEH(num){
     var lielem=jQuery('#wfli_'+num);
-    lielem.find('.wfitem_add_errorhandler').hide();
+    lielem.find('.wfitem_add_errorhandler').parent().hide();
+}
+function _disableWFItemControlsConfigButton(num){
+    var lielem=jQuery('#wfli_'+num);
+    lielem.find('.wfitemcontrols .btn-group button.dropdown-toggle').attr('disabled','disabled');
 }
 
 function _evtNewEHChooseType(evt){
@@ -267,7 +645,7 @@ function _wfishownewErrorHandler(key,num,nodeStep){
 
     newehdiv.show();
     wfiehli.parent().show();
-    _hideWFItemControls();
+    _hideWFItemControls('eh');
 }
 
 function _wfiaddNewErrorHandler(elem,type,num,nodestep){
@@ -287,9 +665,10 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     }
     var wfiehli = jQuery('#wfli_' + key);
     _hideAddNewEH();
+    wfiehli.data('wfitemnodestep', nodestep);
 
     wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
-        postLoadItemEdit(wfiehli);
+        postLoadItemEdit(wfiehli, true, nodestep);
     });
 }
 
@@ -351,40 +730,41 @@ function moveDragItem(dragged, droparea) {
 
     _doMoveItem(num, to);
 }
-function _enableDragdrop() {
-    $$('#workflowContent ol>li').each(function(item) {
+function _enableWFDragdrop() {
+    "use strict";
+    _enableDragdrop("#workflowContent ol>li","workflowDropfinal",moveDragItem);
+}
+function _enableDragdrop(select, finalid, callback) {
+    $$(select).each(function (item) {
         new Draggable(
             item,
-        {
-            revert: 'failure',
-            ghosting: false,
-            constraint:'vertical',
-            handle:'dragHandle',
-            scroll: window,
-            onStart:function(d) {
-                $('workflowDropfinal').show();
-            },
-            onEnd:function(d) {
-                $('workflowDropfinal').hide();
+            {
+                revert: 'failure',
+                ghosting: false,
+                constraint: 'vertical',
+                handle: 'dragHandle',
+                scroll: window,
+                onStart: function (d) {
+                    $(finalid).show();
+                },
+                onEnd: function (d) {
+                    $(finalid).hide();
+                }
             }
-        }
-            );
-    });
-
-    $$('#workflowContent ol>li').each(function(item) {
+        );
         Droppables.add(item, {
-            hoverclass: 'hoverActive',
-            onDrop: moveDragItem
-        }
-            );
+                hoverclass: 'hoverActive',
+                onDrop: callback
+            }
+        );
         $(item).addClassName("ready");
     });
-    $$('#workflowDropfinal').each(function(item) {
+    $$('#' + finalid).each(function (item) {
         Droppables.add(item, {
-            hoverclass: 'hoverActive',
-            onDrop: moveDragItem
-        }
-            );
+                hoverclass: 'hoverActive',
+                onDrop: callback
+            }
+        );
         $(item).addClassName("ready");
     });
 }
@@ -428,7 +808,13 @@ function _showOptControls() {
     $('optnewbutton').show();
     _updateOptsUndoRedo();
     _showOptEmptyMessage();
+    _enableOptDragDrop();
     clearHtml('optsload');
+}
+
+function _enableOptDragDrop(){
+    "use strict";
+    _enableDragdrop('#optionContent ul>li','optionDropFinal',_dragReorderOption);
 }
 function _showOptEmptyMessage() {
     var x = $('optionsContent').down('ul li');
@@ -505,12 +891,17 @@ function _optview(name, target) {
 function _optsave(formelem, tokendataid, target) {
     jobWasEdited();
     $('optsload').loading();
+    var optname = jQuery('#' + formelem + ' :input[name=name]').val();
+    var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
+    var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
     jQuery.ajax({
         type: "POST",
         url:_genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: jQuery('#'+formelem+" :input").serialize(),
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success:function(data,status,xhr){
+            _removeOptionName(optname);
+            _addOption({name: optname, type: opttype, multivalued: multivalued});
             jQuery(target).html(data);
             if (jQuery(target).find('div.optEditForm').length<1) {
                 _showOptControls();
@@ -591,6 +982,9 @@ function _summarizeOpts() {
 function _optsavenew(formelem,tokendataid) {
     jobWasEdited();
     var params = jQuery('#'+formelem+' :input').serialize();
+    var optname = jQuery('#' + formelem + ' :input[name=name]').val();
+    var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
+    var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -599,6 +993,7 @@ function _optsavenew(formelem,tokendataid) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
+            _addOption({name: optname, type: opttype, multivalued: multivalued});
             if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
@@ -628,12 +1023,54 @@ function _doRemoveOption(name, elem,tokendataid) {
                 data:params,
                 beforeSend:_ajaxSendTokens.curry(tokendataid),
                 success:function(data,status,jqxhr){
+                    _removeOptionName(name);
                     jQuery('#optionsContent').find('ul').html(data);
                     _showOptControls();
                 }
             });
         }
     );
+}
+function _dragReorderOption(dragged,drop){
+    "use strict";
+    var optName = jQuery(dragged).data('optName');
+    var toOptName = jQuery(drop).data('optName');
+    var data={};
+    if(!toOptName && jQuery(drop).data('isFinal')){
+        data={end:true};
+    }else{
+        data={before:toOptName};
+    }
+
+
+    _doReorderOption(optName, data);
+
+}
+function _doReorderOption(name,data) {
+    jobWasEdited();
+    var tokendataid = 'reqtoken_undo_opts';
+    var params = {name:name,edit:true};
+    if(data.pos){
+        params['relativePosition']=data.pos;
+    }else if(data.end){
+        params['last']=true;
+    }else if(data.before){
+        params['before']=data.before;
+    }
+    if (getCurSEID()) {
+        params['scheduledExecutionId'] = getCurSEID();
+    }
+    $('optsload').loading();
+    jQuery.ajax({
+        type: "POST",
+        url:_genUrl(appLinks.editOptsReorder,params),
+        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        success:function(data,status,xhr){
+            jQuery('#optionsContent').find('ul').html(data);
+            _showOptControls();
+        }
+    });
+
 }
 
 function _doUndoOptsAction() {
@@ -689,39 +1126,50 @@ function _doRevertOptsAction() {
 }
 
 //job chooser
+var uuidField;
 var jobNameFieldId;
 var jobGroupFieldId;
-function jobChosen(name, group) {
+function jobChosen(uuid, name, group, elem) {
     jobWasEdited();
-    if (jobNameFieldId && jobGroupFieldId) {
+    if (uuidField && jobNameFieldId && jobGroupFieldId) {
+        jQuery('#' + uuidField).val(uuid);
         jQuery('#' + jobNameFieldId).val(name);
         jQuery('#' + jobGroupFieldId).val(group);
+        doyftsuccess(uuidField);
+        doyftsuccess(jobNameFieldId);
+        doyftsuccess(jobGroupFieldId);
     }
-    hideJobChooser();
+    if (jQuery(elem).closest('.modal').length === 1) {
+        jQuery(elem).closest('.modal').modal('hide');
+    }
 }
-function loadJobChooser(elem, target, nameid, groupid) {
+
+function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
-        hideJobChooser();
+        jQuery('#' + modalid).modal('hide');
         return;
     }
+    uuidField = uuid;
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;
+
+    if (projectid) {
+        project = jQuery('#' + projectid).val();
+    }
     jQuery(elem).button('loading').addClass('active');
     jQuery.ajax({
-        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true}),
-        success: function (resp, status, jqxhr){
-            jQuery(elem).popover({html: true, container: 'body', placement: 'left', content: resp, trigger: 'manual'}).popover('show');
-            jQuery(elem).button('reset');
+        url: _genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true, projFilter: project}),
+        success: function (resp, status, jqxhr) {
+            jQuery(elem).button('reset').removeClass('active');
+            jQuery('#' + modalcontentid).html(resp);
+            jQuery('#' + modalid).modal('show');
         },
-        error: function (resp, status, jqxhr){
+        error: function (resp, status, jqxhr) {
             showError("Error performing request: menuJobsPicker: " + transport);
-            jQuery(elem).button('reset');
+            jQuery(elem).button('reset').removeClass('active');
         }
     });
-}
-function hideJobChooser() {
-    jQuery('.btn.act_choose_job').removeClass('active').button('reset').popover('hide');
 }
 
 //group chooser
@@ -753,5 +1201,9 @@ jQuery(window).load(function () {
     });
     jQuery('#groupChooseBtn').on('hide.bs.popover', function (e) {
         jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
+    });
+
+    jQuery('.notifyFields').each(function (i,elem) {
+        addWfAutocomplete(jQuery(elem));
     });
 });

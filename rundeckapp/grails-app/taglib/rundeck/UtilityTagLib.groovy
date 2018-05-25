@@ -1,25 +1,64 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck
 
+import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.util.Environment
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.filters.FormTokenFilters
+import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.util.regex.Pattern
 
 class UtilityTagLib{
     def static  daysofweekkey = [Calendar.SUNDAY,Calendar.MONDAY,Calendar.TUESDAY,Calendar.WEDNESDAY,Calendar.THURSDAY,Calendar.FRIDAY,Calendar.SATURDAY];
     def public static daysofweekord = ScheduledExecution.daysofweeklist;
     def public static monthsofyearord = ScheduledExecution.monthsofyearlist;
-	static returnObjectForTags = ['nodeStatusColorStyle','nodeStatusColorCss','logStorageEnabled','executionMode','appTitle','rkey','w3cDateValue','sortGroupKeys','helpLinkUrl','helpLinkParams','parseOptsFromString','relativeDateString','enc','textFirstLine','textRemainingLines']
+    static returnObjectForTags = [
+            'nodeStatusColorStyle',
+            'nodeStatusColorCss',
+            'logStorageEnabled',
+            'executionMode',
+            'appTitle',
+            'rkey',
+            'w3cDateValue',
+            'sortGroupKeys',
+            'helpLinkUrl',
+            'helpLinkParams',
+            'parseOptsFromString',
+            'relativeDateString',
+            'enc',
+            'textFirstLine',
+            'textRemainingLines',
+            'textBeforeLine',
+            'textAfterLine',
+            'textHasMarker',
+            'humanizeValue'
+    ]
 
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     def configurationService
+    def scheduledExecutionService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -140,7 +179,7 @@ class UtilityTagLib{
 
         def long dms
         if(attrs.time){
-            dms= (long)Math.floor(attrs.time / 1000.0)
+            dms= (long)Math.floor(attrs.time / 1000.0d)
         }else{
             def Date start = attrs.start
             def Date end = attrs.end
@@ -186,11 +225,11 @@ class UtilityTagLib{
             duration=val
         }
 
-        out << duration 
+        out << duration
     }
 
     def relativeDate = { attrs, body ->
-        out<<relativeDateString(attrs,body)
+        out << relativeDateString(attrs + [html: attrs.html != null ? attrs.html : true], body)
     }
 
     def relativeDateString = { attrs, body ->
@@ -219,7 +258,7 @@ class UtilityTagLib{
             }
             return val.toString()
         }else if(attrs.elapsed || attrs.start && attrs.end){
-            def Date date = attrs.elapsed
+            def Date date = (attrs.elapsed instanceof Date) ? attrs.elapsed : null
             def Date enddate = new Date()
             if(attrs.start && attrs.end){
                 date = attrs.start
@@ -244,36 +283,42 @@ class UtilityTagLib{
 
 
             if(test < 60 ){
-                val << "${s}s"
+                val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
             }else if(test <  (5 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 if(s > 0){
-                    val << "${s}s"
+                    val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
                 }
             }else if(test < (60 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
 
             }else if (test < (24 * 60 * 60)){
-                val << "${h}h"
+                val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 if(m > 0 ){
-                    val << "${m}m"
+                    val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 }
             }else{
-                val << "${d}d"
+                val << g.message(code: 'format.time.day.abbrev', args: [d].toArray())
                 if(h > 0 ){
-                    val << "${h}h"
+                    val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 }
             }
             def StringBuffer val2 = new StringBuffer()
 
-            if(diff > 0 && !attrs.end){
-                val2 << "in "
+            if (diff > 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << g.message(code: 'in') + " "
             }
-            val2 << "<span class=\"${enc(attr:diff > 0 ? (attrs.untilClass?:'until') : (attrs.agoClass ?: 'ago'))}\" >"
+            if (attrs.html) {
+                val2 << """<span class="${
+                    enc(attr: diff > 0 ? (attrs.untilClass ?: 'until') : (attrs.agoClass ?: 'ago'))
+                }">"""
+            }
             val2 << val.toString()
-            val2 << "</span>"
-            if(diff < 0 && !attrs.end){
-                val2 << " ago"
+            if (attrs.html) {
+                val2 << "</span>"
+            }
+            if (diff < 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << " " + g.message(code: 'ago')
             }
             return val2.toString()
         } else {
@@ -399,7 +444,7 @@ class UtilityTagLib{
      * renders a java date as the W3C format used by dc:date in RSS feed
      */
     def w3cDateValue = {attrs,body ->
-        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'",Locale.US);
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US);
         dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
         return dateFormater.format(attrs.date);
     }
@@ -440,6 +485,95 @@ class UtilityTagLib{
         }
     }
 
+    def datepickerUI = { attrs ->
+        def name = attrs['name']?:'myDateField'
+        def id = attrs['id']?:'myDateField'
+        def optionName = attrs['optionName']?:null;
+        def value = attrs['value']
+        def options = attrs['options']?:'{}' //{key1: value1, key2: value2, ...}
+        def locale = attrs['locale']?:request.getLocale().toString().substring(0,2)
+        def htmlClass = attrs['class']
+        def htmlRequired = attrs['required']?"required = 'true'":''
+        def placeholder = attrs['placeholder']?:''
+
+        def namePicker = id+"_picker";
+        def nameDay = id+"_day";
+        def nameMonth = id+"_month";
+        def nameYear = id+"_year";
+        def nameHour = id+"_hour";
+        def nameMinute = id+"_minute";
+
+        def c = null
+        def hour;
+        def minute;
+        def day;
+        def month;
+        def year;
+        if(value!=null){
+                if(value instanceof Calendar) {
+                        c = value
+                } else {
+                        c = new GregorianCalendar();
+                        c.setTime(value)
+                }
+                minute = c.get(GregorianCalendar.MINUTE)
+                hour = c.get(GregorianCalendar.HOUR_OF_DAY)
+                day = c.get(GregorianCalendar.DAY_OF_MONTH)
+                month = c.get(GregorianCalendar.MONTH)+1
+                year = c.get(GregorianCalendar.YEAR)
+        }
+
+        out << """
+            <input type='text' id='${namePicker}' name='${optionName ?: namePicker}' placeholder='${
+            placeholder
+        }' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>
+            
+           
+            <input type='hidden' id='${name}' name='${name}' value='date.struct' />
+            
+            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />
+            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />
+            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />
+            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />
+            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />
+                    """
+
+        out << """
+            <script type='text/javascript'>
+            jQuery(document).ready(function(){\n
+                 jQuery('#${namePicker}').datetimepicker(${options});\n
+                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n
+                 jQuery('#${namePicker}').on('change', function(){\n
+                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n
+                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n
+                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n
+                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n
+                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n
+                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n
+                 });\n
+                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n
+                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n
+                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n
+            """
+        // If a value is specified it overrides the default date
+        if(attrs['value']){
+            out << """
+                //Set date from value\n
+                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month - 1},${day},${
+                hour
+            },${minute}));\n
+            """
+        }
+        out << """
+            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n
+            //Set default date\n
+            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate
+.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n
+            });\n
+            </script>
+            
+            """
+    }
 
     def autoLink={ attrs,body->
         def outx=body()
@@ -463,8 +597,38 @@ class UtilityTagLib{
                         textValue: {
                             return it?"User: ${it}": "Your User Profile"
                         }
+                ],
+                help:[
+                        pattern:/\{\{help\/docs\}\}/,
+                        linkText: helpLinkUrl()
+                ],
+                app:[
+                        pattern:/\{\{app\/(version|title|ident)?\}\}/,
+                        textValue:{
+                            if(it[1]=='title'){
+                                appTitle()
+                            }else if(it[1]=='version'){
+                                grailsApplication.metadata['app.version']
+                            }else if(it[1]=='ident'){
+                                grailsApplication.metadata['build.ident']
+                            }
+                        }
                 ]
         ]
+        if(attrs.jobLinkId){
+            linkopts.jobhref=[
+                    pattern: /\{\{job\.permalink\}\}/,
+                    hrefParams:[action:'show',controller:'scheduledExecution',id:attrs.jobLinkId] + xparams,
+            ]
+        }
+        if(attrs.tokens){
+            attrs.tokens.each{k,v->
+                linkopts[k]=[
+                        pattern: Pattern.quote("{{$k}}"),
+                        linkText: v
+                ]
+            }
+        }
         linkopts.each{k,opts->
             outx=outx.replaceAll(opts.pattern){
                 if(opts.linkParams){
@@ -472,8 +636,14 @@ class UtilityTagLib{
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
                     return g.link(lparams,text)
+                }else if(opts.hrefParams){
+                    def lparams= [:]+opts.hrefParams
+                    return g.createLink(lparams)
+                }else if(opts.textValue){
+                    return opts.textValue(it)?:it[0]
+                }else if(opts.linkText){
+                    return opts.linkText
                 }else{
-
                     return it[0]
                 }
             }
@@ -585,40 +755,56 @@ class UtilityTagLib{
      * Humanize data value, based on unit attribute
      */
     def humanize={attrs,body->
-        if(attrs.unit && null!=attrs.value){
-            if(attrs.unit=='byte' || attrs.unit=='hbyte'){
-                long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
-                def testmap=[
-                        byte:[
-                            [value: 0, name: 'B'],
-                            [value: 1024L, name: 'KiB'],
-                            [value: 1024L * 1024, name: 'MiB'],
-                            [value: 1024L * 1024 * 1024, name: 'GiB'],
-                            [value: 1024L * 1024 * 1024 * 1024, name: 'TiB'],
+        def result = humanizeValue(attrs, body)
+        if (result) {
+            out << result
+        }
+    }
+    /**
+     * Humanize data value, based on unit attribute
+     * @attrs unit required unit of data, 'byte','hbyte','ms','%' will be formatted specially
+     * @attrs value required value convert
+     */
+    def humanizeValue = { attrs, body ->
+        if (attrs.unit && null != attrs.value) {
+            if (attrs.unit == 'byte' || attrs.unit == 'hbyte') {
+                long val = attrs.value instanceof String ? Long.parseLong(attrs.value) : attrs.value
+                def testmap = [
+                        byte: [
+                                [value: 0, name: 'B'],
+                                [value: 1024L, name: 'KiB'],
+                                [value: 1024L * 1024, name: 'MiB'],
+                                [value: 1024L * 1024 * 1024, name: 'GiB'],
+                                [value: 1024L * 1024 * 1024 * 1024, name: 'TiB'],
                         ],
                         hbyte: [
-                            [value: 0, name: 'B'],
-                            [value: 1000L, name: 'KB'],
-                            [value: 1000L * 1000, name: 'MB'],
-                            [value: 1000L * 1000 * 1000, name: 'GB'],
-                            [value: 1000L * 1000 * 1000 * 1000, name: 'TB'],
+                                [value: 0, name: 'B'],
+                                [value: 1000L, name: 'KB'],
+                                [value: 1000L * 1000, name: 'MB'],
+                                [value: 1000L * 1000 * 1000, name: 'GB'],
+                                [value: 1000L * 1000 * 1000 * 1000, name: 'TB'],
                         ]
-                    ]
-                def testset=testmap[attrs.unit]
+                ]
+                def testset = testmap[attrs.unit]
                 def found
-                testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
-                if(!found){
-                    found=testset[-1]
+                testset.eachWithIndex { lvl, x ->
+                    if (!found && val < lvl.value) {
+                        found = testset[x - 1]
+                    }
+                }
+                if (!found) {
+                    found = testset[-1]
                 }
                 def outputNumber = found.value > 0 ? (val / found.value) : val
-                out<<g.formatNumber([number : outputNumber, type : "number", maxFractionDigits: "2"],body)+' '+found.name
-            }else if(attrs.unit=='ms'){
-                attrs.time=attrs.value
-                out<<timeDuration(attrs,body)
-            }else if(attrs.unit=='%'){
+                return g.formatNumber([number: outputNumber, type: "number", maxFractionDigits: "2"], body) + ' ' +
+                        found.name
+            } else if (attrs.unit == 'ms') {
+                attrs.time = attrs.value
+                return timeDuration(attrs, body)
+            } else if (attrs.unit == '%') {
                 out << g.formatNumber([number: attrs.value, type: "number", maxFractionDigits: "2"], body) + '%'
-            }else{
-                out<<attrs.value+' ('+attrs.unit+')'
+            } else {
+                return attrs.value + ' (' + attrs.unit + ')'
             }
         }
     }
@@ -627,7 +813,11 @@ class UtilityTagLib{
         def campaign = attrs.campaign?:'helplink'
         def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
         def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
-        return helpParams.collect { k, v -> k + '=' + v }.join('&')
+        return genUrlParam(helpParams)
+    }
+
+    def String genUrlParam(Map<String, Serializable> params) {
+        params.collect { k, v -> k.encodeAsURIComponent() + '=' + v.encodeAsURIComponent() }.join('&')
     }
     def helpLinkUrl={attrs,body->
         def path=''
@@ -643,7 +833,7 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata['app.version']
+        def rdversion = grailsApplication.metadata.getProperty('app.version', String)
         def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversion)
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
@@ -686,7 +876,7 @@ class UtilityTagLib{
             if(attrs.youclass){
                 out<<"<span class=\"${enc(attr:attrs.youclass)}\">"
             }
-            out << "you"
+            out << g.message(code:'you',default:'you')
             if (attrs.youclass) {
                 out << "</span>"
             }
@@ -795,6 +985,34 @@ class UtilityTagLib{
             }
         }
     }
+    def textBeforeLine={attrs,body->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
+            out<< (split.length>0?split[0]:attrs.text)
+        }else{
+            out<<attrs.text
+        }
+    }
+    def textHasMarker = { attrs, body ->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            if(split.length==2){
+                return true
+            }
+        }
+        return false
+    }
+    def textAfterLine={attrs,body->
+        if(attrs.text && attrs.marker){
+            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            if(split.length==2){
+                if(attrs.include){
+                    out<<attrs.marker
+                }
+                out<< split[1]
+            }
+        }
+    }
 
     /**
      * Embed JSON in a page within a script tag
@@ -827,8 +1045,8 @@ class UtilityTagLib{
     def refreshFormTokensHeader = { attrs, body ->
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
-        response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
-        response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
+        response.addHeader(FormTokenInterceptor.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
+        response.addHeader(FormTokenInterceptor.TOKEN_URI_HEADER, uri)
     }
 
 
@@ -878,7 +1096,7 @@ class UtilityTagLib{
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
         //call original form tag
-        def applicationTagLib = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.FormTagLib')
+        def applicationTagLib = grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.FormTagLib')
         applicationTagLib.form.call(attrs,body)
     }
 
@@ -895,8 +1113,33 @@ class UtilityTagLib{
         }else if(null!=attrs.is){
             testIsActive=attrs.is =='active'
         }
+        if(null!=attrs.project){
+            try {
+                def projectExec = scheduledExecutionService.isProjectExecutionEnabled(attrs.project)
+                if(!projectExec){
+                    return testIsActive==projectExec
+                }
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
         return testIsActive==configurationService.executionModeActive
     }
+
+    def scheduleMode={attrs,body->
+        def testIsActive = true
+        if(null!=attrs.is){
+            testIsActive=attrs.is =='active'
+        }
+        if(null!=attrs.project){
+            try {
+                return testIsActive==scheduledExecutionService.isProjectScheduledEnabled(attrs.project)
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
+    }
+
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
             out<<body()
@@ -1488,11 +1731,62 @@ ansi-bg-default'''))
             attrs.name=attrs.name.substring('glyphicon-'.length())
         }
         if (glyphiconSet.contains(attrs.name)) {
-            out << "<i class=\"glyphicon glyphicon-${attrs.name}\"></i>"
+            out << "<i class=\"glyphicon glyphicon-${attrs.name} ${attrs.css?:''}\"></i>"
         }else{
             if(Environment.current==Environment.DEVELOPMENT) {
-                throw new Exception("icon name not recognized: ${attrs.name}")
+                throw new Exception("icon name not recognized: ${attrs.name}, suggestions: "+(glyphiconSet.findAll{it.contains(attrs.name)||it=~attrs.name})+"?")
             }
         }
+    }
+    /**
+     * Output a basic table with headers and rows of data
+     *
+     * @attr classes additional css classes for the table
+     * @attr columTitle map of column name to title
+     * @attr columns required list of column names in order
+     * @attr data required list of data points in order
+     */
+    def basicTable = { attrs, body ->
+        out << "<table class=\"table ${attrs.classes}\">"
+
+        out << "<tr>"
+        attrs.columns.each {
+            out << "<th>${attrs.columnTitle?.get(it) ?: it}</th>"
+        }
+        out << "</tr>"
+
+        attrs.data.each { row ->
+            out << '<tr>'
+            attrs.columns.each {
+                out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
+            }
+            out << '</tr>'
+        }
+        out << '</table>'
+    }
+    /**
+     * Output a basic table for a single datapoint, with field names on the left, values on the right
+     *
+     * @attr classes additional css classes for the table
+     * @attr fields required list of fields to output in order
+     * @attr fieldTitle map of field name to display title (optional)
+     * @attr data required single data object with fields
+     * @attr dataTitles tooltip titles for data fields
+     */
+    def basicData = { attrs, body ->
+        def data = attrs.data
+        out << "<table class=\"table ${attrs.classes}\">"
+
+        attrs.fields.each {
+            out << "<tr>"
+            out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
+            def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
+            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
+            out << "<td title=\"${title}\">${val}</td>"
+            out << "</tr>"
+        }
+
+        out << '</table>'
+
     }
 }

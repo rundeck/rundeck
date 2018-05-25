@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -106,17 +106,14 @@ public class FilePluginCache implements PluginCache {
     public synchronized ProviderLoader getLoaderForIdent(final ProviderIdent ident) throws ProviderLoaderException {
         final cacheItem cacheItem = cache.get(ident);
         if (null == cacheItem) {
-            log.debug("getLoaderForIdent! " + ident);
             return rescanForItem(ident);
         }
 
         final File file = cacheItem.getFirst();
-        if (cacheItem.getSecond().isExpired(ident, file) || shouldRescan()) {
+        if (cacheItem.getSecond().isExpired(ident, file)) {
             remove(ident);
-            log.debug("getLoaderForIdent(expired): " + ident);
             return rescanForItem(ident);
         } else {
-            log.debug("getLoaderForIdent: " + ident);
             return loadFileProvider(cacheItem);
         }
     }
@@ -129,14 +126,6 @@ public class FilePluginCache implements PluginCache {
         return providerIdents;
     }
 
-    private boolean shouldRescan() {
-        for (final PluginScanner scanner : getScanners()) {
-            if (scanner.shouldRescan()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * return the loader stored in filecache for the file and scanner
@@ -144,7 +133,6 @@ public class FilePluginCache implements PluginCache {
     private ProviderLoader loadFileProvider(final cacheItem cached) {
         final File file = cached.getFirst();
         final PluginScanner second = cached.getSecond();
-        log.debug("loadFileProvider(filecache): " + file);
         return filecache.get(file, second);
     }
 
@@ -152,13 +140,11 @@ public class FilePluginCache implements PluginCache {
      * Rescan for the ident and cache and return the loader
      */
     private synchronized ProviderLoader rescanForItem(final ProviderIdent ident) throws ProviderLoaderException {
-        log.debug("rescanForItem: " + ident);
         File candidate = null;
         PluginScanner cscanner = null;
         for (final PluginScanner scanner : getScanners()) {
             final File file = scanner.scanForFile(ident);
             if (null != file) {
-                log.debug("saw file: " + file);
                 if (null != candidate) {
                     throw new ProviderLoaderException(
                             "More than one plugin file matched: " + file + ", and " + candidate,
@@ -167,12 +153,9 @@ public class FilePluginCache implements PluginCache {
                 }
                 candidate = file;
                 cscanner = scanner;
-            } else {
-                log.debug("scanner no result: " + scanner);
             }
         }
         if (null != candidate) {
-            log.debug("file scanned:" + candidate);
             final cacheItem cacheItem = new cacheItem(candidate, cscanner);
             cache.put(ident, cacheItem);
             return loadFileProvider(cacheItem);

@@ -51,7 +51,7 @@
 
 
 <span class="input-group-btn">
-    <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}">
+    <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}" onclick="jQuery('#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}').popover('toggle')">
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
     <a class="btn btn-default" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">

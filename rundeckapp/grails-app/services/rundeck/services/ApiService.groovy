@@ -1,30 +1,52 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import grails.transaction.Transactional
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.grails.web.converters.exceptions.ConverterException
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
-import rundeck.ScheduledExecution
 import rundeck.User
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
+import java.time.Clock
 
 class ApiService {
-    static transactional = false
     public static final String TEXT_XML_CONTENT_TYPE = 'text/xml'
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
     public static final String XML_API_RESPONSE_WRAPPER_HEADER = "X-Rundeck-API-XML-Response-Wrapper"
     def messageSource
     def grailsLinkGenerator
+    def frameworkService
+    def configurationService
+    def userService
 
     public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
             POST: AuthConstants.ACTION_CREATE,
@@ -35,29 +57,235 @@ class ApiService {
     private String genRandomString() {
         return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
     }
+
+    Clock systemClock = Clock.systemUTC()
     /**
-     * Generate a new unique auth token for the user and return it
+     * Generate the expiration date for a token given the duration string, and
+     * duration max string
+     * @param tokenDuration duration string
+     * @param maxDuration optional maximum duration time, if null then no maximum
+     * @return [date:Date] date is UTC time, or [error:'format'] if the input duration is not valid or [error:'max']
+     * if it exceeds the
+     * maximum
+     */
+    Map generateTokenExpirationDate(Integer tokenDuration, Integer maxDuration = null) {
+        int useTokenTime = maxDuration ?: 0
+        boolean max = false
+        if (tokenDuration) {
+            if (tokenDuration <= useTokenTime || useTokenTime < 1) {
+                useTokenTime = tokenDuration
+            } else {
+                max = true
+            }
+        }
+        def newDate = null;
+        if (useTokenTime > 0) {
+            def currentDate = systemClock.instant()
+            newDate = Date.from(currentDate.plusSeconds(useTokenTime))
+        }
+        [date: newDate, max: max]
+    }
+    /**
+     * Generate a new unique auth token for the user and specific groups and return it
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(User u){
+    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration) {
+
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
-        AuthToken token = new AuthToken(token: newtoken, authRoles: 'api_token_group', user: u)
+        def uuid = UUID.randomUUID().toString()
+        AuthToken token = new AuthToken(
+                token: newtoken,
+                authRoles: AuthToken.generateAuthRoles(roles),
+                user: u,
+                expiration: expiration,
+                uuid: uuid,
+                creator: ownerUsername
+        )
 
         if (token.save()) {
-            log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
+            log.info(
+                    "GENERATE TOKEN: ID:${uuid} creator:${ownerUsername} username:${u.login} roles:"
+                            + "${token.authRoles} expiration:${expiration}"
+            )
             return token
         } else {
             throw new Exception("Failed to save token for User ${u.login}")
         }
     }
+
+    /**
+     * Return the resource definition for a job for use by authorization checks, using parameters as input
+     * @param se
+     * @return
+     */
+    def Map authResourceForUserToken(String username, Set<String> roles) {
+        return AuthorizationUtil.resource(
+                AuthConstants.TYPE_APITOKEN,
+                [username: username, roles: AuthToken.generateAuthRoles(roles)]
+        )
+    }
+    /**
+     * Find a token by UUID and creator
+     */
+    AuthToken findUserTokenId(
+            String creator,
+            String id
+    )
+    {
+        AuthToken.findByUuidAndCreator(id, creator)
+    }
+    /**
+     * Find a token by UUID and creator
+     */
+    List<AuthToken> findUserTokensCreator(
+            String creator
+    )
+    {
+        AuthToken.findAllByCreator(creator)
+    }
+    /**
+     * Find a token by UUID
+     */
+    AuthToken findTokenId(String id) {
+        AuthToken.findByUuid(id)
+    }
+    /**
+     * Find a token by UUID
+     */
+    AuthToken findUserTokenValue(String token) {
+        AuthToken.findByToken(token)
+    }
+    /**
+     * Generate an auth token
+     * @param authContext user's own auth context
+     * @param tokenTime time value for token expiration
+     * @param tokenTimeUnit time unit for token expiration (h,m,s)
+     * @param username owner name of token
+     * @param tokenRoles role list for token, or null to use all owner roles (user token only)
+     * @return
+     */
+    AuthToken generateUserToken(
+            UserAndRolesAuthContext authContext,
+            Integer tokenTimeSeconds,
+            String username,
+            Set<String> roles
+    )
+    {
+        //check auth to edit profile
+        //default to current user profile
+        def createTokenUser = authContext.username
+
+        def selfAuth = false
+        def serviceAuth = false
+        //admin auth allows generate of any user token with anhy roles
+        def adminAuth = hasTokenAdminAuth(authContext)
+        if (!adminAuth) {
+            //service auth allows generate of any user token with additional service roles
+            serviceAuth = hasTokenServiceGenerateAuth(authContext)
+            if (!serviceAuth) {
+                //self auth allows generate of self-owned token with any subset of self-owned roles
+                selfAuth = hasTokenUserGenerateAuth(authContext)
+            }
+        }
+        if (!(adminAuth || serviceAuth || selfAuth)) {
+            throw new Exception("Unauthorized: generate API token")
+        }
+        if (username) {
+            if (adminAuth || serviceAuth) {
+                createTokenUser = username
+            } else if (username != authContext.username) {
+                throw new Exception("Unauthorized: generate API token")
+            }
+        }
+        def userRoles = authContext.roles
+
+
+        if (serviceAuth && roles) {
+            //any roles not implicitly allowed by user's access level
+            def extraRoles = roles - userRoles
+            //authorize any extra roles
+            if (extraRoles) {
+                if (!frameworkService.authorizeApplicationResource(
+                        authContext,
+                        authResourceForUserToken(createTokenUser, extraRoles),
+                        AuthConstants.ACTION_CREATE
+                )) {
+                    throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+                }
+            }
+        } else if (!adminAuth) {
+            if (roles && !userRoles.containsAll(roles)) {
+                throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+            }
+        }
+        if (!roles) {
+            if (username != authContext.username) {
+                throw new Exception("Cannot create API token for $username: Roles are required")
+            } else if (username == authContext.username) {
+                //default to user's own roles
+                roles = authContext.roles
+            }
+        }
+
+        Integer maxTokenDuration = maxTokenDurationConfig()
+        def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
+        if (generate.max) {
+            throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
+        }
+        Date newDate = generate.date
+
+        User u = userService.findOrCreateUser(createTokenUser)
+        if (!u) {
+            throw new Exception("Couldn't find user: ${createTokenUser}")
+        }
+        return generateAuthToken(authContext.username, u, roles, newDate)
+    }
+
+    public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {
+        authorizedForTokenAction(authContext, AuthConstants.GENERATE_USER_TOKEN)
+    }
+
+    public boolean hasTokenServiceGenerateAuth(UserAndRolesAuthContext authContext) {
+        authorizedForTokenAction(authContext, AuthConstants.GENERATE_SERVICE_TOKEN)
+    }
+
+    private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {
+        frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_APITOKEN,
+                action
+        )
+    }
+
+    public boolean hasTokenAdminAuth(UserAndRolesAuthContext authContext) {
+        frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_APITOKEN,
+                AuthConstants.ACTION_ADMIN
+        ) || frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN
+        )
+    }
+
+    public int maxTokenDurationConfig() {
+        def string = configurationService.getString("api.tokens.duration.max", null)
+        if (!Sizes.validTimeDuration(string)) {
+            log.warn("Invalid configuration for rundeck.api.tokens.duration.max: " + string + ", using 30d")
+            string = "30d"
+        }
+        string ? Sizes.parseTimeDuration(string) : 0
+    }
+
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
-        response.setHeader("X-Rundeck-API-Version",ApiRequestFilters.API_CURRENT_VERSION.toString())
+        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION.toString())
         def out = response.outputStream
         out << output
         out.flush()
@@ -88,7 +316,7 @@ class ApiService {
     def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
         return renderSuccessXmlWrap(request,response) {
             success {
-                message(messageSource.getMessage(code, args as Object[], null))
+                message(messageSource.getMessage(code, args as Object[], code, null))
             }
         }
     }
@@ -104,7 +332,7 @@ class ApiService {
      * @return
      */
     public boolean doWrapXmlResponse(HttpServletRequest request) {
-        if(request.api_version < ApiRequestFilters.V11){
+        if(request.api_version < ApiVersions.V11){
             //require false to disable wrapper
             return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
         } else{
@@ -164,9 +392,15 @@ class ApiService {
     def renderSuccessXmlUnwrapped(Closure recall){
         return renderXml(recall)
     }
+    /**
+     * TODO: remove "result" wrapper from API responses after Rundeck 2.6
+     * @param recall
+     * @return
+     * @deprecated
+     */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
-            result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+            result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                 recall.delegate = delegate
                 recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall()
@@ -213,7 +447,8 @@ class ApiService {
      */
     public String extractResponseFormat(HttpServletRequest request, HttpServletResponse response,
                                       ArrayList<String> allowed, String defformat = null) {
-        return ((response.format in allowed) ? response.format : (defformat ?: request.format))
+        def defFormatEval = defformat ?: request.format
+        return ((response.format in allowed) ? response.format : (defFormatEval in allowed?defFormatEval:null))
     }
     /**
      * Require request to be a certain format, returns false if not valid and error response is already sent
@@ -303,6 +538,24 @@ class ApiService {
     }
 
     /**
+     * Return an unauthorized response
+     * @param response
+     * @param code api code, default: 'api.error.item.unauthorized'
+     * @param args args to message code
+     * @return
+     */
+    def renderUnauthorized(HttpServletResponse response, List args, String code = 'api.error.item.unauthorized') {
+        renderErrorFormat(
+                response,
+                [
+                        status: HttpServletResponse.SC_FORBIDDEN,
+                        code  : code,
+                        args  : args
+                ]
+        )
+    }
+
+    /**
      * Render error in either JSON or XML format, depending on expected response
      * @param response
      * @param error
@@ -335,22 +588,6 @@ class ApiService {
     }
     /**
      * Require all specified parameters in the request, send json/xml response based on accept header
-     * @param request
-     * @param response
-     * @param params list of parameters of which all must be present
-     * @return false if requirement is not met, response will already have been made
-     */
-    def requireParametersFormat(Map reqparams,HttpServletResponse response,List<String> params){
-        def notfound=params.find{!reqparams[it]}
-        if(notfound){
-            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: [notfound]])
-            return false
-        }
-        return true
-    }
-    /**
-     * Require all specified parameters in the request
      * @param request
      * @param response
      * @param params list of parameters of which all must be present
@@ -474,36 +711,47 @@ class ApiService {
 
     def renderErrorText(messages, String code=null){
         if (!messages) {
-            return messageSource.getMessage("api.error.unknown", null, null)
+            return messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
         }
         if (messages instanceof List) {
             return messages.join("\r\n")
         }else if (messages instanceof Map && messages.message) {
             return messages.message
         } else if (messages instanceof Map && messages.code) {
-            return messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null)
+            return messageSource.getMessage(
+                messages.code,
+                messages.args ? messages.args as Object[] : null,
+                messages.code,
+                null
+            )
         }
         return messages.toString()
     }
     def renderErrorJson(messages, String code=null){
         def result=[
                 error: true,
-                apiversion: ApiRequestFilters.API_CURRENT_VERSION,
+                apiversion: ApiVersions.API_CURRENT_VERSION,
         ]
-        if (code) {
-            result.errorCode=code
-        }
+        result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
-            result.'message'=messageSource.getMessage("api.error.unknown", null, null)
+            result.'message' = messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
         }
         if (messages instanceof List) {
             result.messages=messages
         } else if (messages instanceof Map && messages.code) {
-            result.message=(messages.message ?: messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null))
+            result.message = (
+                messages.message ?:
+                messageSource.getMessage(
+                    messages.code,
+                    messages.args ? messages.args as Object[] : null,
+                    messages.code,
+                    null
+                )
+            )
         }else if (messages instanceof Map && messages.message) {
             result.message=messages.message
         }
-        return result.encodeAsJSON().toString()
+        return (result as JSON).toString()
     }
     def renderErrorXml(messages, String code=null, builder=null){
         def writer = new StringWriter()
@@ -514,21 +762,35 @@ class ApiService {
             xml=builder
         }
         xml.with {
-            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                def errorprops = [:]
+            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+                // REVIEW: disabled by grails3 merge
+//                def errorprops = [:]
+                def errorprops = [code: code ?: 'api.error.unknown']
                 if (code) {
                     errorprops = [code: code]
                 }
                 delegate.'error'(errorprops) {
                     if (!messages) {
-                        delegate.'message'(messageSource.getMessage("api.error.unknown",null,null))
+                        delegate.'message'(
+                            messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
+                        )
                     }
                     if (messages instanceof List) {
-                        messages.each {
-                            delegate.'message'(it)
+                        delegate.'messages' {
+                            messages.each {
+                                delegate.'message'(it)
+                            }
                         }
                     }else if(messages instanceof Map && messages.code){
-                        delegate.'message'(messages.message?:messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
+                        delegate.'message'(
+                            messages.message ?:
+                            messageSource.getMessage(
+                                messages.code,
+                                messages.args ? messages.args as Object[] : null,
+                                messages.code,
+                                null
+                            )
+                        )
                     }else if(messages instanceof Map && messages.message){
                         delegate.'message'(messages.message)
                     }
@@ -541,7 +803,7 @@ class ApiService {
     }
 
     /**
-     * in Json or XML, render a file as a wrapped strings specified by a 'contents' entry/element
+     * in XML, render a file as a wrapped strings specified by a 'contents' entry/element
      * @param contentString
      * @param request
      * @param response
@@ -549,18 +811,14 @@ class ApiService {
      * @param delegate
      * @return
      */
-    void renderWrappedFileContents(
+    void renderWrappedFileContentsXml(
             String contentString,
             String respFormat,
             delegate
     )
     {
-        if (respFormat=='json') {
-            delegate.contents = contentString
-        }else{
-            delegate.'contents' {
-                mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
-            }
+        delegate.'contents' {
+            mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
         }
     }
 
@@ -572,26 +830,21 @@ class ApiService {
      * @param builder builder
      * @return
      */
-     void jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
-        builder.with{
-            delegate.'path'=genpath(path)
-            delegate.'type'='directory'
-            //delegate.'name'= pathName(path)
-            delegate.'href'= genhref(path)
-            delegate.'resources'=array{
-                def builder2=delegate
-                dirlist.each{dirpath->
-                    builder2.element {
-                        delegate.'path'=genpath(dirpath)
-                        delegate.'type'=dirpath.endsWith('/')?'directory':'file'
-                        if(!dirpath.endsWith('/')) {
-                            delegate.'name' = pathName(genpath(dirpath))
-                        }
-                        delegate.'href'= genhref(dirpath)
-                    }
-                }
-            }
-        }
+     Map jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist){
+         def json = [:]
+         json.path = genpath(path)
+         json.type = 'directory'
+         json.href = genhref(path)
+         json.resources = dirlist.collect {dirpath->
+             def e = ['path':genpath(dirpath),
+                      'type':dirpath.endsWith('/')?'directory':'file',
+                      'href': genhref(dirpath)]
+             if(!dirpath.endsWith('/')) {
+                 e.name = pathName(genpath(dirpath))
+             }
+             return e
+         }
+         return json
     }
     /**
      * Render xml response for dir listing
@@ -631,16 +884,15 @@ class ApiService {
         path.lastIndexOf('/')>=0?path.substring(path.lastIndexOf('/') + 1):path
     }
 
-    public void renderJsonAclpolicyValidation(Validation validation, builder){
-        builder.valid = validation.valid
+    Map renderJsonAclpolicyValidation(Validation validation){
+        def json = [:]
+        json.valid = validation.valid
         if(!validation.valid) {
-            builder.'policies' = builder.array {
-                def d=delegate
-                validation.errors.keySet().sort().each { ident ->
-                    builder.'element'(policy: ident, errors: validation.errors[ident])
-                }
+            json.policies = validation.errors.keySet().sort().collect { ident ->
+                [policy: ident, errors: validation.errors[ident]]
             }
         }
+        return json
     }
     public void renderXmlAclpolicyValidation(Validation validation, builder){
         builder.'validation'(valid:validation.valid){
@@ -684,7 +936,7 @@ class ApiService {
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                def Execution e = Execution.get(execdata.execution.id)
+                Execution e = execdata.execution
                 execution(
                         /** attributes   **/
                         id: e.id,
@@ -698,6 +950,10 @@ class ApiService {
                     delegate.'date-started'(unixtime: e.dateStarted.time, w3cDateValue(e.dateStarted))
                     if (null != e.dateCompleted) {
                         delegate.'date-ended'(unixtime: e.dateCompleted.time, w3cDateValue(e.dateCompleted))
+                    }
+
+                    if(e.customStatusString){
+                        customStatus(e.customStatusString)
                     }
                     if (e.cancelled) {
                         abortedby(e.abortedby ? e.abortedby : e.user)
@@ -777,8 +1033,12 @@ class ApiService {
                         href: href,
                         permalink: execdata.permalink,
                         status: status,
-                        project: e.project
+                        project: e.project,
+                        executionType:e.executionType
                 ]
+            if(execdata.customStatus){
+                execMap['customStatus']=execdata.customStatus
+            }
                 /** elements   */
                 execMap.user=(e.user)
                 execMap.'date-started'=[unixtime: e.dateStarted.time, date: w3cDateValue(e.dateStarted)]
@@ -844,7 +1104,7 @@ class ApiService {
     String apiHrefForJob(def scheduledExecution) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 id: scheduledExecution.extid,
-                params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version:ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForJob(def scheduledExecution) {
@@ -856,7 +1116,7 @@ class ApiService {
     }
     String apiHrefForExecution(Execution execution) {
         return grailsLinkGenerator.link(controller: 'execution', id: execution.id,
-                params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version: ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForExecution(Execution execution) {
@@ -867,5 +1127,50 @@ class ApiService {
                 params: [project: execution.project],
                 absolute: true
         )
+    }
+
+    def removeToken(final AuthToken authToken) {
+
+        def user = authToken.user
+        def creator = authToken.creator ?: user.login
+        def id = authToken.uuid ?: authToken.token
+        def oldAuthRoles = authToken.authRoles
+
+        authToken.delete(flush: true)
+        log.info("DELETED TOKEN ${id} (creator:$creator) User ${user.login} with roles: ${oldAuthRoles}")
+    }
+
+    /**
+     * Find and remove AuthTokens created by creator that are expired
+     * @param creator
+     * @return
+     */
+    @Transactional
+    def removeAllExpiredTokens(final String creator) {
+        def now = Date.from(Clock.systemUTC().instant())
+        def found = AuthToken.findAllByCreatorAndExpirationLessThan(creator, now)
+        if (found) {
+            found.each {
+                it.delete()
+            }
+        }
+        found.size()
+    }
+
+    /**
+     * Find and remove all AuthTokens that are expired
+     * @param creator
+     * @return
+     */
+    @Transactional
+    def removeAllExpiredTokens() {
+        def now = Date.from(Clock.systemUTC().instant())
+        def found = AuthToken.findAllByExpirationLessThan(now)
+        if (found) {
+            found.each {
+                it.delete()
+            }
+        }
+        found.size()
     }
 }

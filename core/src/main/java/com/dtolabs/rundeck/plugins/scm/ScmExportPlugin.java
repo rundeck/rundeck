@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.plugins.scm;
 
 import com.dtolabs.rundeck.core.jobs.JobReference;
@@ -18,6 +34,11 @@ public interface ScmExportPlugin {
      */
     void cleanup();
 
+
+    /**
+     * perform a total clean
+     */
+    default void totalClean(){}
 
     /**
      * @param actionId action ID
@@ -74,6 +95,19 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job, String originalPath);
 
     /**
+     * Return the state of the given job, with optional original repo path
+     *
+     * @param job          job
+     * @param originalPath path of original job, e.g. if the file was renamed
+     * @param serialize false to avoid serialize twice a job
+     *
+     * @return state
+     */
+    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
+        return getJobStatus(job, originalPath);
+    }
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();
@@ -113,4 +147,16 @@ public interface ScmExportPlugin {
      * @param originalPath original path
      */
     ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
+
+
+    /**
+     * Function to fix status of the jobs on cluster environment.
+     * To automatically match the job status on every node.
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
+    default Map clusterFixJobs(List<JobExportReference> jobs){
+        return null;
+    }
 }

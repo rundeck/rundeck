@@ -11,7 +11,7 @@ if [ "" == "$2" ] ; then
 fi
 
 createjob(){
-
+errorMsg "CREATE JOB: $1"
   jobname=$1
   shift
   jobkeepgoing=$1
@@ -104,7 +104,7 @@ runjob(){
   ###
   # Run the chosen id, expect success message
   ###
-
+errorMsg "RUN JOB $jobid"
   # now submit req
   runurl="${APIURL}/job/${jobid}/run"
   params=""
@@ -142,7 +142,7 @@ waitexecstatus(){
   shift
   # sleep
   # 
-  rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+  api_waitfor_execution $execid || fail "Waiting for $execid to finish"
   $SHELL $SRC_DIR/api-expect-exec-success.sh $execid $expectstatus || exit 2
 }
 

@@ -1,7 +1,5 @@
-//= require knockout.min
-//= require knockout-mapping
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +14,37 @@
  * limitations under the License.
  */
 
+//= require knockout.min
+//= require knockout-mapping
+
+
 function OptionEditor(data) {
     var self = this;
+    self.optionType = ko.observable(data.optionType);
     self.name=ko.observable(data.name);
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
+    self.tofilebashvar = function (str) {
+        return self.bashVarPrefix + "FILE_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+    };
     self.tobashvar = function (str) {
-        return self.bashVarPrefix+"OPTION_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
-    }
+        return self.bashVarPrefix + "OPTION_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+    };
     self.bashVarPreview=ko.computed(function(){
        return self.tobashvar(self.name());
+    });
+
+    self.fileBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name());
+    });
+
+    self.fileFileNameBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.fileName');
+    });
+    self.fileShaBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.sha');
+    });
+
+    self.isFileType = ko.computed(function () {
+        return "file" === self.optionType();
     });
 }

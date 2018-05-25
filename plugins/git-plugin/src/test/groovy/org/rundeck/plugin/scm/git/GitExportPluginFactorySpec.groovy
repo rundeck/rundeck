@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
@@ -30,7 +46,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 10
+        desc.properties.size() == 13
     }
 
     def "base description properties"() {
@@ -48,8 +64,11 @@ class GitExportPluginFactorySpec extends Specification {
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'format',
+                'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
+                'pullAutomatically'
         ] as Set
     }
 
@@ -68,8 +87,11 @@ class GitExportPluginFactorySpec extends Specification {
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'format',
+                'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
+                'pullAutomatically'
         ] as Set
         def dirprop = properties.find { it.name == 'dir' }
         dirprop.defaultValue == null
@@ -94,8 +116,11 @@ class GitExportPluginFactorySpec extends Specification {
                 'sshPrivateKeyPath',
                 'gitPasswordPath',
                 'format',
+                'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
+                'pullAutomatically'
         ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }
@@ -114,7 +139,7 @@ class GitExportPluginFactorySpec extends Specification {
                 committerEmail       : 'test@example.com',
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
-                url                  : origindir.absolutePath
+                url                  : origindir.absolutePath,
         ]
 
         //create a git dir

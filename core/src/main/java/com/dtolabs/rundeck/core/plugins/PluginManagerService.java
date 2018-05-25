@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -43,11 +43,11 @@ import java.util.Map;
 public class PluginManagerService implements FrameworkSupportService, ServiceProviderLoader {
     private static final Logger log = Logger.getLogger(PluginManagerService.class.getName());
     public static final String SERVICE_NAME = "PluginManager";
-    private static final Map<File, PluginManagerService> managerRegistry = new HashMap<File, PluginManagerService>();
 
     private File extdir;
     private File cachedir;
     private  PluginCache cache;
+    private Map<String, String> serviceAliases;
     /**
      * Create a PluginManagerService
      */
@@ -56,23 +56,22 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
     /**
-     * Create a PluginManagerService for the given directory and cache directory
-     * @param extdir plugin dir
-     * @param cachedir cache dir
+     * Create
+     * @param type
+     * @param serviceName
+     * @param <T>
+     * @return
      */
-    public PluginManagerService(final File extdir, final File cachedir) {
-        this(extdir, cachedir, createDefaultCache(extdir, cachedir));
-        log.debug("Create PluginManagerService");
+    @Override
+    public <T> PluggableProviderService<T> createPluginService(Class<T> type, final String serviceName) {
+        BasePluginProviderService<T> basePluginProviderService = new BasePluginProviderService<T>(
+                serviceName,
+                type
+        );
+        basePluginProviderService.setRundeckServerServiceProviderLoader(this);
+        return basePluginProviderService;
     }
 
-    public static PluginCache createDefaultCache(final File extdir, final File cachedir) {
-        final FileCache<ProviderLoader> filecache = createProviderLoaderFileCache();
-        PluginCache cache = new FilePluginCache(filecache);
-        final int rescanInterval = 5000;//TODO: use framework property to set interval
-        cache.addScanner(new JarPluginScanner(extdir, cachedir, filecache, rescanInterval));
-        cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache, rescanInterval));
-        return cache;
-    }
 
     /**
      * Create a PluginManagerService for the given directory and cache directory
@@ -96,27 +95,34 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
     public static PluginManagerService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
-
-            final PluginManagerService instanceForExtDir = getInstanceForExtDir(framework.getFilesystemFramework().getLibextDir(framework),
-                                                                                framework.getFilesystemFramework().getLibextCacheDir(framework));
-            framework.setService(SERVICE_NAME, instanceForExtDir);
-            return instanceForExtDir;
-        }
         return (PluginManagerService) framework.getService(SERVICE_NAME);
-    }
-
-    public synchronized static PluginManagerService getInstanceForExtDir(final File libextDir, final File cachedir) {
-        if (null == managerRegistry.get(libextDir)) {
-            final PluginManagerService service = new PluginManagerService(libextDir, cachedir);
-            managerRegistry.put(libextDir, service);
-        }
-
-        return managerRegistry.get(libextDir);
     }
 
     public synchronized List<ProviderIdent> listProviders() {
         return getCache().listProviders();
+    }
+
+    @Override
+    public <T> CloseableProvider<T> loadCloseableProvider(
+            final PluggableService<T> service,
+            final String providerName
+    ) throws ProviderLoaderException
+    {
+        final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
+        final ProviderLoader loaderForIdent = getCache().getLoaderForIdent(ident);
+        if (null == loaderForIdent) {
+            throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
+        }
+        final CloseableProvider<T> load = loaderForIdent.loadCloseable(service, providerName);
+        if (null != load) {
+            return load;
+        } else {
+            throw new ProviderLoaderException(
+                    "Unable to load provider: " + providerName + ", for service: " + service.getName(),
+                    service.getName(),
+                    providerName
+            );
+        }
     }
 
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
@@ -135,6 +141,43 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         }
     }
 
+    @Override
+    public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
+        PluginResourceLoader pluginResourceLoader = tryResourceLoader(service, provider);
+        if (pluginResourceLoader == null && serviceAliases != null && serviceAliases.containsKey(service)) {
+            pluginResourceLoader = tryResourceLoader(serviceAliases.get(service), provider);
+        }
+        return pluginResourceLoader;
+    }
+
+    private PluginResourceLoader tryResourceLoader(String service, String provider) throws ProviderLoaderException {
+        ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
+        if (null != loaderForIdent && loaderForIdent instanceof PluginResourceLoader) {
+            return (PluginResourceLoader) loaderForIdent;
+        }
+        return null;
+    }
+
+    @Override
+    public PluginMetadata getPluginMetadata(final String service, final String provider)
+            throws ProviderLoaderException
+    {
+        PluginMetadata pluginMetadata = tryPluginMetadata(service, provider);
+        if (pluginMetadata == null && serviceAliases != null && serviceAliases.containsKey(service)) {
+            pluginMetadata = tryPluginMetadata(serviceAliases.get(service), provider);
+        }
+        return pluginMetadata;
+    }
+
+    private PluginMetadata tryPluginMetadata(String service, final String provider)
+            throws ProviderLoaderException
+    {
+        ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
+        if (null != loaderForIdent && loaderForIdent instanceof PluginMetadata) {
+            return (PluginMetadata) loaderForIdent;
+        }
+        return null;
+    }
 
     public File getExtdir() {
         return extdir;
@@ -158,5 +201,13 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     public void setCache(PluginCache cache) {
         this.cache = cache;
+    }
+
+    public Map<String, String> getServiceAliases() {
+        return serviceAliases;
+    }
+
+    public void setServiceAliases(Map<String, String> serviceAliases) {
+        this.serviceAliases = serviceAliases;
     }
 }

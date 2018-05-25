@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:if test="${!execution.dateCompleted}">
@@ -19,7 +35,12 @@
                         <g:message code="execution.identity" args="[execution.id]"/>
                     </g:link>
                 </span>
-            <g:if test="${null != execution.dateCompleted}">
+            <g:if test="${execution.status == 'scheduled' && execution.dateCompleted == null}">
+                <span class="succeed">
+                    Scheduled
+                </span>
+            </g:if>
+            <g:elseif test="${null != execution.dateCompleted}">
 
                 <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
                     <g:if test="${execution.status == 'true'}">
@@ -32,26 +53,40 @@
                         Failed
                     </g:else>
                 </span>
-            </g:if>
+            </g:elseif>
             <g:else>
-                <span id="runstatus">
-                    <span class="nowrunning">
-                        <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
-                             alt="Spinner"/>
-                        Now Running&hellip;
+                <span >
+                    <!-- ko if: executionState()=='RUNNING' -->
+                    <g:img file="spinner-gray.gif" width="12px" height="12px"/>
+                    <!-- /ko -->
+                    <span class=" execstate execstatedisplay overall"
+                          data-execstate="${enc(attr:execState)}"
+                          data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
                     </span>
                 </span>
                 <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                    <span id="cancelresult" style="margin-left:10px">
-                        <span class="btn btn-danger btn-xs act_cancel" onclick="docancel();">Kill <g:message
-                                code="domain.ScheduledExecution.title"/>
-                            <i class="glyphicon glyphicon-remove"></i>
+                    <span data-bind="if: canKillExec()" style="margin-left: 10px">
+                        <span data-bind="visible: !completed() ">
+                            <!-- ko if: !killRequested() || killStatusFailed() -->
+                            <span class="btn btn-danger btn-xs"
+                                  data-bind="click: killExecAction">
+                                <g:message code="button.action.kill.job" />
+                                <i class="glyphicon glyphicon-remove"></i>
+                            </span>
+                            <!-- /ko -->
+                            <!-- ko if: killRequested() -->
+                            <!-- ko if: killStatusPending() -->
+                            <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                            <!-- /ko -->
+                            <span class="loading" data-bind="text: killStatusText"></span>
+                            <!-- /ko -->
                         </span>
                     </span>
+
                 </g:if>
 
             </g:else>
-                <span class="retrybuttons execRerun " style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                <span class=" " data-bind="visible: completed() ">
                     <g:if test="${scheduledExecution}">
                         <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                             <g:link controller="scheduledExecution"
@@ -173,6 +208,10 @@
                     <input type="checkbox" checked/>
                     <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
                 </label>
+                <label class="log-wrap-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
+                </label>
 
                 </div>
         </div>
@@ -182,27 +221,27 @@
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View text output"
+                                title="${message(code:'execution.show.log.text.button.description',default:'View text output')}"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[view: 'inline', formatted: false, project: execution.project,
                                         stripansi:true]">
-                            Text</g:link>
+                            <g:message code="execution.show.log.text.button.title" /></g:link>
                     </span>
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View colorized output"
+                                title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
                                 controller="execution" action="renderOutput" id="${execution.id}"
-                                params="[project: execution.project, ansicolor:'on',loglevels:'on']">
-                            HTML</g:link>
+                                params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']">
+                            <g:message code="execution.show.log.html.button.title" /></g:link>
                     </span>
 
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
-                                title="Download ${enc(attr: filesize > 0 ? filesize + ' bytes' : '')}"
+                                title="${message(code:'execution.show.log.download.button.description',default:'Download {0} bytes',args:[filesize>0?filesize:'?'])}"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[project: execution.project]">
                             <b class="glyphicon glyphicon-file"></b>
-                            Download</g:link>
+                            <g:message code="execution.show.log.download.button.title" /></g:link>
                     </span>
                 </span>
             </div>
@@ -226,4 +265,26 @@
 <div id="commandPerform" class="commandcontent ansicolor ansicolor-on" style="display:none;  "></div>
 
 <div id="log"></div>
+<div id="commandPerform_empty" style="display: none">
+    <div class="row"><div class="col-sm-12">
+        <div class="well well-nobg inline">
+            <p class="text-muted">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <em><g:message code="execution.log.no.output"/></em>
+            </p>
+        </div>
+    </div>
+    </div>
+</div>
+<div id="commandPerform_clusterinfo" style="display: none">
+    <div class="row"><div class="col-sm-12">
+        <div class="well well-nobg inline">
+            <p class="text-muted">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <em><g:message code="execution.log.clusterExec.log.delayed.message" /></em>
+            </p>
+        </div>
+    </div>
+    </div>
+</div>
 </div>

@@ -27,6 +27,7 @@ execid=$(xmlsel "/result/execution/@id" $DIR/curl.out)
 ####
 # Test: get execution info
 ####
+sleep 5
 
 # now submit req
 runurl="${APIURL}/execution/${execid}"

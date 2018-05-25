@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
   <head>
@@ -8,7 +24,7 @@
             code="now.running" /> - </g:if><g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
-              AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
+                                      AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
       <g:each in="${authKeys}" var="actionName">
       <g:if test="${execution.scheduledExecution}">
@@ -28,12 +44,16 @@
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <asset:javascript src="workflow.js"/>
-      <g:javascript src="executionControl.js"/>
-      <g:javascript src="executionState.js"/>
+      <asset:javascript src="executionControl.js"/>
+      <asset:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
-      <g:javascript library="prototype/effects"/>
-      <g:embedJSON id="workflowDataJSON" data="${execution.workflow.commands*.toMap()}"/>
+      <asset:javascript src="prototype-bundle.js"/>
+      <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="jobDetail"
+                   data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
+                            project: params.project ?: request.project]}"/>
+      <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:javascript>
@@ -58,12 +78,18 @@
 
         var activity;
         function init() {
+            var execInfo=loadJsonData('execInfoJSON');
             var workflowData=loadJsonData('workflowDataJSON');
-            workflow = new RDWorkflow(workflowData,{
-                nodeSteppluginDescriptions:loadJsonData('nodeStepPluginsJSON'),
-                wfSteppluginDescriptions:loadJsonData('wfStepPluginsJSON')
-              });
+            RDWorkflow.nodeSteppluginDescriptions=loadJsonData('nodeStepPluginsJSON');
+            RDWorkflow.wfSteppluginDescriptions=loadJsonData('wfStepPluginsJSON');
+            workflow = new RDWorkflow(workflowData);
 
+          var multiworkflow=new MultiWorkflow(workflow,{
+                dynamicStepDescriptionDisabled:${enc(js:feature.isDisabled(name:'workflowDynamicStepSummaryGUI'))},
+                url:appLinks.scheduledExecutionWorkflowJson,
+                id:execInfo.jobId||execInfo.execId,//id of job or execution
+                workflow:workflowData
+            });
           followControl = new FollowControl('${execution?.id}','outputappendform',{
             parentElement:'commandPerform',
             fileloadId:'fileload',
@@ -73,9 +99,10 @@
             cmdOutputErrorId:'cmdoutputerror',
             outfileSizeId:'outfilesize',
             workflow:workflow,
+            multiworkflow:multiworkflow,
             appLinks:appLinks,
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
             maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
@@ -86,6 +113,7 @@
             execData: {},
             groupOutput:{value:${enc(js:followmode == 'browse')}},
             updatepagetitle:${enc(js:null == execution?.dateCompleted)},
+            killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
           <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
           </g:if>
@@ -98,7 +126,9 @@
           nodeflowvm=new NodeFlowViewModel(
             workflow,
             "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
-            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}"
+            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
+            multiworkflow,
+            {followControl:followControl,executionId:'${enc(js:execution.id)}'}
           );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
@@ -107,46 +137,8 @@
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-            flowState.addUpdater({
-            updateError:function(error,data){
-                nodeflowvm.stateLoaded(false);
-                if(error!='pending'){
-                    nodeflowvm.errorMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }else{
-                    nodeflowvm.statusMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-            },
-            updateState:function(data){
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-                nodeflowvm.updateNodes(data.state);
-            }});
+          nodeflowvm.followFlowState(flowState,true);
+
             ko.mapping.fromJS({
                 completed:'${execution.dateCompleted!=null}',
                 startTime:'${enc(js:execution.dateStarted)}',
@@ -157,9 +149,9 @@
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
             nodeflowvm.selectedNodes.subscribe(function (newValue) {
                 if (newValue) {
-                    flowState.loadUrlParams={nodes:newValue.join(",")};
+                    flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
                 }else{
-                    flowState.loadUrlParams=null;
+                    flowState.loadUrlParams=flowState.loadUrlParamsBase;
                 }
             });
             //link flow and output tabs to initialize following
@@ -190,12 +182,30 @@
                 _applyAce(this);
             });
             followControl.bindActions('outputappendform');
+
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
+
+            var outDetails = window.location.hash;
+            if(outDetails == '#output'){
+                nodeflowvm.activeTab("output");
+                followOutput();
+                showTab('tab_link_output');
+            }else if(outDetails == '#monitor'){
+                nodeflowvm.activeTab("flow");
+                showTab('tab_link_flow');
+            }else if(outDetails== '#definition'){
+                showTab('tab_link_definition');
+            }
         }
         jQuery(init);
       </g:javascript>
 
       <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
           <asset:javascript src="workflow.test.js"/>
+          <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
       <style type="text/css">
 
@@ -242,7 +252,7 @@
                                         <div class="col-sm-12" >
                                             <div class="argstring-scrollable">
                                             <span class="text-muted"><g:message code="options.prompt"/></span>
-                                            <g:render template="/execution/execArgString" model="[argString:execution.argString]"/>
+                                            <g:render template="/execution/execArgString" model="[argString:execution.argString,inputFilesMap:inputFilesMap]"/>
                                             </div>
                                         </div>
                                     </div>
@@ -328,18 +338,30 @@
                             <div class="col-sm-8">
 
                                 <g:if test="${null == execution.dateCompleted}">
-                                    <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                                        <div class="pull-right">
-                                            <span id="cancelresult"
-                                                  data-bind="visible: !completed()">
+                                    <div class="pull-right" data-bind="if: canKillExec()">
+                                        <span data-bind="visible: !completed() ">
+                                            <!-- ko if: !killRequested() || killStatusFailed() -->
                                                 <span class="btn btn-danger btn-sm"
-                                                      onclick="followControl.docancel();">
+                                                      data-bind="click: killExecAction">
                                                     <g:message code="button.action.kill.job" />
                                                     <i class="glyphicon glyphicon-remove"></i>
                                                 </span>
+                                            <!-- /ko -->
+                                            <!-- ko if: killRequested() -->
+                                            <!-- ko if: killStatusPending() -->
+                                            <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                                            <!-- /ko -->
+                                            <span class="loading" data-bind="text: killStatusText"></span>
+                                            <!-- /ko -->
+                                            <!-- ko if: killedbutNotSaved() -->
+                                            <span class="btn btn-danger btn-sm"
+                                                  data-bind="click: markExecAction">
+                                                <g:message code="button.action.incomplete.job" default="Mark as Incomplete"/>
+                                                <i class="glyphicon glyphicon-remove"></i>
                                             </span>
+                                            <!-- /ko -->
+                                        </span>
                                         </div>
-                                    </g:if>
                                 </g:if>
 
                                 %{--auth checks for delete execution--}%
@@ -369,7 +391,7 @@
                                             </g:link>
                                         </g:if>
                                         %{--run again links--}%
-                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true)}">
+                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true,project:execution.project)}">
                                             %{--run again only--}%
                                             <g:link
                                                     controller="framework"
@@ -441,7 +463,7 @@
                                     %{--job buttons--}%
                                     <div class="pull-right">
 
-                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true)}">
+                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true,project:execution.project)}">
                                             %{--Run again link--}%
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
@@ -567,7 +589,7 @@
 
             <g:if test="${execution.scheduledExecution}">
             %{--progress bar--}%
-                <div class="row" data-bind="if: !completed()">
+                <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-12">
                     <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
                         <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
@@ -611,14 +633,100 @@
                         <li id="tab_link_output">
                             <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
                         </li>
-                        <li>
+                    <g:if test="${authChecks[AuthConstants.ACTION_READ]}">                       
+                        <li id="tab_link_definition">
                             <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
                         </li>
+                    </g:if>
                     </ul>
                 </div>
             </div>
 
 
+<script type="text/html" id="step-info-simple">
+    %{--Display the lowest level step info: [icon] identity --}%
+        <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+        <span data-bind="text: stepinfo.stepident"></span>
+</script>
+<script type="text/html" id="step-info">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+</script>
+<script type="text/html" id="step-info-simple-link">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="if: stepinfo.hasLink()">
+        <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
+           href="${createLink(
+                controller: 'scheduledExecution',
+                action: 'show',
+                params: [project: execution.project, id: '<$>']
+        )}">
+            <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+        </a>
+    </span>
+    <span data-bind="if: !stepinfo.hasLink()">
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+</script>
+<script type="text/html" id="step-info-path">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+
+    </span>
+    <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+<script type="text/html" id="step-info-path-links">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+
+    </span>
+    <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+<script type="text/html" id="step-info-parent-path">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+</script>
+<script type="text/html" id="step-info-parent-path-links">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+</script>
+
+<script type="text/html" id="step-info-path-base">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>
+
+    <span data-bind="template: { name: 'step-info', data:stepinfo, as: 'stepinfo' }"></span>
+</script>
+
+<script type="text/html" id="step-info-extended">
+%{--Display the lowest level extended info:  [icon] number. identity --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+    <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+    <span data-bind="text: stepinfo.stepdesc"></span>
+    </span>
+</script>
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
@@ -634,12 +742,14 @@
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                 </div>
-                <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
-                    <div class="presentation" >
-                        <g:render template="execDetails"
-                                  model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                    <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
+                        <div class="presentation" >
+                            <g:render template="execDetails"
+                                      model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                        </div>
                     </div>
-                </div>
+                </g:if>
             </div>
         </div>
     </div>
@@ -654,8 +764,10 @@
             </div>
         </div>
     </g:if>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
-  <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+  <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 
   </body>
 </html>

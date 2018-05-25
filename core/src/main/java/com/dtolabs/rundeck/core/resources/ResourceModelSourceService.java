@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -26,10 +26,7 @@ package com.dtolabs.rundeck.core.resources;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
@@ -77,7 +74,7 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
 
 
     /**
-     * @return a ResourceModelSource of a give type with a given configuration
+     * @return a ResourceModelSource of a give type with a given configuration, without retention
      * @param configuration configuration
      * @param type provider name
      * @throws ExecutionServiceException on error
@@ -85,13 +82,45 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
     public ResourceModelSource getSourceForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException {
 
-        //try to acquire supplier from registry
+        //load instance without retention
         final ResourceModelSourceFactory nodesSourceFactory = providerOfType(type);
         try {
             return nodesSourceFactory.createResourceModelSource(configuration);
-        } catch (ConfigurationException e) {
+        } catch (Throwable e) {
             throw new ResourceModelSourceServiceException(e);
-        } catch (Throwable e){
+        }
+    }
+
+    /**
+     * @param configuration configuration
+     * @param type          provider name
+     *
+     * @return a ResourceModelSource of a give type with a given configuration with a closeable
+     *
+     * @throws ExecutionServiceException on error
+     */
+    public CloseableProvider<ResourceModelSource> getCloseableSourceForConfiguration(
+            final String type,
+            final Properties configuration
+    ) throws
+            ExecutionServiceException
+    {
+
+        //load factory instance with closeable reference
+        final CloseableProvider<ResourceModelSourceFactory> reference = closeableProviderOfType(type);
+        try {
+            ResourceModelSource resourceModelSource = reference.getProvider().createResourceModelSource(configuration);
+            //wrap the built source into another closeable provider
+            return Closeables.closeableProvider(
+                    resourceModelSource,
+                    //close both the model source if it is closeable, and the original plugin loader reference, when
+                    // released
+                    Closeables.single(
+                            Closeables.maybeCloseable(resourceModelSource),
+                            reference
+                    )
+            );
+        } catch (Throwable e) {
             throw new ResourceModelSourceServiceException(e);
         }
     }
@@ -121,6 +150,14 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
                                                            final Properties configuration) throws
         ExecutionServiceException {
         return getSourceForConfiguration(type, configuration);
+    }
+
+    public CloseableProvider<ResourceModelSource> getCloseableProviderForConfiguration(
+            final String type,
+            final Properties configuration
+    ) throws ExecutionServiceException
+    {
+        return getCloseableSourceForConfiguration(type, configuration);
     }
 
     public List<Description> listDescriptions() {

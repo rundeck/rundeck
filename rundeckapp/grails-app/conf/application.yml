@@ -1,0 +1,249 @@
+---
+grails:
+    profile: web
+    codegen:
+        defaultPackage: rundeckapp
+    spring:
+        transactionManagement:
+            proxies: false
+    gorm:
+        reactor:
+            # Whether to translate GORM events into Reactor events
+            # Disabled by default for performance reasons
+            events: false
+    databinding:
+        trimStrings: false
+    servlet:
+        version: 3.0
+
+info:
+    app:
+        name: '@info.app.name@'
+        version: '@info.app.version@'
+        grailsVersion: '@info.app.grailsVersion@'
+build:
+    ident: '@build.ident@'
+
+spring:
+    main:
+        banner-mode: "off"
+    groovy:
+        template:
+            check-template-location: false
+
+# Spring Actuator Endpoints are Disabled by Default
+endpoints:
+    enabled: true
+    jmx:
+        enabled: true
+
+---
+grails:
+    mime:
+        file:
+            extensions: true
+        types:
+            all: '*/*'
+            atom: application/atom+xml
+            css: text/css
+            csv: text/csv
+            form: application/x-www-form-urlencoded
+            html:
+              - text/html
+              - application/xhtml+xml
+            js: text/javascript
+            json:
+              - application/json
+              - text/json
+            multipartForm: multipart/form-data
+            pdf: application/pdf
+            rss: application/rss+xml
+            text: text/plain
+            hal:
+              - application/hal+json
+              - application/hal+xml
+            xml:
+              - text/xml
+              - application/xml
+            yaml:
+              - text/yaml
+              - application/yaml
+        use:
+            accept:
+                header: true
+
+    urlmapping:
+        cache:
+            maxsize: 1000
+    controllers:
+        defaultScope: singleton
+    converters:
+        encoding: UTF-8
+        json:
+            default:
+                deep: true
+    views:
+        default:
+            codec: none
+        gsp:
+            encoding: UTF-8
+            htmlcodec: xml
+            codecs:
+                expression: html
+                scriptlets: html
+                taglib: none
+                staticparts: none
+    enable:
+        native2ascii: true
+    json:
+        legacy:
+            builder: false
+    mail:
+        default:
+            from: rundeck-server@localhost
+    databinding:
+        trimStrings: false
+        dateFormats:
+#            default grails patterns
+            - yyyy-MM-dd HH:mm:ss.S
+            - yyyy-MM-dd'T'hh:mm:ss'Z'
+#            ISO8601 patterns
+            - yyyy-MM-dd'T'HH:mm:ssX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSX
+            - yyyy-MM-dd'T'HH:mm:ssXX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSXX
+            - yyyy-MM-dd'T'HH:mm:ssXXX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+            - yyyy-MM-dd'T'HH:mm:ss.XXX
+            - yyyy-MM-dd'T'HH:mm:ssZ
+            - yyyy-MM-dd'T'HH:mm:ss'Z'
+    plugins:
+        twitterbootstrap:
+            fixtaglib: true
+    assets:
+        less:
+            compile: less4j
+        plugin:
+            twitter-bootstrap:
+                excludes: ["**/*.less"]
+                includes: ["bootstrap.less"]
+---
+endpoints:
+    jmx:
+        unique-names: true
+
+---
+
+rdeck:
+    base: ${user.home}/dev-3-svr/server/config
+
+---
+rundeck:
+    executionMode: active
+    config:
+        location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
+        storage:
+    security:
+        apiCookieAccess:
+            enabled: true
+        authorization:
+            containerPrincipal:
+                enabled: true
+            container:
+                enabled: true
+            preauthenticated:
+                attributeName: REMOTE_USER_GROUPS
+                enabled: false
+                userNameHeader: null
+                userRolesHeader: null
+                delimiter: ','
+        useHMacRequestTokens: true
+    storage:
+    metrics:
+        enabled: true
+        jmxEnabled: true
+        requestFilterEnabled: true
+        servletUrlPattern: '/metrics/*'
+        execution:
+            finalize:
+                retryMax: 10
+                retryDelay: 5000
+            status:
+                retryMax: 5
+                retryDelay: 5000
+            logs:
+                fileStorage:
+                    cancelOnStorageFailure: true
+        gui:
+            execution:
+                tail:
+                    lines:
+                        default: 20
+                        max: 500
+    mail:
+        template:
+            subject: '${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
+    web:
+        metrics:
+            servlets:
+                metrics:
+                    enabled: true
+                ping:
+                    enabled: true
+                threads:
+                    enabled: true
+                healthcheck:
+                    enabled: true
+    gui:
+        job:
+            description:
+                disableHTML: false
+        clusterIdentityInHeader: false
+        clusterIdentityInFooter: true
+    pagination:
+        default:
+            max: 20
+    projectService:
+        projectExportCache:
+            spec: "expireAfterAccess=30m"
+    projectManagerService:
+        projectCache:
+            spec: 'expireAfterAccess=10m,refreshAfterWrite=1m'
+    logFileStorageService:
+        startup:
+            resumeMode: async
+    projectsStorageType: filesystem
+    ajax:
+        compression: gzip
+        executionState:
+            compression:
+                nodeThreshold: 500
+    nodeService:
+        nodeCache:
+            enabled: true
+            spec: 'refreshInterval=30s'
+---
+
+beans:
+    cacheManager:
+        shared: true
+
+
+plugin:
+    platformCore:
+        security:
+            disabled: true
+        navigation:
+            disabled: true
+        ui:
+            disabled: true
+        events:
+            disabled: false
+            gorm:
+                disabled: true
+        show:
+            startup:
+                info: true
+
+server:
+    port: 4440

@@ -1,55 +1,83 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import java.text.SimpleDateFormat
+
 /**
  * The Rundeck Core API build file
  **/
-
+evaluationDependsOn(':rundeck-storage')
 description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 ext.rundeckToolsDependencies=''
 apply plugin: "groovy"
-
+configurations {
+    provided
+}
+sourceSets {
+    main { compileClasspath += configurations.provided }
+}
 dependencies {
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.5.1'
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
+    compile ('com.google.guava:guava:24.1.1-jre') {
+        exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+        exclude group:'org.checkerframework', module: 'checker-compat-qual'
+        exclude group:'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group:'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group:'com.google.code.findbugs', module: 'jsr305'
+    }
     compile 'org.apache.ant:ant:1.8.3',
         'log4j:log4j:1.2.17',
-        'commons-codec:commons-codec:1.5',
-        'commons-beanutils:commons-beanutils:1.8.3',
+        'commons-codec:commons-codec:1.10',
+        'commons-beanutils:commons-beanutils:1.9.3',
         'commons-collections:commons-collections:3.2.2',
-        'commons-logging:commons-logging:1.1.1',
+        'commons-logging:commons-logging:1.2',
         'commons-lang:commons-lang:2.6',
-        'dom4j:dom4j:1.6.1',
+        'org.dom4j:dom4j:2.1.0',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.8.3',
-        'com.jcraft:jsch:0.1.53',
+        'com.jcraft:jsch:0.1.54',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
         'com.jcraft:jsch.agentproxy.usocket-jna:0.0.9',
         'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
-        'com.fasterxml.jackson.core:jackson-databind:2.5.3',
-        'com.fasterxml.jackson.core:jackson-core:2.5.3',
-        'com.fasterxml.jackson.core:jackson-annotations:2.5.3',
-        'org.yaml:snakeyaml:1.9',
-        'xerces:xercesImpl:2.11.0',
-        'xml-apis:xml-apis:1.4.01',
+        'com.fasterxml.jackson.core:jackson-databind:2.8.11.1',
+        'com.fasterxml.jackson.core:jackson-core:2.8.11',
+        'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
+        'org.yaml:snakeyaml:1.14',
+        'com.squareup.retrofit2:retrofit:2.2.0',
+        'com.squareup.retrofit2:converter-jackson:2.2.0'
 
-    compile ('jaxen:jaxen:1.1') {
-        // Remove xerces apis as that should be provided by jdk
-        exclude group: 'xerces', module: 'xmlParserAPIs'
-//        exclude group: 'xml-apis', module: 'xml-apis'
-        exclude group: 'xalan', module: 'xalan'
-    }
+
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
     }
+    provided "org.projectlombok:lombok:1.16.16"
     testCompile 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.8.5'
 
     testCompile "org.codehaus.groovy:groovy-all:2.3.7"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+    testCompile "com.squareup.retrofit2:retrofit-mock:2.2.0"
 }
 
 def genDeps={
@@ -76,13 +104,15 @@ test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
 }
 
-task expandTemplate << {
+task('expandTemplate').doLast {
     ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
+    def datestring=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(new Date())
+    println("Building: $version-$buildNum ($datestring)")
     copy{
-        expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum)
+        expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum,date:datestring)
         from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
         into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
-    }   
+    }
 }
 
 compileJava.dependsOn expandTemplate
@@ -240,7 +270,7 @@ def buildpom={deps->
 }
 }
 
-task createPom << {
+task('createPom').doLast {
     buildpom(rundeckToolsDependencies).writeTo("pom.xml")
 }
 

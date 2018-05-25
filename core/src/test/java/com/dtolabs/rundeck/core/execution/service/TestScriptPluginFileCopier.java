@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.Framework;
@@ -22,10 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -191,6 +204,19 @@ public class TestScriptPluginFileCopier {
             return new String[0];
         }
 
+        @Override
+        public String[] createScriptArgs(
+                final Map<String, Map<String, String>> localDataContext,
+                final String scriptargs,
+                final String[] scriptargsarr,
+                final String scriptinterpreter,
+                final boolean interpreterargsquoted
+        )
+        {
+            Assert.fail("Unexpected");
+            return new String[0];
+        }
+
         @Override public String[] createScriptArgs(
                 Map<String, Map<String, String>> localDataContext,
                 INodeEntry node,
@@ -222,16 +248,14 @@ public class TestScriptPluginFileCopier {
         }
     }
     private class testListener implements ExecutionListener {
-        @Override public boolean isTerse() {
-            return false;
-        }
 
-        @Override public String getLogFormat() {
-            return null;
-        }
+        @Override public void ignoreErrors(boolean ignore){}
 
         @Override public void log(int level, String message) {
 
+        }
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
         }
 
         @Override public void event(String eventType, String message, Map eventMeta) {
@@ -290,6 +314,12 @@ public class TestScriptPluginFileCopier {
 
         }
 
+        @Override public void beginFileCopyFile(
+                ExecutionContext context, List<File> input, INodeEntry node
+        ) {
+
+        }
+
         @Override public void beginFileCopyScriptContent(
                 ExecutionContext context, String input, INodeEntry node
         ) {
@@ -299,6 +329,11 @@ public class TestScriptPluginFileCopier {
         @Override public void finishFileCopy(
                 String result, ExecutionContext context, INodeEntry node
         ) {
+
+        }
+        @Override public void finishMultiFileCopy(
+                String[] result, ExecutionContext context, INodeEntry node
+        ){
 
         }
 
@@ -374,7 +409,7 @@ public class TestScriptPluginFileCopier {
                                                            .executionListener(new testListener())
                                                            .build();
         NodeEntryImpl nodeEntry = new NodeEntryImpl("node1");
-        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry);
+        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry, null);
         Assert.assertNotNull(result);
     }
 

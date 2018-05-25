@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //= require knockout.min
 /*
  * Useful for i18n messages; replace the text content of an element, by substituting values into placeholders.
@@ -20,37 +36,8 @@ ko.bindingHandlers.messageTemplate = {
         var pluralize=allBindings.get('messageTemplatePluralize');
         var data=ko.utils.unwrapObservable(valueAccessor());
         var template=jQuery(element).data('ko-message-template');
-        var pluralTemplate=null;
-        if(pluralize){
-            var arr = template.split('|');
-            template = arr[0];
-            pluralTemplate = arr[1];
-        }
-        var values=[];
-        if(typeof(data)!='object'){
-            values=[data];
-        }else if(jQuery.isArray(data)){
-            values=data;
-        }else if(typeof(data)=='object'){
-            values=ko.utils.unwrapObservable(data['value']);
-            if(!jQuery.isArray(values)){
-                values=[values];
-            }
-        }
-        for(var i=0;i<values.length;i++){
-            values[i] = ko.utils.unwrapObservable(values[i]);
-        }
-        if(pluralize && values[0]!=1){
-            template=pluralTemplate;
-        }
-        var text = template.replace(/\{(\d+)\}/g,function(match, g1, offset, string){
-            var val= parseInt(g1);
-            if(val>=0 && val<values.length){
-                return values[val];
-            }else{
-                return string;
-            }
-        });
+        
+        var text = messageTemplate(template,data,pluralize);
         ko.utils.setTextContent(element, text);
     }
 };

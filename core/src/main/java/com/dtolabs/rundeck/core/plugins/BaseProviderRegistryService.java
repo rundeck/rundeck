@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -30,10 +30,7 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * BaseProviderRegistryService is an abstract base that provides a registry of available service providers based on
@@ -49,8 +46,13 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
 
     public BaseProviderRegistryService(Framework framework) {
         this.framework = framework;
-        instanceregistry = new HashMap<String, T>();
-        registry = new HashMap<String, Class<? extends T>>();
+        instanceregistry = new HashMap<>();
+        registry = new HashMap<>();
+    }
+    public BaseProviderRegistryService(Framework framework, Map<String, Class<? extends T>> classes) {
+        this.framework = framework;
+        instanceregistry = new HashMap<>();
+        registry = new HashMap<>(classes);
     }
 
     public void registerClass(String name, Class<? extends T> clazz) {
@@ -76,6 +78,16 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         }
         return instanceregistry.get(providerName);
     }
+
+    @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        final T t = providerOfType(providerName);
+        if (t == null) {
+            return null;
+        }
+        return Closeables.closeableProvider(t);
+    }
+
     public List<ProviderIdent> listProviders() {
 
         final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();

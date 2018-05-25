@@ -1,11 +1,27 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.plugins.util;
+
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.dtolabs.rundeck.core.plugins.configuration.*;
 
 
 /**
@@ -19,9 +35,11 @@ public class PropertyBuilder {
     private boolean required;
     private String value;
     private List<String> values;
+    private Map<String, String> labels;
     private PropertyValidator validator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
+    private boolean dynamicValues;
 
     private PropertyBuilder() {
 
@@ -46,6 +64,7 @@ public class PropertyBuilder {
             .description(orig.getDescription())
             .title(orig.getTitle())
             .values(orig.getSelectValues())
+            .labels(orig.getSelectLabels())
             .validator(orig.getValidator())
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
@@ -109,6 +128,19 @@ public class PropertyBuilder {
     public PropertyBuilder select(final String name) {
         name(name);
         type(Property.Type.Select);
+        return this;
+    }
+
+
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type#Select}
+     * @param name name
+     *
+     * @return this builder
+     */
+    public PropertyBuilder options(final String name) {
+        name(name);
+        type(Property.Type.Options);
         return this;
     }
 
@@ -202,6 +234,18 @@ public class PropertyBuilder {
     }
 
     /**
+     * Set the select labels
+     *
+     * @param labels map of value to label
+     *
+     * @return this builder
+     */
+    public PropertyBuilder labels(final Map<String, String> labels) {
+        this.labels = labels;
+        return this;
+    }
+
+    /**
      * Set the select values
      * @param values values
      *
@@ -243,6 +287,11 @@ public class PropertyBuilder {
      */
     public PropertyBuilder renderingOptions(final Map<String, Object> renderingOptions) {
         this.renderingOptions.putAll(renderingOptions);
+        return this;
+    }
+
+    public PropertyBuilder dynamicValues(final boolean dynamicValues) {
+        this.dynamicValues = dynamicValues;
         return this;
     }
     
@@ -295,7 +344,20 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope, renderingOptions);
+        return PropertyUtil.forType(
+                type,
+                name,
+                title,
+                description,
+                required,
+                value,
+                values,
+                labels,
+                validator,
+                scope,
+                renderingOptions,
+                dynamicValues
+        );
     }
 
     /**

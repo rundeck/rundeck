@@ -35,6 +35,8 @@ echo "TEST: /api/execution/${execid} ..."
 
 params=""
 
+sleep 5
+
 # get listing
 docurl ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 

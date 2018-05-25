@@ -13,192 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//= require version
 var VersionIdentity=function(data){
     var self=this;
-    self.versionString= data['versionString'];
-    self.versionData= {};
-    self.colorIdentity=data && data.colorIdentity ? data.colorIdentity : 'minorPoint';
-    self.nameIdentity= data && data.nameIdentity ? data.nameIdentity : 'majorMinor';
-    self.iconIdentity= data && data.iconIdentity ? data.iconIdentity : 'minorPoint';
-    self.appId=data && data['appId'] ? data['appId'] : 'Rundeck';
-    self.serverName=data && data['serverName'] ? data['serverName'] : null;
-    self.csscolors= [
-        'BlueViolet',
-        'CadetBlue',
-        'Chocolate',
-        'CornflowerBlue',
-        'Crimson',
-        'DodgerBlue',
-        'FireBrick',
-        'ForestGreen',
-        'Fuchsia',
-        'Goldenrod',
-        'HotPink',
-        'Indigo',
-        'LimeGreen',
-        'Magenta',
-        'Maroon',
-        'MidnightBlue',
-        'Navy',
-        'Olive',
-        'OrangeRed',
-        'Purple',
-        'RoyalBlue',
-        'SaddleBrown',
-        'SeaGreen',
-        'Sienna',
-        'SlateBlue',
-        'SteelBlue',
-        'Teal',
-        'Tomato',
-        'Violet'
-    ];
+    self.version = new RundeckVersion(data);
 
-    self.glyphicons = [
-        'bell',
-        'book',
-        'briefcase',
-        'bullhorn',
-        'camera',
-        'cutlery',
-        'flag',
-        'flash',
-        'gift',
-        'globe',
-        'headphones',
-        'leaf',
-        'music',
-        'paperclip',
-        'phone',
-        'plane',
-        'pushpin',
-        'tower',
-        'glass',
-        'knight',
-        'tent',
-        'apple',
-        'lamp',
-        'piggy-bank',
-        'grain',
-        'sunglasses'
-    ];
-
-    self.names=[
-        'Americano',
-        'Cafe Au Lait',
-        'Cafe Bonbon',
-        'Cafecito',
-        'Cafe Cubano',
-        'Caffe Latte',
-        'Cafe Mocha',
-        'Cappuccino',
-        'Caramel Latte',
-        'Coconut Latte',
-        'Con Panna',
-        'Doppio Espresso',
-        'Dry Cappuccino',
-        'Espresso Breve',
-        'Eye Opener',
-        'Hammerhead',
-        'Macchiato',
-        'Pumpkin Spice Latte',
-        'Ristretto',
-        'Solo Espresso',
-        'Toffee Latte',
-        'Turkish Coffee',
-        'Vanilla Latte',
-        'Viennese Espresso'
-    ];
-    function splitVersion(versionString){
-        var partsa=String(versionString).split(' ');
-        var version = partsa.length > 1 ? partsa[0] : versionString;
-        var parts=String(version).split('-');
-        var vparts=parts[0].split('\.');
-        var data={version:version};
-        if(vparts.length>0){
-            data['major']=parseInt(vparts[0]);
-        }else{
-            data['major']=0;
-        }
-        if(vparts.length>1){
-            data['minor']=parseInt(vparts[1]);
-        }else{
-            data['minor'] =0;
-        }
-        data['majorMinor']=(data.major*10) + data.minor;
-        if(vparts.length>2){
-            data['point']=parseInt(vparts[2]);
-        }else{
-            data['point'] =0;
-        }
-        data['minorPoint'] = (data.minor * 10) + data.point;
-        var release=1;
-        var tag = '';
-        if(parts.length > 1 && /^\d+$/.test(parts[1]) ){
-            release=parseInt(parts[1]);
-            tag = parts.length > 2 ? parts[2] : '';
-        }else if(parts.length>1){
-            tag=parts[1];
-        }
-
-        data['tag']=tag;
-        data['release']=release;
-        data['pointRelease']= data.point*10 + release;
-        data['minorPointRelease']= (data.minor * 100)+ data.point*10 + release;
-        data['full']=data.major*100 + data.minor*10+data.point;
-        return data;
-    }
-    function splitUUID(versionString) {
-        var partsa = String(versionString).split('-');
-        var apart = partsa.length > 0 ? partsa[0].substring(0,2) : versionString;
-        var data = {};
-        for(var i=0;i<partsa.length;i++){
-            data['uuid'+i]=parseInt(partsa[i].substring(0,2),16);
-            data['hexuuid'+i]=partsa[i];
-        }
-        var partsb = partsa.join('');
-        var sixes=[];
-        for(var j=0;(j+1)*6<partsb.length;j++){
-            data['6let'+i]=partsb.substring(j*6,(j+1)*6);
-            sixes.push(partsb.substring(j*6,(j+1)*6));
-        }
-        data['sixes']=sixes;
-        return data;
-    }
-    function inList(list,val){
-        return list[val % list.length];
-    }
-    function colorForVersion(val){
-        return inList(self.csscolors,val);
-    }
-    function nameForVersion(val){
-        return inList(self.names,val);
-    }
-    function iconForVersion(val){
-        return inList(self.glyphicons,val);
-    }
-    self.data=function(){
-        return self.versionData;
-    };
-    self.color=function(){
-        return colorForVersion(self.versionData[self.colorIdentity]);
-    };
-    self.name=function(){
-        return nameForVersion(self.versionData[self.nameIdentity]);
-    };
-    self.icon=function(){
-        return iconForVersion(self.versionData[self.iconIdentity]);
-    };
-    self.text=function(){
-        var sep=' ';
-        return [self.name(),self.color(),self.icon() ].join(sep).toLowerCase().replace(/[^a-z]/g, sep);
-    };
     self.showVersionIdentity=function(dom){
-        var color=self.color();
-        var name=self.name();
-        var icon=self.icon();
-        var text=self.text();
-        var data=self.data();
+        var color=self.version.color();
+        var name=self.version.name();
+        var icon=self.version.icon();
+        var text=self.version.text();
+        var data=self.version.data();
         var span2= jQuery('<span></span>');
         var ispan = jQuery('<span></span>').addClass('version-icon').css({ 'color': color});
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
@@ -209,9 +34,14 @@ var VersionIdentity=function(data){
         }else{
             span2.append(span3)
         }
-        var span=jQuery('<span></span>').attr('title',self.appId+' '+self.versionString +' ('+text+')').append(span2);
+        var span=jQuery('<span></span>').attr('title',self.version.appId+' '+self.version.versionString +' ('+text+')' + (self.version.versionDate?' '+self.version.versionDate:'')).append(span2);
+
         if (data.tag && data.tag != 'GA') {
-            span.append(jQuery('<span></span>').addClass('badge badge-info').text(' ' + data.tag.toLowerCase()));
+            var s = data.tag + " / " + self.version.versionDate;
+            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20)}));
+        } else if (self.version.versionDate) {
+            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
+            span.append(vdate);
         }
         jQuery(dom).append(span);
     };
@@ -240,53 +70,95 @@ var VersionIdentity=function(data){
 
     };
     self.showVersionBlock=function(dom){
-        var color=self.color();
-        var name=self.name();
-        var icon=self.icon();
-        var text=self.text();
-        var data=self.data();
+        var color=self.version.color();
+        var name=self.version.name();
+        var icon=self.version.icon();
+        var text=self.version.text();
+        var data=self.version.data();
         var span2= jQuery('<span></span>');
         var ispan = jQuery('<span></span>').addClass('version-icon');
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
         span2.append(ispan);
         var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
-        span2.append(span3)
+        span2.append(span3);
         var span=jQuery('<div></div>')
-            .text(self.appId+' '+self.versionString+' ' )
+            .text(self.version.appId+' '+self.version.versionString+' ' )
             .append(span2);
         if (data.tag && data.tag != 'GA') {
             jQuery(dom).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20), 'color': 'white'}).append(span);
         }else{
             jQuery(dom).css({ 'background': color, 'color': 'white'}).append(span);
         }
+        if (self.version.versionDate) {
+            var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
+            span.append(vdate);
+        }
+    };
+    self.serverNameStyle = function (name) {
+        if (name === 'underline') {
+            return jQuery('<span></span>').css({
+                'border': '1px solid transparent',
+                'border-image': self.stripeAllBg('90deg', self.version.versionData['sixes'], 20),
+                'border-width': '0 0 3px 0',
+                'padding': '1px',
+                'border-color': 'solid transparent',
+                'border-image-slice': '1'
+            });
+        }
+        if (name === 'solid') {
+
+            return jQuery('<span></span>').css({
+                'color': '#' + self.version.versionData['sixes'][0],
+                'border-radius': '5px',
+                'padding': '3px'
+                // 'color':'white',
+                // 'text-shadow':'1px 1px 3px #333333'
+            });
+        }
+        if (name === 'solidbg') {
+
+            return jQuery('<span></span>').css({
+                'background-color': '#' + self.version.versionData['sixes'][0],
+                'border-radius': '3px',
+                'padding': '2px',
+                'color':'white',
+                'text-shadow':'1px 1px 2px #000000'
+            });
+        }
+        if (name === 'double-solid') {
+            return jQuery('<span></span>').css({
+                'color': '#' + self.version.versionData['sixes'][0],
+                'background-color': '#' + self.version.versionData['sixes'][1],
+                'border-radius': '5px',
+                'padding': '3px',
+                'text-shadow':'1px 1px 3px #333333'
+            });
+        }
+        return jQuery('<span></span>');
     };
     self.showServerName=function(dom){
         if(!data.serverUuid){
             return;
         }
-        var color='#'+((self.versionData['hexuuid0'].substring(0,6)));
-        var icon=iconForVersion(self.versionData['uuid0']);
+        var domdata = jQuery(dom).data();
+        var uuidSize = (domdata && domdata['uuidSize']) || 2;
+        var color='#'+((self.version.versionData['hexuuid0'].substring(0,6)));
+        var icon=self.version.iconForVersion(self.version.versionData['uuid0']);
         var codename=[
             icon,
-            self.versionData['hexuuid0'].substring(0,2)
+            self.version.versionData['uuid'].substring(0, uuidSize)
         ].join('-').toLowerCase();
-        var name=self.serverName?self.serverName:'';
-        var shortname=self.versionData['hexuuid0'].substring(0,2);
-        var nodeicon= jQuery('<i></i>').addClass('rdicon node node-runnable icon-small');
+        var name=self.version.serverName?self.version.serverName:'';
+        var shortname = self.version.versionData['uuid'].substring(0, uuidSize);
         var glyphicon= jQuery('<span></span>');
         var ispan = jQuery('<span></span>');
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
         glyphicon.append(ispan);
         var nametext= jQuery('<span></span>').text(' '+name+' ');
-        var colorpill= jQuery('<span></span>').css({
-            'border-image': self.stripeAllBg('90deg',self.versionData['sixes'],20),
-            'border-width':'0 0 2px 0',
-            'padding': '1px',
-            'border-color':'solid transparent',
-            'border-image-slice':'1'
-            //'color': 'white',
-            //'text-shadow': '1px 1px 3px #333333'
-        });
+
+        var namestyle = self.serverNameStyle(domdata['nameStyle'] || 'plain');
+        var idstyle = self.serverNameStyle(domdata['uuidStyle'] || 'solid');
+
         var span=jQuery('<span></span>')
                 .attr('title',codename+' / '+data.serverUuid)
                 //.addClass('version-icon')
@@ -295,10 +167,12 @@ var VersionIdentity=function(data){
                     //'text-shadow': '1px 1px 3px #333333'
                 })
             .append(
-                colorpill
+                namestyle
                     .append(nametext)
+            ).append(
+                idstyle
                     .append(glyphicon)
-                    .append(' '+(self.serverName?shortname:codename))
+                    .append(' '+(self.version.serverName?shortname:codename))
             )
             //.append(nodeicon)
 
@@ -307,11 +181,6 @@ var VersionIdentity=function(data){
             jQuery(dom).append(span);
             //jQuery(dom).append(jQuery('<a></a>').attr('href','/menu/systemInfo').append(span));
     };
-    if(self.versionString) {
-        self.versionData = splitVersion(self.versionString);
-    }else if(data.serverUuid){
-        self.versionData = splitUUID(data.serverUuid);
-    }
 };
 (function(){
     jQuery(function(){

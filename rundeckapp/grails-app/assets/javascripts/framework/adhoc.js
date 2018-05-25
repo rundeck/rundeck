@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //= require momentutil
 //= require knockout.min
 //= require knockout-mapping
@@ -6,25 +22,12 @@
 //= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
+//= require executionStateKO
 
 /*
  Manifest for "framework/adhoc.gsp" page
  */
-/*
- Copyright 2015 SimplifyOps Inc, <http://simplifyops.com>
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- */
 
 
 function showError(message) {
@@ -118,7 +121,8 @@ function startRunFollow(data) {
             if (status == 'success') {
                 Element.show('runcontent');
                 _initAffix();
-                continueRunFollow(data);
+                var nodeflowvm=continueRunFollow(data);
+                ko.applyBindings(nodeflowvm,jQuery('#runcontent .executionshow')[0]);
             } else {
                 requestFailure(jqxhr);
             }
@@ -144,11 +148,13 @@ function continueRunFollow(data) {
         iconUrl: pageParams.iconUrl,
         lastlines: pageParams.lastlines,
         maxLastLines: pageParams.maxLastLines,
+        killjobauth: pageParams.adhocKillAllowed,
         //showFinalLine: {value: false, changed: false},
         colStep: {value: false},
         collapseCtx: {value: false, changed: false},
         groupOutput:{value:false},
         tailmode: true,
+        taildelay: 1.5,
         browsemode: false,
         nodemode: false,
         //taildelay: 1,
@@ -158,12 +164,29 @@ function continueRunFollow(data) {
         onComplete: onRunComplete,
         dobind: true
     });
+    var nodeflowvm=new NodeFlowViewModel(
+        workflow,
+        null,
+        null,
+        null,
+        {followControl:followControl,executionId:data.id}
+    );
+    var flowState = new FlowState(data.id,null,{
+        workflow:workflow,
+        loadUrl:_genUrl(appLinks.executionAjaxExecState,{id:data.id}),
+        outputUrl:null,
+        selectedOutputStatusId:null,
+        reloadInterval:1500
+    });
+    nodeflowvm.followFlowState(flowState);
     followControl.beginFollowingOutput(data.id);
+    flowState.beginFollowing();
     var oldControl=adhocCommand.followControl;
     adhocCommand.followControl=followControl;
     if(oldControl){
         oldControl.stopFollowingOutput();
     }
+    return nodeflowvm;
 }
 function onRunComplete() {
     adhocCommand.running(false);

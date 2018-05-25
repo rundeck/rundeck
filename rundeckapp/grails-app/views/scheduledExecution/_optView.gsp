@@ -1,19 +1,18 @@
-<%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
 <%--
    _optView.gsp
 
@@ -24,7 +23,10 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <span id="opt_${rkey}" class="optview">
-    <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
+    <span class="optdetail ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
+        <g:if test="${option.optionType=='file'}">
+            <g:icon name="file"/>
+        </g:if>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
         <span class="">
             <g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc>

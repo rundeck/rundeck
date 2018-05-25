@@ -1,57 +1,27 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-onenter
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
 //= require jquery.waypoints.min
-function ProjectAuth(data) {
-    "use strict";
-    var self = this;
-    self.jobCreate = ko.observable(false);
-    self.admin = ko.observable(false);
-    self.mapping = {};
-    if (data) {
-        ko.mapping.fromJS(data, self.mapping, self);
-    }
-}
-function ProjectReadme(data) {
-    "use strict";
-    var self = this;
-    self.readmeHTML = ko.observable(null);
-    self.motdHTML = ko.observable(null);
+//= require menu/project-model
 
-    self.mapping = {};
-    if (data) {
-        ko.mapping.fromJS(data, self.mapping, self);
-    }
-}
-function Project(data) {
-    var self = this;
-    self.name = ko.observable(data.name);
-    self.execCount = ko.observable(data.execCount || 0);
-    self.userCount = ko.observable(data.userCount || 0);
-    self.description = ko.observable(data.description);
-    self.auth = ko.observable(new ProjectAuth());
-    self.readme = ko.observable(new ProjectReadme());
-    self.loaded = ko.observable(false);
-    self.mapping = {
-        auth: {
-            create: function (options) {
-                "use strict";
-                return new ProjectAuth(options.data);
-            }
-        },
-        readme: {
-            create: function (options) {
-                "use strict";
-                return new ProjectReadme(options.data);
-            }
-        }
-    };
-    if (data) {
-        ko.mapping.fromJS(data, self.mapping, self);
-    }
-}
 function HomeData(data) {
     var self = this;
     self.baseUrl = data.baseUrl;
@@ -60,6 +30,7 @@ function HomeData(data) {
     self.loaded = ko.observable(data.loaded?true:false);
     self.jobCount = ko.observable(0);
     self.execCount = ko.observable(data.execCount||0);
+    self.totalFailedCount = ko.observable(data.totalFailedCount||0);
     self.projectNames = ko.observableArray(data.projectNames || []);
     self.projectNamesTotal = ko.observable(data.projectNamesTotal || 0);
     self.loadedProjectNames = ko.observable(false);
@@ -124,7 +95,7 @@ function HomeData(data) {
         "use strict";
         return !self.search() || self.searchProjectsByName()[name]!=null;
     };
-    self.prototypeProject=new Project({});
+    self.prototypeProject = new Project({page: 'projectList'});
     self.projectForName = function (name) {
         var projectsByName = self.projectsByName()[name];
         if(null==projectsByName){
@@ -178,7 +149,7 @@ function HomeData(data) {
                 found.loaded(true);
             } else {
                 self.projects.push(
-                    new Project(jQuery.extend(newproj, {loaded: true}))
+                    new Project(jQuery.extend(newproj, {loaded: true, page: 'projectList'}))
                 );
             }
         }

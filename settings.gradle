@@ -1,20 +1,39 @@
-rootProject.name = 'rundeck'
-include 'core',
-    'rundeck-storage',
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+rootProject.name = 'rundeck-project'
+
+include	'rundeck-storage',
     'rundeck-storage:rundeck-storage-api',
     'rundeck-storage:rundeck-storage-data',
     'rundeck-storage:rundeck-storage-conf',
     'rundeck-storage:rundeck-storage-filesys',
+    'core',
 	'plugins:localexec-plugin',
 	'plugins:script-plugin',
 	'plugins:stub-plugin',
 	'plugins:copyfile-plugin',
 	'plugins:job-state-plugin',
+	'plugins:source-refresh-plugin',
 	'plugins:flow-control-plugin',
 	'plugins:jasypt-encryption-plugin',
 	'plugins:orchestrator-plugin',
 	'plugins:git-plugin',
-	'rundeckapp',
-	'rundeck-launcher',
-	'rundeck-launcher:launcher',
-	'rundeck-launcher:rundeck-jetty-server'
+	'plugins:upvar-plugin',
+    'rundeckapp',
+    'rundeckapp:metricsweb'
+
+project(":rundeckapp").name = "rundeck"

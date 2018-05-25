@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 %{--
 - Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
@@ -236,7 +252,31 @@ jQuery(function(){
                                     </div>
                                 </div>
                             </auth:resourceAllowed>
+                            <br/>
+                            <g:if test="${parentList}">
+                                <div class="form-group">
+                                    <div class="col-sm-10 warn note">
+                                        <g:message code="delete.referenced.job"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                   <div class="col-sm-10">
+                                       <ul>
 
+                                    <g:each var="job" in="${parentList}">
+                                        <li>
+                                        <span class=" wfitem jobtype" title="">
+                                        <g:link controller="scheduledExecution" action="show" id="${job.extid}">
+                                            <i class="glyphicon glyphicon-book"></i>
+                                            ${(job.groupPath?job.groupPath+'/':'')+job.jobName+(scheduledExecution.project!=job.project?' ('+job.project+')':'')}
+                                        </g:link>
+                                        </span>
+                                        </li>
+                                    </g:each>
+                                       </ul>
+                                   </div>
+                                </div>
+                            </g:if>
                         </div>
 
                         <div class="modal-footer">

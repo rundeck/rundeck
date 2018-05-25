@@ -1,11 +1,20 @@
 Rundeck
 ========
 
+| Travis | Deb | RPM | War | Jar |
+|--------|-----|-----|-----|-----|
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck-launcher/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck-launcher/_latestVersion)
+
 Rundeck is an open source automation service with a web console, 
 command line tools and a WebAPI.
 It lets you easily run automation tasks across a set of nodes.
 
-For more information, mailing lists, IRC channel, visit <http://rundeck.org>
+* Site: <http://rundeck.org>
+
+* Latest documentation: <http://rundeck.org/docs/>
+
+* Get Help: <http://rundeck.org/help.html>
+
 
 See the [Release Notes](RELEASE.md) for the latest version information.
 
@@ -23,8 +32,6 @@ Artifacts:
 
 * `rundeckapp/target/rundeck-X.Y.war`
 * `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
-
-Note: some pom.xml files exist, but the Maven build is not currently working.
 
 
 Other builds
@@ -58,7 +65,7 @@ There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -XX:MaxPermSize=256m -Xmx1024m -Xms256m -server -jar rundeck-launcher-2.0.0.jar
+    java -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -jar rundeck-launcher-2.0.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -84,7 +91,7 @@ For Debian, download the .deb from the [downloads page](http://rundeck.org/downl
 Requirements
 =======
 
-Java 7 (openjdk, sun)
+Java 8 (openjdk, oracle)
 
 [Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
@@ -108,7 +115,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2015 SimplifyOps
+Copyright 2018 Rundeck, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

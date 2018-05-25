@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //= require noconflict
 //= require_self
 //= require menus
@@ -81,85 +97,6 @@ function myToggleClassName(elem, name) {
     }
 }
 
-
-/** job cancellation code*/
-
-function updatecancel(data,elem,id){
-
-    var orig=data;
-    if(typeof(data) == "string"){
-        eval("data="+data);
-    }
-    if(data['cancelled']){
-        if($(elem)){
-            setHtml(elem,'<span class="fail">Killed</span>');
-        }
-        if($('exec-'+id+'-spinner')){
-            clearHtml($('exec-'+id+'-spinner'));
-            var img=new Element('img');
-            img.src= appLinks.iconTinyWarn;
-            $('exec-'+id+'-spinner').appendChild(img);
-        }
-        if($('exec-'+id+'-dateCompleted')){
-            clearHtml($('exec-'+id+'-dateCompleted'));
-            if($('exec-'+id+'-dateCompleted').onclick){
-                $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
-            }
-        }
-
-    }else if(data['status']!='success'){
-        if($(elem)){
-            var sp = new Element('span');
-            sp.addClassName('fail');
-            setText(sp, (data['error'] ? data['error'] : 'Failed to Kill job.'));
-            clearHtml(elem);
-            $(elem).appendChild(sp);
-        }
-    }else if(data['status']=='success'){
-        if($(elem)){
-            setText(elem,'Job Completed.');
-        }
-        if($('exec-'+id+'-spinner')){
-            clearHtml('exec-' + id + '-spinner');
-            var img = new Element('img');
-            img.src = appLinks.iconTinyOk;
-            $('exec-' + id + '-spinner').appendChild(img);
-        }
-        if($('exec-'+id+'-dateCompleted')){
-            clearHtml('exec-' + id + '-dateCompleted');
-            if($('exec-'+id+'-dateCompleted').onclick){
-                $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
-            }
-        }
-    }
-}
-
-function canceljob(id,elem){
-    if($(elem)){
-        clearHtml(elem);
-        var img = new Element('img');
-        img.src = appLinks.iconSpinner;
-        $(elem).appendChild(img);
-        appendText(elem,' Killing Job ...');
-    }
-    new Ajax.Request(appLinks.executionCancelExecution, {
-        parameters: "id="+id,
-        onSuccess: function(transport) {
-            try{
-                updatecancel(transport.responseText,elem,id);
-            }catch(e){
-                alert(e);
-            }
-        },
-        onFailure: function(reponse) {
-            updatecancel({error:"Request failed: "+reponse.statusText},elem,id);
-            cancelJobError("Request failed: "+reponse.statusText,elem,id);
-        }
-    });
-}
-
-function cancelJobError(mesg,elem,id){
-}
 
 var Expander = {
     toggle: function(elem, contain,expression) {
@@ -350,7 +287,50 @@ function _applyAce(e,height){
     editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
     editor.setReadOnly(true);
 }
-function _setupAceTextareaEditor(textarea,callback){
+function _setupMarkdeepPreviewTab(tabid,id,getter){
+    "use strict";
+    jQuery('#'+tabid).on('show.bs.tab', function () {
+        //load markdeep preview
+
+        var el = jQuery('#' + id);
+        el.text('Loading...');
+        window.markdeep.format(getter() + '\n', true,function(t){
+            jQuery(el).html(t);
+        });
+    });
+}
+var _ace_modes = [
+    //add more mode files in rundeckapp/web-app/js/ace
+    "batchfile",
+    "diff",
+    "dockerfile",
+    "golang",
+    "groovy",
+    "html",
+    "java",
+    "javscript",
+    "json",
+    "markdown",
+    "perl",
+    "php",
+    "powershell",
+    "properties",
+    "python",
+    "ruby",
+    "sh",
+    "sql",
+    "xml",
+    "yaml"
+];
+function getAceSyntaxMode(aceeditor) {
+    "use strict";
+    return aceeditor.getSession().getMode().$id.split('/')[2];
+}
+function setAceSyntaxMode(mode, aceeditor) {
+    var allowedMode = _ace_modes.indexOf(mode) >= 0 ? mode : null;
+    aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
+}
+function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
     }
@@ -367,12 +347,46 @@ function _setupAceTextareaEditor(textarea,callback){
 
     //create editor
     var editor = ace.edit(generateId(_shadow));
+    editor.$blockScrolling = Infinity;
+
+    var checkResize;
+    if(data.aceResizeMax){
+        var heightPx=parseInt(height.replace(/px$/,''));
+        var lineheight=editor.renderer.lineHeight;
+        var checkSize=Math.floor(heightPx/lineheight);
+        var checkSizeMax=parseInt(data.aceResizeMax);
+        if(checkSize<checkSizeMax) {
+
+            var checkSizeInc=5;
+            var pxInc=lineheight;
+            checkResize = function (editor) {
+                "use strict";
+                var lineCount = editor.session.getLength();
+                if (lineCount > checkSize && checkSize < checkSizeMax) {
+                    var diff = Math.min(checkSizeMax-checkSize,lineCount - checkSize);
+                    var increment = Math.max(checkSizeInc,diff);
+                    checkSize += increment;
+                    heightPx += increment*pxInc;
+                    _shadow.css({height: heightPx + 'px'});
+                    editor.resize();
+                }
+            };
+
+            if(data.aceResizeAuto){
+                checkResize(editor);
+            }
+        }
+    }
+
+    setAceSyntaxMode(data.aceSessionMode, editor);
     editor.setTheme("ace/theme/chrome");
-    editor.getSession().setMode("ace/mode/"+(data.aceSessionMode?data.aceSessionMode: 'sh'));
     editor.getSession().on('change', function (e) {
         jQuery(textarea).val(editor.getValue());
         if(callback) {
-            callback();
+            callback(editor);
+        }
+        if(checkResize){
+            checkResize(editor);
         }
     });
     if(data.aceAutofocus){
@@ -380,7 +394,7 @@ function _setupAceTextareaEditor(textarea,callback){
     }
 
     //add controls
-    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false
+    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false;
     if(addSoftWrapCheckbox){
         var _soft = jQuery('<input/>')
             .attr('type', 'checkbox')
@@ -395,6 +409,60 @@ function _setupAceTextareaEditor(textarea,callback){
             .append(_soft_label)
             .insertBefore(_shadow);
     }
+
+    //add syntax dropdown
+    var addSyntaxSelect = data.aceControlSyntax ? data.aceControlSyntax : false;
+    if(addSyntaxSelect){
+        var sel = jQuery('<select/>')
+            .addClass('form-control')
+            .on('change', function (e) {
+                setAceSyntaxMode(jQuery(this).val(), editor);
+            });
+        sel.append(jQuery('<option/>').attr('value','-').text('-None-'));
+        for (var i = 0; i < _ace_modes.length; i++) {
+            var mode = _ace_modes[i];
+            var option = jQuery('<option/>').attr('value',mode).text(mode);
+            sel.append(option);
+            if(mode==data.aceSessionMode){
+                option.attr('selected','true');
+            }
+        }
+        var label = jQuery('<label></label>')
+            .append('Syntax Mode: ')
+            .append(sel)
+            ;
+        var wrap = jQuery('<div></div>')
+            .addClass('ace_text_controls form-inline')
+            .append(label)
+            .insertBefore(_shadow);
+    }
+    if (autoCompleter) {
+        var langTools = ace.require("ace/ext/language_tools");
+        var lang = ace.require("ace/lib/lang");
+        editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true});
+        var extCompleter = {
+            identifierRegexps: [
+                /[@%a-zA-Z_0-9\$\-\u00A2-\uFFFF]/
+            ],
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                if (prefix.length === 0) {
+                    callback(null, []);
+                    return
+                }
+                callback(null, autoCompleter(editor, session, pos, prefix));
+            },
+            getDocTooltip: function (item) {
+                if (item.type == "rdvar" && !item.docHTML && item.title) {
+                    item.docHTML = [
+                        "<b>", lang.escapeHTML(item.title || ''), "</b>", "<hr></hr>",
+                        lang.escapeHTML(item.desc || '')
+                    ].join("");
+                }
+            }
+        };
+        langTools.addCompleter(extCompleter);
+    }
+    return editor;
 }
 /**
  * Return true if the event is a keycode for a control key
@@ -448,7 +516,7 @@ function _genUrl(url,params){
             urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
         }
     }
-    return url + (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&");
+    return url + (urlparams.length ? ( (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
 }
 /**
  * Generate a link
@@ -618,7 +686,10 @@ function paginate(elem,offset,total,max,options){
     }
     var opts={
         //message text
-        'paginate.next':'Next','paginate.prev':'Previous',
+        'paginate.next': 'Next',
+        'paginate.prev': 'Previous',
+        'paginate.ff': '»',
+        'paginate.rew': '«',
         //css classes
         nextClass:'',prevClass:'', stepClass:'', currentStepClass:'active',
         //url parameter names
@@ -644,10 +715,24 @@ function paginate(elem,offset,total,max,options){
     page.addClassName(opts.ulCss);
 
     //generate paginate links
-    var firststep=1
+    var firststep = 1;
+    while (curpage - firststep >= opts.maxsteps) {
+        //shift window
+        firststep += opts.maxsteps;
+    }
+    console.log("total, offset, curpage,firststep,maxsteps", total, offset, curpage, firststep, opts.maxsteps);
     var a;
-    var li = new Element('li');
-    if(curpage>firststep){
+    var li;
+
+    if (firststep > 1) {
+        //elipsis
+        a= _pageLink(opts.baseUrl, {offset: max * (firststep-2), max: max}, opts['paginate.rew'], opts['prevClass'], opts.stepBehavior);
+        li = new Element('li');
+        li.appendChild(a);
+        page.appendChild(li);
+    }
+    li = new Element('li');
+    if (curpage > firststep || firststep > 1) {
         //previous
         a= _pageLink(opts.baseUrl, {offset: (offset - max), max: max}, opts['paginate.prev'], opts['prevClass'], opts.prevBehavior);
     }else{
@@ -658,16 +743,19 @@ function paginate(elem,offset,total,max,options){
     li.appendChild(a);
     page.appendChild(li);
     //generate intermediate pages
-    var step=1;
-    for(var i=0;i<opts.maxsteps && (max * i)<total;i++){
-        var a = _pageLink(opts.baseUrl, {offset: max * i , max: max}, i+1, opts['stepClass'], opts.stepBehavior);
-        var li = new Element('li');
-        if (i + 1 == curpage) {
+    for (var i = 0; i < opts.maxsteps && (max * (i + firststep - 1)) < total; i++) {
+        a = _pageLink(opts.baseUrl, {
+            offset: max * (i + firststep - 1),
+            max: max
+        }, firststep + i, opts['stepClass'], opts.stepBehavior);
+        li = new Element('li');
+        if (i + firststep == curpage) {
             li.addClassName(opts['currentStepClass']);
         }
         li.appendChild(a);
         page.appendChild(li);
     }
+
     li = new Element('li');
     if (offset<total-max) {
         //next
@@ -679,8 +767,13 @@ function paginate(elem,offset,total,max,options){
     }
     li.appendChild(a);
     page.appendChild(li);
-    if(pages>opts.maxsteps){
+    if (pages >= firststep + opts.maxsteps) {
+        //elipsis
 
+        a= _pageLink(opts.baseUrl, {offset: max * (firststep + opts.maxsteps - 1), max: max}, opts['paginate.ff'], opts['nextClass'], opts.stepBehavior);
+        li = new Element('li');
+        li.appendChild(a);
+        page.appendChild(li);
     }
 
     var insert= {};
@@ -901,7 +994,96 @@ function _initTokenRefresh() {
         }
     });
 }
+/**
+ * Strip text up to first line with '---', return the rest
+ * @param text
+ * @private
+ */
+function _jobDescriptionRunbook(text) {
+    return text.replace(/^(.|[\r\n])*?(\r\n|\n)---(\r\n|\n)/,'');
+}
+function _hasJobDescriptionRunbook(text){
+    "use strict";
+
+    return text != _jobDescriptionRunbook(text);
+}
+/**
+ * Apply markdeep formatting to contents of an element
+ * @param el
+ * @private
+ */
+function _applyMarkdeep(el){
+    "use strict";
+    if(typeof(window.markdeep)!='undefined') {
+        var text=jQuery(el).text();
+        jQuery(el).text('Loading...');
+        window.markdeep.format(text + '\n', true,function(t,err){
+            if(!err){
+                jQuery(el).html(t);
+            }else{
+                jQuery(el).text('');
+                jQuery(el).append(jQuery('<pre><code></code></pre>').text(text));
+            }
+        });
+    }else{
+        console.log("Markdeep was not loaded");
+    }
+}
+/**
+ * Sanitize HTML content
+ * @param t content
+ * @param callback called with (true/false,sanitizedcontent, errmsg)
+ * @returns {*} promise
+ * @private
+ */
+function _remoteSanitizeHTML(t, callback){
+    "use strict";
+    return jQuery.ajax({
+        url:appLinks.scheduledExecutionSanitizeHtml,
+        method:'POST',
+        dataType:'json',
+        contentType:'application/json',
+        data:JSON.stringify({content:t}),
+        success:function(data,res){
+            callback(true,data.content);
+        },
+        error:function(jqxhr,resp,err){
+            callback(false,null,err);
+        }
+    });
+}
+/**
+ * Initialize markdeep and automatically apply to .markdeep elements
+ * replaces window.markdeep.format with asynchronous version for sanitizing
+ * @private
+ */
+function _initMarkdeep(){
+    if(typeof(window.markdeep)!='undefined') {
+        var orig = window.markdeep;
+        window.markdeep = Object.freeze({
+            format: function (t, e, c) {
+                "use strict";
+                _remoteSanitizeHTML(orig.format(t, e), function (suc, sanitized, err) {
+                    if (suc) {
+                        c(sanitized);
+                    }else{
+                        console.log("Error: could not sanitize content: "+err);
+                        c(t,'Failed to sanitize content');
+                    }
+                });
+
+            },
+            formatDiagram: orig.formatDiagram,
+            stylesheet: orig.stylesheet
+        });
+        jQuery('.markdeep').each(function (i, el) {
+            "use strict";
+            _applyMarkdeep(el);
+        });
+    }
+}
 (function(){
+    window.markdeepOptions = {mode: 'script',detectMath:false};
     if(typeof(jQuery)=='function'){
         jQuery.ajaxSetup({
             headers: {'x-rundeck-ajax': 'true'}
@@ -916,6 +1098,7 @@ function _initTokenRefresh() {
             _initIEPlaceholder();
             _initCollapseExpander();
             _initAnsiToggle();
+            _initMarkdeep();
         });
     }
 })();
@@ -1063,18 +1246,65 @@ function _loadMessages(id){
     jQuery.extend(window.Messages,loadJsonData(id));
 }
 /**
+ * expand i18n message template
+ * @param template template of the form "text {0} {1} ..." with placeholders numbered from 0
+ * @param data substitution data, an array, a scalar, or an object containing 'value' entry
+ * @param pluralize if true, treat the template as two templates "singular|plural" separated by | and use the plural
+ *     template if data value {0} is not '1'
+ *
+ * @returns {*|string|XML|void}
+ */
+function messageTemplate(template, data, pluralize) {
+    "use strict";
+    var pluralTemplate = null;
+    if (pluralize) {
+        var arr = template.split('|');
+        template = arr[0];
+        pluralTemplate = arr[1];
+    }
+    var values = [];
+    if (typeof(data) != 'object') {
+        values = [data];
+    } else if (jQuery.isArray(data)) {
+        values = data;
+    } else if (typeof(data) == 'object') {
+        values = data['value'];
+        if (!jQuery.isArray(values)) {
+            values = [values];
+        }
+    }
+    for (var i = 0; i < values.length; i++) {
+        if(typeof(values[i]) == 'function'){
+            values[i] =   values[i]();
+        }
+    }
+    if (pluralize && values[0] != 1) {
+        template = pluralTemplate;
+    }
+    var text = template.replace(/\{(\d+)\}/g, function (match, g1, offset, string) {
+        var val = parseInt(g1);
+        if (val >= 0 && val < values.length) {
+            return values[val];
+        } else {
+            return string;
+        }
+    });
+    return text;
+}
+/**
  * Returns the i18n message for the given code, or the code itself if message is not found.  Requires
  * calling the "g:jsMessages" tag from the taglib to define messages.
  * @param code
+ * @param args template argument values
  * @returns {*}
  */
-function message(code) {
+function message(code,args) {
     if (typeof(window.Messages) == 'object') {
         var msg = Messages[code];
         if(!msg){
             if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         }
-        return msg ? msg : code;
+        return msg ? args?messageTemplate(msg,args): msg : code;
     } else {
         if(typeof(_messageMissingError)=='function'){_messageMissingError ("Message not found: "+code);}
         return code;

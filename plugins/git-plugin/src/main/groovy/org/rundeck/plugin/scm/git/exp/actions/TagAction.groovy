@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git.exp.actions
 
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -9,13 +25,13 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.eclipse.jgit.lib.Ref
+import org.eclipse.jgit.lib.Repository
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Create a tag
@@ -30,11 +46,11 @@ class TagAction extends BaseAction implements GitExportAction {
     }
 
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Commit Changes to Git"
             buttonTitle "Commit"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string P_MESSAGE
                         title "Message"
                         description "Enter a message for the Tag."
@@ -42,7 +58,7 @@ class TagAction extends BaseAction implements GitExportAction {
                         renderingAsTextarea()
                     },
 
-                    property {
+                    BuilderUtil.property {
                         string P_TAG_NAME
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch."
@@ -74,6 +90,7 @@ class TagAction extends BaseAction implements GitExportAction {
             )
         }
         validateTagDoesNotExist( plugin, input[P_TAG_NAME])
+        validateTagName( plugin, input[P_TAG_NAME])
         def commit = plugin.getHead()
         Ref tagref
 
@@ -94,6 +111,14 @@ class TagAction extends BaseAction implements GitExportAction {
         if (found) {
             throw new ScmPluginInvalidInput(
                     Validator.errorReport(P_TAG_NAME, "Tag already exists: ${tag}")
+            )
+        }
+    }
+    static void validateTagName( GitExportPlugin plugin, String tag) {
+        def valid = Repository.isValidRefName("refs/tags/" + tag)
+        if (!valid) {
+            throw new ScmPluginInvalidInput(
+                    Validator.errorReport(P_TAG_NAME, "Tag name is not valid: ${tag}")
             )
         }
     }

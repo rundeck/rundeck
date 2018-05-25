@@ -1,4 +1,20 @@
-<%@ page import="rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
+<%@ page import="rundeck.ScheduledExecution; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
@@ -29,8 +45,12 @@
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
-                               <td class="jobname" style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
-                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
+                               <td class="jobname"
+                                   data-job-id="${scheduledExecution.extid}"
+                                   data-job-name="${scheduledExecution.jobName}"
+                                   data-job-group="${scheduledExecution.groupPath}"
+                                   style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
+                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.extid)}','${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}',this)"/>
                                        <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
                                            <i class="glyphicon glyphicon-book"></i>
                                            <g:enc>${scheduledExecution.jobName}</g:enc>
@@ -44,7 +64,11 @@
                         <g:else>
                             %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-                            <td class="jobname">
+                            <td class="jobname"
+                                data-job-id="${scheduledExecution.extid}"
+                                data-job-name="${scheduledExecution.jobName}"
+                                data-job-group="${scheduledExecution.groupPath}"
+                            >
                                 <span class="jobbulkeditfield" style="display: none" data-bind="visible: enabled">
                                 <input type="checkbox"
                                        name="ids"
@@ -55,7 +79,7 @@
                                 </span>
                                     <span class="inlinebuttons jobbuttons">
                                         <g:if test="${scheduledExecution.hasExecutionEnabled() && jobauthorizations && jobauthorizations[AuthConstants.ACTION_RUN]?.contains(scheduledExecution.id.toString())}">
-                                            <g:ifExecutionMode active="true">
+                                            <g:ifExecutionMode active="true" project="${scheduledExecution.project}">
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
                                                     id="${scheduledExecution.extid}"
@@ -68,7 +92,7 @@
                                                 <b class="glyphicon glyphicon-play"></b>
                                             </g:link>
                                             </g:ifExecutionMode>
-                                            <g:ifExecutionMode passive="true">
+                                            <g:ifExecutionMode passive="true" project="${scheduledExecution.project}">
                                                 <span title="${g.message(code: 'disabled.job.run')}"
                                                       class="has_tooltip"
                                                       data-toggle="tooltip"
@@ -95,11 +119,22 @@
                                                       importCommit  : importStatus?.commit,
                                               ]"/>
                                 </g:if>
+
+                                <!-- ko if: displayBadge('${scheduledExecution.extid}') -->
+                                <span data-bind="attr: {'title': jobText('${scheduledExecution.extid}') }" class="has_tooltip">
+                                    <span data-bind="css: jobClass('${scheduledExecution.extid}')">
+                                        <i data-bind="css: jobIcon('${scheduledExecution.extid}')" class="glyphicon "></i>
+                                    </span>
+                                </span>
+                                <!-- /ko -->
+
+
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
                                             class="hover_show_job_info"
-                                            params="[project: scheduledExecution.project]">
+                                            params="[project: scheduledExecution.project]"
+                                            data-job-id="${scheduledExecution.extid}">
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
@@ -119,7 +154,13 @@
                                 </div>
 
                                 <g:render template="/scheduledExecution/description"
-                                          model="[description: scheduledExecution?.description,textCss:'text-muted',mode:'collapsed',rkey:g.rkey()]"/>
+                                          model="[description: scheduledExecution?.description,
+                                                  textCss:'text-muted',
+                                                  mode:'collapsed',
+                                                  rkey:g.rkey(),
+                                                  jobLinkId:scheduledExecution?.extid,
+                                                  cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
+                                          ]"/>
 
                             </td>
                             <g:if test="${scheduledExecution.scheduled}">
@@ -145,7 +186,7 @@
                                         </span>
                                     </g:if>
                                 </g:if>
-                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
+                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)}">
                                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
                                           data-placement="auto left"
                                           title="${g.message(code: 'disabled.schedule.run')}">
@@ -156,6 +197,15 @@
                                 <g:elseif test="${!scheduledExecution.hasScheduleEnabled() && scheduledExecution.hasExecutionEnabled()}">
                                     <span class="scheduletime disabled has_tooltip"
                                           title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
+                                          data-toggle="tooltip"
+                                          data-placement="auto left">
+                                        <i class="glyphicon glyphicon-time"></i>
+                                        <span class="detail"><g:message code="never"/></span>
+                                    </span>
+                                </g:elseif>
+                                <g:elseif test="${scheduledExecution.hasScheduleEnabled() && !g.scheduleMode(is:'active', project:scheduledExecution.project)}">
+                                    <span class="scheduletime disabled has_tooltip"
+                                          title="${g.message(code: 'project.schedule.disabled')}"
                                           data-toggle="tooltip"
                                           data-placement="auto left">
                                         <i class="glyphicon glyphicon-time"></i>

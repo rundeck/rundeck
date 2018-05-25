@@ -1,16 +1,36 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.quartzjobs
 
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import grails.core.GrailsApplication
+import grails.gorm.transactions.Transactional
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
 
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
@@ -18,6 +38,9 @@ import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
+
+import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
 class ExecutionJob implements InterruptableJob {
 
@@ -48,7 +71,8 @@ class ExecutionJob implements InterruptableJob {
     def boolean wasInterrupted
     def boolean wasThreshold
     def boolean wasTimeout
-    def grailsApplication
+    GrailsApplication grailsApplication
+    Long executionId
     static triggers = {
         /** define no triggers here */
     }
@@ -97,6 +121,7 @@ class ExecutionJob implements InterruptableJob {
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
+        executionId = initMap.executionId ? Long.parseLong(initMap.executionId) : initMap.execution?.id
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
             return
@@ -256,17 +281,49 @@ class ExecutionJob implements InterruptableJob {
             if (serverUUID != null && jobDataMap.get("bySchedule")) {
                 //verify scheduled job should be run on this node in cluster mode
                 if (serverUUID!=initMap.scheduledExecution.serverNodeUUID){
-                    initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    if(!initMap.scheduledExecution.scheduled){
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule has been stopped by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }else if(!initMap.scheduledExecution.shouldScheduleExecution()){
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} schedule/execution has been disabled by ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }else{
+                        initMap.jobShouldNotRun="Job ${initMap.scheduledExecution.extid} will run on server ID ${initMap.scheduledExecution.serverNodeUUID}, removing schedule on this server (${serverUUID})."
+                    }
                     context.getScheduler().deleteJob(context.jobDetail.key)
                     return initMap
+                }else{
+                    //verify run on this node but scheduled disabled
+                    if(!initMap.scheduledExecution.shouldScheduleExecution() ){
+                        initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
+                        context.getScheduler().deleteJob(context.jobDetail.key)
+                        return initMap
+                    }
                 }
             }
+
             FrameworkService frameworkService = initMap.frameworkService
+            def project = initMap.scheduledExecution.project
+            def fwProject = frameworkService.getFrameworkProject(project)
+            def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
+            def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
+            def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')
+            def isProjectScheduledEnabled = ((!disableSe)||disableSe.toLowerCase()!='true')
+
+            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled)){
+                initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
+                context.getScheduler().deleteJob(context.jobDetail.key)
+                return initMap
+            }
+
+
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
-            initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)
+            initMap.authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
+                    initMap.scheduledExecution.user,
+                    rolelist,
+                    project
+            )
             initMap.secureOptsExposed = initMap.executionService.selectSecureOptionInput(initMap.scheduledExecution,[:],true)
-            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext)
+            initMap.execution = initMap.executionService.createExecution(initMap.scheduledExecution,initMap.authContext,null,[executionType:'scheduled'])
         }
         if (!initMap.authContext) {
             throw new RuntimeException("authContext could not be determined")
@@ -314,8 +371,18 @@ class ExecutionJob implements InterruptableJob {
         int killcount = 0;
         def killLimit = 100
         def WorkflowExecutionServiceThread thread = execmap.thread
+        def Consumer<Long> periodicCheck = execmap.periodicCheck
         def ThresholdValue threshold = execmap.threshold
+        def jobAverageDuration = execmap.scheduledExecution?execmap.scheduledExecution.averageDuration:0
+        def boolean avgNotificationSent = false
         def boolean stop=false
+
+
+        def jobAverageDurationFinal = getNotifyAvgDurationThreshold(execmap.scheduledExecution?execmap.scheduledExecution.notifyAvgDurationThreshold:"0",
+                                                                    jobAverageDuration,
+                                                                    thread?.context?.dataContext
+                                    )
+
         boolean never=true
         while (thread.isAlive() || never) {
             never=false
@@ -324,11 +391,25 @@ class ExecutionJob implements InterruptableJob {
             } catch (InterruptedException e) {
                 //do nada
             }
+            def duration = System.currentTimeMillis() - startTime
+            if(!avgNotificationSent && jobAverageDurationFinal>0){
+                if(duration > jobAverageDurationFinal){
+                    def res = executionService.avgDurationExceeded(
+                            execmap.scheduledExecution.id,
+                            [
+                                    execution: execmap.execution,
+                                    context:execmap
+                            ]
+                    )
+                    avgNotificationSent=true
+                }
+            }
+            periodicCheck?.accept(duration)
             if (
             !wasInterrupted
                     && !wasTimeout
                     && shouldCheckTimeout
-                    && (System.currentTimeMillis() - startTime) > timeoutms
+                    && duration > timeoutms
             ) {
                 wasTimeout = true
                 interrupt()
@@ -357,9 +438,10 @@ class ExecutionJob implements InterruptableJob {
         def boolean retrysuccess
         def Throwable exc
         (retrysuccess, exc) = withRetry(
-                finalizeRetryMax,
-                finalizeRetryDelay,
-                "Execution ${execution.id} finishExecution:"
+            finalizeRetryMax,
+            finalizeRetryDelay,
+            "Execution ${execution.id} finishExecution:",
+            executionService.&isApplicationShutdown
         ) {
             executionUtilService.finishExecution(execmap)
             true
@@ -386,10 +468,11 @@ class ExecutionJob implements InterruptableJob {
      * @param max maximum times to retry, or -1 for no maximum
      * @param sleep millisecond sleep between retries
      * @param identity string identifying the action
+     * @param shortcircuit optional closure called each time, if it returns true the retry loop is halted
      * @param action action to retry
      * @return true if execution of action was accomplished without exception
      */
-    def List withRetry(int max, long sleep, String identity, Closure action){
+    def List withRetry(int max, long sleep, String identity, Closure shortcircuit = null, Closure action) {
         int count=0
         boolean complete=false
         def backoff=1.5
@@ -398,7 +481,8 @@ class ExecutionJob implements InterruptableJob {
         }
         long newsleep=sleep+jitter()
         Throwable caught=null
-        while(!complete && (max>count || max<0)){
+        def isshortcircuit = shortcircuit?.call()
+        while (!complete && (max > count || max < 0) && !(isshortcircuit)) {
             if(count>0){
                 log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + newsleep + "ms")
                 try {
@@ -422,11 +506,14 @@ class ExecutionJob implements InterruptableJob {
                 caught=t
                 log.error(identity + " caught exception: ${caught.message}", caught)
             }
+            isshortcircuit = shortcircuit?.call()
         }
         if(!complete && caught){
             log.error(identity + " failed (attempts=${count}/${max}) with exception: ${caught.message}")
         }else if(complete && count>1){
             log.warn(identity + " completed after (attempts=${count}/${max})")
+        } else if (!complete && isshortcircuit) {
+            caught = new Exception("retry halted due to application shutdown")
         }
         return [complete,caught]
     }
@@ -445,7 +532,6 @@ class ExecutionJob implements InterruptableJob {
             Map execmap
     )
     {
-
         Map<String, Object> failedNodes = extractFailedNodes(execmap)
         Set<String> succeededNodes = extractSucceededNodes(execmap)
 
@@ -488,9 +574,12 @@ class ExecutionJob implements InterruptableJob {
         //attempt to save execution state, with retry, in case DB connection fails
         if(finalizeRetryMax>1) {
             (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
-                                                                "Execution ${execution.id} save result status:", action
+                                                                "Execution ${execution.id} save result status:",
+                                                                executionService.&isApplicationShutdown,
+                                                                action
             )
             if (!saveStateComplete) {
+                execution.refresh()
                 log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
             }
         }else{
@@ -500,7 +589,12 @@ class ExecutionJob implements InterruptableJob {
             //update ScheduledExecution statistics for successful execution
             def time = dateCompleted.time - execution.dateStarted.time
             def savedJobState = false
-            withRetry(statsRetryMax, statsRetryDelay, "Execution ${execution.id} update job stats (${scheduledExecutionId}):") {
+            withRetry(
+                statsRetryMax,
+                statsRetryDelay,
+                "Execution ${execution.id} update job stats (${scheduledExecutionId}):",
+                executionService.&isApplicationShutdown
+            ) {
                 savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
                 savedJobState
             }
@@ -517,6 +611,9 @@ class ExecutionJob implements InterruptableJob {
         def ScheduledExecution se=null
         ScheduledExecution.withNewSession {
             se = ScheduledExecution.get(seid)
+            if(se){
+                se.refreshOptions() //force fetch options and option values before return object
+            }
         }
 
         if (!se) {
@@ -558,5 +655,47 @@ class ExecutionJob implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid FrameworkService type: " + es.getClass().getName())
         }
         return es
+    }
+
+    /**
+     * Return evaluated timeout duration, or -1 if not set
+     * @return
+     */
+    long getNotifyAvgDurationThreshold(String notifyAvgDurationThreshold, long averageDuration, Map<String, Map<String, String>> dataContext){
+
+        if(null==notifyAvgDurationThreshold){
+            return averageDuration
+        }
+
+        if (notifyAvgDurationThreshold.contains('${')) {
+            //replace data references
+            notifyAvgDurationThreshold = DataContextUtils.replaceDataReferencesInString(notifyAvgDurationThreshold,dataContext)
+        }
+
+        //add Threshold for avg notification
+        def jobAverageDurationFinal = averageDuration
+
+        if (notifyAvgDurationThreshold?.contains('%')) {
+            def numberList = notifyAvgDurationThreshold.findAll( /-?\d+\.\d*|-?\d*\.\d+|-?\d+/ )
+            def percentageValue = 0
+            if(numberList.size() == 1) {
+                percentageValue = numberList.get(0)?.toInteger()
+            }
+
+            jobAverageDurationFinal = averageDuration + (averageDuration * (percentageValue / 100))
+
+        }else {
+            if (notifyAvgDurationThreshold?.contains('+')) {
+                def avgDurationThresholdValue = Sizes.parseTimeDuration(notifyAvgDurationThreshold.replace("+", ""), TimeUnit.MILLISECONDS)
+                jobAverageDurationFinal = averageDuration + avgDurationThresholdValue
+            } else {
+                jobAverageDurationFinal = Sizes.parseTimeDuration(notifyAvgDurationThreshold, TimeUnit.MILLISECONDS)
+                if(jobAverageDurationFinal==0){
+                    jobAverageDurationFinal = averageDuration
+                }
+            }
+        }
+
+        return jobAverageDurationFinal
     }
 }

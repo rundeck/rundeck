@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -28,6 +44,15 @@
 <%-- define form display conditions --%>
 
 <g:set var="rkey" value="${rkey?:g.rkey()}"/>
+
+<g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
+        context: 'application',
+        type: 'project',
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT],
+        any: true,
+        name: params.project
+)}"/>
+<g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'off':'on'}"/>
 
 <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
@@ -80,7 +105,7 @@
 
                 <div class="filter">
 
-                            <g:hiddenField name="max" value="${max}"/>
+                            <g:hiddenField name="max" value="-1"/>
                             <g:hiddenField name="offset" value="${offset}"/>
                             <g:if test="${params.idlist}">
                                 <div class="form-group">
@@ -106,6 +131,30 @@
                                 <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
                                              class="form-control"/>
                             </div>
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>:
+                                <br>
+                                ${params.scheduledFilter}
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="true" checked="${params.scheduledFilter==true}"/>
+                                    <g:message code="yes" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="false" checked="${params.scheduledFilter == false}"/>
+                                    <g:message code="no" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="" checked="${params.scheduledFilter == null}"/>
+                                    <g:message code="all"/>
+                                </label>
+                            </div>
+                            <g:if test="${clusterModeEnabled}">
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
+                                <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}"
+                                         class="form-control"/>
+                            </div>
+                            </g:if>
 
 
                             <div class="form-group">
@@ -120,7 +169,33 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <div class=" pull-right" >
+        <div class=" pull-right" id="jobpageactionbuttons">
+
+
+            <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
+                <span class="text-info">
+                    <i class="glyphicon glyphicon-exclamation-sign "></i>
+                    <!--ko text: defaultDisplayText()--><!--/ko-->
+                </span>
+            </span>
+            <div id="scmStatusPopoverOK" style="display: none;">
+                <!-- ko if: displayExport() -->
+                <dl>
+                    <dt><g:message code="scm.export.title"/></dt>
+                    <dd>
+                        <!--ko text: exportMessage() --><!--/ko-->
+                    </dd>
+                </dl>
+                <!-- /ko -->
+                <!-- ko if: displayImport() -->
+                <dl>
+                    <dt><g:message code="scm.import.title"/></dt>
+                    <dd>
+                        <!--ko text: importMessage() --><!--/ko-->
+                    </dd>
+                </dl>
+                <!-- /ko -->
+            </div>
 
             <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
             %{--SCM synch status--}%
@@ -170,6 +245,7 @@
                         <g:message code="job.bulk.activate.menu.label" />
                     </a>
                 </li>
+
             <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
                 <g:if test="${scmExportEnabled && scmExportActions}">
                     <li class="divider">
@@ -218,6 +294,17 @@
 
                 </g:if>
                 </g:if>
+
+            <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+
+                <li class="divider"></li>
+                <li>
+                    <a id="toggle_btn"
+                       data-toggle="modal"
+                       href="#toggle_confirm"
+                       class="">${g.message(code:'job.toggle.scm.menu.'+status)}</a>
+                </li>
+            </g:if>
             </ul>
             </div>
         </div>
@@ -301,6 +388,44 @@
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
+        <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+            <g:form controller="menu" params="[project: params.project ?: request.project]">
+                <div class="modal fade" id="toggle_confirm" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"
+                                        aria-hidden="true">&times;</button>
+                                <h4 class="modal-title"><g:message code="job.toggle.scm.confirm.panel.title" /></h4>
+                            </div>
+
+                            <div class="modal-body">
+                                <p><g:message code="job.toggle.scm.confirm.${status}"/></p>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: cancel"
+                                        data-dismiss="modal" ><g:message code="no"/></button>
+
+                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                      project="${params.project ?: request.project}">
+
+                                <span>
+                                    <g:actionSubmit controller="menu" action="projectToggleSCM"
+                                                    value="${message(code:'job.toggle.scm.button.label.'+status)}"
+                                        class="btn btn-danger"
+                                    />
+                                </span>
+                </auth:resourceAllowed>
+
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+            </g:form>
+        </g:if>
                     <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
@@ -453,7 +578,7 @@
 
                             <g:timerStart key="groupTree"/>
 
-                    <g:render template="groupTree" model="${[small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
+                    <g:render template="groupTree" model="${[jobExpandLevel:jobExpandLevel,small:params.compact?true:false,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true]}"/>
 
 
                             <g:timerEnd key="groupTree"/>

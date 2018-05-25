@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="rundeck.UtilityTagLib; rundeck.ScheduledExecution" %>
 
 <div class="floatl clear crontab">
@@ -7,6 +23,7 @@
             at <span class="cronselected" style="display:inline;"><g:enc>${scheduledExecution?.hour}</g:enc>
     :
     <g:enc>${scheduledExecution?.minute?.size()<2 ? "0"+scheduledExecution?.minute : scheduledExecution?.minute}</g:enc>
+        <g:enc>${scheduledExecution?.timeZone}</g:enc>
             <g:if test="${scheduledExecution?.seconds !='0'}">
                 : <g:enc>${scheduledExecution?.seconds?.size()<2 ? "0"+scheduledExecution?.seconds : scheduledExecution?.seconds}</g:enc>
             </g:if>

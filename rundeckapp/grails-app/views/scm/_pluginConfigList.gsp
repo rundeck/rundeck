@@ -1,8 +1,23 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
 
-<h4><g:message code="scm.${integration}.title"/></h4>
 <span class="help-block">
     <g:message code="scm.${integration}.plugins.help"/>
 </span>
+<g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
 
 <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
 %{--Disable plugin modal--}%
@@ -27,7 +42,11 @@
 
                             <div class="col-sm-10">
                                 <span class="form-control-static">
-                                    ${configuredPlugin.description.title}
+                                    <stepplugin:message
+                                            service="${serviceName}"
+                                            name="${configuredPlugin?.description.name}"
+                                            code="plugin.title"
+                                            default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
                                 </span>
                                 <g:hiddenField name="type" value="${pluginConfig.type}"/>
                                 <g:hiddenField name="project" value="${params.project}"/>
@@ -76,7 +95,11 @@
 
                             <div class="col-sm-10">
                                 <span class="form-control-static">
-                                    ${configuredPlugin?.description.title}
+                                    <stepplugin:message
+                                            service="${serviceName}"
+                                            name="${configuredPlugin?.description.name}"
+                                            code="plugin.title"
+                                            default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
                                 </span>
                                 <g:hiddenField name="type" value="${pluginConfig.type}"/>
                                 <g:hiddenField name="project" value="${params.project}"/>
@@ -101,8 +124,58 @@
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
     </g:form>
-</g:if>
 
+<g:form useToken="true">
+    <div class="modal fade" id="cleanPlugin${integration}" role="dialog" aria-labelledby="cleanPlugin${integration}ModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"
+                            aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" id="cleanPlugin${integration}ModalLabel">
+                        <g:message code="scmController.action.clean.${integration}.confirm.title" default="scmController.action.clean.${integration}.confirm.title"/>
+                    </h4>
+                </div>
+
+                <div class="modal-body container">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">
+                            <g:message code="plugin"/>:
+                        </label>
+
+                        <div class="col-sm-10">
+                            <span class="form-control-static">
+                                <stepplugin:message
+                                        service="${serviceName}"
+                                        name="${configuredPlugin?.description.name}"
+                                        code="plugin.title"
+                                        default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
+                            </span>
+                            <g:hiddenField name="type" value="${pluginConfig.type}"/>
+                            <g:hiddenField name="project" value="${params.project}"/>
+                            <g:hiddenField name="integration" value="${integration}"/>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-body">
+                    <span class="text-danger"><g:message code="plugin.disable.confirm.text"/></span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <g:message code="no"/>
+                    </button>
+                    <g:actionSubmit action="clean" value="${message(code: 'yes')}" formmethod="POST"
+                                    class="btn btn-danger"/>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+</g:form>
+    </g:if>
 <g:if test="${plugins}">
     <div class="list-group">
 
@@ -114,8 +187,16 @@
             <div class="list-group-item">
 
                 <h4 class="list-group-item-heading">
-                    ${plugins[pluginName].description.title}
-
+                    <stepplugin:pluginIcon service="${serviceName}"
+                                           name="${pluginName}"
+                                           width="24px"
+                                           height="24px"
+                    />
+                    <stepplugin:message
+                            service="${serviceName}"
+                            name="${pluginName}"
+                            code="plugin.title"
+                            default="${plugins[pluginName].description.title?:pluginName}"/>
                     <g:if test="${isConfiguredButDisabled}">
                         <span class="badge"><g:message code="badge.Disabled.title"/></span>
                     </g:if>
@@ -132,8 +213,10 @@
 
                     <g:render template="/framework/renderPluginConfig"
                               model="${[
+                                      serviceName:serviceName,
                                       values     : isConfigured ? pluginConfig.config : [:],
                                       description: plugins[pluginName].description,
+                                      messagePrefix:'setup.',
                                       hideTitle  : true
                               ]}"/>
 
@@ -169,6 +252,14 @@
 
                         </g:link>
                     </g:if>
+            <g:if test="${isConfiguredButDisabled}">
+                    <span
+                            class="btn  btn-warning"
+                            data-toggle="modal"
+                            data-target="#cleanPlugin${integration}">
+                        <g:message code="button.Clean.title"/>
+                    </span>
+            </g:if>
 
                 </div>
 

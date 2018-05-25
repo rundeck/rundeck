@@ -1,6 +1,6 @@
 name: example script-based remote script node step plugin
 version: 1.0
-rundeckPluginVersion: 1.0
+rundeckPluginVersion: 1.2
 author: Greg Schueler
 date: 12/7/12
 providers:

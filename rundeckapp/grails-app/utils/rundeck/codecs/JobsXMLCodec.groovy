@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.codecs
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
@@ -6,21 +22,6 @@ import groovy.xml.MarkupBuilder
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
-/*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *        http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 /*
 * JobsXMLCodec encapsulates encoding and decoding of the Jobs XML format.
 *
@@ -36,22 +37,49 @@ import rundeck.controllers.JobXMLException
 
 class JobsXMLCodec {
 
-    static encode = {list ->
+    static encodeStripUuid = { list ->
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list,xml)
+        JobsXMLCodec.encodeWithBuilder(list, xml, false)
         return writer.toString()
     }
-    static encodeWithBuilder={ list,xml ->
+    static encodeReplaceUuid = { list, Map replacements ->
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(list, xml, false, replacements)
+        return writer.toString()
+    }
+    static encode = { list ->
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        encodeWithBuilder(list, xml)
+        return writer.toString()
+    }
+    static encodeMaps (list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ){
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        xml.expandEmptyElements = false
+        encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
+        return writer.toString()
+    }
+
+    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
+        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds)
+    }
+
+    static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
         BuilderUtil bu = new BuilderUtil()
         bu.forceLineEndings=true
         bu.lineEndingChars='\n'
         //todo: set line ending from config?
         bu.canonical=true
         xml.joblist() {
-            list.each{ ScheduledExecution jobi->
+            list.each{ Map jobMap->
                 job{
-                    bu.mapToDom(JobsXMLCodec.convertJobMap(jobi.toMap()),delegate)
+                    bu.mapToDom(
+                            JobsXMLCodec.convertJobMap(jobMap, preserveUuid, replaceIds[jobMap.id]),
+                            delegate
+                    )
                 }
             }
         }
@@ -121,6 +149,8 @@ class JobsXMLCodec {
 
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
+        map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
+        map.multipleExecutions = XmlParserUtil.stringToBool(map.multipleExecutions, false)
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
@@ -162,11 +192,23 @@ class JobsXMLCodec {
             }
             if (map.context?.options && map.context?.options?.option) {
                 final def opts = map.context.options.remove('option')
-                def ndx = map.context.options.preserveOrder ? 0 : -1;
+                def ndx = XmlParserUtil.stringToBool(map.context.options.preserveOrder, false) ? 0 : -1;
                 map.remove('context')
                 map.options = [:]
                 if (opts && opts instanceof Map) {
                     opts = [opts]
+                }
+                def convertOptionConfig={Map oconfig->
+                    def e=oconfig.remove('entry')
+                    def confMap=[:]
+                    if(e instanceof Map){
+                        confMap[e['key']]=e['value']
+                    }else if(e instanceof Collection){
+                        e.each{
+                            confMap[it['key']] = it['value']
+                        }
+                    }
+                    confMap
                 }
                 //if preserveOrder is true, include sortIndex information
                 if (opts && opts instanceof Collection) {
@@ -183,8 +225,26 @@ class JobsXMLCodec {
                         if (null != optm.required) {
                             optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
                         }
+                        if (null != optm.multivalued) {
+                            optm.multivalued = XmlParserUtil.stringToBool(optm.remove('multivalued'), false)
+                        }
+                        if(optm.multivalued) {
+                            optm.multivaluedAllSelected = XmlParserUtil.stringToBool(
+                                    optm.remove('multivaluedAllSelected'),
+                                    false
+                            )
+                        }
+                        if(optm.isDate) {
+                            optm.isDate = XmlParserUtil.stringToBool(
+                                    optm.remove('isDate'),
+                                    false
+                            )
+                        }
                         if (ndx > -1) {
                             optm.sortIndex = ndx++;
+                        }
+                        if(optm.config && optm.config instanceof Map){
+                            optm.config=convertOptionConfig(optm.remove('config'))
                         }
                     }
                 }
@@ -199,15 +259,6 @@ class JobsXMLCodec {
             if(null!=map.nodefilters.excludeprecedence){
                 map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
             }
-            if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
-                //convert to integer
-                def value= map.nodefilters.dispatch.threadcount
-                try{
-                    map.nodefilters.dispatch.threadcount= XmlParserUtil.stringToInt(value,1)
-                }catch (NumberFormatException e){
-                    throw new JobXMLException("Not a valid threadcount: "+value)
-                }
-            }
             if(null!=map.nodefilters.dispatch.keepgoing){
                 //convert to boolean
                 def value= map.nodefilters.dispatch.keepgoing
@@ -217,6 +268,11 @@ class JobsXMLCodec {
                 //convert to boolean
                 def value= map.nodefilters.dispatch.excludePrecedence
                 map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
+            }
+            if(null!=map.nodefilters.dispatch.successOnEmptyNodeFilter){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.successOnEmptyNodeFilter
+                map.nodefilters.dispatch.successOnEmptyNodeFilter= XmlParserUtil.stringToBool(value,false)
             }
             if(map.nodesSelectedByDefault){
                 map.nodesSelectedByDefault=XmlParserUtil.stringToBool(map.nodesSelectedByDefault,false)
@@ -300,6 +356,12 @@ class JobsXMLCodec {
                 }
             }
         }
+        if(map.retry instanceof Map){
+            if(map.retry.delay){
+                map.retryDelay = map.retry.delay
+            }
+            map.retry = map.retry['<text>']
+        }
         return map
     }
     static convertXmlWorkflowToMap(Map data){
@@ -336,6 +398,11 @@ class JobsXMLCodec {
                     }
                     if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
                         cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
+                    } else if (null != cmd.jobref.dispatch) {
+                        cmd.jobref.nodefilters = [dispatch: cmd.jobref.remove('dispatch')]
+                    }
+                    if (cmd.project) {
+                        cmd.jobref.project = cmd.remove('project')
                     }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
@@ -368,6 +435,17 @@ class JobsXMLCodec {
                 if(null!= cmd.keepgoingOnSuccess){
                     cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
+                if (cmd.plugins && cmd.plugins instanceof Map && cmd.plugins.LogFilter ) {
+                    if(!(cmd.plugins.LogFilter instanceof Collection)){
+                        cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                    }
+                    cmd.plugins.LogFilter.each {
+                        if (!it.config) {
+                            //remove potential empty string result
+                            it.remove('config')
+                        }
+                    }
+                }
             }
             data.commands.each(fixup)
             data.commands.each {
@@ -379,12 +457,32 @@ class JobsXMLCodec {
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
         }
+        if (data.pluginConfig && data.pluginConfig instanceof Map
+                && data.pluginConfig?.LogFilter ) {
+            if(!(data.pluginConfig?.LogFilter instanceof Collection)){
+                data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+            }
+            data.pluginConfig.LogFilter.each {
+                if (!it.config) {
+                    //remove potential empty string result
+                    it.remove('config')
+                }
+            }
+        }
     }
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
-    static convertJobMap={Map map->
+    static convertJobMap = { Map map, boolean preserveUuid = true, String replaceId = null ->
         map.remove('project')
+        if (!preserveUuid) {
+            map.remove('id')
+            map.remove('uuid')
+            if (replaceId) {
+                map['id'] = replaceId
+                map['uuid'] = replaceId
+            }
+        }
 
         def optdata = map.remove('options')
         boolean preserveOrder=false
@@ -449,9 +547,27 @@ class JobsXMLCodec {
                     //convert 'multivalued' and delimiter to attribute
                     BuilderUtil.makeAttribute(x,'multivalued')
                     BuilderUtil.makeAttribute(x,'delimiter')
+                    BuilderUtil.makeAttribute(x, 'multivalueAllSelected')
                 }else{
                     x.remove('multivalued')
                     x.remove('delimiter')
+                    x.remove('multivalueAllSelected')
+                }
+                if(x.type) {
+                    BuilderUtil.addAttribute(x, 'type', x.remove('type'))
+                    if(x.config){
+                        def config = x.remove('config')
+                        config.keySet().sort().each { k ->
+                            def v = config[k]
+                            if (!x['config']) {
+                                x['config'] = [entry: []]
+                            }
+                            def entryMap= [key: k, value: v]
+                            BuilderUtil.makeAttribute(entryMap,'key')
+                            BuilderUtil.makeAttribute(entryMap,'value')
+                            x['config']['entry'] <<  entryMap
+                        }
+                    }
                 }
                 optslist<<x
             }
@@ -493,13 +609,18 @@ class JobsXMLCodec {
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
         }
+        if(map.retry instanceof Map && map.retry.delay){
+            map.retry = ['<text>':map.retry.retry,delay:map.retry.delay]
+            BuilderUtil.makeAttribute(map.retry,'delay')
+        }
 
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
             def convertNotificationPlugin={Map pluginMap->
                 def confMap = pluginMap.remove('configuration')
                 BuilderUtil.makeAttribute(pluginMap, 'type')
-                confMap.each { k, v ->
+                confMap.keySet().sort().each { k ->
+                    def v = confMap[k]
                     if (!pluginMap['configuration']) {
                         pluginMap['configuration'] = [entry: []]
                     }
@@ -509,7 +630,7 @@ class JobsXMLCodec {
                     pluginMap['configuration']['entry'] <<  entryMap
                 }
             }
-            map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->
+            map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
                 if(map.notification[trigger]){
                     if(map.notification[trigger]?.email){
                         def mail= map.notification[trigger].remove('email')
@@ -545,6 +666,16 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
+        if(map.pluginConfig?.LogFilter) {
+            map.pluginConfig.LogFilter.each { Map plugindef ->
+                BuilderUtil.makeAttribute(plugindef, 'type')
+                if (!plugindef.config) {
+                    //remove null or empty config map
+                    plugindef.remove('config')
+                }
+            }
+        }
+
         //convert script args values to idiosyncratic label
 
         def gencmd= { cmd, iseh=false ->
@@ -566,6 +697,11 @@ class JobsXMLCodec {
                     BuilderUtil.makeAttribute(cmd.jobref, 'group')
                 } else {
                     cmd.jobref.remove('group')
+                }
+                if (cmd.jobref.project) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'project')
+                } else {
+                    cmd.jobref.remove('project')
                 }
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
@@ -601,6 +737,15 @@ class JobsXMLCodec {
             }
             if(iseh){
                 BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
+            }
+            if(cmd.plugins?.LogFilter) {
+                cmd.plugins.LogFilter.each { Map plugindef ->
+                    BuilderUtil.makeAttribute(plugindef, 'type')
+                    if (!plugindef.config) {
+                        //remove null or empty config map
+                        plugindef.remove('config')
+                    }
+                }
             }
         }
         map.command.each(gencmd)

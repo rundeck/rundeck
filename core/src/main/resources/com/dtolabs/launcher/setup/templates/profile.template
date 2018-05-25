@@ -9,12 +9,6 @@ export PATH
 
 export JAVA_CMD=$JAVA_HOME/bin/java
 
-if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
-then
-  RUNDECK_CLI_TERSE=true
-  export RUNDECK_CLI_TERSE
-fi
-
 if test -n "$JRE_HOME"
 then
    unset JRE_HOME
@@ -32,7 +26,7 @@ export CLI_CP
 #
 # Set min/max heap size
 #
-export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -XX:MaxPermSize=256m -server"
+export RDECK_JVM="$RDECK_JVM -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server"
 
 export RDECK_SSL_OPTS="-Djavax.net.ssl.trustStore=$RDECK_BASE/etc/truststore -Djavax.net.ssl.trustStoreType=jks -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol"
 

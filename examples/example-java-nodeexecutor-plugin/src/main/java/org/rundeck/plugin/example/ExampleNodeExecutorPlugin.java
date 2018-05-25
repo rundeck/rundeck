@@ -21,6 +21,7 @@ public class ExampleNodeExecutorPlugin implements NodeExecutor {
 
     public static final String PROVIDER_NAME = "example-nodeexecutor";
 
+
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node) {
         System.out.println("Example node executor for node " + node.getNodename());
         String foo = node.getAttributes().get("foo");

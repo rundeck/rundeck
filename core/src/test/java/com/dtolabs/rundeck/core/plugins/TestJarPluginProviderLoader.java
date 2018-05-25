@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -38,7 +38,6 @@ import java.util.jar.Manifest;
 
 import junit.framework.Assert;
 
-import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
@@ -54,8 +53,6 @@ import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 public class TestJarPluginProviderLoader extends AbstractBaseTest {
     public static final String CURRENT_PLUGIN_VERSION = "1.1";
     public static final String TOO_LOW_PLUGIN_VERSION = "1.0";
-    Framework testFramework;
-    String testnode;
     private File testDir = new File("src/test/resources/com/dtolabs/rundeck/core/plugins");
     private File testJarDNE = new File("src/test/resources/com/dtolabs/rundeck/core/plugins/DNE-plugin.jar");
     private File testCachedir;
@@ -312,7 +309,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (ProviderLoaderException e) {
             assertTrue(e.getCause() instanceof PluginException);
             assertEquals(
-                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider2.class.getName() + ", with a public constructor with no parameter",
                 e.getCause().getMessage());
 
         }
@@ -379,7 +376,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         } catch (ProviderLoaderException e) {
             assertTrue(e.getCause() instanceof PluginException);
             assertEquals(
-                "Class " + testProvider1.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider1.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider1.class.getName() + ", with a public constructor with no parameter",
                 e.getCause().getMessage());
         }
     }
@@ -409,7 +406,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar11, testPluginJarCacheDirectory, testCachedir);
         // Create test jar in pluginCache
-        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar11.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-00-" + testJar11.getName());
         otherJar.createNewFile();
         otherJar.deleteOnExit();
         
@@ -423,12 +420,160 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final JarTestType1 test2 = jarPluginProviderLoader.load(service, "test2");
         assertNotNull(test2);
         assertTrue(test2 instanceof testProvider2);
-        
-        Assert.assertFalse("Expected existing cached jar to be deleted", otherJar.exists());
-        Assert.assertFalse("Expected dependency jar to be deleted", dependency.exists());
+
+        Assert.assertTrue("Expected dependency jar to be deleted", dependency.exists());
         File[] files = testPluginJarCacheDirectory.listFiles();
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files.length);
-        Assert.assertTrue("Expected cached jar to meet requirements for equivalency against original jar", jarPluginProviderLoader.isEquivalentPluginJar(files[0]));
+        Assert.assertTrue(
+                "Expected cached jar to meet requirements for equivalency against original jar",
+                jarPluginProviderLoader.isEquivalentPluginJar(files[0])
+        );
+    }
+
+    public void testExpireRemovesExistingCachedJars() throws Exception {
+        testService1 service = new testService1() {
+            @Override
+            public boolean isValidProviderClass(Class clazz) {
+                return JarTestType1.class.isAssignableFrom(clazz);
+            }
+        };
+        service.name = "TestService";
+        service.isvalid = true;
+        service.createInstance = new testProvider2();
+
+        final Class[] classes = {testProvider2.class};
+
+        final Map<String, String> entries = new HashMap<>();
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
+
+        final File testJar11 = createTestJar(entries, null, classes);
+
+        FileUtils.deleteDir(testPluginJarCacheDirectory);
+        testPluginJarCacheDirectory.mkdirs();
+
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(
+                testJar11,
+                testPluginJarCacheDirectory,
+                testCachedir
+        );
+
+
+        //valid
+        JarTestType1 test2 = jarPluginProviderLoader.load(service, "test2");
+        assertNotNull(test2);
+        assertTrue(test2 instanceof testProvider2);
+
+        File[] files = testCachedir.listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files.length);
+        Assert.assertTrue(files[0].isDirectory());
+        File[] files2 = files[0].listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files2.length);
+        Assert.assertTrue("Jar dir should be ident stamp: "+files2[0].getName(), files2[0].getName().matches("^\\d+-\\d+$"));
+        Assert.assertTrue(files2[0].isDirectory());
+        File[] files3 = files2[0].listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files3.length);
+        Assert.assertTrue("Jar dir should be cache jar file name: "+files3[0].getName(), files3[0].getName().matches("^\\d+-\\d+.*"));
+        Assert.assertTrue(
+                "Jar dir should be cache jar file name: " + files3[0].getName(),
+                files3[0].getName().endsWith(testJar11.getName())
+        );
+        Assert.assertTrue(files3[0].isFile());
+
+        Assert.assertTrue(
+                "Expected cached jar to meet requirements for equivalency against original jar",
+                jarPluginProviderLoader.isEquivalentPluginJar(files3[0])
+        );
+        test2=null;
+        jarPluginProviderLoader.expire();
+
+        File testcachedir=jarPluginProviderLoader.getFileCacheDir();
+        //all files should be removed
+        files = testcachedir.listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 0, files.length);
+    }
+    public void testExpireRemovesExistingCachedJarsAndLibs() throws Exception {
+        testService1 service = new testService1() {
+            @Override
+            public boolean isValidProviderClass(Class clazz) {
+                return JarTestType1.class.isAssignableFrom(clazz);
+            }
+        };
+        service.name = "TestService";
+        service.isvalid = true;
+        service.createInstance = new testProvider2();
+
+        final Class[] classes = {testProvider2.class};
+
+        final Map<String, String> entries = new HashMap<>();
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, classnameString(classes));
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_LIBS, "lib/fakejar.jar");
+        File[] libs = new File[1];
+        libs[0] = new File("fakejar.jar");
+        final File testJar11 = createTestJar(entries, null, classes,libs);
+
+        FileUtils.deleteDir(testPluginJarCacheDirectory);
+        testPluginJarCacheDirectory.mkdirs();
+
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(
+                testJar11,
+                testPluginJarCacheDirectory,
+                testCachedir
+        );
+
+
+        //valid
+        JarTestType1 test2 = jarPluginProviderLoader.load(service, "test2");
+        assertNotNull(test2);
+        assertTrue(test2 instanceof testProvider2);
+
+        File[] files = testCachedir.listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files.length);
+        Assert.assertTrue(files[0].isDirectory());
+        File[] files2 = files[0].listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files2.length);
+        Assert.assertTrue("Jar dir should be ident stamp: "+files2[0].getName(), files2[0].getName().matches("^\\d+-\\d+$"));
+        Assert.assertTrue(files2[0].isDirectory());
+        File[] files3 = files2[0].listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 2, files3.length);
+
+        File cachejarfile = files3[0];
+        File libDir = files3[1];
+        if(files3[0].isDirectory()){
+            libDir = files3[0];
+            cachejarfile = files3[1];
+        }
+
+        Assert.assertTrue("Jar dir should be cache jar file name: " + cachejarfile.getName(), cachejarfile.getName().matches("^\\d+-\\d+.*"));
+        Assert.assertTrue(
+                "Jar dir should be cache jar file name: " + cachejarfile.getName(),
+                cachejarfile.getName().endsWith(testJar11.getName())
+        );
+        Assert.assertTrue(cachejarfile.isFile());
+
+
+        Assert.assertTrue(
+                "Expected cached jar to meet requirements for equivalency against original jar",
+                jarPluginProviderLoader.isEquivalentPluginJar(cachejarfile)
+        );
+        Assert.assertEquals("Jar dir should be lib dir: " + libDir.getName(), "lib", libDir.getName());
+        Assert.assertTrue(libDir.isDirectory());
+
+        File[] files4 = libDir.listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files4.length);
+        Assert.assertEquals("Expected fakarjar dep: " + files4[0].getName(), "fakejar.jar", files4[0].getName());
+
+
+        test2=null;
+        jarPluginProviderLoader.expire();
+        File testcachedir=jarPluginProviderLoader.getFileCacheDir();
+
+        //all files should be removed
+        files = testcachedir.listFiles();
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 0, files.length);
     }
 
     public void testCreateProviderForClass() throws Exception {
@@ -457,7 +602,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             fail("should fail");
         } catch (PluginException e) {
             assertEquals(
-                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService",
+                "Class " + testProvider2.class.getName() + " was not a valid plugin class for service: TestService. Expected class " + testProvider2.class.getName() + ", with a public constructor with no parameter",
                 e.getMessage());
         } catch (ProviderCreationException e) {
             fail("unexpected: " + e.getMessage());
@@ -537,9 +682,12 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         File testJar = createTestJar(null, null);
         JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar,
                 testPluginJarCacheDirectory, testCachedir);
-        
-        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar.getName());
-        Assert.assertTrue("Expected jar names to be the same without timestamp", jarPluginProviderLoader.isEquivalentPluginJar(otherJar));
+
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-00-" + testJar.getName());
+        Assert.assertTrue(
+                "Expected jar names to be the same without timestamp",
+                jarPluginProviderLoader.isEquivalentPluginJar(otherJar)
+        );
     }
     
     public void testIsEquivalentPluginJarDifferentNames() throws IOException {
@@ -555,8 +703,12 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         File testJar = createTestJar(null, null);
         JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar,
                 testPluginJarCacheDirectory, testCachedir);
-        String cachedName = jarPluginProviderLoader.generateCachedJarName();
-        Assert.assertTrue("Expected cached name - mtime to be the same as original jar name", cachedName.substring(18).equals(testJar.getName()));
+        String ident = jarPluginProviderLoader.generateCachedJarIdentity();
+        String cachedName = jarPluginProviderLoader.generateCachedJarName(ident);
+        Assert.assertTrue(
+                "Expected cached name - mtime to be the same as original jar name",
+                cachedName.replaceFirst("\\d+-\\d+-", "").equals(testJar.getName())
+        );
     }
     
     public void testCreateCachedJar() throws Exception {
@@ -568,16 +720,19 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar, testPluginJarCacheDirectory, testCachedir);
         
         // Create test jar in pluginCache
-        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-" + testJar.getName());
+        File otherJar = new File(testPluginJarCacheDirectory, "20120301121249123-00-" + testJar.getName());
         otherJar.createNewFile();
         otherJar.deleteOnExit();
-        
-        jarPluginProviderLoader.createCachedJar();
-        
-        Assert.assertFalse("Expected existing cached jar to be deleted", otherJar.exists());
+        String ident = jarPluginProviderLoader.generateCachedJarIdentity();
+        jarPluginProviderLoader.createCachedJar(testPluginJarCacheDirectory,jarPluginProviderLoader.generateCachedJarName(ident));
+
+//        Assert.assertFalse("Expected existing cached jar to be deleted", otherJar.exists());
         File[] files = testPluginJarCacheDirectory.listFiles();
-        Assert.assertEquals("Expected single cached jar in plugin jar cache", 1, files.length);
-        Assert.assertTrue("Expected cached jar to meet requirements for equivalency against original jar", jarPluginProviderLoader.isEquivalentPluginJar(files[0]));
+        Assert.assertEquals("Expected single cached jar in plugin jar cache", 2, files.length);
+        Assert.assertTrue(
+                "Expected cached jar to meet requirements for equivalency against original jar",
+                jarPluginProviderLoader.isEquivalentPluginJar(files[0])
+        );
     }
     public void testCreateCachedJarInvalidDir() throws Exception {
         File testJar = createTestJar(null, null);
@@ -591,9 +746,9 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         invalidCacheDir.deleteOnExit();
 
         final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(testJar, invalidCacheDir, testCachedir);
-
+        String ident = jarPluginProviderLoader.generateCachedJarIdentity();
         try {
-            jarPluginProviderLoader.createCachedJar();
+            jarPluginProviderLoader.createCachedJar(invalidCacheDir,jarPluginProviderLoader.generateCachedJarName(ident));
             fail("Should fail to create cached jar");
         } catch (PluginException e) {
             e.printStackTrace();
@@ -633,6 +788,13 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
      */
     static File createTestJar(final Map<String, String> entries, final File test, final Class[] classes) throws
         IOException {
+        return createTestJar(entries, test, classes, null);
+    }
+    /**
+     * Create test jar file with manifest entries
+     */
+    public static File createTestJar(final Map<String, String> entries, final File test, final Class[] classes, final File[] libs) throws
+        IOException {
         final File file = null != test ? test : File.createTempFile("createTestJar", ".jar");
         if (null == test) {
             file.deleteOnExit();
@@ -651,9 +813,21 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         for (final Class aClass : classes) {
             writeClassEntry(jarstream, aClass);
         }
+        if(null!=libs){
+            for (File lib : libs) {
+                writeJarFileEntry(jarstream, lib);
+            }
+        }
         jarstream.flush();
         jarstream.close();
         return file;
+    }
+
+    private static void writeJarFileEntry(final JarOutputStream jarstream, final File lib) throws IOException {
+        final JarEntry jarEntry = new JarEntry("lib/" + lib.getName());
+        jarstream.putNextEntry(jarEntry);
+        //no content
+        jarstream.closeEntry();
     }
 
     private static void writeClassEntry(JarOutputStream jarstream, Class aClass) throws IOException {
@@ -671,7 +845,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
     }
 
     public static class testService1 implements PluggableService<JarTestType1> {
-        boolean isvalid;
+        private boolean isvalid;
         JarTestType1 createScriptInstance;
         private String name;
 
@@ -679,7 +853,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             return isvalid;
         }
 
-        JarTestType1 createInstance;
+        private JarTestType1 createInstance;
 
         public <X extends JarTestType1> JarTestType1 createProviderInstance(Class<X> clazz, String name) throws PluginException,
             ProviderCreationException {
@@ -698,6 +872,26 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         public String getName() {
             return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isIsvalid() {
+            return isvalid;
+        }
+
+        public void setIsvalid(boolean isvalid) {
+            this.isvalid = isvalid;
+        }
+
+        public JarTestType1 getCreateInstance() {
+            return createInstance;
+        }
+
+        public void setCreateInstance(JarTestType1 createInstance) {
+            this.createInstance = createInstance;
         }
     }
 

@@ -10,8 +10,8 @@ projectName=""
 jobName=""
 
 generate_projectName_and_jobName(){
-    projectName="project-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
-    jobName="job-$(date -j -f "%a %b %d %T %Z %Y" "`date`" "+%s")"
+    projectName="project-$RANDOM"
+    jobName="job-$RANDOM"
 }
 
 create_job(){

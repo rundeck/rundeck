@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.ProviderService;
@@ -40,6 +56,16 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
     @Override
     public <X extends T> T createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
+    }
+
+    @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        final ServiceProviderLoader pluginManager = getPluginManager();
+        if (null != pluginManager) {
+            return pluginManager.loadCloseableProvider(this, providerName);
+        } else {
+            throw new MissingProviderException("Provider not found", getName(), providerName);
+        }
     }
 
     public T providerOfType(final String providerName) throws ExecutionServiceException {

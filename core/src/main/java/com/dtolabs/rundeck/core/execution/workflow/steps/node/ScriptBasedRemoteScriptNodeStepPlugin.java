@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -27,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.data.MutableDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.PluginException;
@@ -39,7 +39,6 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 
 
@@ -81,31 +80,34 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         final ScriptPluginProvider provider = getProvider();
         Description description = getDescription();
 
-        Map<String, Object> instanceData = new HashMap<>(configuration);
-        Map<String, String> data = toStringStringMap(instanceData);
+        Map<String, String> configData = toStringStringMap(configuration);
         try {
             loadContentConversionPropertyValues(
-                    data,
+                    configData,
                     context.getExecutionContext(),
                     description.getProperties()
             );
         } catch (ConfigurationException e) {
-            throw new NodeStepException(e.getMessage(), StepFailureReason.ConfigurationFailure, node.getNodename());
+            throw new NodeStepException(e.getMessage(), e, StepFailureReason.ConfigurationFailure, node.getNodename());
         }
 
-        final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
-                "config",
-                data,
-                context.getDataContext()
-        );
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        final MutableDataContext finalDataContext = DataContextUtils.context("config", configData);
+        finalDataContext.merge(context.getDataContextObject());
+
+        //NB: dont generate final args yet, they will be constructed by node dispatch layer
+        final String args = provider.getScriptArgs();
+        String[] argsarr = provider.getScriptArgsArray();
+        if (null != args) {
+            argsarr = args.split(" ");
+        }
+        argsarr = finalDataContext.replaceDataReferences(argsarr);
 
         boolean useOriginalFileExtension = true;
         if (provider.getMetadata().containsKey(SCRIPT_FILE_USE_EXTENSION_META_KEY)) {
             useOriginalFileExtension = getMetaBoolean(
                     provider,
                     SCRIPT_FILE_USE_EXTENSION_META_KEY,
-                    useOriginalFileExtension
+                    true
             );
         }
         String fileExtension = null;
@@ -121,10 +123,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
 
         return createFileGeneratedScript(
                 provider.getScriptFile(),
-                finalargs,
+                argsarr,
                 fileExtension,
                 provider.getScriptInterpreter(),
-                provider.getInterpreterArgsQuoted()
+                provider.getInterpreterArgsQuoted(),
+                configData
         );
     }
 
@@ -152,7 +155,8 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             final String[] args,
             final String fileExtension,
             final String scriptInterpreter,
-            final boolean interpreterArgsQuoted
+            final boolean interpreterArgsQuoted,
+            final Map<String, String> configData
     )
     {
 
@@ -190,6 +194,11 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             @Override
             public boolean isInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
+            }
+
+            @Override
+            public Map<String, String> getConfigData() {
+                return configData;
             }
         };
     }

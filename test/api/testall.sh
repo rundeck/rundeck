@@ -20,16 +20,18 @@ if [ "$COLOR" == "yes" ] ; then
     GREEN="\033[0;32m"
     RED="\033[0;31m"
     COLOR_NONE="\033[0m"
-    TEST_OK="${GREEN}OK${COLOR_NONE}"
+    TEST_OK="${GREEN}OK${COLOR_NONE}    "
     TEST_FAIL="${RED}FAILED${COLOR_NONE}"
 fi
 test_ok(){
-    echo -e "$1: ${TEST_OK}"
+    echo -e "${TEST_OK} $1"
 }
 test_fail(){
-    echo -e "$1: ${TEST_FAIL}"
+    echo -e "${TEST_FAIL} $1"
 }
 myexit=0
+
+
 for i in $(ls ./unauthorized-test*.sh)  ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
@@ -48,7 +50,10 @@ done
 rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
-TESTS=$(ls ./test-*.sh)
+# prepare a new project
+#$SHELL $SRC_DIR/prepare.sh ${URL} 'test'
+
+TESTS=$(ls test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
     TESTS=$(ls $TEST_NAME)
 fi
@@ -56,9 +61,14 @@ for i in $TESTS ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
+        if [ -f $DIR/curl.out ] ; then
+            cat $DIR/curl.out >>  $DIR/${tname}.output
+        fi
         let myexit=2
         test_fail "$i"
+        echo "*****************" >> $DIR/testall.output
         echo "${i}: FAILED" >> $DIR/testall.output
+        echo "*****************" >> $DIR/testall.output
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
         test_ok "$i"

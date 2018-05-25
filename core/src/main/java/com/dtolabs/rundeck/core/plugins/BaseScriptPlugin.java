@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -25,6 +24,8 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
@@ -79,7 +80,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
             throws IOException, InterruptedException, ConfigurationException
     {
         Description pluginDesc = getDescription();
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+        final DataContext localDataContext = createScriptDataContext(
                 framework,
                 executionContext.getFrameworkProject(),
                 executionContext.getDataContext()
@@ -92,13 +93,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
                 executionContext.getExecutionContext(),
                 pluginDesc.getProperties()
         );
+        localDataContext.merge(new BaseDataContext("config", data));
 
-        final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
-                "config",
-                data,
-                localDataContext
-        );
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        final String[] finalargs = createScriptArgs(localDataContext);
 
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
                 finalargs));
@@ -107,7 +104,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         if (isMergeEnvVars()) {
             envMap.putAll(getScriptExecHelper().loadLocalEnvironment());
         }
-        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(finalDataContext));
+        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(localDataContext));
         return getScriptExecHelper().runLocalCommand(
                 finalargs,
                 envMap,
@@ -148,12 +145,13 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * @param context orig context
      * @return new data context
      */
-    protected Map<String, Map<String, String>> createScriptDataContext(final Framework framework,
-                                                                       final String project,
-                                                                       final Map<String, Map<String, String>> context) {
-        final Map<String, Map<String, String>> localDataContext
-            = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
-        localDataContext.get("plugin").putAll(createPluginDataContext());
+    protected DataContext createScriptDataContext(
+            final Framework framework,
+            final String project,
+            final Map<String, Map<String, String>> context) {
+        BaseDataContext localDataContext = new BaseDataContext();
+        localDataContext.merge(ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project));
+        localDataContext.group("plugin").putAll(createPluginData());
         localDataContext.putAll(context);
         return localDataContext;
     }
@@ -184,17 +182,16 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * @param dataContext  data
      * @return arglist
      */
-    protected ExecArgList createScriptArgsList(final Map<String, Map<String,
-            String>> dataContext) {
+    protected ExecArgList createScriptArgsList(final Map<String, Map<String, String>> dataContext) {
 
         final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
-        final String scriptargs = null!=plugin.getScriptArgs()?
-                DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext) :
-                    null;
-        final String[] scriptargsarr = null!=plugin.getScriptArgsArray()?
-                DataContextUtils.replaceDataReferences(plugin.getScriptArgsArray(), dataContext) :
-                    null;
+        final String scriptargs = null != plugin.getScriptArgs() ?
+                                  DataContextUtils.replaceDataReferencesInString(plugin.getScriptArgs(), dataContext) :
+                                  null;
+        final String[] scriptargsarr = null!=plugin.getScriptArgsArray() ?
+                                       DataContextUtils.replaceDataReferencesInArray(plugin.getScriptArgsArray(), dataContext) :
+                                       null;
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 

@@ -1,15 +1,11 @@
-package rundeck
-
-import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,6 +14,10 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
  * limitations under the License.
  */
 
+package rundeck
+
+import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 /*
  * ScheduledExecutionFilter.java
  * 
@@ -37,6 +37,9 @@ public class ScheduledExecutionFilter {
 
     String idlist
 
+    String scheduledFilter
+    String serverNodeUUIDFilter
+
     static belongsTo = [user:User]
     static constraints={
         name(blank: false, matches: /^[^<>&'"\/]+$/)
@@ -46,10 +49,17 @@ public class ScheduledExecutionFilter {
         groupPath(nullable:true)
         descFilter(nullable:true)
         loglevelFilter(nullable:true)
+        scheduledFilter(nullable:true)
+        serverNodeUUIDFilter(nullable:true)
     }
 
     public ScheduledExecutionQuery createQuery(){
         ScheduledExecutionQuery query = new ScheduledExecutionQuery(this.properties.findAll{it.key=~/(.*Filter|groupPath|idlist)$/})
+        if(scheduledFilter){
+            query.scheduledFilter=Boolean.valueOf(this.scheduledFilter)
+        }else{
+            query.scheduledFilter=null
+        }
         return query
     }
 
@@ -59,7 +69,7 @@ public class ScheduledExecutionFilter {
         return filter
     }
     public void fix(){
-        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter'].each{
+        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter', 'scheduledFilter', 'serverNodeUUIDFilter'].each{
             if(!this[it]){
                 this[it]=''
             }

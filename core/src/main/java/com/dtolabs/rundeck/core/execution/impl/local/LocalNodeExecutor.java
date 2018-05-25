@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureRea
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.ExecTask;
+import org.apache.tools.ant.types.RedirectorElement;
 
 import java.util.Map;
 
@@ -66,13 +67,17 @@ public class LocalNodeExecutor implements NodeExecutor {
         AntSupport.addAntBuildListener(listener, project);
 
         String propName = System.currentTimeMillis() + ".node." + node.getNodename() + ".LocalNodeExecutor.result";
-
+        listener.log(3, "using charset: " + context.getCharsetEncoding());
         boolean success = false;
         final ExecTask execTask;
         //perform jsch sssh command
         try {
-            execTask = buildExecTask(project, parameterGenerator.generate(node, true, null, command),
-                context.getDataContext());
+            execTask = buildExecTask(project,
+                                     parameterGenerator.generate(node, true, null, command),
+                                     context.getDataContext(),
+                                     context.getCharsetEncoding(),
+                                     new ExecTask()
+            );
         } catch (ExecutionException e) {
             return NodeExecutorResultImpl.createFailure(StepFailureReason.ConfigurationFailure,
                                                         e.getMessage(),
@@ -96,6 +101,9 @@ public class LocalNodeExecutor implements NodeExecutor {
 
             }
         }
+        if(null!=context.getOutputContext()){
+            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+        }
         final boolean status = 0==result;
         if(status) {
             return NodeExecutorResultImpl.createSuccess(node);
@@ -105,9 +113,13 @@ public class LocalNodeExecutor implements NodeExecutor {
         }
     }
 
-    private ExecTask buildExecTask(Project project, ExecTaskParameters taskParameters,
-                                   Map<String, Map<String, String>> dataContext) {
-        final ExecTask execTask = new ExecTask();
+    public static ExecTask buildExecTask(
+            Project project, ExecTaskParameters taskParameters,
+            Map<String, Map<String, String>> dataContext,
+            final String charset,
+            final ExecTask task
+    ) {
+        final ExecTask execTask = task;
         execTask.setTaskType("exec");
         execTask.setFailonerror(false);
         execTask.setProject(project);
@@ -115,8 +127,7 @@ public class LocalNodeExecutor implements NodeExecutor {
         execTask.setExecutable(taskParameters.getCommandexecutable());
         String[] commandargs = taskParameters.getCommandArgs();
         if(null!=commandargs){
-            for (int i = 0; i < commandargs.length; i++) {
-                String commandarg = commandargs[i];
+            for (String commandarg : commandargs) {
                 execTask.createArg().setValue(commandarg);
             }
         }
@@ -124,6 +135,14 @@ public class LocalNodeExecutor implements NodeExecutor {
         //add Env elements to pass environment variables to the exec
 
         DataContextUtils.addEnvVarsFromContextForExec(execTask, dataContext);
+
+        if(charset!=null) {
+            //set input encoding as specified
+            RedirectorElement redirectorElement = new RedirectorElement();
+            redirectorElement.setInputEncoding(charset);
+            execTask.addConfiguredRedirector(redirectorElement);
+        }
+
         return execTask;
     }
 

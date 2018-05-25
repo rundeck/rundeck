@@ -1,4 +1,5 @@
 .*
+!.github
 !.gitignore
 *~
 *.swp
@@ -10,6 +11,8 @@
 /bin/
 **/build
 **/*/build
+**/out
+**/*/out
 /cobertura.ser
 /gradle-cache
 /rundeckapp/stacktrace.log
@@ -30,6 +33,7 @@ rundeckapp/env.bash
 /rundeckapp/var/tmp/*
 /packaging/dist
 /packaging/rpmdist
+/packaging/debdist
 /docs/*/manpages/man*/*.gz
 /docs/*/manpages/man*/*.1
 /docs/*/manpages/man*/*.5
@@ -42,3 +46,5 @@ rundeckapp/env.bash
 /grails/
 /out/
 /scratch/
+rundeckapp/out
+rundeckapp/rundeck-runtime

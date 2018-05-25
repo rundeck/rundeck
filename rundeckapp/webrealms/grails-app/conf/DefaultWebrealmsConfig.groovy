@@ -1,3 +1,0 @@
-webrealms{
-    //enter configuration here
-}

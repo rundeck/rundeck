@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -27,20 +27,22 @@ import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,7 +85,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
-        final HashSet<String> nodeNames = new HashSet<String>();
+        final HashSet<String> nodeNames = new HashSet<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
 
         Project project = new Project();
@@ -98,15 +100,15 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<>(
+                rankAscending ? comparator : Collections.reverseOrder(comparator));
 
         orderedNodes.addAll(nodes1);
         for (final INodeEntry node: orderedNodes) {
@@ -137,7 +139,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 //parallel step failed
                 context.getExecutionListener().log(3, "Dispatch failed on node: " +df.getNode());
             }else{
-                context.getExecutionListener().log(0, e.getMessage());
+                context.getExecutionListener().log(0, "Parallel node dispatch failed: " + e.getMessage());
                 if (!keepgoing) {
                     throw new DispatcherException(e);
                 }
@@ -212,13 +214,33 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
-                    context, item, node);
-                if (!interpreterResult.isSuccess()) {
-                    failureMap.put(node.getNodename(), interpreterResult);
+                ContextView stepContextView = ContextView.nodeStep(
+                        context.getStepNumber(),
+                        node.getNodename()
+                );
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(stepContextView);
+                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(
+                        outputContext).build();
+
+                NodeStepResult result = framework.getExecutionService().executeNodeStep(
+                        nodeDataContext,
+                        item,
+                        node
+                );
+                WFSharedContext sharedContext = outputContext.getSharedContext();
+                if (null != result.getSharedContext()) {
+                    sharedContext.merge(result.getSharedContext());
                 }
-                resultMap.put(node.getNodename(), interpreterResult);
-                return interpreterResult;
+                DataContext data = sharedContext.getData(stepContextView);
+                if (data != null) {
+                    sharedContext.merge(ContextView.node(node.getNodename()), data);
+                }
+                result = NodeStepDataResultImpl.with(result, sharedContext);
+                if (!result.isSuccess()) {
+                    failureMap.put(node.getNodename(), result);
+                }
+                resultMap.put(node.getNodename(), result);
+                return result;
             } catch (NodeStepException e) {
                 NodeStepResultImpl result = new NodeStepResultImpl(e,
                                                                    e.getFailureReason(),
@@ -241,8 +263,8 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
      * @param project the project
      */
     public static void configureNodeContextThreadLocalsForProject(final Project project) {
-        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<String>();
-        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<String>();
+        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<>();
+        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<>();
         if (null == project.getReference(NODE_NAME_LOCAL_REF_ID)) {
             project.addReference(NODE_NAME_LOCAL_REF_ID, localNodeName);
         }

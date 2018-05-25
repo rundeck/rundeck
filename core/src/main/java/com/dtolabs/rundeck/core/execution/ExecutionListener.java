@@ -1,17 +1,17 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,35 +43,18 @@ import java.util.Map;
  * @version $Revision$
  */
 public interface ExecutionListener extends PluginLogger {
-    /**
-     * @return true if output should be terse and not prefixed
-     */
-    public boolean isTerse();
 
     /**
-     * @return log message format
+     * Ignore error messages and transform them into standard output
+     * @param ignore
      */
-    public String getLogFormat();
-
-    /**
-     * Log a message
-     *
-     * @param level   the log level
-     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
-     *                are.
-     */
-    public void log(final int level, final String message);
-
-    public void event(String eventType, final String message, final Map eventMeta);
-
+    public void ignoreErrors(boolean ignore);
     /**
      * Return a listener for failed node list
      *
      * @return listener
      */
     public FailedNodesListener getFailedNodesListener();
-
-
 
     /**
      * Called before execution of command on node
@@ -136,6 +120,14 @@ public interface ExecutionListener extends PluginLogger {
     public void beginFileCopyFile(final ExecutionContext context, File input, INodeEntry node);
 
     /**
+     * Begin file copy of file
+     * @param context context
+     * @param files files
+     * @param node node
+     */
+    public void beginFileCopyFile(final ExecutionContext context, List<File> files, INodeEntry node);
+
+    /**
      * Begin file copy of string
      * @param context context
      * @param input string
@@ -150,6 +142,14 @@ public interface ExecutionListener extends PluginLogger {
      * @param node node
      */
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
+
+    /**
+     * Finish file copy
+     * @param result result
+     * @param context context
+     * @param node node
+     */
+    public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node);
 
 
     /**

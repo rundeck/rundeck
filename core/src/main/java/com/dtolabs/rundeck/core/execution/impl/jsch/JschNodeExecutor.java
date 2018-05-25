@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -26,18 +26,13 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.execution.utils.BasicSource;
-import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
-import com.dtolabs.rundeck.core.execution.utils.PasswordSource;
-import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
+import com.dtolabs.rundeck.core.execution.utils.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -76,7 +71,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         "Authentication failure connecting to node: \"{0}\". Make sure your resource definitions and credentials are up to date.";
     public static final String FWK_PROP_AUTH_FAIL_MSG = "framework.messages.error.ssh.authfail";
     public static final String FWK_PROP_AUTH_FAIL_MSG_DEFAULT =
-        "Authentication failure connecting to node: \"{0}\". Password incorrect.";
+        "Authentication failure connecting to node: \"{0}\". Could not authenticate.";
     public static final String NODE_ATTR_SSH_KEYPATH = "ssh-keypath";
     public static final String NODE_ATTR_SSH_KEY_RESOURCE = "ssh-key-storage-path";
     public static final String NODE_ATTR_SSH_PASSWORD_STORAGE_PATH= "ssh-password-storage-path";
@@ -105,6 +100,13 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH = "ssh-key-passphrase-storage-path";
     public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
+    public static final String FWK_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH= FWK_PROP_PREFIX + NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH;
+    public static final String PROJ_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH;
+
+
+    public static final String NODE_ATTR_ALWAYS_SET_PTY = "always-set-pty";
+    public static final String FWK_PROP_SET_PTY = FWK_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
+    public static final String PROJ_PROP_SET_PTY = PROJ_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
 
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
     public static final String PROJ_PROP_SSH_AUTHENTICATION = PROJ_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
@@ -136,9 +138,28 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
+    /**
+     * deprecated Global command & connection timeout framework property
+     */
+    public static final String SSH_TIMEOUT_PROP = "framework.ssh.timeout";
+
+    public static final String NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP = "ssh-command-timeout";
+    public static final String FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP = "framework.ssh.command.timeout";
+
+    public static final String NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP = "ssh-connect-timeout";
+    public static final String FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP = "framework.ssh.connect.timeout";
+
+
+    public static final String PROJ_PROP_CON_TIMEOUT = PROJ_PROP_PREFIX + NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP;
+    public static final String FWK_PROP_CON_TIMEOUT = FWK_PROP_PREFIX + NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP;
+
+    public static final String PROJ_PROP_COMMAND_TIMEOUT = PROJ_PROP_PREFIX + NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP;
+    public static final String FWK_PROP_COMMAND_TIMEOUT = FWK_PROP_PREFIX + NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP;
+
     public static final String SSH_CONFIG_PREFIX = "ssh-config-";
     public static final String FWK_SSH_CONFIG_PREFIX = FWK_PROP_PREFIX + SSH_CONFIG_PREFIX;
     public static final String PROJ_SSH_CONFIG_PREFIX = PROJ_PROP_PREFIX + SSH_CONFIG_PREFIX;
+
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -148,8 +169,12 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_KEYSTORE_PATH = "keystoragepath";
     public static final String CONFIG_PASSSTORE_PATH = "passwordstoragepath";
+    public static final String CONFIG_PASSPHRASE_STORE_PATH = "passphrasestoragepath";
     public static final String CONFIG_SUDO_PASSSTORE_PATH = "sudopasswordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
+    public static final String CONFIG_SET_PTY = "always-set-pty";
+    public static final String CONFIG_CON_TIMEOUT = "ssh-connection-timeout";
+    public static final String CONFIG_COMMAND_TIMEOUT = "ssh-command-timeout";
 
     static final Description DESC ;
 
@@ -178,10 +203,41 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-data-type=password")
             .build();
 
+
+    static final Property SSH_PASSPHRASE_STORAGE_PROP = PropertyBuilder.builder()
+             .string(CONFIG_PASSPHRASE_STORE_PATH)
+             .required(false)
+             .title("SSH Key Passphrase Storage Path")
+             .description("Path to the key's Passphrase to use within Rundeck Storage. E.g. \"keys/path/my.password\". Can be overridden by a Node attribute named 'ssh-key-passphrase-storage-path'.")
+             .renderingOption(StringRenderingConstants.SELECTION_ACCESSOR_KEY,
+                              StringRenderingConstants.SelectionAccessor.STORAGE_PATH)
+             .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
+             .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-data-type=password")
+             .build();
+
     public static final Property SSH_AUTH_TYPE_PROP = PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
             "Type of SSH Authentication to use",
             true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
             .AuthenticationType.values()), null, null);
+
+    public static final Property ALWAYS_SET_PTY = PropertyUtil.bool(CONFIG_SET_PTY, "Force PTY",
+            "Always force use of new pty",
+            false, "false");
+
+    public static final Property PROP_CON_TIMEOUT = PropertyUtil.longProp(CONFIG_CON_TIMEOUT, "Connection Timeout",
+                                                                          "SSH Connection timeout in milliseconds. (0" +
+                                                                          " for no timeout)",
+                                                                          false, "0"
+    );
+
+    public static final Property PROP_COMMAND_TIMEOUT = PropertyUtil.longProp(
+            CONFIG_COMMAND_TIMEOUT,
+            "Command Timeout",
+            "Maximum duration of commands: timeout " +
+            "in milliseconds. (0 for no timeout)",
+            false,
+            "0"
+    );
 
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
@@ -193,7 +249,11 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(SSH_KEY_FILE_PROP);
         builder.property(SSH_KEY_STORAGE_PROP);
         builder.property(SSH_PASSWORD_STORAGE_PROP);
+        builder.property(SSH_PASSPHRASE_STORAGE_PROP);
         builder.property(SSH_AUTH_TYPE_PROP);
+        builder.property(ALWAYS_SET_PTY);
+        builder.property(PROP_CON_TIMEOUT);
+        builder.property(PROP_COMMAND_TIMEOUT);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
@@ -201,8 +261,19 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_KEY_RESOURCE);
         builder.mapping(CONFIG_PASSSTORE_PATH, PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.frameworkMapping(CONFIG_PASSSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
+        builder.mapping(CONFIG_PASSPHRASE_STORE_PATH, PROJ_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH);
+        builder.frameworkMapping(CONFIG_PASSPHRASE_STORE_PATH, FWK_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
+
+        builder.mapping(CONFIG_SET_PTY, PROJ_PROP_SET_PTY);
+        builder.frameworkMapping(CONFIG_SET_PTY, FWK_PROP_SET_PTY);
+
+        builder.mapping(CONFIG_CON_TIMEOUT, PROJ_PROP_CON_TIMEOUT);
+        builder.frameworkMapping(CONFIG_CON_TIMEOUT, FWK_PROP_CON_TIMEOUT);
+
+        builder.mapping(CONFIG_COMMAND_TIMEOUT, PROJ_PROP_COMMAND_TIMEOUT);
+        builder.frameworkMapping(CONFIG_COMMAND_TIMEOUT, FWK_PROP_COMMAND_TIMEOUT);
 
         DESC=builder.build();
     }
@@ -221,6 +292,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 node
             );
         }
+        boolean forceNewPty = ResolverUtil.resolveBooleanProperty(CONFIG_SET_PTY,false,
+                node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework());
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
@@ -231,7 +305,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         //perform jsch sssh command
         final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework,
                                                                                    context);
-        final int timeout = nodeAuthentication.getSSHTimeout();
         try {
 
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
@@ -288,7 +361,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             //first sudo prompt responder
             ResponderTask responder = new ResponderTask(sudoResponder, responderInput, responderOutput, resultHandler);
 
-            /**
+            /*
              * Callable will be executed by the ExecutorService
              */
             final Callable<ResponderTask.ResponderResult> responderResultCallable;
@@ -325,7 +398,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             //set up SSH execution
-            sshexec.setAllocatePty(true);
+            if(!forceNewPty){
+                sshexec.setAllocatePty(true);
+            }
             sshexec.setInputStream(jschInput);
             sshexec.setSecondaryStream(jschOutput);
             sshexec.setDisconnectHolder(resultHandler);
@@ -363,14 +438,26 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
         String errormsg = null;
         FailureReason failureReason=null;
+        final long contimeout = nodeAuthentication.getConnectTimeout();
+        final long commandtimeout = nodeAuthentication.getCommandTimeout();
         try {
+            if(forceNewPty) {
+                sshexec.setAllocatePty(true);
+            }
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            final ExtractFailure extractJschFailure = extractFailure(e,node, timeout, framework);
+            final ExtractFailure extractJschFailure = extractFailure(e, node, commandtimeout, contimeout, framework);
             errormsg = extractJschFailure.getErrormsg();
             failureReason = extractJschFailure.getReason();
-            context.getExecutionListener().log(0, errormsg);
+            context.getExecutionListener().log(
+                3,
+                String.format(
+                    "SSH command execution error: %s: %s",
+                    failureReason,
+                    errormsg
+                )
+            );
         }
         if (null != responderCleanup) {
             responderCleanup.run();
@@ -395,7 +482,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
         final int resultCode = sshexec.getExitStatus();
-
+        if(null!=context.getOutputContext()){
+            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(resultCode));
+        }
         if (success) {
             return NodeExecutorResultImpl.createSuccess(node);
         } else {
@@ -429,21 +518,36 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         SSHProtocolFailure
     }
 
-    static ExtractFailure extractFailure(BuildException e, INodeEntry node, int timeout, Framework framework) {
+    static ExtractFailure extractFailure(
+            BuildException e,
+            INodeEntry node,
+            long commandTimeout,
+            long connectTimeout,
+            Framework framework
+    )
+    {
         String errormsg;
         FailureReason failureReason;
 
-        if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
+        if (e.getMessage().contains(ExtSSHExec.COMMAND_TIMEOUT_MESSAGE)) {
             errormsg =
-                "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
-                + timeout + "ms), connection dropped";
+                    "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
+                    + commandTimeout + "ms), connection dropped";
+            failureReason = NodeStepFailureReason.ConnectionTimeout;
+        } else if (e.getMessage().contains(ExtSSHExec.CON_TIMEOUT_MESSAGE)) {
+            errormsg =
+                    "Failed execution for node: " + node.getNodename() + ": Connection Timeout period exceeded (after "
+                    + connectTimeout + "ms).";
             failureReason = NodeStepFailureReason.ConnectionTimeout;
         } else if (null != e.getCause() && e.getCause() instanceof JSchException) {
             JSchException jSchException = (JSchException) e.getCause();
-            return extractJschFailure(node, timeout, jSchException, framework);
+            return extractJschFailure(node, commandTimeout, connectTimeout, jSchException, framework);
         } else if (e.getMessage().contains("Remote command failed with exit status")) {
             errormsg = e.getMessage();
             failureReason = NodeStepFailureReason.NonZeroResultCode;
+        } else if (null != e.getCause() && e.getCause() instanceof InterruptedException) {
+            failureReason = StepFailureReason.Interrupted;
+            errormsg = "Connection was interrupted";
         } else {
             failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();
@@ -452,7 +556,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
     static ExtractFailure extractJschFailure(final INodeEntry node,
-                                             final int timeout,
+                                             final long commandTimeout,
+                                             final long connectionTimeout,
                                              final JSchException jSchException, final Framework framework) {
         String errormsg;
         FailureReason reason;
@@ -485,7 +590,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             } else if (cause instanceof UnknownHostException) {
                 reason = NodeStepFailureReason.HostNotFound;
             } else if (cause instanceof SocketTimeoutException) {
-                errormsg = "Connection Timeout (after " + timeout + "ms): " + cause.getMessage();
+                errormsg = "Connection Timeout (after " + connectionTimeout + "ms): " + cause.getMessage();
                 reason = NodeStepFailureReason.ConnectionTimeout;
             } else if (cause instanceof SocketException) {
                 reason = NodeStepFailureReason.ConnectionFailure;

@@ -1,11 +1,11 @@
 %{--
-  - Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
   - You may obtain a copy of the License at
   -
-  -        http://www.apache.org/licenses/LICENSE-2.0
+  -     http://www.apache.org/licenses/LICENSE-2.0
   -
   - Unless required by applicable law or agreed to in writing, software
   - distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,7 @@
   --}%
  <%--
     _pluginConfigProperty.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 7/28/11 12:01 PM
  --%>
@@ -36,12 +36,16 @@
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
-<g:unless test="${outofscopeOnly && propScope?.isInstanceLevel()}">
+<g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
 <div class="form-group ${enc(attr:hasError)}">
-
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
-        <g:enc>${prop.title?:prop.name}</g:enc>:
+        <stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix}property.${prop.name}.title"
+                messagesType="${messagesType}"
+                default="${prop.title ?: prop.name}"/>:
     </label>
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
@@ -54,7 +58,12 @@
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
-                <g:enc>${prop.title ?: prop.name}</g:enc>
+                <stepplugin:message
+                        service="${service}"
+                        name="${provider}"
+                        code="${messagePrefix}property.${prop.name}.title"
+                        messagesType="${messagesType}"
+                        default="${prop.title ?: prop.name}"/>
             </label>
         </div>
     </div>
@@ -62,43 +71,110 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <label class="${labelColType}   ${prop.required ? 'required' : ''}"
-           for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc></label>
+           for="${enc(attr: fieldid)}"><stepplugin:message
+            service="${service}"
+            name="${provider}"
+            code="${messagePrefix}property.${prop.name}.title"
+            messagesType="${messagesType}"
+            default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
+    <g:set var="inputValues" value="${(prop.selectLabels ?: [:])}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <div class="${valueColTypeSplitA}">
-        <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                     id="${fieldid}" size="100" class="${formControlType}"/>
+        <g:textField name="${fieldname}" value="${inputValues&&null!=inputValues[prop.name]?inputValues[prop.name]:prop.defaultValue}"
+                     id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">
-        <g:select name="${fieldid+'_sel'}" from="${prop.selectValues}" id="${fieldid}"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+            <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+            <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+            <g:set var="propSelectValues" value="${selectValues.collect {
+                [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
+            }}"/>
+        <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
+                    optionKey="key" optionValue="value"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
                   noSelection="['':'-choose a value-']"
             onchange="if(this.value){\$('${fieldid}').value=this.value;}"
             class="${formControlType}"
         />
         </div>
     </g:if>
-    <g:elseif test="${prop.required}">
-        <div class="${valueColType}">
-        <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                  class="${formControlType}"/>
-        </div>
-    </g:elseif>
     <g:else>
+        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+        <g:set var="propSelectValues"
+               value="${selectValues.collect { [key: it.encodeAsHTML(), value: stepplugin.messageText(
+                   service: service,
+                   name: provider,
+                   messagesType:messagesType,
+                   code: (messagePrefix?:'')+'property.' + prop.name + '.options.'+it+'.label',
+                   default:propSelectLabels[it] ?: it)] }}"/>
+        <g:set var="noSelectionValue" value="${prop.required ? null : ['':'-none selected-']}"/>
         <div class="${valueColType}">
-        <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}" noSelection="['':'-none selected-']"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"
+                  optionKey="key" optionValue="value"
+                  noSelection="${ noSelectionValue }"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
                   class="${formControlType}"/>
         </div>
     </g:else>
 </g:elseif>
+    <g:elseif test="${prop.type.toString() == 'Options'}">
+        <g:set var="fieldid" value="${g.rkey()}"/>
+        <label class="${labelColType}   ${prop.required ? 'required' : ''}"
+               for="${enc(attr: fieldid)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix}property.${prop.name}.title"
+                messagesType="${messagesType}"
+                default="${prop.title ?: prop.name}"/></label>
+
+        <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
+
+        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+        <g:set var="propSelectValues"
+               value="${selectValues.collect { [value: it.encodeAsHTML(), label: stepplugin.messageText(
+                   service: service,
+                   name: provider,
+                   code: (messagePrefix?:'')+'property.' + prop.name + '.options.'+it+'.label',
+                   messagesType:messagesType,
+                   default:propSelectLabels[it] ?: it)] }}"/>
+        <g:set var="noSelectionValue" value="${prop.required ? null : ['': '-none selected-']}"/>
+
+<g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+<g:set var="defvalset" value="${defval? defval.split(', *') :[] }"/>
+
+        <div class="${valueColType} ">
+        <div class=" grid">
+
+            <g:each in="${propSelectValues}" var="propval">
+                <div class="optionvaluemulti ">
+                    <label class="grid-row optionvaluemulti">
+                        <span class="grid-cell grid-front">
+                            <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}"
+                                   value="${propval.value}"/>
+                        </span>
+                        <span class="grid-cell grid-rest">
+                            ${propval.label}
+                        </span>
+                    </label>
+                </div>
+            </g:each>
+        </div>
+        </div>
+    </g:elseif>
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
-           for="${enc(attr:fieldid)}" ><g:enc>${prop.title ?: prop.name}</g:enc></label>
+           for="${enc(attr: fieldid)}"><stepplugin:message
+            service="${service}"
+            name="${provider}"
+            code="${messagePrefix}property.${prop.name}.title"
+            messagesType="${messagesType}"
+            default="${prop.title ?: prop.name}"/></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:set var="valueText" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"/>
@@ -107,31 +183,45 @@
                     id="${fieldid}" rows="10" cols="100" class="${formControlType}"/>
     </g:if>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CODE, 'CODE']}">
+        <g:set var="syntax" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_MODE)}"/>
+        <g:set var="syntaxSelectable" value="${prop.renderingOptions?.(StringRenderingConstants.CODE_SYNTAX_SELECTABLE)}"/>
         <g:textArea name="${fieldname}" value="${valueText}"
-                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType}"/>
+            data-ace-session-mode="${syntax}"
+            data-ace-control-syntax="${syntaxSelectable?true:false}"
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${extraInputCss}"/>
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
        <g:passwordField name="${fieldname}" value="${valueText}"
+                        autocomplete="new-password"
                     id="${fieldid}" cols="100" class="${formControlType}"/>
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT']}">
         %{--display value/defaultValue as static text in some format--}%
         %{--text/html--}%
+        <g:set var="staticTextValue" value="${
+                    stepplugin.messageText(
+                            service: service,
+                            name: provider,
+                            code: (messagePrefix?:'')+'property.' + prop.name + '.defaultValue',
+                            messagesType:messagesType,
+                            default: prop.defaultValue
+                    )
+        }"/>
         <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
-            <g:enc sanitize="${valueText}"/>
+           <g:enc sanitize="${staticTextValue}"/>
         </g:if>
         <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
             %{--markdown--}%
-            <g:markdown>${valueText}</g:markdown>
+            <g:markdown>${staticTextValue}</g:markdown>
         </g:elseif>
         <g:else>
             %{--plain--}%
-            <g:enc>${valueText}</g:enc>
+            <g:enc html="${staticTextValue}"/>
         </g:else>
     </g:elseif>
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
-                 id="${fieldid}" size="100" class="${formControlType}"/>
+                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">
@@ -151,8 +241,14 @@
 </g:else>
 <div class="${outofscope?valueColType:offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
-                                       model="[description: prop.description, textCss: '',
-                                               mode: 'collapsed', rkey: g.rkey()]"/></div>
+                                       model="[description: stepplugin.messageText(
+                                               service: service,
+                                               name: provider,
+                                               messagesType: messagesType,
+                                               code: (messagePrefix?:'')+'property.' + prop.name + '.description',
+                                               default: prop.description
+                                       ),  textCss       : '',
+                                               mode       : 'collapsed', rkey: g.rkey()]"/></div>
     <g:if test="${error}">
         <div class="text-warning"><g:enc>${error}</g:enc></div>
     </g:if>

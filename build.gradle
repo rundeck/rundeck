@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /**
  * Rundeck Master-Build Project
  * 
@@ -21,7 +37,8 @@
         mavenCentral()
     }
     dependencies {
-        classpath 'com.adaptc.gradle:nexus-workflow:0.5'
+        classpath 'com.adaptc.gradle:nexus-workflow:0.6'
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
     }
 }
 description = 'The master-build project for Rundeck';
@@ -29,6 +46,7 @@ description = 'The master-build project for Rundeck';
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
+apply plugin: 'com.google.osdetector'
 
 eclipse.project.name = 'rundeck'
 
@@ -38,7 +56,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
         ":rundeck-storage:rundeck-storage-conf",
-        ":rundeck-launcher:launcher"
+        ":rundeck"
 ]
 /**
  * Defaults for all projects
@@ -74,7 +92,7 @@ allprojects{
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '4.7'
 }
 
 // prompt for PGP key passphrase if not set
@@ -111,7 +129,7 @@ exportedProjects.each {
                 // do nothing
             }
         }
-        def archiveName=project.name.startsWith('rundeck-')?project.name: "rundeck-${project.name}"
+        def archiveName=project.name.startsWith('rundeck')?project.name: "rundeck-${project.name}"
         //build a pom we reuse for both maven builds and release to sonatype
         ext.publishPom = pom {
             project {
@@ -139,7 +157,7 @@ exportedProjects.each {
                     developer {
                         id('gschueler')
                         name('Greg Schueler')
-                        email('greg@simplifyops.com')
+                        email('greg@rundeck.com')
                     }
                 }
                 parent {
@@ -182,7 +200,7 @@ exportedProjects.each {
         //utility to create a pom for building
         if(!(project.name in ['core','launcher'])){
             //:core buildfile will generate its own pom for specialized purpose
-            task createPom << {
+            task('createPom').doLast {
                 publishPom.writeTo("pom.xml")
             }
         }
@@ -193,4 +211,8 @@ task alljavadoc(type: Javadoc) {
     source exportedProjects.collect { project(it).sourceSets.main.allJava }
     classpath = files(exportedProjects.collect { project(it).sourceSets.main.compileClasspath })
     destinationDir = file("${buildDir}/docs/javadoc")
+
+    if (JavaVersion.current().isJava8Compatible()) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+    }
 }

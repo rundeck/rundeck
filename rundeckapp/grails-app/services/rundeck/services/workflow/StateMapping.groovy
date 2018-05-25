@@ -30,11 +30,10 @@ import java.text.SimpleDateFormat
  */
 class StateMapping {
 
-    def Map summarize(Map map,List<String> nodes,boolean selectedOnly){
+    def Map summarize(Map map, List<String> nodes, boolean selectedOnly, boolean stepStates = false) {
         def nodeSummaries=[:]
         def nodeSteps=[:]
         (selectedOnly?nodes:map.allNodes).each{node->
-
             def states = stepStatesForNode(map, node)
             nodeSummaries[node]=summarizeForNode(map,node, states)
             if(nodes.contains(node)){
@@ -43,7 +42,7 @@ class StateMapping {
         }
         map.nodeSummaries=nodeSummaries
         map.nodeSteps=nodeSteps
-        map.steps=[]
+        map.steps = stepStates ? map.steps : []
         map.remove('nodes')
         map.remove('targetNodes')
         map
@@ -182,6 +181,8 @@ class StateMapping {
                     def newfound=new HashMap(found)
                     newfound.stepctx = step.stepctx
                     newsteps.push(newfound)
+                }else{
+                    newsteps.push(step)
                 }
             }
         }
@@ -196,6 +197,9 @@ class StateMapping {
         def params = stepid.params?StateUtils.parameterString(stepid.params):''
 
         Map step = model.steps[ndx];
+        if (!step) {
+            return null
+        }
         if(params && step.parameterStates && step.parameterStates[params]){
             step = step.parameterStates[params];
         }else if(!params && node && step.parameterStates["node=${node}"]){
@@ -321,13 +325,13 @@ class StateMapping {
             return null;
         }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        sdf.setTimeZone(TimeZone.getDefault());
         sdf.format(date)
     }
 
     static Date decodeDate(String date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        sdf.setTimeZone(TimeZone.getDefault());
         sdf.parse(date)
     }
 

@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.User" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
@@ -33,11 +49,11 @@
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
                 <g:hiddenField name="max" value="${max}"/>
-                <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
-                <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
+                <g:render template="baseFiltersPlain" model="${[ query: query]}"/>
+                <g:render template="recentDateFiltersPlain" model="${[query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
-                <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
+                <g:submitButton value="${g.message(code:'button.action.Filter',default:'Filter')}" name="filterAll" class="btn btn-default btn-sm"/>
                     <a class="btn btn-xs pull-right btn-success collapse ${filterName?'':'in'} obs_filter_is_deselected"
                             style="${wdgt.styleVisible(unless: params.saveFilter)}"
                             data-toggle="modal"
@@ -105,7 +121,7 @@
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></span>
+                                <div class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></div>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>

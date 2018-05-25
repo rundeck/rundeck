@@ -3,8 +3,8 @@ Version: %VERSION%
 Section: utils
 Priority: optional
 Architecture: all
-Depends: openssh-client, java7-runtime | java7-runtime-headless | java8-runtime | java8-runtime-headless , adduser (>= 3.11)
-Maintainer: Noah Campbell <noahcampbell@gmail.com>
+Depends: openssh-client, java7-runtime | java7-runtime-headless | java8-runtime | java8-runtime-headless , adduser (>= 3.11), uuid-runtime
+Maintainer: Greg Schueler <greg@rundeck.com>
 Description: No ordinary wooden deck. You can build a bon fire on this deck.
  Rundeck provides a single console for dispatching commands across many 
  resources.

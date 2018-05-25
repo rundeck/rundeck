@@ -1,6 +1,24 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -18,10 +36,34 @@ class PluginService {
     def frameworkService
     static transactional = false
 
+    /**
+     * Get a plugin
+     * @param name
+     * @param service
+     * @return
+     */
+    def <T> T getPlugin(String name, Class<T> type) {
+        getPlugin(name, rundeckPluginRegistry?.createPluggableService(type))
+    }
     def <T> T getPlugin(String name, PluggableProviderService<T> service) {
         def bean = rundeckPluginRegistry?.loadPluginByName(name, service)
         if (bean != null) {
             return (T) bean
+        }
+        log.error("${service.name} plugin not found: ${name}")
+        return bean
+    }
+
+    /**
+     * Load a plugin which can be closed when no longer in use
+     * @param name
+     * @param service
+     * @return
+     */
+    def <T> CloseableProvider<T> retainPlugin(String name, PluggableProviderService<T> service) {
+        def bean = rundeckPluginRegistry?.retainPluginByName(name, service)
+        if (bean != null) {
+            return (CloseableProvider<T>) bean
         }
         log.error("${service.name} plugin not found: ${name}")
         return bean
@@ -39,6 +81,14 @@ class PluginService {
         }
         log.error("${service.name} not found: ${name}")
         return null
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def DescribedPlugin getPluginDescriptor(String name, Class type) {
+        getPluginDescriptor(name, rundeckPluginRegistry?.createPluggableService(type))
     }
 
     /**
@@ -61,7 +111,28 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+    /**
+     * Configure a plugin given only instance configuration
+     * @param name name
+     * @param configuration instance configuration
+     * @param service service
+     * @return plugin , or null if configuration or plugin loading failed
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, Class<T> type) {
+        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService(type))
+    }
 
+    def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(
+            String projectName,
+            Framework framework,
+            PluggableProviderService<T> service
+    )
+    {
+        return { String provider, Map<String, Object> config ->
+            def plugin = configurePlugin(provider, (Map) config, projectName, framework, service)
+            plugin?.instance
+        } as SimplePluginProviderLoader<T>
+    }
     /**
      * Configure a new plugin using only instance-scope configuration values
      * @param name provider name
@@ -73,6 +144,10 @@ class PluginService {
                                                 Framework framework,
                               PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
+        if (!validation) {
+            logValidationErrors(service.name, name, Validator.errorReport('provider', 'Not found: ' + name))
+            return null
+        }
         if (!validation.valid) {
             logValidationErrors(service.name, name, validation.report)
             return null
@@ -84,6 +159,27 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+    /**
+     * Configure a new plugin using only instance-scope configuration values
+     * @param name provider name
+     * @param configuration map of instance configuration values
+     * @param service service
+     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name, Map configuration, String projectName,
+            Framework framework,
+            Class<T> type
+    )
+    {
+        configurePlugin(
+                name,
+                configuration,
+                projectName,
+                framework,
+                rundeckPluginRegistry?.createPluggableService(type)
+        )
+    }
 
     /**
      * Configure a new plugin using a specific property resolver for configuration
@@ -93,9 +189,13 @@ class PluginService {
      * @param defaultScope default plugin property scope
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, PluggableProviderService<T> service,
-    PropertyResolver resolver,
-                              PropertyScope defaultScope) {
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
         if(null==validation){
@@ -114,6 +214,16 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            Class<T> type,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
+        configurePlugin(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
+    }
     /**
      * Return the configured values for a plugin
      * @param name provider name
@@ -123,7 +233,20 @@ class PluginService {
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
     def <T> Map getPluginConfiguration(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
-        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+
+        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory
+                .createPrefixedResolver(resolver, name, service.name), defaultScope
+        )
+    }
+
+    def <T> Map getPluginConfiguration(
+            String name,
+            Class<T> type,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
+        getPluginConfiguration(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
     }
 
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
@@ -174,11 +297,25 @@ class PluginService {
     }
 
     /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config) {
+        return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
+    }
+
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
+        listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
+    }
+    /**
      * @param clazz
      * @param service
      * @return map of [name: DescribedPlugin]
      */
-    def <T> Map listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
         def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
         String svcName=service.name

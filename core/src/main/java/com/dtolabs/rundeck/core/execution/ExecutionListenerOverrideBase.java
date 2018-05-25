@@ -1,17 +1,17 @@
 /*
- * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
@@ -43,8 +42,6 @@ import java.util.*;
  */
 public abstract class ExecutionListenerOverrideBase implements ExecutionListenerOverride {
     private FailedNodesListener failedNodesListener;
-    private boolean terse;
-    private String logFormat;
     private ExecutionListenerOverrideBase delegate;
 
     protected ExecutionListenerOverrideBase(ExecutionListenerOverrideBase delegate) {
@@ -52,25 +49,10 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
     public ExecutionListenerOverrideBase(
-        final FailedNodesListener failedNodesListener,
-        final boolean terse,
-        final String logFormat
+            final FailedNodesListener failedNodesListener
     ) {
 
         this.failedNodesListener = failedNodesListener;
-        this.terse = terse;
-        this.logFormat = logFormat;
-    }
-
-    /**
-     * Method should be overridden
-     * @return appropriate logging context data
-     */
-    public Map<String, String> getLoggingContext() {
-        if (null != delegate) {
-            return delegate.getLoggingContext();
-        }
-        return null;
     }
 
 
@@ -135,6 +117,12 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
+    public void beginFileCopyFile(ExecutionContext context, List<File> input, INodeEntry node) {
+        if (null != delegate) {
+            delegate.beginFileCopyFile(context, input, node);
+        }
+    }
+
     public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
         if (null != delegate) {
             delegate.beginFileCopyScriptContent(context, input, node);
@@ -144,6 +132,12 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         if (null != delegate) {
             delegate.finishFileCopy(result, context, node);
+        }
+    }
+
+    public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
+        if (null != delegate) {
+            delegate.finishMultiFileCopy(result, context, node);
         }
     }
 
@@ -167,24 +161,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
             return delegate.getFailedNodesListener();
         }
         return failedNodesListener;
-    }
-
-
-    public boolean isTerse() {
-        if (null != delegate) {
-            return delegate.isTerse();
-        }
-        return terse;
-    }
-
-    public String getLogFormat() {
-        if (null != logFormat) {
-            return logFormat;
-        }
-        if (null != delegate) {
-            return delegate.getLogFormat();
-        }
-        return logFormat;
     }
 
     public void setFailedNodesListener(FailedNodesListener failedNodesListener) {

@@ -11,12 +11,12 @@ source $DIR/include.sh
 
 runurl="${APIURL}/run/command"
 proj="test"
-params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-plain+line+1%27%22+;sleep+2;echo+line+😄;sleep+2;echo+你好;sleep+2;echo+line+4+final"
+params="project=${proj}&exec=echo+%22%27testing+execution+%3Coutput%3E+api-unicode+line+1%27%22+;sleep+2;echo+line+😄;sleep+2;echo+你好;sleep+2;echo+line+4+final"
 
-expectfile=$DIR/expect-exec-output-plain.txt
+expectfile=$DIR/expect-exec-output-unicode.txt
 
 cat > $expectfile <<END
-testing execution <output> api-plain line 1
+testing execution <output> api-unicode line 1
 line 😄
 你好
 line 4 final
@@ -42,7 +42,7 @@ fi
 
 
 ####
-# Test: receive output in plain text
+# Test: receive output in unicode text
 ####
 
 # now submit req
@@ -50,7 +50,7 @@ runurl="${APIURL}/execution/${execid}/output.text"
 
 echo "TEST: /api/execution/${execid}/output.text using lastmod ..."
 
-outfile=$DIR/test-exec-output-plain.txt
+outfile=$DIR/test-exec-output-unicode.txt
 doff=0
 ddone="false"
 dlast=0
@@ -85,7 +85,7 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     unmod=$(grep 'X-Rundeck-ExecOutput-Unmodified:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     doff=$(grep 'X-Rundeck-ExecOutput-Offset:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     dlast=$(grep 'X-Rundeck-ExecOutput-LastModifed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
-    ddone=$(grep 'X-Rundeck-ExecOutput-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
+    ddone=$(grep 'X-Rundeck-Exec-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     #echo "unmod $unmod"
     #echo "doff $doff"
     #echo "dlast $dlast"
@@ -117,7 +117,7 @@ fi
 rm $expectfile $outfile
 
 ##wait for exec to finish...
-rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+api_waitfor_execution $execid || fail "Waiting for $execid to finish"
 $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 echo "OK"

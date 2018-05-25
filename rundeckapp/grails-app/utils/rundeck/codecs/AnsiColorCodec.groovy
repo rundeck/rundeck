@@ -64,7 +64,7 @@ class AnsiColorCodec {
             47: 'bg-white',
             49: 'bg-default',
     ]
-    def decode = { string ->
+    static def decode = { string ->
         def ctx = []
         def sb = new StringBuilder()
         def vals = string.split('\033[\\[%\\(]')
@@ -75,15 +75,20 @@ class AnsiColorCodec {
                 return
             }
             if (!coded) {
-                sb << str.encodeAsHTMLElement()
+                sb << str.encodeAsHTML()
                 coded = true
                 return
             }
 
+            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mKGHfABCDRsuhl])).*$').matcher(str)
+            if (matcher.matches() && matcher.groupCount() > 1 && matcher.group(5) == 'K') {
+                //clear screen escape code
+                //ignore this for now, and output the remaining text
+                sb << str.substring(matcher.group(1).length()).encodeAsHTML()
+                return
+            }
             sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
             ctx = []
-
-            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mGHfABCDRsuhl])).*$').matcher(str)
             if (matcher.matches()) {
                 def len = matcher.group(1).length()
                 def cols = []
@@ -111,12 +116,12 @@ class AnsiColorCodec {
                                 }
                             }
                         } catch (NumberFormatException e) {
-                            sb << matcher.group(1).encodeAsHTMLElement()
+                            sb << matcher.group(1).encodeAsHTML()
                         }
                     }
                 }
                 if (!cols) {
-                    sb << matcher.group(1).encodeAsHTMLElement()
+                    sb << matcher.group(1).encodeAsHTML()
                 } else {
                     //256 col ansi
                     def ncols=[]
@@ -155,9 +160,9 @@ class AnsiColorCodec {
 
                     sb << (rvals ? '<span class="' + rvals + '">' : '')
                 }
-                str = str.substring(len).encodeAsHTMLElement()
+                str = str.substring(len).encodeAsHTML()
             }
-            sb << str.encodeAsHTMLElement()
+            sb << str.encodeAsHTML()
         }
         sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
         sb.toString()

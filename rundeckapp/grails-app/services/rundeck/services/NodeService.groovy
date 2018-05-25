@@ -1,16 +1,37 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.nodes.ProjectNodeService
+import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalListener
+import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
@@ -25,7 +46,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Provides asynchronous loading and caching of nodesets for projects
  */
-class NodeService implements InitializingBean, RundeckProjectConfigurable,IProjectNodesFactory {
+class NodeService implements InitializingBean, RundeckProjectConfigurable,IProjectNodesFactory, ProjectNodeService {
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     static transactional = false
@@ -37,6 +58,10 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     String category='resourceModelSource'
 
+    @Override
+    Map<String, String> getCategories() {
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource']
+    }
     @Override
     List<Property> getProjectConfigProperties() {
         [
@@ -82,6 +107,14 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
         nodeCache = CacheBuilder.from(spec)
                                 .recordStats()
+                                .removalListener(
+                new RemovalListener<String, CachedProjectNodes>() {
+                    @Override
+                    void onRemoval(final RemovalNotification<String, CachedProjectNodes> notification) {
+                        Closeables.closeQuietly(notification.getValue()?.nodeSupport)
+                    }
+                }
+        )
                                 .build(
                 new CacheLoader<String, CachedProjectNodes>() {
                     public CachedProjectNodes load(String key) {
@@ -256,6 +289,10 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         nodeCache.invalidate(name)
     }
 
+    INodeSet getNodeSet(final String name) {
+        getNodes(name).nodeSet
+    }
+
     IProjectNodes getNodes(final String name) {
         def framework = frameworkService.getRundeckFramework()
         if (!framework.projectManager.existsFrameworkProject(name)) {
@@ -267,4 +304,5 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         }
         result
     }
+
 }

@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -25,7 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -38,7 +38,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.Map;
 
 
 /**
@@ -46,7 +46,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class StepPluginAdapter implements StepExecutor, Describable {
+class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public static final Convert CONVERTER = new Convert();
     private StepPlugin plugin;
 
@@ -59,6 +59,15 @@ class StepPluginAdapter implements StepExecutor, Describable {
         public StepExecutor convert(final StepPlugin plugin) {
             return new StepPluginAdapter(plugin);
         }
+    }
+
+    @Override
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues){
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+        }
+
+        return null;
     }
 
     @Override
@@ -82,8 +91,15 @@ class StepPluginAdapter implements StepExecutor, Describable {
         {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           executionContext.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.global(),
+                    ContextView::nodeStep,
+                    null,
+                    executionContext.getSharedDataContext(),
+                    false,
+                    true
+            );
         }
         final String providerName = item.getType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,

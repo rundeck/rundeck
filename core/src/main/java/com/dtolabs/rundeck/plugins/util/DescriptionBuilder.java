@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -29,6 +28,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 
 /**
@@ -64,6 +64,19 @@ public class DescriptionBuilder {
      */
     public static DescriptionBuilder builder() {
         return new DescriptionBuilder();
+    }
+
+    /**
+     * Build a description
+     *
+     * @param builder new DescriptionBuilder to build with
+     *
+     * @return built description
+     */
+    public static Description buildDescriptionWith(Consumer<DescriptionBuilder> builder) {
+        DescriptionBuilder builder1 = builder();
+        builder.accept(builder1);
+        return builder1.build();
     }
 
     /**
@@ -254,6 +267,21 @@ public class DescriptionBuilder {
      */
     public DescriptionBuilder property(final Property property) {
         replaceOrAddProperty(property);
+        return this;
+    }
+
+    /**
+     * Add a new property, or replace an existing property with the same name, with a
+     * consumer
+     *
+     * @param builder a new PropertyBuilder to modify
+     *
+     * @return this builder
+     */
+    public DescriptionBuilder property(final Consumer<PropertyBuilder> builder) {
+        PropertyBuilder propertyBuilder = PropertyBuilder.builder();
+        builder.accept(propertyBuilder);
+        replaceOrAddProperty(propertyBuilder.build());
         return this;
     }
 

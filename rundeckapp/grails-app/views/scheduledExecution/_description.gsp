@@ -19,19 +19,31 @@
 <g:set var="firstline" value="${g.textFirstLine(text: description)}"/>
 <g:if test="${allowHTML && !firstLineOnly}">
     <g:set var="remainingLine" value="${g.textRemainingLines(text: description)}"/>
+    <g:if test="${cutoffMarker}">
+        <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
+    </g:if>
     <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
-    <g:if test="${remainingLine}">
+    <g:if test="${remainingLine?.trim()}">
+        <g:set var="replTokens" value="${[:]}"/>
+        <g:if test="${service && name}">
+            <g:set var="pluginBaseUrl" value="${g.createLink(
+                    controller: 'plugin',
+                    action: 'pluginFile',
+                    params: [service: service, name: name]
+            )}"/>
+            <g:set var="replTokens" value="${['plugin.url':pluginBaseUrl]}"/>
+        </g:if>
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
             <span class="expandComponentHolder">
-            <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:'More'}</g:expander>
+            <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:message(code: "more", default: "More")}</g:expander>
             <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
-                <g:markdown>${remainingLine}</g:markdown>
+                <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
             </span>
             </span>
         </g:if>
         <g:elseif test="${mode!='hidden'}">
             <span class="${enc(attr: markdownCss ?: '')}">
-                <g:markdown>${remainingLine}</g:markdown>
+                <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
             </span>
         </g:elseif>
     </g:if>

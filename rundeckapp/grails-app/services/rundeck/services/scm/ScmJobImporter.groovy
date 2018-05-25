@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services.scm
 
 import com.dtolabs.rundeck.plugins.scm.ImportResult
@@ -22,7 +38,8 @@ class ScmJobImporter implements ContextJobImporter {
             final ScmOperationContext context,
             final String format,
             final InputStream input,
-            final Map importMetadata
+            final Map importMetadata,
+            final boolean preserveUuid
     )
     {
 
@@ -48,13 +65,14 @@ class ScmJobImporter implements ContextJobImporter {
             )
         }
 
-        importJob(context, parseresult.jobset[0], importMetadata)
+        importJob(context, parseresult.jobset[0], importMetadata, preserveUuid)
     }
 
     private ImportResult importJob(
             final ScmOperationContext context,
             ScheduledExecution jobData,
-            final Map importMetadata
+            final Map importMetadata,
+            final boolean preserveUuid
     )
     {
 
@@ -62,25 +80,30 @@ class ScmJobImporter implements ContextJobImporter {
         def loadresults = scheduledExecutionService.loadJobs(
                 [jobData],
                 'update',
-                'preserve',
+                preserveUuid ? 'preserve' : 'remove',
                 [user: context.userInfo.userName, method: 'scm-import'],
                 context.authContext
         )
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
-        loadresults.jobs.each { ScheduledExecution job ->
-            jobMetadataService.setJobPluginMeta(job, 'scm-import', [version: job.version, pluginMeta: importMetadata])
-        }
-        def result = new ImporterResult()
         if (loadresults.errjobs) {
-            result = ImporterResult.fail(loadresults.errjobs.collect { it.errmsg }.join(", "))
-        } else {
-            ScheduledExecution job = loadresults.jobs[0]
-            result.job = ScmService.scmJobRef(ScmService.jobRevReference(job),[version: job.version, pluginMeta: importMetadata])
-            result.created = result.job.version == 0L
-            result.modified = result.job.version > 0
-            result.successful = true
+            return ImporterResult.fail(loadresults.errjobs.collect { it.errmsg }.join(", "))
         }
+
+        ScheduledExecution job = loadresults.jobs[0]
+
+        def data = [version: job.version, pluginMeta: importMetadata]
+        if (loadresults.idMap?.get(job.extid)) {
+            data.srcId = loadresults.idMap[job.extid]
+        }
+        jobMetadataService.setJobPluginMeta(job, 'scm-import', data)
+
+        def result = new ImporterResult()
+        result.job = ScmService.scmJobRef(ScmService.jobRevReference(job), data)
+        result.created = result.job.version == 0L
+        result.modified = result.job.version > 0
+        result.successful = true
+
         result
     }
 
@@ -88,7 +111,8 @@ class ScmJobImporter implements ContextJobImporter {
     ImportResult importFromMap(
             final ScmOperationContext context,
             final Map input,
-            final Map importMetadata
+            final Map importMetadata,
+            final boolean preserveUuid
     )
     {
         List<ScheduledExecution> jobset
@@ -97,6 +121,25 @@ class ScmJobImporter implements ContextJobImporter {
         } catch (Throwable e) {
             return ImporterResult.fail("Failed to construct job definition map: " + e.message)
         }
-        importJob(context, jobset[0], importMetadata)
+        importJob(context, jobset[0], importMetadata, preserveUuid)
     }
+
+    @Override
+    ImportResult deleteJob(
+        final ScmOperationContext context,
+        final String project,
+        final String jobid
+    )
+    {
+        def res = scheduledExecutionService.deleteScheduledExecutionById(jobid, 'git-import-deleteJob')
+        def result = new ImporterResult()
+        if(res?.success){
+            result.successful = true
+        }else{
+            result.successful = false
+            result.errorMessage = res.error?.message
+        }
+        result
+    }
+
 }

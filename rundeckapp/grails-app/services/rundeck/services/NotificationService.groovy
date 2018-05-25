@@ -1,14 +1,35 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import grails.gorm.transactions.Transactional
+import grails.web.mapping.LinkGenerator
 import groovy.xml.MarkupBuilder
 import org.apache.commons.httpclient.Header
 import org.apache.commons.httpclient.HttpClient
@@ -26,21 +47,6 @@ import rundeck.services.logging.ExecutionLogState
 
 import java.text.SimpleDateFormat
 
-/*
-* Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*        http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
 /*
  * NotificationService.java
  *
@@ -60,6 +66,9 @@ public class NotificationService implements ApplicationContextAware{
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
     def LoggingService loggingService
+    def apiService
+    def executionService
+    OrchestratorPluginService orchestratorPluginService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -69,6 +78,31 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.validatePlugin(name, notificationPluginProviderService,
                 frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
     }
+
+    private Map loadExecutionViewPlugins() {
+        def pluginDescs = [node: [:], workflow: [:]]
+
+        frameworkService.getNodeStepPluginDescriptions().each { desc ->
+            pluginDescs['node'][desc.name] = desc
+        }
+        frameworkService.getStepPluginDescriptions().each { desc ->
+            pluginDescs['workflow'][desc.name] = desc
+        }
+        def wfstrat = pluginService.listPlugins(
+                WorkflowStrategy,
+                frameworkService.rundeckFramework.workflowStrategyService
+        ).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        [
+
+                stepPluginDescriptions: pluginDescs,
+                orchestratorPlugins   : orchestratorPluginService.getOrchestratorPlugins(),
+                strategyPlugins       : wfstrat,
+                logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
+        ]
+    }
+
     /**
      *
      * @param name
@@ -80,9 +114,10 @@ public class NotificationService implements ApplicationContextAware{
     def Map listNotificationPlugins(){
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
-    def boolean triggerJobNotification(String trigger, schedId, Map content){
+    @Transactional
+    boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
-            ScheduledExecution.withNewSession {
+            ScheduledExecution.withNewTransaction {
                 def ScheduledExecution sched = ScheduledExecution.get(schedId)
                 if(null!=sched){
                     return triggerJobNotification(trigger,sched,content)
@@ -98,7 +133,7 @@ public class NotificationService implements ApplicationContextAware{
      * @return replaced text
      */
     def String renderTemplate(String templateText, Map context){
-        return DataContextUtils.replaceDataReferences(templateText,context,null,false,false)
+        return DataContextUtils.replaceDataReferencesInString(templateText, context, null, false, false)
     }
     /**
      * write log output to a temp file, optionally formatted.
@@ -145,14 +180,18 @@ public class NotificationService implements ApplicationContextAware{
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
             notes.each{ Notification n ->
                 try{
+
+                    frameworkService.getPluginControlService(source.project).
+                        checkDisabledPlugin(n.type, ServiceNameConstants.Notification)
+
                 if(n.type=='email'){
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     def mailConfig = n.mailConfiguration()
-                    def destarr=mailConfig.recipients?.split(",") as List
+
                     def configSubject=mailConfig.subject
                     def configAttachLog=mailConfig.attachLog
-                    final state = ExecutionService.getExecutionState(exec)
+                    final state = exec.executionState
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
                             (ExecutionService.EXECUTION_FAILED):'FAILURE',
@@ -169,7 +208,6 @@ public class NotificationService implements ApplicationContextAware{
                     def jobMap=exportJobdata(source)
                     Map context = generateContextData(exec, content)
                     def contextMap=[:]
-
                     execMap.projectHref = projUrl
 
                     contextMap['job'] = toStringStringMap(jobMap)
@@ -178,6 +216,21 @@ public class NotificationService implements ApplicationContextAware{
 
                     context = DataContextUtils.merge(context, contextMap)
                     context = DataContextUtils.addContext("notification", [trigger: trigger, eventStatus: statMsg[state]], context)
+
+                    def destarr=[]
+                    def destrecipients=mailConfig.recipients
+                    if(destrecipients){
+                        if(destrecipients.indexOf('${')>=0){
+                            try {
+                                destrecipients=DataContextUtils.replaceDataReferencesInString(destrecipients, context, null, true)
+                            } catch (DataContextUtils.UnresolvedDataReferenceException e) {
+                                log.error("Cannot send notification email: "+e.message +
+                                                  ", context: user: "+ exec.user+", job: "+source.generateFullName());
+
+                            }
+                        }
+                        destarr = destrecipients.split(', *') as List
+                    }
 
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
@@ -251,10 +304,10 @@ public class NotificationService implements ApplicationContextAware{
                         String sendTo=recipient
                         if(sendTo.indexOf('${')>=0){
                             try {
-                                sendTo=DataContextUtils.replaceDataReferences(recipient, context ,null,true)
+                                sendTo=DataContextUtils.replaceDataReferencesInString(recipient, context, null, true)
                             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                                 log.error("Cannot send notification email: "+e.message +
-                                        ", context: user: "+ exec.user+", job: "+source.generateFullName());
+                                                  ", context: user: "+ exec.user+", job: "+source.generateFullName());
                                 return
                             }
                         }
@@ -266,9 +319,17 @@ public class NotificationService implements ApplicationContextAware{
                                 if(htmlemail){
                                     html(htmlemail)
                                 }else{
-                                    body(view: "/execution/mailNotification/status", model: [execution: exec,
-                                            scheduledExecution: source, msgtitle: subjectmsg, execstate: state,
-                                            nodestatus: content.nodestatus])
+                                    body(
+                                            view: "/execution/mailNotification/status",
+                                            model: loadExecutionViewPlugins() + [
+                                                    execution         : exec,
+                                                    scheduledExecution: source,
+                                                    msgtitle          : subjectmsg,
+                                                    execstate         : state,
+                                                    nodestatus        : content.nodestatus,
+                                                    jobref            : content.jobref
+                                            ]
+                                    )
                                 }
                                 if(attachlog && outputfile != null){
                                     attachBytes "${source.jobName}-${exec.id}.txt", "text/plain", outputfile.getText("UTF-8").bytes
@@ -289,12 +350,12 @@ public class NotificationService implements ApplicationContextAware{
                 }else if(n.type=='url'){    //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
                     //iterate through the URLs, and submit a POST to the destination with the XML Execution result
-                    final state = ExecutionService.getExecutionState(exec)
+                    final state = exec.executionState
                     def writer = new StringWriter()
                     def xml = new MarkupBuilder(writer)
 
                     xml.'notification'(trigger:trigger,status:state,executionId:exec.id){
-                        new ExecutionController().renderApiExecutions(grailsLinkGenerator,[exec], [:], delegate)
+                        renderApiExecutions(grailsLinkGenerator,[exec], [:], delegate)
                     }
                     writer.flush()
                     String xmlStr=  writer.toString()
@@ -334,6 +395,7 @@ public class NotificationService implements ApplicationContextAware{
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
+
                     didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
                 }else{
                     log.error("Unsupported notification type: " + n.type);
@@ -348,6 +410,20 @@ public class NotificationService implements ApplicationContextAware{
         }
 
         return didsend
+    }
+/*
+    * Render execution list xml given a List of executions, and a builder delegate
+    */
+    private def renderApiExecutions(LinkGenerator grailsLinkGenerator, List execlist, paging, delegate) {
+        apiService.renderExecutionsXml(execlist.collect{ Execution e->
+            [
+                execution:e,
+                href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
+                        params: [project: e.project]),
+                status: e.executionState,
+                summary: executionService.summarizeJob(e.scheduledExecution, e)
+            ]
+        },paging,delegate)
     }
     /**
      * Creates a datacontext map from the execution's original context, and user profile data.
@@ -407,7 +483,7 @@ public class NotificationService implements ApplicationContextAware{
             id: e.id,
             href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
                     params: [project: e.project]),
-            status: ExecutionService.getExecutionState(e),
+            status: e.executionState,
             user: e.user,
             dateStarted: e.dateStarted,
             'dateStartedUnixtime': e.dateStarted.time,
@@ -480,7 +556,7 @@ public class NotificationService implements ApplicationContextAware{
     }
 
     String expandWebhookNotificationUrl(String url,Execution exec, ScheduledExecution job, String trigger){
-        def state=ExecutionService.getExecutionState(exec)
+        def state= exec.executionState
         /**
          * Expand the URL string's embedded property references of the form
          * ${job.PROPERTY} and ${execution.PROPERTY}.  available properties are

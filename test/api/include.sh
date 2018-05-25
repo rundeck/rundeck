@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
+API_CURRENT_VERSION=24
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -41,10 +42,7 @@ xmlsel(){
     $XMLSTARLET sel -T -t -v "$xpath" $*
 }
 
-API_CURRENT_VERSION=17
-
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
-
 
 # curl opts to use a cookie jar, and follow redirects, showing only errors
 if [ -n "$RDAUTH" ] ; then 
@@ -132,7 +130,45 @@ api_request(){
     EXPECT_STATUS=
     
 }
+api_waitfor_execution(){
+    local execid=$1
+    local shouldfail=${2:-true}
+    # now submit req
+    local runurl="${APIURL}/execution/${execid}"
 
+    local status='running'
+
+    local rsleep=3
+    local rmax=10
+    local rc=0
+    
+    while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do
+
+        # get listing
+        docurl ${runurl} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+        
+        #Check projects list
+        assert_xml_valid $DIR/curl.out
+        assert_xml_value "1" "//executions/@count" $DIR/curl.out
+
+        status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
+
+        if [[ $status == 'running' ]] ; then
+            rc=$(( $rc + 1 ))
+            sleep $rsleep
+        fi
+    done
+    
+    # only return 1 if failed or aborted, 
+    # this is how rd-queue used to work, 
+    if [[ $status == 'failed' || $status == 'aborted' ]] ; then
+        if [[ $shouldfail == "true" ]] ; then
+            echo "Status is $status shouldfail $shouldfail"
+            #return 1
+        fi
+    fi
+}
 
 ##
 # utilities for testing http responses
@@ -154,6 +190,7 @@ assert_xml_valid(){
     $XMLSTARLET val -w ${1} > /dev/null 2>&1
     if [ 0 != $? ] ; then
         errorMsg "FAIL: Response was not valid xml, file: $1"
+        cat $1
         exit 2
     fi
 
@@ -165,10 +202,12 @@ assert_xml_value(){
     local value=$($XMLSTARLET sel -T -t -v "$2" $3)
     if [ $? != 0 -a -n "$1" ] ; then
         errorMsg "xmlstarlet failed: $!: $value, for $1 $2 $3"
+        cat $3
         exit 2
     fi
     if [ "$1" != "$value" ] ; then
         errorMsg "XPath $2 wrong value, expected $1 was $value (in file $3)"
+        cat $3
         exit 2
     fi
 }
@@ -176,10 +215,12 @@ assert_xml_notblank(){
     local value=$($XMLSTARLET sel -T -t -v "$1" $2)
     if [ $? != 0 ] ; then
         errorMsg "Expected value for XPath $1, but select failed: $! (in file $2)"
+        cat $2
         exit 2
     fi
     if [ "" == "$value" ] ; then
         errorMsg "XPath $1 wrong value, expected (not blank) was $value (in file $2)"
+        cat $2
         exit 2
     fi
 }
@@ -202,6 +243,7 @@ assert_json_value(){
     local expval=$(echo "$1")
     if [ "$expval" != "$propval" ] ; then
         errorMsg "Json query $2 wrong value, expected '$1' was $propval (in file $3)"
+        cat $3
         exit 2
     fi
 }
@@ -224,6 +266,7 @@ assert_json_null(){
     fi
     if [ "null" != "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected null was $propval (in file $2)"
+        cat $2
         exit 2
     fi
 }
@@ -244,6 +287,7 @@ assert_json_not_null(){
     fi
     if [ "null" == "$propval" ] ; then
         errorMsg "Json query $1 wrong value, expected not null was $propval (in file $2)"
+        cat $2
         exit 2
     fi
 }

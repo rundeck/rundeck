@@ -1,4 +1,20 @@
-<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
+<%@ page import="rundeck.ScheduledExecution; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
 <div class="list-group">
@@ -22,9 +38,9 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
-<g:javascript library="prototype/scriptaculous"/>
-<g:javascript library="prototype/effects"/>
-<g:javascript library="prototype/dragdrop"/>
+<asset:javascript src="prototype/scriptaculous"/>
+<asset:javascript src="prototype/effects"/>
+<asset:javascript src="prototype/dragdrop"/>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <script type="text/javascript">
 //<!CDATA[
@@ -126,7 +142,7 @@ function getCurSEID(){
             registerNodeFilters(jobRefNodeFilter,root);
         }
         function pageinit(){
-            _enableDragdrop();
+            _enableWFDragdrop();
 
             Event.observe(document,'keydown',function(evt){
                 //escape key hides popup bubble
@@ -156,7 +172,8 @@ function getCurSEID(){
             );
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
             registerNodeFilters(nodeFilter, '#nodegroupitem');
-
+            nodeSummary.reload();
+            nodeFilter.updateMatchedNodes();
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
@@ -178,7 +195,7 @@ function getCurSEID(){
         font-size:100%;
     }
     /** drag and drop for workflow editor */
-    #workflowDropfinal.ready{
+    .dragdropfinal.ready{
         padding:2px;
         margin-top:3px;
         display:block;
@@ -186,13 +203,13 @@ function getCurSEID(){
         -webkit-border-radius: 3px;
         border-radius: 3px;
     }
-    #workflowContent ol li{
+    .draggableitem{
         padding:0;
     }
-    #workflowContent ol li.hoverActive{
+    .draggableitem.hoverActive{
         border-top: 2px solid blue;
     }
-    #workflowDropfinal.hoverActive{
+    .dragdropfinal.hoverActive{
         border-top: 2px solid blue;
         padding:8px;
 
@@ -202,7 +219,7 @@ function getCurSEID(){
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:200px;
+        padding-right:150px;
     }
     .wfitem{
         display: block;
@@ -213,7 +230,7 @@ function getCurSEID(){
         position:absolute;
         right:0;
         top:0;
-        width:250px;
+        width:150px;
         text-align:right;
     }
     .controls.autohide{
@@ -400,7 +417,7 @@ function getCurSEID(){
                 </span>
             </div>
 
-            <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
+
         </div>
     </div>
 
@@ -408,14 +425,36 @@ function getCurSEID(){
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'description', 'has-error')}">
         <label for="description" class="${labelColClass}"><g:message code="scheduledExecution.property.description.label" /></label>
         <div class="${fieldColSize}">
-            <g:textArea name="description"
-                        value="${scheduledExecution?.description}"
-                        cols="80"
-                        rows="3"
-                        class="form-control ace_editor"
-                        data-ace-session-mode="markdown"
-                        data-ace-height="120px"
-            />
+            <ul class="nav nav-tabs">
+
+                <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
+                <li id="previewrunbook" style="${wdgt.styleVisible(
+                        if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER)
+                )}">
+                    <a href="#descpreview" data-toggle="tab">
+                        <g:message code="job.editor.preview.runbook" />
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+                <div class="tab-pane active" id="desceditor">
+                    <g:textArea name="description"
+                                value="${scheduledExecution?.description}"
+                                cols="80"
+                                rows="3"
+                                class="form-control ace_editor _job_description"
+                                data-ace-session-mode="markdown"
+                                data-ace-height="120px"
+                                data-ace-resize-auto="true"
+                                data-ace-resize-max="30"
+                    />
+                </div>
+                <div class="tab-pane panel panel-default panel-tab-content" id="descpreview">
+                    <div class="panel-body" id="descpreview_content"></div>
+                </div>
+            </div>
             <g:hasErrors bean="${scheduledExecution}" field="description">
                 <i class="glyphicon glyphicon-warning-sign text-warning"></i>
             </g:hasErrors>
@@ -423,21 +462,32 @@ function getCurSEID(){
                    value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
             <div class="help-block">
                 <g:if test="${allowHTML}">
-                    <g:message code="ScheduledExecution.property.description.description"/>
-                    <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank" class="text-info">
-                        <i class="glyphicon glyphicon-question-sign"></i>
-                    </a>
+                    <g:render template="/scheduledExecution/description"
+                              model="${[description: g.message(code:"ScheduledExecution.property.description.description"),mode:'collapsed',rkey:g.rkey()]}"/>
                 </g:if>
                 <g:else>
                     <g:message code="ScheduledExecution.property.description.plain.description"/>
                 </g:else>
             </div>
             <g:javascript>
-            jQuery(function(){
-                jQuery('textarea.ace_editor').each(function(){
-                    _addAceTextarea(this);
+                jQuery(function () {
+                    jQuery('textarea.ace_editor._job_description').each(function () {
+                        var editor = _addAceTextarea(this, function (editor) {
+                            "use strict";
+                            //test if a runbook was added, enable preview tab
+                            if (_hasJobDescriptionRunbook(editor.getValue())) {
+                                jQuery('#previewrunbook').show();
+                            }else{
+                                jQuery('#previewrunbook').hide();
+                            }
+                        });
+
+                        _setupMarkdeepPreviewTab('previewrunbook', 'descpreview_content', function () {
+                            return _jobDescriptionRunbook(editor.getValue());
+                        });
+
+                    });
                 });
-            });
             </g:javascript>
         </div>
     </div>
@@ -453,7 +503,11 @@ function getCurSEID(){
             <div class="${fieldColSize}">
 
                 <div  id="editoptssect" class="rounded">
-                    <g:render template="/scheduledExecution/detailsOptions" model="${[options:scheduledExecution?.options,edit:true]}"/>
+                    <%
+                        def tmpse = ScheduledExecution.get(scheduledExecution.id)
+                        def options = tmpse?tmpse.options:scheduledExecution.options
+                    %>
+                    <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
                     <g:if test="${scheduledExecution && scheduledExecution.argString}">
                         <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
                     </g:if>
@@ -470,7 +524,8 @@ function getCurSEID(){
             <div class="${labelColSize}  control-label text-form-label"><g:message code="workflow.prompt" /></div>
             <div class="${fieldColSize}">
                 <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
-                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'']}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
+                                                                              strategyPlugins:strategyPlugins]}"/>
                 <g:hiddenField name="_sessionwf" value="true"/>
                 <g:if test="${null==editwf || null==editwf.commands || 0==editwf.commands.size()}">
                     <g:javascript>
@@ -632,8 +687,29 @@ function getCurSEID(){
 
     <div id="nodeDispatchFields" class="subfields ">
 
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.nodefiltereditable.label"/>
+            </div>
 
-        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcount', 'has-error')}">
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
+                    <g:radio value="false" name="nodeFilterEditable"
+                             checked="${!scheduledExecution.nodeFilterEditable}"
+                             id="editableFalse"/>
+                    <g:message code="no"/>
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio name="nodeFilterEditable" value="true"
+                             checked="${scheduledExecution.nodeFilterEditable}"
+                             id="editableTrue"/>
+                    <g:message code="yes"/>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcountDynamic', 'has-error')}">
             <label for="schedJobnodeThreadcount" class="${labelColClass}">
                 <g:message code="scheduledExecution.property.nodeThreadcount.label"/>
             </label>
@@ -641,16 +717,16 @@ function getCurSEID(){
             <div class="${fieldColSize}">
                 <div class="row">
                 <div class="col-sm-4">
-                <input type='number' name="nodeThreadcount"
-                       value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
+                <input type='text' name="nodeThreadcountDynamic"
+                       value="${enc(attr:scheduledExecution?.nodeThreadcountDynamic)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>
                 </div>
                 </div>
-                <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcount">
+                <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcountDynamic">
                     <div class="text-warning">
                         <i class="glyphicon glyphicon-warning-sign"></i>
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeThreadcount"/>
+                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeThreadcountDynamic"/>
                     </div>
                 </g:hasErrors>
                 <span class="help-block">
@@ -735,6 +811,36 @@ function getCurSEID(){
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label class="${labelColClass}"><g:message code="scheduledExecution.property.successOnEmptyNodeFilter.prompt"/></label>
+
+            <div class="${fieldColSize}">
+                <div class="radio">
+                    <label>
+                        <g:radio name="successOnEmptyNodeFilter"
+                                 value="false"
+
+                                 checked="${!scheduledExecution?.successOnEmptyNodeFilter}"
+
+                                 id="successOnEmptyNodeFilterFalse"/>
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.false.description"/>
+                    </label>
+                </div>
+
+                <div class="radio">
+                    <label>
+                        <g:radio
+                                name="successOnEmptyNodeFilter"
+                                value="true"
+
+                                checked="${scheduledExecution?.successOnEmptyNodeFilter}"
+
+                                id="successOnEmptyNodeFilterTrue"/>
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.true.description"/>
+                    </label>
+                </div>
+            </div>
+        </div>
 
         <div class="form-group">
             <label class="${labelColClass}"><g:message code="scheduledExecution.property.nodesSelectedByDefault.label"/></label>
@@ -809,12 +915,37 @@ function getCurSEID(){
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
                     <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
                 <wdgt:eventHandlerJS for="scheduledFalse" state="unempty" >
                     <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
     </div>
+
+    <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.timezone.prompt" />
+        </div>
+        <div class="${fieldColHalfSize}">
+                <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
+                       id="timeZone" class="form-control"/>
+
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.timezone.description" />
+                </span>
+        </div>
+    <g:javascript>
+        fireWhenReady('timeZone',function(){
+            var timeZonesDataArr = loadJsonData('timeZonesData');
+            jQuery("#timeZone").devbridgeAutocomplete({
+                lookup: timeZonesDataArr
+            });
+        });
+    </g:javascript>
+    </div>
+
     %{-- scheduleEnabled --}%
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
         <div class="form-group">
@@ -944,7 +1075,7 @@ function getCurSEID(){
             <label for="schedJobRetry"><g:message code="scheduledExecution.property.retry.label" default="Retry"/></label>
         </div>
 
-        <div class="${fieldColHalfSize}">
+        <div class="${fieldColShortSize}">
 
             <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
                    id="schedJobRetry" class="form-control"/>
@@ -956,6 +1087,21 @@ function getCurSEID(){
             </g:hasErrors>
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
+            </span>
+        </div>
+
+        <label class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.retry.delay.label" default="Timeout"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+
+            <input type='text' name="retryDelay" value="${enc(attr:scheduledExecution?.retryDelay)}"
+                   id="schedJobRetryDelay" class="form-control"/>
+
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.retry.delay.description"/>
             </span>
         </div>
     </div>
@@ -1005,6 +1151,46 @@ function getCurSEID(){
         </div>
     </div>
 
+    %{--default exec tab--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.defaultTab.label"/>
+        </div>
+
+        <div class="${fieldColSize}">
+            <label class="radio-inline">
+                <g:radio value="summary" name="defaultTab"
+                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                         id="tabSummary"/>
+                <g:message code="execution.page.show.tab.Summary.title"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="monitor"
+                         checked="${scheduledExecution.defaultTab=='monitor'}"
+                         id="tabMonitor"/>
+                <g:message code="report"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="output"
+                         checked="${scheduledExecution.defaultTab=='output'}"
+                         id="tabOutput"/>
+                <g:message code="execution.show.mode.Log.title"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="definition"
+                         checked="${scheduledExecution.defaultTab=='definition'}"
+                         id="tabDefinition"/>
+                <g:message code="definition"/>
+            </label>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.defaultTab.description"/>
+            </span>
+        </div>
+    </div>
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
@@ -1039,7 +1225,8 @@ function getCurSEID(){
         _initPopoverContentRef();
     }
 </g:javascript>
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>
 
     <g:render template="/framework/storageBrowseModalKO"/>

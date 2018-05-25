@@ -1,11 +1,11 @@
 %{--
-  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
   - You may obtain a copy of the License at
   -
-  -        http://www.apache.org/licenses/LICENSE-2.0
+  -     http://www.apache.org/licenses/LICENSE-2.0
   -
   - Unless required by applicable law or agreed to in writing, software
   - distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,108 +43,33 @@
 </div>
     <div class="list-group-item">
         <div class="form-group ">
+            <label for="label">
+                <g:message code="domain.Project.label.label" default="Label"/>
+            </label>
+            <g:textField name="label" size="50"  value="${projectLabel}" class="form-control"/>
+        </div>
+        <div class="form-group ">
             <label for="description">
                 <g:message code="domain.Project.description.label" default="Description"/>
             </label>
             <g:textField name="description" size="50"  value="${projectDescription}" class="form-control"/>
         </div>
     </div>
-<g:if test="${resourceModelConfigDescriptions}">
-    <div class="list-group-item">
-    <span class="h4 ">
-        <g:message code="framework.service.ResourceModelSource.label" />
-    </span>
+    <g:set var="categories"
+           value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
 
-    <div class="help-block">
-        <g:message code="domain.Project.edit.ResourceModelSource.explanation" />
-    </div>
+    <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
 
-    <div class="alert alert-warning" id="errors" style="display:none;">
 
-    </div>
-    <ol id="configs" >
-        <g:if test="${configs}">
-            <g:each var="config" in="${configs}" status="n">
-                <li>
-                    <div class="inpageconfig">
-                        <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
-                        <g:if test="${!desc}">
-                            <span
-                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
-                        </g:if>
-                        <g:render template="viewResourceModelConfig"
-                                  model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
-                    </div>
-                </li>
-            </g:each>
-        </g:if>
-    </ol>
+        <g:render template="projectConfigurableForm"
+                  model="${[extraConfigSet: extraConfig?.values(),
+                            category      : category,
+                            categoryPrefix     : 'extra.category.' + category + '.',
+                            titleCode     : 'project.configuration.extra.category.' + category + '.title',
+                            helpCode      : 'project.configuration.extra.category.' + category + '.description'
+                  ]}"/>
 
-    <div id="sourcebutton" >
-        <button class="btn btn-success btn-sm">
-            Add Source
-            <i class="glyphicon glyphicon-plus"></i>
-        </button>
-    </div>
-
-    <div id="sourcepicker" class="panel panel-success sourcechrome" style="display:none;">
-        <div class="panel-heading">
-            <g:message code="framework.service.ResourceModelSource.add.title"/>
-        </div>
-        <div class="list-group">
-            <g:each in="${resourceModelConfigDescriptions}" var="description">
-                <a onclick="configControl.addConfig('${enc(js: description.name)}');
-                return false;"
-                    href="#"
-                   class="list-group-item">
-                    <strong>
-                        <i class="glyphicon glyphicon-plus"></i>
-                        <g:enc>${description.title}</g:enc>
-                    </strong>
-                    <span class="help-block"><g:enc>${description.description}</g:enc></span>
-                </a>
-            </g:each>
-        </div>
-
-        <div id="sourcecancel" class="panel-footer">
-            <button class="btn btn-default btn-sm">Cancel</button>
-        </div>
-
-    </div>
-    </div>
-
-</g:if>
-
-    <g:if test="${extraConfig}">
-       <div class="list-group-item">
-           <span class="h4 ">
-                <g:message code="resource.model" />
-            </span>
-
-            <div class="help-block">
-                <g:message code="additional.configuration.for.the.resource.model.for.this.project" />
-            </div>
-
-            <div class="form-horizontal">
-                <g:each in="${extraConfig.keySet()}" var="configService">
-                    <g:set var="configurable" value="${extraConfig[configService].configurable}"/>
-                    <g:if test="${configurable.category == 'resourceModelSource'}">
-
-                        <g:set var="pluginprefix" value="${extraConfig[configService].get('prefix')}"/>
-                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                properties:configurable.projectConfigProperties,
-                                report:extraConfig[configService].get('report'),
-                                prefix:pluginprefix,
-                                values:extraConfig[configService].get('values')?:[:],
-                                fieldnamePrefix:pluginprefix,
-                                origfieldnamePrefix:'orig.' + pluginprefix,
-                                allowedScope:PropertyScope.Project
-                        ]}"/>
-                    </g:if>
-                </g:each>
-            </div>
-       </div>
-    </g:if>
+    </g:each>
 
 <g:if test="${nodeExecDescriptions}">
     <div class="list-group-item">
@@ -180,6 +105,8 @@
                          style="${wdgt.styleVisible(if: isSelected)}">
                         <div class="form-horizontal " >
                             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:com.dtolabs.rundeck.plugins.ServiceNameConstants.NodeExecutor,
+                                    provider:description.name,
                                     properties:description.properties,
                                     report:nodeexecreport?.errors && isSelected ? nodeexecreport : null,
                                     prefix:nodeexecprefix,
@@ -229,6 +156,8 @@
                 <div class="form-horizontal " >
 
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                            service:com.dtolabs.rundeck.plugins.ServiceNameConstants.FileCopier,
+                            provider:description.name,
                             properties:description.properties,
                             report:fcopyreport?.errors && isSelected ? fcopyreport : null,
                             prefix:fcopyprefix,

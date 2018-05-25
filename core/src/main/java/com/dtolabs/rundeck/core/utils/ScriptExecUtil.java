@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -26,11 +25,9 @@ package com.dtolabs.rundeck.core.utils;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.collections.Predicate;
-import org.apache.commons.collections.PredicateUtils;
 import org.apache.tools.ant.taskdefs.Execute;
 
 import java.io.*;
@@ -38,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -99,6 +97,21 @@ public class ScriptExecUtil {
                 return ScriptExecUtil.createScriptArgs(
                         localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
                         interpreterargsquoted, filepath
+                );
+            }
+
+            @Override
+            public String[] createScriptArgs(
+                    final Map<String, Map<String, String>> localDataContext,
+                    final String scriptargs,
+                    final String[] scriptargsarr,
+                    final String scriptinterpreter,
+                    final boolean interpreterargsquoted
+            )
+            {
+                return ScriptExecUtil.createScriptArgs(
+                        localDataContext, null, scriptargs, scriptargsarr, scriptinterpreter,
+                        interpreterargsquoted
                 );
             }
 
@@ -204,8 +217,10 @@ public class ScriptExecUtil {
      */
     public static int runLocalCommand(
             final String[] command,
-            final Map<String, String> envMap, final File workingdir,
-            final OutputStream outputStream, final OutputStream errorStream
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream
     )
             throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
@@ -327,15 +342,11 @@ public class ScriptExecUtil {
         return builder.build();
     }
 
-    static Predicate any(Predicate... preds) {
-        return PredicateUtils.anyPredicate(preds);
-    }
 
-    static final Predicate needsQuoting = any(
-            DataContextUtils.stringContainsPropertyReferencePredicate,
-            CLIUtils.stringContainsWhitespacePredicate,
-            CLIUtils.stringContainsQuotePredicate
-    );
+    static final Predicate needsQuoting =
+            DataContextUtils.stringContainsPropertyReferencePredicate
+                    .or(CLIUtils::containsSpace)
+                    .or(CLIUtils::containsQuote);
 
 
     private static void addScriptFileArgList(
@@ -361,6 +372,38 @@ public class ScriptExecUtil {
      * @param scriptargsarr         arguments to the script file as an array
      * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
      * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
+     *
+     * @return args
+     */
+    public static String[] createScriptArgs(
+            final Map<String, Map<String, String>> localDataContext,
+            final INodeEntry node,
+            final String scriptargs,
+            final String[] scriptargsarr,
+            final String scriptinterpreter,
+            final boolean interpreterargsquoted
+    )
+    {
+        return createScriptArgs(
+                localDataContext,
+                node,
+                scriptargs,
+                scriptargsarr,
+                scriptinterpreter,
+                interpreterargsquoted,
+                null
+        );
+    }
+
+    /**
+     * Generate argument array for a script file invocation
+     *
+     * @param localDataContext      data context properties to expand among the args
+     * @param node                  node to use for os-type argument quoting.
+     * @param scriptargs            arguments to the script file
+     * @param scriptargsarr         arguments to the script file as an array
+     * @param scriptinterpreter     interpreter invocation for the file, or null to invoke it directly
+     * @param interpreterargsquoted if true, pass the script file and args as a single argument to the interpreter
      * @param filepath              remote filepath for the script
      *
      * @return args
@@ -371,19 +414,32 @@ public class ScriptExecUtil {
             final String scriptargs,
             final String[] scriptargsarr,
             final String scriptinterpreter,
-            final boolean interpreterargsquoted, final String filepath
+            final boolean interpreterargsquoted,
+            final String filepath
     ) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
-            arglist.addAll(Arrays.asList(OptsUtil.burst(scriptinterpreter)));
+            List<String> c = Arrays.asList(
+                    DataContextUtils.replaceDataReferencesInArray(
+                            OptsUtil.burst(scriptinterpreter),
+                            localDataContext,
+                            null,
+                            false,
+                            true
+                    ));
+            arglist.addAll(c);
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             final ArrayList<String> sublist = new ArrayList<String>();
-            sublist.add(filepath);
+            if (filepath != null) {
+                sublist.add(filepath);
+            }
             addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, sublist, true);
             arglist.add(DataContextUtils.join(sublist, " "));
         } else {
-            arglist.add(filepath);
+            if (filepath != null) {
+                arglist.add(filepath);
+            }
             addQuotedArgs(localDataContext, node, scriptargs, scriptargsarr, arglist, false);
         }
         return arglist.toArray(new String[arglist.size()]);
@@ -396,7 +452,7 @@ public class ScriptExecUtil {
         if (null != scriptargs) {
             arglist.addAll(
                     Arrays.asList(
-                            DataContextUtils.replaceDataReferences(
+                            DataContextUtils.replaceDataReferencesInArray(
                                     scriptargs.split(" "),
                                     localDataContext
                             )
@@ -406,7 +462,7 @@ public class ScriptExecUtil {
             if (!quoted) {
                 arglist.addAll(Arrays.asList(scriptargsarr));
             } else {
-                final String[] newargs = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
+                final String[] newargs = DataContextUtils.replaceDataReferencesInArray(scriptargsarr, localDataContext);
                 Converter<String, String> quote = getQuoteConverterForNode(node);
                 //quote args that have substituted context input, or have whitespace
                 //allow other args to be used literally

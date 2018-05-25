@@ -1,17 +1,17 @@
 /*
- * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -29,12 +29,14 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.UpdateUtils;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdaterBuilder;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.ExecArgList;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
-import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -42,7 +44,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
@@ -54,7 +55,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
 
 /**
  * ScriptURLNodeStepExecutor is a NodeStepExecutor for executing a script retrieved from a URL.
@@ -65,17 +65,19 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
     public static final Logger logger = Logger.getLogger(ScriptURLNodeStepExecutor.class.getName());
     public static final String SERVICE_IMPLEMENTATION_NAME = "script-url";
 
-    public static final int DEFAULT_TIMEOUT = 30;
-    public static final boolean USE_CACHE = true;
+    private static final int DEFAULT_TIMEOUT = 30;
+    private static final boolean USE_CACHE = true;
+    public static final String UTF_8 = "UTF-8";
 
     private File cacheDir;
 
     private Framework framework;
-    URLFileUpdater.httpClientInteraction interaction;
+    private URLFileUpdater.httpClientInteraction interaction;
+    private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
 
     public ScriptURLNodeStepExecutor(Framework framework) {
         this.framework = framework;
-        cacheDir = new File(Constants.getBaseVar(framework.getFilesystemFramework().getBaseDir().getAbsolutePath())
+        cacheDir = new File(Constants.getBaseVar(framework.getBaseDir().getAbsolutePath())
                             + "/cache/ScriptURLNodeStepExecutor");
     }
 
@@ -83,13 +85,22 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-1");
             digest.reset();
-            digest.update(url.getBytes(Charset.forName("UTF-8")));
+            digest.update(url.getBytes(Charset.forName(UTF_8)));
             return new String(Hex.encodeHex(digest.digest()));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return Integer.toString(url.hashCode());
     }
+
+    public ScriptFileNodeStepUtils getScriptUtils() {
+        return scriptUtils;
+    }
+
+    public void setScriptUtils(ScriptFileNodeStepUtils scriptUtils) {
+        this.scriptUtils = scriptUtils;
+    }
+
     static enum Reason implements FailureReason{
         /**
          * Failed to download required URL
@@ -108,7 +119,11 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         if (!USE_CACHE) {
             destinationTempFile.deleteOnExit();
         }
-        return ScriptFileNodeStepExecutor.executeScriptFile(
+        boolean expandTokens = true;
+        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
+            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
+        }
+        return scriptUtils.executeScriptFile(
                 context,
                 node,
                 null,
@@ -118,7 +133,8 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                 script.getArgs(),
                 script.getScriptInterpreter(),
                 script.getInterpreterArgsQuoted(),
-                framework.getExecutionService()
+                framework.getExecutionService(),
+                expandTokens
         );
     }
 
@@ -132,10 +148,16 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
             throw new RuntimeException("Unable to create cachedir: " + cacheDir.getAbsolutePath());
         }
         //create node context for node and substitute data references in command
-        final Map<String, Map<String, String>> nodeDataContext =
-            DataContextUtils.addContext("node", DataContextUtils.nodeData(node), context.getDataContext());
+        WFSharedContext sharedContext = new WFSharedContext();
+        sharedContext.merge(context.getSharedDataContext());
+        sharedContext.merge(ContextView.global(), context.getDataContextObject());
+        sharedContext.merge(
+                ContextView.node(node.getNodename()),
+                new BaseDataContext("node", DataContextUtils.nodeData(node))
+        );
 
-        final String finalUrl = expandUrlString(script.getURLString(), nodeDataContext);
+
+        final String finalUrl = expandUrlString(script.getURLString(), sharedContext, node.getNodename());
         final URL url;
         try {
             url = new URL(finalUrl);
@@ -186,50 +208,66 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         return destinationTempFile;
     }
 
-    public static final Converter<String, String> urlPathEncoder = new Converter<String, String>() {
-        public String convert(String s) {
-            try {
-                return URIUtil.encodeWithinPath(s, "UTF-8");
-            } catch (URIException e) {
-                e.printStackTrace();
-                return s;
-            }
+    public static final Converter<String, String> urlPathEncoder = s -> {
+        try {
+            return URIUtil.encodeWithinPath(s, UTF_8);
+        } catch (URIException e) {
+            e.printStackTrace();
+            return s;
         }
     };
-    public static final Converter<String, String> urlQueryEncoder = new Converter<String, String>() {
-        public String convert(String s) {
-            try {
-                return URIUtil.encodeWithinQuery(s, "UTF-8");
-            } catch (URIException e) {
-                e.printStackTrace();
-                return s;
-            }
+    public static final Converter<String, String> urlQueryEncoder = s -> {
+        try {
+            return URIUtil.encodeWithinQuery(s, UTF_8);
+        } catch (URIException e) {
+            e.printStackTrace();
+            return s;
         }
     };
 
     /**
      * Expand data references in a URL string, using proper encoding for path and query parts.
      * @param urlString url
-     * @param dataContext data
+     * @param dataContext multi context
+     * @param nodename default node context
      * @return expanded string
      */
-    public static String expandUrlString(final String urlString, final Map<String, Map<String, String>> dataContext) {
-        final String origUrl = urlString;
-        final int qindex = origUrl.indexOf("?");
+    public static String expandUrlString(
+            final String urlString,
+            final MultiDataContext<ContextView, DataContext> dataContext,
+            final String nodename
+    )
+    {
+        final int qindex = urlString.indexOf('?');
         final StringBuilder builder = new StringBuilder();
+
+        builder.append(
+                SharedDataContextUtils.replaceDataReferences(
+                        qindex > 0 ? urlString.substring(0, qindex) : urlString,
+                        dataContext,
+                        ContextView.node(nodename),
+                        ContextView::nodeStep,
+                        urlPathEncoder,
+                        true,
+                        false
+                ));
         if (qindex > 0) {
-            builder.append(DataContextUtils.replaceDataReferences(origUrl.substring(0, qindex),
-                dataContext, urlPathEncoder, true));
             builder.append("?");
-            if (qindex < origUrl.length() - 1) {
-                builder.append(DataContextUtils.replaceDataReferences(origUrl.substring(qindex + 1),
-                    dataContext, urlQueryEncoder, true));
+            if (qindex < urlString.length() - 1) {
+                builder.append(SharedDataContextUtils.replaceDataReferences(
+                        urlString.substring(qindex + 1),
+                        dataContext,
+                        ContextView.node(nodename),
+                        ContextView::nodeStep,
+                        urlQueryEncoder,
+                        true,
+                        false
+                ));
             }
-            return builder.toString();
-        } else {
-            return DataContextUtils.replaceDataReferences(urlString, dataContext,
-                urlPathEncoder, false);
+
         }
+
+        return builder.toString();
     }
 
     URLFileUpdater.httpClientInteraction getInteraction() {

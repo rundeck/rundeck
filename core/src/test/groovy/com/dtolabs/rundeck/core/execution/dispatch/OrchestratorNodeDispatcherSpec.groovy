@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.execution.dispatch
 
 import com.dtolabs.rundeck.core.common.Framework
@@ -8,6 +24,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.OrchestratorConfig
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -34,7 +51,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
-    def teardown() {
+    def cleanup() {
         framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
     }
 
@@ -81,7 +98,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
             getNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
-            getDataContext() >> dataContext
+            getDataContext() >> DataContextUtils.context(dataContext)
         }
 
         NodeStepExecutionItem item = Mock(NodeStepExecutionItem)
@@ -126,7 +143,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
             getNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
-            getDataContext() >> dataContext
+            getDataContext() >> DataContextUtils.context(dataContext)
         }
 
         NodeStepExecutionItem item = Mock(NodeStepExecutionItem)

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.codahale.metrics.Gauge
@@ -5,6 +21,7 @@ import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
@@ -30,7 +47,7 @@ import com.google.common.cache.LoadingCache
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.apache.commons.fileupload.util.Streams
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
@@ -109,7 +126,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        Project.withNewSession{
+        Project.withSession{
             Project.findByName(project) ? true : false
         }
     }
@@ -465,9 +482,10 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
+        def description = properties.get('project.description')
         if (!found) {
-            def project = new Project(name: projectName)
-            project.save()
+            def project = new Project(name: projectName, description: description)
+            project.save(failOnError: true)
         }
         def res = storeProjectConfig(projectName, properties)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
@@ -480,9 +498,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
-                description: rdprojectconfig.hasProperty('project.description') ? rdprojectconfig.getProperty(
-                        'project.description'
-                ) : null
+                description: description? description: null
         )
         newproj.nodesFactory = nodeService
         return newproj
@@ -514,6 +530,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
+        if(properties['project.description'] != null ) {
+            def description = properties['project.description']
+            Project.withSession {
+                def dbproj = Project.findByName(project.name)
+                dbproj.description = description ? description : null
+                dbproj.save(flush: true)
+
+            }
+        }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
                                                        createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
@@ -574,9 +599,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         project.nodesFactory = nodeService
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
-        Project found = Project.findByName(projectName)
-        if (!found) {
-            throw new IllegalArgumentException("project does not exist: " + projectName)
+        def description = properties['project.description']
+        Project.withSession{
+            def found = Project.findByName(projectName)
+            if (!found) {
+                throw new IllegalArgumentException("project does not exist: " + projectName)
+            }
+            found.description = description?description:null
+            found.save(flush: true)
+
         }
         Map resource=storeProjectConfig(projectName, properties)
         resource
@@ -602,7 +633,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = getProjectFileResource(key.project,key.path)
         def file = resource.contents
         def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime)
+        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime, new ValidationSet())
     }
     /**
      * Create Authorization using project-owned aclpolicies
@@ -623,7 +654,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     boolean needsReloadAcl(ProjectFile key,CacheableYamlSource source) {
 
         boolean needsReload=true
-        Storage.withNewSession {
+        Storage.withSession {
             def exists=existsProjectFileResource(key.project,key.path)
             def resource=exists?getProjectFileResource(key.project,key.path):null
             needsReload = resource == null ||
@@ -665,16 +696,16 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
+        def description = Project.withSession{
+            Project.findByName(project)?.description
+        }
         //preload cached readme/motd
         String readme = readCachedProjectFileAsAstring(project,"readme.md")
         String motd = readCachedProjectFileAsAstring(project,"motd.md")
         rdproject.info = new ProjectInfo(
                 projectName: project,
                 projectService: this,
-                description:
-                        rdproject.hasProperty('project.description')
-                                ? rdproject.getProperty('project.description')
-                                : null
+                description: description? description : null
         )
         rdproject.nodesFactory = nodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")
@@ -682,7 +713,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     boolean needsReload(IRundeckProject project) {
-        Project.withNewSession {
+        Project.withSession {
             Project rdproject = Project.findByName(project.name)
             boolean needsReload = rdproject == null ||
                     project.configLastModifiedTime == null ||

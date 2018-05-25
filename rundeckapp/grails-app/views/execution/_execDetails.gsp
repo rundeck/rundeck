@@ -1,4 +1,20 @@
-<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
+<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row" >
 <div class="col-sm-12">
@@ -29,7 +45,7 @@
 
                 </g:if>
 
-                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
+                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
                           data-placement="auto left"
                           title="${g.message(code: 'disabled.schedule.run')}">
@@ -60,7 +76,7 @@
         <tr>
             <td><g:message code="steps" />:</td>
             <td >
-                <g:render template="/execution/execDetailsWorkflow" model="${[edit: false, workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
+                <g:render template="/execution/execDetailsWorkflow" model="${[strategyPlugins:strategyPlugins, edit: false, workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
         </tr>
         </g:unless>
@@ -255,6 +271,13 @@
                 <div class="row">
                     <div class="col-sm-12" >
                         <span class=""><g:message code="notification.event.${trigger}"/>:</span>
+
+                        <g:if test="${trigger == ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME}">
+                            <div class="">
+                                <g:message code="scheduledExecution.property.notifyAvgDurationThreshold.label" default="Threshold"/>:
+                                <code class="argstring optvalue"><g:enc>${scheduledExecution.notifyAvgDurationThreshold}</g:enc></code>
+                            </div>
+                        </g:if>
                 <g:if test="${bytrigger[trigger].size()>1}">
                 <ul class="overflowx">
                 <g:each var="notify" in="${bytrigger[trigger].sort{a,b->a.type.toLowerCase()<=>b.type.toLowerCase()}}" status="i">

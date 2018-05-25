@@ -1,0 +1,6 @@
+---
+- name: An example playbook
+  hosts: all
+  tasks:
+  - name: print the current date and time
+    command: date

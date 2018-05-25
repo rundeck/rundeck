@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.plugins.scm;
 
 /**
@@ -40,6 +56,11 @@ public class ScmImportTrackedItemBuilder {
         return this;
     }
 
+    public ScmImportTrackedItemBuilder deleted(final boolean deleted) {
+        proto.deleted = deleted;
+        return this;
+    }
+
     public ScmImportTrackedItem build() {
         return new Implementation(proto);
     }
@@ -53,6 +74,7 @@ public class ScmImportTrackedItemBuilder {
         private String iconName;
         private String jobId;
         private boolean selected;
+        private boolean deleted;
 
         public Implementation() {
         }
@@ -63,6 +85,7 @@ public class ScmImportTrackedItemBuilder {
             this.iconName = item.getIconName();
             this.jobId = item.getJobId();
             this.selected = item.isSelected();
+            this.deleted = item.isDeleted();
         }
 
 
@@ -93,6 +116,11 @@ public class ScmImportTrackedItemBuilder {
         @Override
         public String getJobId() {
             return jobId;
+        }
+
+        @Override
+        public boolean isDeleted(){
+            return deleted;
         }
 
     }

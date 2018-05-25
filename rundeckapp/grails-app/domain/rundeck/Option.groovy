@@ -1,15 +1,11 @@
-package rundeck
-
-import java.util.regex.Pattern
-
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,6 +13,14 @@ import java.util.regex.Pattern
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package rundeck
+
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.ObjectMapper
+
+import java.util.regex.Pattern
+
 /*
  * Option domain class, stores the definition of allowable user inputs for a
  * CLI option for a WOrkflow Job (ScheduledExecution)
@@ -45,9 +49,12 @@ public class Option implements Comparable{
     String defaultStoragePath
     Boolean enforced
     Boolean required
+    Boolean isDate
+    String dateFormat
     SortedSet<String> values
     static hasMany = [values:String]
     URL valuesUrl
+    String label
     /**
      * supercedes valuesUrl and allows longer values. 
      */
@@ -58,9 +65,12 @@ public class Option implements Comparable{
     String delimiter
     Boolean secureInput
     Boolean secureExposed
+    String optionType
+    String configData
+    Boolean multivalueAllSelected
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients=['valuesList','realValuesUrl']
+    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -69,6 +79,8 @@ public class Option implements Comparable{
         defaultStoragePath(nullable:true,matches: '^(/?)keys/.+')
         enforced(nullable:false)
         required(nullable:true)
+        isDate(nullable:true)
+        dateFormat(nullable: true, maxSize: 30)
         values(nullable:true)
         valuesUrl(nullable:true)
         valuesUrlLong(nullable:true)
@@ -79,21 +91,59 @@ public class Option implements Comparable{
         secureInput(nullable:true)
         secureExposed(nullable:true)
         sortIndex(nullable:true)
+        optionType(nullable: true, maxSize: 255)
+        configData(nullable: true)
+        multivalueAllSelected(nullable: true)
+        label(nullable: true)
+    }
+
+
+    public Map getConfigMap() {
+        //de-serialize the json
+        if (null != configData) {
+            final ObjectMapper mapper = new ObjectMapper()
+            try {
+                return mapper.readValue(configData, Map.class)
+            } catch (JsonParseException e) {
+                return null
+            }
+        } else {
+            return null
+        }
+    }
+
+    public void setConfigMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            configData = mapper.writeValueAsString(obj)
+        } else {
+            configData = null
+        }
     }
 
     static mapping = {
         table "rdoption"
         valuesUrlLong length:3000
-        values type: 'text', lazy: false
         description type: 'text'
         defaultValue type: 'text'
         regex type: 'text'
+        optionType type: 'text'
+        configData type: 'text'
+//        values type: 'string'//, lazy: false
     }
     /**
      * Return canonical map representation
      */
     public Map toMap(){
         final Map map = [:]
+        if (null != optionType) {
+            map.type = optionType
+            def config = getConfigMap()
+            if (config) {
+                map.config = config
+            }
+        }
         if (null!=sortIndex) {
             map.sortIndex = sortIndex
         }
@@ -102,6 +152,13 @@ public class Option implements Comparable{
         }
         if(required){
             map.required=required
+        }
+        if(isDate){
+            map.isDate=isDate
+            map.dateFormat=dateFormat
+        }
+        if(label){
+            map.label = label
         }
         if(description){
             map.description=description
@@ -124,6 +181,9 @@ public class Option implements Comparable{
         if(multivalued){
             map.multivalued=multivalued
             map.delimiter=delimiter?:','
+            if (multivalueAllSelected) {
+                map.multivalueAllSelected = true
+            }
         }
         if(secureInput){
             map.secure=secureInput
@@ -137,8 +197,22 @@ public class Option implements Comparable{
     public static Option fromMap(String name,Map data){
         Option opt = new Option()
         opt.name=name
+        if(data.label){
+            opt.label=data.label
+        }
         opt.enforced=data.enforced?true:false
         opt.required=data.required?true:false
+        opt.isDate=data.isDate?true:false
+        if(opt.isDate){
+            opt.dateFormat=data.dateFormat
+        }
+        if (data.type) {
+            opt.optionType = data.type
+            def config = data.config
+            if (config && config instanceof Map) {
+                opt.configMap = config
+            }
+        }
         if(data.description){
             opt.description=data.description
         }
@@ -165,6 +239,7 @@ public class Option implements Comparable{
             if(data.delimiter){
                 opt.delimiter=data.delimiter
             }
+            opt.multivalueAllSelected = Boolean.valueOf(data.multivalueAllSelected)
         }
         if(data.secure){
             opt.secureInput=Boolean.valueOf(data.secure)
@@ -251,13 +326,21 @@ public class Option implements Comparable{
         }
     }
 
+    boolean isTypeFile() {
+        this.optionType == 'file'
+    }
 
     /**
      * create a clone Option object and set the valuesList string
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required','values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
+         'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
+         'multivalueAllSelected', 'label',
+         'delimiter',
+         'secureInput', 'secureExposed', 'optionType', 'configData'].
+                each { k ->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -275,13 +358,18 @@ public class Option implements Comparable{
         ", storagePath='" + defaultStoragePath + '\'' +
         ", enforced=" + enforced +
         ", required=" + required +
+        ", isDate=" + isDate +
+        ", dateFormat=" + dateFormat +
         ", values=" + values +
         ", valuesUrl=" + getRealValuesUrl() +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
+                ", multivalueAllSelected='" + multivalueAllSelected + '\'' +
         ", secureInput='" + secureInput + '\'' +
         ", secureExposed='" + secureExposed + '\'' +
         ", delimiter='" + delimiter + '\'' +
+                ", optionType='" + optionType + '\'' +
+                ", configData='" + configData + '\'' +
         '}' ;
     }
 

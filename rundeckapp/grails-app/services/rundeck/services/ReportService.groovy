@@ -1,8 +1,26 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import grails.gorm.transactions.Transactional
+import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
-
+@Transactional
 class ReportService  {
 
     def grailsApplication
@@ -154,8 +172,6 @@ class ReportService  {
         return model
     }
 
-    boolean transactional = true
-
     private def getStartsWithFilters() {
         return [
             //job filter repurposed for reportId
@@ -201,6 +217,8 @@ class ReportService  {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
+        ]
+        def jobfilters = [
                 jobId: 'jcJobId',
                 proj: 'ctxProject',
         ]
@@ -213,10 +231,8 @@ class ReportService  {
                 tags: 'tags',
         ]
 
-        def filters = [:]
-        filters.putAll(txtfilters)
-        filters.putAll(eqfilters)
-
+        //in cancel case the real stat is failed but AbortedByUser != null
+        boolean fixCancel = (query.statFilter=='cancel' && !query.abortedByFilter)
 
         delegate.with {
 
@@ -225,6 +241,13 @@ class ReportService  {
                     if (query["${key}Filter"]) {
                         ilike(val, '%' + query["${key}Filter"] + '%')
                     }
+                }
+
+                if(fixCancel){
+                    query.statFilter='fail'
+                    isNotNull('abortedByUser')
+                }else if(query.statFilter=='fail' && !query.abortedByFilter){
+                    isNull('abortedByUser')
                 }
 
                 eqfilters.each { key, val ->
@@ -253,6 +276,68 @@ class ReportService  {
                         eq(val, query["${key}Filter"])
                     }
                 }
+
+                if (query.execIdFilter) {
+                    or {
+                        'in'('jcExecId', query.execIdFilter)
+                        and{
+                                    jobfilters.each { key, val ->
+                                        if (query["${key}Filter"] == 'null') {
+                                            or {
+                                                isNull(val)
+                                                eq(val, '')
+                                            }
+                                        } else if (query["${key}Filter"] == '!null') {
+                                            and {
+                                                isNotNull(val)
+                                                ne(val, '')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
+                                            or {
+                                                eq(val, 'succeed')
+                                                eq(val, 'succeeded')
+                                                eq(val, 'true')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
+                                            or {
+                                                eq(val, 'fail')
+                                                eq(val, 'failed')
+                                            }
+                                        } else if (query["${key}Filter"]) {
+                                            eq(val, query["${key}Filter"])
+                                        }
+                                    }
+                        }
+                    }
+                }else{
+                    jobfilters.each { key, val ->
+                        if (query["${key}Filter"] == 'null') {
+                            or {
+                                isNull(val)
+                                eq(val, '')
+                            }
+                        } else if (query["${key}Filter"] == '!null') {
+                            and {
+                                isNotNull(val)
+                                ne(val, '')
+                            }
+                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
+                            or {
+                                eq(val, 'succeed')
+                                eq(val, 'succeeded')
+                                eq(val, 'true')
+                            }
+                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
+                            or {
+                                eq(val, 'fail')
+                                eq(val, 'failed')
+                            }
+                        } else if (query["${key}Filter"]) {
+                            eq(val, query["${key}Filter"])
+                        }
+                    }
+                }
+
                 if (query.titleFilter) {
                     or {
                         eq('jcJobId', '')
@@ -308,6 +393,23 @@ class ReportService  {
                 isNull("jcJobId")
                 isNull("jcExecId")
             }
+
+            if(query.execnodeFilter){
+                if(query.execnodeFilter.startsWith('name:') || !(query.execnodeFilter.contains(":") || query.execnodeFilter.contains(".*"))){
+                    def node = query.execnodeFilter.startsWith('name:')?(query.execnodeFilter.split("name:")[1]).stripIndent():query.execnodeFilter;
+                    or {
+                        ilike("failedNodeList", '%' + node + '%')
+                        ilike("succeededNodeList", '%' + node + '%')
+                    }
+
+                }else{
+                    ilike("filterApplied", '%' + query.execnodeFilter + '%')
+                }
+
+            }
+        }
+        if(fixCancel){
+            query.statFilter='cancel'
         }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {
@@ -325,10 +427,14 @@ class ReportService  {
                 title: 'title',
                 tags: 'tags',
         ]
+        def specialfilters = [
+                execnode: 'execnode'
+        ]
 
         def filters = [:]
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
+
         def runlist=ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -348,8 +454,6 @@ class ReportService  {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
-                order("dateStarted",'desc')
-                order("id", 'desc')
             }
         }
         def executions=[]
@@ -360,11 +464,14 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-
-
-        def total = ExecReport.createCriteria().count{
-            applyExecutionCriteria(query, delegate,isJobs)
-        };
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
+            ExecReport.createCriteria().count {
+                applyExecutionCriteria(query, delegate, isJobs)
+            }
+        }
+        filters.putAll(specialfilters)
 
         return [
             query:query,

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
@@ -10,6 +26,10 @@ class ImportTracker {
 
     Map<String, String> trackedCommits = Collections.synchronizedMap([:])
     Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
+    /**
+     * job ID -> path
+     */
+    Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
 
     public Set<String> trackedPaths() {
         return trackedCommits.keySet() + trackedJobIds.keySet()
@@ -44,6 +64,7 @@ class ImportTracker {
     void trackJobAtPath(JobScmReference job, String path) {
         trackedCommits[path] = job.scmImportMetadata?.commitId
         trackedJobIds[path] = job.id
+        trackedPathsMap[job.id] = path
     }
 
     String untrackPath(String path) {
@@ -59,6 +80,10 @@ class ImportTracker {
         trackedJobIds[path]
     }
 
+    String trackedPath(String jobId) {
+        trackedPathsMap[jobId]
+    }
+
     Map<String, String> trackedDetail(String path) {
         [id: trackedJobIds[path], commitId: trackedCommits[path]]
     }
@@ -69,6 +94,7 @@ class ImportTracker {
                 "renamedTrackedItems=" + renamedTrackedItems +
                 ", trackedCommits=" + trackedCommits +
                 ", trackedJobIds=" + trackedJobIds +
+                ", trackedPathsMap=" + trackedPathsMap +
                 '}';
     }
 }

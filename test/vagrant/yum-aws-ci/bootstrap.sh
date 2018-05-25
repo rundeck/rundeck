@@ -19,6 +19,27 @@ die() {
 
     exit ${exit_status:-1}
 }
+setup_project(){
+        local FARGS=("$@")
+        local DIR=${FARGS[0]}
+        local PROJ=${FARGS[1]}
+        mkdir -p $DIR/projects/$PROJ/etc
+        cat >$DIR/projects/$PROJ/etc/project.properties<<END
+project.name=$PROJ
+project.nodeCache.delay=30
+project.nodeCache.enabled=true
+project.ssh-authentication=privateKey
+#project.ssh-keypath=
+resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
+resources.source.1.config.format=resourcexml
+resources.source.1.config.generateFileAutomatically=true
+resources.source.1.config.includeServerNode=true
+resources.source.1.config.requireFileExists=false
+resources.source.1.type=file
+service.FileCopier.default.provider=jsch-scp
+service.NodeExecutor.default.provider=jsch-ssh
+END
+}
 
 #trap 'die $? "*** bootstrap failed. ***"' ERR
 
@@ -61,6 +82,13 @@ service iptables stop
 #iptables -A INPUT -p tcp --dport 4440 -j ACCEPT
 #service iptables save
 
+# create test project
+setup_project /var/rundeck test
+chown -R rundeck:rundeck /var/rundeck/projects
+cat >/etc/sysconfig/rundeckd <<END
+LANG=en_US.UTF-8
+RDECK_JVM_SETTINGS="-Dfile.encoding=utf-8 -Xmx1024m -Xms256m -XX:MaxPermSize=256m -server"
+END
 # Start up rundeck
 mkdir -p /var/log/vagrant
 if ! /etc/init.d/rundeckd status
@@ -73,7 +101,7 @@ then
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -88,7 +116,7 @@ else
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -104,5 +132,5 @@ fi
 
 # test data file is in correct location
 
-ls /var/lib/rundeck/data/rundeckdb.h2.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.data.db"
+ls /var/lib/rundeck/data/rundeckdb.mv.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.mv.db"
 

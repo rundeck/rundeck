@@ -43,7 +43,7 @@ public class LocalFileCopierTest {
     //
     // junit exported java properties (e.g. from maven's project.properties)
     //
-    public static String RDECK_BASE = System.getProperty("rdeck.base", "target/rdeck_base");
+    public static String RDECK_BASE = System.getProperty("rdeck.base", "build/rdeck_base");
 
     //
     // derived modules and projects base

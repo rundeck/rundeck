@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -72,6 +73,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_REQUIRED = "required";
     public static final String CONFIG_DEFAULT = "default";
     public static final String CONFIG_VALUES = "values";
+    public static final String CONFIG_LABELS = "labels";
     public static final String CONFIG_SCOPE = "scope";
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
@@ -88,7 +90,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     /**
      * @return data with exported plugin details
      */
-    public Map<String,String> createPluginDataContext() {
+    public Map<String,String> createPluginData() {
         final Map<String,String> pluginDataContext = new HashMap<String, String>();
 
         pluginDataContext.put("file", provider.getArchiveFile().getAbsolutePath());
@@ -185,6 +187,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         values = null;
                     }
                     pbuild.values(values);
+                    Object labelmap = itemmeta.get(CONFIG_LABELS);
+                    if(labelmap instanceof Map){
+                        pbuild.labels((Map) labelmap);
+                    }
 
                     final String scopeString = metaStringProp(itemmeta, CONFIG_SCOPE);
                     if(null!=scopeString) {
@@ -391,7 +397,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
                     convertStoragePathValue(data, context.getStorageTree(), name, propValue, renderingOptions);
                 } else if (StringRenderingConstants.ValueConversion.PRIVATE_DATA_CONTEXT.equalsOrString(conversion)) {
-                    convertPrivateDataValue(data, context.getPrivateDataContext(), name, propValue, renderingOptions);
+                    convertPrivateDataValue(data, context.getPrivateDataContextObject(), name, propValue, renderingOptions);
                 }
             }
         }
@@ -471,7 +477,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      */
     private void convertPrivateDataValue(
             final Map<String, String> data,
-            final Map<String, Map<String, String>> privateDataContext,
+            final DataContext privateDataContext,
             final String name,
             final String propValue,
             final Map<String, Object> renderingOptions
@@ -488,7 +494,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     propValue
             );
         }
-        String newvalue = DataContextUtils.resolve(privateDataContext, prop[0], prop[1]);
+        String newvalue = privateDataContext.resolve(prop[0], prop[1]);
 
         if (null == newvalue) {
             if(clearValue) {

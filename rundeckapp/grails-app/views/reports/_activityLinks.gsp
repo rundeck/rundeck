@@ -1,25 +1,26 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 %{--
-  Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
-
-  Licensed under the Apache License, Version 2.0 (the "License");
-  you may not use this file except in compliance with the License.
-  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
   --}%
+
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:set var="projParams" value="${[project: project ?: params.project ?: request.project]}"/>
 <g:set var="linkParams" value="${filter?filter+projParams:projParams}"/>
 <g:set var="runningParams" value="${filter ? filter + projParams : projParams}"/>
 <g:if test="${scheduledExecution}">
-    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id]+projParams}"/>
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, includeJobRef: includeJobRef]+projParams}"/>
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <ul class="nav nav-tabs activity_links">
@@ -56,7 +57,7 @@
                     title="Executions by you"
                     params="${linkParams+[ userFilter: session.user]}">
                 <i class="glyphicon glyphicon-user"></i>
-                by you
+                <g:message code="by.you" default="by you"/> 
             </g:link>
         </li>
     </g:if>
@@ -67,7 +68,7 @@
                     title="Executions by ${enc(attr:execution.user)}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
-                by <g:username user="${execution.user}"/>
+                <g:message code="by" default="by"/> <g:username user="${execution.user}"/>
             </g:link>
         </li>
     </g:if>
@@ -87,12 +88,16 @@
                 <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
                        class="_defaultInput"/>
             </td>
-            <td class="eventicon autoclickable" data-bind="attr: { 'title': status() } ">
-                <i class="exec-status icon"
-                   data-bind="css: { 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel' || status()=='aborted', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
+            <td class="eventicon autoclickable" data-bind="attr: { 'title': executionState() } ">
+                <i class="exec-status icon" data-bind="
+                attr: { 'data-execstate': executionState, 'data-statusstring': customStatusString }
+                "></i>
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
+                <g:if test="${includeJobRef}">
+                    <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
+                </g:if>
                 <g:if test="${showTitle}">
                     <span data-bind="if: !jobDeleted()">
                         <span data-bind="text: isJob()?jobName():executionString()"></span>
@@ -126,11 +131,23 @@
 
                     </span>
                     <span title="">
-                        <span class="text-muted">in</span>
+                        <span class="text-muted"><g:message code="in.of" default="in"/></span>
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
-                <span data-bind="if: !dateCompleted()">
+                <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
+                    <g:render template="/common/progressBar" model="[indefinite: true,
+                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
+                            progressBarClass: 'progress-bar-info',
+                            containerId: 'progressContainer2',
+                            showpercent: false,
+                            progressId: 'progressBar',
+                            innerContent: '',
+                            bind: 'timeNow()',
+                            bindText: '\'Scheduled; starting \' + timeToStart()',
+                    ]"/>
+                </span>
+                <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
                     <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
                     <g:render template="/common/progressBar" model="${[
                             indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
@@ -157,7 +174,7 @@
             </td>
 
             <td class="  user text-right autoclickable" style="white-space: nowrap;">
-                <em>by</em>
+                <em><g:message code="by" default="by"/></em>
                 <span data-bind="text: user"></span>
             </td>
 

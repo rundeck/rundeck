@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%--
   Created by IntelliJ IDEA.
   User: greg
@@ -11,7 +27,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="configure"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - <g:message code="scmController.page.commit.title" args="[params.project]"/></title>
+    <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[params.project]:params.project}"/>
+    <title><g:appTitle/> - <g:message code="scmController.page.commit.title" args="[projectLabel]"/></title>
 
 </head>
 
@@ -31,14 +48,22 @@
                 method="post" class="form form-horizontal">
             <g:hiddenField name="allJobs" value="${params.allJobs}"/>
             <g:hiddenField name="actionId" value="${params.actionId}"/>
+            <g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
-                        <g:if test="${pluginDescription && pluginDescription.description?.title}">
-                            ${pluginDescription.description.title}:
-                        </g:if>
+
+                        <stepplugin:message
+                                service="${serviceName}"
+                                name="${pluginDescription.name}"
+                                code="plugin.title"
+                                default="${pluginDescription.description?.title?:pluginDescription.name}"/>:
                         <g:if test="${actionView && actionView.title}">
-                            ${actionView.title}
+                            <stepplugin:message
+                                    service="${serviceName}"
+                                    name="${pluginDescription.name}"
+                                    code="action.${actionId}.title"
+                                    default="${actionView.title}"/>
                         </g:if>
                         <g:else>
                             <g:message code="scmController.page.commit.description" default="SCM Export"/>
@@ -50,7 +75,11 @@
                     <g:if test="${actionView && actionView.description}">
                         <div class="list-group-item">
                             <div class="list-group-item-text">
-                                <g:markdown>${actionView.description}</g:markdown>
+                                <g:markdown><stepplugin:message
+                                        service="${serviceName}"
+                                        name="${pluginDescription.name}"
+                                        code="action.${actionId}.description"
+                                        default="${actionView.description}"/></g:markdown>
                             </div>
                         </div>
                     </g:if>
@@ -172,11 +201,11 @@
                                                 }"/>
 
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', notext: true,
-                                                                                                     integration:'export', text: '',]"/>
+                                                          model="[iscommit: true, exportStatus: 'DELETED', notext: true,
+                                                                                                     text: '',]"/>
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', noicon: true,
-                                                                                                     integration:'export', text: deletedJobText]"/>
+                                                          model="[iscommit: true, exportStatus: 'DELETED', noicon: true,
+                                                                                                     text: deletedJobText]"/>
 
                                             </label>
                                         </div>
@@ -209,7 +238,7 @@
                         </g:if>
                         <g:if test="${!jobs && !deletedPaths && scmProjectStatus.state.toString() == 'CLEAN'}">
                             <div class="list-group-item">
-                                No Changes
+                                <g:message code="no.changes" />
                             </div>
                         </g:if>
                     </g:if>
@@ -225,7 +254,6 @@
                                                 <g:checkBox name="chosenTrackedItem"
                                                             value="${trackedItem.id}"
                                                             checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected||(trackedItem.jobId && selected?.contains(trackedItem.jobId))}"/>
-
                                                 <g:if test="${job}">
 
                                                     <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
@@ -300,10 +328,99 @@
                                 </g:if>
                             </div>
                         </g:if>
+                        <g:if test="${toDeleteItems}">
+                            <div class="list-group-item overflowy">
+                                <div class="form-group">
+                                    <g:each in="${toDeleteItems}" var="toDeleteItem">
+                                        <g:set var="job" value="${toDeleteItem.jobId?jobMap[toDeleteItem.jobId]:null}"/>
+                                        <g:set var="jobst" value="${job?scmStatus?.get(job.extid)?.synchState?.toString():null}"/>
+
+                                        <div class="checkbox col-sm-12">
+                                            <label title="${toDeleteItem.id}">
+                                                <g:checkBox name="chosenDeleteItem"
+                                                            value="${(jobst == 'DELETE_NEEDED')?toDeleteItem.jobId:toDeleteItem.id}"
+                                                            checked="${selectedItems?.contains(toDeleteItem.id)||toDeleteItem.selected||(toDeleteItem.jobId && selected?.contains(toDeleteItem.jobId))}"/>
+                                                <g:if test="${job}">
+
+                                                    <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
+
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit          : true,
+                                                                      importStatus: jobstatus?.synchState?.toString(),
+                                                                      notext: true,
+                                                                      integration:integration,
+                                                                      text: '',
+                                                                      commit: jobstatus?.commit]"/>
+                                                    <g:render template="statusIcon"
+                                                              model="[iscommit          : true,
+                                                                      importStatus: jobstatus?.synchState?.toString(),
+                                                                      noicon: true,
+                                                                      integration:integration,
+                                                                      text: job.jobName,
+                                                                      commit: jobstatus?.commit]"/>
+
+                                                    <span class="text-muted">
+                                                        - ${job.groupPath}
+                                                    </span>
+                                                </g:if>
+                                                <g:else>
+
+                                                    <span class="">
+                                                        <g:if test="${toDeleteItem.iconName}">
+                                                            <g:icon name="${toDeleteItem.iconName}"/>
+                                                        </g:if>
+                                                        ${toDeleteItem.title ?: toDeleteItem.id}
+                                                    </span>
+                                                </g:else>
+
+                                            </label>
+                                            <g:if test="${job}">
+
+                                                <g:link action="diff" class="btn btn-xs btn-info"
+                                                        params="${[project: params.project, id: job.extid, integration: 'import']}">
+                                                    <g:message code="button.View.Diff.title"/>
+                                                </g:link>
+                                            </g:if>
+                                        </div>
+                                        <g:if test="${job}">
+                                            <div class="col-sm-11 col-sm-offset-1">
+                                                <span class="text-muted">
+                                                    <span class="">
+                                                        <g:if test="${toDeleteItem.iconName}">
+                                                            <g:icon name="${toDeleteItem.iconName}"/>
+                                                        </g:if>
+                                                        ${toDeleteItem.title ?: toDeleteItem.id}
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </g:if>
+
+                                    </g:each>
+                                </div>
+                                <g:if test="${toDeleteItems.size() > 1}">
+                                    <div class=" row row-spacing">
+                                        <div class=" col-sm-12">
+                                            <span class="textbtn textbtn-default"
+                                                  onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', true)">
+                                                <g:message code="select.all"/>
+                                            </span>
+                                            &bull;
+                                            <span class="textbtn textbtn-default"
+                                                  onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', false)">
+                                                <g:message code="select.none"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </g:if>
+                            </div>
+                        </g:if>
                     </g:elseif>
                     <div class="list-group-item">
                         <g:if test="${actionView?.properties}">
                             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:serviceName,
+                                    provider:pluginDescription.name,
+                                    messagePrefix:"action.${actionId}.",
                                     properties:actionView?.properties,
                                     report:report,
                                     values:config,
@@ -320,8 +437,8 @@
                             code="button.action.Cancel"/></button>
                     <g:submitButton
                             name="submit"
-                            value="${actionView.buttonTitle ?:
-                                    g.message(code: 'button.Export.title')}"
+                            value="${stepplugin.messageText(service:serviceName,name:pluginDescription.name,code:'action.'+actionId+'.buttonTitle',default:actionView.buttonTitle ?:
+                                    g.message(code: 'button.Export.title'))}"
                             class="btn btn-primary"/>
                 </div>
             </div>

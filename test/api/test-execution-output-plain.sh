@@ -85,7 +85,7 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     unmod=$(grep 'X-Rundeck-ExecOutput-Unmodified:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     doff=$(grep 'X-Rundeck-ExecOutput-Offset:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     dlast=$(grep 'X-Rundeck-ExecOutput-LastModifed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
-    ddone=$(grep 'X-Rundeck-ExecOutput-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
+    ddone=$(grep 'X-Rundeck-Exec-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     #echo "unmod $unmod"
     #echo "doff $doff"
     #echo "dlast $dlast"
@@ -117,7 +117,7 @@ fi
 rm $expectfile $outfile
 
 ##wait for exec to finish...
-rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+api_waitfor_execution $execid || fail "Waiting for $execid to finish"
 $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 echo "OK"

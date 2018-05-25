@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -25,17 +24,18 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.execution.ExceptionStatusResult;
+import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
+import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 
 import java.util.Map;
 
 
 /**
- * StepExecutionResult is ...
+ * StepExecutionResult is result of a step.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface StepExecutionResult extends ExceptionStatusResult {
-    public Map<String,Object> getResultData();
     public Map<String,Object> getFailureData();
 
     public FailureReason getFailureReason();

@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -80,6 +80,16 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
             final INodeEntry node
     )
     {
+        return executeCommand(executionContext, command, node,true);
+    }
+
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext executionContext,
+            final String[] command,
+            final INodeEntry node,
+            final boolean showError
+    )
+    {
         Description pluginDesc = getDescription();
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();
@@ -93,7 +103,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                 executionContext.getFrameworkProject(),
                 executionContext.getDataContext()
         );
-        final HashMap<String, String> scptexec = new HashMap<String, String>();
+        final HashMap<String, String> scptexec = new HashMap<>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
         final Map<String, Map<String, String>> nodeExecContext =
@@ -145,6 +155,9 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                     3,
                     "[" + pluginname + "]: result code: " + result + ", success: " + (0 == result)
             );
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             if (0 != result) {
                 return NodeExecutorResultImpl.createFailure(
                         NodeStepFailureReason.NonZeroResultCode,

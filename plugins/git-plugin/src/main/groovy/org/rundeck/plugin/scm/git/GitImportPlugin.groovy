@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -5,6 +21,8 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
@@ -12,6 +30,7 @@ import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.config.Import
+import org.rundeck.plugin.scm.git.imp.actions.FetchAction
 import org.rundeck.plugin.scm.git.imp.actions.ImportJobs
 import org.rundeck.plugin.scm.git.imp.actions.PullAction
 import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
@@ -22,12 +41,14 @@ import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
 class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
+    /**
+     * @deprecated use {@link #ACTION_IMPORT_JOBS}
+     */
     public static final String ACTION_IMPORT_ALL = 'import-all'
+    public static final String ACTION_IMPORT_JOBS = 'import-jobs'
     public static final String ACTION_PULL = 'remote-pull'
+    public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
-    boolean trackedItemsSelected = false
-    boolean useTrackingRegex = false
-    String trackingRegex
     List<String> trackedItems = null
     Import config
     /**
@@ -56,6 +77,35 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
     }
 
+    @Override
+    ScmExportResult scmImport(
+        final ScmOperationContext context,
+        final String actionId,
+        final JobImporter importer,
+        final List<String> selectedPaths,
+        final List<String> deletedJobs,
+        final Map<String, String> input
+    ) throws ScmPluginException
+    {
+        if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
+            deletedJobs.each { jobid ->
+                jobStateMap.remove(jobid)
+            }
+            return ((ImportJobs) actions[ACTION_IMPORT_JOBS]).performAction(
+                context,
+                this,
+                importer,
+                selectedPaths,
+                deletedJobs,
+                input
+            )
+        }else{
+            log.debug("deletedJobs list to non import action, ignored")
+            actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
+        }
+
+    }
+
     void initialize(final ScmOperationContext context) {
         setup(context)
         actions = [
@@ -66,6 +116,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "glyphicon-cog"
 
                 ),
+                (ACTION_IMPORT_JOBS)         : new ImportJobs(
+                    ACTION_IMPORT_JOBS,
+                        "Import Remote Changes",
+                        "Import Changes",
+                        null
+
+                ),
+                //preserve compatibility with action name 'import-all'
                 (ACTION_IMPORT_ALL)         : new ImportJobs(
                         ACTION_IMPORT_ALL,
                         "Import Remote Changes",
@@ -78,6 +136,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         ACTION_PULL,
                         "Pull Remote Changes",
                         "Synch incoming changes from Remote"
+                ),
+
+                (ACTION_FETCH)               : new FetchAction(
+                        ACTION_FETCH,
+                        "Fetch Remote Changes",
+                        "Fetch changes from Remote for local comparison"
                 ),
 
         ]
@@ -109,16 +173,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         git.close()
     }
 
-
     @Override
-    ScmImportSynchState getStatus(ScmOperationContext context) {
-        return getStatusInternal(context, true)
+    void totalClean(){
+        File base = new File(config.dir)
+        base?.deleteDir()
     }
 
 
-    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
+    @Override
+    ScmImportSynchState getStatus(ScmOperationContext context) {
+        return getStatusInternal(context, config.shouldFetchAutomatically())
+    }
+
+
+    GitImportSynchState   getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern() && !trackedItems) {
             return null
         }
 
@@ -126,6 +196,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                if(config.shouldPullAutomatically()){
+                    actions[ACTION_PULL].performAction(context,this,null,null,null)
+                }
             } catch (Exception e) {
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
@@ -171,8 +244,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         //compare to tracked branch
         def bstat = BranchTrackingStatus.of(repo, branch)
         state.branchTrackingStatus = bstat
-        if (bstat && bstat.behindCount > 0) {
-            state.state = ImportSynchState.REFRESH_NEEDED
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
+                state.state = ImportSynchState.REFRESH_NEEDED
         } else if (importNeeded || renamed || notFound) {
             state.state = ImportSynchState.IMPORT_NEEDED
         } else if (deleted) {
@@ -181,7 +254,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             state.state = ImportSynchState.CLEAN
         }
 
-        if (bstat && bstat.behindCount > 0) {
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
             msgs << "${bstat.behindCount} changes from remote need to be pulled"
         }
         if (importNeeded) {
@@ -223,7 +296,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 job.scmImportMetadata.commitId
         ) : null
 
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
 
         jobStateMap.remove(job.id)
 
@@ -242,7 +315,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             importTracker.trackJobAtPath(job, path)
         }
         log.debug(
-                "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${latestCommit?.name}"
+                "import job status: ${synchState} with meta ${job.scmImportMetadata}, " +
+                        "version ${job.importVersion}/${job.version} commit ${latestCommit?.name}" +
+                        " sourceID: ${job.sourceId}"
         )
 
         def ident = job.id + ':' + String.valueOf(job.version) + ':' + (latestCommit ? latestCommit.name : '')
@@ -252,6 +327,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         jobstat['version'] = job.version
         jobstat['synch'] = synchState
         jobstat['path'] = path
+        jobstat['sourceId'] = job.sourceId
         if (previousImportCommit) {
             jobstat['commitId'] = previousImportCommit.name
             jobstat['commitMeta'] = GitUtil.metaForCommit(previousImportCommit)
@@ -287,24 +363,28 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
         } else {
-            if (job.scmImportMetadata && job.scmImportMetadata.commitId && commit) {
+            if (job.scmImportMetadata && job.scmImportMetadata.commitId &&
+                    commit &&
+                    (!job.scmImportMetadata.url || job.scmImportMetadata.url == config.url)) {
                 //determine change between tracked commit ID and head commit, if available
                 //i.e. detect if path was deleted
                 def oldCommit = GitUtil.getCommit repo, job.scmImportMetadata.commitId
-                def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
-                def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
-                log.debug("Found changes for ${path}: " + pathChanges.collect { entry ->
-                    "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
-                }.join("\n")
-                )
-                def found = pathChanges.find { it.oldPath == path }
-                if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
-                    return ImportSynchState.DELETE_NEEDED
-                } else if (found && found.changeType == DiffEntry.ChangeType.MODIFY) {
-                    return ImportSynchState.IMPORT_NEEDED
-                } else if (found && found.changeType == DiffEntry.ChangeType.RENAME) {
-                    log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
-                    return ImportSynchState.IMPORT_NEEDED
+                if (oldCommit) {
+                    def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
+                    def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
+                    log.debug("Found changes for ${path}: " + pathChanges.collect { entry ->
+                        "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
+                    }.join("\n")
+                    )
+                    def found = pathChanges.find { it.oldPath == path }
+                    if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
+                        return ImportSynchState.DELETE_NEEDED
+                    } else if (found && found.changeType == DiffEntry.ChangeType.MODIFY) {
+                        return ImportSynchState.IMPORT_NEEDED
+                    } else if (found && found.changeType == DiffEntry.ChangeType.RENAME) {
+                        log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
+                        return ImportSynchState.IMPORT_NEEDED
+                    }
                 }
             }
             //different commit was imported previously, or job has been modified
@@ -314,7 +394,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     boolean contentDiffers(final JobScmReference job, RevCommit commit, final String path) {
         def currentJob = new ByteArrayOutputStream()
-        job.jobSerializer.serialize(path.endsWith('.xml') ? 'xml' : 'yaml', currentJob)
+        job.jobSerializer.serialize(
+                path.endsWith('.xml') ? 'xml' : 'yaml',
+                currentJob,
+                config.importPreserve,
+                config.importArchive ? job.sourceId : null
+        )
         def id = lookupId(commit, path)
         if (!id) {
             return true
@@ -332,7 +417,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     JobImportState getJobStatus(final JobScmReference job, String originalPath) {
         log.debug("getJobStatus(${job.id},${originalPath})")
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
         if (null == originalPath) {
             originalPath = importTracker.originalValue(path)
         }
@@ -344,8 +429,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     List<Action> jobActionsForStatus(Map status) {
-        if (status.synch == ImportSynchState.IMPORT_NEEDED) {
-            [actions[ACTION_IMPORT_ALL]]
+        if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
+            [actions[ACTION_IMPORT_JOBS]]
         } else {
             []
         }
@@ -354,9 +439,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     JobImportState jobChanged(JobChangeEvent event, JobScmReference reference) {
-        def path = relativePath(event.originalJobReference)
-        def newpath = relativePath(event.jobReference)
-        String origPath = null
+        def path = getRelativePathForJob(event.originalJobReference)
+        def newpath = relativePath(reference)//recalculate path
         if (!isTrackedPath(path) && !isTrackedPath(newpath)) {
             return null
         }
@@ -389,8 +473,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(ScmOperationContext context) {
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern()) {
             return actions[ACTION_INITIALIZE_TRACKING]
+        }else{
+            log.debug("SetupTracking: ${input} (true)")
+            trackedItems = null
         }
         null
     }
@@ -399,7 +486,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.frameworkProject) {
             //project-level actions
-            if (!trackedItemsSelected) {
+            if (!config.shouldUseFilePattern() && !trackedItems) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
 
@@ -409,7 +496,10 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     avail << actions[ACTION_PULL]
                 }
                 if (status.state != ImportSynchState.CLEAN) {
-                    avail << actions[ACTION_IMPORT_ALL]
+                    avail << actions[ACTION_IMPORT_JOBS]
+                }
+                if(!config.shouldFetchAutomatically()){
+                    avail << actions[ACTION_FETCH]
                 }
                 return avail
             }
@@ -419,7 +509,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     String getRelativePathForJob(final JobReference job) {
-        relativePath(job)
+        importTracker.trackedPath(job.id)?:relativePath(job)
     }
 
 
@@ -431,12 +521,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportDiffResult getFileDiff(final JobScmReference job, String originalPath) {
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
         if (!originalPath) {
             originalPath = importTracker.originalValue(path)
         }
-        path = originalPath ?: relativePath(job)
-        def temp = serializeTemp(job, config.format)
+        path = originalPath ?: getRelativePathForJob(job)
+        def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
         def id = latestCommit ? lookupId(latestCommit, path) : null
         if (!latestCommit || !id) {
@@ -448,7 +538,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         temp.delete()
 
 
-        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_ALL]] : null
+        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_JOBS]] : null
         return new GitDiffResult(
                 content: baos.toString(),
                 modified: diffs > 0,
@@ -474,9 +564,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     trackPath(it, false, importTracker.trackedJob(it))
                 }
             }
-        } else if (actionId == ACTION_IMPORT_ALL) {
+        } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
 
             List<ScmImportTrackedItem> found = []
+
+            //files to delete
+            jobStateMap?.each {job->
+                String status = job.getValue()?.get("synch")
+                if (status?.equalsIgnoreCase('DELETE_NEEDED')){
+                    found << trackPath(
+                        job.getValue().get("path").toString(),
+                        true,
+                        job.key.toString(),
+                        true
+                    )
+                }
+            }
 
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
@@ -502,12 +605,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null, final boolean deleted = false) {
         ScmImportTrackedItemBuilder.builder().
                 id(path).
                 iconName('glyphicon-file').
                 selected(selected).
                 jobId(jobId).
+                deleted(deleted).
                 build()
     }
 
@@ -520,9 +624,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         tree.addTree(head)
         tree.setRecursive(true)
         if (useFilter) {
-            if (isUseTrackingRegex()) {
-                tree.setFilter(PathRegexFilter.create(trackingRegex))
-            } else {
+            if (config.shouldUseFilePattern()) {
+                tree.setFilter(PathRegexFilter.create(config.filePattern))
+            } else if(trackedItems) {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
@@ -534,6 +638,20 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     boolean isTrackedPath(final String path) {
-        return trackedItems?.contains(path) || isUseTrackingRegex() && trackingRegex && path.matches(trackingRegex)
+        return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
+    }
+
+
+    Map clusterFixJobs(List<JobScmReference> jobs){
+        Status st = git.status().call()
+        def bstat = BranchTrackingStatus.of(repo, branch)
+        if(st.clean && bstat && bstat.behindCount>0){
+            PullResult result = git.pull().call()
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+            return [updated:true]
+        }
+        [:]
     }
 }

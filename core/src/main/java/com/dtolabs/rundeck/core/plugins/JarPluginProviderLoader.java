@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -23,21 +23,16 @@
  */
 package com.dtolabs.rundeck.core.plugins;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
@@ -58,15 +53,29 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
+class JarPluginProviderLoader implements ProviderLoader,
+        FileCache.Expireable,
+        PluginResourceLoader,
+        PluginMetadata,
+        Closeable
+{
+    public static final String RESOURCES_DIR_DEFAULT = "resources";
     private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
+    public static final String RUNDECK_PLUGIN_RESOURCES = "Rundeck-Plugin-Resources";
+    public static final String RUNDECK_PLUGIN_RESOURCES_DIR = "Rundeck-Plugin-Resources-Dir";
     public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
     public static final String JAR_PLUGIN_VERSION = "1.1";
+    public static final String JAR_PLUGIN_VERSION_1_2 = "1.2";
+    public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(
+            JAR_PLUGIN_VERSION_1_2);
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
+    public static final String RUNDECK_PLUGIN_AUTHOR = "Rundeck-Plugin-Author";
+    public static final String RUNDECK_PLUGIN_URL = "Rundeck-Plugin-URL";
+    public static final String RUNDECK_PLUGIN_DATE = "Rundeck-Plugin-Date";
     public static final String RUNDECK_PLUGIN_LIBS_LOAD_FIRST = "Rundeck-Plugin-Libs-Load-First";
     public static final String CACHED_JAR_TIMESTAMP_FORMAT = "yyyyMMddHHmmssSSS";
     private final File pluginJar;
@@ -76,6 +85,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     private final DateFormat cachedJarTimestampFormatter = new SimpleDateFormat(CACHED_JAR_TIMESTAMP_FORMAT);
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
+    private AtomicInteger loadCount = new AtomicInteger();
 
     public JarPluginProviderLoader(final File pluginJar, final File pluginJarCacheDirectory, final File cachedir) {
         this(pluginJar, pluginJarCacheDirectory, cachedir, true);
@@ -96,6 +106,41 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         this.pluginJarCacheDirectory = pluginJarCacheDirectory;
         this.cachedir = cachedir;
         this.loadLibsFirst = loadLibsFirst;
+    }
+
+    private boolean supportsResources(final String pluginVersion) {
+        return VersionCompare.forString(pluginVersion).atLeast(SUPPORTS_RESOURCES_PLUGIN_VERSION);
+    }
+
+    @Override
+    public List<String> listResources() throws PluginException, IOException {
+        if (supportsResources(getPluginVersion())) {
+            return getCachedJar().resourcesLoader.listResources();
+        }
+        return null;
+    }
+
+    @Override
+    public InputStream openResourceStreamFor(final String path) throws PluginException, IOException {
+        if (supportsResources(getPluginVersion())) {
+            return getCachedJar().resourcesLoader.openResourceStreamFor(path);
+        }
+        return null;
+    }
+
+    private final Closeable dereferencer = new Closeable() {
+        @Override
+        public void close() throws IOException {
+            removeReference();
+        }
+    };
+
+    @Override
+    public <T> CloseableProvider<T> loadCloseable(final PluggableService<T> service, final String providerName)
+            throws ProviderLoaderException
+    {
+        addReference();
+        return Closeables.closeableProvider(load(service, providerName), Closeables.closeOnce(dereferencer));
     }
 
     /**
@@ -166,6 +211,40 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return value.split(",");
     }
 
+    private String getResourcesBasePath() {
+        final Attributes attributes = getMainAttributes();
+        if (null != attributes) {
+            final String dir = attributes.getValue(RUNDECK_PLUGIN_RESOURCES_DIR);
+            if (null != dir) {
+                //list resources in the dir of the jar
+                return dir;
+            }
+        }
+        return RESOURCES_DIR_DEFAULT;
+    }
+
+
+    private List<String> getPluginResourcesList() {
+        final Attributes attributes = getMainAttributes();
+        if (null != attributes) {
+            final String value = attributes.getValue(RUNDECK_PLUGIN_RESOURCES);
+            if (null != value) {
+                return Arrays.asList(value.split(" *, *"));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the version of the plugin, not the file version
+     *
+     * @return
+     */
+    public String getPluginVersion() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
+    }
+
     /**
      * return the main attributes from the jar manifest
      */
@@ -206,8 +285,8 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String pluginname = annotation.name();
 
         if (!service.isValidProviderClass(cls)) {
-            throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: "
-                    + service.getName());
+            throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: " 
+                    + service.getName() + ". Expected class " + cls.getName() + ", with a public constructor with no parameter");
         }
         debug("Succeeded loading plugin " + cls.getName() + " for service: " + service.getName());
         return service.createProviderInstance(cls, pluginname);
@@ -243,57 +322,58 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
     }
 
     private Map<String, Class<?>> classCache = new HashMap<String, Class<?>>();
-    /**
-     * opened classloaders that need to be closed upon expiration of this loader
-     */
-    private Map<File, Closeable> classLoaders = new HashMap<>();
 
     /**
      * @return true if the other jar is a copy of the pluginJar based on names returned by generateCachedJarName
      */
     protected boolean isEquivalentPluginJar(File other) {
-        String name = other.getName();
-        // length of timestamp + 1 for the dash in generateCachedJarName
-        int length = CACHED_JAR_TIMESTAMP_FORMAT.length() + 1;
-        if (name.length() <= length) {
-            log.warn(String.format("%s does not conform to cached plugin jar naming convention.", other));
-            return false;
-        } else {
-            return other.getName().substring(length).equals(pluginJar.getName());
-        }
+        return other.getName().replaceFirst("\\d+-\\d+-", "").equals(pluginJar.getName());
+    }
+
+    static final AtomicLong counter = new AtomicLong(0);
+    /**
+     * @return a generated name for the pluginJar using the last modified timestamp
+     */
+    protected String generateCachedJarIdentity() {
+        Date mtime = new Date(pluginJar.lastModified());
+        return String.format(
+                "%s-%d",
+                cachedJarTimestampFormatter.format(mtime),
+                counter.getAndIncrement()
+        );
     }
 
     /**
      * @return a generated name for the pluginJar using the last modified timestamp
      */
-    protected String generateCachedJarName() {
-        Date mtime = new Date(pluginJar.lastModified());
-        return String.format("%s-%s", cachedJarTimestampFormatter.format(mtime), pluginJar.getName());
+    protected String generateCachedJarName(String ident) {
+        return String.format(
+                "%s-%s",
+                ident,
+                pluginJar.getName()
+        );
+    }
+
+    /**
+     * @return a generated name for the pluginJar using the last modified timestamp
+     */
+    protected File generateCachedJarDir(String ident) {
+        File dir = new File(getFileCacheDir(), ident);
+        if (!dir.mkdirs()) {
+            debug("Could not create dir for cachedjar libs: " + dir);
+        }
+        return dir;
     }
 
     /**
      * Creates a single cached version of the pluginJar located within pluginJarCacheDirectory
      * deleting all existing versions of pluginJar
+     * @param jarName
      */
-    protected File createCachedJar() throws PluginException {
+    protected File createCachedJar(final File dir, final String jarName) throws PluginException {
         File cachedJar;
         try {
-            debug(String.format("Scanning %s for cached versions of %s", pluginJarCacheDirectory, pluginJar));
-            File[] files = pluginJarCacheDirectory.listFiles();
-            if(files == null) {
-                throw new PluginException(
-                        String.format("Plugin jar cache dir is not a directory or cannot be read: %s",
-                                pluginJarCacheDirectory));
-            }
-            for (File f : files) {
-                if (isEquivalentPluginJar(f)) {
-                    debug(String.format("Found %s, deleting...", f));
-                    if (!f.delete()) {
-                        debug(String.format("Could not delete %s", f));
-                    }
-                }
-            }
-            cachedJar = new File(pluginJarCacheDirectory, generateCachedJarName());
+            cachedJar = new File(dir, jarName);
             cachedJar.deleteOnExit();
             FileUtils.fileCopy(pluginJar, cachedJar, true);
         } catch (IOException e) {
@@ -310,18 +390,13 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             throw new IllegalArgumentException("A null java class name was specified.");
         }
         if (null != classCache.get(classname)) {
-            debug("(loadClass) " + classname + ": " + pluginJar);
             return classCache.get(classname);
         }
+        CachedJar cachedJar1 = getCachedJar();
 
-        debug(String.format("Deleting dependency lib cache %s",  getFileCacheDir()));
-        FileUtils.deleteDir(getFileCacheDir());
-        File cachedJar = createCachedJar();
-        debug("loadClass! " + classname + ": " + cachedJar);
-
+        debug("loadClass! " + classname + ": " + cachedJar1.getCachedJar());
         final Class<?> cls;
-
-        final URLClassLoader urlClassLoader = getClassLoader(cachedJar);
+        final URLClassLoader urlClassLoader = cachedJar1.getClassLoader();
         try {
             cls = Class.forName(classname, true, urlClassLoader);
             classCache.put(classname, cls);
@@ -333,45 +408,56 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return cls;
     }
 
-    private URLClassLoader getClassLoader(final File cachedJar) throws PluginException
-    {
-        ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
-        // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader to use the libs
-        Collection<File> extlibs = null;
-        try {
-            extlibs = extractDependentLibs();
-        } catch (IOException e) {
-            throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
-        }
-        try {
-            final URL url = cachedJar.toURI().toURL();
-            final URL[] urlarray;
-            if (null != extlibs && extlibs.size() > 0) {
-                final ArrayList<URL> urls = new ArrayList<URL>();
-                urls.add(url);
-                for (final File extlib : extlibs) {
-                    urls.add(extlib.toURI().toURL());
+    private CachedJar cachedJar;
+    private Date loadedDate = null;
+
+    private synchronized JarPluginProviderLoader.CachedJar getCachedJar() throws PluginException {
+        if (null == cachedJar) {
+            synchronized (this) {
+                if (null == cachedJar) {
+                    this.loadedDate = new Date();
+                    String itemIdent = generateCachedJarIdentity();
+                    String jarName = generateCachedJarName(itemIdent);
+                    File dir = generateCachedJarDir(itemIdent);
+                    File cachedJar = createCachedJar(dir, jarName);
+
+                    // if jar manifest declares secondary lib deps, expand lib into cachedir, and setup classloader
+                    // to use the libs
+                    Collection<File> extlibs = null;
+                    try {
+                        extlibs = extractDependentLibs(dir);
+                    } catch (IOException e) {
+                        throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
+                    }
+                    ZipResourceLoader loader = null;
+                    if (supportsResources(getPluginVersion())) {
+
+                        loader = new ZipResourceLoader(
+                                new File(dir, "resources"),
+                                cachedJar,
+                                getPluginResourcesList(),
+                                getResourcesBasePath()
+                        );
+                        try {
+                            loader.extractResources();
+                        } catch (IOException e) {
+                            throw new PluginException("Unable to expand plugin resources: " + e.getMessage(), e);
+                        }
+                    }
+                    this.cachedJar = new CachedJar(dir, cachedJar, extlibs, loader);
                 }
-                urlarray = urls.toArray(new URL[urls.size()]);
-            } else {
-                urlarray = new URL[]{url};
             }
-            URLClassLoader loaded = loadLibsFirst
-                                    ? LocalFirstClassLoader.newInstance(urlarray, parent)
-                                    : URLClassLoader.newInstance(urlarray, parent);
-            classLoaders.put(cachedJar, loaded);
-            return loaded;
-        } catch (MalformedURLException e) {
-            throw new PluginException("Error creating classloader for " + cachedJar, e);
         }
+        return cachedJar;
     }
+
 
     /**
      * Extract the dependent libs and return the extracted jar files
      *
      * @return the collection of extracted files
      */
-    private Collection<File> extractDependentLibs() throws IOException {
+    private Collection<File> extractDependentLibs(final File cachedir) throws IOException {
         final Attributes attributes = getMainAttributes();
         if (null == attributes) {
             debug("no manifest attributes");
@@ -382,12 +468,17 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         final String libs = attributes.getValue(RUNDECK_PLUGIN_LIBS);
         if (null != libs) {
             debug("jar libs listed: " + libs + " for file: " + pluginJar);
-
+            if (!cachedir.isDirectory()) {
+                if (!cachedir.mkdirs()) {
+                    debug("Failed to create cachedJar dir for dependent libs: " + cachedir);
+                }
+            }
             final String[] libsarr = libs.split(" ");
-            final File cachedir = getFileCacheDir();
             extractJarContents(libsarr, cachedir);
             for (final String s : libsarr) {
-                files.add(new File(cachedir, s));
+                File libFile = new File(cachedir, s);
+                libFile.deleteOnExit();
+                files.add(libFile);
             }
         } else {
             debug("no jar libs listed in manifest: " + pluginJar);
@@ -471,32 +562,69 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         return providerIdents;
     }
 
-    /**
-     * Remove any cache dir for the file
-     */
-    private synchronized boolean removeScriptPluginCache() {
-        final File fileExpandedDir = getFileCacheDir();
-        if (null != fileExpandedDir && fileExpandedDir.exists()) {
-            debug("removeScriptPluginCache: " + fileExpandedDir);
-            return FileUtils.deleteDir(fileExpandedDir);
+
+    private synchronized int addReference() {
+        return loadCount.incrementAndGet();
+    }
+
+    private synchronized int removeReference() {
+        int i = loadCount.decrementAndGet();
+        debug(String.format("removeReference for: %s (loadCount: %d)", pluginJar, i));
+        if (i <= 0) {
+            if (isExpired()) {
+                try {
+                    close();
+                } catch (IOException e) {
+
+                }
+            }
         }
-        return true;
+        return i;
+    }
+
+    /**
+     * Close class loaders and delete cached files
+     * @throws IOException
+     */
+    @Override
+    public void close() throws IOException {
+        debug(String.format("close jar provider loader for: %s", pluginJar));
+        synchronized (this) {
+            closed = true;
+        }
+        if (null != cachedJar) {
+            cachedJar.close();
+            classCache.clear();
+            cachedJar = null;
+        }
+    }
+
+    private boolean closed = false;
+
+    public synchronized boolean isClosed() {
+        return closed;
+    }
+
+    private boolean expired = false;
+
+    public synchronized boolean isExpired() {
+        return expired;
     }
 
     /**
      * Expire the loader cache item
      */
     public void expire() {
-        debug("expire jar provider loader for: " + pluginJar);
-        removeScriptPluginCache();
-        classCache.clear();
-        //close loaders
-        for (File file : classLoaders.keySet()) {
+        synchronized (this) {
+            expired = true;
+        }
+        int i = loadCount.get();
+        debug(String.format("expire jar provider loader for: %s (loadCount: %d)", pluginJar, i));
+        if (i <= 0) {
             try {
-                debug("expire classLoaders for: " + file);
-                classLoaders.remove(file).close();
+                close();
             } catch (IOException e) {
-                e.printStackTrace();
+
             }
         }
     }
@@ -644,5 +772,141 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             value = mainAttributes.getValue(attribute);
         }
         return value;
+    }
+
+    /**
+     * Holds the cached jar file, dir, libs list and class and resource loaders for a jar plugin
+     */
+    private class CachedJar implements Closeable {
+        private File dir;
+        private File cachedJar;
+        private Collection<File> depLibs;
+        private URLClassLoader classLoader;
+        private PluginResourceLoader resourcesLoader;
+
+        public File getDir() {
+            return dir;
+        }
+
+        public File getCachedJar() {
+            return cachedJar;
+        }
+
+        public CachedJar(
+                File dir,
+                File cachedJar,
+                Collection<File> depLibs,
+                PluginResourceLoader resourcesLoader
+        )
+                throws PluginException
+        {
+            this.dir = dir;
+            this.cachedJar = cachedJar;
+            this.depLibs = depLibs;
+            this.resourcesLoader = resourcesLoader;
+        }
+
+        public Collection<File> getDepLibs() {
+            return depLibs;
+        }
+
+        public URLClassLoader getClassLoader() throws PluginException{
+            if(null==classLoader){
+                synchronized (this){
+                    if(null==classLoader){
+                        classLoader = buildClassLoader();
+                    }
+                }
+            }
+            return classLoader;
+        }
+
+        private URLClassLoader buildClassLoader() throws PluginException {
+            ClassLoader parent = JarPluginProviderLoader.class.getClassLoader();
+            try {
+                final URL url = getCachedJar().toURI().toURL();
+                final URL[] urlarray;
+                if (null != getDepLibs() && getDepLibs().size() > 0) {
+                    final ArrayList<URL> urls = new ArrayList<URL>();
+                    urls.add(url);
+                    for (final File extlib : getDepLibs()) {
+                        urls.add(extlib.toURI().toURL());
+                    }
+                    urlarray = urls.toArray(new URL[urls.size()]);
+                } else {
+                    urlarray = new URL[]{url};
+                }
+                URLClassLoader loaded = loadLibsFirst
+                                        ? LocalFirstClassLoader.newInstance(urlarray, parent)
+                                        : URLClassLoader.newInstance(urlarray, parent);
+                return loaded;
+            } catch (MalformedURLException e) {
+                throw new PluginException("Error creating classloader for " + cachedJar, e);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            debug(String.format("Jar plugin closing cached jar: %s", cachedJar));
+            //close loaders
+            if (null != classLoader) {
+                try {
+                    debug("expire classLoaders for: " + cachedJar);
+                    classLoader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            //remove cache files
+            debug("remove cache dir on exit: " + dir);
+            FileUtils.deleteDir(dir);
+        }
+    }
+
+    @Override
+    public String getFilename() {
+        return pluginJar.getName();
+    }
+
+    @Override
+    public File getFile() {
+        return pluginJar;
+    }
+
+    @Override
+    public String getPluginAuthor() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_AUTHOR);
+    }
+
+    @Override
+    public String getPluginFileVersion() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+    }
+
+    @Override
+    public String getPluginUrl() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_URL);
+    }
+
+    @Override
+    public Date getPluginDate() {
+        Attributes mainAttributes = getMainAttributes();
+        String value = mainAttributes.getValue(RUNDECK_PLUGIN_DATE);
+        if (null != value) {
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(value);
+            } catch (ParseException e) {
+
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Date getDateLoaded() {
+        return loadedDate;
     }
 }

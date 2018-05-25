@@ -1,17 +1,17 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.dtolabs.rundeck.core.execution.script;
@@ -58,17 +58,17 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
         if (!command && null == scriptfile) {
             throw new ExecutionException("Could not determine the command to dispatch");
         }
-        if ("windows".equals(nodeentry.getOsFamily())) {
+        if ("windows".equalsIgnoreCase(nodeentry.getOsFamily())) {
             //TODO: escape args properly for windows
             commandexecutable = "cmd.exe";
             if (command) {
-                ArrayList<String> list = new ArrayList<String>();
+                ArrayList<String> list = new ArrayList<>();
                 list.add(0, "/c");
                 list.addAll(Arrays.asList(args));
                 commandargs = list.toArray(new String[list.size()]);
             } else if (null != scriptfile) {
                 //commandString is the script file location
-                ArrayList<String> list = new ArrayList<String>();
+                ArrayList<String> list = new ArrayList<>();
                 list.add(scriptfile.getAbsolutePath());
                 if(args!=null && args.length>0){
                     list.addAll(Arrays.asList(args));

@@ -1,20 +1,53 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
 import spock.lang.Specification
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Created by greg on 10/14/15.
  */
 class BaseGitPluginSpec extends Specification {
+    File tempdir
+
+    def setup() {
+        tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
+        tempdir.delete()
+    }
+
+    def cleanup() {
+        if (tempdir.exists()) {
+            FileUtils.delete(tempdir, FileUtils.RECURSIVE)
+        }
+    }
     def "getSshConfig"() {
         given:
         Common config = new Common(configInput)
@@ -39,20 +72,140 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobScmReference) {
+            getVersion()>>1L
+            getSourceId() >> sourceId
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, !stripUuid, useSourceId)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{args->
+            1 * serialize(format, !null, (!stripUuid), sourceId) >> { args ->
                 args[1].write('data'.bytes)
             }
         }
+        outfile.text=='data'
+
+
+        where:
+        format | stripUuid | useSourceId | sourceId
+        'xml'  | true      | false       | null
+        'xml'  | true      | true        | null
+        'xml'  | true      | true        | '123'
+        'yaml' | true      | false       | null
+        'yaml' | true      | true        | null
+        'yaml' | true      | true        | '123'
+        'xml'  | false     | false       | null
+        'xml'  | false     | true        | null
+        'xml'  | false     | true        | '123'
+        'yaml' | false     | false       | null
+        'yaml' | false     | true        | null
+        'yaml' | false     | true        | '123'
+    }
+
+    def "serialize job with two threads will not write same revision twice"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def job2 = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        AtomicLong counter = new AtomicLong(-1)
+        base.fileSerializeRevisionCounter[outfile]=counter
+        AtomicLong serializedCounter=new AtomicLong(0)
+
+        _ * job.getJobSerializer() >> Mock(JobSerializer) {
+            _ * serialize(format, !null, _,_) >> { args ->
+                serializedCounter.incrementAndGet()
+                args[1].write('data'.bytes)
+            }
+        }
+        _ * job2.getJobSerializer() >> Mock(JobSerializer) {
+            _ * serialize(format, !null, _,_) >> { args ->
+                serializedCounter.incrementAndGet()
+                args[1].write('data2'.bytes)
+            }
+        }
+        when:
+        def latch = new CountDownLatch(2)
+        synchronized (counter){
+            //grab lock on counter
+            //now start threads which will block at the synchronized block
+            def t1=Thread.start {
+                base.serialize(job, format, true, false)
+                latch.countDown()
+            }
+            def t2=Thread.start {
+                base.serialize(job2, format, true, false)
+                latch.countDown()
+            }
+        }
+        //wait until they are done
+        latch.await()
+
+        then:
+        2 * base.mapper.fileForJob(_) >> outfile
+
+        1L == serializedCounter.longValue()
+
+
+        where:
+        format | _
+        'xml'  | _
+        'yaml' | _
+    }
+    def "serialize job with two revision will not write older revision"() {
+        given:
+        Common config = new Common()
+        def base = new BaseGitPlugin(config)
+        base.mapper = Mock(JobFileMapper)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
+        def newerJob = Mock(JobExportReference){
+            getVersion()>>2L
+        }
+        def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
+        outfile.deleteOnExit()
+
+        AtomicLong counter = new AtomicLong(-1)
+        base.fileSerializeRevisionCounter[outfile]=counter
+        AtomicLong serializedCounter=new AtomicLong(0)
+
+        _ * job.getJobSerializer() >> Mock(JobSerializer) {
+            0 * serialize(format, !null, _,_) >> { args ->
+                serializedCounter.incrementAndGet()
+                args[1].write('data'.bytes)
+            }
+        }
+        _ * newerJob.getJobSerializer() >> Mock(JobSerializer) {
+            1 * serialize(format, !null, _,_) >> { args ->
+                serializedCounter.incrementAndGet()
+                args[1].write('data2'.bytes)
+            }
+        }
+        when:
+
+        base.serialize(newerJob, format, true, false)
+
+        base.serialize(job, format, true, false)
+
+        then:
+        2 * base.mapper.fileForJob(_) >> outfile
+
+        1L == serializedCounter.longValue()
 
 
         where:
@@ -66,7 +219,9 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile1 = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile1.deleteOnExit()
 
@@ -75,7 +230,7 @@ class BaseGitPluginSpec extends Specification {
 
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -93,17 +248,19 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)//no write to stream
+            1 * serialize(format, !null, _,_)//no write to stream
         }
         ScmPluginException e = thrown()
         e.message.startsWith('Failed to serialize job, no content was written')
@@ -119,17 +276,19 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{
+            1 * serialize(format, !null, _,_) >> {
                 throw new IOException("test forced error")
             }
         }
@@ -149,15 +308,17 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference)
+        def job = Mock(JobExportReference){
+            getVersion()>>1L
+        }
 
         when:
-        def outfile = base.serializeTemp(job, format)
+        def outfile = base.serializeTemp(job, format, true, false)
 
 
         then:
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)
+            1 * serialize(format, !null, _,_)
         }
         outfile != null
         outfile.isFile()
@@ -174,9 +335,6 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
 
-        def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
-        tempdir.deleteOnExit()
-        tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
         //create a git dir
@@ -203,9 +361,6 @@ class BaseGitPluginSpec extends Specification {
         def base = new BaseGitPlugin(config)
         base.branch = 'master'
 
-        def tempdir = File.createTempFile("BaseGitPluginSpec", "-test")
-        tempdir.deleteOnExit()
-        tempdir.delete()
         def gitdir = new File(tempdir, 'scm')
         gitdir.mkdir()
         def origindir = new File(tempdir, 'origin')

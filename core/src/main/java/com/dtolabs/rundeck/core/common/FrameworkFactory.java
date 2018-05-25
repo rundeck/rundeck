@@ -1,11 +1,26 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.client.services.DispatcherConfig;
-import com.dtolabs.client.services.RundeckAPICentralDispatcher;
 import com.dtolabs.rundeck.core.authorization.AclsUtil;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 import com.dtolabs.rundeck.core.authorization.providers.Policies;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
@@ -13,6 +28,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * Created by greg on 2/19/15.
@@ -40,24 +56,40 @@ public class FrameworkFactory {
         PropertyLookup lookup1 = PropertyLookup.createDeferred(propertyFile2);
         lookup1.expand();
         FrameworkProjectMgr projectManager = createProjectManager(
-                filesystemFramework,
-                createNodesFactory(filesystemFramework)
+                filesystemFramework
 
         );
-        return createFramework(lookup1, filesystemFramework, projectManager);
+        Framework framework = createFramework(lookup1, filesystemFramework, projectManager);
+
+        IProjectNodesFactory nodesFactory = createNodesFactory(
+                filesystemFramework,
+                framework::getResourceFormatGeneratorService,
+                framework::getResourceModelSourceService
+        );
+        projectManager.setNodesFactory(nodesFactory);
+        return framework;
     }
-    public static IProjectNodesFactory createNodesFactory(final FilesystemFramework filesystemFramework){
+
+    public static IProjectNodesFactory createNodesFactory(
+            final IFilesystemFramework filesystemFramework,
+            Supplier<ResourceFormatGeneratorService> formatGeneratorServiceSupplier,
+            Supplier<ResourceModelSourceService> resourceModelSourceServiceSupplier
+    )
+    {
         return new IProjectNodesFactory() {
             @Override
             public IProjectNodes getNodes(final String name) {
-                return createNodes(
+
+                return new ProjectNodeSupport(
                         loadFrameworkProjectConfig(
                                 name,
                                 new File(filesystemFramework.getFrameworkProjectsBaseDir(), name),
                                 filesystemFramework,
                                 null
                         ),
-                        filesystemFramework);
+                        formatGeneratorServiceSupplier.get(),
+                        resourceModelSourceServiceSupplier.get()
+                );
             }
 
             @Override
@@ -65,17 +97,6 @@ public class FrameworkFactory {
                 //noop
             }
         };
-    }
-    public static IProjectNodes createNodes(IRundeckProjectConfig projectConfig, FilesystemFramework filesystemFramework){
-
-        ProjectNodeSupport projectNodeSupport = new ProjectNodeSupport(
-                projectConfig,
-                filesystemFramework.getFramework()
-                                                                                          .getResourceFormatGeneratorService(),
-                filesystemFramework.getFramework()
-                                                                                          .getResourceModelSourceService()
-        );
-        return projectNodeSupport;
     }
 
     public static FilesystemFramework createFilesystemFramework(final File baseDir) {
@@ -134,6 +155,7 @@ public class FrameworkFactory {
                 serviceSupport,
                 iFrameworkNodes
         );
+        filesystemFramework.setFramework(framework);
         if(null!=services) {
             //load predefined services
             for (String s : services.keySet()) {
@@ -166,6 +188,7 @@ public class FrameworkFactory {
                 serviceSupport,
                 iFrameworkNodes
         );
+        filesystemFramework.setFramework(framework);
         serviceSupport.initialize(framework);
 
         return framework;
@@ -187,6 +210,17 @@ public class FrameworkFactory {
                 filesystemFramework.getFrameworkProjectsBaseDir(),
                 filesystemFramework,
                 nodesFactory
+        );
+    }
+
+    public static FrameworkProjectMgr createProjectManager(
+            FilesystemFramework filesystemFramework
+    )
+    {
+        return new FrameworkProjectMgr(
+                "name",
+                filesystemFramework.getFrameworkProjectsBaseDir(),
+                filesystemFramework
         );
     }
 
@@ -244,7 +278,7 @@ public class FrameworkFactory {
     public static FrameworkProject createFrameworkProject(
             String projectName,
             File baseDir,
-            final FilesystemFramework filesystemFramework,
+            final IFilesystemFramework filesystemFramework,
             IFrameworkProjectMgr mgr,
             IProjectNodesFactory nodesFactory,
             Properties properties
@@ -264,7 +298,6 @@ public class FrameworkFactory {
                 projectConfig,
                 new NodeResetConfigModifier(nodesFactory,projectConfig,projectName)
         );
-        frameworkProject.setFramework(filesystemFramework.getFramework());
         frameworkProject.setProjectNodesFactory(nodesFactory);
         File aclPath = new File(baseDir, "acls");
         if(!aclPath.exists()) {
@@ -294,7 +327,7 @@ public class FrameworkFactory {
     public static FrameworkProjectConfig loadFrameworkProjectConfig(
             final String projectName,
             final File baseDir,
-            final FilesystemFramework filesystemFramework,
+            final IFilesystemFramework filesystemFramework,
             final Properties properties
     )
     {
@@ -306,53 +339,8 @@ public class FrameworkFactory {
         );
     }
 
-    /**
-     * Return true if the config has values for each config
-     * @param config config
-     * @return true if valid values are found
-     */
-    public static boolean isValid(DispatcherConfig config) {
-        return null != config.getUrl() &&
-               null != config.getUsername() &&
-               null != config.getPassword();
-    }
-    public static DispatcherConfig createDispatcherConfig(PropertyRetriever props){
-        final String url = props.getProperty("framework.server.url");
-        final String username = props.getProperty("framework.server.username");
-        final String password = props.getProperty("framework.server.password");
-        return createDispatcherConfig(url, username, password);
-    }
 
-    public static DispatcherConfig createDispatcherConfig(
-            final String url,
-            final String username,
-            final String password
-    )
-    {
-        return new DispatcherConfig() {
-            @Override
-            public String getUrl() {
-                return url;
-            }
 
-            @Override
-            public String getUsername() {
-                return username;
-            }
 
-            @Override
-            public String getPassword() {
-                return password;
-            }
-        };
-    }
 
-    public static CentralDispatcher createDispatcher(PropertyRetriever props) {
-        return createDispatcher(createDispatcherConfig(props));
-    }
-
-    public static CentralDispatcher createDispatcher(final DispatcherConfig config)
-    {
-        return new RundeckAPICentralDispatcher(config);
-    }
 }

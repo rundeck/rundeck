@@ -1,27 +1,96 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.authorization.providers
 
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.authorization.ValidationSet
 import spock.lang.Specification
 import spock.lang.Unroll
 
 
 class YamlProviderSpec extends Specification {
 
-    private static Validation validationForString(String string) {
-        YamlProvider.validate(YamlProvider.sourceFromString("test1", string, new Date()))
+    private static Validation validationForString(String string, ValidationSet set) {
+        YamlProvider.validate(YamlProvider.sourceFromString("test1", string, new Date(), set), set)
     }
-    private static Validation validationForStringWithProject(String string, String project) {
+
+    private static Validation validationForStringWithProject(String string, String project, ValidationSet set) {
         YamlProvider.validate(
-                YamlProvider.sourceFromString("test1", string, new Date()),
-                AuthorizationUtil.projectContext(project)
+            YamlProvider.sourceFromString("test1", string, new Date(), set),
+            AuthorizationUtil.projectContext(project),
+            set
         )
     }
 
 
+    def "validate buggy"() {
+        given:
+        def text = '''
+description: "Users"
+context:
+ project: *
+for:
+ resource:
+ - equals:
+ kind: 'node\'
+ allow: [read,update,refresh]
+ - equals:
+ kind: 'job\'
+ allow: [read,run,kill]
+ - equals:
+ kind: 'adhoc\'
+ allow: [read,run,kill]
+ - equals:
+ kind: 'event\'
+ allow: [read,create]
+ job:
+ - match:
+ name: '.*\'
+ allow: [read,run,kill]
+ adhoc:
+ - match:
+ name: '.*\'
+ allow: [read,run,kill]
+ node:
+ - match:
+ nodename: '.*\'
+ allow: [read,run,refresh]
+by:
+ group:
+
+
+'''
+        ValidationSet validation = new ValidationSet()
+        when:
+        def source = YamlProvider.sourceFromString('test', text, new Date(), validation)
+        def policies = YamlProvider.policiesFromSource(
+            source,
+            null,
+            validation
+        )
+        validation.complete();
+        then:
+        validation.errors != null
+        !validation.valid
+    }
     def "validate empty list"(){
         when:
-        def validation = YamlProvider.validate(Arrays.asList())
+        def validation = YamlProvider.validate(Arrays.asList(), new ValidationSet())
 
         then:
         validation.valid
@@ -39,7 +108,7 @@ for:
         - allow: '*'
 description: blah
 id: any string
-'''
+''', new ValidationSet()
 
         then:
         validation.valid
@@ -53,16 +122,17 @@ for:
     type:
         - allow: '*'
 description: blah
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'context:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'context:\' section was not present']
     }
     def "validate required context, any context"(){
         when:
-        def validation = validationForStringWithProject("""
+        def validation = validationForStringWithProject(
+            """
 context:
     ${ctx}
 by:
@@ -71,7 +141,8 @@ for:
     type:
         - allow: '*'
 description: blah
-""","testproj")
+""", "testproj", new ValidationSet()
+        )
 
         then:
         !validation.valid
@@ -87,7 +158,8 @@ description: blah
     }
     def "validate required context, no context ok"(){
         when:
-        def validation = validationForStringWithProject('''
+        def validation = validationForStringWithProject(
+            '''
 by:
     username: elf
     group: jank
@@ -96,7 +168,8 @@ for:
         - allow: '*\'
 description: blah
 id: any string
-''',"testproj")
+''', "testproj", new ValidationSet()
+        )
 
         then:
         validation.valid
@@ -111,12 +184,12 @@ by:
 for:
     type:
         - allow: '*'
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Policy is missing a description.']
+        validation.errors['test1[1]'] == ['Policy is missing a description']
     }
     def "validate no by"(){
         when:
@@ -127,12 +200,12 @@ description: wat
 for:
     type:
         - allow: '*'
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'by:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'by:\' section was not present']
     }
     def "validate no for"(){
         when:
@@ -143,12 +216,12 @@ description: wat
 by:
     username: elf
 
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'for:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'for:\' section was not present']
     }
     def "validate extraneous section"(){
         when:
@@ -162,12 +235,14 @@ for:
     type:
         - allow: '*'
 invalid: blah
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Policy contains invalid keys: [invalid], allowed keys: [by, id, for, context, description]']
+        validation.errors['test1[1]'][0].contains(
+                'Policy contains invalid keys: [invalid], allowed keys: [by, id, for, context, description]'
+        )
     }
     def "validate context invalid entry"(){
         when:
@@ -180,12 +255,13 @@ by:
 for:
     type:
         - allow: '*'
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Context section is not valid: {blab=test}, it should contain only \'application:\' or \'project:\'']
+        validation.errors['test1[1]'].size() == 1
+        validation.errors['test1[1]'][0] =~ /Context section should contain only 'application:' or 'project:'/
     }
     def "validate by invalid entry"(){
         when:
@@ -198,12 +274,13 @@ by:
 for:
     type:
         - allow: '*'
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'by:\' is not valid: {blonk=elf} it must contain \'group:\' and/or \'username:\'']
+        validation.errors['test1[1]'].size() == 1
+        validation.errors['test1[1]'][0] =~ /Unknown property: 'blonk'/
     }
     def "validate by group: not a string"(){
         when:
@@ -216,7 +293,7 @@ by:
 for:
     type:
         - allow: '*'
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
@@ -240,7 +317,7 @@ by:
 for:
     type:
         - allow: '*'
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
@@ -261,12 +338,12 @@ description: wat
 by:
     username: elf
 for: { }
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'for:\' should not be empty.']
+        validation.errors['test1[1]'] == ['Error parsing the policy document: Section \'for:\' cannot be empty']
     }
     def "validate for expect map"(){
         when:
@@ -276,13 +353,13 @@ context:
 description: wat
 by:
     username: elf
-for: [ ]
-'''
+for: [ x , y , z ]
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Expected \'for:\' section to contain a map, but was [java.util.ArrayList].']
+        validation.errors['test1[1]'][0] =~ /Expected 'for:' section to contain a map, but was sequence/
     }
     def "validate for expect map entry is list"(){
         when:
@@ -294,12 +371,34 @@ by:
     username: elf
 for:
     blah: { }
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Expected \'for: { blah: <...> }\' section to contain a List, but was [java.util.LinkedHashMap].']
+        validation.errors['test1[1]'] ==
+                ['Error parsing the policy document: Expected \'for: { blah: <...> }\' to be a Seqence, but was [mapping]']
+    }
+    def "validate for value cannot be null"(){
+        when:
+        def validation = validationForString '''
+context:
+    project: test
+description: wat
+by:
+    username: elf
+for:
+    blah:
+        - equals:
+            name:
+          allow: 'any'
+''', new ValidationSet()
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]'] ==
+                ['Type rule \'for: { blah: [...] }\' entry at index [1] Section \'equals:\' value for key: \'name\' cannot be null']
     }
     def "validate type entry requires non-empty"(){
         when:
@@ -311,12 +410,12 @@ by:
     username: elf
 for:
     blah: [ ]
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'for: { blah: [...] }\' list should not be empty.']
+        validation.errors['test1[1]'] == ['Type rule \'for: { blah: [...] }\' list should not be empty.']
     }
     def "validate type entry requires map"(){
         when:
@@ -329,12 +428,14 @@ by:
 for:
     blah:
         - [ ]
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Type rule \'for: { blah: [...] }\'\' entry at index [1] expected a Map but saw: java.util.ArrayList']
+        validation.errors['test1[1]'] ==
+                ['Error parsing the policy document: Type rule \'for: { blah: [...] }\' entry at index [1] expected a' +
+                         ' Map but saw: sequence']
     }
     def "validate type entry requires non-empty map"(){
         when:
@@ -347,7 +448,7 @@ by:
 for:
     blah:
         - { }
-'''
+''', new ValidationSet()
 
         then:
         !validation.valid
@@ -366,7 +467,7 @@ by:
 for:
     blah:
         - ${actionsname}: {}
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
@@ -392,21 +493,23 @@ by:
 for:
     blah:
         - ${actionsname}: []
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
         validation.errors['test1[1]']== [('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                                                   actionsname +
-                                                  ':\' should not be empty.')]
+                ':\' should not be empty')]
 
         where:
         actionsname | _
         "allow"     | _
         "deny"      | _
     }
-    def "validate type entry match/equals/contains not empty"(String matchname,_){
+
+    @Unroll
+    def "validate type entry #matchname not empty"(String matchname, _) {
         when:
         def validation = validationForString """
 context:
@@ -418,7 +521,7 @@ for:
     blah:
         - ${matchname}: {}
           allow: asdf
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
@@ -428,10 +531,11 @@ for:
                                                   ':\' should not be empty.')]
 
         where:
-        matchname | _
-        "match"   | _
-        "equals"  | _
-        "contains"  | _
+        matchname  | _
+        "match"    | _
+        "equals"   | _
+        "contains" | _
+        "subset"   | _
     }
     @Unroll
     def "validate type entry match/equals/contains does not contain allow/deny"(String matchname,String actionsname,_){
@@ -446,21 +550,18 @@ for:
     blah:
         - ${matchname}: { ${actionsname}: asdf }
           allow: asdf
-"""
+""", new ValidationSet()
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]'].size()==(matchname=='contains'?2:1)
-        if(matchname=='contains'){
+        validation.errors['test1[1]'].size() == 1
+        if (matchname == 'contains' && actionsname == 'blee') {
             validation.errors['test1[1]']== [
                     ('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                             matchname +
                             ':\' can only be applied to \'tags\'.')
-                    ,
-                    ('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
-                    matchname +
-                    ':\' should not contain \'allow:\' or \'deny:\'.')]
+            ]
         }else{
             validation.errors['test1[1]']== [('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                     matchname +
@@ -476,6 +577,7 @@ for:
         "equals"   | "deny"      | _
         "contains" | "allow"     | _
         "contains" | "deny"      | _
+        "contains" | "blee"      | _
     }
     @Unroll
     def "validate multi-policy with empty policy is valid"(){
@@ -492,7 +594,7 @@ for:
 description: blah
 id: any string
 ---
-"""
+""", new ValidationSet()
 
         then:
         validation.valid

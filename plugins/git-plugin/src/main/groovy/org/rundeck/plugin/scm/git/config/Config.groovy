@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git.config
 
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -6,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
+import groovy.transform.CompileStatic
 import org.rundeck.plugin.scm.git.BuilderUtil
 
 /**
@@ -22,7 +39,7 @@ class Config {
     static List<Property> listProperties(Class<?>... classes) {
         classes.collect {
             PluginAdapterUtility.buildFieldProperties(it)
-        }.flatten()
+        }.flatten() as List
     }
 
     /**
@@ -32,7 +49,7 @@ class Config {
      * @throws ScmPluginInvalidInput
      */
     static void configure(Config config, final Map<String, String> input) throws ScmPluginInvalidInput {
-        def unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input)
+        Map<String,Object> unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input as Map<String,Object>)
         listProperties(config.class).findAll { it.required }.each { prop ->
             //verify required input
             if (!input[prop.name]) {

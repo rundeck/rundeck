@@ -1,21 +1,34 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git.exp.actions
 
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Status
-import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/8/15.
@@ -30,12 +43,12 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
     }
 
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title getTitle()
             description getDescription()
             buttonTitle "Commit"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string P_MESSAGE
                         title "Commit Message"
                         description "Enter a commit message. Committing to branch: `" + plugin.branch + '`'
@@ -43,18 +56,19 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                         renderingAsTextarea()
                     },
 
-                    property {
+                    BuilderUtil.property {
                         string TagAction.P_TAG_NAME
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch."
                         required false
                     },
 
-                    property {
+                    BuilderUtil.property {
                         booleanType P_PUSH
                         title "Push Remotely?"
                         description "Check to push to the remote"
                         required false
+                        defaultValue'true'
                     },
             ]
             )
@@ -83,6 +97,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
         }
         if (input[TagAction.P_TAG_NAME]) {
             TagAction.validateTagDoesNotExist(plugin, input[TagAction.P_TAG_NAME])
+            TagAction.validateTagName(plugin, input[TagAction.P_TAG_NAME])
         }
 
         if (!jobs && !pathsToDelete) {
@@ -100,9 +115,10 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
             ScmUserInfoMissing.fieldMissing("committerEmail")
         }
 
-        plugin.serializeAll(jobs, plugin.format)
+        plugin.serializeAll(jobs, plugin.format, plugin.config.exportPreserve, plugin.config.exportOriginal)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
+        int pathcount=0
         //add all changes to index
         if (jobs) {
             AddCommand addCommand = plugin.git.add()
@@ -110,6 +126,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 addCommand.addFilepattern(plugin.relativePath(it))
             }
             addCommand.call()
+            pathcount+=jobs.size()
         }
         def rmfiles = new HashSet<String>(status.removed + status.missing)
         def todelete = pathsToDelete.intersect(rmfiles)
@@ -119,15 +136,21 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                 rm.addFilepattern(it)
             }
             rm.call()
+            pathcount+=todelete.size()
         }
 
+        if (!pathcount) {
+            result.success = true
+            result.message = 'No git changes needed'
+            return result
+        }
         CommitCommand commit1 = plugin.git.commit().
                 setMessage(commitMessage).
                 setCommitter(commitIdentName, commitIdentEmail)
         jobs.each {
             commit1.setOnly(plugin.relativePath(it))
         }
-        pathsToDelete.each {
+        todelete.each {
             commit1.setOnly(it)
         }
         commit = commit1.call()

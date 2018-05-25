@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -27,12 +27,18 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
+import com.dtolabs.rundeck.core.common.PluginControlService;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
+import com.dtolabs.rundeck.core.jobs.JobService;
+import com.dtolabs.rundeck.core.logging.LoggingManager;
+import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
-import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -66,6 +72,11 @@ public interface ExecutionContext {
      * @return the job service
      */
     public JobService getJobService();
+
+    /**
+     * @return the node service
+     */
+    public ProjectNodeService getNodeService();
 
     /**
      * @return username
@@ -112,23 +123,45 @@ public interface ExecutionContext {
     int getLoglevel();
 
     /**
+     *
+     * @return the charset encoding to use for handling output, or null for default
+     */
+    String getCharsetEncoding();
+
+    /**
      * Return data context set
      *
      * @return map of data contexts keyed by name
      */
     public Map<String, Map<String, String>> getDataContext();
+    public DataContext getDataContextObject();
+    /**
+     * @return the node specific context data keyed by node name
+     */
+    public MultiDataContext<ContextView, DataContext> getSharedDataContext();
 
     /**
      * @return the data context in the private scope
      */
     public Map<String, Map<String, String>> getPrivateDataContext();
+    public DataContext getPrivateDataContextObject();
 
     public ExecutionListener getExecutionListener();
 
-    /**
-     * @return Specific file to use for nodes source instead of project nodes
-     */
-    public File getNodesFile();
+    public WorkflowExecutionListener getWorkflowExecutionListener();
+
+    public ExecutionLogger getExecutionLogger();
 
 	public OrchestratorConfig getOrchestrator();
+    /**
+     * @return context for emitting new data
+     */
+    public SharedOutputContext getOutputContext();
+
+    /**
+     * @return manager for capturing logs
+     */
+    public LoggingManager getLoggingManager();
+
+    public PluginControlService getPluginControlService();
 }

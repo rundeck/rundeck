@@ -1,36 +1,59 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.project.sources.Source
+import com.dtolabs.rundeck.app.api.project.sources.Resources
+import com.dtolabs.rundeck.app.api.project.sources.Sources
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
-import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.web.servlet.mvc.GrailsParameterMap
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.http.MediaType
+import org.springframework.util.InvalidMimeTypeException
+import org.springframework.util.MimeTypeUtils
 import rundeck.Execution
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
-import rundeck.services.framework.RundeckProjectConfigurable
+import rundeck.services.ScheduledExecutionService
 
-import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -42,12 +65,10 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodesFileGenerator
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -59,11 +80,12 @@ import rundeck.NodeFilter
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
     ExecutionService executionService
+    ScheduledExecutionService scheduledExecutionService
     UserService userService
 
     PasswordFieldsService resourcesPasswordFieldsService
@@ -75,17 +97,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def configStorageService
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
+    def MenuService menuService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            apiProjectResources: ['POST'],
-            apiProjectResourcesPost: ['POST'],
-            apiProjectResourcesRefresh: ['POST'],
-            apiSystemAcls: ['GET','PUT','POST','DELETE'],
-            createProjectPost: 'POST',
-            deleteNodeFilter: 'POST',
-            saveProject: 'POST',
-            storeNodeFilter: 'POST',
+        apiSourceWriteContent    : 'POST',
+        apiSystemAcls            : ['GET', 'PUT', 'POST', 'DELETE'],
+        createProjectPost        : 'POST',
+        deleteNodeFilter         : 'POST',
+        saveProject              : 'POST',
+        storeNodeFilter          : 'POST',
+        saveProjectNodeSources   : 'POST',
+        saveProjectNodeSourceFile: 'POST',
     ]
 
     def index = {
@@ -198,8 +221,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (params.fromExecId || params.retryFailedExecId) {
             Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
             if (e && unauthorizedResponse(
-                    frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ]),
-                    AuthConstants.ACTION_READ, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
+                    frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                    AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
                 return
             }
 
@@ -302,7 +325,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
-        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
@@ -316,7 +338,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodeset=new NodeSetImpl()
-            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
+            def localnode = nodes1.getNode(framework.getFrameworkNodeName())
+            if(localnode) nodeset.putNode(localnode)
         }
         else if (nset && !(nset.include.blank && nset.exclude.blank)){
             //match using nodeset unless all filters are blank
@@ -363,6 +386,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 remaining=true;
                 page=page*-1;
             }
+        }
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
+        if(truncateMax && max){
+            truncateMax=Math.max(truncateMax,max)
         }
 
         def tagsummary=frameworkService.summarizeTags(nodes)
@@ -565,9 +592,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesFragment(ExtNodeFilters query) {
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(
-                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
-            )
+            return renderErrorFragment([beanErrors:query.errors])
         }
         def result= nodesFragmentData(query)
         render(template:"allnodes",model: result)
@@ -576,11 +601,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
     def nodesQueryAjax(ExtNodeFilters query) {
+        if (requireAjax(action: 'nodes', params: params)) {
+            return
+        }
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(
-                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
-            )
+            return renderErrorFragment([beanErrors:query.errors])
         }
         Map result= nodesFragmentData(query)
         result.remove('selectedProject')
@@ -604,43 +630,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             xml{
                 return render (result as XML)
             }
-        }
-    }
-
-    /**
-     * If user has admin rights and the project parameter is specified, attempt to re-fetch the resources.xml
-     * via the project's project.resources.url (if it exists).
-     * Returns true if re-fetch succeeded, false otherwise.
-     */
-    protected def performNodeReload (String url = null){
-        if(!params.project){
-            return [success: false, message: "project parameter is required", invalid: true]
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if(!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                AuthConstants.ACTION_REFRESH,params.project)){
-            def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
-            log.error(msg)
-            return [success:false,message:msg,unauthorized:true]
-        }
-        def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
-       //if reload parameter is specified, and user is admin, reload from source URL
-        try {
-            if(url){
-                if(!(url==~ /(?i)^(https?|file):\/\/?.*$/)){
-                    log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
-                    return [success: false, message: "Error updating node resources file for project ${project.name}: invalid URL: " + url, invalid: true]
-                }
-                project.updateNodesResourceFileFromUrl(url, null, null)
-                return [success:true]
-            }else{
-                return [success:project.updateNodesResourceFile(),url:url,
-                        message:g.message(code:'api.project.updateResources.noproviderUrl.failed',args: [params.project])]
-            }
-        } catch (Exception e) {
-            log.error("Error updating node resources file for project ${project.name}: "+e.message)
-            return [success: false, message: "Error updating node resources file for project ${project.name}: " + e.message, error: true]
         }
     }
 
@@ -687,7 +676,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name,project:params.project])
+        redirect(controller:'framework',action:'nodes',params:[filterName:filter.name,project:params.project])
         }.invalidToken{
             response.status=HttpServletResponse.SC_BAD_REQUEST
             renderErrorView(g.message('request.error.invalidtoken.message'))
@@ -701,7 +690,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if(ffilter){
                 ffilter.delete(flush:true)
             }
-            redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
+            redirect(controller:'framework',action:'nodes',params:[project: params.project])
         }.invalidToken{
             request.error=g.message(code:'request.error.invalidtoken.message')
             renderErrorView([:])
@@ -717,7 +706,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 ffilter.delete(flush:true)
             }
             render(contentType: 'application/json'){
-                success=true
+                success true
             }
         }.invalidToken{
             return apiService.renderErrorFormat(response, [
@@ -734,14 +723,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def createProjectPost() {
         metricService.markMeter(this.class.name,actionName)
-        boolean valid=false
-        withForm{
-            valid=true
-        }.invalidToken{
-            request.errorCode='request.error.invalidtoken.message'
-            renderErrorView([:])
-        }
-        if(!valid){
+        if (!requestHasValidToken()) {
             return
         }
         //only attempt project create if form POST is used
@@ -762,6 +744,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def Properties projProps = new Properties()
         if(params.description) {
             projProps['project.description'] = params.description
+        }
+        if(params.label) {
+            projProps['project.label'] = params.label
         }
         def errors = []
         def configs
@@ -815,79 +800,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
         }
 
-        //parse plugin config properties, and convert to project.properties
-        def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-        def ndxes = [params.list('index')].flatten()
-
-        def count = 1
-        configs = []
-        ndxes.each { ndx ->
-            def String type = params[prefixKey + '.' + ndx + '.type']
-            if (!type) {
-                log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
-                return
-            }
-            if(!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)){
-                errors << "Invalid Resource Model Source definition for source #${ndx}"
-                return
-            }
-            final service = framework.getResourceModelSourceService()
-            def provider=null
-            try {
-                provider = service.providerOfType(type)
-            } catch (MissingProviderException e) {
-            }
-            if (null==provider || !(provider instanceof Describable)) {
-                errors << "Resource Model Source provider was not found: ${type}"
-            } else {
-                projProps[sourceConfigPrefix + '.' + count + '.type'] = type
-                def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
-                def props = new Properties()
-                props.putAll(mapprops)
-                props.keySet().each { k ->
-                    if (props[k]) {
-                        projProps[sourceConfigPrefix + '.' + count + '.config.' + k] = props[k]
-                    }
-                }
-                count++
-                configs << [type: type, props: props]
-            }
-        }
-
         //load extra configuration for grails services
 
-        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
-
-        Map<String,Map> extraConfig=[:]
-        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
-            if(k.endsWith('Profiled')){
-                //skip profiled versions of beans
-                return
-            }
-            //construct input values for the bean
-            def beanData=[
-                    configurable:v,
-                    prefix:"extraConfig.${k}."
-            ]
-            def input=params.extraConfig?."${k}"?:[:]
-            beanData.values=input
-
-            v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
-                if(input[it.name]!='true'){
-                    input[it.name]='false'
-                }
-            }
-            //validate
-            def report=Validator.validate(input as Properties, v.projectConfigProperties)
-            beanData.report=report
-            if(!report.valid){
-                errors << ("Some configuration was invalid: "+ report )
-            }else{
-                def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
-                projProps.putAll(projvalues)
-            }
-            extraConfig[k]=beanData
+        def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                params.extraConfig,
+                'extraConfig.',
+                { String category -> category != 'resourceModelSource' }
+        )
+        if (pconfigurable.errors) {
+            errors.addAll(pconfigurable.errors)
         }
+        Map<String, Map> extraConfig = pconfigurable.config
+        projProps.putAll(pconfigurable.props)
 
 
         if (!project) {
@@ -905,12 +829,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
-                def result = userService.storeFilterPref(session.user, [project: proj.name])
-                return redirect(controller: 'menu', action: 'index',params: [project:proj.name])
+                return redirect(controller: 'framework', action: 'editProjectNodeSources', params: [project: proj.name])
             }
         }
         if (errors) {
-//            request.error=errors.join("\n")
             request.errors = errors
         }
         //get list of node executor, and file copier services
@@ -920,6 +842,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return render(view:'createProject',
                 model: [
                 newproject: params.newproject,
+                projectDescription: params.description,
+                projectLabel: params.label,
                 projectNameError: projectNameError,
                 resourcesUrl: resourcesUrl,
                 resourceModelConfigDescriptions: descriptions,
@@ -932,7 +856,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 nodeexecreport: nodeexecreport,
                 fcopyreport: fcopyreport,
                 prefixKey: prefixKey,
-                configs: configs,
                 extraConfig:extraConfig
                 ])
     }
@@ -971,21 +894,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             ]
         ]
         //get grails services that declare project configurations
-        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
-
-        Map<String,Map> extraConfig=[:]
-        projectConfigurableBeans.each { k, v ->
-            if(k.endsWith('Profiled')){
-                //skip profiled versions of beans
-                return
-            }
-            //construct existing values from project properties
-            extraConfig[k]=[
-                    configurable:v,
-                    values:[:],
-                    prefix:"extraConfig.${k}."
-            ]
-        }
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
         return [
             newproject:params.newproject,
@@ -997,7 +906,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
-            configs: configs,
             extraConfig:extraConfig
         ]
     }
@@ -1028,18 +936,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         authContext,
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_ADMIN, 'Project',project
+                AuthConstants.ACTION_CONFIGURE, 'Project',project
         )) {
             return
         }
@@ -1065,6 +973,21 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps.putAll(inputProps)
             def inputMap = new HashMap(inputProps)
 
+            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
+            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
+
+
+            def newExecutionDisabledStatus =
+                    (projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION]
+                            && projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true')
+            def newScheduleDisabledStatus =
+                    (projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE]
+                            && projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true')
+
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+
             final nodeExecType = frameworkService.getDefaultNodeExecutorService(projProps)
             final nodeConfig = frameworkService.getNodeExecConfigurationForType(nodeExecType, projProps)
 
@@ -1082,8 +1005,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //validate input values
             final nevalidation = frameworkService.validateServiceConfig(nodeExecType, "", nodeConfig, nodeExecService)
             if (!nevalidation.valid) {
-                nodeexecreport = nevalidation.report
-                errors << nevalidation.error ? "Node Executor configuration was invalid: " + nevalidation.error : "Node Executor configuration was invalid"
+                nodeexecreport = nevalidation.report ? frameworkService.remapReportProperties(
+                        nevalidation.report,
+                        nodeExecType,
+                        nodeExecService
+
+                ) : null
+                errors << (nevalidation.error ? ("Node Executor configuration was invalid: " + nevalidation.error) :
+                        "Node Executor configuration was invalid: " + nodeexecreport?.toString())
             }else{
                 //store back in props
                 frameworkService.addProjectNodeExecutorPropertiesForType(nodeExecType, projProps, nodeConfig)
@@ -1106,8 +1035,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //validate input values
             final fcvalidation = frameworkService.validateServiceConfig(fileCopyType, "", filecopyConfig, fileCopierService)
             if (!fcvalidation.valid) {
-                nodeexecreport = fcvalidation.report
-                errors << fcvalidation.error ? "File Copier configuration was invalid: " + fcvalidation.error : "File Copier configuration was invalid"
+                nodeexecreport = nevalidation.report ? frameworkService.remapReportProperties(
+                        nevalidation.report,
+                        fileCopyType,
+                        fileCopierService
+
+                ) : null
+                errors << (fcvalidation.error ? ("File Copier configuration was invalid: " + fcvalidation.error) : "File Copier configuration was invalid: "+nodeexecreport?.toString())
             }else{
                 frameworkService.addProjectFileCopierPropertiesForType(fileCopyType, projProps, filecopyConfig)
             }
@@ -1144,6 +1078,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 if (!result.success) {
                     errors << result.error
                 }
+                if(reschedule){
+                    if(active){
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
+                    }else{
+                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
+                    }
+                }
             }
 
             if (!errors) {
@@ -1151,7 +1092,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'admin', params: [project: project])
+                return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
         }
         if(errors){
@@ -1185,15 +1126,15 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext,
-                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project',project)) {
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
             return
         }
 
@@ -1216,8 +1157,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }else{
                 projProps['project.description']=''
             }
+            if(params.label){
+                projProps['project.label']=params.label
+            }else{
+                projProps['project.label']=''
+            }
+
+
             def Set<String> removePrefixes=[]
-            removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
             if (params.defaultNodeExec) {
                 (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
                 try {
@@ -1239,107 +1186,46 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
 
-            //parse plugin config properties, and convert to project.properties
-            def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-            def ndxes = [params.list('index')].flatten().collect { Integer.valueOf(it) }
-
-
-            resourcesPasswordFieldsService.adjust(ndxes)
-
-            def count = 1
-            ndxes.each {ndx ->
-                def type = params[prefixKey + '.' + ndx + '.type']
-                if(!type) {
-                    log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
-                    return
-                }
-                final service = framework.getResourceModelSourceService()
-                def provider
-                def description
-                if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                    errors << "Invalid Resource Model Source definition for source #${ndx}"
-                } else {
-                    try {
-                        provider = service.providerOfType(type)
-                    } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
-                        errors << "Resource Model Source was not found: ${type}"
-                    }
-
-                    if (provider && provider instanceof Describable) {
-                        description = provider.description
-                    }
-                }
-
-                final String resourceConfigPrefix = sourceConfigPrefix + '.' + count + '.config.'
-                final String resourceType = sourceConfigPrefix + '.' + count + '.type'
-                count++
-
-                projProps[resourceType] = type
-                def mapprops = frameworkService.parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
-
-                Properties props = new Properties()
-                props.putAll(mapprops)
-
-                //store the parsed config
-                def config = [type: type, props: props]
-                configs << config
-                resourceMappings<<[config:config,prefix: resourceConfigPrefix,index:ndx-1]
-            }
-            //replace any unmodified password fields with the session data
-            resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
-            //for each resources model source definition, add project properties from the input config
-            resourceMappings.each{ Map mapping->
-                def props=mapping.config.props
-                def resourceConfigPrefix=mapping.prefix
-                props.keySet().each { k ->
-                    if (props[k]) {
-                        projProps[resourceConfigPrefix + k] = props[k]
-                    }
-                }
-            }
-
-            removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
-
 
             //load extra configuration for grails services
-
-            Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
-
-            projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
-                if(k.endsWith('Profiled')){
-                    //skip profiled versions of beans
-                    return
-                }
-                //construct input values for the bean
-                def beanData=[
-                        configurable:v,
-                        prefix:"extraConfig.${k}"
-                ]
-                def input=params.extraConfig."${k}"
-                beanData.values=input
-
-                v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
-                    if(input[it.name]!='true'){
-                        input[it.name]='false'
-                    }
-                }
-                //validate
-                def report=Validator.validate(input as Properties, v.projectConfigProperties)
-                beanData.report=report
-                if(!report.valid){
-                    errors << ("Some configuration was invalid: "+ report )
-                }else{
-                    def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
-                    projProps.putAll(projvalues)
-                    //remove all previous settings
-                    removePrefixes.addAll(v.getPropertiesMapping().values())
-                }
-                extraConfig[k]=beanData
+            def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                    params.extraConfig,
+                    'extraConfig.',
+                    { String category -> category != 'resourceModelSource' }
+            )
+            if (pconfigurable.errors) {
+                errors.addAll(pconfigurable.errors)
             }
+            extraConfig = pconfigurable.config
+            if (pconfigurable.props) {
+                projProps.putAll(pconfigurable.props)
+            }
+            if (pconfigurable.remove) {
+                removePrefixes.addAll(pconfigurable.remove)
+            }
+
+            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
+            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
+
+            def newExecutionDisabledStatus =
+                    projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+            def newScheduleDisabledStatus =
+                    projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
 
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+                if(reschedule){
+                    if(active){
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
+                    }else{
+                        scheduledExecutionService.unscheduleJobsForProject(project,frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }
+                }
                 if (!result.success) {
                     errors << result.error
                 }
@@ -1348,10 +1234,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if (!errors) {
                 flash.message = "Project ${project} saved"
 
-                resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'admin', params: [project: project])
+                return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }
         if(errors){
@@ -1393,6 +1278,451 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         [type, config, report]
     }
 
+    def deleteProjectNodesource() {
+        if (!requestHasValidToken()) {
+            return
+        }
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!params.index) {
+            return renderErrorView("Index parameter is required")
+        }
+
+        int index = params.index.toInteger()
+        def project = params.project
+
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        //get list of model source configes
+        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
+        if (index < 1 || index > resourceConfig.size()) {
+            //invalid
+            flash.errors = ['Invalid index: ' + index]
+            log.error(flash.errors)
+            return redirect(action: 'projectNodeSources', params: [project: project])
+        }
+        resourceConfig.remove(index - 1)
+        Properties projProps = ProjectNodeSupport.serializeResourceModelConfigurations(resourceConfig)
+
+        log.error("Setting project props:  " + projProps)
+
+
+        def result = frameworkService.updateFrameworkProjectConfig(
+                project,
+                projProps,
+                [FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX] as Set
+        )
+        if (!result.success) {
+            log.error(result.error)
+            flash.errors = [result.error]
+        } else {
+            flash.message = 'Removed Node Source'
+        }
+        return redirect(action: 'projectNodeSources', params: [project: project])
+    }
+
+    def projectNodeSources() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        final fmk = frameworkService.getRundeckFramework()
+        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+
+        //get list of model source configes
+        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
+        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
+
+        // Reset Password Fields in Session
+        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+        resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties,
+                'resourceModelSource'
+        )
+
+        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
+
+        [
+                project                        : project,
+                projectDescription             : fwkProject.getProjectProperties().get("project.description"),
+                resourceModelConfigDescriptions: resourceDescs,
+                configs                        : resourceConfig,
+                writeableSources               : writeableModelSources,
+                prefixKey                      : 'plugin',
+                extraConfig                    : extraConfig,
+                parseExceptions                : parseExceptions
+        ]
+    }
+
+    def saveProjectNodeSources() {
+
+        if (!requestHasValidToken()) {
+            return
+        }
+
+        def project = params.project
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        //cancel modification
+        if (params.cancel) {
+            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        def framework = frameworkService.getRundeckFramework()
+        final resourceModelSourceDescriptions = framework.getResourceModelSourceService().listDescriptions()
+
+        def prefixKey = 'plugin'
+        def errors = []
+        def configs = []
+        def resourceMappings = []
+        //only attempt project create if form POST is used
+
+        def Set<String> removePrefixes = []
+
+        removePrefixes << FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
+
+        //parse plugin config properties, and convert to project.properties
+        def sourceConfigPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
+        def ndxes = [params.list('index')].flatten().collect { Integer.valueOf(it) }
+
+
+        resourcesPasswordFieldsService.adjust(ndxes)
+
+        def count = 1
+        ndxes.each { ndx ->
+            def type = params[prefixKey + '.' + ndx + '.type']
+            if (!type) {
+                log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
+                return
+            }
+            final service = framework.getResourceModelSourceService()
+            def provider
+            def description
+            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Invalid Resource Model Source definition for source #${ndx}"
+            } else {
+                try {
+                    provider = service.providerOfType(type)
+                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
+                    errors << "Resource Model Source was not found: ${type}"
+                }
+
+                if (provider && provider instanceof Describable) {
+                    description = provider.description
+                }
+            }
+
+            final String resourceConfigPrefix = sourceConfigPrefix + '.' + count + '.config.'
+            count++
+
+            def mapprops = frameworkService.parsePluginConfigInput(
+                    description,
+                    prefixKey + '.' + ndx + '.' + 'config.',
+                    params
+            )
+
+            Properties props = new Properties()
+            props.putAll(mapprops)
+
+            //store the parsed config
+            def config = [type: type, props: props]
+            configs << config
+            resourceMappings << [config: config, prefix: resourceConfigPrefix, index: ndx - 1]
+        }
+        //replace any unmodified password fields with the session data
+        resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
+
+        def Properties projProps = ProjectNodeSupport.serializeResourceModelConfigurations(configs)
+
+        def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                params.extraConfig,
+                'extraConfig.',
+                { String category -> category == 'resourceModelSource' }
+        )
+        if (pconfigurable.errors) {
+            errors.addAll(pconfigurable.errors)
+        }
+        Map<String, Map> extraConfig = pconfigurable.config
+        projProps.putAll(pconfigurable.props)
+        removePrefixes.addAll(pconfigurable.remove)
+
+        if (!errors) {
+
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+            if (!result.success) {
+                errors << result.error
+            }
+        }
+
+        if (!errors) {
+            flash.message = "Project ${project} Node Sources saved"
+
+            resourcesPasswordFieldsService.reset()
+            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+        }
+        if (errors) {
+            request.errors = errors
+        }
+
+
+        return render(view: 'projectNodeSources', model:
+                [
+                        project                        : params.project,
+                        newproject                     : params.newproject,
+                        resourceModelConfigDescriptions: resourceModelSourceDescriptions,
+                        prefixKey                      : prefixKey,
+                        configs                        : configs,
+                        extraConfig                    : extraConfig
+                ]
+        )
+    }
+
+    def editProjectNodeSources() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        final fmk = frameworkService.getRundeckFramework()
+        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+
+        //get list of model source configes
+        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
+        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
+
+        // Reset Password Fields in Session
+        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+        resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
+        //get grails services that declare project configurations
+
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties,
+                'resourceModelSource'
+        )
+        [
+                project                        : project,
+                projectDescription             : fwkProject.getProjectProperties().get("project.description"),
+                resourceModelConfigDescriptions: resourceDescs,
+                configs                        : resourceConfig,
+                writeableSources               : writeableModelSources,
+                prefixKey                      : 'plugin',
+                extraConfig                    : extraConfig
+        ]
+    }
+    static final Map<String, String> Formats = [
+            'text/xml'        : 'xml',
+            'application/xml' : 'xml',
+            'application/yaml': 'yaml',
+            'text/yaml'       : 'yaml',
+            'application/json': 'json',
+    ]
+
+    def editProjectNodeSourceFile() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!params.index) {
+            return renderErrorView("Index parameter is required")
+        }
+
+        int index = params.index.toInteger()
+        def project = params.project
+
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        //get list of model source configes
+        final writableSources = fwkProject.projectNodes.writeableResourceModelSources
+        final source = writableSources.find { it.index == index }
+
+        if (!source) {
+            //invalid
+            flash.errors = ['Invalid index: ' + index]
+            log.error(flash.errors)
+            return redirect(action: 'projectNodeSources', params: [project: project])
+        }
+
+
+        def baos = new ByteArrayOutputStream()
+        def emptydata = false
+        if (source.writeableSource.hasData()) {
+            source.writeableSource.readData(baos)
+        } else {
+            emptydata = true
+        }
+        def fileText = baos.toString('UTF-8')
+        def modelFormat = source.writeableSource.syntaxMimeType
+        def sourceDesc = source.writeableSource.sourceDescription
+        def providerType = source.type;
+        def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
+                listDescriptions()?.find { it.name == providerType }
+
+        [
+                project     : project,
+                index       : index,
+                fileText    : fileText,
+                fileEmpty   : emptydata,
+                fileFormat  : modelFormat ? (Formats[modelFormat] ?: modelFormat) : '',
+                sourceDesc  : sourceDesc,
+                providerType: providerType,
+                providerDesc: desc
+        ]
+    }
+
+    def saveProjectNodeSourceFile() {
+        if (!requestHasValidToken()) {
+            return
+        }
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!params.index) {
+            return renderErrorView("Index parameter is required")
+        }
+        if (null == params.fileText) {
+            return renderErrorView("fileText parameter is required")
+        }
+
+        def project = params.project
+        def index = params.index.toInteger()
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        //cancel modification
+        if (params.cancel) {
+            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        final writableSources = fwkProject.projectNodes.writeableResourceModelSources
+        final source = writableSources.find { it.index == index }
+
+        if (!source) {
+            //invalid
+            flash.errors = ['Invalid index: ' + index]
+            log.error(flash.errors)
+            return redirect(action: 'projectNodeSources', params: [project: project])
+        }
+        def format = source.writeableSource.syntaxMimeType
+        //validate
+
+
+        def bais = new ByteArrayInputStream(params.fileText.toString().getBytes("UTF-8"))
+        long size = -1
+        def error = null
+        try {
+            size = source.writeableSource.writeData(bais)
+        } catch (ResourceModelSourceException exc) {
+            log.error(exc)
+            exc.printStackTrace()
+            error = exc
+        }
+        if (!error) {
+            flash.message = "Saved nodes content: $size bytes"
+            return redirect(
+                    controller: 'framework',
+                    action: 'projectNodeSources',
+                    params: [project: project]
+            )
+        }
+        def modelFormat = source.writeableSource.syntaxMimeType
+        def sourceDesc = source.writeableSource.sourceDescription
+        def providerType = source.type;
+        def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
+                listDescriptions()?.find { it.name == providerType }
+        return render(
+                view: 'editProjectNodeSourceFile',
+                model: [
+                        project     : project,
+                        index       : index,
+                        fileText    : params.fileText,
+                        fileFormat  : modelFormat ? (Formats[modelFormat] ?: modelFormat) : '',
+                        sourceDesc  : sourceDesc,
+                        providerType: providerType,
+                        providerDesc: desc,
+                        saveError   : error.message
+                ]
+        )
+
+
+    }
     def editProject (){
         if(!params.project){
             return renderErrorView("Project parameter is required")
@@ -1401,15 +1731,21 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-            frameworkService.authorizeApplicationResourceAll(
-                frameworkService.getAuthContextForSubject(session.subject),
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN]),
-            AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                frameworkService.authorizeApplicationResourceAny(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
             return
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
+        final def projectDescription = Project.withNewSession {
+            Project.findByName(project)?.description
+        }
+
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
         //get list of node executor, and file copier services
@@ -1419,43 +1755,27 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
-        final resourceConfig = frameworkService.listResourceModelConfigurations(project)
+
 
         // Reset Password Fields in Session
-        resourcesPasswordFieldsService.reset()
         execPasswordFieldsService.reset()
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
         execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], *execDesc)
         fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]], *filecopyDesc)
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
         //get grails services that declare project configurations
-        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
-
-        Map<String,Map> extraConfig=[:]
-        projectConfigurableBeans.each { k, v ->
-            if(k.endsWith('Profiled')){
-                //skip profiled versions of beans
-                return
-            }
-            //construct existing values from project properties
-            def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
-            extraConfig[k]=[
-                    configurable:v,
-                    values:values,
-                    prefix:"extraConfig.${k}."
-            ]
-        }
-
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties
+        )
         [
             project: project,
-            projectDescription:fwkProject.getProjectProperties().get("project.description"),
-            resourceModelConfigDescriptions: resourceDescs,
-            configs: resourceConfig,
+            projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
+            projectLabel:fwkProject.getProjectProperties().get("project.label"),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,
@@ -1477,11 +1797,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
             return
         }
 
@@ -1492,9 +1814,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             fwkProject.loadFileResource(params.filename,baos)
             fileText=baos.toString('UTF-8')
         }
+
+        def displayConfig
+        if (params.filename == 'readme.md') {
+            displayConfig = menuService.getReadmeDisplay(fwkProject)
+        } else if (params.filename == 'motd.md') {
+            displayConfig = menuService.getMotdDisplay(fwkProject)
+        }
+
         [
-                filename:params.filename,
-                fileText:fileText
+                displayConfig: displayConfig,
+                filename     : params.filename,
+                fileText     : fileText
         ]
     }
     def saveProjectFile (){
@@ -1521,17 +1852,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
@@ -1545,7 +1876,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             flash.message='Cleared project file '+params.filename
         }
 
-        return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        return redirect(
+                controller: 'framework',
+                action: 'editProjectFile',
+                params: [project: project, filename: params.filename]
+        )
     }
     def editProjectConfig (){
         if(!params.project){
@@ -1555,11 +1890,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-            frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                 frameworkService.getAuthContextForSubject(session.subject),
                 frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN]),
-            AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
         }
 
@@ -1857,6 +2192,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projects = frameworkService.projectNames(authContext)
             session.frameworkProjects=projects
         }
+        if(!session.frameworkLabels){
+            def flabels = frameworkService.projectLabels(authContext)
+            session.frameworkLabels = flabels
+        }
         [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
     }
     /**
@@ -1870,155 +2209,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     /*******
      * API actions
      */
-
-    /**
-     * API: /api/2/project/NAME/resources/refresh
-     * calls performNodeReload, then returns API response
-     * @deprecated will be removed
-     * */
-    def apiProjectResourcesRefresh () {
-        if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
-            return
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        if (!params.project) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required',
-                    args: ['project']])
-        }
-        def exists = frameworkService.existsFrameworkProject(params.project)
-        if (!exists) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist',
-                    args: ['project', params.project]])
-        }
-
-        //check content
-        def result = performNodeReload(params.providerURL)
-        def didsucceed=result.success
-        if(didsucceed){
-            return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
-        }else{
-            def error=[:]
-            if(result.invalid){
-                error.code='api.error.invalid.request'
-                error.args=[result.message]
-            }else if(result.unauthorized){
-                error.code='api.error.item.unauthorized'
-                error.args=['Refresh Resources','Project: '+params.project,result.message]
-            }
-            if(!error.code && !result.url){
-                error.code= 'api.project.updateResources.failed'
-                error.args=[params.project]
-                error.message=result.message
-            }else if(!error.code){
-                error.code = 'api.project.updateResources.failed'
-                error.args = [error.message?:'Unknown reason']
-            }
-
-            return apiService.renderErrorXml(response, error)
-        }
-    }
-    /**
-     * API: /api/2/project/NAME/resources
-     * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
-     *     GET: see {@link #apiResourcesv2}
-     * */
-    def apiProjectResourcesPost() {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
-            return
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        if (!params.project) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        def exists = frameworkService.existsFrameworkProject(params.project)
-        if (!exists) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-        }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_UPDATE], params.project)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
-        }
-        final IRundeckProject project = frameworkService.getFrameworkProject(params.project)
-
-        def didsucceed=false
-        def errormsg=null
-        //determine data
-        //assume post request
-        if(!request.post){
-            //bad method
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-                    code: 'api.error.invalid.request', args: ['Method not allowed']])
-        }
-        final contentType = request.contentType
-        //try to parse loaded data
-        if(!(contentType?.endsWith("/xml")||contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml'))){
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
-                //require api V3 for any other content type
-                return
-            }
-        }
-
-        final parser
-        try {
-            parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
-        } catch (UnsupportedFormatException e) {
-            //invalid data
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.resources-import.unsupported-format', args: [contentType]])
-        }
-
-        //write content to temp file
-        File tempfile=File.createTempFile("post-input","data")
-        tempfile.deleteOnExit()
-        final stream = new FileOutputStream(tempfile)
-        try {
-            com.dtolabs.utils.Streams.copyStream(request.getInputStream(), stream)
-        } finally {
-            stream.close()
-        }
-
-        def INodeSet nodeset
-        try {
-            nodeset=parser.parseDocument(tempfile)
-        }catch (ResourceFormatParserException e){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: [e.message]])
-        }catch (Exception e){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.project.updateResources.failed', args: [e.message]])
-        }
-        tempfile.delete()
-
-        //finally update resources file with the new nodes data
-        try {
-            project.updateNodesResourceFile nodeset
-            didsucceed=true
-        } catch (Exception e) {
-            log.error("Failed updating nodes file: "+e.getMessage())
-            e.printStackTrace(System.err)
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.project.updateResources.failed', args: [e.message]])
-        }
-        withFormat{
-            xml{
-                return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
-            }
-            json{
-                return apiService.renderSuccessJson(response){
-                    success=true
-                    message=g.message(code:'api.project.updateResources.succeeded', args:[params.project])
-                }
-            }
-        }
-
-    }
 
     /**
      * Convert input node filter parameters into specific property names used by
@@ -2048,12 +2238,344 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return result
     }
 
+    def apiSourcesList() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+            return
+        }
 
+        if (!apiService.requireParameters(params, response, ['project'])) {
+            return
+        }
+        def project = params.project
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(project),
+            ['project', project]
+        )) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeApplicationResourceAll(
+                authContext,
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            ),
+            response,
+            [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
+            return
+        }
+        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
+        final IProjectNodes projectNodes = fwkProject.projectNodes
+        final fmk = frameworkService.getRundeckFramework()
+        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+
+        //get list of model source configes
+        final resourceConfig = projectNodes.listResourceModelConfigurations()
+        final writeableModelSourcesMap = projectNodes.writeableResourceModelSources.collectEntries { [it.index, it] }
+
+        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
+
+        int index = 0
+        respond(
+            new Sources(
+                project,
+                resourceConfig.collect { Map config ->
+                    index++
+                    def ident = index + '.source'
+                    def writeableSource = writeableModelSourcesMap[index]
+                    new Source(
+                        index: index,
+                        type: config.type,
+                        errors: parseExceptions[ident]?.message ?: null,
+                        resources: new Resources(
+                            writeable: writeableSource ? true : false,
+                            description: writeableSource?.writeableSource?.sourceDescription,
+                            empty: writeableSource ? !writeableSource.writeableSource.hasData() : null,
+                            href: createLink(
+                                absolute: true,
+                                mapping: 'apiProjectSourceResources',
+                                params: [
+                                    api_version: ApiVersions.API_CURRENT_VERSION,
+                                    project    : project,
+                                    index      : index
+                                ]
+                            )
+                        )
+                    )
+                }
+            ),
+
+            [formats: ['json', 'xml']]
+        )
+    }
+
+    def apiSourceWriteContent() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['project','index'])) {
+            return
+        }
+        def project = params.project
+        if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
+            return
+        }
+        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeApplicationResourceAll(
+                authContext,
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            ),
+            response,
+            [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
+            return
+        }
+
+        final contentType = request.contentType
+
+        def index = params.int('index')
+        if (!apiService.requireExists(response, index, ['source index', params.index])) {
+            return
+        }
+        def projectNodes = fwkProject.projectNodes
+        final writableSources = projectNodes.writeableResourceModelSources
+        final source = writableSources.find { it.index == index }
+
+        if (!source) {
+            return apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+                 code  : 'api.error.invalid.request',
+                 args  : ["POST to readonly project source index $index"]]
+            )
+        }
+        def format = source.writeableSource.syntaxMimeType
+        def inputStream = request.getInputStream()
+        //validate
+        def framework = frameworkService.rundeckFramework
+        if (format != contentType) {
+            //attempt to convert to expected format
+            ResourceFormatParser parser
+            INodeSet nodes
+
+            try {
+                parser = framework.resourceFormatParserService.getParserForMIMEType(contentType)
+                nodes = parser.parseDocument(request.getInputStream())
+            } catch (Exception e) {
+                log.error("Cannot parse input data for format: $contentType", e)
+                apiService.renderErrorFormat(
+                    response,
+                    [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                     code  : 'api.error.resource.format.unsupported',
+                     args  : [contentType]]
+                )
+                return
+            }
+            try {
+                def generator = framework.resourceFormatGeneratorService.getGeneratorForMIMEType(format)
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()
+                generator.generateDocument(nodes, baos)
+                inputStream = new ByteArrayInputStream(baos.toByteArray())
+            } catch (ResourceFormatGeneratorException | IOException e) {
+                log.error("Cannot generate resource model data for format: $format", e)
+                apiService.renderErrorFormat(
+                    response,
+                    [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                     code  : 'api.error.resource.format.unsupported',
+                     args  : [contentType]]
+                )
+                return
+            } catch (Exception e) {
+                log.error("Cannot generate resource model data for format: $format", e)
+                apiService.renderErrorFormat(
+                    response,
+                    [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                     code  : 'api.error.unknown',
+                    ]
+                )
+                return
+            }
+        }
+
+        long size = -1
+        def error = null
+        try {
+            size = source.writeableSource.writeData(inputStream)
+        } catch (ResourceModelSourceException exc) {
+            log.error(exc)
+            exc.printStackTrace()
+            error = exc
+        }
+        if (error) {
+            apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                 code  : 'api.error.resource.write.failure',
+                 args  : [error.message]]
+            )
+            return
+        }
+        def readsource = projectNodes.resourceModelSources.find { it.index == index }
+        if (!apiService.requireExists(response, readsource, ['source index', params.index])) {
+            return
+        }
+
+        return apiRenderNodeResult(readsource.source.nodes, framework, params.project)
+    }
+
+    def apiSourceGet() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['project', 'index'])) {
+            return
+        }
+        def project = params.project
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(project),
+            ['project', project]
+        )) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeApplicationResourceAll(
+                authContext,
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            ),
+            response,
+            [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
+            return
+        }
+        def index = params.int('index')
+        if (!apiService.requireExists(response, index, ['source index', params.index])) {
+            return
+        }
+        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
+        final IProjectNodes projectNodes = fwkProject.projectNodes
+        final fmk = frameworkService.getRundeckFramework()
+        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+
+        //get list of model source configes
+        final resourceConfig = projectNodes.listResourceModelConfigurations()
+        if (resourceConfig.size() < index || index < 1) {
+            apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist', args: ['source index', params.index]]
+            )
+            return
+        }
+        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
+        def config = resourceConfig[index - 1]
+        def writeableSource = projectNodes.writeableResourceModelSources.find { it.index == index }
+        def errors = parseExceptions[index + '.source']
+
+        respondProjectSource(config.type, writeableSource, project, index, errors?.message)
+    }
+
+    public void respondProjectSource(
+        String type,
+        IProjectNodes.WriteableProjectNodes writeableSource,
+        project,
+        index,
+        String errors
+    ) {
+        Resources sourceContent = new Resources(
+            writeable: writeableSource ? true : false,
+            href: createLink(
+                absolute: true,
+                mapping: 'apiProjectSourceResources',
+                params: [
+                    api_version: ApiVersions.API_CURRENT_VERSION,
+                    project    : project,
+                    index      : index
+                ]
+            )
+        )
+        if (writeableSource) {
+            sourceContent.description = writeableSource.writeableSource.sourceDescription
+            sourceContent.empty = !writeableSource.writeableSource.hasData()
+        }
+
+        respond(
+            new Source(
+                project: project,
+                index: index,
+                type: type,
+                errors: errors,
+                resources: sourceContent
+            ),
+            [formats: ['json', 'xml']]
+        )
+    }
+
+    def apiSourceGetContent() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['project', 'index'])) {
+            return
+        }
+        def project = params.project
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(project),
+            ['project', project]
+        )) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (!apiService.requireAuthorized(
+            frameworkService.authorizeApplicationResourceAll(
+                authContext,
+                frameworkService.authResourceForProject(project),
+                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            ),
+            response,
+            [AuthConstants.ACTION_CONFIGURE, 'Project', project]
+        )) {
+            return
+        }
+        def index = params.int('index')
+        if (!apiService.requireExists(response, index, ['source index', params.index])) {
+            return
+        }
+        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
+        final IProjectNodes projectNodes = fwkProject.projectNodes
+        final fmk = frameworkService.getRundeckFramework()
+
+        //get list of model source configes
+        final resourceConfig = projectNodes.listResourceModelConfigurations()
+        if (resourceConfig.size() < index || index < 1) {
+            apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_NOT_FOUND, code: 'api.error.item.doesnotexist', args: ['source index', params.index]]
+            )
+            return
+        }
+        def source = projectNodes.resourceModelSources.find { it.index == index }
+        if (!apiService.requireExists(response, source, ['source index', params.index])) {
+            return
+        }
+
+        return apiRenderNodeResult(source.source.nodes, fmk, params.project)
+    }
     /**
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiResource()
@@ -2065,7 +2587,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!apiService.requireApi(request, response)) {
             return
         }
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -2090,18 +2612,23 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         nset.setSingleNodeName(params.name)
         def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
-        if(!nodes || nodes.nodes.size()<1 ){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['Node Name', params.name]])
 
+        def readnodes = frameworkService.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
+
+        if (!readnodes || readnodes.nodes.size() < 1) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code  : 'api.error.item.doesnotexist',
+                    args  : ['Node Name', params.name]]
+            )
         }
-        return apiRenderNodeResult(nodes, framework, params.project)
+        return apiRenderNodeResult(readnodes, framework, params.project)
     }
     /**
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request, response,ApiVersions.V2)) {
             return
         }
         return apiResources(query)
@@ -2117,7 +2644,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -2141,7 +2668,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiVersions.V3)) {
                 return
             }
         }
@@ -2161,95 +2688,118 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
-        return apiRenderNodeResult(nodes,framework,params.project)
+        def readnodes = frameworkService.filterAuthorizedNodes(
+                params.project,
+                Collections.singleton('read'),
+                nodes,
+                authContext
+        )
+        return apiRenderNodeResult(readnodes, framework, params.project)
     }
-    protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project) {
-        if (params.format && !(params.format in ['xml', 'yaml']) ||
-                response.format &&
-                !(response.format in ['all', 'html', 'xml', 'yaml'])) {
-            //expected another content type
-            if (!apiService.requireVersion(request, response, ApiRequestFilters.V3)) {
-                return
+
+    def handleInvalidMimeType(InvalidMimeTypeException e) {
+        return apiService.renderErrorFormat(
+            response,
+            [
+                status: HttpServletResponse.SC_BAD_REQUEST,
+                code  : 'api.error.invalid.request',
+                args  : [e.message]
+            ]
+        )
+    }
+    static final Map<String, String> resourceFormatBuiltinTypes = [
+        xml : 'resourcexml',
+        json: 'resourcejson',
+        yaml: 'resourceyaml',
+    ]
+
+    protected def apiRenderNodeResult(INodeSet nodes, IFramework framework, String project) {
+        def reqformat = params.format ?: response.format
+        if (reqformat in ['all', 'html']) {
+            if (request.api_version < ApiVersions.V23) {
+                reqformat = 'xml'
+            } else {
+                reqformat = 'json'
             }
-            def reqformat = params.format ?: response.format
-            //render specified format
-            final service = framework.getResourceFormatGeneratorService()
-            ByteArrayOutputStream baos = new ByteArrayOutputStream()
-            def generator
-            [params.format,response.format].each{
-                if(!generator && it){
-                    try{
-                        generator = service.getGeneratorForFormat(it)
-                    }catch (UnsupportedFormatException e) {
-                        log.debug("could not get generator for format: ${it}: ${e.message}",e)
-                    }
+        }
+        reqformat = resourceFormatBuiltinTypes[reqformat] ?: reqformat
+        //render specified format
+        final service = framework.getResourceFormatGeneratorService()
+        ByteArrayOutputStream baos = new ByteArrayOutputStream()
+        def generator
+
+        [params.format, response.format, reqformat].each {
+            if (!generator && it) {
+                try {
+                    generator = service.getGeneratorForFormat(it)
+                } catch (UnsupportedFormatException e) {
+                    log.debug("could not get generator for format: ${it}: ${e.message}", e)
                 }
             }
-            if(!generator){
-                //try accept header
-                try{
-                    generator = service.getGeneratorForMIMEType(request.getHeader("accept"))
-                }catch (UnsupportedFormatException e) {
-                    log.debug("could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",e)
-                }
-            }
-            if(!generator){
-                return apiService.renderErrorFormat(
-                        response,
-                        [
-                                status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                                code  : 'api.error.resource.format.unsupported',
-                                args: [reqformat]
-                        ]
-                )
-            }
-
-
+        }
+        if (!generator) {
+            //try accept header
+            List<MediaType> mimes = []
             try {
-                generator.generateDocument(nodes, baos)
-            } catch (ResourceFormatGeneratorException e) {
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                                                               code  : 'api.error.resource.format.generator', args: [e.message]]
-                )
-            } catch (IOException e) {
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                                                               code  : 'api.error.resource.format.generator', args: [e.message]]
+                mimes = MediaType.parseMediaTypes(request.getHeader('accept'))
+                MediaType.sortBySpecificityAndQuality(mimes)
+            } catch (RuntimeException e) {
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [e.message]
+                    ]
                 )
             }
-            final types = generator.getMIMETypes() as List
-            return render(contentType: types[0], encoding: "UTF-8", text: baos.toString())
-        }
-        withFormat {
-            xml {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                final NodesFileGenerator generator = new ResourceXMLGenerator(baos)
-                nodes.nodes.each { INodeEntry node ->
-                    generator.addNode(node)
-                }
-                generator.generate()
-                return render(contentType: "text/xml", encoding: "UTF-8", text: baos.toString())
-            }
-            yaml {
-                if (nodes.nodes.size() > 0) {
-                    StringWriter sw = new StringWriter()
-                    final NodesFileGenerator generator = new NodesYamlGenerator(sw)
-                    nodes.nodes.each { INodeEntry node ->
-                        generator.addNode(node)
-                    }
-                    generator.generate()
-                    return render(contentType: "text/yaml", encoding: "UTF-8", text: sw.toString())
-                } else {
-                    return render(contentType: "text/yaml", encoding: "UTF-8", text: "# 0 results for query\n")
+            for (MediaType mime : mimes) {
+                try {
+                    generator = service.getGeneratorForMIMEType(mime.toString())
+                    break
+                } catch (UnsupportedFormatException e) {
+                    log.debug(
+                        "could not get generator for mime type: ${request.getHeader("accept")}: ${e.message}",
+                        e
+                    )
                 }
             }
         }
+        if (!generator) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.resource.format.unsupported',
+                    args  : [reqformat]
+                ]
+            )
+        }
+
+
+        try {
+            generator.generateDocument(nodes, baos)
+        } catch (ResourceFormatGeneratorException e) {
+            return apiService.renderErrorFormat(
+                response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                           code  : 'api.error.resource.format.generator', args: [e.message]]
+            )
+        } catch (IOException e) {
+            return apiService.renderErrorFormat(
+                response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                           code  : 'api.error.resource.format.generator', args: [e.message]]
+            )
+        }
+        final types = generator.getMIMETypes() as List
+        return render(contentType: types[0], encoding: "UTF-8", text: baos.toString())
+
     }
 
     /**
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2298,7 +2848,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     private def renderAclHref(String path) {
-        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
+        createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
     private def apiSystemAclsPutResource(String storagePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
@@ -2369,9 +2919,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderJsonAclpolicyValidation(validation,delegate)
-                    }
+                    render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
@@ -2396,14 +2944,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                     }
 
                 }
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                    }
+                    def content = [contents: baos.toString()]
+                    render content as JSON
                 }
                 json j
                 '*' j
@@ -2431,13 +2978,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 configStorageService.loadFileResource(projectFilePath,baos)
                 withFormat{
                     def j={
-                        render(contentType:'application/json'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                        }
+                        def content = [contents:baos.toString()]
+                        render content as JSON
                     }
                     xml{
                         render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                         }
 
                     }
@@ -2447,9 +2993,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
         }else if(configStorageService.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
-            def list=configStorageService.listDirPaths(projectFilePath).findAll{
-                it ==~ /.*\.aclpolicy$/
-            }
+            def list=configStorageService.listDirPaths(projectFilePath,'.+\\.aclpolicy$')
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
@@ -2464,15 +3008,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 }
                 def j ={
-                    render(contentType:'application/json') {
-                        apiService.jsonRenderDirlist(
+                    render apiService.jsonRenderDirlist(
                                 projectFilePath,
                                 { String p -> apiService.pathRmPrefix(p, rmprefix) },
                                 { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
-                                list,
-                                delegate
-                        )
-                    }
+                                list
+                        ) as JSON
                 }
                 json j
                 '*' j

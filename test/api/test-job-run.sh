@@ -110,7 +110,7 @@ fi
 
 #wait for execution to complete
 
-rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
 # 
@@ -132,6 +132,131 @@ itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
 assert "1" "$itemcount" "execution count should be 1"
 status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
 assert "succeeded" "$status" "execution status should be succeeded"
+
+echo "OK"
+
+
+###
+# Specify option parameters in json
+###
+
+echo "TEST: POST job/id/run with JSON"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/run"
+params=""
+JSONDATA='{"options":{"opt1":"xyz","opt2":"def"}}'
+
+# get listing
+$CURL -H "$AUTHHEADER" -X POST --data-binary "$JSONDATA" -H content-type:application/json \
+  -H accept:application/xml \
+  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#get execid
+
+execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    :
+else
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    exit 2
+fi
+
+#wait for execution to complete
+
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
+
+# test execution status
+# 
+runurl="${APIURL}/execution/${execid}"
+
+params=""
+
+# get listing
+docurl ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+assert "succeeded" "$status" "execution status should be succeeded"
+
+assert_xml_value "-opt1 xyz -opt2 def" "/result/executions/execution/argstring" $DIR/curl.out
+assert_xml_value "xyz" "/result/executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
+assert_xml_value "def" "/result/executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
+
+echo "OK"
+
+
+
+###
+# Specify option parameters individually
+###
+
+echo "TEST: POST job/id/run with option parameters"
+
+
+# now submit req
+runurl="${APIURL}/job/${jobid}/run"
+params=""
+
+# get listing
+$CURL -H "$AUTHHEADER" -X POST --data-urlencode "option.opt2=a" --data-urlencode "option.opt1=xyz" \
+  ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#get execid
+
+execcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+execid=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@id" $DIR/curl.out)
+
+if [ "1" == "${execcount}" -a "" != "${execid}" ] ; then
+    :
+else
+    errorMsg "FAIL: expected run success message for execution id. (count: ${execcount}, id: ${execid})"
+    exit 2
+fi
+
+#wait for execution to complete
+
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
+
+# test execution status
+# 
+runurl="${APIURL}/execution/${execid}"
+
+params=""
+
+# get listing
+docurl ${runurl}?${params} > $DIR/curl.out
+if [ 0 != $? ] ; then
+    errorMsg "ERROR: failed query request"
+    exit 2
+fi
+
+$SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+
+#Check projects list
+itemcount=$($XMLSTARLET sel -T -t -v "/result/executions/@count" $DIR/curl.out)
+assert "1" "$itemcount" "execution count should be 1"
+status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/curl.out)
+assert "succeeded" "$status" "execution status should be succeeded"
+
+assert_xml_value "-opt1 xyz -opt2 a" "/result/executions/execution/argstring" $DIR/curl.out
+assert_xml_value "xyz" "/result/executions/execution/job/options/option[@name='opt1']/@value" $DIR/curl.out
+assert_xml_value "a" "/result/executions/execution/job/options/option[@name='opt2']/@value" $DIR/curl.out
 
 echo "OK"
 

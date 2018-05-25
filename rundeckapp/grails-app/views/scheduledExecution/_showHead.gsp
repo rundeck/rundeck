@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
 
 <div class="col-sm-12 jobInfoSection">
@@ -7,6 +23,7 @@
         <g:each in="${parts}" var="part" status="i">
             <g:if test="${i != 0}">/</g:if>
             <g:set var="subgroup" value="${parts[0..i].join('/')}"/>
+            <g:if test="${groupBreadcrumbMode!='static'}">
             <g:link controller="menu"
                     action="jobs"
                     class="secondary"
@@ -15,12 +32,17 @@
                     absolute="${absolute ? 'true' : 'false'}">
                 <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
                 <g:enc>${part}</g:enc></g:link>
+            </g:if>
+            <g:if test="${groupBreadcrumbMode=='static'}">
+                <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
+                <g:enc>${part}</g:enc>
+            </g:if>
         </g:each>
     </section>
 </g:if>
 <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
     <span class=" h3">
-        <g:link controller="scheduledExecution" action="show"
+        <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
             class="primary"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
@@ -91,7 +113,7 @@
                 </g:if>
             </span>
         </g:if>
-        <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active')}">
+        <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
             <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
                 data-placement="auto left"
                   title="${g.message(code: 'disabled.schedule.run')}">
@@ -111,6 +133,13 @@
 </section>
 <section class="section-space">
         <g:render template="/scheduledExecution/description"
-                  model="[description: scheduledExecution.description, textCss: 'h4 text-muted', mode: jobDescriptionMode ?: 'expanded', rkey: g.rkey()]"/>
+                  model="[
+                          description : scheduledExecution.description,
+                          textCss     : 'h4 text-muted',
+                          mode        : jobDescriptionMode ?: 'expanded',
+                          cutoffMarker: ScheduledExecution.RUNBOOK_MARKER,
+                          jobLinkId   : scheduledExecution.extid,
+                          rkey        : g.rkey()
+                  ]"/>
 </section>
 </div>

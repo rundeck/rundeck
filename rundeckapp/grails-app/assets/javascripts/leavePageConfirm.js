@@ -20,14 +20,14 @@ function PageConfirm(message){
 
     self.setNeedsConfirm=function() {
         self.needConfirm = true;
-    }
+    };
 
     self.clearNeedConfirm=function() {
         self.needConfirm = false;
-    }
+    };
     self.watchConfirm=function(input){
         jQuery(input).on("change", self.setNeedsConfirm);
-    }
+    };
 
     jQuery(function () {
         window.onbeforeunload = function () {

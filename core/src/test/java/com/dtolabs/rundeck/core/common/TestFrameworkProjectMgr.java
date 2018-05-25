@@ -1,17 +1,17 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.dtolabs.rundeck.core.common;
@@ -74,26 +74,37 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
     }
 
     public void testConstruction() {
-        final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                                   new File(getFrameworkProjectsBase()),
-                                                                   getFrameworkInstance(),
-                                                                   FrameworkFactory.createNodesFactory(
-                                                                           getFrameworkInstance().getFilesystemFramework())
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
+
+        assertEquals(
+                "mgr.getBaseDir() did not match exepcted",
+                mgr.getBaseDir(),
+                new File(getFrameworkProjectsBase()).getAbsoluteFile()
         );
-        assertEquals("mgr.getBaseDir() did not match exepcted", mgr.getBaseDir(), new File(getFrameworkProjectsBase()));
 
         assertEquals("expected 1 projects listed. number found: " + mgr.listFrameworkProjects().size()
                 + " projects="+mgr.listChildNames(),1,
                    mgr.listFrameworkProjects().size() );
     }
 
-    public void testChildCouldBeLoaded() throws IOException {
-        final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                                   new File(getFrameworkProjectsBase()),
-                                                                   getFrameworkInstance(),
-                                                                   FrameworkFactory.createNodesFactory(
-                                                                           getFrameworkInstance().getFilesystemFramework())
+    public FrameworkProjectMgr createFrameworkProjectMgr() {
+        Framework frameworkInstance = getFrameworkInstance();
+        FilesystemFramework filesystemFramework = FrameworkFactory.createFilesystemFramework(
+                frameworkInstance.getBaseDir()
         );
+        return FrameworkFactory.createProjectManager(
+                frameworkInstance.getFrameworkProjectsBaseDir(),
+                filesystemFramework,
+                FrameworkFactory.createNodesFactory(
+                        filesystemFramework,
+                        frameworkInstance::getResourceFormatGeneratorService,
+                        frameworkInstance::getResourceModelSourceService
+                )
+        );
+    }
+
+    public void testChildCouldBeLoaded() throws IOException {
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         assertTrue(mgr.childCouldBeLoaded(PROJECT_NAME));
         assertFalse(mgr.childCouldBeLoaded(PROJECT_NAME2));
         assertFalse(mgr.childCouldBeLoaded(PROJECT_NAME2));
@@ -116,12 +127,7 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
     }
 
     public void testListChildNames() throws IOException {
-        final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                                   new File(getFrameworkProjectsBase()),
-                                                                   getFrameworkInstance(),
-                                                                   FrameworkFactory.createNodesFactory(
-                                                                           getFrameworkInstance().getFilesystemFramework())
-        );
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         assertTrue(mgr.listChildNames().contains(PROJECT_NAME));
         assertFalse(mgr.listChildNames().contains(PROJECT_NAME2));
         final File projectDir2 = new File(mgr.getBaseDir(), PROJECT_NAME2);
@@ -132,12 +138,7 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
     }
 
     public void testLoadChild() throws IOException {
-        final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                                   new File(getFrameworkProjectsBase()),
-                                                                   getFrameworkInstance(),
-                                                                   FrameworkFactory.createNodesFactory(
-                                                                           getFrameworkInstance().getFilesystemFramework())
-        );
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         try {
             IFrameworkResource res = mgr.loadChild(PROJECT_NAME);
             assertNotNull(res);
@@ -172,12 +173,7 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
     }
 
     public void testCreateRemoveDepot() {
-        final IFrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                                    new File(getFrameworkProjectsBase()),
-                                                                    getFrameworkInstance(),
-                                                                    FrameworkFactory.createNodesFactory(
-                                                                            getFrameworkInstance().getFilesystemFramework())
-        );
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         final IRundeckProject d1 = mgr.createFrameworkProject("Depot1");
         assertEquals("exected two listed FrameworkProject after the addDepot call", 2, mgr.listFrameworkProjects().size());
         assertTrue("expected existsFrameworkProject to be true after it was added", mgr.existsFrameworkProject("Depot1"));
@@ -191,9 +187,7 @@ public class TestFrameworkProjectMgr extends AbstractBaseTest {
     }
 
     public void testAddRemoveFrameworkProject() {
-        final FrameworkProjectMgr mgr = FrameworkProjectMgr.create("projectMgr",
-                                                             new File(getFrameworkProjectsBase()),
-                                                             getFrameworkInstance(),FrameworkFactory.createNodesFactory(getFrameworkInstance().getFilesystemFramework()) );
+        final FrameworkProjectMgr mgr = createFrameworkProjectMgr();
         final FrameworkProject d1 = mgr.createFSFrameworkProject("Depot1");
         assertTrue("existsFrameworkProject did not return true for a type that should exist",
                    mgr.existsFrameworkProject("Depot1"));

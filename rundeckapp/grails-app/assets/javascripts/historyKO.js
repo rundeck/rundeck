@@ -1,23 +1,23 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //= require momentutil
 //= require knockout.min
 //= require knockout-foreachprop
 //= require knockout-mapping
-
-/*
- Copyright 2013 SimplifyOps Inc, <http://simplifyops.com>
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-     http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
- */
 
 
 function Report(data) {
@@ -34,6 +34,8 @@ function Report(data) {
     self.title = ko.observable();
     self.jobAverageDuration = ko.observable(0);
     self.duration = ko.observable(0);
+    self.timeNow = ko.observable(new Date());
+    window.setInterval(function() { self.timeNow(new Date()) }, 5000);
     //true if checked for bulk edit
     self.bulkEditSelected=ko.observable(false);
 
@@ -49,13 +51,64 @@ function Report(data) {
     self.endTimeSimple = ko.computed(function () {
         return MomentUtil.formatTimeSimple(self.dateCompleted());
     });
-    self.statusList=['running','succeed','succeeded','failed','cancel','aborted','retry','timedout','timeout','fail'];
+    self.timeToStart = ko.computed(function () {
+        self.timeNow();
+        return moment(self.dateStarted()).fromNow();
+    });
+    self.statusList = ['scheduled','running','succeed','succeeded','failed',
+        'cancel','aborted','retry','timedout','timeout','fail'];
 
     self.isCustomStatus = ko.computed(function () {
         return self.statusList.indexOf(self.status()) < 0 ;
     });
     self.customStatusString = ko.computed(function () {
         return self.execution()?self.execution().status():status();
+    });
+    self.isRetry = ko.computed(function () {
+        return self.execution() && self.execution().retry && self.execution().retry();
+    });
+    self.hasRetryExec = ko.computed(function () {
+        return self.execution() && self.execution().retryExecutionId && self.execution().retryExecutionId();
+    });
+    self.wasTimedOut = ko.computed(function () {
+        return self.execution() && self.execution().timedOut && self.execution().timedOut();
+    });
+    self.css = ko.computed(function () {
+        if (self.status() == 'scheduled') {
+            return 'scheduled';
+        }
+        if (self.status() == 'succeed' || self.status() == 'succeeded') {
+            return 'succeeded';
+        }
+        if (self.status() == 'fail' || self.status() == 'failed') {
+            return 'failed';
+        }
+        if (self.status() == 'cancel' || self.status() == 'aborted') {
+            return 'aborted';
+        }
+        if (self.status() == 'running') {
+            return 'running';
+        }
+        if (self.status() == 'timedout') {
+            return 'timedout';
+        }
+        if (self.status() == 'retry') {
+            return 'failed-with-retry';
+        }
+        return 'other';
+    });
+    self.executionState = ko.computed(function () {
+        var css = self.css();
+        var exec = self.execution();
+
+        if (self.hasRetryExec()) {
+            return 'FAILED-WITH-RETRY';
+        }
+        if (self.wasTimedOut()) {
+            return 'TIMEDOUT';
+        }
+
+        return css.toUpperCase();
     });
     self.isJob = ko.computed(function () {
         var id = self.jobId();
@@ -114,6 +167,12 @@ function Report(data) {
         }
         }
     });
+
+    self.textJobRef = function (schedId) {
+        if(self.jobId() != schedId){
+            return '(Referenced)'
+        }
+    };
     ko.mapping.fromJS(data, {}, self);
 }
 function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {

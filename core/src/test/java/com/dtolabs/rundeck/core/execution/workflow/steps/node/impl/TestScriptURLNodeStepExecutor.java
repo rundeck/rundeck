@@ -1,17 +1,17 @@
 /*
- * Copyright 2012 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -25,13 +25,15 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest;
@@ -85,45 +87,29 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         Test
     }
 
-    public static class testFileCopier implements FileCopier,DestinationFileCopier {
+    public static class testFileCopier implements FileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;
         INodeEntry testNode;
         boolean throwException;
 
-        public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyFileStream(
+                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testInput = input;
             if (throwException) {
                 throw new FileCopierException("copyFileStream test",TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyFileStream(
-                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyFileStream(context, input, node);
 
             return destination;
         }
 
         File testFile;
-
-        public String copyFile(ExecutionContext context, File file, INodeEntry node) throws FileCopierException {
-            testContext = context;
-            testNode = node;
-            testFile = file;
-            if (throwException) {
-                throw new FileCopierException("copyFile test", TestReason.Test);
-            }
-            return testResult;
-        }
 
         @Override
         public String copyFile(
@@ -134,14 +120,22 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         )
                 throws FileCopierException
         {
-            testResult = copyFile(context, file, node);
+            testContext = context;
+            testNode = node;
+            testFile = file;
+            if (throwException) {
+                throw new FileCopierException("copyFile test", TestReason.Test);
+            }
             return destination;
         }
 
         String testScript;
 
-        public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyScriptContent(
+                final ExecutionContext context, final String script, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testScript = script;
@@ -149,17 +143,9 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
             if (throwException) {
                 throw new FileCopierException("copyScriptContent test", TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyScriptContent(
-                final ExecutionContext context, final String script, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyScriptContent(context, script, node);
             return destination;
         }
+
     }
 
     public static class multiTestNodeExecutor implements NodeExecutor {
@@ -581,45 +567,58 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
     }
 
     public void testExpandUrlString() throws Exception {
-        final Map<String, Map<String, String>> stringMapMap = new HashMap<String, Map<String, String>>();
+        final WFSharedContext stringMapMap = new WFSharedContext();
         HashMap<String, String> nodeData = new HashMap<String, String>();
         nodeData.put("name", "node/name");
 
         HashMap<String, String> data = new HashMap<String, String>();
         data.put("value", "some value ? for things & stuff");
 
-        t:{//no expansion
             String value = null;
             try {
                 value = ScriptURLNodeStepExecutor.expandUrlString(
                     "http://example.com/path/${node.name}?query=${data.value}",
-                    stringMapMap);
+                    stringMapMap,
+                    "anodename");
                 fail("should not succeed");
             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                 assertEquals("${node.name}", e.getReferenceName());
             }
         }
-        t:
-        {//path expansion
-            stringMapMap.put("node", nodeData);
+
+    public void testExpandUrlString2() throws Exception {
+        final WFSharedContext stringMapMap = new WFSharedContext();
+        HashMap<String, String> nodeData = new HashMap<String, String>();
+        nodeData.put("name", "node/name");
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("value", "some value ? for things & stuff");//path expansion
+        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
             String value = null;
             try {
                 value = ScriptURLNodeStepExecutor.expandUrlString(
                     "http://example.com/path/${node.name}?query=${data.value}",
-                    stringMapMap);
+                    stringMapMap,
+                    "anodename");
                 fail("should not succeed");
             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                 assertEquals("${data.value}", e.getReferenceName());
             }
         }
-        t:
-        {//dataexpansion
-            stringMapMap.put("node", nodeData);
-            stringMapMap.put("data", data);
+
+    public void testExpandUrlString3() throws Exception {
+        final WFSharedContext stringMapMap = new WFSharedContext();
+        HashMap<String, String> nodeData = new HashMap<String, String>();
+        nodeData.put("name", "node/name");
+
+        HashMap<String, String> data = new HashMap<String, String>();
+        data.put("value", "some value ? for things & stuff");//dataexpansion
+        stringMapMap.merge(ContextView.node("anodename"), new BaseDataContext("node", nodeData));
+        stringMapMap.merge(ContextView.global(), new BaseDataContext("data", data));
             String value = ScriptURLNodeStepExecutor.expandUrlString(
                 "http://example.com/path/${node.name}?query=${data.value}",
-                stringMapMap);
+                stringMapMap,
+                "anodename");
             assertEquals("http://example.com/path/node%2Fname?query=some%20value%20%3F%20for%20things%20%26%20stuff", value);
-        }
     }
 }

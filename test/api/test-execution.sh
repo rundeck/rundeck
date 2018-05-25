@@ -88,6 +88,10 @@ assert_json_not_null  ".user" $DIR/curl.out
 echo "OK"
 
 
+api_waitfor_execution $execid || {
+  errorMsg "Failed to wait for execution $execid to finish"
+  exit 2
+}
 
 
 #rm $DIR/curl.out

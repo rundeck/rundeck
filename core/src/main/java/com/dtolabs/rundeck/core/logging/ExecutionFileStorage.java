@@ -44,6 +44,26 @@ public interface ExecutionFileStorage {
             ExecutionFileStorageException;
 
     /**
+     * Stores the incomplete snapshot file of the given file type, read from the given stream
+     *
+     * @param filetype     filetype or extension of the file to store
+     * @param stream       the input stream
+     * @param length       the file length
+     * @param lastModified the file modification time
+     *
+     * @return true if successful
+     *
+     * @throws java.io.IOException                                            if an IO error occurs
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
+     */
+    default boolean partialStore(String filetype, InputStream stream, long length, Date lastModified)
+            throws IOException,
+            ExecutionFileStorageException
+    {
+        throw new UnsupportedOperationException("partialStore is not implemented");
+    }
+
+    /**
      * Write a file of the given file type to the given stream
      *
      * @param filetype key to identify stored file
@@ -55,4 +75,21 @@ public interface ExecutionFileStorage {
      * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
      */
     boolean retrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException;
+
+    /**
+     * Write the incomplete snapshot of the file of the given file type to the given stream
+     *
+     * @param filetype key to identify stored file
+     * @param stream   the output stream
+     *
+     * @return true if successful
+     *
+     * @throws IOException                                                    if an IO error occurs
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
+     */
+    default boolean partialRetrieve(String filetype, OutputStream stream)
+            throws IOException, ExecutionFileStorageException
+    {
+        throw new UnsupportedOperationException("partialRetrieve is not implemented");
+    }
 }

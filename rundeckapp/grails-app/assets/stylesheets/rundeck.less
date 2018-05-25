@@ -2,7 +2,7 @@
 *= require_self
 *= require rundeck1
 */
-  @import "bootswatch";
+  @import "markdeep";
   @import "nav-links";
 
   @popover-wide-max-width: 500px;
@@ -82,11 +82,11 @@
     .glyphicon();
     .glyphicon-chevron-down();
   }
-  .auto-caret{
+  .auto-caret, .accordion-toggle.collapsed .auto-caret{
     .glyphicon();
     .glyphicon-chevron-right();
   }
-  .auto-caret-container{
+  .auto-caret-container, .accordion-toggle{
     .auto-caret, .auto-caret-left {
       .glyphicon();
       .glyphicon-chevron-down();
@@ -178,6 +178,9 @@
     &[data-execstate=RUNNING], .execstate[data-execstate=RUNNING_HANDLER] {
       color: darken(@brand-info, 10%);
     }
+    &[data-execstate=SCHEDULED] {
+      color: darken(@brand-info, 20%);
+    }
     &[data-execstate=RUNNING_HANDLER] {
       border-bottom: 2px dotted orange;
     }
@@ -230,6 +233,11 @@
         content: 'OK';
       }
 
+    &[data-execstate=OTHER][data-statusstring=incomplete]:after {
+      content: 'Incomplete';
+      color: orange;
+    }
+
       &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
         content: 'Partial';
       }
@@ -264,6 +272,9 @@
           content: 'Succeeded';
           color: @brand-success;
         }
+      }
+      &[data-execstate=SCHEDULED]:after {
+        content: 'Scheduled';
       }
   }
 
@@ -482,7 +493,11 @@
   &.textbtn-on-hover:hover,
   &.textbtn-on-hover:focus,
   &.textbtn-on-hover:active,
-  &.textbtn-on-hover.active
+  &.textbtn-on-hover.active,
+  &.textbtn-deemphasize:hover,
+  &.textbtn-deemphasize:focus,
+  &.textbtn-deemphasize:active,
+  &.textbtn-deemphasize.active
    {
     color: darken(@color, 8%);
     background-color: @background-higlight;
@@ -523,6 +538,9 @@
   &.textbtn-on-hover{
     .textbtn-on-hover();
   }
+  &.textbtn-deemphasize {
+    color: lighten(@gray, 30%);
+  }
 
 }
 .textbtn-default {
@@ -554,6 +572,21 @@
 .textbtn-info {
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
+
+
+// muted button variant
+.btn-muted {
+  .button-variant(@text-muted; transparent; lighten(@text-muted, 20%));
+}
+// link version
+.btn-link.btn-muted {
+
+  color: @text-muted;
+  font-weight: normal;
+  border-radius: 0;
+  border: 1px solid transparent;
+}
+
 
 //represent textual query
 
@@ -757,6 +790,14 @@ section{
         .glyphicon-asterisk();
       }
     }
+    &[data-execstate=OTHER][data-statusstring=incomplete] {
+      color: orange;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-exclamation-sign();
+      }
+    }
     &.fail, &[data-execstate=FAILED] {
       color: @brand-danger;
 
@@ -805,6 +846,14 @@ section{
       &.icon {
         .glyphicon();
         .glyphicon-repeat();
+      }
+    }
+    &.scheduled, &[data-execstate=SCHEDULED] {
+      color: @brand-info;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-time();
       }
     }
   }
@@ -861,6 +910,10 @@ section{
       margin-bottom:0;
     }
   }
+
+.panel-body.panel-content-embed {
+  padding: 0;
+}
 
 
   //padding between sequential buttons in a form group
@@ -1031,7 +1084,7 @@ section{
     td.node.empty {
       color: #eee;
     }
-    tr.node-new td{
+    tr.node-new > td{
       border-top: 2px solid white;
     }
     td.node{
@@ -1137,6 +1190,11 @@ section{
       padding: 1px 3px;
       color: black;
     }
+    &.no-wrap {
+      td.data {
+        white-space: pre;
+      }
+    }
     td.time{
       padding: 0 3px;
       background-color: @gray-lighter;
@@ -1161,8 +1219,11 @@ section{
     }
 
 
-    td.data.log_warn, td.data.log_error {
+    td.data.log_error {
       color: #800;
+    }
+    td.data.log_warn {
+      color: #a80;
     }
 
     table.execoutput.collapse_stepnum {
@@ -1192,6 +1253,9 @@ section{
   }
   .log_line{
     white-space: pre-wrap;
+    &.no-wrap {
+      white-space: pre;
+    }
     font-family: "Lucida Console", courier, monospace;
     color: black;
     &.level_verbose, &.level_debug {
@@ -1202,6 +1266,17 @@ section{
     }
   }
 
+table.table-data-embed {
+  font-size: @font-size-base;
+  white-space: normal;
+  &.invert {
+    background-color: @well-bg;
+    border: 1px solid white;
+    td, th {
+      border: 1px solid white;
+    }
+  }
+}
   .stepident, .stepnum {
 //    color: @brand-light;
   }
@@ -1216,7 +1291,7 @@ section{
   }
 
   //workflow editor, option editor, autohilite:
-  span.autohilite:hover {
+span.autohilite:hover, btn.autohilite:hover {
     background: lighten(@brand-info, 40%);
   }
 
@@ -1246,6 +1321,9 @@ section{
 //option values in code sections
 .optvalue{
   color: @text-muted;
+  &.optextra {
+    border-bottom: 1px dashed @text-muted;
+  }
 }
 .optkey{
   color: @brand-primary;
@@ -1266,6 +1344,11 @@ section{
   }
   .table-footer{
     background: @panel-footer-bg;
+  }
+  th.table-header{
+    .text-header();
+    .text-center();
+    .text-muted();
   }
 
 
@@ -1300,6 +1383,7 @@ section{
     }
   }
 }
+
 .node_entry{
   .nodeident, .nodedesc, .nodetags, .username, .hostname{
     white-space: nowrap;
@@ -1361,7 +1445,7 @@ input.placeholder{
 .table.events-table{
   table-layout: fixed;
   td.eventargs{
-    width: 40%;
+    width: auto;
     overflow:auto;
     text-overflow: ellipsis;
   }
@@ -1369,10 +1453,10 @@ input.placeholder{
     width: 24px;
   }
   td.eventtitle{
-    width: 20%;
+    width: auto;
   }
   td.eventtitle.adhoc{
-    width: 60%;
+    width: auto;
   }
   td.date{
     width: 20%;
@@ -1388,7 +1472,7 @@ input.placeholder{
   &.events-table-embed{
     tr.adhoc{
       td.eventtitle{
-        width: 60%;
+        width: auto;
       }
       td.eventargs{
         width:0%;
@@ -1413,7 +1497,24 @@ pre.filtererror{
   color: @brand-info;
   padding:0;
 }
+td {
 
+  &.ellipsis {
+    position: relative;
+  }
+  &.ellipsis:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+  &.ellipsis span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 .overflowx{
   text-overflow: ellipsis;
   overflow-x: auto;
@@ -1445,7 +1546,7 @@ pre.filtererror{
         background-image: url("icon-small-script.png");
       }
 
-      &.scriptfile {
+      &.scriptfile,&.scripturl {
         background-image: url("icon-small-scriptfile.png");
       }
 
@@ -1595,7 +1696,7 @@ pre.filtererror{
   white-space: nowrap;
   .version-icon{
     .badge();
-    background-color: #eee;
+    background-color: transparent;
     font-weight: normal;
   }
 }
@@ -1612,6 +1713,9 @@ pre.filtererror{
   &:after{
     content:'" ';
   }
+}
+.rundeck-version-date{
+  font-style: italic;
 }
 
 /////
@@ -1667,4 +1771,95 @@ pre.filtererror{
 // Info appears as blue-green
 .badge-info {
   .badge-variant(@brand-info,@badge-color);
+}
+
+//alert in jumbotron style
+.alert-welcome{
+  .alert-variant(@jumbotron-bg; @jumbotron-bg; @text-color);
+}
+
+//link variant
+.link-bare{
+  text-decoration: none;
+}
+
+//pseudo table layout
+.grid {
+  display: table;
+  width: 100%;
+  .grid-row {
+    display: table-row;
+    .grid-cell {
+      padding: @table-cell-padding;
+      display: table-cell;
+      &.grid-front{
+        width: 30px;
+      }
+      &.grid-rest{
+        width: 100%;
+      }
+    }
+  }
+}
+
+//links with text-color style
+
+a {
+  &.text-primary:hover,
+  &.text-success:hover,
+  &.text-danger:hover,
+  &.text-warning:hover,
+  &.text-info:hover {
+    color: @link-hover-color;
+  }
+}
+
+.autohide {
+  visibility: hidden;
+}
+
+.autoshow:hover .autohide {
+  visibility: visible;
+}
+
+.autocomplete-suggestions { border: 1px solid #999; background: #FFF; overflow: auto; }
+.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
+.autocomplete-selected { background: #F0F0F0; }
+.autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
+.autocomplete-group { padding: 2px 5px; }
+.autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+
+//other buttons
+
+// hollow button variant
+.btn-info-hollow {
+  .button-variant(@brand-info ; transparent; @btn-info-border);
+}
+
+@keyframes pulse {
+  50% {
+    background-color: #3399FF;
+    border-color: #3399FF;
+  }
+}
+
+@keyframes info_pulse {
+  50% {
+    background-color: #33FF99;
+    border-color: #33FF99;
+  }
+}
+
+.flash_undo {
+  animation: pulse .75s ease 1 normal;
+}
+
+.flash_info {
+  animation: pulse 1.5s ease 1 normal;
+  //animation-iteration-count: 2;
+}
+
+//gray alert variant
+.alert-default {
+  .alert-variant(@well-bg; @well-bg; @brand-primary);
 }

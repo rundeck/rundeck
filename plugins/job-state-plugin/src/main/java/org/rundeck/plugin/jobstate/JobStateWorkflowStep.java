@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.jobstate;
 
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState;
@@ -47,6 +63,10 @@ public class JobStateWorkflowStep implements StepPlugin {
     public static final String EXEC_STATE_SUCCEEDED = "Succeeded";
     public static final String EXEC_STATE_FAILED_WITH_RETRY = "Failed-with-retry";
     public static final String PROVIDER_NAME = "job-state-conditional";
+
+    @PluginProperty(title = "Job Project",
+            description = "The project name (needed only if is an external project).")
+    String jobProject;
 
     @PluginProperty(title = "Job Name",
                     description = "Group and Name for the Job in the form \"group/name\".")
@@ -113,11 +133,15 @@ public class JobStateWorkflowStep implements StepPlugin {
         final JobState jobState;
         final JobReference jobReference;
         try {
+            String project = context.getFrameworkProject();
+            if(null != jobProject){
+                project = jobProject;
+            }
 
             if (null != jobUUID) {
-                jobReference = jobService.jobForID(jobUUID, context.getFrameworkProject());
+                jobReference = jobService.jobForID(jobUUID, project);
             } else {
-                jobReference = jobService.jobForName(jobName, context.getFrameworkProject());
+                jobReference = jobService.jobForName(jobName, project);
             }
             jobState = jobService.getJobState(jobReference);
         } catch (JobNotFound jobNotFound) {
@@ -149,10 +173,7 @@ public class JobStateWorkflowStep implements StepPlugin {
             throws StepException
     {
         if(result!=equality) {
-            //for now fail
-//            String message = "Condition not met: " + stringBuilder;
-//            throw new StepException(message, Failures.ConditionNotMet);
-            context.getLogger().log(0, message);
+            context.getLogger().log(halt && fail ? 0 : 1, message);
             haltConditionally(context);
         }else{
             context.getLogger().log(2, message);

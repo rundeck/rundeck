@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%--
   Created by IntelliJ IDEA.
   User: greg
@@ -20,7 +36,7 @@
     <g:else>
         <g:embedJSON data="${[projectNames:projectNames[0..49],projectNamesTotal:projectNames.size()]}" id="projectNamesData"/>
     </g:else>
-    <g:embedJSON data="${[loaded:true,execCount:execCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
+    <g:embedJSON data="${[loaded:true,execCount:execCount,totalFailedCount:totalFailedCount,recentUsers:recentUsers,recentProjects:recentProjects]}" id="statsData"/>
     <g:embedJSON data="${[
             pagingInitialMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingInitialMax?:15,
             pagingRepeatMax:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingRepeatMax?:50,
@@ -41,6 +57,21 @@
 </div>
 <div data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row row-space">
+
+        <g:if test="${isFirstRun}">
+            <div class="col-sm-12">
+                <div class="alert alert-dismissable alert-welcome">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <h1><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h1>
+                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
+                    <span class="text-small text-muted">
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
+                    </span>
+                </div>
+            </div>
+        </g:if>
 
         <div class="col-sm-4">
             <span class="h3 text-muted">
@@ -70,7 +101,16 @@
 
                     <g:message code="page.home.duration.in.the.last.day" />
 
+
+                <span class="summary-count"
+                      data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-muted': totalFailedCount()<1 }">
+
+                    <span data-bind="messageTemplate: totalFailedCount">
+                        <g:message code="page.home.project.executions.0.failed.parenthetical" />
+                    </span>
                 </span>
+
+            </span>
                 <div data-bind="if: recentProjectsCount()>1">
 
                     <g:message code="in" />
@@ -107,7 +147,7 @@
         </auth:resourceAllowed>
     </div>
 </div>
-<div data-bind="if: projectCount()<1 && loadedProjectNames()">
+<g:if test="${projectNames.size()<1}">
     <div class="row row-space">
         <div class="col-sm-12">
             <auth:resourceAllowed action="create" kind="project" context="application" has="false">
@@ -123,8 +163,8 @@
             </auth:resourceAllowed>
             <auth:resourceAllowed action="create" kind="project" context="application" has="true">
                 <div class="jumbotron">
-                    <h1><g:message code="page.home.welcome.to.app" args="${[g.appTitle()]}"/></h1>
-
+                    <h2><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h2>
+                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
                     <p>
                         <g:message code="page.home.get.started.message" />
                     </p>
@@ -134,11 +174,16 @@
                             <b class="glyphicon glyphicon-plus"></b>
                         </g:link>
                     </p>
+                    <span class="text-small text-muted">
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
+                    </span>
                 </div>
             </auth:resourceAllowed>
         </div>
     </div>
-</div>
+</g:if>
 
 <div class="row row-space">
     <div class="col-sm-12">
@@ -184,7 +229,12 @@
                                 data-bind="urlPathParam: project"
                                class="h3">
                                 <i class="glyphicon glyphicon-tasks"></i>
-                                <span data-bind="text: project"></span>
+                                <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
+                                    <span data-bind="text: $root.projectForName(project).label"></span>
+                                </span>
+                                <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
+                                    <span data-bind="text: project"></span>
+                                </span>
                             </a>
 
                             <span data-bind="if: $root.projectForName(project)">
@@ -209,8 +259,21 @@
                                 <span data-bind="messageTemplate: $root.projectForName(project).execCount(), messageTemplatePluralize: true">
                                     <g:message code="Execution" />|<g:message code="Execution.plural" />
                                 </span>
-                                <g:message code="page.home.duration.in.the.last.day" />
-                            </a>
+                                <g:message code="page.home.duration.in.the.last.day" /></a>
+
+                                <span data-bind="if: $root.projectForName(project).failedCount()>0">
+                                    <a data-bind="urlPathParam: project "
+                                       class="text-warning"
+                                       href="${g.createLink(
+                                               controller: "reports",
+                                               action: "index",
+                                               params: [project: '<$>', statFilter: 'fail']
+                                       )}">
+                                        <span data-bind="messageTemplate: $root.projectForName(project).failedCount()">
+                                            <g:message code="page.home.project.executions.0.failed.parenthetical"/>
+                                        </span>
+                                    </a>
+                                </span>
                             <div>
                                 <div data-bind="if: $root.projectForName(project).userCount()>0">
                                     <g:message code="by" />
@@ -241,7 +304,7 @@
                                         <g:img file="spinner-gray.gif" width="24px" height="24px"/>
                                     </span>
                                     <span data-bind="if: $root.projectForName(project).auth().admin">
-                                        <a href="${g.createLink(controller: "menu", action: "admin", params: [project: '<$>'])}"
+                                        <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                                             data-bind="urlPathParam: project"
                                            class="btn btn-default btn-sm">
                                             <g:message code="gui.menu.Admin"/>
@@ -281,14 +344,14 @@
                     </div>
 
                     <div data-bind="if: $root.projectForName(project)">
-                        <div class="row row-space" data-bind="if: $root.projectForName(project).readme && ($root.projectForName(project).readme().readmeHTML || $root.projectForName(project).readme().motdHTML)">
+                        <div class="row row-space" data-bind="if: $root.projectForName(project).showMessage() ">
                             <div class="col-sm-12">
-                                <div data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                                <div data-bind="if: $root.projectForName(project).showMotd() ">
                                     <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
                                         <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
                                     </span>
                                 </div>
-                                <div data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                                <div data-bind="if:  $root.projectForName(project).showReadme() ">
                                     <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
                                         <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
                                     </span>

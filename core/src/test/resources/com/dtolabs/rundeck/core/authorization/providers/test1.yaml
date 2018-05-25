@@ -11,7 +11,7 @@ for: # each entry in for: checks a specific type of resource
       allow: [read] #this will allow workflow_read only
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       deny: [command_exec]  #allow/deny explicitly
 by:
     group: ['qa_group','dev_group']
@@ -29,10 +29,10 @@ for: # each entry in for: checks a specific type of resource
       allow: ['*'] #this will allow workflow_read only
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       allow: [command_exec]  #allow/deny explicitly
     - contains: # contains indicates attribute value is a member of a set
-        tag: qa # tag set membership
+        tags: qa # tag set membership
       allow: ['*']  #allow/deny explicitly
 by:
     group: 'prod_group'
@@ -47,10 +47,10 @@ for:
       allow: [read,update,create,delete] #allow/deny indicated explicitly
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: dev # tag set membership
+        tags: dev # tag set membership
       allow: [run,read]  #allow/deny explicitly
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       deny: ['*']  #allow/deny explicitly
 by:
     group: 'dev_.*'
@@ -61,7 +61,7 @@ description: single user match
 for:
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       deny: ['*']  #allow/deny explicitly
 by:
     username: 'dev1'
@@ -72,7 +72,7 @@ description: multi user match
 for:
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       deny: ['*']  #allow/deny explicitly
 by:
     username: ['dev1','dev2']
@@ -83,7 +83,7 @@ description: regex user match
 for:
   node:
     - contains: # contains indicates attribute value is a member of a set
-        tag: production # tag set membership
+        tags: production # tag set membership
       deny: ['*']  #allow/deny explicitly
 by:
     username: ['dev[ABC]']

@@ -1,6 +1,5 @@
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 %{--
-  - Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+  - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,12 +13,16 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
-<g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_READ])}"/>
+<g:set var="authView" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW])}"/>
+<g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ])}"/>
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
 <g:set var="authEnableDisableSchedule" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_SCHEDULE])}"/>
 <g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>
 <g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
+<g:set var="authOtherProject" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project, others: true)}"/>
 <g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
 <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
         context: 'application',
@@ -28,7 +31,9 @@
         any: true,
         name: scheduledExecution.project
 )}"/>
+<g:set var="renderedActions" value="${0}"/>
 <g:if test="${authUpdate}">
+    %{renderedActions++}%
     <li>
         <g:link controller="scheduledExecution"
                 title="${g.message(code:'scheduledExecution.action.edit.button.tooltip')}"
@@ -41,6 +46,7 @@
     </li>
 </g:if>
 <g:if test="${authRead && authJobCreate}">
+    %{renderedActions++}%
     <li>
         <g:link controller="scheduledExecution"
                 title="${g.message(code:'scheduledExecution.action.duplicate.button.tooltip')}"
@@ -53,12 +59,29 @@
         </g:link>
     </li>
 </g:if>
+<g:if test="${authRead && authOtherProject}">
+    %{renderedActions++}%
+    <li>
+        <g:link controller="scheduledExecution"
+                title="${g.message(code:'scheduledExecution.action.duplicate.button.tooltip')}"
+                action="copyanother"
+                data-job-id="${enc(attr: scheduledExecution.extid)}"
+                data-action="copy_other_project"
+                class="page_action">
+            <i class="glyphicon glyphicon-plus"></i>
+            <g:message
+                    code="scheduledExecution.action.duplicate.other.button.label"/>
+        </g:link>
+
+    </li>
+</g:if>
 
 <g:unless test="${hideJobDelete}">
     <g:if test="${authJobDelete && authDelete}">
         <g:if test="${authUpdate || authRead&&authJobCreate}">
             <li class="divider"></li>
         </g:if>
+        %{renderedActions++}%
         <li>
             <g:link
                 controller="scheduledExecution"
@@ -80,6 +103,7 @@
 </g:if>
 <g:if test="${authEnableDisableSchedule && scheduledExecution.scheduled}">
     <li>
+        %{renderedActions++}%
         <g:if test="${scheduledExecution.hasScheduleEnabled()}">
             <g:link controller="scheduledExecution"
                     action="flipScheduleEnabled"
@@ -108,6 +132,7 @@
 </g:if>
 
 <g:if test="${authEnableDisableExecution}">
+    %{renderedActions++}%
     <li>
         <g:if test="${scheduledExecution.hasExecutionEnabled()}">
             <g:link controller="scheduledExecution"
@@ -137,6 +162,7 @@
 </g:if>
 
 <g:if test="${authRead}">
+    %{renderedActions++}%
     <g:if test="${authJobDelete && authDelete || authUpdate || authJobCreate}">
         <li class="divider"></li>
     </g:if>
@@ -165,6 +191,7 @@
 </g:if>
 
 <g:if test="${authProjectExport && scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
+    %{renderedActions++}%
     <g:if test="${authRead}">
         <li class="divider"></li>
     </g:if>
@@ -215,6 +242,7 @@
 </g:if>
 
 <g:if test="${scmImportEnabled && scmImportStatus?.get(scheduledExecution.extid)}">
+    %{renderedActions++}%
 
 
     <g:set var="jobstatus" value="${scmImportStatus?.get(scheduledExecution.extid)}"/>
@@ -274,4 +302,9 @@
             />
         </li>
     </g:if>
+</g:if>
+<g:if test="${renderedActions<1}">
+    <li class="dropdown-header">
+        <g:message code="scheduledExecution.action.menu.none-available" />
+    </li>
 </g:if>

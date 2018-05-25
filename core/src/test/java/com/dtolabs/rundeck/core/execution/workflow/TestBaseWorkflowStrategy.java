@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -39,7 +38,6 @@ import com.dtolabs.rundeck.core.utils.NodeSet;
 import org.apache.tools.ant.BuildListener;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 
@@ -79,14 +77,14 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         FileUtils.deleteDir(projectdir);
     }
 
-    public static class testWorkflowStrategy extends BaseWorkflowStrategy {
+    public static class testWorkflowExecutor extends BaseWorkflowExecutor {
         private WorkflowExecutionResult result;
         private int execIndex = 0;
         private List<Object> results;
         private List<Map<String, Object>> inputs;
         private int executeWfItemCalled = 0;
 
-        public testWorkflowStrategy(Framework framework) {
+        public testWorkflowExecutor(Framework framework) {
             super(framework);
             inputs = new ArrayList<Map<String, Object>>();
             results = new ArrayList<Object>();
@@ -184,7 +182,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         //test success 1 item
         final NodeSet nodeset = new NodeSet();
 
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         strategy.getResults().addAll(returnResults);
 
@@ -209,7 +207,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                            ))
                     .stepNumber(1)
                     .build();
-            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
+            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing, 1, null);
             assertFalse(expectStepException);
         } catch (NodeFileParserException e) {
             e.printStackTrace();
@@ -493,7 +491,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
     public void testConvertFailures_wrappedDispatcherResult() throws Exception {
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         HashMap<Integer, StepExecutionResult> failedMap = new
                 HashMap<Integer, StepExecutionResult>();
@@ -516,7 +514,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         assertEquals(stepResult, node1);
     }
     public void testConvertFailures_wrappedDispatcherException_singleNode() throws Exception {
-        testWorkflowStrategy strategy = new testWorkflowStrategy(testFramework);
+        testWorkflowExecutor strategy = new testWorkflowExecutor(testFramework);
 
         HashMap<Integer, StepExecutionResult> failedMap = new
                 HashMap<Integer, StepExecutionResult>();
@@ -762,7 +760,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
     }
 
 
-    static class testWorkflowCmdItem implements NodeStepExecutionItem, HandlerExecutionItem {
+    static class testWorkflowCmdItem extends BaseExecutionItem implements NodeStepExecutionItem, HandlerExecutionItem {
         private String type;
         private String nodeStepType;
         int flag = -1;
@@ -792,7 +790,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
     }
 
-    static class testHandlerWorkflowCmdItem implements StepExecutionItem, HasFailureHandler {
+    static class testHandlerWorkflowCmdItem extends BaseExecutionItem implements StepExecutionItem, HasFailureHandler {
         private String type;
         private StepExecutionItem failureHandler;
         int flag = -1;
@@ -839,16 +837,17 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
     static class testListener implements ExecutionListenerOverride {
-        public boolean isTerse() {
-            return false;
-        }
 
-        public String getLogFormat() {
-            return null;
-        }
+        @Override public void ignoreErrors(boolean ignore){}
+
 
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
+        }
+
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+            System.err.println(level + ": " + message);
         }
 
         @Override
@@ -891,10 +890,16 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         public void beginFileCopyFile(ExecutionContext context, File input, INodeEntry node) {
         }
 
+        public void beginFileCopyFile(ExecutionContext context, List<File> input, INodeEntry node) {
+        }
+
         public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
         }
 
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
+        }
+
+        public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
         }
 
         public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {

@@ -70,7 +70,7 @@ wait_for(){
 start_rundeck(){
 	local FARGS=("$@")
 	local launcherJar=${FARGS[0]}
-	java -Xmx1024m -XX:MaxPermSize=256m -jar $launcherJar 
+	java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar
 	# ( bash -c 'sleep 30; echo done; sleep 600' > $outfile 2>&1 ) &
 	
 }
@@ -94,12 +94,33 @@ clean_dir(){
 
 	mkdir -p $DIR
 }
+setup_project(){
+	local FARGS=("$@")
+	local DIR=${FARGS[0]}
+	local PROJ=${FARGS[1]}
+	mkdir -p $DIR/projects/$PROJ/etc
+	cat >$DIR/projects/$PROJ/etc/project.properties<<END
+project.name=$PROJ
+project.nodeCache.delay=30
+project.nodeCache.enabled=true
+project.ssh-authentication=privateKey
+#project.ssh-keypath=
+resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
+resources.source.1.config.format=resourcexml
+resources.source.1.config.generateFileAutomatically=true
+resources.source.1.config.includeServerNode=true
+resources.source.1.config.requireFileExists=false
+resources.source.1.type=file
+service.FileCopier.default.provider=jsch-scp
+service.NodeExecutor.default.provider=jsch-ssh
+END
+}
 copy_jar(){
 	local FARGS=("$@")
 	local DIR=${FARGS[0]}
 	local -a VERS=( $( rd_get_version ) )
-	local JAR=rundeck-launcher-${VERS[0]}-${VERS[2]}.jar
-	local buildJar=$PWD/rundeck-launcher/launcher/build/libs/$JAR
+	local JAR=rundeck-${VERS[0]}-${VERS[2]}.war
+	local buildJar=$PWD/rundeckapp/build/libs/$JAR
 	test -f $buildJar || die "Jar file not found $buildJar"
 	mkdir -p $DIR
 	cp $buildJar $DIR/
@@ -124,6 +145,7 @@ run_ci_test(){
 	local DIR=$PWD/build/citest
 
 	clean_dir $DIR
+	setup_project $DIR 'test'
 
 	local launcherJar=$( copy_jar $DIR )
 
@@ -135,17 +157,17 @@ run_ci_test(){
 
 		# start rundeck
 
-		(java -Xmx1024m -XX:MaxPermSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
+		(java -Xmx1024m -XX:MaxMetaspaceSize=256m -jar $launcherJar > $DIR/rundeck.out 2>&1 ) &
 		RDPID=$!
 
 		trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR
 
 		echo "Rundeck process PID: $RDPID"
+
+		wait_for $DIR/rundeck.out 'Grails application running'
+
+		echo "Rundeck started."
 	fi
-
-	wait_for $DIR/rundeck.out 'Started SelectChannelConnector@'
-
-	echo "Rundeck started."
 
 	if [ $TESTS == "yes" ] ; then
 		echo "Start tests"

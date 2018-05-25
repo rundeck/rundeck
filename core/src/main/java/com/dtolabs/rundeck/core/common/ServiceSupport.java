@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -8,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcherService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
@@ -25,7 +42,6 @@ import java.util.HashMap;
  * Created by greg on 2/20/15.
  */
 public class ServiceSupport implements IFrameworkServices {
-    public static final String FRAMEWORK_PLUGINS_ENABLED = "framework.plugins.enabled";
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
 
@@ -42,10 +58,6 @@ public class ServiceSupport implements IFrameworkServices {
         setFramework(framework);
         //plugin manager service inited first.  any pluggable services will then be
         //able to try to load providers via the plugin manager
-        if(!framework.hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(framework.getProperty(FRAMEWORK_PLUGINS_ENABLED))){
-            //enable plugin service only if framework property does not disable them
-            PluginManagerService.getInstanceForFramework(getFramework());
-        }
         NodeStepExecutionService.getInstanceForFramework(getFramework());
         NodeExecutorService.getInstanceForFramework(getFramework());
         FileCopierService.getInstanceForFramework(getFramework());
@@ -95,6 +107,12 @@ public class ServiceSupport implements IFrameworkServices {
     public WorkflowExecutionService getWorkflowExecutionService() {
         return WorkflowExecutionService.getInstanceForFramework(getFramework());
     }
+
+    @Override
+    public WorkflowStrategyService getWorkflowStrategyService() {
+        return WorkflowStrategyService.getInstanceForFramework(getFramework());
+    }
+
     @Override
     public StepExecutionService getStepExecutionService() {
         return StepExecutionService.getInstanceForFramework(getFramework());

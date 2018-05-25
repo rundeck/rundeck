@@ -1,17 +1,17 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.dtolabs.rundeck.core.tools;
@@ -39,7 +39,7 @@ public abstract class AbstractBaseTest extends TestCase {
     //
     // junit exported java properties (e.g. from maven's project.properties)
     //
-    public static String RDECK_BASE = System.getProperty("rdeck.base","target/rdeck_base");
+    public static String RDECK_BASE = System.getProperty("rdeck.base","build/rdeck_base");
 
     //
     // derived modules and projects base
@@ -61,7 +61,7 @@ public abstract class AbstractBaseTest extends TestCase {
         return baseDir;
     }
 
-    private static String projectsBase;
+    private String projectsBase = PROJECTS_BASE;
 
     public String getFrameworkProjectsBase() {
         return projectsBase;
@@ -82,11 +82,10 @@ public abstract class AbstractBaseTest extends TestCase {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
         Properties properties = new Properties();
-//        properties.put("resources.source.1.type", "file");
-//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
-        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
-//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
-//        properties.put("resources.source.1.config.includeServerNode", "true");
+        properties.put("resources.source.1.type", "file");
+        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+        properties.put("resources.source.1.config.includeServerNode", "true");
 
         Set<String> prefixes=new HashSet<String>();
         prefixes.add("resources.source");
@@ -103,11 +102,10 @@ public abstract class AbstractBaseTest extends TestCase {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
         Properties properties = new Properties();
-//        properties.put("resources.source.1.type", "file");
-//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
-        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
-//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
-//        properties.put("resources.source.1.config.includeServerNode", "true");
+        properties.put("resources.source.1.type", "file");
+        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+        properties.put("resources.source.1.config.includeServerNode", "true");
         return properties;
     }
     protected String getExistingFilePath(String filename, String type)
@@ -139,18 +137,20 @@ public abstract class AbstractBaseTest extends TestCase {
     }
 
     public static Framework createTestFramework() {
+        if(!new File(RDECK_BASE).exists()) {
+            configureFramework();
+        }
         return FrameworkFactory.createForFilesystem(RDECK_BASE);
     }
 
-    protected void configureFramework()
+    protected static void configureFramework()
             throws BuildException {
 
         baseDir = RDECK_BASE;
-        projectsBase = PROJECTS_BASE;
         if(new File(baseDir).exists()){
             FileUtils.deleteDir(new File(baseDir));
         }
-        File projectsDir = new File(projectsBase);
+        File projectsDir = new File(PROJECTS_BASE);
         FileUtils.deleteDir(projectsDir);
         projectsDir.mkdirs();
         new File(baseDir,"etc").mkdirs();

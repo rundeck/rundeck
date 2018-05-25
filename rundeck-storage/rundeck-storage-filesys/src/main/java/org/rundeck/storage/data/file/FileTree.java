@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.storage.data.file;
 
 import org.rundeck.storage.api.*;
@@ -39,7 +55,7 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
     @Override
     public Resource<T> getResource(Path path) {
         try {
-            return loadResource(path);
+            return loadResource(path, true);
         } catch (IOException e) {
             throw StorageException.readException(path, "Failed to read resource: " + path + ": " + e.getMessage(), e);
         }
@@ -48,17 +64,23 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
     @Override
     public Resource<T> getPath(Path path) {
         try {
-            return loadResource(path);
+            return loadResource(path, false);
         } catch (IOException e) {
             throw StorageException.readException(path, "Failed to read resource: " + path + ": " + e.getMessage(), e);
         }
     }
 
-    private Resource<T> loadResource(Path path) throws IOException {
+    private Resource<T> loadResource(Path path, final boolean requireFile) throws IOException {
         synchronized (pathSynch(path)) {
             File datafile = filepathMapper.contentFileForPath(path);
             if (!datafile.exists()) {
                 throw StorageException.readException(path, "Path does not exist: " + path);
+            }
+            if (requireFile && datafile.isDirectory()) {
+                throw StorageException.readException(
+                    path,
+                    String.format("Failed to read resource at path: %s: is a directory", path)
+                );
             }
             boolean directory = datafile.isDirectory();
             if (!directory) {
@@ -141,8 +163,7 @@ public class FileTree<T extends ContentMeta> extends LockingTree<T> implements T
         HashSet<Resource<T>> files = new HashSet<Resource<T>>();
         try {
             for (File file1 : file.listFiles()) {
-
-                Resource<T> res = loadResource(filepathMapper.pathForContentFile(file1));
+                Resource<T> res = loadResource(filepathMapper.pathForContentFile(file1), false);
                 if (null == test || test.apply(res)) {
                     files.add(res);
                 }

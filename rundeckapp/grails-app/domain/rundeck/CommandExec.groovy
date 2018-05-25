@@ -1,13 +1,11 @@
-package rundeck
-
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *        http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +13,8 @@ package rundeck
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+package rundeck
 
 /*
 * CommandExec.java
@@ -42,6 +42,7 @@ public class CommandExec extends WorkflowStep  {
         argString type: 'text'
         scriptInterpreter type: 'text'
         fileExtension type: 'text'
+        pluginConfigData(type: 'text')
     }
     public String toString() {
         StringBuffer sb = new StringBuffer()
@@ -85,6 +86,7 @@ public class CommandExec extends WorkflowStep  {
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
         fileExtension(nullable: true, maxSize: 255)
+        pluginConfigData(nullable: true, blank: true)
     }
 
     public CommandExec createClone(){
@@ -130,6 +132,34 @@ public class CommandExec extends WorkflowStep  {
         if(description){
             map.description=description
         }
+        def config = getPluginConfig()
+        if (config) {
+            map.plugins = config
+        }
+        return map
+    }
+    /**
+    * Return map representation without content details
+     */
+    public Map toDescriptionMap(){
+        def map=[:]
+        if(adhocRemoteString){
+            map.exec='exec'
+        }else if(adhocLocalString){
+            map.script='script'
+        }else {
+            if(adhocFilepath==~/^(?i:https?|file):.*$/){
+                map.scripturl = 'scripturl'
+            }else{
+                map.scriptfile='scriptfile'
+            }
+        }
+        if(errorHandler){
+            map.errorhandler=errorHandler.toDescriptionMap()
+        }
+        if(description){
+            map.description=description
+        }
         return map
     }
 
@@ -161,6 +191,9 @@ public class CommandExec extends WorkflowStep  {
         ce.keepgoingOnSuccess=!!data.keepgoingOnSuccess
         ce.description=data.description?.toString()
         //nb: error handler is created inside Workflow.fromMap
+        if (data.plugins) {
+            ce.pluginConfig = data.plugins
+        }
         return ce
     }
 

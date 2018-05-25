@@ -5,7 +5,23 @@
 <!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
 <head>
-    <title><g:appTitle/> - Login</title>
+    <title>%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
+<g:appTitle/> - Login</title>
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,9 +30,8 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
-    <asset:stylesheet href="non_responsive.css"/>
     <!--[if lt IE 9]>
-    <g:javascript library="respond.min"/>
+    <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="prototype.min.js"/>
@@ -65,18 +80,35 @@
             </div>
             </g:if>
             <div class="form-group">
-                <label for="login">Username</label>
+                <label for="login"><g:message code="user.login.username.label"/></label>
                 <input type="text" name="j_username" id="login" class="form-control" autofocus="true"/>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password"><g:message code="user.login.password.label"/></label>
                 <input type="password" name="j_password" id="password" class="form-control"/>
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="submit" class="btn btn-primary"><g:message code="user.login.login.button"/></button>
             </div>
+
+            <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
+                <div class='form-group'>
+                    <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                </div>
+            </g:if>
+
+            <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
+            <g:if test="${footermessagehtml}">
+                <div class="row">
+                    <span class="col-sm-12">
+                        ${enc(sanitize:footermessagehtml)}
+                    </span>
+                </div>
+            </g:if>
+
+
         </form>
         </div>
         <g:if test="${flash.loginerror}">

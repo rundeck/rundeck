@@ -1,11 +1,11 @@
 %{--
-  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
   - You may obtain a copy of the License at
   -
-  -        http://www.apache.org/licenses/LICENSE-2.0
+  -     http://www.apache.org/licenses/LICENSE-2.0
   -
   - Unless required by applicable law or agreed to in writing, software
   - distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,31 +22,21 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:if test="${description}">
+
     <div class="row">
-    <div class="col-sm-12">
-        <g:if test="${showPluginIcon}">
-            <i class="rdicon icon-small plugin"></i>
-        </g:if>
-        <g:if test="${showNodeIcon}">
-            <i class="rdicon icon-small node"></i>
-        </g:if>
-        <span class=" text-info">
-            <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
-        </span>
-            <g:if test="${!hideDescription}">
-            <g:if test="${!fullDescription}">
+        <div class="col-sm-12">
 
-                <g:render template="/scheduledExecution/description"
-                          model="[description: description.description, textCss: 'small text-muted',
-                                  mode: 'hidden', rkey: g.rkey()]"/>
-            </g:if>
-                <g:else>
-                    <small class="text-muted"><g:enc>${description.description}</g:enc></small>
+            <g:render template="/framework/renderPluginDesc" model="${[
+                    serviceName    : serviceName,
+                    description    : description,
+                    showPluginIcon : showPluginIcon,
+                    showNodeIcon   : showNodeIcon,
+                    hideTitle      : hideTitle,
+                    hideDescription: hideDescription,
+                    fullDescription: fullDescription
+            ]}"/>
 
-                </g:else>
-            </g:if>
-
-    </div>
+        </div>
     </div>
 </g:if>
 <div class="row">
@@ -63,7 +53,7 @@
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
-                              model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
+                              model="${[service: serviceName, provider: description.name, messagePrefix:messagePrefix, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
                 </g:each>
             </g:if>
         </span>

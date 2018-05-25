@@ -1,11 +1,29 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.controllers
 
+import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
+import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
+import org.grails.web.servlet.mvc.GrailsWebRequest
+import org.grails.web.servlet.mvc.TokenResponseHandler
+import org.rundeck.util.Toposort
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
-import org.codehaus.groovy.grails.web.metaclass.InvalidResponseHandler
-import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
-import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.services.UiPluginService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -17,7 +35,7 @@ import java.util.zip.GZIPOutputStream
  * @since 2014-03-12
  */
 class ControllerBase {
-    def grailsApplication
+    UiPluginService uiPluginService
 
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
@@ -68,7 +86,7 @@ class ControllerBase {
     def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
         if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
                 && request.getHeader("Accept-Encoding").contains("gzip")){
-            response.setHeader("Content-Encoding","x-gzip")
+            response.setHeader("Content-Encoding","gzip")
             response.setHeader("Content-Type",contentType)
             def stream = new GZIPOutputStream(response.outputStream)
             stream.withWriter("UTF-8"){ it << data }
@@ -192,5 +210,36 @@ class ControllerBase {
      */
     protected def renderErrorFragment(Map model) {
         render(template: "/common/errorFragment",model:model)
+    }
+
+    /**
+     * Test for valid request token
+     * @return true if token is valid, false if error response has been sent
+     */
+    protected boolean requestHasValidToken() {
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+        }
+        if (!valid) {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        valid
+    }
+
+    /**
+     * Require the request to contain x-rundeck-ajax:true header, otherwise
+     * redirect with the given params
+     * @param params redirect params
+     * @return true if redirected
+     */
+    protected boolean requireAjax(Map params) {
+        boolean invalid = 'true' != request.getHeader('x-rundeck-ajax')
+        if (invalid) {
+            redirect(params)
+        }
+        invalid
     }
 }

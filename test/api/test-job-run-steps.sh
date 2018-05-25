@@ -165,7 +165,7 @@ fi
 #
 echo "TEST: execution ${execid} should succeed"
 
-rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
+api_waitfor_execution $execid || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
 # 

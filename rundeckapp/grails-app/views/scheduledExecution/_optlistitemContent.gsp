@@ -1,19 +1,18 @@
-<%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
 <%--
     _optlistitemContent.gsp
     
@@ -30,11 +29,11 @@
 
         <div id="optdel_${enc(attr:ukey)}" class="panel panel-danger collapse">
             <div class="panel-heading">
-                Delete this option
+                <g:message code="delete.this.option" />
             </div>
 
             <div class="panel-body">
-                Really delete option <g:enc>${option.name}</g:enc>?
+                <g:message code="really.delete.option.0" args="${[option.name]}"/>
             </div>
 
             <g:jsonToken id="reqtoken_del_${ukey}" url="${request.forwardURI}"/>
@@ -52,13 +51,44 @@
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
                   data-target="#optdel_${enc(attr:ukey)}"
-                  title="Delete this option.">
+                  title="${message(code:"delete.this.option")}">
                 <i class="glyphicon glyphicon-remove"></i></span>
             <span class="textbtn textbtn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
-                  title="Edit this option">
+                  title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
-                edit
+                <g:message code="edit" />
             </span>
+            <g:set var="canMoveUp" value="${optIndex!=0}"/>
+            <g:set var="canMoveDown" value="${optIndex<optCount-1}"/>
+            <g:if test="${canMoveUp}">
+                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                      title="${message(code:"move.up")}">
+                    <i class="glyphicon glyphicon-arrow-up"></i>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" >
+                    <i class="glyphicon glyphicon-arrow-up"></i>
+                </span>
+            </g:else>
+            <g:if test="${canMoveDown}">
+
+                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                      title="${message(code:"move.down")}">
+                    <i class="glyphicon glyphicon-arrow-down"></i>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" >
+                    <i class="glyphicon glyphicon-arrow-down"></i>
+                </span>
+            </g:else>
+            <g:if test="${canMoveUp || canMoveDown}">
+                <span class="dragHandle" title="${message(code:"drag.to.reorder")}"><g:icon name="resize-vertical"/></span>
+            </g:if>
+            <g:else>
+                <span class="textbtn textbtn-info disabled" ><g:icon name="resize-vertical"/></span>
+            </g:else>
         </span>
 
         <g:javascript>

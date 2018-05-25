@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.dtolabs.rundeck.core.resources;
@@ -259,17 +259,17 @@ class ScriptResourceUtil {
         //use script-copy attribute and replace datareferences
         if (null != scriptargs || null!=scriptargsarr) {
             if (interpreterArgsQuoted) {
-                final String newargs = null != scriptargs ? DataContextUtils.replaceDataReferences(
+                final String newargs = null != scriptargs ? DataContextUtils.replaceDataReferencesInString(
                         scriptargs,
                         newDataContext
-                ) : DataContextUtils.join(Arrays.asList(DataContextUtils.replaceDataReferences(
+                ) : DataContextUtils.join(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(
                         scriptargsarr,
                         newDataContext
                 )), " ");
                 shells.add(scriptfile.getAbsolutePath() + " " + newargs);
             } else {
                 shells.add(scriptfile.getAbsolutePath());
-                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(
+                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(
                         null!=scriptargsarr?scriptargsarr:scriptargs.split(" "),
                         newDataContext
                 )));
@@ -330,15 +330,15 @@ class ScriptResourceUtil {
         final ArrayList<String> list = new ArrayList<String>();
         list.add(scriptfile.getAbsolutePath());
         if (null != scriptargsarr && scriptargsarr.length > 0) {
-            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, newDataContext)));
+            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(scriptargsarr, newDataContext)));
         }else if (null != scriptargs && !"".equals(scriptargs)) {
-            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext)));
+            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(scriptargs.split(" "), newDataContext)));
         }
         final String[] args = list.toArray(new String[list.size()]);
 
         //create system environment variables from the data context
         final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(envContext);
-        final ArrayList<String> envlist = new ArrayList<String>();
+        final ArrayList<String> envlist = new ArrayList<>();
         for (final Map.Entry<String, String> entry : envMap.entrySet()) {
             envlist.add(entry.getKey() + "=" + entry.getValue());
         }

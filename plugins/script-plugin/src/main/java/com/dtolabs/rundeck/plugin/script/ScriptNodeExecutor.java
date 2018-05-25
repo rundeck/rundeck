@@ -1,6 +1,6 @@
 /*
- * Copyright 2011 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -149,6 +148,11 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
+        return executeCommand(executionContext, command, node, true);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
+                                             final INodeEntry node, boolean showError)  {
         File workingdir = null;
         String scriptargs;
         String dirstring;
@@ -233,6 +237,9 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             outthread.join();
             exec.getErrorStream().close();
             exec.getInputStream().close();
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             success = 0 == result;
             executionContext.getExecutionListener().log(3,
                                                         "[script-exec]: result code: " + result + ", success: "

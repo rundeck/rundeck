@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -24,18 +23,12 @@
 */
 package com.dtolabs.rundeck.plugins;
 
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
+
 /**
  * PluginLogger provides logging to execution plugins.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface PluginLogger {
-    /**
-     * Log a message at a given level
-     *
-     * @param level   the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
-     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
-     *                are.
-     */
-    public void log(final int level, final String message);
+public interface PluginLogger extends ExecutionLogger {
 }

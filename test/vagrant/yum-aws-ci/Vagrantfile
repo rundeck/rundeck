@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config|
 
     aws.keypair_name = ENV['AWS_KEYPAIR_NAME']#"build-ci"
 
-    aws.security_groups =  ENV['AWS_SG_NAME'] #"quicklaunch-1"
+    aws.security_groups =  [ENV['AWS_SG_NAME']] #"quicklaunch-1"
     aws.user_data = "#!/bin/bash\necho 'Defaults:ec2-user !requiretty' > /etc/sudoers.d/999-vagrant-cloud-init-requiretty && chmod 440 /etc/sudoers.d/999-vagrant-cloud-init-requiretty\nyum update -y\n"
     #aws.ami = "ami-a6e15bcf" #Centos 6.3 official
     aws.ami = "ami-05355a6c" #Amazon linux amazon/amzn-ami-pv-2013.03.1.x86_64-ebs

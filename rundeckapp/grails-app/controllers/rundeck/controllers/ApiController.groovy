@@ -1,14 +1,33 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.tokens.ListTokens
+import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
+import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
-import rundeck.User
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 /**
  * Contains utility actions for API access and responses
@@ -21,8 +40,13 @@ class ApiController extends ControllerBase{
     def userService
     def configurationService
 
+    static allowedMethods = [
+            apiTokenList         : ['GET'],
+            apiTokenCreate       : ['POST'],
+            apiTokenRemoveExpired: ['POST']
+    ]
     def invalid = {
-        return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
+        return apiService.renderErrorFormat(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
     }
     /**
      * Respond with a 400 error and information about new endpoint location
@@ -95,111 +119,6 @@ class ApiController extends ControllerBase{
             response.outputStream.close()
         }
     }
-    private renderToken(AuthToken oldtoken){
-        withFormat {
-            xml {
-                apiService.renderSuccessXml(request, response) {
-                    delegate.token(id: oldtoken.token, user: oldtoken.user.login)
-                }
-            }
-            json {
-                render(contentType: 'application/json') {
-                    delegate.id = oldtoken.token
-                    delegate.user = oldtoken.user.login
-                }
-
-            }
-        }
-    }
-    /*
-     * /api/11/tokens/$user?
-     */
-    def apiTokenList() {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)){
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_FORBIDDEN,
-                    code:'api.error.item.unauthorized',
-                    args:[AuthConstants.ACTION_ADMIN,'Rundeck','User account']
-            ])
-        }
-        if(request.method=='POST'){
-            //parse input json or xml
-            def tokenuser=params.user
-            if (!params.user) {
-                def errormsg="Format was not valid."
-                def parsed=apiService.parseJsonXmlWith(request,response,[
-                        json:{data->
-                            tokenuser=data.user
-                            if(!tokenuser) {
-                                errormsg += " json: expected 'user' property"
-                            }
-                        },
-                        xml:{xml->
-                            tokenuser=xml.'@user'.text()
-                            if (!tokenuser) {
-                                errormsg += " xml: expected 'user' attribute"
-                            }
-                        }
-                ])
-                if(!parsed){
-                    return
-                }
-                if (!tokenuser) {
-                    return apiService.renderErrorFormat(response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code: 'api.error.invalid.request',
-                            args: [errormsg]
-                    ])
-                }
-            }
-
-            //create token for a user
-            def User u = userService.findOrCreateUser(tokenuser)
-            def token = apiService.generateAuthToken(u)
-            response.status=HttpServletResponse.SC_CREATED
-            return renderToken(token)
-        }
-        def tokenlist
-        if (params.user) {
-            def user = User.findByLogin(params.user)
-            tokenlist = user ? AuthToken.findAllByUser(user) : []
-        } else {
-            tokenlist = AuthToken.list()
-        }
-
-        withFormat {
-            xml {
-                apiService.renderSuccessXml(request, response) {
-                    def attrs=[count: tokenlist.size()]
-                    if(params.user){
-                        attrs.user=params.user
-                    }else{
-                        attrs.allusers='true'
-                    }
-                    tokens(attrs) {
-                        tokenlist.each { AuthToken token ->
-                            delegate.token(id: token.token, user: token.user.login)
-                        }
-                    }
-                }
-            }
-            json {
-                render(contentType: 'application/json') {
-                    array {
-                        tokenlist.each { AuthToken token ->
-                            delegate.element(id: token.token, user: token.user.login)
-                        }
-                    }
-                }
-
-            }
-        }
-    }
     /**
      * /api/11/token/$token
      */
@@ -207,39 +126,214 @@ class ApiController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
+
+        if (!apiService.requireParameters(params, response, ['token'])) {
+            return
+        }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized',
-                    args: [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account']
-            ])
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (request.api_version < ApiVersions.V19 && !adminAuth) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
         }
-        if(!apiService.requireParametersFormat(params,response,['token'])){
+
+        //admin: search by token ID then token value
+        //user: search for token ID owned by user
+        AuthToken oldtoken = adminAuth ?
+                (apiService.findTokenId(params.token) ?: apiService.findUserTokenValue(params.token)) :
+                apiService.findUserTokenId(authContext.username, params.token)
+
+
+        if (!apiService.requireExistsFormat(response, oldtoken, ['Token', params.token])) {
             return
         }
 
-        AuthToken oldtoken = AuthToken.findByToken(params.token)
-        if (!apiService.requireExistsFormat(response,oldtoken,['Token',params.token])) {
-            return
-        }
-
-        switch (request.method){
+        switch (request.method) {
             case 'GET':
-                return renderToken(oldtoken)
+                return respond(new Token(oldtoken), [formats: ['xml', 'json']])
                 break;
             case 'DELETE':
-                def findtoken=params.token
-                def login=oldtoken.user.login
-                def oldAuthRoles = oldtoken.authRoles
-                oldtoken.delete(flush: true)
-                log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
+                apiService.removeToken(oldtoken)
                 return render(status: HttpServletResponse.SC_NO_CONTENT)
                 break;
         }
     }
 
+    /**
+     * GET /api/11/tokens/$user?
+     */
+    def apiTokenList() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (request.api_version < ApiVersions.V19 && !adminAuth) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
+        }
+
+        if (!adminAuth && params.user && params.user != authContext.username) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', params.user])
+        }
+        def tokenlist
+        if (params.user) {
+            tokenlist = apiService.findUserTokensCreator(params.user)
+        } else if (!adminAuth) {
+            tokenlist = apiService.findUserTokensCreator(authContext.username)
+        } else {
+            tokenlist = AuthToken.list()
+        }
+        def apiv19 = request.api_version >= ApiVersions.V19
+        def data = new ListTokens(params.user, !params.user, tokenlist.collect { new Token(it, apiv19) })
+
+        respond(data, [formats: ['xml', 'json']])
+    }
+
+    /**
+     * POST /api/11/tokens/$user?
+     * @return
+     */
+    def apiTokenCreate() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            //parse input json or xml
+        String tokenuser = params.user ?: authContext.username
+        def roles = null
+        def tokenDuration = null
+        def errors = []
+        boolean tokenRolesV19Enabled = request.api_version >= ApiVersions.V19
+
+        if (tokenRolesV19Enabled || request.getHeader("Content-Type")) {
+            def parsed = apiService.parseJsonXmlWith(request, response, [
+                    json: { data ->
+                        if (!params.user) {
+                            tokenuser = data.user
+                            if (!tokenuser) {
+                                errors << " json: expected 'user' property"
+                            }
+                        }
+                        if (tokenRolesV19Enabled) {
+                            roles = data.roles
+                            tokenDuration = data.duration
+                            if (!roles) {
+                                errors << " json: expected 'roles' property"
+                            }
+                        }
+                    },
+                    xml : { xml ->
+                        if (!params.user) {
+                            tokenuser = xml.'@user'.text()
+                            if (!tokenuser) {
+                                errors << " xml: expected 'user' attribute"
+                            }
+                        }
+                        if (tokenRolesV19Enabled) {
+                            roles = xml.'@roles'.text()
+                            tokenDuration = xml.'@duration'.text()
+                            if (!roles) {
+                                errors << " xml: expected 'roles' attribute"
+                            }
+                        }
+                    }
+            ]
+            )
+            if (!parsed) {
+                return
+            }
+            if (errors) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : ["Format was not valid." + errors.join(" ")]
+                ]
+                )
+            }
+        }
+        if (!tokenRolesV19Enabled) {
+            roles = 'api_token_group'
+            tokenDuration = null
+        }
+        Set<String> rolesSet=null
+        if (roles instanceof String) {
+            rolesSet = AuthToken.parseAuthRoles(roles)
+        } else if (roles instanceof Collection) {
+            rolesSet = new HashSet(roles)
+        }
+        if (rolesSet.size() == 1 && rolesSet.contains('*')) {
+            rolesSet = null
+        }
+        AuthToken token
+
+        Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
+        if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.invalid',
+                    args  : [tokenDuration, "duration", "Format was not valid"]
+            ]
+            )
+        }
+        try {
+            token = apiService.generateUserToken(
+                    authContext,
+                    tokenDurationSeconds ?: null,
+                    tokenuser,
+                    rolesSet
+            )
+        } catch (Exception e) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [e.message]
+            ]
+            )
+        }
+        response.status = HttpServletResponse.SC_CREATED
+        respond(new Token(token), [formats: ['xml', 'json']])
+    }
+
+    /**
+     * /api/19/tokens/$user?/removeExpired
+     */
+    def apiTokenRemoveExpired() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (!apiService.requireParameters(params, response, ['user'])) {
+            return
+        }
+        def user = params.user
+        def alltokens = user == '*'
+
+        if (!adminAuth && alltokens) {
+            return apiService.renderUnauthorized(
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'API Tokens for ', "All users"]
+            )
+        }
+        if (!adminAuth && user != authContext.username) {
+            return apiService.renderUnauthorized(
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'API Tokens for user: ', params.user]
+            )
+        }
+
+        def resultCount = alltokens ?
+                apiService.removeAllExpiredTokens() :
+                apiService.removeAllExpiredTokens(user)
+
+        respond(
+                new RemoveExpiredTokens(count: resultCount, message: "Removed $resultCount expired tokens"),
+                [formats: ['json', 'xml']]
+        )
+    }
     /**
      * /api/1/system/info: display stats and info about the server
      */
@@ -273,7 +367,7 @@ class ApiController extends ControllerBase{
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
         def metricsHealthcheckUrl = createLink(uri: '/metrics/healthcheck',absolute: true)
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -297,7 +391,7 @@ class ApiController extends ControllerBase{
                             build(grailsApplication.metadata['build.ident'])
                             node(nodeName)
                             base(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion(ApiRequestFilters.API_CURRENT_VERSION)
+                            apiversion(ApiVersions.API_CURRENT_VERSION)
                             serverUUID(sUUID)
                         }
                         executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
@@ -358,7 +452,7 @@ class ApiController extends ControllerBase{
                             build=(grailsApplication.metadata['build.ident'])
                             node=(nodeName)
                             base=(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion=(ApiRequestFilters.API_CURRENT_VERSION)
+                            apiversion=(ApiVersions.API_CURRENT_VERSION)
                             serverUUID=(sUUID)
                         }
                         executions={

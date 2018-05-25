@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
@@ -7,11 +23,12 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import grails.converters.JSON
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
@@ -48,48 +65,51 @@ class StorageController extends ControllerBase{
     ]
 
     private def pathUrl(path){
-        def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
+        def uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/incubator/storage/$path"
         if ("${path}".startsWith('keys/') || path.toString() == 'keys') {
-            uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
+            uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/storage/$path"
         }
         return createLink(absolute: true, uri: uriString)
     }
-    private def jsonRenderResource(builder, Resource res, dirlist=[]){
-        builder.with{
-            path = res.path.toString()
-            type = res.directory ? 'directory' : 'file'
-            if(!res.directory){
-                name = res.path.name
-            }
-            url = pathUrl(res.path)
-            if (!res.directory) {
-                def meta1 = res.contents.meta
-                if (meta1) {
-                    def masked = resourceContentsMasked(res)
-                    def bd = delegate
-                    def meta = [:]
-                    RES_META_RUNDECK_OUTPUT.each { k ->
-                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
-                            meta[k] = meta1[k]
-                        }
-                    }
-                    if (meta) {
-                        bd.meta = meta
-                    }
 
-                }
-            }
-            if(dirlist){
-                delegate.'resources' = array {
-                    def builder2 = delegate
-                    dirlist.each { diritem ->
-                        builder2.element {
-                            jsonRenderResource(delegate, diritem,[])
-                        }
+    private Map getMeta(Resource res){
+        def meta_ = [:]
+        if (!res.directory) {
+            def meta1 = res.contents.meta
+            if (meta1) {
+                def masked = resourceContentsMasked(res)
+                RES_META_RUNDECK_OUTPUT.each { k ->
+                    if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
+                        meta_[k] = meta1[k]
                     }
                 }
             }
         }
+
+        return meta_
+    }
+
+    private def jsonRenderResource(Resource res, dirlist=[]){
+        def json = [
+            path: res.path.toString(),
+            type: (res.directory ? 'directory' : 'file'),
+            name: !res.directory ? res.path.name : null,
+            url: pathUrl(res.path),
+            meta: this.getMeta(res) ]
+
+        if(dirlist){
+            json.resources = dirlist.collect { diritem ->
+
+                [
+                        path: diritem.path.toString(),
+                        type: (diritem.directory ? 'directory' : 'file'),
+                        name: !diritem.directory ? diritem.path.name : null,
+                        url: pathUrl(diritem.path),
+                        meta: this.getMeta(diritem)
+                ]
+            }
+        }
+        return json
     }
     private def xmlRenderResource(builder,Resource res,dirlist=[]){
         def map=[path: res.path.toString(),
@@ -125,13 +145,11 @@ class StorageController extends ControllerBase{
                                 Set<Resource<ResourceMeta>> dirlist) {
         withFormat {
             json {
-                render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource,dirlist)
-                }
+                render jsonRenderResource(resource,dirlist) as JSON
             }
             xml {
                 render {
-                    xmlRenderResource(delegate, resource, dirlist)
+                    this.xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
@@ -189,16 +207,14 @@ class StorageController extends ControllerBase{
             case 'json':
                 ///fallthrough json response by default
             default:
-                render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource)
-                }
+                render jsonRenderResource(resource) as JSON
         }
     }
 
     private Object renderError(String message) {
         def jsonResponseclosure= {
             render(contentType: "application/json") {
-                delegate.'error' = message
+                delegate.error message
             }
         }
         if(!(response.format in ['json','xml'])){
@@ -218,8 +234,8 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageAccess(StorageParams storageParams){
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         getResource(storageParams)
     }
@@ -227,8 +243,8 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageDownload(StorageParams storageParams){
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         getResource(storageParams,true)
     }
@@ -240,11 +256,11 @@ class StorageController extends ControllerBase{
             flash.errors=storageParams.errors
             return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
         }
-        if (!params.resourcePath && null!=params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/'+params.relativePath): ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/'+storageParams.relativePath): ''}"
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def resourcePath = params.resourcePath
+        def resourcePath = storageParams.resourcePath
         def valid=false
         withForm {
             valid=true
@@ -259,32 +275,32 @@ class StorageController extends ControllerBase{
         def contentLength = -1
         def inputStream = null
 
-        if (params.uploadKeyType == 'public') {
+        if (storageParams.uploadKeyType == 'public') {
             contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
-        } else if (params.uploadKeyType == 'private') {
+        } else if (storageParams.uploadKeyType == 'private') {
             contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
-        } else if (params.uploadKeyType == 'password') {
+        } else if (storageParams.uploadKeyType == 'password') {
             contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
         } else {
             //invalid
             flash.errorCode = 'api.error.parameter.invalid'
-            flash.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+            flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
-        if( !(params.inputType in ['file','text'])){
+        if( !(storageParams.inputType in ['file','text'])){
             flash.errorCode = 'api.error.parameter.not.inList'
-            flash.errorArgs = [params.inputType, 'inputType']
+            flash.errorArgs = [storageParams.inputType, 'inputType']
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
 
         def hasUploadedFile = request instanceof MultipartHttpServletRequest &&
-                params.inputType == 'file' &&
+                storageParams.inputType == 'file' &&
                 request.getFile('storagefile') &&
                 !request.getFile('storagefile').empty
 
-        if (params.inputType == 'file' && !hasUploadedFile) {
+        if (storageParams.inputType == 'file' && !hasUploadedFile) {
             //mising file upload
             flash.errorCode = 'api.error.upload.missing'
             flash.errorArgs = ['storagefile']
@@ -292,7 +308,7 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
 
-        if (params.inputType == 'text' && !params.fileName) {
+        if (storageParams.inputType == 'text' && !storageParams.fileName) {
             //invalid
             flash.errorCode = 'api.error.parameter.required'
             flash.errorArgs = ['fileName']
@@ -300,9 +316,9 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
 
-        def filename = params.fileName
+        def filename = storageParams.fileName
 
-        if(params.inputType == 'text' && params.uploadKeyType in ['public','private'] ){
+        if(storageParams.inputType == 'text' && storageParams.uploadKeyType in ['public','private'] ){
             //store a public/private key
             if(!params.uploadText){
                 //invalid
@@ -316,7 +332,7 @@ class StorageController extends ControllerBase{
             def inputBytes = params.uploadText.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
-        }else if(params.inputType == 'text' && params.uploadKeyType == 'password' ){
+        }else if(storageParams.inputType == 'text' && storageParams.uploadKeyType == 'password' ){
             //store a password
             if (!params.uploadPassword) {
                 //invalid
@@ -394,27 +410,25 @@ class StorageController extends ControllerBase{
             }else{
                 def resource = storageService.createResource(authContext, resourcePath, map, inputStream)
             }
-            return redirect(controller: 'menu', action: 'storage', params: [project: params.project,resourcePath:resourcePath])
+            return redirect(controller: 'menu', action: 'storage', params: [resourcePath:resourcePath])
         } catch (StorageAuthorizationException e) {
             log.error("Unauthorized: resource ${resourcePath}: ${e.message}")
             flash.errorCode = 'api.error.item.unauthorized'
             flash.errorArgs = [e.event.toString(), 'Path', e.path.toString()]
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
+            return redirect(controller: 'menu', action: 'storage')
         } catch (StorageException e) {
             log.error("Error creating resource ${resourcePath}: ${e.message}")
             log.debug("Error creating resource ${resourcePath}", e)
             flash.error= e.message
-            return redirect(controller: 'menu', action: 'storage',
-                    params: [project: params.project])
+            return redirect(controller: 'menu', action: 'storage')
         }
     }
     /**
      * non-api action wrapper for deleteResource method
      */
-    public def keyStorageDelete() {
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+    public def keyStorageDelete(StorageParams storageParams) {
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         def valid = false
         withForm {
@@ -431,46 +445,58 @@ class StorageController extends ControllerBase{
         if (!valid) {
             return
         }
-        deleteResource()
+        deleteResource(storageParams)
     }
     /**
      * Handle resource requests to the /ssh-key path
      * @return
      */
-    def apiKeys() {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
+    def apiKeys(StorageParams storageParams) {
+        if(!apiService.requireVersion(request,response,ApiVersions.V11)){
             return
         }
-        params.resourcePath = "/keys/${params.resourcePath?:''}"
+        storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"
+        storageParams.validate()
         switch (request.method) {
             case 'POST':
-                apiPostResource()
+                apiPostResource(storageParams)
                 break
             case 'PUT':
-                apiPutResource()
+                apiPutResource(storageParams)
                 break
             case 'GET':
-                apiGetResource()
+                apiGetResource(storageParams)
                 break
             case 'DELETE':
-                apiDeleteResource()
+                apiDeleteResource(storageParams)
                 break
         }
     }
 
-    def apiPostResource() {
+    def apiPostResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return postResource()
+        return postResource(storageParams)
     }
-    private def postResource() {
+
+    private def postResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
+        }
+        //require path is longer than "/keys/"
         if (storageService.hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
-        }else if(storageService.hasPath(authContext, resourcePath)){
+        } else if (storageService.hasPath(authContext, resourcePath)) {
             response.status = 409
             return renderError("directory already exists: ${resourcePath}")
         }
@@ -500,15 +526,25 @@ class StorageController extends ControllerBase{
     }
 
 
-    def apiDeleteResource() {
+    def apiDeleteResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return deleteResource()
+        return deleteResource(storageParams)
     }
-    private def deleteResource() {
+
+    private def deleteResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
+        }
         if(!storageService.hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -543,15 +579,25 @@ class StorageController extends ControllerBase{
         }
     }
 
-    def apiPutResource() {
+    def apiPutResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return putResource()
+        return putResource(storageParams)
     }
-    private def putResource() {
+
+    private def putResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
+        }
         def found = storageService.hasResource(authContext, resourcePath)
         if (!found) {
             response.status = 404
@@ -596,7 +642,7 @@ class StorageController extends ControllerBase{
             ])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
         if(!found){
             response.status=404

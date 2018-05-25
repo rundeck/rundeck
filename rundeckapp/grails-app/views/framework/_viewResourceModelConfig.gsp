@@ -1,11 +1,11 @@
 %{--
-  - Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
   - You may obtain a copy of the License at
   -
-  -        http://www.apache.org/licenses/LICENSE-2.0
+  -     http://www.apache.org/licenses/LICENSE-2.0
   -
   - Unless required by applicable law or agreed to in writing, software
   - distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,4 +23,4 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:render template="/framework/renderPluginConfig" model="${[project:project,prefix:prefix,includeFormFields:includeFormFields,values:values,description:description,type:type]}"/>
+<g:render template="/framework/renderPluginConfig" model="${[serviceName:'ResourceModelSource',project:project,prefix:prefix,includeFormFields:includeFormFields,values:values,description:description,type:type]}"/>

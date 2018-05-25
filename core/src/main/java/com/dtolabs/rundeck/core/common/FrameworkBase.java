@@ -1,17 +1,17 @@
 /*
- * Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.dtolabs.rundeck.core.common;
@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor;
@@ -54,6 +55,8 @@ public class FrameworkBase implements IFramework{
     public static final Logger logger = Logger.getLogger(FrameworkBase.class);
 
     public static final String NODES_RESOURCES_FILE_PROP = "framework.nodes.file.name";
+    public static final String FRAMEWORK_GLOBALS_PROP = "framework.globals.";
+    public static final String PROJECT_GLOBALS_PROP = "project.globals.";
 
     /**
      * Environmental attribute for the rundeck app
@@ -123,6 +126,10 @@ public class FrameworkBase implements IFramework{
     @Override
     public WorkflowExecutionService getWorkflowExecutionService() {
         return frameworkServices.getWorkflowExecutionService();
+    }
+    @Override
+    public WorkflowStrategyService getWorkflowStrategyService() {
+        return frameworkServices.getWorkflowStrategyService();
     }
 
     @Override
@@ -248,6 +255,59 @@ public class FrameworkBase implements IFramework{
             return getProperty(key);
         }
         return null;
+    }
+
+
+    /**
+    * Retrieves the global properties defined for the specified project.
+    * This variables are defined either in the framework (framework.globals.*) or in the
+    * project (project.globals.*). The prefix (xxx.globals.) will be stripped from the
+    * property name.
+    * <p></p>
+    * For variables defines both in framework and project contexts, the variable defined in the project
+    * will have priority.
+    * @param project The project identifier.
+    * @return Map with global variables.
+    */
+    public Map<String, String> getProjectGlobals(final String project) {
+
+        // Final property map.
+        Map<String, String> projectGlobalsMap = new HashMap<>();
+
+        // Transitional map for project global variables.
+        Map<String, String> projectGlobs = new HashMap<>();
+
+        // Project full properties (framework + project).
+        Map<String, String> projectFullProps = getFrameworkProjectMgr().getFrameworkProject(project).getProperties();
+
+        // Search properties for globals entries.
+        for(Map.Entry<String, String> propEntry: projectFullProps.entrySet()) {
+
+            Map<String, String> curMap;
+            String varName;
+
+            if(propEntry.getKey().startsWith(FRAMEWORK_GLOBALS_PROP)) {
+                // Search for framework globals and extract var name.
+                curMap = projectGlobalsMap;
+                varName = propEntry.getKey().substring(FRAMEWORK_GLOBALS_PROP.length());
+            }
+            else if(propEntry.getKey().startsWith(PROJECT_GLOBALS_PROP)) {
+                // Search for project globals and extract var name.
+                curMap = projectGlobs;
+                varName = propEntry.getKey().substring(PROJECT_GLOBALS_PROP.length());
+            }
+            else
+                continue;
+            if("".equals(varName)){
+                continue;
+            }
+            // Copy value into new map.
+            curMap.put(varName, propEntry.getValue());
+        }
+
+        // Merge and replace props.
+        projectGlobalsMap.putAll(projectGlobs);
+        return projectGlobalsMap;
     }
 
 

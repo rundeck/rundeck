@@ -80,7 +80,7 @@ then
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -95,7 +95,7 @@ else
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -111,5 +111,5 @@ fi
 
 # test data file is in correct location
 
-ls /var/lib/rundeck/data/rundeckdb.h2.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.data.db"
+ls /var/lib/rundeck/data/rundeckdb.mv.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.mv.db"
 

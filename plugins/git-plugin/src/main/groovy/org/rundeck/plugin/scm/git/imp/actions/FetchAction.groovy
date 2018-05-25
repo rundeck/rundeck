@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.rundeck.plugin.scm.git.imp.actions
 
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -7,11 +23,10 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportResult
 import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/8/15.
@@ -23,11 +38,11 @@ class FetchAction extends BaseAction implements GitImportAction {
 
     @Override
     BasicInputView getInputView(final ScmOperationContext context, final GitImportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Fetch remote changes"
             buttonTitle "Fetch"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string "status"
                         title "Git Status"
                         renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.utils.NullablePairImpl;
@@ -22,10 +38,10 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
     /**
      * Thread local context stack, inherited by sub threads.
      */
-    private InheritableThreadLocal<STEP> localStep = new InheritableThreadLocal<STEP>();
-    private InheritableThreadLocal<NODE> localNode = new InheritableThreadLocal<NODE>();
+    private InheritableThreadLocal<STEP> localStep = new InheritableThreadLocal<>();
+    private InheritableThreadLocal<NODE> localNode = new InheritableThreadLocal<>();
     private InheritableThreadLocal<ContextStack<ctxPair>> contextStack = new
-            InheritableThreadLocal<ContextStack<ctxPair>>();
+            InheritableThreadLocal<>();
 
     public void beginContext() {
         STEP info = localStep.get();
@@ -116,7 +132,7 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
     }
 
     private List<Pair<STEP, NODE>> getPairs(List<ctxPair> stack) {
-        ArrayList<Pair<STEP, NODE>> pairs = new ArrayList<Pair<STEP, NODE>>();
+        ArrayList<Pair<STEP, NODE>> pairs = new ArrayList<>();
         for (ctxPair ctxPair : stack) {
             pairs.add(ctxPair);
         }

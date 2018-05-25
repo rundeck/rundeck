@@ -1,8 +1,25 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.execution.workflow.steps.node
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -28,7 +45,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         testProject = framework.getFrameworkProjectMgr().createFrameworkProject(PROJECT_NAME)
     }
 
-    def teardown() {
+    def cleanup() {
         framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
     }
 
@@ -80,7 +97,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -97,7 +114,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def result = plugin.generateScript(context, config, node)
         then:
         result != null
-        Arrays.asList(result.args) == [tempFile.absolutePath, 'test', '-blah', 'myvalue']
+        Arrays.asList(result.args) == ['test', '-blah', 'myvalue']
 
 
         1 * storageTree.getResource(keyPath) >> Mock(Resource) {
@@ -133,7 +150,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -151,6 +168,67 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         result instanceof FileBasedGeneratedScript
         FileBasedGeneratedScript fileBasedGeneratedScript = result
         fileBasedGeneratedScript.fileExtension == 'myext'
+
+    }
+
+
+    @Unroll
+    def "generateScript with options quoted #isquoted"() {
+        given:
+        File tempFile = File.createTempFile("test", "zip");
+        tempFile.deleteOnExit()
+        File scriptFile = File.createTempFile("test", "sh");
+        scriptFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        def pluginMeta = [
+                'script-file-extension': 'myext',
+        ]
+        def provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> pluginMeta
+            getArchiveFile() >> tempFile
+            getScriptFile() >> scriptFile
+            getContentsBasedir() >> basedir
+            getScriptArgs() >> 'a b ${config.alpha} ${node.name}'
+            getScriptInterpreter() >> interpreter
+            getInterpreterArgsQuoted() >> isquoted
+        }
+        def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
+        def context = Mock(PluginStepContext) {
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContextObject() >> new BaseDataContext([
+                    node: [name: 'anode']
+            ])
+            getLogger() >> Mock(PluginLogger)
+            getExecutionContext() >> Mock(ExecutionContext) {
+                getFramework() >> framework
+                getFrameworkProject() >> PROJECT_NAME
+            }
+        }
+
+        def config = [alpha: 'x']
+        def node = new NodeEntryImpl('anode')
+
+        when:
+        def result = plugin.generateScript(context, config, node)
+        then:
+        result != null
+        result instanceof FileBasedGeneratedScript
+        FileBasedGeneratedScript fileBasedGeneratedScript = result
+        fileBasedGeneratedScript.fileExtension == 'myext'
+        fileBasedGeneratedScript.args == expect as String[]
+        fileBasedGeneratedScript.scriptFile == scriptFile
+        fileBasedGeneratedScript.interpreterArgsQuoted == isquoted
+        fileBasedGeneratedScript.scriptInterpreter == interpreter
+        where:
+        isquoted | interpreter        | expect
+        true     | null               | ['a', 'b', 'x', 'anode']
+        false    | null               | ['a', 'b', 'x', 'anode']
+        false    | 'some interpreter' | ['a', 'b', 'x', 'anode']
+        true     | 'some interpreter' | ['a', 'b', 'x', 'anode']
 
     }
 
@@ -177,7 +255,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework

@@ -1,24 +1,8 @@
 /**
  * Cobertura Plug-In 
- * https://github.com/Mapvine/gradle-cobertura-plugin
+ * Disable for java 8
+ * https://github.com/stevesaliman/gradle-cobertura-plugin/issues/121
  */
-import org.gradle.api.internal.GradleInternal
-import org.gradle.api.internal.project.ProjectInternal
 
-logger.warn( "Loading cobertura support for ${project.name}")
+logger.warn( "Cobertura not used")
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "net.saliman:gradle-cobertura-plugin:2.2.7"
-        classpath 'org.codehaus.groovy:groovy-backports-compat23:2.3.5'
-    }
-}
-
-apply plugin: net.saliman.gradle.plugin.cobertura.CoberturaPlugin
-
-cobertura {
-	coverageFormats = ['xml','html']
-}

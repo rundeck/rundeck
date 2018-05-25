@@ -1,75 +1,216 @@
-import java.io.File;
-import java.util.Map;
-
-import org.gradle.api.Project;
-import org.gradle.api.DefaultTask
-import org.gradle.api.tasks.TaskAction
-import org.gradle.plugins.signing.Sign
-
 import java.util.jar.JarInputStream
 
-/**
- * The Rundeck webapp build file
- * 
- * It's important to note that grails has it's own build system based on Gant. Rather
- * than trying to integrate Gradle directly with Gant or use one of the Gradle-Grails plugins
- * available, we're following in the steps of the Make based build and just wrapping 
- * around the Grails builds.
- */
+buildscript {
+    ext {
+        bootstrapFramework = [
+            version             : "3.3.5",
+        //    cssPath             : "grails-app/assets/stylesheets",
+        //    jsPath              : "grails-app/assets/javascripts",
+        //    useIndividualJs     : false,
+            useLess             : true,
+        //    invalidVersionFails : false,
+        //    fontAwesome : [
+        //       install             : true,
+        //       version             : "4.3.0",
+        //       useLess             : false
+        //       invalidVersionFails : false
+        //    ]
+        ]
+    }
+    repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
+        jcenter()
+    }
+    dependencies {
+        classpath "org.grails:grails-gradle-plugin:$grailsVersion"
+        classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
+        classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
+        classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.7"
+        classpath "com.siprell.plugins:bootstrap-framework:1.0.3"
+    }
+}
 
-description = 'The Rundeck Grails webapp project'
+//version "0.1"
+//group "rundeckapp"
 
-apply plugin: 'groovy'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-apply plugin: 'maven'
-apply plugin: 'signing'
+apply plugin:"eclipse"
+apply plugin:"idea"
+apply plugin:"war"
+apply plugin:"org.grails.grails-web"
+apply plugin:"com.energizedwork.webdriver-binaries"
+apply plugin:"com.energizedwork.idea-project-components"
+apply plugin:"asset-pipeline"
+apply plugin:"org.grails.grails-gsp"
+apply plugin: "com.siprell.plugins.bootstrap-framework"
 
-// set the convention to rundeck:<branch>:<path>:<projectName>
-eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
-
-// Properties for downloading, installing and running Grails
-def grailsBaseName = "grails-${grailsVersion}"
-def grailsZipFile = "${grailsBaseName}.zip"
-def grailsZipFileDefaultBasePath = "${rootProject.projectDir}/local/tmp"
-def boolean grailsZipFileBasePathOverriden = hasProperty("grailsZipFileBasePath")
-def grailsZipFileBasePath = grailsZipFileBasePathOverriden ? grailsZipFileBasePath : grailsZipFileDefaultBasePath
-def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
-def grailsInstallLocation = "${rootProject.projectDir}/local"
-def grailsLocalRepo = hasProperty('grailsLocalRepo') ? grailsLocalRepo : 'grails-app/plugins'
-def grailsCentral = hasProperty('disableGrailsCentral') && disableGrailsCentral=='true' ? "-Ddisable.grails.central=${disableGrailsCentral}" : "-Dgrails.central.url=${grailsCentralUrl}"
-def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
-def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
-def grailsCommandLine = "${grailsHome}/bin/grails"
-def mavenCredsDefined = hasProperty('mavenUser') && hasProperty('mavenPassword') && hasProperty('mavenRealm') && hasProperty('mavenHost')
-def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ''
-def warFileName = "rundeck-${version}.war"
-def warFileLocation = "${project.projectDir}/target/${warFileName}"
-def additionalFileLocation = "${project.projectDir}/target/war-contents"
-
-configurations{
+configurations {
+    war{}
     pluginFiles {
         transitive = false
-
     }
-    pluginFiles.extendsFrom(runtime)
 }
+
+repositories {
+    mavenLocal()
+    maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://jitpack.io" }
+    flatDir dirs: "$rootDir/locallib"
+}
+
+def springBootVersion = "1.5.12.RELEASE"
+//ext['jackson.version'] = '2.8.11'
 
 dependencies {
+
+    //Rundeck plugin dependencies
     pluginFiles project(':plugins:script-plugin'),
-            project(':plugins:stub-plugin'),
-            project(':plugins:localexec-plugin'),
-            project(':plugins:copyfile-plugin'),
-            project(':plugins:job-state-plugin'),
-            project(':plugins:flow-control-plugin'),
-            project(':plugins:jasypt-encryption-plugin'),
-            project(':plugins:orchestrator-plugin'),
-            project(':plugins:git-plugin')
+                project(':plugins:stub-plugin'),
+                project(':plugins:localexec-plugin'),
+                project(':plugins:copyfile-plugin'),
+                project(':plugins:job-state-plugin'),
+                project(':plugins:flow-control-plugin'),
+                project(':plugins:jasypt-encryption-plugin'),
+                project(':plugins:orchestrator-plugin'),
+                project(':plugins:git-plugin'),
+                project(':plugins:source-refresh-plugin'),
+                project(':plugins:upvar-plugin'),
+                "com.github.Batix:rundeck-ansible-plugin:2.3.0",
+                "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
+                "com.github.rundeck-plugins:py-winrm-plugin:1.0.4",
+                "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
+
+    // Rundeck project dependencies.
+    compile project(':core')
+    compile project(':rundeck-storage:rundeck-storage-filesys')
+    compile project('metricsweb')
+
+    // From BuildConfig.groovy.
+    compile 'org.quartz-scheduler:quartz:2.3.0'
+    compile 'org.grails.plugins:quartz:2.0.13'
+    compile 'org.grails.plugins:mail:2.0.0'
+
+    compile 'org.yaml:snakeyaml:1.14'
+    compile 'com.codahale.metrics:metrics-core:3.0.2'
+    compile 'com.atlassian.commonmark:commonmark:0.10.0'
+    compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
+    compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20171016.1'
+    compile 'org.owasp.encoder:encoder:1.2.1'
+    compile 'org.grails.plugins:external-config:1.1.2'
+    compile 'commons-fileupload:commons-fileupload:1.3.3'
+
+    // Grails Plugins.
+    //compile 'org.grails:grails-plugin-filters:3.0.17'
+
+//    compile "org.grails:grails-test-mixins:3.3.0"
+//    compile "org.grails:grails-plugin-testing:3.2.11"
+
+    // Defined by create-app
+    compile "org.grails.plugins:hibernate5:${gormVersion}"
+    compile "org.hibernate:hibernate-core:5.1.0.Final"
+    compile "org.hibernate:hibernate-ehcache:5.1.0.Final"
+    compile "org.springframework.boot:spring-boot-starter-logging"
+    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile "org.grails:grails-core"
+    compile "org.springframework.boot:spring-boot-starter-actuator"
+    //provided "org.springframework.boot:spring-boot-starter-tomcat"
+    provided "org.springframework.boot:spring-boot-starter-jetty"
+    compile "org.grails:grails-web-boot"
+    compile "org.grails:grails-logging"
+    compile "org.grails:grails-plugin-rest"
+    compile "org.grails:grails-plugin-databinding"
+    compile "org.grails:grails-plugin-i18n"
+    compile "org.grails:grails-plugin-services"
+    compile "org.grails:grails-plugin-url-mappings"
+    compile "org.grails:grails-plugin-interceptors"
+    compile 'org.grails.plugins:grails-executor:0.4'
+    compile "org.grails.plugins:cache"
+    compile "org.grails.plugins:async"
+    compile "org.grails.plugins:scaffolding"
+    compile "org.grails.plugins:events"
+    compile "org.grails.plugins:hibernate5"
+    compile "org.hibernate:hibernate-core:5.1.5.Final"
+    compile "org.grails.plugins:gsp"
+    compile "com.google.code.gson:gson:2.8.2"
+
+    compile 'org.eclipse.jetty:jetty-jaas:9.4.9.v20180320'
+    compile 'org.grails.plugins:spring-security-core:3.2.1'
+    compile 'org.kohsuke:libpam4j:1.5'
+    compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
+    compile 'org.codehaus.groovy:groovy-all:2.4.13'
+    console "org.grails:grails-console"
+    profile "org.grails.profiles:web"
+//    runtime "org.springframework:spring-test:5.0.3.RELEASE"
+    runtime "org.glassfish.web:el-impl:2.1.2-b03"
+    runtime "com.h2database:h2:1.4.196"
+    runtime 'mysql:mysql-connector-java:5.1.35'
+    runtime "org.apache.tomcat:tomcat-jdbc"
+    runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
+    runtime "org.slf4j:jcl-over-slf4j:1.7.25"
+    assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.5'
+    testCompile "org.grails:grails-gorm-testing-support"
+    testCompile "org.grails:grails-web-testing-support"
+    testCompile "org.grails.plugins:geb"
+    testCompile "org.grails:grails-test-mixins:3.3.0.RC1"
+//    testCompile("org.spockframework:spock-core:1.0-groovy-2.4")
+//    testCompile("org.spockframework:spock-spring:1.1-groovy-2.4-rc-2")
+    testRuntime "org.seleniumhq.selenium:selenium-chrome-driver"
+    testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
+    testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
+    testRuntime "org.seleniumhq.selenium:selenium-api"
 }
 
-task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
-    File libextDir = new File(additionalFileLocation, "WEB-INF/rundeck/plugins")
-    File manifestFile = new File(additionalFileLocation, "WEB-INF/rundeck/plugins/manifest.properties")
+bootRun {
+    jvmArgs('-Dspring.output.ansi.enabled=always')
+    systemProperties(System.properties)
+    systemProperty "build.ident", project.version
+    addResources = true
+}
+
+webdriverBinaries {
+    chromedriver '2.32'
+    geckodriver '0.18.0'
+}
+
+tasks.withType(Test) {
+    systemProperty "geb.env", System.getProperty('geb.env')
+    systemProperty "webdriver.chrome.driver", System.getProperty('webdriver.chrome.driver')
+    systemProperty "webdriver.gecko.driver", System.getProperty('webdriver.gecko.driver')
+}
+
+assets {
+    minifyJs = false
+    minifyCss = false
+    excludes = ["**/*.less"]
+    includes = ["*.less","*.css"]
+}
+
+
+artifacts {
+    war war
+}
+
+buildProperties.doLast {
+    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
+    if (!grailsBuildInfoFile) return
+    Properties properties = new Properties()
+
+    grailsBuildInfoFile.withInputStream {
+        properties.load(it)
+    }
+
+    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
+
+    grailsBuildInfoFile.withOutputStream {
+        properties.store(it,null)
+    }
+}
+
+task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
+    println "copying plugin libs"
+    File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
+    File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
 
     def filelist=[]
     libextDir.mkdirs()
@@ -92,9 +233,9 @@ task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
         Properties fileProps = new Properties()
         fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
         fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
-        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'SimplifyOps, Inc.'
+        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'Rundeck, Inc.'
         fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
-        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.org'
+        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.com'
         fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
         fileProps[  'plugin.filename']= f
 
@@ -109,286 +250,17 @@ task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
         manifestProps.store(w,"generated manifest")
     }
 }
-/**
- * Downloads Grails from the SpringSource archives
- */
-task downloadGrails {
-    File grailsArchive = file(grailsZipFileLocation);
-    outputs.file grailsArchive;
-    doLast {
-        if (grailsZipFileBasePathOverriden) {
-            logger.warn("Using existing Grails zip file: ${grailsZipFileLocation}");
-            if (!grailsArchive.isFile()) {
-                throw new InvalidUserDataException("Grails zip file does not exist: ${grailsZipFileLocation}");
-            }
-        } else {
-            logger.warn("Downloading ${grailsBaseName}...");
-            file("${grailsZipFileBasePath}").mkdirs();
-            if (!grailsArchive.isFile()) {
-                ant.get(src: grailsDownloadUrl, dest: grailsZipFileLocation, verbose: true);
-            }
-        }
+
+war {
+    it.dependsOn copyPluginLibs
+    from("${buildDir}/WEB-INF/rundeck/plugins") {
+        into("WEB-INF/rundeck/plugins")
+    }
+    from("templates") {
+        into("templates")
     }
 }
 
-/**
- * Expand the downloaded archive if it hasn't already been expanded
- */
-task extractGrails(dependsOn: downloadGrails) {
-    logger.debug("grailsZipFileLocation: ${grailsZipFileLocation}")
-    inputs.file file(grailsZipFileLocation);
-
-    logger.debug("grailsInstallLocation: ${grailsInstallLocation}")
-    outputs.dir file(grailsHome);
-
-    doLast {
-        logger.info("Extracting ${grailsZipFile}...")
-        file(grailsInstallLocation).mkdirs();
-        copy {
-            from zipTree(grailsZipFileLocation);
-            into file(grailsInstallLocation);
-        }
-        // make sure that everything but the .bat files are set +x on linux / macs
-        if (System.getProperty('os.name').toLowerCase().indexOf('win') < 0) {
-            FileTree tree = fileTree("${grailsInstallLocation}/${grailsBaseName}/bin").exclude('**/*.bat');
-            tree.each { File file ->
-                logger.info('Setting +x permission on ' + file);
-                file.setExecutable(true);
-            }
-        }
-    }
-}
-
-def projDeps = [
-        ":core",
-        ":rundeck-storage:rundeck-storage-api",
-        ":rundeck-storage:rundeck-storage-data",
-        ":rundeck-storage:rundeck-storage-filesys",
-        ":rundeck-storage:rundeck-storage-conf",
-        ":rundeck-launcher:rundeck-jetty-server"
-].collect{
-    project(it).install
-}
-/**
- * "core" needs to be built and installed into the local ~/.m2 repo before
- * we attempt to do anything further with Grails.
- */
-task installDependencies(dependsOn: projDeps) << {
-    description = "Builds and installs dependencies on other subprojects"
-}
-
-/**
- * Installs the jetty-plugin into the .grails folder
-
-task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
-    def jettyPluginVersion = '2.0.3'
-    def jettyPluginInstalled = "${System.properties['user.home']}/.grails/${grailsVersion}/projects/rundeckapp/plugins/jetty-${jettyPluginVersion}"
-    
-    inputs.dir file(grailsHome)
-    outputs.dir file(jettyPluginInstalled)
-
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "${grailsCentral}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-DRUNDECK_VERSION=${version}",
-            'install-plugin',
-            'jetty',
-            jettyPluginVersion
-}
-
- */
-
-task cleanWar(type: Delete) {
-    delete file(warFileLocation), file("${project.projectDir}/target")
-}
-
-task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
-    inputs.dir file(grailsHome)
-    ignoreExitValue=true
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "${grailsCentral}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-DRUNDECK_VERSION=${version}", 'clean'
-}
-
-task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
-}
-
-/**
- * Wrapper task for grails test-app
- */
-task testGrails(type: Exec, overwrite: true, dependsOn: [ installDependencies, extractGrails]) {
-    inputs.dir file(grailsHome)
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    def rdbase=new File(temporaryDir,'rdeck_base')
-    rdbase.mkdirs()
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "${grailsCentral}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-DRUNDECK_VERSION=${version}",
-            "-Drdeck.base=${rdbase}",
-            'test-app'
-}
-test.dependsOn testGrails
-
-/**
- * Run grails compile
- */
-task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
-    inputs.dir file(grailsHome)
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "${grailsCentral}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-DRUNDECK_VERSION=${version}",
-            'prod',
-            'compile'
-}
-/**
- * Builds the rundeck war file
- */
-task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extractGrails, copyPluginLibs]) {
-    inputs.dir file(grailsHome)
-    inputs.sourceDir file("${projectDir}/src")
-    outputs.file file(warFileLocation)
-    workingDir project.projectDir
-    environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    args "-Dmaven.central.url=${mavenCentralUrl}",
-            "${mavenCreds}",
-            "${grailsCentral}",
-            "-Dgrails.local.repo=${grailsLocalRepo}",
-            "-Drundeck.war.additional=${additionalFileLocation}",
-            "-DRUNDECK_VERSION=${version}",
-            'prod',
-            'war',
-            '--non-interactive',
-            warFileLocation
-}
-
-// add the war to default configuration for this project
-artifacts{
-    'default'(file(warFileLocation)){
-        name 'rundeck'
-        type 'war'
-        builtBy grailsWar
-    }
-}
-
-task build(overwrite: true, dependsOn: [test, grailsWar]) {
-    // noop build because this isn't actually a java project
-    // besides the war task is handling building by issuing a "grails war"
-}
-
-
-//********* artifact signing *********
-if(isReleaseBuild && project.hasProperty("signing.keyId")) {
-    signing {
-        sign configurations.archives
-    }
-} else {
-    task signArchives {
-        // do nothing
-    }
-}
-
-//build a pom we reuse for both maven builds and release to sonatype
-def deploypom=pom {
-    project {
-        artifactId archivesBaseName
-        groupId project.group
-        inceptionYear '2011'
-        packaging 'war'
-        version version
-        name "Rundeck Web app"
-        description "Rundeck web console for command dispatching and job scheduling"
-        url 'http://rundeck.org'
-        licenses {
-            license {
-                name 'The Apache Software License, Version 2.0'
-                url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                distribution 'repo'
-            }
-        }
-        properties{
-            'version'(version)
-        }
-        scm {
-            url 'https://github.com/dtolabs/rundeck'
-            connection 'scm:git:git@github.com/dtolabs/rundeck.git'
-            developerConnection 'scm:git:git@github.com:dtolabs/rundeck.git'
-        }
-        developers {
-          developer {
-            id('gschueler')
-            name('Greg Schueler')
-            email('greg@dtosolutions.com')
-          }
-        }
-        parent {
-            groupId('org.sonatype.oss')
-            artifactId('oss-parent')
-            version('7')
-        }
-    }
-}
-// prompt for PGP key passphrase if not set
-gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty("signing.password") && !isDevBuild) {
-        // Use Java 6's console to read from the console (no good for a CI environment)
-        Console console = System.console()
-        console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
-
-        //def id = console.readLine("PGP Key Id: ")
-        //def file = console.readLine("PGP Secret Key Ring File (absolute path): ")
-        def password = console.readPassword("PGP Private Key Password: ")
-
-        //allprojects { ext."signing.keyId" = id }
-        //allprojects { ext."signing.secretKeyRingFile" = file }
-        allprojects { ext."signing.password" = password }
-
-        console.printf "\nThanks.\n\n"
-    }
-}
-
-uploadArchives {
-    if(isDevBuild){
-        repositories{
-            repositories.mavenDeployer {
-                configuration = configurations.archives
-                pom=deploypom
-            }
-        }
-    }else{
-        repositories.mavenDeployer {
-            if(isReleaseBuild){
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-            }
- 
-            configuration = configurations.archives
-            if(project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')){
-                repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-                snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                    authentication(userName: sonatypeUsername, password: sonatypePassword)
-                }
-            }
-            pom=deploypom
-        }
-    }
-}
+//spring boot 1.5.x bootRepackage is not a good gradle citizen
+// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
+[install, buildArchives, uploadArchives].each { it.dependsOn assemble }

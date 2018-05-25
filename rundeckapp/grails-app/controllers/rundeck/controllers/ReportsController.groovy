@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
@@ -7,7 +23,10 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import org.grails.plugins.metricsweb.MetricService
+import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
@@ -21,7 +40,7 @@ import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.User
 import rundeck.ReportFilter
 import rundeck.services.FrameworkService
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class ReportsController extends ControllerBase{
     def reportService
@@ -29,6 +48,7 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     def scheduledExecutionService
     def ApiService apiService
+    def MetricService metricService
     static allowedMethods = [
             deleteFilter:'POST',
             storeFilter:'POST'
@@ -104,12 +124,41 @@ class ReportsController extends ControllerBase{
             query.dostartafterFilter=true
             query.startafterFilter=new Date(session.creationTime)
         }
+        if(params.includeJobRef && params.jobIdFilter){
+            ScheduledExecution.withTransaction {
+                ScheduledExecution sched = ScheduledExecution.get(params.jobIdFilter)
+                def list = ReferencedExecution.findAllByScheduledExecution(sched)
+                def include = []
+                list.each {refex ->
+                    boolean add = true
+                    if(refex.execution.project != params.project){
+                        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                                .resourceType('event'), [AuthConstants.ACTION_READ],
+                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.execution.project)){
+                            log.debug('Cant read executions on project '+refex.execution.project)
+                        }else{
+                            include << String.valueOf(refex.execution.id)
+                        }
+                    }else{
+                        include << String.valueOf(refex.execution.id)
+                    }
+                }
+                if(include){
+                    query.execIdFilter = include
+                }
+            }
+
+        }
 
         if(null!=query){
             query.configureFilter()
         }
         def curdate=new Date()
-        def model= reportService.getExecutionReports(query,true)
+        def model =
+                metricService?.withTimer(ReportsController.name, 'index.getExecutionReports') {
+                    reportService.getExecutionReports(query, true)
+                } ?: reportService.getExecutionReports(query, true)
+
 //        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
 //        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
         if(model.lastDate<1 && query.recentFilter ){
@@ -139,6 +188,15 @@ class ReportsController extends ControllerBase{
                 .resourceType('event'), [AuthConstants.ACTION_READ],
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
+        }
+        if (params.max != null && params.max != query.max.toString()) {
+            query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
+        }
+        if (params.offset != null && params.offset != query.offset.toString()) {
+            query.errors.rejectValue('offset', 'typeMismatch.java.lang.Integer', ['offset'] as Object[], 'invalid')
+        }
+        if (query.hasErrors()) {
+            return render(view: '/common/error', model: [beanErrors: query.errors])
         }
         def User u = userService.findOrCreateUser(session.user)
         
@@ -200,18 +258,16 @@ class ReportsController extends ControllerBase{
                 }
             }
             json{
-                render(contentType:"text/json"){
-                    if(errmsg){
-                        delegate.error={
-                            delegate.message= flash.error
-                        }
-                    }else{
-                        delegate.since={
-                            delegate.count=count
-                            delegate.time= time
-                        }
-                    }
+                def out = [:]
+                if(errmsg){
+                    out.error = [message:flash.error]
+                }else{
+                    out.since = [
+                            count: count,
+                            time: time
+                    ]
                 }
+                render out as JSON
             }
             xml {
                 render(contentType:"text/xml"){
@@ -244,7 +300,7 @@ class ReportsController extends ControllerBase{
         results.params=params
         return results
     }
-    def eventsAjax={ ExecQuery query ->
+    def eventsAjax(ExecQuery query){
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
 
@@ -256,7 +312,6 @@ class ReportsController extends ControllerBase{
 
         if (query.hasErrors()) {
             response.status=400
-            log.error("query errors: "+(query.errors.allErrors.collect{it.toString()}.join(", ")))
             return render(contentType: 'application/json', text:  [errors: query.errors] as JSON)
         }
         def results = index(query)
@@ -272,12 +327,22 @@ class ReportsController extends ControllerBase{
 
                 }
             }
+            map.jobName= map.remove('reportId')
             if(map.jcJobId){
                 map.jobId= map.remove('jcJobId')
                 try {
                     def job = ScheduledExecution.get(Long.parseLong(map.jobId))
                     map.jobId=job?.extid
                     map.jobDeleted = job==null
+                    map['jobPermalink']= createLink(
+                            controller: 'scheduledExecution',
+                            action: 'show',
+                            absolute: true,
+                            id: job?.extid,
+                            params:[project:job?.project]
+                    )
+                    map.jobName=job?.jobName
+                    map.jobGroup=job?.groupPath
                 }catch(Exception e){
                 }
                 if(map.execution.argString){
@@ -285,24 +350,11 @@ class ReportsController extends ControllerBase{
                 }
             }
             map.user= map.remove('author')
-            map.jobName= map.remove('reportId')
             map.executionString= map.remove('title')
             return map
         }
         results.params=params
         render(contentType: 'application/json', text: results as JSON)
-    }
-    def jobsFragment={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
-                .resourceType('event'), [AuthConstants.ACTION_READ],
-                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
-            return
-        }
-        def results = jobs(query)
-        results.params=params
-        render(view:'eventsFragment',model:results)
     }
 
 
@@ -332,19 +384,19 @@ class ReportsController extends ControllerBase{
         }
         filter.fillProperties()
         if(!filter.save(flush:true)){
-            flash.error=filter.errors.allErrors.collect { g.message(error:it) }.join("\n")
+            flash.errors = filter.errors
             params.saveFilter=true
             chain(controller:'reports',action:'index',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
-                return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
+                return renderErrorView([beanErrors: u.errors])
             }
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
+            redirect(controller: 'reports', action: 'index', params: [filterName: filter.name, project: params.project])
         }.invalidToken {
             flash.error=g.message(code:'request.error.invalidtoken.message')
-            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [project: params.project])
+            redirect(controller: 'reports', action: 'index', params: [project: params.project])
         }
     }
 
@@ -357,10 +409,14 @@ class ReportsController extends ControllerBase{
                 ffilter.delete(flush:true)
                 flash.message="Filter deleted: ${filtername}"
             }
-            redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
+            redirect(controller: 'reports', action: 'index', params: [project: params.project])
         }.invalidToken {
             flash.error= g.message(code: 'request.error.invalidtoken.message')
-            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [filterName: params.delFilterName,project: params.project])
+            redirect(
+                    controller: 'reports',
+                    action: 'index',
+                    params: [filterName: params.delFilterName, project: params.project]
+            )
         }
     }
    
@@ -394,7 +450,7 @@ class ReportsController extends ControllerBase{
      * API, /api/14/project/PROJECT/history
      */
     def apiHistoryv14(ExecQuery query){
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiHistory(query)
@@ -411,7 +467,7 @@ class ReportsController extends ControllerBase{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(params.jobListFilter || params.excludeJobListFilter){
-            if (!apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.V5)) {
                 return
             }
         }
@@ -458,12 +514,16 @@ class ReportsController extends ControllerBase{
         if(null!=query){
             query.configureFilter()
         }
-        def model=reportService.getExecutionReports(query,true)
+        def model =
+                metricService?.withTimer(ReportsController.name, 'apiHistory.getExecutionReports') {
+                    reportService.getExecutionReports(query, true)
+                } ?: reportService.getExecutionReports(query, true)
         model = reportService.finishquery(query,params,model)
 
-        def statusMap=[
-                succeed:ExecutionService.EXECUTION_SUCCEEDED,
-                (ExecutionService.EXECUTION_SUCCEEDED):ExecutionService.EXECUTION_SUCCEEDED,
+        def statusMap = [scheduled: ExecutionService.EXECUTION_SCHEDULED,
+            (ExecutionService.EXECUTION_SCHEDULED): ExecutionService.EXECUTION_SCHEDULED,
+            succeed: ExecutionService.EXECUTION_SUCCEEDED,
+            (ExecutionService.EXECUTION_SUCCEEDED): ExecutionService.EXECUTION_SUCCEEDED,
             cancel: ExecutionService.EXECUTION_ABORTED,
             (ExecutionService.EXECUTION_ABORTED): ExecutionService.EXECUTION_ABORTED,
             fail: ExecutionService.EXECUTION_FAILED,
@@ -472,7 +532,7 @@ class ReportsController extends ControllerBase{
             (ExecutionService.EXECUTION_FAILED_WITH_RETRY): ExecutionService.EXECUTION_FAILED_WITH_RETRY,
             timeout: ExecutionService.EXECUTION_TIMEDOUT,
             (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',

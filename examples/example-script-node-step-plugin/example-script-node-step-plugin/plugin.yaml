@@ -21,11 +21,13 @@ providers:
         default: whatever
       - type: String
         name: examplemulti
-        title: Example Multiline
+        title: Example Multiline Code
         description: An example string
         default: whatever
         renderingOptions:
-          displayType: MULTI_LINE
+          displayType: CODE
+          codeSyntaxMode: batchfile
+          codeSyntaxSelectable: true
       - type: Boolean
         name: asif
         title: As if

@@ -1,6 +1,6 @@
 /*
- * Copyright 2012 DTO Labs, Inc. (http://dtolabs.com)
- * 
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -24,31 +23,26 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Map;
-
 import com.dtolabs.rundeck.core.Constants;
-import org.apache.log4j.Logger;
-
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import org.apache.log4j.Logger;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Map;
 
 
 /**
@@ -57,7 +51,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
+class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
     protected static Logger log = Logger.getLogger(NodeStepPluginAdapter.class.getName());
 
     @Override
@@ -68,6 +62,15 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         } else {
             return PluginAdapterUtility.buildDescription(plugin, DescriptionBuilder.builder());
         }
+    }
+
+    @Override
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues){
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+        }
+
+        return null;
     }
 
     private NodeStepPlugin plugin;
@@ -91,8 +94,15 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         throws NodeStepException {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    true
+            );
         }
         final String providerName = item.getNodeStepType();
 

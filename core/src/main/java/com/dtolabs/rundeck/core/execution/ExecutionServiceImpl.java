@@ -1,17 +1,17 @@
 /*
- * Copyright 2011 DTO Solutions, Inc. (http://dtosolutions.com)
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 /*
@@ -24,9 +24,10 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
@@ -34,17 +35,21 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
-import com.dtolabs.rundeck.core.utils.*;
-import org.apache.commons.collections.Predicate;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,48 +61,22 @@ class ExecutionServiceImpl implements ExecutionService {
     private final Framework framework;
 
     public ExecutionServiceImpl(Framework framework) {
+
         this.framework = framework;
     }
 
     protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
-        WorkflowExecutionListener wlistener = null;
+        WorkflowExecutionListener wlistener = executionContext.getWorkflowExecutionListener();
+        if(null!=wlistener){
+            return wlistener;
+        }
         final ExecutionListener elistener = executionContext.getExecutionListener();
         if (null != elistener && elistener instanceof WorkflowExecutionListener) {
-            wlistener = (WorkflowExecutionListener) elistener;
+            return (WorkflowExecutionListener) elistener;
         }
-        return wlistener;
+        return null;
     }
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
-        throws ExecutionException, ExecutionServiceException {
-        if (null != getWorkflowListener(context)) {
-            getWorkflowListener(context).beginStepExecution(null,context, executionItem);
-        }
-        if (!(executionItem instanceof NodeStepExecutionItem)) {
-            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " +
-                    executionItem);
-        }
-        NodeStepExecutionItem item = (NodeStepExecutionItem) executionItem;
 
-        boolean success = false;
-        DispatcherResult result = null;
-        BaseExecutionResult baseExecutionResult = null;
-        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
-        try {
-            result = dispatchToNodes(context, item);
-            success = result.isSuccess();
-            baseExecutionResult = new BaseExecutionResult(result, success, null);
-        } catch (DispatcherException e) {
-            baseExecutionResult = new BaseExecutionResult(result, success, e);
-        } finally {
-            loggingReformatter.resetOutputStreams();
-            if (null != getWorkflowListener(context)) {
-                getWorkflowListener(context).finishStepExecution(null,baseExecutionResult, context, item);
-            }
-        }
-
-        return baseExecutionResult;
-    }
 
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
 
@@ -113,7 +92,28 @@ class ExecutionServiceImpl implements ExecutionService {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).beginStepExecution(executor, context, item);
             }
-            result = executor.executeWorkflowStep(context, item);
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(context, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                context
+                    .getPluginControlService()
+                    .checkDisabledPlugin(
+                        item.getType(),
+                        ServiceNameConstants.WorkflowStep
+                    );
+                result = executor.executeWorkflowStep(context, item);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
         } finally {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).finishStepExecution(executor,result, context, item);
@@ -140,13 +140,75 @@ class ExecutionServiceImpl implements ExecutionService {
             getWorkflowListener(context).beginExecuteNodeStep(context, item, node);
         }
         //create node context for node and substitute data references in command
+        boolean secureOptionReplaced = false;
+        Map<String, String> nodeDeferredOptions = context.getDataContext().get("nodeDeferred");
+        Map<String, String> options = context.getDataContext().get("option");
+        if(nodeDeferredOptions != null) {
+            for (String key : nodeDeferredOptions.keySet()) {
+                String val = nodeDeferredOptions.get(key);
+                if (options != null && options.containsKey(key)) {
+                    String currentValue = options.get(key);
+                    if (currentValue.equals(val)) {
+                        //replace node references
+                        val = SharedDataContextUtils.replaceDataReferences(
+                                val,
+                                context.getSharedDataContext(),
+                                //add node name to qualifier to read node-data first
+                                ContextView.node(node.getNodename()),
+                                ContextView::nodeStep,
+                                DataContextUtils.replaceMissingOptionsWithBlank,
+                                false,
+                                false
+                        );
+                        try {
+                            InputStream defaultVal = context.getStorageTree().getResource(val).getContents().getInputStream();
+                            String pass = CharStreams.toString(new InputStreamReader(
+                                    defaultVal, Charsets.UTF_8));
+                            context.getDataContext().get("option").put(key, pass);
+                            secureOptionReplaced = true;
+                        } catch (IOException ex) {
+                            throw new NodeStepException(ex, StepFailureReason.Unknown, node.getNodename());
+                        }
+                    }
+                }
+            }
+        }
 
         NodeStepResult result = null;
         try {
-            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
-                    .singleNodeContext(node, true)
-                    .build();
-            result = interpreter.executeNodeStep(nodeContext, item, node);
+            final ExecutionContextImpl nodeContext;
+            if(secureOptionReplaced){
+                nodeContext = new ExecutionContextImpl.Builder(context)
+                        .singleNodeContext(node, true)
+                        .sharedDataContext(WFSharedContext.with(ContextView.global(), context.getDataContextObject()))
+                        .build();
+            }else{
+                nodeContext = new ExecutionContextImpl.Builder(context)
+                        .singleNodeContext(node, true)
+                        .build();
+            }
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(nodeContext, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                context
+                    .getPluginControlService()
+                    .checkDisabledPlugin(
+                        item.getNodeStepType(),
+                        ServiceNameConstants.WorkflowNodeStep
+                    );
+                result = interpreter.executeNodeStep(nodeContext, item, node);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
             if (!result.isSuccess()) {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }
@@ -168,44 +230,51 @@ class ExecutionServiceImpl implements ExecutionService {
                                                                                                       DispatcherException,
                                                                                                       ExecutionServiceException {
 
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
-        }
-        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
-        DispatcherResult result = null;
-        try {
-            result = dispatcher.dispatch(context, item);
-        } finally {
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
-            }
-        }
-        return result;
+        return dispatchToNodesWith(context, null, item);
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
                                                                                              DispatcherException,
                                                                                              ExecutionServiceException {
 
+        return dispatchToNodesWith(context, item, null);
+    }
+
+    private DispatcherResult dispatchToNodesWith(
+            StepExecutionContext context,
+            Dispatchable dispatchable,
+            NodeStepExecutionItem item
+    ) throws
+            DispatcherException,
+            ExecutionServiceException
+    {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
+            if (null != item) {
+                context.getExecutionListener().beginNodeDispatch(context, item);
+            } else if (null != dispatchable) {
+                context.getExecutionListener().beginNodeDispatch(context, dispatchable);
+            }
         }
         final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
-            result = dispatcher.dispatch(context, item);
+            if (null != item) {
+                result = dispatcher.dispatch(context, item);
+            } else {
+                result = dispatcher.dispatch(context, dispatchable);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
+                if (null != item) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, item);
+                } else if (null != dispatchable) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, dispatchable);
+                }
             }
         }
         return result;
     }
 
-    public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException {
-        return fileCopyFileStream(context, input, node, null);
-    }
 
     public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
             String destinationPath) throws
@@ -223,12 +292,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFileStream(context, input, node, destinationPath);
-            } else {
-                result = copier.copyFileStream(context, input, node);
-            }
+            result = copier.copyFileStream(context, input, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -237,10 +301,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyFile(ExecutionContext context, File file,
-                               INodeEntry node) throws FileCopierException {
-        return fileCopyFile(context, file, node, null);
-    }
 
     public String fileCopyFile(ExecutionContext context, File file, INodeEntry node,
             String destinationPath) throws FileCopierException {
@@ -256,12 +316,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFile(context, file, node, destinationPath);
-            }else{
-                result = copier.copyFile(context, file, node);
-            }
+            result = copier.copyFile(context, file, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -270,10 +325,40 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyScriptContent(ExecutionContext context, String script,
-            INodeEntry node) throws FileCopierException {
-        return fileCopyScriptContent(context,script,node,null);
+    public String[] fileCopyFiles(
+            ExecutionContext context,
+            File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    )
+            throws FileCopierException {
+
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().beginFileCopyFile(context, files, node);
+        }
+        final FileCopier copier;
+        try {
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+        } catch (ExecutionServiceException e) {
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
+        }
+        String[] result = null;
+        try {
+            if (copier instanceof MultiFileCopier) {
+                MultiFileCopier dcopier = (MultiFileCopier) copier;
+                result = dcopier.copyFiles(context, basedir, files, remotePath, node);
+            }else{
+                result = MultiFileCopierUtil.copyMultipleFiles(copier, context, basedir, files, remotePath, node);
+            }
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishMultiFileCopy(result, context, node);
+            }
+        }
+        return result;
     }
+
 
     public String fileCopyScriptContent(ExecutionContext context, String script, INodeEntry node, String
             destinationPath) throws FileCopierException {
@@ -288,12 +373,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyScriptContent(context, script, node, destinationPath);
-            }else{
-                result = copier.copyScriptContent(context, script, node);
-            }
+            result = copier.copyScriptContent(context, script, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -322,10 +402,15 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         //create node context for node and substitute data references in command
-        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
+        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
+                .nodeContextData(node)
+                .build();
 
-        final ArrayList<String> commandList = command.buildCommandForNode(nodeContext.getDataContext(),
-                node.getOsFamily());
+        final ArrayList<String> commandList = command.buildCommandForNode(
+                nodeContext.getSharedDataContext(),
+                node.getNodename(),
+                node.getOsFamily()
+        );
 
         NodeExecutorResult result = null;
         String[] commandArray = commandList.toArray(new String[commandList.size()]);
@@ -343,123 +428,5 @@ class ExecutionServiceImpl implements ExecutionService {
         return SERVICE_NAME;
     }
 
-    /**
-     * @deprecated
-     */
-    private static class ContextLoggerExecutionListenerMapGenerator implements MapGenerator<String,String>{
-        final ContextLoggerExecutionListener ctxListener;
 
-        private ContextLoggerExecutionListenerMapGenerator(final ContextLoggerExecutionListener ctxListener) {
-            this.ctxListener = ctxListener;
-        }
-
-        public Map<String, String> getMap() {
-            return ctxListener.getLoggingContext();
-        }
-    }
-    /**
-     * Create a LogReformatter for the specified node and listener. If the listener is a {@link ContextLoggerExecutionListener},
-     * then the context map data is used by the reformatter.
-     * @deprecated
-     */
-    public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
-        LogReformatter gen;
-        if (null != listener && listener.isTerse()) {
-            gen = null;
-        } else {
-            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (null != listener && null != listener.getLogFormat()) {
-                logformat = listener.getLogFormat();
-            }
-            if (listener instanceof ContextLoggerExecutionListener) {
-                final ContextLoggerExecutionListener ctxListener = (ContextLoggerExecutionListener) listener;
-                gen = new LogReformatter(logformat, new ContextLoggerExecutionListenerMapGenerator(ctxListener));
-            } else {
-                final HashMap<String, String> baseContext = new HashMap<String, String>();
-                //discover node name and username
-                baseContext.put("node", null != node?node.getNodename():"");
-                baseContext.put("user", null != node?node.extractUserName():"");
-                gen = new LogReformatter(logformat, baseContext);
-            }
-
-        }
-        return gen;
-    }
-
-    /**
-     * @deprecated
-     */
-    static class ThreadStreamFormatter {
-        final LogReformatter gen;
-        private ThreadBoundOutputStream threadBoundSysOut;
-        private ThreadBoundOutputStream threadBoundSysErr;
-        private OutputStream origout;
-        private OutputStream origerr;
-
-        ThreadStreamFormatter(final LogReformatter gen) {
-            this.gen = gen;
-        }
-
-        public ThreadBoundOutputStream getThreadBoundSysOut() {
-            return threadBoundSysOut;
-        }
-
-        public ThreadBoundOutputStream getThreadBoundSysErr() {
-            return threadBoundSysErr;
-        }
-
-        public OutputStream getOrigout() {
-            return origout;
-        }
-
-        public OutputStream getOrigerr() {
-            return origerr;
-        }
-
-
-        public ThreadStreamFormatter invoke() {
-            //bind System printstreams to the thread
-            threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
-            threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
-
-            //get outputstream for reformatting destination
-            origout = threadBoundSysOut.getThreadStream();
-            origerr = threadBoundSysErr.getThreadStream();
-
-            //replace any existing logreformatter
-            final FormattedOutputStream outformat;
-            if (origout instanceof FormattedOutputStream) {
-                final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
-                outformat = new FormattedOutputStream(gen, origsink);
-            } else {
-                outformat = new FormattedOutputStream(gen, origout);
-            }
-            outformat.setContext("level", "INFO");
-
-            final FormattedOutputStream errformat;
-            if (origerr instanceof FormattedOutputStream) {
-                final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
-                errformat = new FormattedOutputStream(gen, origsink);
-            } else {
-                errformat = new FormattedOutputStream(gen, origerr);
-            }
-            errformat.setContext("level", "ERROR");
-
-            //install the OutputStreams for the thread
-            threadBoundSysOut.installThreadStream(outformat);
-            threadBoundSysErr.installThreadStream(errformat);
-            return this;
-        }
-
-        public void resetOutputStreams() {
-            threadBoundSysOut.removeThreadStream();
-            threadBoundSysErr.removeThreadStream();
-            if (null != origout) {
-                threadBoundSysOut.installThreadStream(origout);
-            }
-            if (null != origerr) {
-                threadBoundSysErr.installThreadStream(origerr);
-            }
-        }
-    }
 }

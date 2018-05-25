@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services.logging
 
 import com.dtolabs.rundeck.core.logging.LogFileState
@@ -18,6 +34,10 @@ public enum ExecutionLogState {
      */
     AVAILABLE,
     /**
+     * Partial data present locally
+     */
+    AVAILABLE_PARTIAL,
+    /**
      * Waiting for output
      */
     WAITING,
@@ -25,6 +45,10 @@ public enum ExecutionLogState {
      * Present on remote storage
      */
     AVAILABLE_REMOTE,
+    /**
+     * Partial data on remote storage
+     */
+    AVAILABLE_REMOTE_PARTIAL,
     /**
      * Pending presence on remote storage
      */
@@ -37,6 +61,10 @@ public enum ExecutionLogState {
      * Error determining state
      */
     ERROR
+
+    public boolean isAvailableOrPartial() {
+        return this in [AVAILABLE, AVAILABLE_PARTIAL]
+    }
     /**
      * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
      * @param local
@@ -53,10 +81,17 @@ public enum ExecutionLogState {
      * @param notFoundState a state to return if both states are NOT_FOUND
      * @return
      */
-    public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote, ExecutionLogState notFoundState) {
+    public static ExecutionLogState forFileStates(
+            LogFileState local,
+            LogFileState remote,
+            ExecutionLogState notFoundState
+    )
+    {
         switch (local) {
             case LogFileState.AVAILABLE:
                 return AVAILABLE
+            case LogFileState.AVAILABLE_PARTIAL:
+                return AVAILABLE_PARTIAL
             case LogFileState.PENDING:
                 return PENDING_LOCAL
             case LogFileState.NOT_FOUND:
@@ -65,6 +100,8 @@ public enum ExecutionLogState {
                         return ERROR
                     case LogFileState.AVAILABLE:
                         return AVAILABLE_REMOTE
+                    case LogFileState.AVAILABLE_PARTIAL:
+                        return AVAILABLE_REMOTE_PARTIAL
                     case LogFileState.PENDING:
                         return PENDING_REMOTE
                     case LogFileState.NOT_FOUND:

@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="rundeck.Execution; rundeck.ScheduledExecution; rundeck.ExecReport" %>
 <%--
   Created by IntelliJ IDEA.
@@ -39,12 +55,12 @@
                 <input type="checkbox" value="${enc(attr:rpt.jcExecId)}" name="bulk_edit" class="_defaultInput bulk_edit"/>
             </td>
             </g:if>
-            <g:set var="statusIcon" value="${!execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
+            <g:set var="statusIcon" value="${execution.status == 'scheduled' ? 'time' : !execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
-                    execution.status in ['false','failed']?'fail':'other'}"/>
+                    execution.status in ['false','failed']?'fail':execution.status in ['incomplete']?'fail':'other'}"/>
             <g:set var="statusIcon" value="${[succeeded:'succeed','failed-with-retry':'failedretry',failed:'fail'].get(status)?:status}"/>
             <td class="eventicon autoclickable">
-                <i class="exec-status icon ${statusIcon}"></i>
+                <i class="exec-status icon " data-execstate="${execution.executionState?.toUpperCase()}" data-statusstring="${execution.customStatusString}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">
@@ -57,7 +73,8 @@
             </g:if>
 
 
-        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${rpt?.jcJobId?1:2}">
+            <g:set var="hasJobArgs" value="${rpt?.jcJobId && execution && execution.argString}"/>
+        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${hasJobArgs?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
                     title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
@@ -89,7 +106,7 @@
                 <span class="exec-status-text custom-status">${execution.status}</span>
             </g:if>
         </td>
-            <g:if test="${rpt?.jcJobId}">
+            <g:if test="${rpt?.jcJobId && execution && execution.argString}">
         <td class="eventargs autoclickable">
             <div class="argstring-scrollable">
             <g:if test="${execution && execution.argString}">
@@ -102,22 +119,35 @@
         </td>
             </g:if>
 
-            <td style="white-space:nowrap" class="right  date autoclickable">
+            <td style="white-space:nowrap;text-overflow: ellipsis; overflow: hidden" class="right  date autoclickable">
                 <g:if test="${it.dateCompleted}">
                     %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
                     <g:unless test="${hideDate}">
                     <span class="timeabs"><g:formatDate date="${it?.dateCompleted}" formatName="jobslist.date.format"/></span>
                     </g:unless>
-                    <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
-                            atDate='${it?.dateCompleted}'/> ">
-                        in <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
-                    </span>
+                    <g:if test="${it?.dateStarted?.getTime() < it?.dateCompleted?.getTime()}">
+                        <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
+                                atDate='${it?.dateCompleted}'/> ">
+                            <g:message code="in.of" default="in"/> <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
+                        </span>
+                    </g:if>
                 </g:if>
             </td>
 
-            <td class="  user autoclickable" style="white-space: nowrap">
-                <em>by</em>
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden" title="by ${it?.author==session.user?'you':it.author}">
+                <em><g:message code="by" default="by"/></em>
                 <g:username user="${it?.author}"/>
+            </td>
+
+
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;">
+                <g:if test="${it?.filterApplied}">
+                    <em><g:message code="activity.jobs.executed.node"/>:</em>
+                    ${it?.filterApplied}
+                </g:if>
+                <g:else>
+                    <em><g:message code="activity.jobs.executed.local"/></em>
+                </g:else>
             </td>
 
             <g:unless test="${hideNodes}">
