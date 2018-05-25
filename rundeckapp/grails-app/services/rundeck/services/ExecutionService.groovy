@@ -2297,9 +2297,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     )
             throws ExecutionServiceException
     {
-        def maxExecutions = 0
-        if(se.multipleExecutions && se.maxMultipleExecutions){
-            maxExecutions = se.maxMultipleExecutions?.toInteger()
+        def maxExecutions = 1
+        if(se.multipleExecutions){
+            maxExecutions = 0
+            if(se.maxMultipleExecutions){
+                maxExecutions = se.maxMultipleExecutions?.toInteger()
+            }
         }
         if (maxExecutions > 0 ) {
             synchronized (syncForJob(se.extid)) {
@@ -2317,9 +2320,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}', 'conflict')
                 }
 
-                /*if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
-                    throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}','conflict')
-                }*/
                 return int_createExecution(se, authContext, runAsUser, input)
             }
         }else{
