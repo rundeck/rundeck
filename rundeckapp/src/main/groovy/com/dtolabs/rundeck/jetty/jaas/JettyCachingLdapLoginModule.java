@@ -38,6 +38,8 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 
+import grails.boot.config.GrailsAutoConfiguration;
+import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
@@ -845,7 +847,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
-        _bindPassword = (String) options.get("bindPassword");
+        String bindPassword = Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString();
+        if(bindPassword != null && !"null".equals(bindPassword)) {
+            _bindPassword = bindPassword;
+        } else {
+            _bindPassword = (String) options.get("bindPassword");
+        }
         _authenticationMethod = (String) options.get("authenticationMethod");
 
         _userBaseDn = (String) options.get("userBaseDn");
