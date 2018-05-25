@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
+import com.dtolabs.rundeck.plugins.option.OptionSourcePlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
@@ -79,7 +80,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
         map.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
-
+        map.put(ServiceNameConstants.OptionSource, OptionSourcePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }
