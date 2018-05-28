@@ -2416,7 +2416,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def Map<String,String> addImportedOptions(ScheduledExecution scheduledExecution, Map optparams, StepExecutionContext executionContext) throws ExecutionServiceException {
         def newMap = new HashMap()
         executionContext.dataContext.option.each {it ->
-            println(it.key)
             if(scheduledExecution.findOption(it.key)){
                 newMap<<it
             }
