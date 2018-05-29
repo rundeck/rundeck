@@ -219,7 +219,7 @@ class JobExecSpec extends Specification {
         null            | _
     }
 
-    def "from map with node intersect"() {
+    def "from map with importOptions"() {
         given:
         def map = [
                 jobref     : [
