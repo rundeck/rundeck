@@ -24,35 +24,48 @@ var RundeckVersion = function (data) {
     self.appId = data && data['appId'] ? data['appId'] : 'Rundeck';
     self.serverName = data && data['serverName'] ? data['serverName'] : null;
     self.csscolors = [
-        'BlueViolet',
-        'CadetBlue',
-        'Chocolate',
-        'CornflowerBlue',
-        'Crimson',
-        'DodgerBlue',
-        'FireBrick',
-        'ForestGreen',
-        'Fuchsia',
-        'Goldenrod',
-        'HotPink',
-        'Indigo',
-        'LimeGreen',
-        'Magenta',
-        'Maroon',
-        'MidnightBlue',
-        'Navy',
-        'Olive',
-        'OrangeRed',
-        'Purple',
-        'RoyalBlue',
-        'SaddleBrown',
-        'SeaGreen',
-        'Sienna',
-        'SlateBlue',
-        'SteelBlue',
-        'Teal',
-        'Tomato',
-        'Violet'
+        "aquamarine",
+        "blue",
+        "brown",
+        "burlywood",
+        "chartreuse",
+        "coral",
+        "deeppink",
+        "deepskyblue",
+        "fuchsia",
+        "gold",
+        "green",
+        "greenyellow",
+        "indianred",
+        "indigo",
+        "khaki",
+        "lime",
+        "olivedrab",
+        "orange",
+        "orchid",
+        "palevioletred",
+        "peachpuff",
+        "peru",
+        "pink",
+        "plum",
+        "powderblue",
+        "rebeccapurple",
+        "red",
+        "rosybrown",
+        "salmon",
+        "sandybrown",
+        "silver",
+        "skyblue",
+        "slategray",
+        "slategrey",
+        "springgreen",
+        "tan",
+        "thistle",
+        "turquoise",
+        "violet",
+        "wheat",
+        "yellow",
+        "yellowgreen"
     ];
 
     self.glyphicons = [
@@ -83,6 +96,35 @@ var RundeckVersion = function (data) {
         'grain',
         'sunglasses'
     ];
+    //sorted
+    self.glyphicons3 = [
+        'apple',
+        'bell',
+        'book',
+        'briefcase',
+        'bullhorn',
+        'camera',
+        'cutlery',
+        'flag',
+        'flash',
+        'gift',
+        'glass',
+        'globe',
+        'grain',
+        'headphones',
+        'knight',
+        'lamp',
+        'leaf',
+        'music',
+        'paperclip',
+        'phone',
+        'piggy-bank',
+        'plane',
+        'pushpin',
+        'sunglasses',
+        'tent',
+        'tower'
+    ];
 
     self.names = [
         'Americano',
@@ -109,6 +151,31 @@ var RundeckVersion = function (data) {
         'Turkish Coffee',
         'Vanilla Latte',
         'Viennese Espresso'
+    ];
+    self.names3 = [
+        'Antipasto',
+        'Bruschetta',
+        'Calamari',
+        'Deviled egg',
+        'Egg roll',
+        'Fattoush',
+        'Gougère',
+        'Hors d\'oeuvre',
+
+        'Jalapeño popper',
+        'Mozzarella stick',
+        'Nacho',
+        'Onion ring',
+        'Papadum',
+        'Poke',
+        'Queso flameado',
+        'Rumaki',
+        'Saganaki',
+        'Spanakopita',
+        'Tapas',
+        'Vol-au-vent',
+        'Xiaolongbao',
+        'Zakuski'
     ];
     self.splitVersion = function (versionString) {
         var partsa = String(versionString).split(' ');
@@ -175,8 +242,14 @@ var RundeckVersion = function (data) {
     self.nameForVersion = function (val) {
         return self.inList(self.names, val);
     };
+    self.nameForVersion3 = function (val) {
+        return self.inList(self.names3, val);
+    };
     self.iconForVersion = function (val) {
         return self.inList(self.glyphicons, val);
+    };
+    self.iconForVersion3 = function (val) {
+        return self.inList(self.glyphicons3, val);
     };
     self.data = function () {
         return self.versionData;
@@ -185,14 +258,15 @@ var RundeckVersion = function (data) {
         return self.colorForVersion(self.versionData[self.colorIdentity]);
     };
     self.name = function () {
-        return self.nameForVersion(self.versionData[self.nameIdentity]);
+        var func = self.versionData.major === 3 ? self.nameForVersion3 : self.nameForVersion;
+        return func(self.versionData[self.nameIdentity]);
     };
     self.icon = function () {
-        return self.iconForVersion(self.versionData[self.iconIdentity]);
+        return self.iconForVersion3(self.versionData[self.iconIdentity]);
     };
     self.text = function () {
         var sep = ' ';
-        return [self.name(), self.color(), self.icon()].join(sep).toLowerCase().replace(/[^a-z]/g, sep);
+        return [self.name(), self.color(), self.icon()].join(sep).toLowerCase()/*.replace(/[^a-z]/g, sep)*/;
     };
 
     if (self.versionString) {
