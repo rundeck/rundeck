@@ -1,22 +1,15 @@
-FROM ubuntu:16.04
+FROM rdubuntu16.04-util:latest
 
 ## General package configuration
 RUN apt-get -y update && \
     apt-get -y install \
         sudo \
-        unzip \
-        curl \
-        xmlstarlet \
-        git \
-        netcat-traditional \
         software-properties-common \
         debconf-utils \
         uuid-runtime \
-        ncurses-bin \
-        iputils-ping \
-        zip \
-        vim \
+        openssh-client \
         apt-transport-https
+        
 
 
 ## Install Oracle JVM

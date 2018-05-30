@@ -85,4 +85,4 @@ unset JRE_HOME
 
 umask 002
 
-rundeckd="$JAVA_CMD $RDECK_JVM $RDECK_JVM_OPTS -jar $EXECUTABLE_WAR"
+rundeckd="$JAVA_CMD $RDECK_JVM $RDECK_JVM_OPTS -jar $EXECUTABLE_WAR --skipinstall"

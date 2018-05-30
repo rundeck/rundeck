@@ -29,7 +29,7 @@ USER="rundeck"
 RETVAL=0
 PIDFILE=/var/run/$prog.pid
 DAEMON="${JAVA_HOME:-/usr}/bin/java"
-DAEMON_ARGS="$RDECK_JVM $RDECK_JVM_OPTS -cp $BOOTSTRAP_CP com.dtolabs.rundeck.RunServer $RDECK_BASE"
+DAEMON_EXEC="$rundeckd"
 LOG="/var/log/rundeck/service.log"
 
 
@@ -44,7 +44,7 @@ start() {
   start-stop-daemon --start --quiet --chuid $USER:$USER \
                     --make-pidfile --pidfile $PIDFILE \
                     --background --startas /bin/bash -- \
-                    -c "exec $DAEMON $DAEMON_ARGS >> $LOG 2>&1" 
+                    -c "exec $DAEMON_EXEC >> $LOG 2>&1" 
 
 	RETVAL=$?
 	if [ $RETVAL -eq 0 ]; then
