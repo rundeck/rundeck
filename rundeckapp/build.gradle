@@ -89,7 +89,12 @@ dependencies {
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
     compile 'org.grails.plugins:quartz:2.0.13'
-    compile 'org.grails.plugins:mail:2.0.0'
+    //
+    //TODO: update to official mail plugin 2.0.1 once released
+    //compile 'org.grails.plugins:mail:2.0.1'
+    // using patch via jitpack https://jitpack.io/#grails3-plugins/mail/9435b0ac77
+    // pr: https://github.com/grails3-plugins/mail/pull/32
+    compile 'com.github.grails3-plugins:mail:9435b0ac77'
 
     compile 'org.yaml:snakeyaml:1.14'
     compile 'com.codahale.metrics:metrics-core:3.0.2'
@@ -139,6 +144,7 @@ dependencies {
     compile 'org.kohsuke:libpam4j:1.5'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile 'org.codehaus.groovy:groovy-all:2.4.13'
+    compile "javax.xml.bind:jaxb-api:2.3.0"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
