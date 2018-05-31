@@ -1,0 +1,18 @@
+.expandComponentHolder{
+  .expandComponentControl{
+    .more-indicator-verbiage{
+      display: inline-block;
+    }
+    .less-indicator-verbiage{
+      display: none;
+    }
+  }
+  &.expanded{
+    .more-indicator-verbiage{
+      display: none;
+    }
+    .less-indicator-verbiage{
+      display: inline-block;
+    }
+  }
+}

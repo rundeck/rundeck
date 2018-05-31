@@ -29,7 +29,7 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="pagehistory.js"/>
     <g:javascript>
-                
+
 
         var pagefirstload=true;
         function _pageUpdateNowRunning(count, perc) {
@@ -233,7 +233,7 @@
                  onFailure: function() {
                  }
              });
-            
+
         }
         function _checkSinceSuccess(response){
             var data=JSON.parse(response.responseText); // evaluate the JSON;
@@ -326,7 +326,7 @@
             jQuery('.act_bulk_edit_deselectall').click(bulkEditDeselectAll);
             jQuery('.act_bulk_edit_toggleall').click(bulkEditToggleAll);
         }
-        
+
         jQuery(init);
     </g:javascript>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
@@ -336,12 +336,12 @@
 <div>
 
 
-<div class="pageBody">
+<div class="pageBody container-fluid">
     <g:render template="/common/messages"/>
 
 
-    <div id="evtsholder" class="eventspage">
-    <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,includeBadge:true,includeAutoRefresh:true,reports:reports,filterName:filterName, filtersOpen: true, includeNowRunning:true]}"/>
+    <div id="evtsholder" class="eventspage row">
+      <g:render template="eventsFragment" model="${[paginateParams:paginateParams,params:params,includeBadge:true,includeAutoRefresh:true,reports:reports,filterName:filterName, filtersOpen: true, includeNowRunning:true]}"/>
     </div>
 
     </div>

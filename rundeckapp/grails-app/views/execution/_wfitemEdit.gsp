@@ -23,7 +23,7 @@
     $Id$
  --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class=" wfitemEditForm container">
+<div class=" wfitemEditForm">
     <g:hasErrors bean="${item}">
         <div class="alert alert-danger">
             <g:renderErrors bean="${item}" as="list"/>
@@ -129,8 +129,7 @@
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
     <div class="row">
     <div class="col-sm-2 control-label">
-    <span class="btn   btn-link ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'active')}"
-                data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
+    <span class="btn ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'active')}" data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
         <g:message code="override.node.filters" />
         <i class="glyphicon ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
     </span>
@@ -209,7 +208,7 @@
                     <div class=" col-sm-10  ">
 
                         <div class="well well-sm embed matchednodes">
-                            <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                            <button type="button" class="pull-right btn btn-sm refresh_nodes"
                                     data-loading-text="${message(code:"loading.text")}"
                                     data-bind="click: $data.updateMatchedNodes"
                                     title="${message(code:"click.to.refresh")}">
@@ -442,7 +441,7 @@
                     <g:set var="hasAdvanced" value="${item?.scriptInterpreter || item?.interpreterArgsQuoted || item?.fileExtension}"/>
                     <div class="row">
                         <div class="col-sm-2 control-label">
-                            <span class="btn btn-link ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
+                            <span class="btn ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
                                 Advanced
                                 <i class="glyphicon ${wdgt.css(if: hasAdvanced, then: 'glyphicon-chevron-down', else:'glyphicon-chevron-right')} "></i>
                             </span>
@@ -688,7 +687,7 @@
             <g:else>
                 <g:hiddenField name="num" value="${num}"/>
                 <g:hiddenField name="origitemtype" value="${origitemtype}"/>
-                <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.discard" /></span>
+                <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.Cancel" /></span>
                 <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
             </g:else>

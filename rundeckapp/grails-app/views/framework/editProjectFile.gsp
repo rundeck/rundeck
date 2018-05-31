@@ -46,73 +46,50 @@
 </head>
 
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
-</div>
+  <div class="container-fluid">
     <div class="row">
-        <g:form action="saveProjectFile" method="post"
-            params="${[project:params.project]}"
-                useToken="true"
-                onsubmit="" class="form">
+      <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+      </div>
+    </div>
+    <div class="row">
+      <g:form action="saveProjectFile" method="post" params="${[project:params.project]}" useToken="true" onsubmit="" class="form">
         <g:hiddenField name="filename" value="${filename}"/>
-        <div class="col-sm-10 col-sm-offset-1">
-            <div class="panel panel-primary"  id="createform">
-                <div class="panel-heading">
-                        <span class="panel-title">
-                            <g:message code="project.file.${filename}.edit.message"
-                                       default="Edit {0} for project {1}"
-                                       args="${[filename,params.project ?: request.project]}"/>
-                    </span>
-                </div>
-                <div class="panel-body">
-                    <div class="help-block">
-                        <g:markdown><g:message code="project.file.${filename}.help.markdown"
-                                               default="Enter markdown"/></g:markdown>
-                    </div>
-
-                    <textarea
-                              name="fileText"
-                              class="form-control code apply_ace"
-                              data-ace-autofocus='true'
-                              data-ace-session-mode="markdown"
-                              data-ace-height="500px"
-                              data-ace-control-soft-wrap="true"
-                    >${fileText}</textarea>
-                </div>
-
-
-                <div class="panel-footer buttons">
-                    <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}"
-                                    class="btn btn-default reset_page_confirm"/>
-                    <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}"
-                                    class="btn btn-primary reset_page_confirm"/>
-                    <g:if test="${displayConfig?.contains('none')}">
-                        <span class="text-warning text-right">
-                            <g:set var="authAdmin" value="${auth.resourceAllowedTest(
-                                    action: AuthConstants.ACTION_ADMIN,
-                                    type: "project",
-                                    name: (params.project ?: request.project),
-                                    context: "application"
-                            )}"/>
-                            <g:if test="${authAdmin}">
-                                <g:message code="project.edit.readme.warning.not.displayed.admin.message" />
-                                <g:link controller="framework" action="editProject" params="[project: params.project]">
-                                    <g:message code="project.configuration" />
-                                </g:link>
-                            </g:if>
-                            <g:else>
-                                <g:message code="project.edit.readme.warning.not.displayed.nonadmin.message" />
-                            </g:else>
-
-                        </span>
-                    </g:if>
-                </div>
+        <div class="col-xs-12">
+          <div class="card"  id="createform">
+            <div class="card-header">
+              <h3 class="card-title">
+                <g:message code="project.file.${filename}.edit.message" default="Edit {0} for project {1}" args="${[filename,params.project ?: request.project]}"/>
+              </h3>
             </div>
+            <div class="card-content">
+              <div class="help-block">
+                <!-- TODO: This message mentions 'home page'. Is that accurate? Should this be changed to Dashboard? -->
+                <g:markdown><g:message code="project.file.${filename}.help.markdown" default="Enter markdown"/></g:markdown>
+              </div>
+              <textarea name="fileText" class="form-control code apply_ace" data-ace-autofocus='true' data-ace-session-mode="markdown" data-ace-height="500px" data-ace-control-soft-wrap="true">${fileText}</textarea>
+            </div>
+            <div class="card-footer">
+              <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default reset_page_confirm"/>
+              <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}" class="btn btn-primary reset_page_confirm"/>
+              <g:if test="${displayConfig?.contains('none')}">
+                <span class="text-warning text-right">
+                  <g:set var="authAdmin" value="${auth.resourceAllowedTest( action: AuthConstants.ACTION_ADMIN, type: "project", name: (params.project ?: request.project), context: "application" )}"/>
+                  <g:if test="${authAdmin}">
+                    <g:message code="project.edit.readme.warning.not.displayed.admin.message" />
+                      <g:link controller="framework" action="editProject" params="[project: params.project]">
+                        <g:message code="project.configuration" />
+                      </g:link>
+                  </g:if>
+                  <g:else>
+                    <g:message code="project.edit.readme.warning.not.displayed.nonadmin.message" />
+                  </g:else>
+                </span>
+              </g:if>
+            </div>
+          </div>
         </div>
-        </g:form>
+      </g:form>
     </div>
 
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->

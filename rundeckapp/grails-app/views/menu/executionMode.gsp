@@ -32,88 +32,78 @@
 </head>
 
 <body>
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
-</div>
-<div class="row">
-    <div class="col-sm-10 col-sm-offset-1">
-
-        <g:form class="form-horizontal" controller="execution" action="executionMode" method="POST" useToken="true">
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title"><g:message code="change.execution.mode" /></h3>
-            </div>
-            <div class="panel-body">
-
-
-            <g:hiddenField name="project" value="${params.project}"/>
-            <div class="form-group">
-                <div class="radio  col-sm-12 ">
-                <label class="control-label text-success">
-                    <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
-                    <g:icon name="play" />
-                    <g:message code="system.executionMode.status.active"/>
-                    <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
-                </label>
-
-                    <p class="col-sm-12 help-block ">
-                        <g:message code="system.executionMode.description.active"/>
-                    </p>
-                </div>
-
-                <div class="radio  col-sm-12 ">
-                <label class="control-label text-warning">
-                    <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
-                    <g:icon name="pause" />
-                    <g:message code="system.executionMode.status.passive"/>
-                    <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
-                </label>
-
-                    <p class="col-sm-12 help-block ">
-                        <g:message code="system.executionMode.description.passive"/>
-                    </p>
-                </div>
-
-                <g:ifExecutionMode>
-
-
-                    <p class="col-sm-12 help-block text-info">
-                        <g:message code="action.executionMode.set.passive.help"/>
-                    </p>
-                </g:ifExecutionMode>
-                <g:ifExecutionMode passive="true">
-
-
-                    <p class="col-sm-12 help-block text-info">
-                        <g:message code="action.executionMode.set.active.help"/>
-                    </p>
-                </g:ifExecutionMode>
-            </div>
-
-            </div>
-            <div class="panel-footer">
-                <div class=" buttons">
-                    <g:link action="index" controller="menu" class="btn btn-default " name="cancel">
-                        <g:message code="cancel"/>
-                    </g:link>
-                    <g:set var="authAction"
-                           value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
-                                   AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
-                    <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}" any="true"
-                                          context="application" kind="system">
-                        <button type="submit" class="btn btn-primary ">
-                            <g:message code="set.execution.mode"/>
-                        </button>
-                    </auth:resourceAllowed>
-                </div>
-            </div>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <g:render template="/common/messages"/>
         </div>
-        </g:form>
-
-</div>
-</div>
-
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="card">
+          <g:form class="form-horizontal" controller="execution" action="executionMode" method="POST" useToken="true">
+          <div class="card-header">
+            <h4 class="card-title">
+              <g:message code="change.execution.mode" />
+            </h4>
+          </div>
+          <div class="card-content">
+            <g:hiddenField name="project" value="${params.project}"/>
+            <div>
+              <div class="radio">
+                <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
+                <label>
+                  <g:icon name="play" />
+                  <g:message code="system.executionMode.status.active"/>
+                  <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
+                </label>
+                <p class="col-sm-12 help-block ">
+                  <g:message code="system.executionMode.description.active"/>
+                </p>
+              </div>
+              <div class="radio">
+                <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
+                <label>
+                  <g:icon name="pause" />
+                  <g:message code="system.executionMode.status.passive"/>
+                  <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
+                </label>
+                <p class="col-sm-12 help-block ">
+                  <g:message code="system.executionMode.description.passive"/>
+                </p>
+              </div>
+              <g:ifExecutionMode>
+              <div class="col-xs-12">
+                <div class="alert alert-info">
+                  <span><g:message code="action.executionMode.set.passive.help"/></span>
+                </div>
+              </div>
+              </g:ifExecutionMode>
+              <g:ifExecutionMode passive="true">
+                <div class="col-xs-12">
+                  <div class="alert alert-info">
+                    <span><g:message code="action.executionMode.set.active.help"/></span>
+                  </div>
+                </div>                
+              </g:ifExecutionMode>
+            </div>
+          </div>
+          <div class="card-footer">
+            <hr style="display:block;width:100%;">
+            <g:link action="index" controller="menu" class="btn btn-default " name="cancel">
+              <g:message code="cancel"/>
+            </g:link>
+            <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS : AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
+            <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
+              <button type="submit" class="btn btn-primary ">
+                <g:message code="set.execution.mode"/>
+              </button>
+            </auth:resourceAllowed>
+          </div>
+          </g:form>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -1,0 +1,17 @@
+.no-border-on-first-tr{
+  tr:first-of-type{
+    td{
+      // border-top:none;
+    }
+  }
+}
+
+// TABS
+.vue-tabs {
+  .nav-tabs-navigation,
+  .tab-content{
+    text-align: left;
+  }
+}
+
+@import "table-events";

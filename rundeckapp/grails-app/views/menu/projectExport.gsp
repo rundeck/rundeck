@@ -32,12 +32,13 @@
 </head>
 
 <body>
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <g:render template="/common/messages"/>
+        </div>
     </div>
-</div>
-<g:render template="projectExportForm"/>
-
+    <g:render template="projectExportForm"/>
+  </div>
 </body>
 </html>

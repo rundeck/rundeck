@@ -16,49 +16,47 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
+<g:set var="authRead" value="${auth.resourceAllowedTest(
+        type: 'resource',
+        kind: 'system',
+        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
+        any: true,
+        context: 'application'
+)}"/>
 
-<bs:dropdown>
-
-    <bs:menuitem headerCode="system"/>
-    <bs:menuitem
-            controller="menu"
-            action="storage"
-            code="gui.menu.KeyStorage"/>
-    <g:set var="authRead" value="${auth.resourceAllowedTest(
-            type: 'resource',
-            kind: 'system',
-            action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
-            any: true,
-            context: 'application'
-    )}"/>
-
-    <g:if test="${authRead}">
-
-        <bs:menuitem
-                controller="menu"
-                action="systemConfig"
-                code="gui.menu.SystemConfig"/>
-        <bs:menuitem
-                controller="menu"
-                action="acls"
-                code="gui.menu.AccessControl"/>
-        <bs:menuitem
-                controller="menu"
-                action="systemInfo"
-                code="gui.menu.SystemInfo"/>
-
-
-        <bs:menuitem
-                shown="${g.logStorageEnabled()}"
-                controller="menu"
-                action="logStorage"
-                code="gui.menu.LogStorage"/>
-
-    </g:if>
-    <bs:menuitem
-            controller="menu"
-            action="plugins"
-            code="gui.menu.ListPlugins"/>
-
-    <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
-</bs:dropdown>
+<ul class="dropdown-menu">
+  <li class="dropdown-header">System</li>
+  <li>
+    <g:link controller="menu" action="storage">
+        <g:message code="gui.menu.KeyStorage"/>
+    </g:link>
+  </li>
+  <g:if test="${authRead}">
+    <li>
+      <g:link controller="menu" action="systemConfig">
+        <g:message code="gui.menu.SystemConfig"/>
+      </g:link>
+    </li>
+    <li>
+      <g:link controller="menu" action="acls">
+        <g:message code="gui.menu.AccessControl"/>
+      </g:link>
+    </li>
+    <li>
+      <g:link controller="menu" action="systemInfo">
+        <g:message code="gui.menu.SystemInfo"/>
+      </g:link>
+    </li>
+    <li>
+      <g:link shown="${g.logStorageEnabled()}" controller="menu" action="logStorage">
+        <g:message code="gui.menu.LogStorage"/>
+      </g:link>
+    </li>
+  </g:if>
+  <li>
+    <g:link controller="menu" action="plugins">
+      <g:message code="gui.menu.ListPlugins"/>
+    </g:link>
+  </li>
+  <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
+</ul>

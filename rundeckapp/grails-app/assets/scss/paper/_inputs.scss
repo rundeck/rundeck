@@ -1,0 +1,195 @@
+.form-control::-moz-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.form-control:-moz-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.form-control::-webkit-input-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.form-control:-ms-input-placeholder{
+   @include placeholder($medium-gray,1);
+}
+
+.form-control {
+    background-color: $gray-input-bg;
+    border: 1px solid $gray-input-outline;
+    border-radius: $border-radius-base;
+    color: $font-color;
+    font-size: $font-size-base;
+    @include input-size($padding-base-vertical, $padding-base-horizontal, $height-base);
+    @include box-shadow(none);
+
+    &:focus{
+       border: 1px solid $gray-input-outline;
+       background-color: $white-bg;
+       @include box-shadow(none);
+       outline: 0 !important;
+    }
+
+    .has-success &,
+    .has-error &,
+    .has-success &:focus,
+    .has-error &:focus{
+        @include box-shadow(none);
+    }
+
+    .has-success &,
+    &.valid{
+        //background-color: $white-bg;
+        color: $font-color;
+        border-color: $gray-input-outline;
+    }
+    .has-success &:focus,
+    &.valid:focus, &[aria-invalid="false"]:focus{
+        background-color: $white-bg;
+        border-color: $success-color;
+    }
+    .has-error &,
+    &.error, &[aria-invalid="true"]{
+        background-color: $danger-input-bg;
+        color: $danger-color;
+        border-color: $danger-color;
+    }
+    .has-error &:focus,
+    &.error:focus{
+        background-color: $white-bg;
+        border-color: $danger-color;
+    }
+
+    & + .form-control-feedback{
+        border-radius: $border-radius-large;
+        font-size: $font-size-base;
+        margin-top: -7px;
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        vertical-align: middle;
+    }
+
+    .open &{
+        border-bottom-color: transparent;
+    }
+
+    &.input-no-border{
+        border: 0 none;
+    }
+
+    .input-group &:not(:first-child):not(:last-child){
+        border-left: 0;
+        border-right: 0;
+    }
+}
+
+.input-lg{
+    height: 55px;
+    padding: $padding-large-vertical $padding-large-horizontal;
+}
+
+.has-error{
+    .form-control-feedback, .control-label{
+        color: $danger-color;
+    }
+}
+.has-success{
+    .form-control-feedback, .control-label{
+        color: $success-color;
+    }
+}
+
+
+.input-group-addon {
+    background-color: $gray-input-bg;
+    border: 1px solid $gray-input-outline;
+    border-radius: $border-radius-base;
+
+    .has-success &,
+    .has-error &{
+        background-color: $white-color;
+    }
+    .has-error .form-control:focus + &{
+        color: $danger-color;
+    }
+    .has-success .form-control:focus + &{
+        color: $success-color;
+    }
+    .form-control:focus + &,
+    .form-control:focus ~ &{
+        background-color: $white-color;
+    }
+
+    .has-error &{
+        color: $danger-color;
+        border-color: $danger-color;
+    }
+    .has-error &{
+        color: $success-color;
+        border-color: $success-color;
+    }
+
+    & + .form-control{
+        padding-left: 0;
+    }
+}
+.input-group{
+    margin-bottom: 15px;
+}
+.input-group[disabled]{
+    .input-group-addon{
+        background-color: $light-gray;
+    }
+}
+.input-group .form-control:first-child,
+.input-group-addon:first-child,
+.input-group-btn:first-child > .dropdown-toggle,
+.input-group-btn:last-child > .btn:not(:last-child):not(.dropdown-toggle) {
+    border-right: 0 none;
+}
+.input-group .form-control:last-child,
+.input-group-addon:last-child,
+.input-group-btn:last-child > .dropdown-toggle,
+.input-group-btn:first-child > .btn:not(:first-child) {
+    border-left: 0 none;
+}
+.form-control[disabled], .form-control[readonly], fieldset[disabled] .form-control {
+    background-color: $light-gray;
+    cursor: not-allowed;
+    @include placeholder($dark-gray,1);
+}
+.form-control[disabled]::-moz-placeholder{
+   @include placeholder($dark-gray,1);
+}
+.form-control[disabled]:-moz-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.form-control[disabled]::-webkit-input-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.form-control[disabled]:-ms-input-placeholder{
+   @include placeholder($medium-gray,1);
+}
+.input-group-btn .btn{
+    border-width: $border-thin;
+    padding: $padding-round-vertical $padding-base-horizontal;
+}
+.input-group-btn .btn-default:not(.btn-fill){
+    border-color: $medium-gray;
+}
+
+.input-group-btn:last-child > .btn{
+    margin-left: 0;
+}
+textarea.form-control{
+    max-width: 100%;
+    padding: 10px 18px;
+    resize: none;
+}
+
+.input-group-focus .input-group-addon{
+    background-color: $white-bg;
+}
+
+label::after + input[aria-required="true"]{
+  content: "*";
+  color: red;
+}

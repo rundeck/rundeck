@@ -1,12 +1,12 @@
 <table class="table table-condensed table-embed">
     <tbody>
     <tr data-bind="if: attributes.description">
-        <td class="value text-muted" colspan="4" data-bind="text: attributes.description">
+        <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
 
         </td>
     </tr>
     <tr data-bind="if: !authrun">
-        <td class="value text-muted" colspan="4">
+        <td class="value text-primary" colspan="4">
             <i class="glyphicon glyphicon-ban-circle"></i>
             %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -77,7 +77,7 @@
     %{-- unless exclude tags --}%
     <tr>
         <td class="key">
-            <i class="" data-bind="css: {'glyphicon glyphicon-tags text-muted': tags().size()>0}"></i>
+            <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i>
         </td>
         <td class="" colspan="3">
             <span data-bind="if: tags">

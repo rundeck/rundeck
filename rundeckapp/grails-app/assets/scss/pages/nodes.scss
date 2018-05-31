@@ -1,0 +1,29 @@
+#nodesContent{
+  .vue-tabs .nav-tabs-navigation{
+    text-align: left;
+    margin-bottom:0px;
+    border-color: #b7b7b7;
+    li.active a:before{
+      border-bottom-color: #b7b7b7;
+    }
+  }
+  .vue-tabs .tab-content {
+      text-align: left;
+      padding: 1em 0;
+      // border:1px solid black;
+  }
+  #schedJobNodeFilter{
+    border-top: 1px solid #cfcfca;
+    border-bottom: 1px solid #cfcfca;
+    // border-left: 1px solid #cfcfca;
+  }
+  .column-title{
+    margin-top:0;
+    margin-bottom:0;
+  }
+  #tagdemo{
+    margin-bottom:1em;
+    padding-bottom:1em;
+    border-bottom:1px solid #b7b7b7;
+  }
+}

@@ -51,32 +51,33 @@
 </head>
 
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
+<div class="container-fluid">
+  <div class="row">
+      <div class="col-sm-12">
+          <g:render template="/common/messages"/>
+      </div>
+  </div>
+  <div class="row">
+      <g:form action="saveProjectAclFile" method="post"
+              params="${[project: params.project, id: id]}"
+              useToken="true"
+              class="form-horizontal">
+          <div class="col-xs-12">
+              <g:render template="editAclFile" model="${[
+                      backHref                : g.createLink(controller: 'menu', action: 'projectAcls',params:[project:project]),
+                      title                   : g.message(code: 'edit.project.acl.file'),
+                      primaryLabel            : g.message(code: 'policy.name.label.prompt'),
+                      primaryValue            : name,
+                      secondaryLabel          : g.message(code: 'project.label.prompt'),
+                      secondaryValue          : project,
+                      fileText                : fileText,
+                      validationDocumentPrefix: 'acls/' + id
+              ]}"/>
+          </div>
+      </g:form>
+  </div>
 </div>
 
-<div class="row">
-    <g:form action="saveProjectAclFile" method="post"
-            params="${[project: params.project, id: id]}"
-            useToken="true"
-            class="form-horizontal">
-        <div class="col-sm-10 col-sm-offset-1">
-            <g:render template="editAclFile" model="${[
-                    backHref                : g.createLink(controller: 'menu', action: 'projectAcls',params:[project:project]),
-                    title                   : g.message(code: 'edit.project.acl.file'),
-                    primaryLabel            : g.message(code: 'policy.name.label.prompt'),
-                    primaryValue            : name,
-                    secondaryLabel          : g.message(code: 'project.label.prompt'),
-                    secondaryValue          : project,
-                    fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + id
-            ]}"/>
-        </div>
-    </g:form>
-</div>
 
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>

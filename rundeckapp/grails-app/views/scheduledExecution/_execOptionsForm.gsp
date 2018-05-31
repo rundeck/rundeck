@@ -170,8 +170,8 @@
                                 value="cherrypick"
                                />
                         <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
-                        <span class="textbtn textbtn-default textbtn-on-hover selectall"><g:message code="all" /></span>
-                        <span class="textbtn textbtn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
+                        <span class="btn btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
+                        <span class="btn btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
@@ -202,8 +202,8 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     <g:message code="select.prompt" />
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
+                                    <span class="btn btn-default textbtn-on-hover selectall" >All</span>
+                                    <span class="btn btn-default textbtn-on-hover selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
                                         <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active textbtn  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
@@ -329,9 +329,12 @@
                                         <span data-bind="if: total()>maxShown()">
                                             <span data-bind="messageTemplate: [maxShown(), total()]" class="text-muted"><g:message code="count.nodes.shown" /></span>
                                         </span>
-                                        <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                            <g:message code="view.in.nodes.page.prompt" />
-                                        </a>
+                                        <div class="pull-right">
+                                          <a class="btn btn-default btn-sm" data-bind="click: nodesPageView">
+                                              <g:message code="view.in.nodes.page.prompt" />
+                                          </a>
+                                        </div>
+
                                     </span>
                                 </div>
                                 <span >
