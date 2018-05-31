@@ -273,7 +273,7 @@
 
                     </span>
                     <span title="">
-                        <span class="text-muted">in</span>
+                        <span class="text-muted"><g:message code="in.of" default="in"/></span>
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
@@ -316,7 +316,7 @@
             </td>
 
             <td class="  user text-right autoclickable" style="white-space: nowrap;">
-                <em><g:message code="by" default="by"/</em>
+                <em><g:message code="by" default="by"/></em>
                 <span data-bind="text: user"></span>
             </td>
 
