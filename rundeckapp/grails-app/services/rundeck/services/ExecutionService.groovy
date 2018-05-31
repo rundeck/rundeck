@@ -2297,18 +2297,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     )
             throws ExecutionServiceException
     {
-        if (!se.multipleExecutions ) {
+        def maxExecutions = 1
+        if(se.multipleExecutions){
+            maxExecutions = 0
+            if(se.maxMultipleExecutions){
+                maxExecutions = se.maxMultipleExecutions?.toInteger()
+            }
+        }
+        if (maxExecutions > 0 ) {
             synchronized (syncForJob(se.extid)) {
                 //find any currently running executions for this job, and if so, throw exception
                 def found = Execution.withCriteria {
                     isNull('dateCompleted')
-                    eq('scheduledExecution',se)
+                    eq('scheduledExecution', se)
                     isNotNull('dateStarted')
+                    if (retry) {
+                        ne('id', prevId)
+                    }
                 }
-                if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
-                    throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}','conflict')
+
+                if (found && found.size() >= maxExecutions) {
+                    throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}', 'conflict')
                 }
-                return int_createExecution(se,authContext,runAsUser,input)
+
+                return int_createExecution(se, authContext, runAsUser, input)
             }
         }else{
             return int_createExecution(se,authContext,runAsUser,input)
