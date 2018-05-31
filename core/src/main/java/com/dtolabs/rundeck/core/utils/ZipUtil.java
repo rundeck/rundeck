@@ -199,23 +199,21 @@ public class ZipUtil {
                 if (!destFile.exists()) {
                     //create parent dirs if necessary
                     File parent = destFile.getParentFile();
-                    if(!parent.exists() && !parent.mkdirs()){
+                    if (!parent.exists() && !parent.mkdirs()) {
                         throw new IOException("Unable to create parent dir for file: " + destFile.getAbsolutePath());
                     }
                     if (!destFile.createNewFile()) {
                         throw new IOException("Unable to create file: " + destFile.getAbsolutePath());
                     }
                 }
-                InputStream entryStream = jar.getInputStream(entry);
-                FileOutputStream fileOut = new FileOutputStream(destFile);
-                try{
-                    if (null != copier) {
-                        copier.copyStream(entryStream, fileOut);
-                    } else {
-                        copyStream(entryStream, fileOut);
+                try (InputStream entryStream = streamSource.getInputStream(entry)) {
+                    try (FileOutputStream fileOut = new FileOutputStream(destFile)) {
+                        if (null != copier) {
+                            copier.copyStream(entryStream, fileOut);
+                        } else {
+                            copyStream(entryStream, fileOut);
+                        }
                     }
-                }finally{
-                    fileOut.close();
                 }
             }
         }
