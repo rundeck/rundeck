@@ -10,10 +10,24 @@ before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y xmlstarlet jq
 - sudo chsh --shell $(which bash)
+install: true
+before_script:
+- export -f travis_nanoseconds
+- export -f travis_fold
+- export -f travis_time_start
+- export -f travis_time_finish
 script:
-- "./gradlew clean && ./gradlew build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER
-  rpm deb && bash test-docker-install-deb.sh && bash test-docker-install-rpm.sh &&  DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh
-  && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && bash run-docker-ansible-tests.sh"
+- set -o errexit
+- source travis-helpers.sh
+- script_block 'gradle-build' './gradlew clean && ./gradlew build'
+- script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
+- script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+- script_block 'deb-test' 'bash test-docker-install-deb.sh'
+- script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
+- script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
+- script_block 'docker-test' 'bash run-docker-tests.sh'
+- script_block 'docker-ssl-test' 'bash run-docker-ssl-tests.sh'
+- script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
 addons:
   hostname: rdbuild
   apt:
