@@ -13,6 +13,7 @@
 **/*/build
 **/out
 **/*/out
+/artifacts
 /cobertura.ser
 /gradle-cache
 /rundeckapp/stacktrace.log
