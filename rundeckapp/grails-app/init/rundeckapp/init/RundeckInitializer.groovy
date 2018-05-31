@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
