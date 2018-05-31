@@ -724,6 +724,18 @@
             jQuery('#jobid').val(el.data('jobId'));
             jQuery('#selectProject').modal();
         });
+        var outDetails = window.location.hash;
+        if(outDetails === '#output'){
+            nodeflowvm.activeTab("output");
+            followOutput();
+            showTab('tab_link_output');
+        }else if(outDetails === '#monitor'){
+            nodeflowvm.activeTab("flow");
+            showTab('tab_link_flow');
+        }else if(outDetails === '#definition'){
+            showTab('tab_link_definition');
+        }
+
     }
     jQuery(init);
   </g:javascript>
