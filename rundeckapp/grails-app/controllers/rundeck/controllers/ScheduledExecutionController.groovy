@@ -63,6 +63,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
+import rundeck.services.optionsource.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -132,6 +133,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScmService scmService
     def PluginService pluginService
     def FileUploadService fileUploadService
+    OptionValuesService optionValuesService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -698,8 +700,43 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //see if option specified, and has url
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
-            def Option opt = scheduledExecution.options.find {it.name == params.option}
-            def values=[]
+            Option opt = scheduledExecution.options.find {it.name == params.option}
+            if(opt.optionValuesPluginType) {
+                def err = [:]
+                def values=[]
+                try {
+                    values.addAll(optionValuesService.getOptions(opt.optionValuesPluginType))
+                } catch(Exception ex) {
+                    err.message = "Failed loading remote option values"
+                    err.exception = ex
+                }
+
+                println values
+                //TODO: copied from below extract and cleanup later
+                def model= [optionSelect: opt,
+                            values: values,
+                            err: err,
+                            fieldPrefix: params.fieldPrefix,
+                            selectedvalue: params.selectedvalue]
+                if(params.extra?.option?.get(opt.name)){
+                    model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
+                }
+                withFormat{
+                    html{
+                        return render(template: "/framework/optionValuesSelect", model: model);
+                    }
+                    json{
+                        model.remove('optionSelect')
+                        model.name=opt.name
+                        if(model.err?.exception){
+                            model.err.exception=model.err.exception.toString()
+                        }
+                        render(contentType: 'application/json', text: model as JSON)
+                    }
+                }
+                return
+            }
+
             if (opt.realValuesUrl) {
                 //load expand variables in URL source
 

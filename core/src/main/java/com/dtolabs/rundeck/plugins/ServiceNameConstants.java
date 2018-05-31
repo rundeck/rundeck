@@ -64,5 +64,5 @@ public class ServiceNameConstants {
     public static final String LogFilter               = "LogFilter";
     public static final String ContentConverter        = "ContentConverter";
     public static final String TourLoader              = "TourLoader";
-    public static final String OptionSource            = "OptionSource";
+    public static final String OptionValues            = "OptionValues";
 }

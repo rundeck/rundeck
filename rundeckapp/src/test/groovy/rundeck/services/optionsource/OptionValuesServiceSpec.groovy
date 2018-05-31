@@ -3,7 +3,7 @@ package rundeck.services.optionsource
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
-class OptionSourceServiceSpec extends Specification implements ServiceUnitTest<OptionSourceService>{
+class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<OptionValuesService>{
 
     def setup() {
     }

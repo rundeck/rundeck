@@ -26,6 +26,7 @@ import rundeck.ScheduledExecution
  */
 class EditOptsController {
     def fileUploadService
+    def optionValuesService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -73,7 +74,8 @@ class EditOptsController {
                 scheduledExecutionId       : params.scheduledExecutionId,
                 newoption                  : params['newoption'],
                 edit                       : true,
-                fileUploadPluginDescription: fileUploadService.pluginDescription
+                fileUploadPluginDescription: fileUploadService.pluginDescription,
+                optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()
         ]
         return render(template: "/scheduledExecution/optEdit", model: model + outparams)
     }

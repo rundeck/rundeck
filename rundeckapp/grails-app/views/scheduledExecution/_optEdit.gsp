@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description; com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
 
 <%--
    _optEdit.gsp
@@ -386,6 +386,18 @@
                         </label>
                     </div>
 
+                <!--List OptionValuesPlugins here -->
+                <g:each in="${optionValuesPlugins}" var="optionValPlugin">
+                    <div class="radio-inline">
+                        <label class="left">
+                        <g:radio name="valuesType" value="${optionValPlugin.key}"
+                                 checked="${option?.optionValuesPluginType == optionValPlugin.key}"
+                                 id="optvalplugin_${optionValPlugin.key}"/>
+                        ${optionValPlugin.key}
+                        </label>
+                    </div>
+                </g:each>
+                    <g:set var="pluginDescription" value="${optionValuesPlugins.find { it.key == option?.optionValuesPluginType}?.value.description}" />
                     <g:set var="listvalue" value="${option?.valuesList}"/>
                     <g:set var="listjoin" value="${option?.values }"/>
 
@@ -403,7 +415,7 @@
                 </div>
 
                 <div id="vurl_${enc(attr: rkey)}_section"
-                     style="${wdgt.styleVisible(if: option?.realValuesUrl)}">
+                     style="${wdgt.styleVisible(if: option?.realValuesUrl && !option?.optionValuesPluginType)}">
                     <g:textField type="url"
                            class=" form-control"
                            name="valuesUrl"
@@ -421,6 +433,34 @@
                             <g:message code="rundeck.user.guide.option.model.provider" />
                         </a>
                     </div>
+                </div>
+                <g:if test="${pluginDescription instanceof com.dtolabs.rundeck.core.plugins.configuration.Description}">
+
+                    <div>
+                        <g:if test="${pluginDescription?.properties}">
+                            <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    extraInputCss: 'context_var_autocomplete',
+                                    service:com.dtolabs.rundeck.plugins.ServiceNameConstants.OptionValues,
+                                    provider:pluginDescription.name,
+                                    properties:pluginDescription?.properties,
+                                    prefix:prefix,
+                                    values:option?.configMap,
+                                    fieldnamePrefix:prefix,
+                                    origfieldnamePrefix:'orig.' + prefix,
+                                    allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                            ]}"/>
+                        </g:if>
+
+                        <g:if test="${!pluginDescription?.properties}">
+                            <span class="text-muted">
+                                <g:message code="notification.plugin.configuration.noproperties.message"
+                                           args="${[pluginDescription['title'] ?:
+                                                    pluginDescription['name'] ?: pluginName]}"/>
+                            </span>
+                        </g:if>
+                    </div>
+                </g:if>
+
                 </div>
 
                 %{--automatically check appropriate radio button when text is entered in the list or url field--}%

@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -53,6 +54,7 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
      */
     private static Map<Class, Class<? extends ScriptPluginBuilder>> clazzBuilderRegistry = [
             (NotificationPlugin)        : ScriptNotificationPluginBuilder,
+            (OptionValuesPlugin)        : ScriptOptionValuesPluginBuilder,
             (StreamingLogWriterPlugin)  : StreamingLogWriterPluginBuilder,
             (StreamingLogReaderPlugin)  : StreamingLogReaderPluginBuilder,
             (ExecutionFileStoragePlugin): ExecutionFileStoragePluginBuilder,

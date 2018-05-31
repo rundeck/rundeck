@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,20 @@ package com.dtolabs.rundeck.server.plugins.services;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
-import com.dtolabs.rundeck.plugins.option.OptionSourcePlugin;
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
 
 /**
  * Provider service for OptionSourcePlugins
- * Created by greg
- * Date: 4/12/13
- * Time: 4:43 PM
+ * Created by stephen
+ * Date: 5/29/18
+ * Time: 6:05 AM
  */
-public class OptionSourcePluginProviderService extends BasePluggableProviderService<OptionSourcePlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.OptionSource;
+public class OptionValuesPluginProviderService extends BasePluggableProviderService<OptionValuesPlugin> {
+    public static final String SERVICE_NAME = ServiceNameConstants.OptionValues;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
-    public OptionSourcePluginProviderService() {
-        super(SERVICE_NAME, OptionSourcePlugin.class);
+    public OptionValuesPluginProviderService() {
+        super(SERVICE_NAME, OptionValuesPlugin.class);
     }
 
     public ServiceProviderLoader getPluginManager() {

@@ -19,16 +19,17 @@ import com.dtolabs.rundeck.core.plugins.configuration.Configurable
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.plugins.option.OptionSourcePlugin
+import com.dtolabs.rundeck.plugins.option.OptionValue
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 
 
-class ScriptOptionSourcePlugin implements OptionSourcePlugin, Describable, Configurable {
+class ScriptOptionValuesPlugin implements OptionValuesPlugin, Describable, Configurable {
 
     private HashMap configuration
     private Description description
     Map<String, Closure> handlers
 
-    ScriptOptionSourcePlugin(Map<String, Closure> handlers,Description description) {
+    ScriptOptionValuesPlugin(Map<String, Closure> handlers, Description description) {
         this.handlers = handlers
         this.description = description
     }
@@ -44,7 +45,7 @@ class ScriptOptionSourcePlugin implements OptionSourcePlugin, Describable, Confi
     }
 
     @Override
-    Map<String, Object> getOptionMap() {
-        return handlers["getOptionMap"].call()
+    List<OptionValue> getOptionValues() {
+        return handlers["getOptionValues"].call(this.configuration)
     }
 }

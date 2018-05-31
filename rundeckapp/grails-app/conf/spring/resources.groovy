@@ -218,9 +218,9 @@ beans={
     }
 
     /**
-     * the OptionSource plugin provider service
+     * the OptionValues plugin provider service
      */
-    optionSourcePluginProviderService(OptionSourcePluginProviderService) {
+    optionValuesPluginProviderService(OptionValuesPluginProviderService) {
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
     /**

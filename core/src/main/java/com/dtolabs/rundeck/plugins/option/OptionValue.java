@@ -15,11 +15,7 @@
  */
 package com.dtolabs.rundeck.plugins.option;
 
-import java.util.Map;
-
-/*
- *  Plugin to provide options to Rundeck Jobs
- */
-public interface OptionSourcePlugin {
-    Map<String,Object> getOptionMap();
+public interface OptionValue {
+    String getName();
+    String getValue();
 }
