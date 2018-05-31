@@ -47,7 +47,7 @@
                         <a href="#"
                            data-toggle="collapse"
                            data-bind="attr: {href: '#detail_'+$index() }"
-                           class="textbtn textbtn-default "
+                           class="btn btn-default "
                         >
                             <i class="auto-caret"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">

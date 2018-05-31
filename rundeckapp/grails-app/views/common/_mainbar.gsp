@@ -64,6 +64,8 @@
                       </g:ifPageProperty>
                   </g:if>
                   <g:if test="${session.frameworkProjects}">
+                    %{--
+                      Removed and placed in the sidebar
                       <li id="projectSelect">
                           <g:render template="/framework/projectSelect"
                                     model="${[
@@ -73,6 +75,7 @@
                                             selectParams: selectParams
                                     ]}"/>
                       </li>
+                    --}%
                   </g:if>
                   <g:else>
                       <!-- There's no reason for an empty dropdown -->

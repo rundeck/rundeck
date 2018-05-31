@@ -43,14 +43,14 @@
             <b class="glyphicon glyphicon-play"></b>
         </g:link>
     </g:if>
-    <button type="button" class="btn ${enc(attr: btnClass ?: ' btn-default btn-sm btn-link')} dropdown-toggle"
+    <button type="button" class="btn ${enc(attr: btnClass ?: ' btn-default btn-sm')} dropdown-toggle"
             data-toggle="dropdown"
             aria-expanded="false">
         <g:if test="${!hideIcon}">
         <i class="glyphicon glyphicon-list"></i>
         </g:if>
         <g:if test="${!hideTitle}">
-            <g:message code="button.Action"/>
+            <!-- <g:message code="button.Action"/> -->
         </g:if>
         <span class="caret"></span>
     </button>

@@ -23,11 +23,10 @@
             role="button"
       -->
         <a
-           style="display: inline-block;"
-           class="col-sm-4 node_ident textbtn-default textbtn-plain"
+           style="display: inline-block; cursor:pointer;"
+           class="col-sm-4 node_ident"
            data-toggle="popover"
            data-placement="auto"
-
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
 

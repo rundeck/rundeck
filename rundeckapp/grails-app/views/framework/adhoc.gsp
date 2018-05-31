@@ -181,7 +181,7 @@
                     </div>
                   </div>
                 </div>
-                <div class="row row-space">
+                <div class="row">
                   <div class="col-xs-12">
                     <div class="spacing text-warning" id="emptyerror" style="display: none" data-bind="visible: !loading() && !error() && (!total() || total()==0)">
                       <span class="errormessage">
@@ -192,7 +192,7 @@
                       <i class="glyphicon glyphicon-warning-sign"></i>
                       <span class="errormessage" data-bind="text: error()"></span>
                     </div>
-                    <div data-bind="visible: total()>0 || loading()" class="well well-sm inline">
+                    <div data-bind="visible: total()>0 || loading()" class="well inline">
                       <span data-bind="if: loading()" class="text-info">
                         <i class="glyphicon glyphicon-time"></i>
                         <g:message code="loading.matched.nodes" />
@@ -201,11 +201,14 @@
                         <span data-bind="messageTemplate: [ total(), nodesTitle() ]"><g:message code="count.nodes.matched" /></span>.
 
                         <span data-bind="if: total()>maxShown()">
-                        <span data-bind="messageTemplate: [maxShown(), total()]" class="text-muted"><g:message code="count.nodes.shown" /></span>
+                        <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary"><g:message code="count.nodes.shown" /></span>
                         </span>
-                        <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                            <g:message code="view.in.nodes.page.prompt" />
-                        </a>
+                        <div class="pull-right" style="margin-top:-5px">
+                          <a class="btn btn-default btn-sm" data-bind="click: nodesPageView">
+                              <g:message code="view.in.nodes.page.prompt" />
+                          </a>
+                        </div>
+
                       </span>
                     </div>
                     <g:render template="nodesEmbedKO"/>

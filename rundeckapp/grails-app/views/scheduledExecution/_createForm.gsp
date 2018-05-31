@@ -23,15 +23,12 @@
             useToken="true"
             controller="scheduledExecution" action="save" params="[project: params.project]"
             class="form-horizontal">
-        <div class="panel panel-primary">
-        <div class="panel-heading">
+        <div class="card">
+        <div class="card-header">
             <div class="row">
-                <div class="col-sm-10">
-                    <span class="h4">
-                        <g:message code="ScheduledExecution.page.create.title" />
-                    </span>
-                </div>
-
+                <h4 class="col-sm-10 card-title">
+                  <g:message code="ScheduledExecution.page.create.title" />
+                </h4>
                 <div class="col-sm-2 ">
                     <g:link controller="scheduledExecution" action="upload"
                             params="[project: params.project?:request.project]"
@@ -42,10 +39,10 @@
                 </div>
             </div>
         </div>
-
-        <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
-
-        <div class="panel-footer">
+        <div class="card-content">
+          <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
+        </div>
+        <div class="card-footer">
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty" >
                     <wdgt:action visible="true" targetSelector=".cformAllowSaveOnly"/>
@@ -66,5 +63,5 @@
             </div>
         </div>
 
-        </div>
+      </div>
     </g:form>

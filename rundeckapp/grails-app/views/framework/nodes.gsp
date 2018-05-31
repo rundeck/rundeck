@@ -148,7 +148,7 @@
                             </li>
                             <li data-bind="visible: canRemoveDefaultFilter">
                                 <a href="#"
-                                   class="textbtn textbtn-default"
+                                   class="btn btn-default"
                                    data-bind="click: nodeSummary().removeDefault">
                                     <i class="glyphicon glyphicon-ban-circle"></i>
                                     <g:message code="remove.default.filter" />
@@ -262,7 +262,7 @@
                         <ul class="list-unstyled">
                             <li>
                                 <a href="#"
-                                   class="nodefilterlink textbtn textbtn-default" data-node-filter=".*"
+                                   class="nodefilterlink btn btn-default" data-node-filter=".*"
                                    data-node-filter-all="true">
                                     <g:message code="all.nodes" /></a>
 
@@ -300,7 +300,7 @@
                             <li>
                                 <a
                                         href="#"
-                                        class=" nodefilterlink textbtn textbtn-default"
+                                        class=" nodefilterlink btn btn-default"
                                         data-bind="attr: {
                                                         'data-node-filter-name': name(),
                                                         'data-node-filter': filter(),

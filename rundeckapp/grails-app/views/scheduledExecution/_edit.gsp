@@ -219,7 +219,7 @@ function getCurSEID(){
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:150px;
+        padding-right:170px;
     }
     .wfitem{
         display: block;
@@ -230,7 +230,7 @@ function getCurSEID(){
         position:absolute;
         right:0;
         top:0;
-        width:150px;
+        width:160px;
         text-align:right;
     }
     .controls.autohide{
@@ -366,7 +366,6 @@ function getCurSEID(){
 <g:if test="${scheduledExecution && scheduledExecution.id}">
     <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
 </g:if>
-<h1>hello</h1>
 
 <div class="alert alert-danger" style="display: none" id="editerror">
 
@@ -428,9 +427,7 @@ function getCurSEID(){
             <ul class="nav nav-tabs">
 
                 <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
-                <li id="previewrunbook" style="${wdgt.styleVisible(
-                        if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER)
-                )}">
+                <li id="previewrunbook" style="${wdgt.styleVisible(if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER))}">
                     <a href="#descpreview" data-toggle="tab">
                         <g:message code="job.editor.preview.runbook" />
                     </a>

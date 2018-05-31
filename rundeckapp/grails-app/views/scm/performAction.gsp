@@ -168,12 +168,12 @@
                                 <g:if test="${jobs.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=id]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=id]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -222,12 +222,12 @@
                                 <g:if test="${deletedPaths.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -314,12 +314,12 @@
                                 <g:if test="${trackingItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -400,12 +400,12 @@
                                 <g:if test="${toDeleteItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                             &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>

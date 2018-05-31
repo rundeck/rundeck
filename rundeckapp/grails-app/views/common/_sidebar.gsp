@@ -79,19 +79,40 @@
         </g:ifPageProperty>
     </g:ifPageProperty>
 </g:if>
+<g:if test="${session.frameworkProjects}">
+    <li id="projectSelect">
+      <a href="#" data-toggle="collapse" href="javascript:void(0)">
+        <i class="fas fa-suitcase"></i>
+        <p>
+          <g:message code="gui.menu.Projects"/>
+          <b class="caret"></b>
+        </p>
+      </a>
+        <g:render template="/framework/projectSelectSidebar"
+                  model="${[
+                          projects    : session.frameworkProjects,
+                          labels      : session.frameworkLabels,
+                          project     : params.project ?: request.project,
+                          selectParams: selectParams
+                  ]}"/>
+    </li>
+</g:if>
 <g:if test="${params.project ?: request.project}">
     <li>
       <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
       <i class="fas fa-clipboard-list"></i>
         <p>
-          Dashboard
+          <g:message code="gui.menu.Dashboard"/>
           <!--
+          <br>
           <g:if test="${session.frameworkLabels}">
-              <g:enc>${project ?session.frameworkLabels[project]: params.project ?
+              <small>
+                <g:enc>${project ?session.frameworkLabels[project]: params.project ?
                       session.frameworkLabels[params.project]: request.project ?
                       session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
+              </small>
           </g:if>
-        -->
+          -->
         </p>
       </g:link>
     </li>
@@ -156,7 +177,8 @@
           <a href="#" data-toggle="collapse" href="javascript:void(0)">
             <i class="fas fa-cogs"></i>
             <p>
-              <g:message code="Project"/>
+              <!-- <g:message code="Project"/> -->
+              <g:message code="gui.menu.ProjectSettings"/>
               <b class="caret"></b>
             </p>
           </a>

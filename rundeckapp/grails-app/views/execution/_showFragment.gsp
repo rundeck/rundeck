@@ -24,8 +24,18 @@
   <div class="card-header">
     <div class="executionshow panel-heading-affix" data-affix="top" data-affix-padding-top="8" id="jobInfo_${execution.id}" >
       <div class="row">
-        <div class="col-sm-6">
-          <span class="inline_only ">
+        <div class="col-xs-12 col-sm-2">
+          <div>
+            <a class="has_tooltip arrow-button" data-placement="bottom" title="<g:message code="scroll.to.top" />" href="#top">
+              <i class="fas fa-chevron-circle-up fa-2x"></i>
+            </a>
+            <a class="has_tooltip arrow-button" data-placement="bottom" title="<g:message code="scroll.to.bottom" />" href="#bottom">
+              <i class="fas fa-chevron-circle-down fa-2x"></i>
+            </a>
+          </div>
+        </div>
+        <div class="col-sm-8 text-center">
+          <span class="inline_only">
             <g:link class="primary" title="Show execution #${execution.id}" controller="execution" action="show" id="${execution.id}" params="[project:execution.project]">
               <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
               <g:message code="execution.identity" args="[execution.id]"/>
@@ -76,61 +86,59 @@
               </span>
             </g:if>
           </g:else>
-          <span class=" " data-bind="visible: completed() ">
-            <g:if test="${scheduledExecution}">
-              <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
-                <g:link controller="scheduledExecution"
-                          action="execute"
-                          id="${scheduledExecution.extid}"
-                          params="${[retryExecId: execution.id,project:execution.project]}"
-                          class="btn btn-default btn-xs"
-                          title="${g.message(code: 'execution.job.action.runAgain')}">
-                  <i class="glyphicon glyphicon-play"></i>
-                  <g:message code="execution.action.runAgain"/>&hellip;
-                </g:link>
-              </g:if>
-            </g:if>
-            <g:else>
-              <g:if test="${jobCreateAllowed}">
-                <g:link
-                        controller="scheduledExecution"
-                        action="createFromExecution"
-                        params="${[executionId: execution.id, project: execution.project]}"
-                        class="btn btn-default btn-xs"
-                        title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
-                    <g:message code="execution.action.saveAsJob" default="Save as Job"/>
-                </g:link>
-              </g:if>
-            </g:else>
-          </span>
       </div>
-      <div class="col-sm-6">
+      <div class="col-sm-2">
+          <a class="close closeoutput">
+            <i class="fas fa-times-circle" style="font-size:28px;"></i>
+          </a>
+      </div>
+    </div>
+    <div class="row" style="margin-top:20px;">
+      <div class="col-xs-12 col-sm-10">
         <g:render template="wfItemView" model="[
                   item: execution.workflow.commands[0],
                   icon: 'icon-med',
                   iwidth: '24px',
                   iheight: '24px',
           ]"/>
-          <a class="btn btn-xs close closeoutput">&times;</a>
-          <div class="pull-right">
-            <a class="btn btn-xs arrow-button has_tooltip" data-placement="bottom" title="<g:message code="scroll.to.top" />" href="#top">
-              <i class="glyphicon glyphicon-arrow-up"></i>
-            </a>
-          </div>
-          <div class="pull-right">
-            <a class="btn btn-xs arrow-button has_tooltip" data-placement="bottom" title="<g:message code="scroll.to.bottom" />" href="#bottom">
-              <i class="glyphicon glyphicon-arrow-down"></i>
-            </a>
-          </div>
-        </div>
+      </div>
+      <div class="col-xs-12 col-sm-2 text-right">
+        <span class=" " data-bind="visible: completed() ">
+          <g:if test="${scheduledExecution}">
+            <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
+              <g:link controller="scheduledExecution"
+                        action="execute"
+                        id="${scheduledExecution.extid}"
+                        params="${[retryExecId: execution.id,project:execution.project]}"
+                        class="btn btn-default btn-xs"
+                        title="${g.message(code: 'execution.job.action.runAgain')}">
+                <i class="glyphicon glyphicon-play"></i>
+                <g:message code="execution.action.runAgain"/>&hellip;
+              </g:link>
+            </g:if>
+          </g:if>
+          <g:else>
+            <g:if test="${jobCreateAllowed}">
+              <g:link
+                      controller="scheduledExecution"
+                      action="createFromExecution"
+                      params="${[executionId: execution.id, project: execution.project]}"
+                      class="btn btn-default btn-xs"
+                      title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
+                  <g:message code="execution.action.saveAsJob" default="Save as Job"/>
+              </g:link>
+            </g:if>
+          </g:else>
+        </span>
       </div>
     </div>
   </div>
+</div>
 </g:if>
 <div class="${inlineView?'card-content inlineexecution':''}">
   <div id="commandFlow" class="outputcontrols" style="margin-bottom:1em;">
     <form action="#" id="outputappendform">
-      <div class="row">
+      <div class="row" style="border-bottom:1px solid #e8e8e8;">
         <div class="col-sm-8" style="margin-bottom: 10px">
           <a href="#" class="collapser btn btn-xs" data-toggle="collapse" data-target="#viewoptions" title="Log Output View Options">
             View Options
@@ -143,7 +151,7 @@
                   <g:checkBox name="coltime" id="colTimeShow" value="true" checked="true" class="opt_display_col_time"/>
                   Time
                 </label>
-                <label class="action  join title="Click to change id="colNodeShowLabel">
+                <label class="action  join" title="Click to change" id="colNodeShowLabel">
                   <g:checkBox name="coltime id="colNodeShow value="true checked="true class="opt_display_col_node"/>
                   Node
                 </label>
@@ -174,7 +182,7 @@
           <div class="pull-right">
             <span class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
               <span>
-                <g:link class="textbtn" style="padding:5px;"
+                <g:link class="btn btn-default btn-xs"
                         title="${message(code:'execution.show.log.text.button.description',default:'View text output')}"
                         controller="execution" action="downloadOutput" id="${execution.id}"
                         params="[view: 'inline', formatted: false, project: execution.project,
@@ -183,7 +191,7 @@
                 </g:link>
               </span>
               <span>
-                <g:link class="textbtn" style="padding:5px;"
+                <g:link class="btn btn-default btn-xs"
                         title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
                         controller="execution" action="renderOutput" id="${execution.id}"
                         params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']">
@@ -191,7 +199,7 @@
                 </g:link>
               </span>
               <span class="sepL">
-                <g:link class="textbtn" style="padding:5px;"
+                <g:link class="btn btn-default btn-xs"
                       title="${message(code:'execution.show.log.download.button.description',default:'Download {0} bytes',args:[filesize>0?filesize:'?'])}"
                       controller="execution" action="downloadOutput" id="${execution.id}"
                       params="[project: execution.project]">

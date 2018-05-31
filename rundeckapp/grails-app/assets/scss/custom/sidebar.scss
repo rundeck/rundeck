@@ -46,6 +46,14 @@ body.modal-open{
     filter: alpha(opacity=50);
     opacity: .5;
   }
+  &.sidebar-mini{
+    .sidebar .sidebar-modal-backdrop{
+      display: block;
+      max-width:80px;
+      filter: alpha(opacity=50);
+      opacity: .5;
+    }
+  }
 }
 .sidebar:not(:hover){
   .sidebar-mini &{

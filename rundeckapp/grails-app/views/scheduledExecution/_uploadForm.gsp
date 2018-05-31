@@ -137,7 +137,7 @@
             %{--</g:if>--}%
             %{--<g:else>--}%
                 %{--<label for="xmlBatch">--}%
-                    %{--<span class="textbtn textbtn-default"--}%
+                    %{--<span class="btn btn-default"--}%
                           %{--onclick="toggleDisclosure('uploadFormDiv', 'uploadFormDiv-toggle', '${resource(dir:"images",file:"icon-tiny-disclosure.png")}', '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}')">--}%
                         %{--Upload File--}%
                         %{--<img src="${resource(dir: 'images', file: 'icon-tiny-disclosure' + (errjobs?.size() > 0 ? '-open' : '') + '.png')}"--}%

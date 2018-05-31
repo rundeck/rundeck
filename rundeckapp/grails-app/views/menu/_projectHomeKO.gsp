@@ -154,7 +154,7 @@
                           </div>
                       </span>
                 </div>
-              </div>              
+              </div>
             </div>
           </div>
 
@@ -170,11 +170,12 @@
              data-bind="if: project.showMessage() ">
             <div class="col-sm-12">
                 <!-- ko if: project.showReadme() -->
-                <div class="well well-nobg">
+                <div class="card">
+                  <div class="card-content">
                     <span data-bind="html: project.readme().readmeHTML()"></span>
+                  </div>
                 </div>
                 <!-- /ko -->
-
             </div>
         </div>
     </div>
