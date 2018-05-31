@@ -1529,6 +1529,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (frameworkService.isClusterModeEnabled() && !forceIncomplete) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
+                def eresult = null
                 sendAndReceive(
                         'cluster.abortExecution',
                         [
@@ -1540,7 +1541,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 uuidSource : serverUUID,
                                 uuidTarget : e.serverNodeUUID
                         ]
-                ) {
+                ) { resp ->
                     //recieve reply from event
                     Map abortresult = [
                             abortstate: ABORT_FAILED,
@@ -1548,13 +1549,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             status    : getExecutionState(e),
                             reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
                     ]
-                    def resp = ereply?.value
                     if (resp && resp instanceof Map) {
-                        return new AbortResult(abortresult + resp)
+                        eresult = new AbortResult(abortresult + resp)
                     } else {
-                        return new AbortResult(abortresult)
+                        eresult = new AbortResult(abortresult)
                     }
                 }
+                if(eresult) return eresult
             }
         }
         def result = new AbortResult()
