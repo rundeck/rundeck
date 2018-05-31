@@ -21,7 +21,7 @@
     </g:link>
   </li>
   <li>
-    <g:link controller="logout" action="user">
+    <g:link controller="user" action="logout">
       <g:message code="logout"/>
     </g:link>
   </li>
