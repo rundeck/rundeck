@@ -976,7 +976,7 @@ public class AclTool extends BaseTool {
 
     static {
         projResAttrsByType = new HashMap<>();
-        projResAttrsByType.put(ACLConstants.TYPE_JOB, Arrays.asList("group", "name"));
+        projResAttrsByType.put(ACLConstants.TYPE_JOB, Arrays.asList("group", "name", "uuid"));
         projResAttrsByType.put(ACLConstants.TYPE_ADHOC, new ArrayList<String>());
         List<String> nodeAttributeNames = Arrays.asList(
                 "nodename",
