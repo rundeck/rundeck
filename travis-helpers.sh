@@ -32,10 +32,11 @@ sync_to_s3() {
 # and copies the most common into place.
 fetch_common_artifacts() {
     sync_from_s3
-
-    cp -r artifacts/debdist packaging/ 
-    cp -r artifacts/rpmdist packaging/
-    cp -r artifacts/rundeckapp/build rundeckapp/
+    # Drop to subshell and change dir; courtesy roundup
+    (
+        cd artifacts
+        cp -r --parents * ../
+    )
 }
 
 export -f script_block

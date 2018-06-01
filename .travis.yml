@@ -37,8 +37,8 @@ jobs:
     - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
     - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
 
-    - cp -r packaging/debdist artifacts/ && cp -r packaging/rpmdist artifacts/
-    - cp -r rundeckapp/build/libs artifacts/rundeckapp/build
+    - find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+    - cp -r --parents rundeckapp/build/libs artifacts/
 
     - script_block 'sync-artifacts' sync_to_s3
 
