@@ -67,6 +67,11 @@
         <td ><g:message code="scheduledExecution.property.multipleExecutions.label"/></td>
         <td >
             <g:message code="yes" />
+        <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.maxMultipleExecutions}">
+            <code>
+                <g:message code="up.to" /> ${execdata.maxMultipleExecutions}
+            </code>
+        </g:if>
         </td>
         </tr>
     </g:if>

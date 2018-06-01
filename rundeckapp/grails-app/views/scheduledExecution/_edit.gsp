@@ -1053,6 +1053,22 @@ function getCurSEID(){
     %{--Job timeout--}%
     <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.maxMultipleExecutions.label"/>
+        </div>
+
+        <div class="${fieldColHalfSize}">
+
+            <input type='text' name="maxMultipleExecutions" value="${enc(attr:scheduledExecution?.maxMultipleExecutions)}"
+                   id="maxMultipleExecutions" class="form-control"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.maxMultipleExecutions.description"/>
+            </span>
+        </div>
+    </div>
+    %{--Job timeout--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
             <g:message code="scheduledExecution.property.timeout.label" default="Timeout"/>
         </div>
 

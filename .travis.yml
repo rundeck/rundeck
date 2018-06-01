@@ -6,14 +6,85 @@ jdk:
 sudo: required
 services:
 - docker
+
+stages:
+- build
+- test
+
 before_install:
 - sudo apt-get update -qq
 - sudo apt-get install -y xmlstarlet jq
 - sudo chsh --shell $(which bash)
-script:
-- "./gradlew clean && ./gradlew build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER
-  rpm deb && bash test-docker-install-deb.sh && bash test-docker-install-rpm.sh &&  DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh
-  && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && bash run-docker-ansible-tests.sh"
+- pip install awscli --upgrade --user
+install: true
+before_script:
+- export -f travis_nanoseconds
+- export -f travis_fold
+- export -f travis_time_start
+- export -f travis_time_finish
+
+jobs:
+  include:
+
+  - stage: build
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - mkdir -p artifacts/packaging
+    - mkdir -p artifacts/rundeckapp/build
+
+    - script_block 'gradle-build' './gradlew clean && ./gradlew build'
+    - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
+    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+
+    - find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+    - cp -r --parents rundeckapp/build/libs artifacts/
+
+    - script_block 'sync-artifacts' sync_to_s3
+
+  - stage: test
+    env: JOB='Test deb install'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'deb-test' 'bash test-docker-install-deb.sh'
+  
+  - env: JOB='Test rpm install'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
+
+  - env: JOB='Docker API tests'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
+
+  - env: JOB='Docker tests'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker-test' 'bash run-docker-tests.sh'
+  
+  - env: JOB='Docker SSL tests'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker-ssl-test' 'bash run-docker-ssl-tests.sh'
+
+  - env: JOB='Docker Ansible tests'
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
+
 addons:
   hostname: rdbuild
   apt:
@@ -29,6 +100,7 @@ branches:
     - master
     - release-2.11
     - prerelease-2.12.0
+    - build-stages
 
 notifications:
   irc:
