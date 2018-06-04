@@ -8,8 +8,12 @@ services:
 - docker
 
 stages:
-- build
-- test
+- name: build
+  if: (NOT fork)
+- name: test
+  if: (NOT fork)
+- name: fork
+  if: (fork)
 
 before_install:
 - sudo apt-get update -qq
@@ -83,6 +87,22 @@ jobs:
     - set -o errexit
     - source travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
+
+  # Fork stage consolidates all tets into one job.
+  # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
+  - stage: fork
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'gradle-build' './gradlew clean && ./gradlew build'
+    - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
+    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+    - script_block 'deb-test' 'bash test-docker-install-deb.sh'
+    - script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
+    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
+    - script_block 'docker-test' 'bash run-docker-tests.sh'
+    - script_block 'docker-ssl-test' 'bash run-docker-ssl-tests.sh'
     - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
 
 addons:
