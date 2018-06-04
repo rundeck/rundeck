@@ -9,11 +9,11 @@ services:
 
 stages:
 - name: build
-  if: (NOT fork)
+  if: fork = false
 - name: test
-  if: (NOT fork)
+  if: fork = false
 - name: fork
-  if: (fork)
+  if: fork = true
 
 before_install:
 - sudo apt-get update -qq
