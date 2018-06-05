@@ -267,45 +267,45 @@ class FrameworkServiceTests  {
 
     void testAuthorizeProjectJobAll(){
         FrameworkService test= new FrameworkService();
-        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         def decisions = [[authorized: true]] as Set
-        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject"){
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'], decisions, ['test'], "testProject"){
             assertTrue(test.authorizeProjectJobAll(it, job, ['test'] , 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllSingleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         def decisions = [[authorized: false]] as Set
-        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'], decisions, ['test'], "testProject") {
             assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         def decisions = [[authorized: false], [authorized: true]] as Set
-        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'], decisions, ['test'], "testProject") {
             assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllAllMultipleAuthFalse() {
         FrameworkService test = new FrameworkService();
-        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         def decisions = [[authorized: false], [authorized: false]] as Set
-        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'], decisions, ['test'], "testProject") {
             assertFalse(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
 
     void testAuthorizeProjectJobAllAllMultipleAuthTrue() {
         FrameworkService test = new FrameworkService();
-        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
+        ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         def decisions = [[authorized: true], [authorized: true]] as Set
-        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee'], decisions, ['test'], "testProject") {
+        assertTestAuthorizeSet(test, [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b'], decisions, ['test'], "testProject") {
             assertTrue(test.authorizeProjectJobAll(it, job, ['test'], 'testProject'))
         }
     }
@@ -373,23 +373,23 @@ class FrameworkServiceTests  {
 
         FrameworkService test = new FrameworkService();
         test:{
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee')
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
             assertEquals expected,test.authResourceForJob(job)
         }
         test:{
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah')
-            def expected = [type: 'job', name: 'name1', group: 'blah']
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
+            def expected = [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
             assertEquals expected,test.authResourceForJob(job)
         }
         test:{
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: '')
-            def expected = [type: 'job', name: 'name1', group: '']
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
+            def expected = [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
             assertEquals expected,test.authResourceForJob(job)
         }
         test:{
-            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: null)
-            def expected = [type: 'job', name: 'name1', group: '']
+            ScheduledExecution job = new ScheduledExecution(jobName: 'name1', groupPath: null, uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b')
+            def expected = [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
             assertEquals expected,test.authResourceForJob(job)
         }
     }
@@ -397,20 +397,20 @@ class FrameworkServiceTests  {
 
         FrameworkService test = new FrameworkService();
         test:{
-            def expected = [type: 'job', name: 'name1', group: 'blah/blee']
-            assertEquals expected,test.authResourceForJob('name1','blah/blee')
+            def expected = [type: 'job', name: 'name1', group: 'blah/blee', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            assertEquals expected,test.authResourceForJob('name1','blah/blee','8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         }
         test:{
-            def expected = [type: 'job', name: 'name1', group: 'blah']
-            assertEquals expected,test.authResourceForJob('name1','blah')
+            def expected = [type: 'job', name: 'name1', group: 'blah', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            assertEquals expected,test.authResourceForJob('name1','blah','8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         }
         test:{
-            def expected = [type: 'job', name: 'name1', group: '']
-            assertEquals expected,test.authResourceForJob('name1','')
+            def expected = [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            assertEquals expected,test.authResourceForJob('name1','','8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         }
         test:{
-            def expected = [type: 'job', name: 'name1', group: '']
-            assertEquals expected,test.authResourceForJob('name1',null)
+            def expected = [type: 'job', name: 'name1', group: '', uuid: '8b411ae8-8931-4db9-b12e-8d29a6fec43b']
+            assertEquals expected,test.authResourceForJob('name1',null,'8b411ae8-8931-4db9-b12e-8d29a6fec43b')
         }
     }
     void testAuthorizeApplicationResourceSuccess(){
