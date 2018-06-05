@@ -56,7 +56,7 @@ class AuthTagLib {
         boolean has=(!attrs.has || attrs.has == "true")
 
         def authContext = frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
-        def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath)
+        def resource = frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid)
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE+"project"), attrs.project))
 
@@ -272,7 +272,7 @@ class AuthTagLib {
         
                 
 
-        def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath) ]
+        def Set resources = [frameworkService.authResourceForJob(attrs.job?.jobName, attrs.job?.groupPath, attrs.job?.extid) ]
 
         def env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), attrs.job?.project))
 
