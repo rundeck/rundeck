@@ -13,7 +13,7 @@ build(){
 	docker build "$DIR" -t "$TAG"
 }
 run(){
-	docker run -it -v "$PWD:/home/rundeck/rundeck" "$TAG":latest 
+	docker run -it -v "$PWD:/home/rundeck/rundeck" "$TAG":latest -test
 }
 
 build
