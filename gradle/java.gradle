@@ -10,26 +10,6 @@ apply plugin: 'idea';
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-// add static analysis support when running on build servers (-Penvironment=build)
-if (project.hasProperty('environment') && environment == 'build') {
-    if(project in rootProject.exportedProjects.collect{project(it)}){
-        apply from: rootDir.path + '/gradle/cobertura.gradle'
-        apply plugin: 'findbugs'
-
-        findbugs {
-            toolVersion = '3.0.1'
-            ignoreFailures = true
-        }
-        if (project.hasProperty('findbugsHtml')) {
-            tasks.withType(org.gradle.api.plugins.quality.FindBugs) {
-                reports {
-                    xml.enabled false
-                    html.enabled true
-                }
-            }
-        }
-    }
-}
 
 repositories {
     mavenLocal()
