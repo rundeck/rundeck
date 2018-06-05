@@ -286,6 +286,28 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals(testFile.length(), sourceFile.length());
         testFile.delete();
     }
+
+    /**
+     * Test store file resource
+     *
+     * @throws Exception
+     */
+    public void testStoreFileResource_invalid() throws Exception {
+        FrameworkProject project = createProject();
+
+        File sourceFile = new File(
+            "src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"
+        );
+        long copied = 0;
+        try {
+            copied = project.storeFileResource("blah/../../test.file", new FileInputStream(sourceFile));
+            fail("Expected exception");
+        } catch (IOException e) {
+            assertTrue(e.getMessage(), e.getMessage().contains("Path is outside of destination directory"));
+        }
+
+
+    }
     /**
      * Test delete file resource
      * @throws Exception
