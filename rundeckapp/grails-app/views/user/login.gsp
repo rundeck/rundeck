@@ -104,7 +104,7 @@
                       <g:if test="${loginmsg}">
                         <div>
                           <span>
-                            <h3 class="text-muted">
+                            <h3 class="text-primary">
                               <g:enc>${loginmsg}</g:enc>
                             </h3>
                           </span>

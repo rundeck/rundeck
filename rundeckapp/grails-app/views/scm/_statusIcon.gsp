@@ -40,7 +40,7 @@
         <g:set var="iconName" value="glyphicon-exclamation-sign"/>
     </g:elseif>
     <g:elseif test="${showStatus.toString() == 'UNKNOWN'}">
-        <g:set var="textColor" value="text-muted"/>
+        <g:set var="textColor" value="text-primary"/>
         <g:set var="iconName" value="glyphicon-question-sign"/>
     </g:elseif>
     <g:elseif test="${showStatus.toString() == 'IMPORT_NEEDED'}">
@@ -57,7 +57,7 @@
 
     </g:elseif>
     <g:elseif test="${showStatus.toString() == 'CLEAN'}">
-        <g:set var="textColor" value="text-muted"/>
+        <g:set var="textColor" value="text-primary"/>
         <g:set var="iconName" value="glyphicon-ok"/>
     </g:elseif>
     <g:elseif test="${showStatus.toString() == 'DELETE_NEEDED'}">

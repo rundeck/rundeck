@@ -33,14 +33,14 @@
                 </div>
 
                 <div data-bind="if: !errorMessage() && !statusMessage()">
-                    <div class="well well-lg text-muted">
+                    <div class="well well-lg text-primary">
                         Loading…
                     </div>
                 </div>
 
 
                 <div data-bind="if: statusMessage()">
-                    <div class="well well-lg text-muted" data-bind="text: statusMessage()">
+                    <div class="well well-lg text-primary" data-bind="text: statusMessage()">
                     </div>
                 </div>
 
@@ -56,7 +56,7 @@
             <tmpl:wfstateSummaryScore/>
         </div>
     </div>
-<div class="row text-muted row-space">
+<div class="row text-primary row-space">
     <div class="col-sm-3">
         Node
     </div>
@@ -106,7 +106,7 @@
                         <span data-bind="template: {name: 'step-info-simple-link', data:stepinfo(), as: 'stepinfo'}"></span>
                     </feature:enabled>
                 </span>
-                <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-muted">
+                <span data-bind="if: ( executionState() == 'WAITING' ) " class="text-primary">
                     (Next up)
                 </span>
             </div>
@@ -183,7 +183,7 @@
                 <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
                     <div class="col-sm-12">
                         <div class="well well-sm well-nobg inline">
-                        <p class="text-muted">
+                        <p class="text-primary">
                             <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
                                  alt="Spinner"/>
                             <em><g:message code="loading" /></em>
@@ -194,7 +194,7 @@
                 <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
                     <div class="col-sm-12">
                         <div class="well well-sm well-nobg inline">
-                        <p class="text-muted">
+                        <p class="text-primary">
                             <i class="glyphicon glyphicon-info-sign"></i>
                             <em><g:message code="no.output" /></em>
                         </p>

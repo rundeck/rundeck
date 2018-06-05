@@ -171,7 +171,7 @@
 <div data-bind="if: hasRemote() && remoteValues().length<1 && !remoteError()">
     <div class="row">
         <div class="col-sm-12">
-            <div class="text-muted"><g:message code="option.remote.dependency.emptyresult"/></div>
+            <div class="text-primary"><g:message code="option.remote.dependency.emptyresult"/></div>
         </div>
     </div>
 </div>
@@ -180,7 +180,7 @@
     <div class="row">
         <div class="col-sm-12">
             <div data-bind="if: remoteError().code == 'empty'">
-                <div class="text-muted"><g:message code="option.remote.dependency.emptyresult"/></div>
+                <div class="text-primary"><g:message code="option.remote.dependency.emptyresult"/></div>
             </div>
             <span class="text-danger " data-bind="text: remoteError().error"></span>
 

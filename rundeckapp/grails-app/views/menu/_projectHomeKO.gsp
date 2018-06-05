@@ -111,10 +111,10 @@
                       <span data-bind="if: project">
                           <a
                                   class="h4"
-                                  data-bind="css: { 'text-muted': project.execCount()<1 }, urlPathParam: projectName "
+                                  data-bind="css: { 'text-primary': project.execCount()<1 }, urlPathParam: projectName "
                                   href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}">
                               <span class="summary-count "
-                                    data-bind="css: { 'text-muted': project.execCount()<1, 'text-info':project.execCount()>0 } ">
+                                    data-bind="css: { 'text-primary': project.execCount()<1, 'text-info':project.execCount()>0 } ">
                                   <span data-bind="text: project.loaded()?project.execCount():''"></span>
                                   <span data-bind="if: !project.loaded()">...</span>
                               </span>

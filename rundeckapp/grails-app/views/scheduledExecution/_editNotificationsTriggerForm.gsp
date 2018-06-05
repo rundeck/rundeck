@@ -153,7 +153,7 @@
                                           cols="40"
                                           class="form-control context_var_autocomplete"><g:enc>${notifurlcontent}</g:enc></textarea>
 
-                                <span class=" text-muted">
+                                <span class=" text-primary">
                                     <g:message code="notification.webhook.field.description"/>
                                 </span>
                             </g:if>
@@ -217,7 +217,7 @@
                             default="${pluginDescription.title?:pluginName}"/>
                 </label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="text-muted"><g:render template="/scheduledExecution/description"
+                        <span class="text-primary"><g:render template="/scheduledExecution/description"
                                                            model="[description:
                                                                            stepplugin.messageText(
                                                                                    service: 'Notification',
@@ -255,7 +255,7 @@
                             </g:if>
 
                             <g:if test="${!pluginDescription?.properties}">
-                                <span class="text-muted">
+                                <span class="text-primary">
                                     <g:message code="notification.plugin.configuration.noproperties.message"
                                                args="${[pluginDescription['title'] ?:
                                                        pluginDescription['name'] ?: pluginName]}"/>

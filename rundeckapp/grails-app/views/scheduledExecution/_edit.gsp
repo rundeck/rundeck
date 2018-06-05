@@ -671,7 +671,7 @@ function getCurSEID(){
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
-                <span class="text-muted" data-bind="if: loaded" >
+                <span class="text-primary" data-bind="if: loaded" >
                     <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                 </span>
                 <div id='matchednodes' class="clearfix">
@@ -1207,13 +1207,13 @@ function getCurSEID(){
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-muted">
+        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-primary">
             <g:message code="uuid" />
         </label>
 
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                <p class="form-control-static text-muted" title="${g.message(code:'uuid.for.this.job')}">
+                <p class="form-control-static text-primary" title="${g.message(code:'uuid.for.this.job')}">
                     <g:enc>${scheduledExecution?.uuid}</g:enc>
                 </p>
             </g:if>

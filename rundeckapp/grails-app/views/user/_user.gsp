@@ -41,7 +41,7 @@
                     <th class="table-header">
                         <g:message code="security.groups.label"/>
 
-                        <g:helpTooltip code="security.groups.description" css="text-muted"/>
+                        <g:helpTooltip code="security.groups.description" css="text-primary"/>
                     </th>
                 </g:if>
 

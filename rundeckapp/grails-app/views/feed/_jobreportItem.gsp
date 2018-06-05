@@ -64,7 +64,7 @@
                 &raquo;${foundJob.groupPath ? foundJob.groupPath+'/':''}${foundJob.jobName}&laquo;
             </g:if>
             <g:else>
-                <span class="text-muted">(<g:message
+                <span class="text-primary">(<g:message
                         code="domain.ScheduledExecution.title"/> ID <g:enc>${rpt.jcJobId}</g:enc> has been deleted)</span>
             </g:else>
 

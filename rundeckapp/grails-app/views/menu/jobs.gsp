@@ -632,7 +632,7 @@
                         return "text-success";
                         break;
                     case "UNKNOWN":
-                        return "text-muted";
+                        return "text-primary";
                         break;
                     case "IMPORT_NEEDED":
                         return "text-warning";
@@ -644,10 +644,10 @@
                         return "text-danger";
                         break;
                     case "CLEAN":
-                        return "text-muted";
+                        return "text-primary";
                         break;
                 }
-                return 'text-muted';
+                return 'text-primary';
             };
 
             self.jobIcon = function(jobid){

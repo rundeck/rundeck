@@ -68,7 +68,7 @@
                     <tmpl:nodeFilterLink key="name" value="${resName}"
                                          linkicon="glyphicon glyphicon-circle-arrow-right"/>
                     <span class="nodedesc"></span>
-                    <span class="text-muted ">
+                    <span class="text-primary ">
                         <g:nodeBadgeIcons node="${node}" css="badge"/>
                         ${node.description}
                     </span>
@@ -78,7 +78,7 @@
                         <td  title="Tags" class="nodetags" >
                             <g:if test="${node.tags}">
                                 <span class="nodetags">
-                                    <i class="glyphicon glyphicon-tags text-muted"></i>
+                                    <i class="glyphicon glyphicon-tags text-primary"></i>
                                     <g:each var="tag" in="${node.tags.sort().findAll{!it.startsWith('ui:')}}">
                                         <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
                                     </g:each>
@@ -104,7 +104,7 @@
                     <td title="Tags" class="nodetags" >
                         <g:if test="${node.tags}">
                             <span class="nodetags">
-                                <i class="glyphicon glyphicon-tags text-muted"></i>
+                                <i class="glyphicon glyphicon-tags text-primary"></i>
                                 <g:each var="tag" in="${node.tags.sort().findAll{!it.startsWith('ui:')}}">
                                     <tmpl:nodeFilterLink key="tags" value="${tag}" linkclass="textbtn tag"/>
                                 </g:each>

@@ -104,7 +104,7 @@
                                 />
                                 <g:message code="Workflow.Step.jobreference.import.options.label" />
                             </label>
-                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
                         </div>
                     </div>
 
@@ -120,7 +120,7 @@
                                             />
                                 <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
                             </label>
-                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
                         </div>
                     </div>
 
@@ -215,10 +215,10 @@
                                 <g:message code="refresh"/>
                                 <i class="glyphicon glyphicon-refresh"></i>
                             </button>
-                            <span class="text-muted" data-bind="visible: total()>0">
+                            <span class="text-primary" data-bind="visible: total()>0">
                                 <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                             </span>
-                            <span class="text-muted" data-bind="visible: !filter()">
+                            <span class="text-primary" data-bind="visible: !filter()">
                                 <span data-bind="text: emptyMessage"></span>
                             </span>
 
@@ -349,7 +349,7 @@
 
                                 <g:message code="JobExec.nodeStep.true.label" />
                             </label>
-                            <span class="text-muted"><g:message code="JobExec.nodeStep.true.description"/></span>
+                            <span class="text-primary"><g:message code="JobExec.nodeStep.true.description"/></span>
                         </div>
                         <div class="radio">
                             <label>
@@ -358,7 +358,7 @@
 
                                 <g:message code="JobExec.nodeStep.false.label" />
                             </label>
-                            <span class="text-muted"><g:message code="JobExec.nodeStep.false.description"/></span>
+                            <span class="text-primary"><g:message code="JobExec.nodeStep.false.description"/></span>
                         </div>
                     </div>
                 </div>
@@ -642,7 +642,7 @@
                     <g:checkBox name="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
                     <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
                 </label>
-                <span class="text-muted"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
+                <span class="text-primary"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
             </div>
         </g:if>
         <g:else>

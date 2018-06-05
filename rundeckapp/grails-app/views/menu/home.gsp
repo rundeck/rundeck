@@ -65,7 +65,7 @@
                         <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
                         <h1><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h1>
                         <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-                        <span class="text-small text-muted">
+                        <span class="text-small text-primary">
                             <g:message code="you.can.see.this.message.again.by.clicking.the" />
                             <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
                             <g:message code="in.the.page.footer" />
@@ -78,7 +78,7 @@
         <div class="col-sm-12 col-md-6">
           <div class="card">
             <div class="card-content" style="padding-bottom: 20px;">
-              <span class="h3 text-muted">
+              <span class="h3 text-primary">
                   <span data-bind="messageTemplate: projectNamesTotal, messageTemplatePluralize:true">
                       <g:message code="page.home.section.project.title" />|<g:message code="page.home.section.project.title.plural" />
                   </span>
@@ -116,14 +116,14 @@
               <div data-bind="if: projectCount() > 1 && loaded()">
                 %{--app summary info--}%
                   <span class="h4">
-                    <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-muted': execCount()<1 }">
+                    <span class="summary-count" data-bind="css: { 'text-info': execCount()>0, 'text-primary': execCount()<1 }">
                           <span data-bind="text: execCount"></span>
                     </span>
                     <span data-bind="messageTemplate: execCount, messageTemplatePluralize:true">
                       <g:message code="Execution" />|<g:message code="Execution.plural" />
                     </span>
                     <g:message code="page.home.duration.in.the.last.day" />
-                    <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-muted': totalFailedCount()<1 }">
+                    <span class="summary-count" data-bind="css: { 'text-warning': totalFailedCount()>0, 'text-primary': totalFailedCount()<1 }">
                       <span data-bind="messageTemplate: totalFailedCount">
                         <g:message code="page.home.project.executions.0.failed.parenthetical" />
                       </span>
@@ -181,7 +181,7 @@
                               <b class="glyphicon glyphicon-plus"></b>
                           </g:link>
                       </p>
-                      <span class="text-small text-muted">
+                      <span class="text-small text-primary">
                           <g:message code="you.can.see.this.message.again.by.clicking.the" />
                           <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
                           <g:message code="in.the.page.footer" />
@@ -235,13 +235,13 @@
                     </span>
                   </a>
                   <!-- <span data-bind="if: $root.projectForName(project)">
-                    <span class="text-muted" data-bind="text: $root.projectForName(project).description"></span>
+                    <span class="text-primary" data-bind="text: $root.projectForName(project).description"></span>
                   </span> -->
                 </div>
                   <div class="col-sm-6 col-md-4">
                     <span data-bind="if: $root.projectForName(project)">
-                      <a class="h4" data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1 }, urlPathParam: project " href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}">
-                        <span class="summary-count " data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1, 'text-info':$root.projectForName(project).execCount()>0 } ">
+                      <a class="h4" data-bind="css: { 'text-primary': $root.projectForName(project).execCount()<1 }, urlPathParam: project " href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}">
+                        <span class="summary-count " data-bind="css: { 'text-primary': $root.projectForName(project).execCount()<1, 'text-info':$root.projectForName(project).execCount()>0 } ">
                             <span data-bind="text: $root.projectForName(project).loaded()?$root.projectForName(project).execCount():''"></span>
                             <span data-bind="if: !$root.projectForName(project).loaded()" >...</span>
                           </span>

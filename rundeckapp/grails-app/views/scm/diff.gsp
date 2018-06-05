@@ -69,7 +69,7 @@
                 <g:if test="${scmFilePaths && scmFilePaths[job.extid]}">
                     <g:if test="${scmExportRenamedPath}">
                         <div>
-                            <span class="has_tooltip text-muted" title="Original repo path">
+                            <span class="has_tooltip text-primary" title="Original repo path">
                                 <g:icon name="file"/>
                                 ${scmExportRenamedPath}
                             </span>
@@ -119,7 +119,7 @@
             <g:elseif test="${diffResult && !diffResult.modified}">
 
                 <div class="list-group-item">
-                    <div class="list-group-item-text text-muted">
+                    <div class="list-group-item-text text-primary">
                         <g:message code="no.changes"/>
                     </div>
                 </div>

@@ -104,7 +104,7 @@
                             <span data-bind="text: allcount" class="text-info">${total}</span>
                             <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                         </span>
-                        <span data-bind="visible: allcount()<0" class="text-muted">&hellip;</span>
+                        <span data-bind="visible: allcount()<0" class="text-primary">&hellip;</span>
 
                     </a>
                     <a href="#" data-bind="visible: !filterIsSet() ">
@@ -217,7 +217,7 @@
                                           model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
                             </g:if>
                             <g:elseif test="${tagsummary?.size() == 0}">
-                            %{--<span class="text-muted">no tags</span>--}%
+                            %{--<span class="text-primary">no tags</span>--}%
                         </g:elseif>
 
                     </div>

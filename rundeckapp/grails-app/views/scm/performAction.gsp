@@ -128,7 +128,7 @@
                                                                   text: job.jobName,
                                                                   commit: jobstatus?.commit]"/>
 
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     - ${job.groupPath}
                                                 </span>
 
@@ -140,7 +140,7 @@
                                         </div>
                                         <g:if test="${renamedJobPaths?.get(job.extid)}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <g:icon name="file"/>
                                                     ${renamedJobPaths[job.extid]}
 
@@ -152,7 +152,7 @@
                                         </g:if>
                                         <g:if test="${filesMap?.get(job.extid)}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                         <g:icon name="arrow-right"/>
                                                     </g:if>
@@ -211,7 +211,7 @@
                                         </div>
 
                                         <div class="col-sm-11 col-sm-offset-1">
-                                            <span class="text-muted">
+                                            <span class="text-primary">
                                                 <span class="glyphicon glyphicon-file"></span>
                                                 ${path}
                                             </span>
@@ -273,7 +273,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-muted">
+                                                    <span class="text-primary">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -298,7 +298,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <span class="">
                                                         <g:if test="${trackedItem.iconName}">
                                                             <g:icon name="${trackedItem.iconName}"/>
@@ -359,7 +359,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-muted">
+                                                    <span class="text-primary">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -384,7 +384,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <span class="">
                                                         <g:if test="${toDeleteItem.iconName}">
                                                             <g:icon name="${toDeleteItem.iconName}"/>

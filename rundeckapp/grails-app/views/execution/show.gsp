@@ -175,7 +175,7 @@
                     <div class="card-content">
                       <div>
                         <g:if test="${execution.retryAttempt}">
-                          <div class="text-muted">
+                          <div class="text-primary">
                             <i class="glyphicon glyphicon-repeat"></i>
                             Retry #<g:enc>${execution.retryAttempt}</g:enc>  (of <g:enc>${execution.retry}</g:enc>)
                           </div>
@@ -499,7 +499,7 @@
     <g:if test="${scheduledExecution}">
         <div class="row row-space" id="activity_section">
             <div class="col-sm-12 ">
-                <h4 class="text-muted "><g:message code="page.section.Activity.for.this.job"/></h4>
+                <h4 class="text-primary "><g:message code="page.section.Activity.for.this.job"/></h4>
                 <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
             </div>
         </div>
@@ -540,7 +540,7 @@
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-muted"/>
+        <g:icon name="menu-right" css="text-primary"/>
 
     </span>
     <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
@@ -551,7 +551,7 @@
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-muted"/>
+        <g:icon name="menu-right" css="text-primary"/>
 
     </span>
     <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
@@ -563,7 +563,7 @@
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-muted"/>
+        <g:icon name="menu-right" css="text-primary"/>
     </span>
   </script>
   <script type="text/html" id="step-info-parent-path-links">
@@ -573,7 +573,7 @@
         <span data-bind="with: stepinfo.parentStepInfo()">
             <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
         </span>
-        <g:icon name="menu-right" css="text-muted"/>
+        <g:icon name="menu-right" css="text-primary"/>
     </span>
   </script>
 

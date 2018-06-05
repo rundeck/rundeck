@@ -26,7 +26,7 @@
   <div class="row">
     <div class="col-sm-12">
       <div class="h4 text-info"><g:enc>${description.title}</g:enc>
-        <small class="text-muted"><g:enc>${description.description}</g:enc></small>
+        <small class="text-primary"><g:enc>${description.description}</g:enc></small>
       </div>
     </div>
   </div>

@@ -43,7 +43,7 @@
                                        </span>
 
                                        <g:render template="/scheduledExecution/description"
-                                                 model="[description: scheduledExecution?.description, textCss: 'text-muted', firstLineOnly:true]"/>
+                                                 model="[description: scheduledExecution?.description, textCss: 'text-primary', firstLineOnly:true]"/>
                                </div>
                             </div>
                         </g:if>
@@ -128,7 +128,7 @@
 
                                 <g:render template="/scheduledExecution/description"
                                           model="[description: scheduledExecution?.description,
-                                                  textCss:'text-muted',
+                                                  textCss:'text-primary',
                                                   mode:'collapsed',
                                                   rkey:g.rkey(),
                                                   jobLinkId:scheduledExecution?.extid,
@@ -169,7 +169,7 @@
 
                                     <g:if test="${remoteClusterNodeUUID}">
                                         on
-                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-muted">
+                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-primary">
                                         </span>
                                     </g:if>
                                 </g:if>
