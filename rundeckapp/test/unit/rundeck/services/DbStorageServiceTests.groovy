@@ -263,6 +263,14 @@ class DbStorageServiceTests {
         } catch (StorageException e) {
         }
     }
+    void testCreateResource_invalid() {
+        try {
+            def res1 = service.createResource(null,'xyz/../abc', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
+            fail("expected error")
+        } catch (StorageException e) {
+            assert  e.message.contains('Invalid path')
+        }
+    }
 
     void testCreateResource_ns_ok() {
         def s1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(flush:
@@ -348,6 +356,15 @@ class DbStorageServiceTests {
             def res1 = service.updateResource(null,'abc2', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
             fail("expected error")
         } catch (StorageException e) {
+        }
+    }
+
+    void testUpdateResource_invalid() {
+        try {
+            def res1 = service.updateResource(null,'xyz/../abc2', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
+            fail("expected error")
+        } catch (StorageException e) {
+            assert  e.message.contains('Invalid path')
         }
     }
 
