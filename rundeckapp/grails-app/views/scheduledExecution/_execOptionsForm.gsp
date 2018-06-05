@@ -32,7 +32,7 @@
 
 <input id='runAtTime' type='hidden' name='runAtTime' value='' />
 
-<div class="panel panel-default panel-tab-content panel-modal-content">
+<div>
 <g:if test="${!hideHead}">
     <div class="panel-heading">
         <div class="row">
@@ -43,59 +43,6 @@
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-<script lang="text/javascript">
-    function init() {
-        var pageParams = loadJsonData('pageParams');
-        jQuery('body').on('click', '.nodefilterlink', function (evt) {
-            evt.preventDefault();
-            nodeFilter.selectNodeFilterLink(this);
-            $('filterradio').checked=true;
-        });
-        jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
-            evt.preventDefault();
-            closeOutputArea();
-        });
-
-
-        //setup node filters knockout bindings
-        var filterParams = loadJsonData('filterParamsJSON');
-        <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
-        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-        var nodeFilter = new NodeFilters(
-                appLinks.frameworkAdhoc,
-                appLinks.scheduledExecutionCreate,
-                appLinks.frameworkNodes,
-                Object.extend(filterParams, {
-                    nodeSummary:nodeSummary,
-                    view: 'embed',
-                    maxShown: 100,
-                    emptyMode: 'blank',
-                    project: pageParams.project,
-                    nodesTitleSingular: message('Node'),
-                    nodesTitlePlural: message('Node.plural')
-                }));
-
-            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-        //show selected named filter
-        nodeFilter.filterName.subscribe(function (val) {
-            if (val) {
-                jQuery('a[data-node-filter-name]').removeClass('active');
-                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-            }
-        });
-
-        nodeSummary.reload();
-        nodeFilter.updateMatchedNodes();
-
-        var tmpfilt = {};
-        jQuery.data( tmpfilt, "node-filter-name", "" );
-        jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
-        nodeFilter.selectNodeFilterLink(tmpfilt);
-
-        </g:if>
-    }
-    jQuery(document).ready(init);
-</script>
     <div class=" collapse" id="queryFilterHelp">
         <div class="help-block">
             <g:render template="/common/nodefilterStringHelp"/>
@@ -631,7 +578,59 @@
 </g:uploadForm>
 </div> %{--/.col--}%
 </div> %{--/.row--}%
+<script lang="text/javascript">
+    function init() {
+        var pageParams = loadJsonData('pageParams');
+        jQuery('body').on('click', '.nodefilterlink', function (evt) {
+            evt.preventDefault();
+            nodeFilter.selectNodeFilterLink(this);
+            $('filterradio').checked=true;
+        });
+        jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
+            evt.preventDefault();
+            closeOutputArea();
+        });
 
+
+        //setup node filters knockout bindings
+        var filterParams = loadJsonData('filterParamsJSON');
+        <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
+        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
+        var nodeFilter = new NodeFilters(
+                appLinks.frameworkAdhoc,
+                appLinks.scheduledExecutionCreate,
+                appLinks.frameworkNodes,
+                Object.extend(filterParams, {
+                    nodeSummary:nodeSummary,
+                    view: 'embed',
+                    maxShown: 100,
+                    emptyMode: 'blank',
+                    project: pageParams.project,
+                    nodesTitleSingular: message('Node'),
+                    nodesTitlePlural: message('Node.plural')
+                }));
+
+            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
+        //show selected named filter
+        nodeFilter.filterName.subscribe(function (val) {
+            if (val) {
+                jQuery('a[data-node-filter-name]').removeClass('active');
+                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
+            }
+        });
+
+        nodeSummary.reload();
+        nodeFilter.updateMatchedNodes();
+
+        var tmpfilt = {};
+        jQuery.data( tmpfilt, "node-filter-name", "" );
+        jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
+        nodeFilter.selectNodeFilterLink(tmpfilt);
+
+        </g:if>
+    }
+    jQuery(document).ready(init);
+</script>
 <content tag="footScripts">
     <asset:stylesheet src="bootstrap-datetimepicker.min.css" />
     <asset:javascript src="scheduler.js" />

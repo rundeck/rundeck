@@ -15,7 +15,7 @@
   --}%
  <%--
     _tagsummary.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 10/24/11 12:27 PM
  --%>
@@ -84,5 +84,5 @@
                 </span>
             </g:if>
         </span>
-    
+
 </g:if>

@@ -2,8 +2,6 @@
 
 }
 
-
-
 //node detail
 /** node detail */
 .nodedetail {
@@ -53,6 +51,11 @@
 
   .nodetags {
     max-width: 20em;
+    .label{
+      a{
+        color:white;
+      }
+    }
   }
 }
 

@@ -31,7 +31,7 @@
                     <th>
                       <g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
-                    <th data-bind="text: $data"></th>
+                    <th data-bind="text: $data" class="text-capitalize"></th>
                     <!--/ko -->
 
                     <!-- ko if: useDefaultColumns -->
@@ -44,11 +44,7 @@
                 <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {server: islocal}">
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
-                        <a href="#"
-                           data-toggle="collapse"
-                           data-bind="attr: {href: '#detail_'+$index() }"
-                           class="btn btn-default "
-                        >
+                        <a href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
                             <i class="auto-caret"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
@@ -87,10 +83,10 @@
                         <span class="value" data-bind="if: $parent.attributes[$data]">
                             <span data-bind="if: $data=='tags'">
                                 <span class="nodetags">
-                                    <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i>
+                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
-                                        <node-filter-link params="
+                                        <node-filter-link class="label label-default" params="
                                                     filterkey: 'tags',
                                                     filterval: $data,
                                                     tag: $data
@@ -116,7 +112,7 @@
                     <td  title="Tags" class="nodetags" >
                         <span data-bind="if: tags">
                             <span class="nodetags">
-                                <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i>
+                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
                                 <span data-bind="foreach: tags">
                                     <node-filter-link params="
                                                     filterkey: 'tags',

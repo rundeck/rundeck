@@ -156,12 +156,12 @@
 
 .md table.table {
   margin: auto;
-  .table-bordered();
-  .table-condensed();
-  .table-hover();
+  // .table-bordered();
+  // .table-condensed();
+  // .table-hover();
   th{
     text-transform: capitalize;
-    background: @table-bg-accent;
+    background: #f9f9f9;
     font-weight:bold;
   }
 }

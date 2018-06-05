@@ -83,7 +83,7 @@
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
-    <div id="execution_main" >
+    <div id="execution_main" class="content-fluid">
       <div class="executionshow_wrap" data-affix="wrap">
         <div class="executionshow" data-affix="top" data-affix-padding-top="21">
           <div class="row">
