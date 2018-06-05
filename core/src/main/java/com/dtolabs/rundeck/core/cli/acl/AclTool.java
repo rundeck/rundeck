@@ -75,6 +75,8 @@ public class AclTool extends BaseTool {
     public static final String PROJECT_ACL_LONG_OPT = "projectacl";
     public static final String JOB_OPT = "j";
     public static final String JOB_LONG_OPT = "job";
+    public static final String JOB_UUID_OPT = "I";
+    public static final String JOB_UUID_LONG_OPT = "jobUuid";
     public static final String CONTEXT_OPT = "c";
     public static final String CONTEXT_LONG_OPT = "context";
     public static final String ADHOC_OPT = "A";
@@ -236,6 +238,7 @@ public class AclTool extends BaseTool {
     private String argProject;
     private String argProjectAcl;
     private String argProjectJob;
+    private String argProjectJobUUID;
     private String argProjectNode;
     private String argTags;
     private List<String> tagsSet;
@@ -335,6 +338,15 @@ public class AclTool extends BaseTool {
                                          "Job group/name. (project context)"
                                  )
                                  .create(JOB_OPT)
+            );
+            options.addOption(
+                    OptionBuilder.withArgName("uuid")
+                            .withLongOpt(JOB_UUID_LONG_OPT)
+                            .hasArg()
+                            .withDescription(
+                                    "Job uuid. (project context)"
+                            )
+                            .create(JOB_UUID_OPT)
             );
             options.addOption(
                     OptionBuilder.withArgName("application | project")
@@ -458,6 +470,9 @@ public class AclTool extends BaseTool {
             }
             if (cli.hasOption(JOB_OPT)) {
                 argProjectJob = cli.getOptionValue(JOB_OPT);
+            }
+            if (cli.hasOption(JOB_UUID_OPT)) {
+                argProjectJobUUID = cli.getOptionValue(JOB_UUID_OPT);
             }
             if (cli.hasOption(CONTEXT_OPT)) {
                 argContext = Context.valueOf(cli.getOptionValue(CONTEXT_OPT).toLowerCase());
@@ -686,8 +701,18 @@ public class AclTool extends BaseTool {
                     new HashSet<>(projectJobActions),
                     projectEnv
             );
+        }else if(null!=argProjectJobUUID) {
+            Map<String,Object> resourceMap = createProjectJobUUIDResource();
+            logDecisions(
+                    "Job UUID\""+argProjectJobUUID+"\"",
+                    authorization,
+                    subject,
+                    resources(resourceMap),
+                    new HashSet<>(projectJobActions),
+                    projectEnv
+            );
         }else{
-            log("\n(No job (-j) specified, skipping Project context actions for a specific job.)\n");
+            log("\n(No job name (-j) or uuid (-I) specified, skipping Project context actions for a specific job.)\n");
         }
         //node
 
@@ -1078,6 +1103,8 @@ public class AclTool extends BaseTool {
             resourceMap = createStorageResource();
         } else if (argContext == Context.project && argProjectJob != null) {
             resourceMap = createProjectJobResource();
+        } else if (argContext == Context.project && argProjectJobUUID != null) {
+            resourceMap = createProjectJobUUIDResource();
         } else if (argContext == Context.project && (argProjectNode != null || argTags != null)) {
             resourceMap = createProjectNodeResource();
         } else if (argContext == Context.project && argProjectAdhoc) {
@@ -1229,7 +1256,7 @@ public class AclTool extends BaseTool {
         } else if (argContext == Context.project && argGenericType != null) {
             //actions for job
             possibleActions.addAll(projKindActionsByType.get(argGenericType.toLowerCase()));
-        } else if (argContext == Context.project && argProjectJob != null) {
+        } else if (argContext == Context.project && (argProjectJob != null || argProjectJobUUID != null)) {
             //actions for job
             possibleActions.addAll(projectJobActions);
         } else if (argContext == Context.project && argProjectAdhoc) {
@@ -1323,6 +1350,13 @@ public class AclTool extends BaseTool {
             res.put("group", "");
             res.put("name", argProjectJob);
         }
+        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
+        return resourceMap;
+    }
+
+    private Map<String, Object> createProjectJobUUIDResource() {
+        final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
+        res.put("uuid", argProjectJobUUID);
         resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
         return resourceMap;
     }
