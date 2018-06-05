@@ -15,10 +15,10 @@
   --}%
 
 
-        <table class="table table-bordered table-condensed">
+        <table class="table table-condensed">
 
             <tr>
-                <th colspan="4" class="text-primary table-footer text-small">
+                <th colspan="4" class="text-primary" style="border-top:0;">
                     <g:message code="node.summary" />
                 </th>
             </tr>

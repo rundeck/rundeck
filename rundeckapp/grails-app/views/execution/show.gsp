@@ -329,7 +329,7 @@
 
                             <g:if test="${deleteExecAuth}">
                                 <div class="spacing" data-bind="visible: completed()">
-                                    <a href="#execdelete" class="btn-link btn-sm btn btn-danger "
+                                    <a href="#execdelete" class="btn-simple btn-sm btn btn-danger "
                                        data-toggle="modal">
                                         <b class="glyphicon glyphicon-remove-circle"></b>
                                         <g:message code="button.action.delete.this.execution" />
@@ -439,60 +439,67 @@
 
         </div>
         </div>
-            <div class="row row-space clearfix">
+            <div class="row">
                 <div class="col-sm-12">
-                    <g:render template="/common/messages"/>
-                    <ul class="nav nav-tabs">
-                        <li id="tab_link_summary" class="active">
-                            <a href="#summary" data-toggle="tab"><g:message code="execution.page.show.tab.Summary.title" /></a>
-                        </li>
-                        <li id="tab_link_flow">
-                            <a href="#state" data-toggle="tab" data-bind="text: completed()?'${enc(attr:g.message(code: "report"))}':'${enc(attr:g.message(code: "monitor"))}' ">
-                                <g:if test="${execution.dateCompleted==null}">
-                                    <g:message code="monitor" />
-                                </g:if>
-                                <g:else>
-                                    <g:message code="report" />
-                                </g:else>
-                            </a>
-                        </li>
-                        <li id="tab_link_output">
-                            <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
-                        </li>
-                        <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
-                            <li id="tab_link_definition">
-                                <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
-                            </li>
-                        </g:if>
-                    </ul>
-                </div>
-            </div>
-    <div class="row">
-        <div class="col-sm-12">
-            <div class="tab-content">
-                <div class="tab-pane active" id="summary">
-                    <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
-                </div>
-                <div class="tab-pane" id="state">
-                    <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
-                       <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
-                    </div>
-                </div>
-                <div class="tab-pane " id="output">
-                    <g:render template="/execution/showFragment"
-                              model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
-                </div>
-                <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
-                    <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
-                        <div class="presentation" >
-                            <g:render template="execDetails"
-                                      model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                  <div class="card">
+                    <div class="card-content">
+                      <g:render template="/common/messages"/>
+                      <ul class="nav nav-tabs">
+
+                          <li id="tab_link_flow active">
+                              <a href="#state" data-toggle="tab" data-bind="text: completed()?'${enc(attr:g.message(code: "report"))}':'${enc(attr:g.message(code: "monitor"))}' ">
+                                  <g:if test="${execution.dateCompleted==null}">
+                                      <g:message code="monitor" />
+                                  </g:if>
+                                  <g:else>
+                                      <g:message code="report" />
+                                  </g:else>
+                              </a>
+                          </li>
+
+                          <!-- <li id="tab_link_summary">
+                              <a href="#summary" data-toggle="tab"><g:message code="execution.page.show.tab.Summary.title" /></a>
+                          </li> -->
+                          <li id="tab_link_output">
+                              <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
+                          </li>
+                          <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                              <li id="tab_link_definition">
+                                  <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
+                              </li>
+                          </g:if>
+                      </ul>
+
+                      <div class="tab-content">
+
+                        <div class="tab-pane active" id="state">
+                            <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
+                            <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
+                               <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                            </div>
                         </div>
+
+                          <!-- <div class="tab-pane" id="summary">
+                              <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
+                          </div> -->
+
+                          <div class="tab-pane " id="output">
+                              <g:render template="/execution/showFragment"
+                                        model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
+                          </div>
+                          <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                              <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
+                                  <div class="presentation" >
+                                      <g:render template="execDetails"
+                                                model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                                  </div>
+                              </div>
+                          </g:if>
+                      </div>
                     </div>
-                </g:if>
+                  </div>
+                </div>
             </div>
-        </div>
-    </div>
   </div>
 
 

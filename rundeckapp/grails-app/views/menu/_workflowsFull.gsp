@@ -87,7 +87,7 @@
               <g:else >
                 <div class="filterdef saved clear">
                   <span class="prompt"><g:enc>${filterName}</g:enc></span>
-                  <a class="btn btn-xs btn-link btn-danger pull-right" data-toggle="modal"
+                  <a class="btn btn-xs btn-simple btn-danger pull-right" data-toggle="modal"
                         href="#deleteFilterModal" title="${message(code:"job.filter.delete.button.title")}">
                     <b class="glyphicon glyphicon-remove"></b>
                     <g:message code="job.filter.delete.button" />

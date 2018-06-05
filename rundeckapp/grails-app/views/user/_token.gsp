@@ -32,7 +32,7 @@
             <code class="token-data-holder obs_hide_token collapse" data-token-id="${token.uuid}"></code>
         </g:if>
         <g:else>
-            <span class="btn btn-link btn-xs collapse in"
+            <span class="btn btn-simple btn-xs collapse in"
                   id="${ukey}_rvbtn"
                   data-toggle="collapse"
                   data-target="#${ukey}_reveal,#${ukey}_rvbtn">

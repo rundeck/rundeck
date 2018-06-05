@@ -19,7 +19,7 @@
     <div class="card-header">
         <h3 class="card-title">
             <g:if test="${backHref}">
-                <a href="${backHref}" class="btn btn-xs btn-link"
+                <a href="${backHref}" class="btn btn-xs btn-simple"
                    title="${titleText ?: g.message(code: 'navigation.back.title')}"><g:icon name="arrow-left"/></a>
             </g:if>
             ${title}

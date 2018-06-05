@@ -43,7 +43,7 @@
     <g:jsonToken id="reqtoken_undo_${key}" url="${request.forwardURI}"/>
     <g:if test="${undo || redo}">
         %{--popover trigger is initialized on click, defined in jquery init from scheduledExecution/_edit.gsp --}%
-        <span class="btn btn-xs btn-link btn-muted act_revert_popover"
+        <span class="btn btn-xs btn-simple btn-muted act_revert_popover"
               data-toggle="popover"
               data-popover-content-ref="#revert_${enc(attr:rkey)}"
               data-placement="bottom"

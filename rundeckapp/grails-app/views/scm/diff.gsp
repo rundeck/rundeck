@@ -127,7 +127,7 @@
             <g:elseif test="${diffResult?.content}">
                 <div class="list-group-item">
                     <g:link action="diff" controller="scm"
-                            class="btn btn-link"
+                            class="btn btn-simple"
                             params="[project: params.project, id: job.extid, download: true, integration:integration]">
                         <g:icon name="download"/>
                         <g:message code="download.diff" />

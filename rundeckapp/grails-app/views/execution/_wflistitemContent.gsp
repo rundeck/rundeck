@@ -93,7 +93,7 @@
             </g:unless>
         </div>
             <g:unless test="${isErrorHandler}">
-            <span class="btn btn-sm btn-link dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
+            <span class="btn btn-sm btn-simple dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
             </g:unless>
         </span>
 

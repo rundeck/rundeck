@@ -51,7 +51,7 @@
             </div>
 
             <p>
-                <g:link controller="menu" action="home" class="btn btn-link">
+                <g:link controller="menu" action="home" class="btn btn-simple">
                     <i class="glyphicon glyphicon-arrow-left"></i>
                     <g:message code="login.again" />
                 </g:link>

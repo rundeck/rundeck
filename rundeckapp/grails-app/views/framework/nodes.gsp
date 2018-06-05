@@ -271,7 +271,7 @@
                                 </a>
                                 <div class="btn-group">
                                     <button type="button"
-                                            class="btn btn-default btn-xs btn-link dropdown-toggle"
+                                            class="btn btn-default btn-xs btn-simple dropdown-toggle"
                                             style="padding: 0 5px;"
                                             title="Filter Actions"
                                             data-toggle="dropdown"
@@ -305,7 +305,7 @@
                                 </a>
                                 <div class="btn-group">
                                     <button type="button"
-                                            class="btn btn-default btn-sm btn-link dropdown-toggle"
+                                            class="btn btn-default btn-sm btn-simple dropdown-toggle"
                                             title="Filter Actions"
                                             data-toggle="dropdown"
                                             aria-expanded="false">

@@ -156,7 +156,7 @@
 
     <div data-bind="if: showDefaultButton()">
         <div class="col-sm-12">
-            <span class="btn btn-sm btn-link"
+            <span class="btn btn-sm btn-simple"
                   data-bind="attr: { title: message('option.default.button.title') }, click: setDefault"
                   title="Click to use default value: xx">
                 <g:icon name="hand-right"/>

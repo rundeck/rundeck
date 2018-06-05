@@ -13,13 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   --}%
-<div class="container">
+<div>
 <script type="text/html" id="node-current-state-simple">
     <g:render template="nodeCurrentStateSimpleKO"/>
 </script>
 
 <div data-bind="if: !stateLoaded()">
-        <div class="row-space-lg row">
+        <div class="row">
             <div class="col-sm-12">
 
                 <div data-bind="if: errorMessage()">
@@ -50,7 +50,7 @@
 
 <div data-bind="if: stateLoaded()">
 
-        <div class="row row-space" data-bind="if: completed()">
+        <div class="row" data-bind="if: completed()">
             <div class="col-sm-12">
                 <tmpl:wfstateSummaryScore />
             </div>

@@ -207,7 +207,7 @@
 
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token,instance:params.instance, iproject:params.iproject]"
-                class="btn  btn-link reload_button"
+                class="btn  btn-simple reload_button"
                 data-loading="Loading...">
             <i class="glyphicon glyphicon-refresh"></i>
             <g:message code="refresh.this.page" />

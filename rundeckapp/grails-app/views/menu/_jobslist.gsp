@@ -137,7 +137,7 @@
 
                                   <div class="btn-group pull-right">
                                       <button type="button"
-                                              class="btn btn-default btn-sm btn-link dropdown-toggle act_job_action_dropdown"
+                                              class="btn btn-default btn-sm btn-simple dropdown-toggle act_job_action_dropdown"
                                               title="${g.message(code: 'click.for.job.actions')}"
                                               data-job-id="${enc(attr:scheduledExecution.extid)}"
                                               data-toggle="dropdown"
