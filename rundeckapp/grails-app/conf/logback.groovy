@@ -36,6 +36,9 @@ appender('STDOUT', TrueConsoleAppender) {
  'net.sf.ehcache.hibernate'].each {
     logger it, WARN, ['STDOUT'], false
 }
+['org.hibernate.cache.ehcache','org.springframework.beans.GenericTypeAwarePropertyDescriptor'].each {
+    logger it, ERROR, ['STDOUT'], false
+}
 
 logger "rundeckapp.BootStrap", INFO, ["STDOUT"], false
 if (Environment.isDevelopmentMode()) {
