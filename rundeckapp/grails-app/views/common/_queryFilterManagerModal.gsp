@@ -130,14 +130,14 @@
 
 
 <div class="modal fade" id="saveFilterModal" role="dialog" aria-labelledby="saveFilterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="saveFilterModalLabel">Save Filter</h4>
             </div>
             <div class="modal-body">
-                <div class="row">
+                <div>
                   <div class="form-group">
                       <label for="newFilterName" class="control-label col-sm-2">Name:</label>
                       <div class="col-sm-10"><g:textField name="newFilterName" class="form-control input-sm"/></div>

@@ -80,15 +80,6 @@
         <div class="card">
           <div class="card-content vue-tabs">
 <!-- NAV TABS -->
-
-    %{--Form for saving/deleting node filters--}%
-
-        <g:form class="form form-horizontal" useToken="true">
-            <g:hiddenField name="project" value="${params.project}"/>
-            <g:render template="nodeFiltersHidden"/>
-            <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
-        </g:form>
         <div class="nav-tabs-navigation">
           <div class="nav-tabs-wrapper" style="width:100%;">
             <ul class="nav nav-tabs">
@@ -354,10 +345,15 @@
       </div>
     </div>
   </div>
-
-
-
-
 </div>
+
+    %{--Form for saving/deleting node filters--}%
+
+        <g:form class="form form-horizontal" useToken="true">
+            <g:hiddenField name="project" value="${params.project}"/>
+            <g:render template="nodeFiltersHidden"/>
+            <g:render template="/common/queryFilterManagerModal"
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+        </g:form>
 </body>
 </html>

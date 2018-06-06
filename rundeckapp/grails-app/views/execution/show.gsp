@@ -84,8 +84,8 @@
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
     <div id="execution_main" class="content-fluid">
-      <div class="executionshow_wrap" data-affix="wrap">
-        <div class="executionshow" data-affix="top" data-affix-padding-top="21">
+      <div class="executionshow_wrap">
+        <div class="executionshow">
           <div class="row">
           %{--job or adhoc title--}%
             <div class="col-sm-7">
@@ -504,10 +504,16 @@
 
 
     <g:if test="${scheduledExecution}">
-        <div class="row row-space" id="activity_section">
-            <div class="col-sm-12 ">
-                <h4 class="text-primary "><g:message code="page.section.Activity.for.this.job"/></h4>
-                <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
+        <div class="row" id="activity_section">
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-header">
+                  <h4 class="card-title"><g:message code="page.section.Activity.for.this.job"/></h4>
+                </div>
+                <div class="card-content">
+                  <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
+                </div>                
+              </div>
             </div>
         </div>
     </g:if>

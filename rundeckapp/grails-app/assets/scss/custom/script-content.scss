@@ -1,0 +1,13 @@
+.scriptContent {
+  font-family: courier, monospace;
+  // max-width: 500px;
+  //white-space: nowrap;
+  //max-height: 300px;
+  // overflow: hidden;
+  &.expanded {
+      max-width: none;
+      max-height: none;
+      overflow: auto;
+      white-space: pre;
+  }
+}

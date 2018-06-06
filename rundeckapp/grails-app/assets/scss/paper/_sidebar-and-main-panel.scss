@@ -340,7 +340,8 @@
 .main-panel{
   background-color: $bg-nude;
   overflow: auto;
-  position: relative;
+  position: initial;
+  // position: relative;
   z-index: 2;
   float: right;
   width: $sidebar-width;

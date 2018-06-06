@@ -122,6 +122,7 @@
                       </g:if>
                     </div>
                   </div>
+                </div>
           </div>
         </div>
       </g:form>
