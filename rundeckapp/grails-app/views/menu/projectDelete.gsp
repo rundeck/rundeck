@@ -32,6 +32,8 @@
 </head>
 
 <body>
-<g:render template="projectDeleteForm"/>
+  <div class="container-fluid">
+    <g:render template="projectDeleteForm"/>
+  </div>
 </body>
 </html>

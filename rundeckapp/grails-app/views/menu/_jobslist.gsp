@@ -19,23 +19,9 @@
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
                 <g:if test="${jobslist.size()>0}">
-                <table cellpadding="0" cellspacing="0" class="jobsList list" >
-                    <g:if test="${null==headers || headers}">
-                <tr>
-                    <g:if test="${sortEnabled}">
-
-                        <g:sortableColumn property="jobName" defaultOrder="desc" title="Name" colspan="2"  params="${paginateParams}"/>
-                        <g:sortableColumn property="nextExecution" defaultOrder="desc" title="Execution" colspan="1" params="${paginateParams}"/>
-                    </g:if>
-                    <g:else>
-
-                        <th colspan="2">Name</th>
-                        <th colspan="1">Execution</th>
-                    </g:else>
-                </tr>
-                        </g:if>
                     <% def j=0 %>
                     <g:each in="${runAuthRequired?jobslist.findAll{ jobauthorizations&&jobauthorizations[AuthConstants.ACTION_RUN]?.contains(it.id.toString())}:jobslist}" var="scheduledExecution">
+                    <div class="list-group-item">
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
                         <g:set var="clusterUUID"
@@ -44,8 +30,8 @@
                         <g:set var="remoteClusterNodeUUID" value="${scheduledExecution.scheduled ? scheduledExecution.serverNodeUUID :null}" />
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
-                            <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
-                               <td class="jobname"
+                            <div class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
+                               <div class="jobname"
                                    data-job-id="${scheduledExecution.extid}"
                                    data-job-name="${scheduledExecution.jobName}"
                                    data-job-group="${scheduledExecution.groupPath}"
@@ -57,14 +43,14 @@
                                        </span>
 
                                        <g:render template="/scheduledExecution/description"
-                                                 model="[description: scheduledExecution?.description, textCss: 'text-muted', firstLineOnly:true]"/>
-                               </td>
-                            </tr>
+                                                 model="[description: scheduledExecution?.description, textCss: 'text-primary', firstLineOnly:true]"/>
+                               </div>
+                            </div>
                         </g:if>
                         <g:else>
                             %{--normal view--}%
-                        <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-                            <td class="jobname"
+                        <div class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
+                            <div class="jobname"
                                 data-job-id="${scheduledExecution.extid}"
                                 data-job-name="${scheduledExecution.jobName}"
                                 data-job-group="${scheduledExecution.groupPath}"
@@ -139,32 +125,33 @@
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>
                                         <g:enc>${scheduledExecution.jobName}</g:enc></g:link>
-                                <div class="btn-group">
-                                    <button type="button"
-                                            class="btn btn-default btn-sm btn-link dropdown-toggle act_job_action_dropdown"
-                                            title="${g.message(code: 'click.for.job.actions')}"
-                                            data-job-id="${enc(attr:scheduledExecution.extid)}"
-                                            data-toggle="dropdown"
-                                            aria-expanded="false">
-                                        <span class="caret"></span>
-                                    </button>
-                                    <ul class="dropdown-menu" role="menu">
-                                        <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
-                                    </ul>
-                                </div>
 
                                 <g:render template="/scheduledExecution/description"
                                           model="[description: scheduledExecution?.description,
-                                                  textCss:'text-muted',
+                                                  textCss:'text-primary',
                                                   mode:'collapsed',
                                                   rkey:g.rkey(),
                                                   jobLinkId:scheduledExecution?.extid,
                                                   cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
                                           ]"/>
 
-                            </td>
+                                  <div class="btn-group pull-right">
+                                      <button type="button"
+                                              class="btn btn-default btn-sm btn-simple dropdown-toggle act_job_action_dropdown"
+                                              title="${g.message(code: 'click.for.job.actions')}"
+                                              data-job-id="${enc(attr:scheduledExecution.extid)}"
+                                              data-toggle="dropdown"
+                                              aria-expanded="false">
+                                          <span class="caret"></span>
+                                      </button>
+                                      <ul class="dropdown-menu" role="menu">
+                                          <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
+                                      </ul>
+                                  </div>
+
+                            </div>
                             <g:if test="${scheduledExecution.scheduled}">
-                            <td class="scheduletime">
+                            <div class="scheduletime" style="margin-top:5px; margin-left:5px;">
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <g:if test="${serverClusterNodeUUID && !remoteClusterNodeUUID}">
                                         <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
@@ -182,7 +169,7 @@
 
                                     <g:if test="${remoteClusterNodeUUID}">
                                         on
-                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-muted">
+                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-primary">
                                         </span>
                                     </g:if>
                                 </g:if>
@@ -221,13 +208,13 @@
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
-                            </td>
+                            </div>
                             </g:if>
-                        </tr>
+                        </div>
                         </g:else>
                         <% j++ %>
+                        </div>
                     </g:each>
-                </table>
             </g:if>
                 <g:else>
                 <span class="note empty">None</span>

@@ -18,7 +18,7 @@
 <span class="execstate isnode"
       data-bind="text: name, attr: { 'data-execstate': summaryState() } "></span>
 
-<i class="glyphicon glyphicon-chevron-right text-muted"></i>
+<i class="glyphicon glyphicon-chevron-right text-primary"></i>
 <span data-bind="with: currentStep()">
     <a class="stepident action textbtn"
           data-bind="attr: { 'data-execstate': executionState, title: stepctxdesc, href: '#'+stepctx+':'+node.name },  click: $root.scrollToOutput">

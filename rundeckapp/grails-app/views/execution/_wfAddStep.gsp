@@ -70,7 +70,7 @@
                         <span class="text-info">- <g:message code="step.type.jobreference.nodestep.description"/></span>
                     </a>
                 <g:if test="${nodeStepDescriptions}">
-                    <div class="list-group-item text-muted ">
+                    <div class="list-group-item text-primary ">
                         <g:plural for="${nodeStepDescriptions}" code="node.step.plugin" />
                     </div>
                     <g:each in="${nodeStepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
@@ -116,7 +116,7 @@
                     <g:message code="step.type.jobreference.title" /> <span class="text-info">- <g:message code="step.type.jobreference.description" /></span>
                 </a>
                 <g:if test="${stepDescriptions}">
-                    <div class="list-group-item text-muted ">
+                    <div class="list-group-item text-primary ">
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">

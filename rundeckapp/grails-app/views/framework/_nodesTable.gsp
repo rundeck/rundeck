@@ -41,14 +41,14 @@
             <g:if test="${remainCount>max}">
             <span
                     id="nextPageButton"
-                    class="textbtn textbtn-default nodes_paging_next"
+                    class="btn btn-default nodes_paging_next"
                     data-node-table-id="nodesTable"
                     data-node-paging-id="nodesPaging"
                     data-bind="click: updateNodesNextPage, visible: hasMultiplePages"
                     title="Load next ${enc(attr:max)} nodes...">Next <g:enc>${max}</g:enc>&hellip;</span>
             </g:if>
             <span
-                    class="textbtn textbtn-default nodes_paging_all"
+                    class="btn btn-default nodes_paging_all"
                     data-node-table-id="nodesTable"
                     data-node-paging-id="nodesPaging"
                     data-bind="click: updateNodesRemainingPages"

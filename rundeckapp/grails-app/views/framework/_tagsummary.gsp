@@ -15,7 +15,7 @@
   --}%
  <%--
     _tagsummary.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 10/24/11 12:27 PM
  --%>
@@ -26,13 +26,13 @@
         <g:if test="${hidetop}">
             <span class="textbtn textbtn-secondary tag"
                   title="Show tag demographics" onclick="Element.toggle('tagdemo'); Element.toggleClassName(this,'active');">
-                <i class="glyphicon glyphicon-tags text-muted "></i>
+                <i class="glyphicon glyphicon-tags text-primary "></i>
                 <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
         <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
             <g:if test="${!hidetop}">
-                <i class="glyphicon glyphicon-tags text-muted"></i>
+                <i class="glyphicon glyphicon-tags text-primary"></i>
             </g:if>
             <g:set var="singletag" value="${[]}"/>
             <g:each var="tag" in="${tagsummary.sort{a,b->a.value>b.value?-1:a.value<b.value?1:a.key<=>b.key}.keySet()}">
@@ -84,5 +84,5 @@
                 </span>
             </g:if>
         </span>
-    
+
 </g:if>

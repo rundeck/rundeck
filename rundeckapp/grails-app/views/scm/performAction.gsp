@@ -128,7 +128,7 @@
                                                                   text: job.jobName,
                                                                   commit: jobstatus?.commit]"/>
 
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     - ${job.groupPath}
                                                 </span>
 
@@ -140,7 +140,7 @@
                                         </div>
                                         <g:if test="${renamedJobPaths?.get(job.extid)}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <g:icon name="file"/>
                                                     ${renamedJobPaths[job.extid]}
 
@@ -152,7 +152,7 @@
                                         </g:if>
                                         <g:if test="${filesMap?.get(job.extid)}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <g:if test="${renamedJobPaths?.get(job.extid)}">
                                                         <g:icon name="arrow-right"/>
                                                     </g:if>
@@ -168,12 +168,12 @@
                                 <g:if test="${jobs.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=id]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=id]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -211,7 +211,7 @@
                                         </div>
 
                                         <div class="col-sm-11 col-sm-offset-1">
-                                            <span class="text-muted">
+                                            <span class="text-primary">
                                                 <span class="glyphicon glyphicon-file"></span>
                                                 ${path}
                                             </span>
@@ -222,12 +222,12 @@
                                 <g:if test="${deletedPaths.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=deletePaths]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -273,7 +273,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-muted">
+                                                    <span class="text-primary">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -298,7 +298,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <span class="">
                                                         <g:if test="${trackedItem.iconName}">
                                                             <g:icon name="${trackedItem.iconName}"/>
@@ -314,12 +314,12 @@
                                 <g:if test="${trackingItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenTrackedItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
@@ -359,7 +359,7 @@
                                                                       text: job.jobName,
                                                                       commit: jobstatus?.commit]"/>
 
-                                                    <span class="text-muted">
+                                                    <span class="text-primary">
                                                         - ${job.groupPath}
                                                     </span>
                                                 </g:if>
@@ -384,7 +384,7 @@
                                         </div>
                                         <g:if test="${job}">
                                             <div class="col-sm-11 col-sm-offset-1">
-                                                <span class="text-muted">
+                                                <span class="text-primary">
                                                     <span class="">
                                                         <g:if test="${toDeleteItem.iconName}">
                                                             <g:icon name="${toDeleteItem.iconName}"/>
@@ -400,12 +400,12 @@
                                 <g:if test="${toDeleteItems.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                             &bull;
-                                            <span class="textbtn textbtn-default"
+                                            <span class="btn btn-default"
                                                   onclick="jQuery('input[name=chosenDeleteItem]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>

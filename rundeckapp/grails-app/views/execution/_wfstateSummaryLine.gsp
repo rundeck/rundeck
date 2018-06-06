@@ -61,7 +61,7 @@
 <g:message code="by" />
 <g:username user="${execution.user}"/>
 <span data-bind="if: execDurationSimple() != '' && (completed() || jobAverageDuration() <= 0)">
-    <span class="text-muted">
+    <span class="text-primary">
         <i class="glyphicon glyphicon-time"></i>
         %{--<g:message code="elapsed.time.prompt" />--}%
     </span>
@@ -74,7 +74,7 @@
         <span data-bind="text: '#'+retryExecutionId()"></span>
     </a>
 
-    <span class="text-muted"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
+    <span class="text-primary"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
 </div>
 
 <g:if test="${clusterModeEnabled && execution.serverNodeUUID}">
@@ -82,7 +82,7 @@
         <g:message code="on" />
         <span data-server-uuid="${execution.serverNodeUUID}"
               data-server-name="${execution.serverNodeUUID}"
-              class="rundeck-server-uuid text-muted">
+              class="rundeck-server-uuid text-primary">
         </span>
     </span>
 </g:if>

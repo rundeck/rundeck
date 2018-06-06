@@ -49,3 +49,4 @@ rundeckapp/env.bash
 /scratch/
 rundeckapp/out
 rundeckapp/rundeck-runtime
+/rundeckapp/grails-app/assets/node_modules

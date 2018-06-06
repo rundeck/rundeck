@@ -1,22 +1,6 @@
 import java.util.jar.JarInputStream
 
 buildscript {
-    ext {
-        bootstrapFramework = [
-            version             : "3.3.5",
-        //    cssPath             : "grails-app/assets/stylesheets",
-        //    jsPath              : "grails-app/assets/javascripts",
-        //    useIndividualJs     : false,
-            useLess             : true,
-        //    invalidVersionFails : false,
-        //    fontAwesome : [
-        //       install             : true,
-        //       version             : "4.3.0",
-        //       useLess             : false
-        //       invalidVersionFails : false
-        //    ]
-        ]
-    }
     repositories {
         mavenLocal()
         maven { url "https://repo.grails.org/grails/core" }
@@ -27,8 +11,7 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
-        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.7"
-        classpath "com.siprell.plugins:bootstrap-framework:1.0.3"
+        classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.10"
     }
 }
 
@@ -43,7 +26,6 @@ apply plugin:"com.energizedwork.webdriver-binaries"
 apply plugin:"com.energizedwork.idea-project-components"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
-apply plugin: "com.siprell.plugins.bootstrap-framework"
 
 configurations {
     war{}
@@ -154,7 +136,7 @@ dependencies {
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
-    assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.5'
+    assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.10'
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
@@ -188,8 +170,7 @@ tasks.withType(Test) {
 assets {
     minifyJs = false
     minifyCss = false
-    excludes = ["**/*.less"]
-    includes = ["*.less","*.css"]
+    excludes = ["**/*.less",'gulpfile.js','**/*~','*.json']
 }
 
 

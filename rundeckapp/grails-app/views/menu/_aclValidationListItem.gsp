@@ -24,7 +24,7 @@
     </g:else>
     <span class="${validation.valid ? '' : 'text-warning'}">${policyFile}</span>
     <g:if test="${editHref}">
-        <a href="${editHref}" class="btn btn-link btn-sm">
+        <a href="${editHref}" class="btn btn-simple btn-sm">
             <g:icon name="edit"/>
             <g:message code="edit.file"/>
         </a>

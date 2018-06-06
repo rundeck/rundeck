@@ -1,0 +1,301 @@
+.nav {
+  > li{
+    > a:hover,
+    > a:focus{
+      background-color: transparent;
+    }
+  }
+}
+.navbar{
+  border: $none;
+  border-radius: 0;
+  font-size: $font-size-navbar;
+  //z-index: 3;
+
+  .navbar-minimize{
+    float: left;
+
+    .btn{
+      margin: $navbar-margin-btn-vertical - 2px 3px;
+    }
+
+    .ti-more-alt{
+      display: inline-block;
+      min-width: 14px;
+      @include rotate-vertical();
+    }
+    .btn-simple{
+      margin: $navbar-margin-btn;
+      font-size: $font-size-base;
+    }
+  }
+
+  .navbar-brand{
+    font-weight: $font-weight-bold;
+    margin: $navbar-margin-brand;
+    padding: $navbar-padding-brand;
+    font-size: $font-size-large-navbar;
+  }
+  .navbar-nav{
+    > li > a {
+      line-height: 1.42857;
+      margin: $navbar-margin-a;
+      padding: $navbar-padding-a;
+
+      i,
+      p{
+        display: inline-block;
+        margin: 0;
+      }
+      i{
+        position: relative;
+        top: 1px;
+      }
+    }
+    > li > a.btn{
+      margin: $navbar-margin-a-btn;
+      padding: $padding-base-vertical $padding-base-horizontal;
+    }
+  }
+
+  .btn-simple{
+    font-size: $font-size-medium;
+  }
+
+  &.navbar-absolute{
+    position: absolute;
+    width: 100%;
+    z-index: 1030;
+  }
+}
+
+.navbar-fixed{
+  position: fixed;
+  z-index: 1032;
+  right: 0;
+  width: 100%;
+
+  & ~ .main-panel > .content {
+    padding-top: 95px;
+    min-height: calc(100% - 71px);
+  }
+}
+
+.navbar-nav > li > .dropdown-menu{
+  border-radius: $border-radius-extreme;
+  margin-top: -5px;
+}
+
+.navbar-transparent, [class*="navbar-ct"]{
+  .navbar-brand{
+    @include opacity(.9);
+
+    &:focus,
+    &:hover{
+      background-color: transparent;
+      @include opacity(1);
+    }
+  }
+  .navbar-brand:not([class*="text"]){
+    color: $white-color;
+  }
+
+  .navbar-nav{
+    > li > a:not(.btn){
+      color: $white-color;
+      border-color: $white-color;
+      @include opacity(0.8);
+    }
+    > .active > a:not(.btn),
+    > .active > a:hover:not(.btn),
+    > .active > a:focus:not(.btn),
+    > li > a:hover:not(.btn),
+    > li > a:focus:not(.btn){
+      background-color: transparent;
+      border-radius: 3px;
+      color: $white-color;
+      @include opacity(1);
+    }
+    .nav > li > a.btn:hover{
+      background-color: transparent;
+    }
+
+    > .dropdown > a .caret,
+    > .dropdown > a:hover .caret,
+    > .dropdown > a:focus .caret{
+      border-bottom-color: $white-color;
+      border-top-color: $white-color;
+    }
+
+    > .open > a,
+    > .open > a:hover,
+    > .open > a:focus {
+      background-color: transparent;
+      color: $white-color;
+      @include opacity(1);
+    }
+  }
+
+  .btn-default{
+    color: $white-color;
+    border-color: $white-color;
+  }
+  .btn-default.btn-fill{
+    color: $dark-gray;
+    background-color: $white-color;
+    @include opacity(.9);
+  }
+  .btn-default.btn-fill:hover,
+  .btn-default.btn-fill:focus,
+  .btn-default.btn-fill:active,
+  .btn-default.btn-fill.active,
+  .open .dropdown-toggle.btn-fill.btn-default{
+    border-color: $white-color;
+    @include opacity(1);
+  }
+
+}
+.navbar-transparent{
+  .dropdown-menu .divider{
+    background-color: rgba($white-color,.2);
+  }
+}
+
+.navbar-default {
+  background-color: $bg-nude;
+  border-bottom: 1px solid $medium-gray;
+
+  .brand{
+    color: $font-color !important;
+  }
+  .navbar-nav{
+    > li > a:not(.btn){
+      color: $dark-gray;
+    }
+
+    > .active > a,
+    > .active > a:not(.btn):hover,
+    > .active > a:not(.btn):focus,
+    > li > a:not(.btn):hover,
+    > li > a:not(.btn):focus {
+      background-color: transparent;
+      border-radius: 3px;
+      color: $info-color;
+      @include opacity(1);
+    }
+
+    > .dropdown > a:hover .caret,
+    > .dropdown > a:focus .caret {
+      border-bottom-color: $info-color;
+      border-top-color: $info-color;
+
+    }
+
+    > .open > a,
+    > .open > a:hover,
+    > .open > a:focus{
+      background-color: transparent;
+      color: $info-color;
+    }
+
+    .navbar-toggle:hover,.navbar-toggle:focus {
+      background-color: transparent;
+    }
+
+  }
+
+  &:not(.navbar-transparent) .btn-neutral,
+  &:not(.navbar-transparent) .btn-neutral:hover,
+  &:not(.navbar-transparent) .btn-neutral:active{
+    color: $dark-gray;
+  }
+}
+
+.navbar-form{
+  @include box-shadow(none);
+  .form-control{
+
+  }
+  .navbar-transparent & .form-control,
+  [class*="navbar-ct"] & .form-control{
+
+  }
+
+  .input-group{
+    margin: 0;
+  }
+
+}
+
+.navbar-ct-primary{
+  @include navbar-color($bg-primary);
+}
+.navbar-ct-info{
+  @include navbar-color($bg-info);
+}
+.navbar-ct-success{
+  @include navbar-color($bg-success);
+}
+.navbar-ct-warning{
+  @include navbar-color($bg-warning);
+}
+.navbar-ct-danger{
+  @include navbar-color($bg-danger);
+}
+
+.navbar-transparent{
+  padding-top: 15px;
+  background-color: transparent;
+  border-bottom: 1px solid transparent;
+
+  .navbar-brand{
+    color: $white-color;
+    @include opacity(.9);
+
+    &:focus,
+    &:hover{
+      background-color: transparent;
+      @include opacity(1);
+    }
+  }
+
+  .navbar-nav{
+    > li > a:not(.btn){
+      color: $white-color;
+      border-color: $white-color;
+      @include opacity(0.8);
+    }
+    > .active > a:not(.btn),
+    > .active > a:hover:not(.btn),
+    > .active > a:focus:not(.btn),
+    > li > a:hover:not(.btn),
+    > li > a:focus:not(.btn){
+      background-color: transparent;
+      border-radius: 3px;
+      color: $white-color;
+      @include opacity(1);
+    }
+    .nav > li > a.btn:hover{
+      background-color: transparent;
+    }
+  }
+}
+
+.navbar-toggle{
+  margin-top: 19px;
+  margin-bottom: 19px;
+  border: $none;
+
+  .icon-bar {
+    background-color: $white-color;
+  }
+  .navbar-collapse,
+  .navbar-form {
+    border-color: transparent;
+  }
+
+  &.navbar-default .navbar-toggle:hover,
+  &.navbar-default .navbar-toggle:focus {
+    background-color: transparent;
+  }
+}

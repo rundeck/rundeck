@@ -30,7 +30,7 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="rundeck.css"/>
+    <asset:stylesheet href="app.css"/>
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -70,7 +70,7 @@
 
             </div>
 
-            <div class="text-muted small text-right">
+            <div class="text-primary small text-right">
                 URI: <g:enc>${request.forwardURI}</g:enc>
             </div>
         </div>

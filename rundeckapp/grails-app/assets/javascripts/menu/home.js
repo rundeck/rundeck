@@ -302,7 +302,7 @@ function initWaypoints(homedata,reset){
         Waypoint.destroyAll();
     }
 
-    batchInitWaypoints(jQuery('.list-group-item.project_list_item[data-project]'),homedata.waypointHandler,50);
+    batchInitWaypoints(jQuery('.project_list_item[data-project]'),homedata.waypointHandler,50);
 }
 
 /**

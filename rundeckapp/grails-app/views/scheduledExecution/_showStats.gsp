@@ -17,16 +17,16 @@
     <table class="table table-bordered table-condensed" >
 
         <tr>
-            <th style="width: 20%" class="text-muted text-center  text-header">
+            <th style="width: 20%" class="text-primary text-center  text-header">
                 <g:message code="Execution.plural" />
             </th>
         <g:if test="${lastrun || reflastrun}">
-            <th style="width: 20%" class="text-muted text-center  text-header">
+            <th style="width: 20%" class="text-primary text-center  text-header">
                 <g:message code="success.rate" />
             </th>
         </g:if>
         <g:if test="${scheduledExecution.execCount > 0}">
-            <th style="width: 20%" class="text-muted text-center  text-header">
+            <th style="width: 20%" class="text-primary text-center  text-header">
                 <g:message code="average.duration" />
             </th>
         </g:if>
@@ -39,7 +39,7 @@
             </td>
         <g:if test="${lastrun || reflastrun}">
             <g:set var="successrate" value="${params.float('success')?:successrate}"/>
-            <g:set var="ratecolors" value="${['text-success','text-muted','text-warning','text-danger']}"/>
+            <g:set var="ratecolors" value="${['text-success','text-primary','text-warning','text-danger']}"/>
             <g:set var="ratelevels" value="${[0.9f,0.75f,0.5f]}"/>
             <g:set var="successindex" value="${ratelevels.findIndexOf{it<=(successrate)}}"/>
             <g:set var="successcolor" value="${successindex>=0?ratecolors[successindex]:ratecolors[-1]}"/>

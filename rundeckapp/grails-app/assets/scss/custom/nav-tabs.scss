@@ -1,0 +1,13 @@
+.vue-tabs .nav-tabs-navigation{
+  text-align: left;
+  margin-bottom:0px;
+  border-color: #b7b7b7;
+  li.active a:before{
+    border-bottom-color: #b7b7b7;
+  }
+}
+.vue-tabs .tab-content {
+    text-align: left;
+    padding: 1em 0;
+    // border:1px solid black;
+}

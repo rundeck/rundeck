@@ -1,4 +1,11 @@
-%{--
+<!DOCTYPE html>
+<!--[if lt IE 7 ]> <html class="ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html class="ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html class="ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
+<head>
+    <title>%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,52 +21,78 @@
   - limitations under the License.
   --}%
 
-<%--
-  Created by IntelliJ IDEA.
-  User: greg
-  Date: 3/12/14
-  Time: 11:36 AM
-  To change this template use File | Settings | File Templates.
---%>
-
-<%@ page contentType="text/html;charset=UTF-8" %>
-<html>
-<head><title><g:appTitle/> - Logged Out</title>
-    <meta name="layout" content="base"/>
+    <g:appTitle/> - Logged Out</title>
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <META HTTP-EQUIV="Expires" CONTENT="-1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="rundeck.css"/>
+    <asset:stylesheet href="bootstrap.min.css"/>
+    <asset:stylesheet href="app.scss.css"/>
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
-    <asset:javascript src="bootstrap.js"/>
-    <asset:javascript src="prototype.min.js"/>
+    <asset:javascript src="versionIdentity.js"/>
+    <g:render template="/common/css"/>
 </head>
-
-<body>
-<div class="container">
-
-    <div class="row row-space">
-        <div class="col-sm-8 col-sm-offset-2">
-            <div class="jumbotron">
-                <p><g:message code="you.are.now.logged.out"/></p>
-
+<body id="loginpage">
+  <div class="wrapper wrapper-full-page">
+    <div class="full-page login-page">
+    <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
+      <div class="content">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
+              <div class="card">
+                <div class="card-header">
+                  <h4 class="card-title">
+                    <div class="logo">
+                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+                           title="Home">
+                            <g:set var="appTitle"
+                                   value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
+                            <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
+                            <g:set var="brandHtml"
+                                   value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
+                            <g:set var="brandDefaultHtml"
+                                   value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
+                            <i class="rdicon app-logo"></i>
+                            <g:if test="${brandHtml}">
+                                ${enc(sanitize:brandHtml)}
+                            </g:if>
+                            <g:elseif test="${appTitle}">
+                                ${appTitle}
+                            </g:elseif>
+                            <g:elseif test="${brandDefaultHtml}">
+                                ${enc(sanitize:brandDefaultHtml)}
+                            </g:elseif>
+                            <g:else>
+                                ${appDefaultTitle}
+                            </g:else>
+                        </a>
+                    </div>
+                    <p class="text-center h4">
+                      <g:message code="you.are.now.logged.out"/>
+                    </p>
+                  </h4>
+                </div>
+                <div class="card-content">
+                  <p class="text-center">
+                    <g:link controller="menu" action="home" class="btn btn-default btn-large">
+                      <g:message code="login.again" />
+                    </g:link>
+                  </p>
+                </div>
+              </div>
             </div>
-
-            <p>
-                <g:link controller="menu" action="home" class="btn btn-link">
-                    <i class="glyphicon glyphicon-arrow-left"></i>
-                    <g:message code="login.again" />
-                </g:link>
-            </p>
-
+          </div>
         </div>
     </div>
+    <g:render template="/common/footer"/>
+  </div>
 </div>
-
 </body>
 </html>

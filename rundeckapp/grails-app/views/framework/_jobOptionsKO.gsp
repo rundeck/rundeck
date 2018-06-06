@@ -149,7 +149,7 @@ data for configuring remote option cascading/dependencies
 
 
     <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT}">
-        <div data-bind="foreach: {data: options(), as: 'option' }" class="text-muted">
+        <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">
             <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
         </div>
     </g:if>
@@ -213,7 +213,7 @@ data for configuring remote option cascading/dependencies
         </div>
 
         <div class="col-sm-10">
-            <p class="form-control-static text-muted"><g:message code="no.input.options.for.this.job"/></p>
+            <p class="form-control-static text-primary"><g:message code="no.input.options.for.this.job"/></p>
         </div>
     </div>
 </g:else>

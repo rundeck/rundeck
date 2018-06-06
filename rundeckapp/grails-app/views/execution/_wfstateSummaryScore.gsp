@@ -15,30 +15,30 @@
   --}%
 
 
-        <table class="table table-bordered table-condensed">
+        <table class="table table-condensed">
 
             <tr>
-                <th colspan="4" class="text-muted table-footer text-small">
+                <th colspan="4" class="text-primary" style="border-top:0;">
                     <g:message code="node.summary" />
                 </th>
             </tr>
             <tr>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                <th style="width: 25%" class="text-primary text-center h5 text-header">
                     <g:message code="complete" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
                 </th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                <th style="width: 25%" class="text-primary text-center h5 text-header">
                     <g:message code="status.label.failed" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.failed.description']"/>
                 </th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                <th style="width: 25%" class="text-primary text-center h5 text-header">
                     <g:message code="incomplete" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.incomplete.description']"/>
                 </th>
-                <th style="width: 25%" class="text-muted text-center h5 text-header">
+                <th style="width: 25%" class="text-primary text-center h5 text-header">
                     <g:message code="not.started" />
                     <g:render template="/common/helpTooltipIconKO"
                               model="[messageCode: 'workflowState.summary.nodes.notstarted.description']"/>
@@ -47,12 +47,12 @@
             <tr>
                 <td>
                     <div class="text-center">
-                        <span class="h3 text-muted"
+                        <span class="h3 text-primary"
                               data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
                     </div>
 
                     <div class="text-center">
-                        <span class="text-muted"
+                        <span class="text-primary"
                               data-bind="text: completedNodes().length+'/'+activeNodes().length"></span>
                     </div>
                 </td>
@@ -61,7 +61,7 @@
 
                     <div class="text-center">
                         <span class=" h3"
-                              data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-muted': failedNodes().length < 1 } ">
+                              data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-primary': failedNodes().length < 1 } ">
                             <span data-bind="text: failedNodes().length"></span>
                         </span>
                     </div>
@@ -70,7 +70,7 @@
                     <div class="text-center">
 
                         <span class=" h3"
-                              data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-muted': partialNodes().length < 1 } ">
+                              data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-primary': partialNodes().length < 1 } ">
                             <span class="" data-bind="text: partialNodes().length"></span>
                         </span>
 
@@ -80,7 +80,7 @@
 
                     <div class="text-center">
                         <span class=" h3"
-                              data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-muted': notstartedNodes().length < 1 } ">
+                              data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-primary': notstartedNodes().length < 1 } ">
                             <span class="" data-bind="text: notstartedNodes().length"></span>
                         </span>
                     </div>

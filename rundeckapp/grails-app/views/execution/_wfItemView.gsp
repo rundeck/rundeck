@@ -111,7 +111,7 @@
                     </g:else>
                 </g:elseif>
                 <g:if test="${item.scriptInterpreter}">
-                    <span class="text-muted"><g:message code="executed.as" />:</span>
+                    <span class="text-primary"><g:message code="executed.as" />:</span>
                     <span class="argString">
                         <g:enc>${item.scriptInterpreter}</g:enc>
                         <g:if test="${item.interpreterArgsQuoted}">

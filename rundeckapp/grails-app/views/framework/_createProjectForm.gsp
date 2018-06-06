@@ -48,28 +48,26 @@
 <g:set var="adminauth"
        value="${auth.resourceAllowedTest(type: 'resource', kind: 'project', action: ['create'], context: 'application')}"/>
 <g:if test="${adminauth}">
+  <div class="container-fluid">
     <div class="row">
-    <div class="col-sm-12 col-md-10 col-md-offset-1 col-lg-8 col-lg-offset-2">
-        <g:form action="createProject"
-            useToken="true"
-                method="post" onsubmit="return configControl.checkForm();">
-            <div class="panel panel-primary"  id="createform">
-                <div class="panel-heading">
-                    <span class="h3">
-                        <g:message code="domain.Project.create.message" default="Create a new Project"/>
-                    </span>
-                </div>
-                <tmpl:editProjectForm/>
-                <div class="panel-footer">
-                    <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
-                </div>
+      <div class="col-xs-12">
+        <div class="card" id="createform">
+          <g:form action="createProject" useToken="true" method="post" onsubmit="return configControl.checkForm();">
+            <div class="card-header">
+              <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>
+            <div class="card-content">
+              <tmpl:editProjectForm/>
+            </div>
+            <div class="card-footer">
+              <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
+            </div>
+          </div>
         </g:form>
+      </div>
     </div>
-    </div>
-
     <g:render template="storageBrowseModalKO"/>
-
+  </div>
 </g:if>
 <g:else>
     <div class="pageBody">

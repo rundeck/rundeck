@@ -16,6 +16,7 @@
 
 function NodeFilterLinkParams(params){
     var self=this;
+    self.count=params.count||'';
     self.linkicon=params.linkicon||'';
     self.classnames=params.classnames||'';
     self.filterval=params.filterval||'';
@@ -53,9 +54,12 @@ function NodeFilterLinkParams(params){
         return (self.linktext? ko.unwrap(self.linktext) : self.filter?ko.unwrap(self.filter):ko.unwrap(self.filterval))+ko.unwrap(self.suffix);
     };
 }
+console.log('NodeFilterLinkParams', NodeFilterLinkParams);
 ko.components.register('node-filter-link', {
     viewModel:NodeFilterLinkParams,
     template: '<a  class="nodefilterlink"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
     <span data-bind="if: linkicon"><i data-bind="css: linkicon"></i></span>\
-<span data-bind="if: !linkicon"><span data-bind="text: viewtext(), css: textcss"></span></span></a>'
+    <span data-bind="if: !linkicon"><span data-bind="text: viewtext(), css: textcss"></span></span>\
+    <span data-bind="if: count">(<span data-bind="text: count"></span>)</span>\
+    </a>'
 });

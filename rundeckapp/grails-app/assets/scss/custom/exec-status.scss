@@ -1,0 +1,111 @@
+
+//execution status text
+.exec-status {
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+
+  &.icon{
+    display: inline;
+  }
+
+  &.other,
+  &[data-execstate=OTHER] {
+    color: $warning-color;
+    &.icon{
+      &:before {
+        content: "\f069";
+      }
+    }
+  }
+
+  &[data-execstate=OTHER][data-statusstring=incomplete] {
+    color: orange;
+    &.icon{
+      &:before {
+        content: "\f12a";
+      }
+    }
+  }
+
+  &.fail,
+  &[data-execstate=FAILED] {
+    color: $danger-color;
+    &.icon{
+      &:before {
+        content: "\f068";
+      }
+    }
+  }
+
+  &.running,
+  &[data-execstate=RUNNING] {
+    color: $info-color;
+    &.icon{
+      &:before {
+        content: "\f144";
+      }
+    }
+  }
+
+  &.succeed,
+  &[data-execstate=SUCCEEDED] {
+    color: $success-color;
+    &.icon{
+      &:before {
+        content: "\f058";
+      }
+    }
+  }
+
+  &.aborted,
+  &[data-execstate=ABORTED] {
+    color: $light-gray;
+    &.icon{
+      &:before {
+        content: "\f056";
+      }
+    }
+  }
+
+  &.timedout,
+  &[data-execstate=TIMEDOUT] {
+    color: $warning-color;
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
+
+  &.failedretry,
+  &[data-execstate=FAILED-WITH-RETRY] {
+    color: $warning-color;
+    &.icon{
+      &:before {
+        content: "\f01e";
+      }
+    }
+  }
+
+  &.scheduled,
+  &[data-execstate=SCHEDULED] {
+    color: $info-color;
+    &.icon{
+      &:before {
+        content: "\f017";
+      }
+    }
+  }
+}
+
+.exec-status-text.custom-status {
+  font-style: italic;
+}
+
+.exec-status-text.custom-status:before {
+  content: '“';
+}
+
+.exec-status-text.custom-status:after {
+  content: '”';
+}

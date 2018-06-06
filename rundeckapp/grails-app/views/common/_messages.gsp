@@ -15,7 +15,7 @@
   --}%
 
 <g:if test="${flash.message || request.message}">
-    <div class="alert alert-info alert-dismissable">
+    <div class="alert alert-info">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
@@ -30,7 +30,7 @@
     </div>
 </g:if>
 <g:if test="${flash.invalidToken||flash.error||flash.errors!=null||request.error||( ((request.errors instanceof org.springframework.validation.Errors && request.errors.hasErrors())|| request.errors instanceof java.util.Collection))||flash.errorCode||request.errorCode}">
-    <div class="alert alert-danger alert-dismissable">
+    <div class="alert alert-danger">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>
@@ -57,7 +57,7 @@
         </g:if>
     </div>
     <g:if test="${request.errorHelp || flash.errorHelp}">
-        <div class="alert alert-info alert-dismissable">
+        <div class="alert alert-info">
                 <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
 
             <g:icon name="question-sign"/>
@@ -66,7 +66,7 @@
     </g:if>
 </g:if>
 <g:if test="${flash.warn || request.warn}">
-    <div class="alert alert-warning alert-dismissable">
+    <div class="alert alert-warning">
         <g:unless test="${notDismissable}">
             <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
         </g:unless>

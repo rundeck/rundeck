@@ -13,13 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   --}%
-<div class="container">
+<div>
 <script type="text/html" id="node-current-state-simple">
     <g:render template="nodeCurrentStateSimpleKO"/>
 </script>
 
 <div data-bind="if: !stateLoaded()">
-        <div class="row-space-lg row">
+        <div class="row">
             <div class="col-sm-12">
 
                 <div data-bind="if: errorMessage()">
@@ -33,12 +33,12 @@
                 </div>
 
                 <div data-bind="if: !errorMessage() && !statusMessage()">
-                    <div class="well well-lg text-muted">
+                    <div class="well well-lg text-primary">
                         <g:message code="waiting.for.state.info" />
                     </div>
                 </div>
                 <div data-bind="if: statusMessage()">
-                    <div class="well well-lg text-muted" data-bind="text: statusMessage()">
+                    <div class="well well-lg text-primary" data-bind="text: statusMessage()">
 
                     </div>
                 </div>
@@ -50,7 +50,7 @@
 
 <div data-bind="if: stateLoaded()">
 
-        <div class="row row-space" data-bind="if: completed()">
+        <div class="row" data-bind="if: completed()">
             <div class="col-sm-12">
                 <tmpl:wfstateSummaryScore />
             </div>
@@ -61,22 +61,22 @@
                 <table class="table table-bordered">
 
                     <tr>
-                        <th colspan="3" class="text-muted table-footer text-small">
+                        <th colspan="3" class="text-primary table-footer text-small">
                             <g:message code="node.summary" />
                         </th>
                     </tr>
                     <tr>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                       <th style="width: 33%" class="text-primary text-center h5 text-header">
                            <g:message code="waiting" />
                            <g:render template="/common/helpTooltipIconKO"
                                    model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
                        </th>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                       <th style="width: 33%" class="text-primary text-center h5 text-header">
                            <g:message code="running" />
                            <g:render template="/common/helpTooltipIconKO"
                                      model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
                        </th>
-                       <th style="width: 33%" class="text-muted text-center h5 text-header">
+                       <th style="width: 33%" class="text-primary text-center h5 text-header">
                            <g:message code="done" />
                            <g:render template="/common/helpTooltipIconKO"
                                      model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
@@ -85,14 +85,14 @@
                     <tr>
                         <td>
                                 <div class="text-center">
-                                    <span class="h3 text-muted" data-bind="text: waitingNodes().length"></span>
+                                    <span class="h3 text-primary" data-bind="text: waitingNodes().length"></span>
                                 </div>
                         </td>
                         <td>
 
                             <div class="text-center">
                                 <span class=" h3"
-                                      data-bind="css: {'text-info': runningNodes().length > 0 , 'text-muted': runningNodes().length < 1 } ">
+                                      data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
                                     <span class=" " data-bind="text: runningNodes().length"></span>
                                 </span>
                             </div>
@@ -103,7 +103,7 @@
 
                             <div class="text-center">
                                 <span class=" h3"
-                                      data-bind="css: {'text-info': completedNodes().length > 0 , 'text-muted': completedNodes().length < 1 } ">
+                                      data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
                                     <span data-bind="text: completedNodes().length"></span>
                                 </span>
                             </div>
@@ -115,7 +115,7 @@
 
 
         <div class="row " data-bind="if: !completed()">
-            <div class="col-sm-3 text-muted h4 text-right">
+            <div class="col-sm-3 text-primary h4 text-right">
                 Now Running
             </div>
             <div class="col-sm-9">
@@ -129,7 +129,7 @@
         </div>
 
         <div class="row " data-bind="if: failedNodes().length > 0 ">
-            <div class="col-sm-3 text-muted h4 text-right">
+            <div class="col-sm-3 text-primary h4 text-right">
                 <span data-bind="text: failedNodes().length"></span>
                 Failed Nodes
             </div>
@@ -144,7 +144,7 @@
             </div>
 
     <div class="row " data-bind="if: partialNodes().length > 0">
-        <div class="col-sm-3 text-muted h4 text-right">
+        <div class="col-sm-3 text-primary h4 text-right">
             <span data-bind="text: partialNodes().length"></span>
             Incomplete Nodes
         </div>
