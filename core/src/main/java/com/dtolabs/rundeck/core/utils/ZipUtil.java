@@ -188,7 +188,7 @@ public class ZipUtil {
             }
             final File destFile = new File(dest, name);
 
-            if (!destFile.toPath().normalize().startsWith(dest.toPath().normalize())) {
+            if (!destFile.getCanonicalPath().startsWith(dest.getCanonicalPath())) {
                 throw new IOException(String.format("Path is outside of destination directory: %s", destFile));
             }
             if (entry.isDirectory() && !destFile.isDirectory()) {

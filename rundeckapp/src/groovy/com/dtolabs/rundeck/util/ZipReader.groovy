@@ -158,7 +158,7 @@ class ZipReader {
     def copyToDir(File destdir){
         //copy current
         def destFile = new File(destdir, namepart(filectx.name))
-        if (!destFile.toPath().normalize().startsWith(destdir.toPath().normalize())) {
+        if (!destFile.getCanonicalPath().startsWith(destdir.getCanonicalPath())) {
             throw new IOException("Path is outside of destination directory: $destFile")
         }
         copyTo(destFile)
