@@ -139,6 +139,9 @@ public class ZipUtil {
                 name = rename.rename(name);
             }
             final File destFile = new File(dest, name);
+            if (!destFile.getCanonicalPath().startsWith(dest.getCanonicalPath())) {
+                throw new IOException(String.format("Path is outside of destination directory: %s", destFile));
+            }
             if (entry.isDirectory() && !destFile.isDirectory()) {
                 if (!destFile.mkdirs()) {
                     throw new IOException("Unable to make directory: " + destFile);
