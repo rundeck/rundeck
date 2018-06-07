@@ -1,9 +1,9 @@
-Release 2.11.3
+Release 2.11.4
 ===========
 
-Date: 2018-05-11
+Date: 2018-06-07
 
-Name: <span style="color: RoyalBlue"><span class="glyphicon glyphicon-plane"></span> "cappuccino royalblue plane"</span>
+Name: <span style="color: SaddleBrown"><span class="glyphicon glyphicon-pushpin"></span> "cappuccino saddlebrown pushpin"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,27 +11,29 @@ Name: <span style="color: RoyalBlue"><span class="glyphicon glyphicon-plane"></s
 
 ## Notes
 
-Bug fixes
+Bug and security fixes.
+
+This release addresses a potential security issue in processing of zip files,
+please see the this issue: [Security Advisory: Zip Slip directory traversal vulnerability #3471](https://github.com/rundeck/rundeck/issues/3471).
 
 ## Contributors
 
 * Greg Schueler (gschueler)
-* Martin (martinbydefault)
 * Jaime Tobar (jtobard)
-* Romain LEON (PeekLeon)
-* Luis Toledo (ltamaster)
+* Stephen Joyner (sjrd218)
 
 ## Bug Reporters
 
-* martinbydefault
+* gschueler
 * jtobard
-* PeekLeon
-* ltamaster
+* kino71
 
 ## Issues
 
-[Milestone 2.11.3](https://github.com/rundeck/rundeck/milestone/77)
+[Milestone 2.11.4](https://github.com/rundeck/rundeck/milestone/78)
 
-* [Documentation: fixed list not being correctly rendered](https://github.com/rundeck/rundeck/pull/3386)
-* [i18n Fix: default messages and 'by.you'](https://github.com/rundeck/rundeck/pull/3385)
-* [i18n Update: node filter help](https://github.com/rundeck/rundeck/pull/3383)
+* [2.11: backport bug fixes](https://github.com/rundeck/rundeck/issues/3494)
+    * [#3384 duplicate jobs page doesn't show options]((https://github.com/rundeck/rundeck/issues/3384)
+    * [#3423 Create project via API with invalid project name does not return error]((https://github.com/rundeck/rundeck/issues/3423)
+    * [2.11: Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3493)
+    * [backport: Zip Slip fix for 2.11](https://github.com/rundeck/rundeck/pull/3486)
