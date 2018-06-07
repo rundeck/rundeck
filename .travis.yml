@@ -13,7 +13,7 @@ stages:
 - name: test
   if: fork = false
 - name: release
-  if: fork = false AND (branch = master OR env(RUNDECK_RELEASE) IS present)
+  if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present)
 
 - name: fork
   if: fork = true
