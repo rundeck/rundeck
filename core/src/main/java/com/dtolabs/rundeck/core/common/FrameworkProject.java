@@ -361,7 +361,12 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
 
     @Override
     public long storeFileResource(final String path, final InputStream input) throws IOException {
+        String canonicalPath = getBaseDir().getCanonicalPath();
         File result = new File(getBaseDir(), path);
+        String resultPath = result.getCanonicalPath();
+        if (!resultPath.startsWith(canonicalPath)) {
+            throw new IOException(String.format("Path is outside of destination directory: %s", result));
+        }
         if(!result.getParentFile().exists()){
             result.getParentFile().mkdirs();
         }

@@ -139,6 +139,9 @@ public class ZipUtil {
                 name = rename.rename(name);
             }
             final File destFile = new File(dest, name);
+            if (!destFile.getCanonicalPath().startsWith(dest.getCanonicalPath())) {
+                throw new IOException(String.format("Path is outside of destination directory: %s", destFile));
+            }
             if (entry.isDirectory() && !destFile.isDirectory()) {
                 if (!destFile.mkdirs()) {
                     throw new IOException("Unable to make directory: " + destFile);
@@ -147,37 +150,20 @@ public class ZipUtil {
                 if (!destFile.exists()) {
                     //create parent dirs if necessary
                     File parent = destFile.getParentFile();
-                    if(!parent.exists() && !parent.mkdirs()){
+                    if (!parent.exists() && !parent.mkdirs()) {
                         throw new IOException("Unable to create parent dir for file: " + destFile.getAbsolutePath());
                     }
                     if (!destFile.createNewFile()) {
                         throw new IOException("Unable to create file: " + destFile.getAbsolutePath());
                     }
                 }
-                if (null != copier) {
-                    final FileOutputStream out = new FileOutputStream(destFile);
-                    try {
-                        final InputStream in = jar.getInputStream(entry);
-                        try {
-                            copier.copyStream(in, out);
-                        } finally {
-                            in.close();
+                try (InputStream entryStream = jar.getInputStream(entry)) {
+                    try (FileOutputStream fileOut = new FileOutputStream(destFile)) {
+                        if (null != copier) {
+                            copier.copyStream(entryStream, fileOut);
+                        } else {
+                            copyStream(entryStream, fileOut);
                         }
-                    } finally {
-                        out.close();
-                    }
-                } else {
-                    final FileOutputStream out = new FileOutputStream(destFile);
-
-                    try {
-                        final InputStream in = jar.getInputStream(entry);
-                        try {
-                            copyStream(in, out);
-                        } finally {
-                            in.close();
-                        }
-                    } finally {
-                        out.close();
                     }
                 }
             }

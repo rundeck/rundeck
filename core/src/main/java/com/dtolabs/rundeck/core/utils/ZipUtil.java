@@ -138,18 +138,45 @@ public class ZipUtil {
     /**
      * Extract the zip file to the destination, optionally only the matching files and renaming the files
      *
-     * @param path   zip file path
-     * @param dest   destination directory to contain files
+     * @param zipFilePath   zip file path
+     * @param destDir   destination directory to contain files
      * @param filter filter to select matching files
      * @param rename renamer to use
      * @param copier streamCopier to use
      *
      * @throws IOException on io error
      */
-    public static void extractZip(final String path, final File dest, final FilenameFilter filter, final renamer rename,
-                                  final streamCopier copier) throws IOException {
-        final ZipFile jar = new ZipFile(path);
-        final Enumeration<? extends ZipEntry> enumeration = jar.entries();
+    public static void extractZip(
+        final String zipFilePath,
+        final File destDir,
+        final FilenameFilter filter,
+        final renamer rename,
+        final streamCopier copier
+    ) throws IOException {
+        try (final ZipFile jar = new ZipFile(zipFilePath)) {
+            extractZip(jar.entries(), jar::getInputStream, destDir, filter, rename, copier);
+        }
+    }
+
+    /**
+     * Extract the zip file to the destination, optionally only the matching files and renaming the files
+     *
+     * @param enumeration zip file path
+     * @param dest destination directory to contain files
+     * @param filter  filter to select matching files
+     * @param rename  renamer to use
+     * @param copier  streamCopier to use
+     * @throws IOException on io error
+     */
+    public static void extractZip(
+        final Enumeration<? extends ZipEntry> enumeration,
+        final GetStream streamSource,
+        final File dest,
+        final FilenameFilter filter,
+        final renamer rename,
+        final streamCopier copier
+    ) throws IOException {
+
         while (enumeration.hasMoreElements()) {
             final ZipEntry entry = enumeration.nextElement();
             if (null != filter && !filter.accept(dest, entry.getName())) {
@@ -160,6 +187,10 @@ public class ZipUtil {
                 name = rename.rename(name);
             }
             final File destFile = new File(dest, name);
+
+            if (!destFile.getCanonicalPath().startsWith(dest.getCanonicalPath())) {
+                throw new IOException(String.format("Path is outside of destination directory: %s", destFile));
+            }
             if (entry.isDirectory() && !destFile.isDirectory()) {
                 if (!destFile.mkdirs()) {
                     throw new IOException("Unable to make directory: " + destFile);
@@ -168,23 +199,21 @@ public class ZipUtil {
                 if (!destFile.exists()) {
                     //create parent dirs if necessary
                     File parent = destFile.getParentFile();
-                    if(!parent.exists() && !parent.mkdirs()){
+                    if (!parent.exists() && !parent.mkdirs()) {
                         throw new IOException("Unable to create parent dir for file: " + destFile.getAbsolutePath());
                     }
                     if (!destFile.createNewFile()) {
                         throw new IOException("Unable to create file: " + destFile.getAbsolutePath());
                     }
                 }
-                InputStream entryStream = jar.getInputStream(entry);
-                FileOutputStream fileOut = new FileOutputStream(destFile);
-                try{
-                    if (null != copier) {
-                        copier.copyStream(entryStream, fileOut);
-                    } else {
-                        copyStream(entryStream, fileOut);
+                try (InputStream entryStream = streamSource.getInputStream(entry)) {
+                    try (FileOutputStream fileOut = new FileOutputStream(destFile)) {
+                        if (null != copier) {
+                            copier.copyStream(entryStream, fileOut);
+                        } else {
+                            copyStream(entryStream, fileOut);
+                        }
                     }
-                }finally{
-                    fileOut.close();
                 }
             }
         }
@@ -195,6 +224,10 @@ public class ZipUtil {
      */
     public static interface renamer {
         public String rename(String input);
+    }
+
+    public interface GetStream {
+        InputStream getInputStream(ZipEntry entry) throws IOException;
     }
 
     /**
