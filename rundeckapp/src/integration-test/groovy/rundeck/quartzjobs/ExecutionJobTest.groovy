@@ -864,6 +864,61 @@ class ExecutionJobTest extends GroovyTestCase{
         Assert.assertEquals(testExecmap,result.execmap)
     }
 
+    /**
+     * Job timeout determined by ScheduledExecution option value
+     */
+    @Test()
+    void testInitializeJobExecutionWithTimeoutFromExecution(){
+        ScheduledExecution se = setupJob{se->
+            se.user='test'
+            se.userRoleList='a,b'
+            se.timeout='${option.timeout}'
+        }
+        Execution e = setupExecution(se, new Date(), null)
+        e.argString="-timeout=2s"
+        e.save()
+        ExecutionJob job = new ExecutionJob()
+        def mockes=new MockFor(ExecutionService)
+        def mockeus=new MockFor(ExecutionUtilService)
+        def mockfs=new MockFor(FrameworkService)
+        mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
+            [test:'input']
+        }
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user, input ->
+            Assert.assertEquals(se.id,se1.id)
+            Assert.assertEquals(se.user, auth.username)
+            Assert.assertEquals(input.executionType, 'scheduled')
+            'fakeExecution'
+        }
+        def proj = new MockFor(IRundeckProject)
+        proj.demand.getProjectProperties(2..2){-> [:]}
+        mockfs.demand.parseOptsFromString(1..1){opts->
+            ['timeout':'2s']
+        }
+        mockfs.demand.getRundeckFramework(1..1){->
+            'fakeFramework'
+        }
+        def mockAuth =new MockFor(UserAndRolesAuthContext)
+        mockAuth.demand.getUsername(1..1){
+            'test'
+        }
+        mockAuth.demand.asBoolean(1..1) { true }
+        def authcontext=mockAuth.proxyInstance()
+        mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
+            authcontext
+        }
+
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
+        FrameworkService fs = mockfs.proxyInstance()
+
+        def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,executionId:e.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
+        def result=job.initialize(null, contextMock)
+
+        Assert.assertEquals(2,result.timeout)
+        Assert.assertEquals(e,result.execution)
+    }
+
     private ScheduledExecution setupJob(Closure extra=null) {
         ScheduledExecution.withNewTransaction {
             ScheduledExecution se = new ScheduledExecution(
@@ -888,6 +943,7 @@ class ExecutionJobTest extends GroovyTestCase{
             se.save()
         }
     }
+
 
     private def setupJobDataMap(Map mockdata) {
         def data = new Expando(mockdata)

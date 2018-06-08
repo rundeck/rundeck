@@ -251,6 +251,12 @@ class ExecutionJob implements InterruptableJob {
             initMap.secureOpts=jobDataMap.get("secureOpts")
             initMap.secureOptsExposed=jobDataMap.get("secureOptsExposed")
             initMap.execution = Execution.get(initMap.executionId)
+            def jobArguments=initMap.frameworkService.parseOptsFromString(initMap.execution.argString)
+            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout.contains('${')) {
+                def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
+                        DataContextUtils.addContext("option", jobArguments, null))
+                initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
+            }
             //NOTE: Oracle/hibernate bug workaround: if session has not flushed we may have to wait until Execution.get
             //can return the right entity
             int retry=30
