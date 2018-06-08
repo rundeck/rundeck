@@ -12,8 +12,20 @@ stages:
   if: fork = false
 - name: test
   if: fork = false
+- name: release
+  if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present)
+
 - name: fork
   if: fork = true
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
 
 before_install:
 - sudo apt-get update -qq
@@ -29,7 +41,7 @@ before_script:
 
 jobs:
   include:
-
+  # Stage: build
   - stage: build
     script:
     - set -o errexit
@@ -37,15 +49,16 @@ jobs:
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
-    - script_block 'gradle-build' './gradlew clean && ./gradlew build'
-    - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
-    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+    - script_block 'build' 'bash jenkins-build.sh no SNAPSHOT'
+    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
 
     - find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+    - cp -r --parents core/build/libs artifacts/
     - cp -r --parents rundeckapp/build/libs artifacts/
 
     - script_block 'sync-artifacts' sync_to_s3
-
+  
+  # Stage: test
   - stage: test
     env: JOB='Test deb install'
     script:
@@ -89,7 +102,23 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
 
-  # Fork stage consolidates all tets into one job.
+  # Stage: release publishes artifacts to external repositories
+  - stage: release
+    script:
+    - set -o errexit
+    - source travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - export VCS_URL=https://github.com/rundeck/rundeck.git
+    # Delete existing packages
+    - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb rundeck
+    - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck
+    - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck-config
+    # Deploy new snapshot packages
+    - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb "${RUNDECK_BUILD_NUMBER}"
+    - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm
+    - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"
+
+  # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
   - stage: fork
     script:
@@ -97,7 +126,7 @@ jobs:
     - source travis-helpers.sh
     - script_block 'gradle-build' './gradlew clean && ./gradlew build'
     - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
-    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb'
+    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
     - script_block 'deb-test' 'bash test-docker-install-deb.sh'
     - script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
@@ -120,7 +149,6 @@ branches:
     - master
     - release-2.11
     - prerelease-2.12.0
-    - build-stages
 
 notifications:
   irc:
