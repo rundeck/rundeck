@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 export RUNDECK_VERSION=${RUNDECK_VERSION:-2.9.2}
 export LAUNCHER_URL=${LAUNCHER_URL:-http://dl.bintray.com/rundeck/rundeck-maven/rundeck-launcher-${RUNDECK_VERSION}.jar}
 export CLI_DEB_URL=${CLI_DEB_URL:-https://dl.bintray.com/rundeck/rundeck-deb}
@@ -15,7 +17,6 @@ build_rdtest_docker(){
 	fi
 
 	# setup test dirs
-	mkdir dockers/rundeck/api_test
 	cp -r ../src dockers/rundeck/api_test/
 	cp -r ../api dockers/rundeck/api_test/
 	

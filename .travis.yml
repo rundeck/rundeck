@@ -12,20 +12,24 @@ stages:
   if: fork = false
 - name: test
   if: fork = false
-- name: release
-  if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present)
+- name: snapshot release
+  # if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag NOT present
+  if: tag IS blank
+- name: tag release
+  if: tag IS present
+  # if: fork = false AND type = push AND tag =~ ^v AND (branch = master OR env(RUNDECK_RELEASE) IS present)
 
 - name: fork
   if: fork = true
 
 before_cache:
-  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
-  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -f  gradle-cache/caches/modules-2/modules-2.lock
+  - rm -fr gradle-cache/caches/*/plugin-resolution/
 
 cache:
   directories:
-    - $HOME/.gradle/caches/
-    - $HOME/.gradle/wrapper/
+    - gradle-cache/wrapper/
+    - gradle-cache/caches/
 
 before_install:
 - sudo apt-get update -qq
@@ -45,12 +49,11 @@ jobs:
   - stage: build
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
-    - script_block 'build' 'bash jenkins-build.sh no SNAPSHOT'
-    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
+    - script_block 'make' 'make TAG=$RUNDECK_RELEASE_TAG BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
 
     - find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
     - cp -r --parents core/build/libs artifacts/
@@ -60,79 +63,104 @@ jobs:
   
   # Stage: test
   - stage: test
-    env: JOB='Test deb install'
+    env: JOB='Test Grails'
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'deb-test' 'bash test-docker-install-deb.sh'
-  
-  - env: JOB='Test rpm install'
-    script:
-    - set -o errexit
-    - source travis-helpers.sh
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
+    - script_block 'grails-test' './gradlew -g gradle-cache --build-cache test'
 
   - env: JOB='Docker API tests'
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
+    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
+
+  - stage: test
+    env: JOB='Test deb install'
+    script:
+    - set -o errexit
+    - source scripts/travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+  
+  - env: JOB='Test rpm install'
+    script:
+    - set -o errexit
+    - source scripts/travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
 
   - env: JOB='Docker tests'
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'docker-test' 'bash run-docker-tests.sh'
+    - script_block 'docker-test' 'bash test/run-docker-tests.sh'
   
   - env: JOB='Docker SSL tests'
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'docker-ssl-test' 'bash run-docker-ssl-tests.sh'
+    - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'
 
   - env: JOB='Docker Ansible tests'
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
+    - script_block 'docker-ansible-test' 'bash test/run-docker-ansible-tests.sh'
 
-  # Stage: release publishes artifacts to external repositories
-  - stage: release
+  # # Stage: snapshot release publishes snapshot artifacts to external repositories
+  - stage: snapshot release
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
+    # Sync artifacts under commit so we can use them for tag releases
     - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'sync-commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
     # Delete existing packages
     - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb rundeck
     - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck
     - bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck-config
     # Deploy new snapshot packages
-    - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb "${RUNDECK_BUILD_NUMBER}"
-    - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm
+    - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb "${RUNDECK_RELEASE_TAG}" "${RUNDECK_BUILD_NUMBER}"
+    - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm "${RUNDECK_RELEASE_TAG}"
     - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"
+
+  # Stage: tag release publishes artifacts to the appropriate external repsositories
+  - stage: tag release
+    script:
+    - set -o errexit
+    - source scripts/travis-helpers.sh
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - export VCS_URL=https://github.com/rundeck/rundeck.git
+
+    - printenv
+
+    # Deploy new snapshot packages
+    # - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_DEB_REPO}" "${RUNDECK_BUILD_NUMBER}"
+    # - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}"
+    # - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
 
   # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
   - stage: fork
     script:
     - set -o errexit
-    - source travis-helpers.sh
+    - source scripts/travis-helpers.sh
     - script_block 'gradle-build' './gradlew clean && ./gradlew build'
     - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
     - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
-    - script_block 'deb-test' 'bash test-docker-install-deb.sh'
-    - script_block 'rpm-test' 'bash test-docker-install-rpm.sh'
-    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
-    - script_block 'docker-test' 'bash run-docker-tests.sh'
-    - script_block 'docker-ssl-test' 'bash run-docker-ssl-tests.sh'
-    - script_block 'docker-ansible-test' 'bash run-docker-ansible-tests.sh'
+    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
+    - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
+    - script_block 'docker-test' 'bash test/run-docker-tests.sh'
+    - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'
+    - script_block 'docker-ansible-test' 'bash test/run-docker-ansible-tests.sh'
 
 addons:
   hostname: rdbuild
@@ -149,9 +177,10 @@ branches:
     - master
     - release-2.11
     - prerelease-2.12.0
+    - /v.*/
 
-notifications:
-  irc:
-  - irc.freenode.org#rundeck
-  slack:
-    secure: ep3APeVD6QwEkTJ8YR0f1eDzcFJ2uLUIci4Aob/5ILm+v8h0hOTAe1yFoKv+iR/4PCeZ+5PvVezOMHSkFNX7rCj06Mj/ivlnng569JLjOQAR0q25aeIH+wy4oDE33HaNbNOYLMe7bXDP4SelRi9SbRRe84j6OjDgZzyDC36cyAk=
+# notifications:
+#   irc:
+#   - irc.freenode.org#rundeck
+#   slack:
+#     secure: ep3APeVD6QwEkTJ8YR0f1eDzcFJ2uLUIci4Aob/5ILm+v8h0hOTAe1yFoKv+iR/4PCeZ+5PvVezOMHSkFNX7rCj06Mj/ivlnng569JLjOQAR0q25aeIH+wy4oDE33HaNbNOYLMe7bXDP4SelRi9SbRRe84j6OjDgZzyDC36cyAk=
