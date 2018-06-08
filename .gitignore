@@ -42,6 +42,8 @@ rundeckapp/env.bash
 /docs/*/dist
 /tmp/**
 /test/api/*.output
+/test/**/*.jar
+/test/**/*.war
 /core/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties
 /local/
 /grails/

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 . common.sh
 
 export DOCKER_COMPOSE_SPEC=docker-compose-multinode-test.yml
