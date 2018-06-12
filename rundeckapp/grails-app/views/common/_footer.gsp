@@ -19,15 +19,16 @@
 <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
     <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
         <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInFooter in [true, 'true']}">
-
-            <div class="row">
-                <div class="col-sm-12">
-                    <span class=" rundeck-server-uuid"
+          <footer class="footer">
+            <div class="container-fluid">
+                <div class="col-sm-12" style="padding-top: 10px; padding-bottom: 10px">
+                    <span class="rundeck-server-uuid"
                           data-server-uuid="${enc(attr: servletContextAttribute(attribute: 'SERVER_UUID'))}"
                           data-server-name="${enc(attr: servletContextAttribute(attribute: 'FRAMEWORK_NODE'))}">
                     </span>
                 </div>
             </div>
+          </footer>
         </g:if>
     </g:ifServletContextAttribute>
 </g:ifServletContextAttributeExists>

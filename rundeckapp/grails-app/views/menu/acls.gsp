@@ -260,53 +260,48 @@
               </div>
           </div>
           <g:if test="${clusterMode}">
-              <div id="clusterModeArea">
-                  <span class="btn btn-fill btn-primary" data-bind="visible: !show(), click: toggleShow">
-                      ${aclFileList.size()}
-                      <g:message
-                              code="list.of.acl.policy.files.in.directory"/>
-                      <span data-bind="if: !policyFiles().valid()">
-
-                          <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-                             title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                      </span>
-                      <g:icon name="chevron-right"/>
-                  </span>
-
-                  <div class="panel panel-default" data-bind="visible: show">
-                      <div class="card-header clearfix">
-                          <span class="panel-title text-primary pull-left">
-                              <span class="text-info">${aclFileList.size()}</span>
-                              <g:message code="list.of.acl.policy.files.in.directory"/>
-                              <code>${fwkConfigDir.absolutePath}</code>
-                              <span data-bind="if: !policyFiles().valid()">
-
-                                  <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-                                     title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                              </span>
+              <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
+                  <div class="card-header">
+                    <h4 class="card-title" data-bind="click: toggleShow">
+                          ${aclFileList.size()}
+                          <g:message code="list.of.acl.policy.files.in.directory"/>
+                          <span data-bind="if: !policyFiles().valid()">
+                              <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                                 title="${message(code: "aclpolicy.format.validation.failed")}"></i>
                           </span>
-                          <span class="panel-title pull-right">
-
-                              <button type="button"
-                                      class="close"
-                                      data-bind="click: toggleShow"
-                                      aria-hidden="true">&times;</button>
+                          <span data-bind="visible: !show()" class="pull-right">
+                            <g:icon name="chevron-down"/>
                           </span>
-                      </div>
-
-                      <div class="panel-body">
-                          <table class="table table-condensed table-embed">
-                              <tbody data-bind="foreach: policyFiles().policies">
-                                  <g:render template="/menu/aclValidationRowKO"
-                                            model="${[
-                                                    hasEditAuth  : false,
-                                                    hasDeleteAuth: false,
-                                            ]}"/>
-
-                              </tbody>
-                          </table>
-                      </div>
+                          <span  data-bind="visible: show" class="pull-right">
+                            <button type="button"
+                                    class="close"
+                                    data-bind="click: toggleShow"
+                                    aria-hidden="true">
+                                <g:icon name="chevron-up"/>
+                            </button>
+                          </span>
+                    </h4>
                   </div>
+                  <div class="card-content" data-bind="visible: show">
+                    <div style="margin-bottom:10px;">
+                          <code>${fwkConfigDir.absolutePath}</code>
+                          <span data-bind="if: !policyFiles().valid()">
+
+                              <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                                 title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                          </span>
+                    </div>
+                    <div>
+                            <div data-bind="foreach: policyFiles().policies">
+                                <g:render template="/menu/aclValidationRowKO"
+                                          model="${[
+                                                  hasEditAuth  : false,
+                                                  hasDeleteAuth: false,
+                                          ]}"/>
+
+                            </div>
+                    </div>
+                </div>
               </div>
           </g:if>
 

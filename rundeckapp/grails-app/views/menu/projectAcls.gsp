@@ -136,7 +136,6 @@
         </div>
 
         <div class="card-content" id="policyList">
-          <div class="row">
             <div data-bind="foreach: policies">
               <g:render template="/menu/aclValidationRowKO"
                         model="${[
@@ -152,7 +151,6 @@
               ]}"/>
 
             </div>
-          </div>
         </div>
       </div>
     </div>
