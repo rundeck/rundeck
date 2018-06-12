@@ -30,7 +30,8 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="app.css"/>
+    <asset:stylesheet href="bootstrap.min.css"/>
+    <asset:stylesheet href="app.scss.css"/>
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -40,47 +41,77 @@
     <style>
         @keyframes riseup {
             0% {bottom: -480px;}
-            50% {bottom: 0px;}
+            50% {bottom: -5px;}
             100% {bottom: -40px;}
         }
         svg{
             position: fixed;
-            right: 0px;
+            right: calc(50% - 150px);
             bottom: -40px;
-            z-index: -1;
+            z-index: 9;
             animation: riseup 6s ease-in-out;
         }
         .grumpy{
-            fill: #eee;
+            fill: #69000c;
         }
     </style>
 </head>
-<body>
-<g:render template="/common/topbar"/>
-<div class="container">
-
-    <div class="row row-space">
-        <div class="col-sm-8 col-sm-offset-2">
-            <div class="h1"><g:message code="request.error.notfound.title"/></div>
-            <div class="jumbotron">
-
-                <div class="text-danger">
-                    <g:message code="page.notfound.message"/>
+<body id="fourohfour">
+<div class="wrapper wrapper-full-page">
+  <div class="full-page four-oh-four">
+  <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
+    <div class="content">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
+              <div class="card" data-background="color" data-color="blue">
+                <div class="card-header">
+                  <h3 class="card-title">
+                    <div class="logo">
+                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+                           title="Home">
+                            <g:set var="appTitle"
+                                   value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
+                            <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
+                            <g:set var="brandHtml"
+                                   value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
+                            <g:set var="brandDefaultHtml"
+                                   value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
+                            <i class="rdicon app-logo"></i>
+                            <g:if test="${brandHtml}">
+                                ${enc(sanitize:brandHtml)}
+                            </g:if>
+                            <g:elseif test="${appTitle}">
+                                ${appTitle}
+                            </g:elseif>
+                            <g:elseif test="${brandDefaultHtml}">
+                                ${enc(sanitize:brandDefaultHtml)}
+                            </g:elseif>
+                            <g:else>
+                                ${appDefaultTitle}
+                            </g:else>
+                        </a>
+                    </div>
+                  </h3>
                 </div>
+                <div class="card-content text-center">
+                  <div class="h3"><g:message code="request.error.notfound.title"/></div>
+                  <div class="text-danger h5">
+                      <g:message code="page.notfound.message"/>
+                  </div>
+                </div>
+                <div class="card-footer text-center">
+                  URI: <g:enc>${request.forwardURI}</g:enc>
 
-            </div>
-
-            <div class="text-primary small text-right">
-                URI: <g:enc>${request.forwardURI}</g:enc>
+                </div>
+              </div>
             </div>
         </div>
+      </div>
     </div>
-</div>
-
-<div class="container footer">
     <g:render template="/common/footer"/>
+  </div>
 </div>
-
 <svg
         xmlns:dc="http://purl.org/dc/elements/1.1/"
         xmlns:cc="http://creativecommons.org/ns#"
