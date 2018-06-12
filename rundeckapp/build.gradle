@@ -132,7 +132,14 @@ dependencies {
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
     runtime "com.h2database:h2:1.4.197"
+
+    // Database drivers
     runtime 'mysql:mysql-connector-java:5.1.42'
+    runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
+    runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
+    runtime 'org.postgresql:postgresql:42.2.2'
+
+
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
