@@ -37,7 +37,7 @@
 
       <h3 class="card-title">
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
-            class="primary"
+            class="text-primary"
             params="[project: scheduledExecution.project]"
                 id="${scheduledExecution.extid}"
                 absolute="${absolute ? 'true' : 'false'}">
