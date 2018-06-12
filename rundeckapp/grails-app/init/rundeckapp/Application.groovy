@@ -38,6 +38,7 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
         RundeckInitializer initilizer = new RundeckInitializer(rundeckConfig)
         initilizer.initialize()
+        loadJdbcDrivers()
         CoreConfigurationPropertiesLoader rundeckConfigPropertyFileLoader = new DefaultRundeckConfigPropertyLoader()
         ServiceLoader<CoreConfigurationPropertiesLoader> rundeckPropertyLoaders = ServiceLoader.load(
                 CoreConfigurationPropertiesLoader
@@ -59,6 +60,15 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 new PropertiesPropertySource(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, rundeckConfigs)
         )
         loadGroovyRundeckConfigIfExists(environment)
+    }
+
+    def loadJdbcDrivers() {
+        File serverLib = new File(rundeckConfig.serverBaseDir,"lib")
+        serverLib.eachFile { file ->
+            if(!file.name.startsWith("rundeck-core") && file.name.endsWith(".jar")) {
+                Thread.currentThread().contextClassLoader.addURL(file.toURI().toURL())
+            }
+        }
     }
 
     void loadGroovyRundeckConfigIfExists(final Environment environment) {
