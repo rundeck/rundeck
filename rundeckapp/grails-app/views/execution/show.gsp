@@ -83,7 +83,7 @@
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
-    <div id="execution_main" class="content-fluid">
+    <div id="execution_main" class="container-fluid">
       <div class="executionshow_wrap">
         <div class="executionshow">
           <div class="row">
@@ -237,7 +237,7 @@
                                     <!-- /ko -->
                                     <!-- ko if: killRequested() -->
                                     <!-- ko if: killStatusPending() -->
-                                    <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                                    <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
                                     <!-- /ko -->
                                     <span class="loading" data-bind="text: killStatusText"></span>
                                     <!-- /ko -->
@@ -512,7 +512,7 @@
                 </div>
                 <div class="card-content">
                   <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
-                </div>                
+                </div>
               </div>
             </div>
         </div>

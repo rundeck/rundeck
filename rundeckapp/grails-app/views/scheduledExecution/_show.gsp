@@ -15,7 +15,7 @@
   --}%
 
 <%@ page import="rundeck.ScheduledExecution; com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
-<div class="content-fluid">
+<div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
       <div class="card">

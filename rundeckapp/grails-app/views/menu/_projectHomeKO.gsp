@@ -49,7 +49,7 @@
 
                           <div class="pull-right">
                               <span data-bind="if: !project.loaded()">
-                                  <g:img file="spinner-gray.gif" width="24px" height="24px"/>
+                                  <g:img class="loading-spinner" file="spinner-gray.gif" width="24px" height="24px"/>
                               </span>
                               <span data-bind="if: project.auth().admin">
                                   <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"

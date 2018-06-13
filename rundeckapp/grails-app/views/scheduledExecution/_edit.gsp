@@ -604,7 +604,7 @@ function getCurSEID(){
         </g:hasErrors>
         <g:set var="filtvalue" value="${scheduledExecution.asFilter()}"/>
 
-                <span class="input-group nodefilters">
+                <span class="input-group nodefilters multiple-control-input-group">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
                         <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
                     </g:if>
