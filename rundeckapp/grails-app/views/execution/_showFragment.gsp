@@ -62,7 +62,7 @@
           <g:else>
             <span>
               <!-- ko if: executionState()=='RUNNING' -->
-              <g:img file="spinner-gray.gif" width="12px" height="12px"/>
+              <g:img class="loading-spinner" file="spinner-gray.gif" width="12px" height="12px"/>
               <!-- /ko -->
               <span class=" execstate execstatedisplay overall" data-execstate="${enc(attr:execState)}" data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
               </span>
@@ -78,7 +78,7 @@
                   <!-- /ko -->
                   <!-- ko if: killRequested() -->
                   <!-- ko if: killStatusPending() -->
-                  <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                  <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
                   <!-- /ko -->
                   <span class="loading" data-bind="text: killStatusText"></span>
                   <!-- /ko -->

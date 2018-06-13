@@ -128,7 +128,7 @@
                                   </g:each>
                               </div>
 
-                              <div id="sourcecancel" class="card-footer">
+                              <div id="sourcecancel" class="card-footer" style="margin-top:1em;">
                                   <button class="btn btn-default btn-sm"><g:message code="button.action.Cancel"/></button>
                               </div>
 

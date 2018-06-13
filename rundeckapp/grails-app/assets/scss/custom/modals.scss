@@ -4,6 +4,11 @@
   .modal-footer{
     text-align: left;
   }
+  .modal-body{
+    .container{
+      width: auto;
+    }
+  }
 }
 
 body.modal-open{

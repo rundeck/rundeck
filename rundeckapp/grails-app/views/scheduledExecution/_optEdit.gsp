@@ -24,7 +24,7 @@
    $Id$
 --%>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="container optEditForm" >
+<div class="optEditForm" >
     <g:hasErrors bean="${option}">
         <div class="alert alert-danger">
             <g:renderErrors bean="${option}" as="list"/>
@@ -255,16 +255,16 @@
 
 
                     <div class="radio">
-                        <label>
-                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
+                        <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
+                        <label for="inputplain_${rkey}">
                             <g:message code="form.option.secureInput.false.label"/>
                         </label>
                     </div>
 
                     <div class="radio">
+                        <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
                         <label>
-                                <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
-                            <g:message code="form.option.date.label"/>
+                          <g:message code="form.option.date.label"/>
                         </label>
                         <span class="text-primary">
                             <g:message code="form.option.date.description"/>
@@ -287,14 +287,13 @@
                     </div>
 
                     <div class="radio">
+                        <g:radio
+                                name="inputType"
+                                value="secureExposed"
+                                checked="${option?.secureInput && option?.secureExposed}"
+                                id="sectrue_${rkey}"
+                        />
                         <label>
-                            <g:radio
-                                    name="inputType"
-                                    value="secureExposed"
-                                    checked="${option?.secureInput && option?.secureExposed}"
-                                    id="sectrue_${rkey}"
-                            />
-
                             <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
                         </label>
                         <span class="text-primary">
@@ -304,10 +303,10 @@
                      </div>
 
                     <div class="radio">
+                        <g:radio name="inputType" value="secure"
+                                 checked="${option?.secureInput && !option?.secureExposed}"
+                                 id="secexpfalse_${rkey}"/>
                         <label>
-                            <g:radio name="inputType" value="secure"
-                                     checked="${option?.secureInput && !option?.secureExposed}"
-                                     id="secexpfalse_${rkey}"/>
                             <g:message code="form.option.secureExposed.false.label"/>
                             <span class="text-danger small">&dagger;</span>
                         </label>
@@ -450,25 +449,25 @@
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>
             <div class="col-sm-10">
                 <div class="radio">
+                    <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
+                        id="enforcedType_none"
+                             class="evnonregex"/>
                     <label>
-                        <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
-                            id="enforcedType_none"
-                                 class="evnonregex"/>
                         <g:message code="none" />
                     </label>
                     <span class="text-primary"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
                 <div class="radio">
+                    <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
+                             id="enforcedType_enforced"
+                    />
                     <label class="${hasErrors(bean:option,field:'enforced','fieldError')}">
-                        <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
-                                 id="enforcedType_enforced"
-                        />
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
                 <div class="radio">
+                    <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
                     <label class="${hasErrors(bean:option,field:'regex','fieldError')}">
-                        <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
                         <g:message code="form.option.regex.label" />
                     </label>
                 </div>

@@ -34,7 +34,7 @@
 </head>
 
 <body>
-<div class="content-fluid">
+<div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
       <g:render template="/common/messages"/>
@@ -45,7 +45,7 @@
       <div class="col-xs-12">
         <div class="card"  id="createform">
           <div class="card-header">
-            <h4 class="card-title">
+            <h3 class="card-title">
               <g:message code="Node.plural" default="Nodes"/>: <g:enc>${params.project ?: request.project}</g:enc>
               <g:link controller="framework" action="editProjectNodeSources"
                       params="[project: params.project ?: request.project]"
@@ -57,7 +57,7 @@
                 <g:icon name="pencil"/>
                 <g:message code="project.configure.nodes.title"/>
               </g:link>
-            </h4>
+            </h3>
           </div>
           <div class="card-content">
             <div class="list-group">
@@ -92,7 +92,7 @@
                                               model="${[prefix   : prefixKey + '.' + (n + 1) + '.', values: config.props, includeFormFields: false, description: desc, saved: true, type: config.type]}"/>
                                       <g:set var="writeableSource" value="${writeableSources.find { it.index == (n + 1) }}"/>
                                       <g:if test="${writeableSource}">
-                                        <div class="row row-space">
+                                        <div class="row row-space-top">
                                           <div class="col-sm-12">
                                             <g:link
                                                     class="btn btn-sm btn-default"
