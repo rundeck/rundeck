@@ -45,6 +45,7 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
+import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -3735,5 +3736,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
+    }
+
+    /**
+     * Retrun a list of dates in a time lapse between now and the to Date.
+     * @param to Date in the future
+     * @return list of dates
+     */
+    List<Date> nextExecutions(ScheduledExecution se, Date to){
+        def trigger = createTrigger(se)
+        Calendar cal = new BaseCalendar()
+        if(se.timeZone){
+            cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
+        }
+        return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
     }
 }
