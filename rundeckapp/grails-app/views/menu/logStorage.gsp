@@ -99,6 +99,7 @@
                                                     progressId      : 'progressBar',
                                                     bind            : 'percent()',
                                                     bindText        : '',
+                                                    height: 28
                                             ]"/>
                               </span>
                               <span data-bind="visible: progressView()==1">
@@ -182,7 +183,7 @@
 
 
                   <div class="btn-group">
-                      <button class="btn btn-info  btn-sm"
+                      <button class="btn btn-default btn-sm"
                               data-bind="click: loadIncomplete, attr: { disabled: incompleteCount()<1 && queuedCount()<1 }">
                           <g:message code="menu.logStorage.button.list.incomplete.log.data.storage" />
                       </button>
