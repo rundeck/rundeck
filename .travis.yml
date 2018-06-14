@@ -15,7 +15,7 @@ stages:
 - name: snapshot release
   if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
-  if: fork = false AND type = push AND tag =~ ^v AND (branch = master OR env(RUNDECK_RELEASE) IS present)
+  if: fork = false AND type = push AND tag =~ ^v
 - name: fork
   if: fork = true
 
