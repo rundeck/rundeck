@@ -17,6 +17,11 @@ function replace(){
 }
 NNAME=$(replace $NAME $REPL $NEW)
 
-echo "Renaming $NAME to $NNAME"
+NEW_FILE=$(dirname $FILE)/$NNAME
 
-mv $(dirname $FILE)/$NAME $(dirname $FILE)/$NNAME
+if [[ "${FILE}" != "${NEW_FILE}" ]]; then
+    echo "Renaming $NAME to $NNAME"
+    mv $FILE $NEW_FILE
+else
+    echo "No change in file: ${FILE}"
+fi
