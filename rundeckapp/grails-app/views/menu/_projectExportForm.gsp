@@ -65,7 +65,7 @@
               <div class="col-sm-10">
                 <div class="checkbox">
                   <g:checkBox name="exportAll" value="true" checked="true"class="export_all"/>
-                  <label>
+                  <label for="exportAll">
                       <em>All</em>
                   </label>
                 </div>
@@ -75,24 +75,24 @@
               <div class="col-sm-offset-2 col-sm-10 export_select_list">
                 <div class="checkbox">
                   <g:checkBox name="exportJobs" value="true"/>
-                  <label>Jobs</label>
+                  <label for="exportJobs">Jobs</label>
                 </div>
                 <div class="checkbox">
                   <g:checkBox name="exportExecutions" value="true"/>
-                  <label>Executions</label>
+                  <label for="exportExecutions">Executions</label>
                 </div>
                 <div class="checkbox">
                   <g:checkBox name="exportConfigs" value="true"/>
-                  <label>Configuration</label>
+                  <label for="exportConfigs">Configuration</label>
                 </div>
                 <div class="checkbox">
                   <g:checkBox name="exportReadmes" value="true"/>
-                  <label>Readme/Motd</label>
+                  <label for="exportReadmes">Readme/Motd</label>
                 </div>
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" name="${params.project}">
                   <div class="checkbox">
                     <g:checkBox name="exportAcls" value="true"/>
-                    <label>ACL Policies</label>
+                    <label for="exportAcls">ACL Policies</label>
                   </div>
                 </auth:resourceAllowed>
                 <auth:resourceAllowed action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project_acl" has="false" name="${params.project}">

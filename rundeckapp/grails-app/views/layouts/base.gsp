@@ -130,6 +130,33 @@
 <body>
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
+      <div class="logo">
+          <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+             title="Home">
+              <g:set var="appTitle"
+                     value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
+              <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
+              <g:set var="brandHtml"
+                     value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
+              <g:set var="brandDefaultHtml"
+                     value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
+              <i class="rdicon app-logo"></i>
+              <span class="appTitle">
+                <g:if test="${brandHtml}">
+                    ${enc(sanitize:brandHtml)}
+                </g:if>
+                <g:elseif test="${appTitle}">
+                    ${appTitle}
+                </g:elseif>
+                <g:elseif test="${brandDefaultHtml}">
+                    ${enc(sanitize:brandDefaultHtml)}
+                </g:elseif>
+                <g:else>
+                    ${appDefaultTitle}
+                </g:else>
+              </span>
+          </a>
+      </div>      
       <div class="sidebar-wrapper">
           <g:render template="/common/sidebar"/>
           <div class="sidebar-modal-backdrop"></div>

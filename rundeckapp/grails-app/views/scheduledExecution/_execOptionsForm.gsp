@@ -48,8 +48,8 @@
             <g:render template="/common/nodefilterStringHelp"/>
         </div>
     </div>
-<div class="list-group list-group-tab-content">
-<div class="list-group-item">
+<div>
+<div>
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
@@ -421,31 +421,32 @@
     </div>
 </div>
 <g:if test="${hideHead}">
-<div class="col-sm-3">
+<div class="col-sm-3 text-right">
     <div id="formbuttons">
         <g:if test="${!hideCancel}">
-            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
         </g:if>
-        <div class="pull-right">
+        <div class="">
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
                   class="has_tooltip"
                   data-toggle="tooltip"
-                  data-placement="auto right"
+                  data-placement="auto"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
                 <button type="submit"
+                        style="margin-bottom:10px;"
                         name="_action_runJobNow"
                         id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-success">
+                        class=" btn btn-success btn-sm">
                     <g:message code="run.job.now" />
                     <b class="glyphicon glyphicon-play"></b>
                 </button>
                 <a tabindex="0" role="button"
                         id="showScheduler"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-default"
+                        class=" btn btn-default btn-sm"
                         data-toggle="popover" title="Set start time" data-trigger="click"
-                        data-placement="auto left" data-container="body" data-html="true"
+                        data-placement="auto" data-container="body" data-html="true"
                         data-trigger="focus" data-content="<div id='scheduler'>
                                 <div class='input-group date' id='datetimepicker'>
                                     <input type='text' class='form-control' />
@@ -477,7 +478,7 @@
                             checked="${defaultFollow || params.follow == 'true'}"
                             value="true"/>
                 <g:message code="job.run.watch.output"/>
-                <select name="followdetail">
+                <select class="form-control" name="followdetail">
                     <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
                         <g:message code="execution.page.show.tab.Summary.title"/>
                     </option>
@@ -504,27 +505,28 @@
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">
             <g:if test="${!hideCancel}">
-                <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
             </g:if>
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
                   class="form-group has_tooltip"
                   data-toggle="tooltip"
-                  data-placement="auto right"
+                  data-placement="auto"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
                 <button type="submit"
+                        style="margin-bottom:10px;"
                         name="_action_runJobNow"
                         id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-success">
+                        class=" btn btn-success btn-sm">
                     <i class="glyphicon glyphicon-play"></i>
                     <g:message code="run.job.now" />
                 </button>
                 <a tabindex="0" role="button"
                         id="showScheduler"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-default"
+                        class=" btn btn-default btn-sm"
                         data-toggle="popover" title="Set start time" data-trigger="click"
-                        data-placement="auto bottom" data-container="#formbuttons" data-html="true"
+                        data-placement="auto" data-container="#formbuttons" data-html="true"
                         data-trigger="focus" data-content="<div id='scheduler'>
                                 <div class='input-group date' id='datetimepicker'>
                                     <input type='text' class='form-control' />

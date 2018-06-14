@@ -111,7 +111,7 @@
           <div class="card">
             <div class="card-content">
               <span data-bind="if: !loaded()">
-                  <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
+                  <asset:image class="loading-spinner" src="spinner-gray.gif" width="32px" height="32px"/>
               </span>
               <div data-bind="if: projectCount() > 1 && loaded()">
                 %{--app summary info--}%
@@ -202,7 +202,7 @@
           <div data-bind="if: !loadedProjectNames() && projectCount()<1">
             <div class="">
                 <g:message code="page.home.loading.projects" />
-                <asset:image src="spinner-gray.gif" width="32px" height="32px"/>
+                <asset:image class="loading-spinner" src="spinner-gray.gif" width="32px" height="32px"/>
             </div>
           </div>
           <div data-bind="if: projectCount()>0">
@@ -280,7 +280,7 @@
                       <div class="col-sm-12 col-md-4" >
                         <div class="pull-right">
                           <span data-bind="if: !$root.projectForName(project).loaded()">
-                              <g:img file="spinner-gray.gif" width="24px" height="24px"/>
+                              <g:img class="loading-spinner" file="spinner-gray.gif" width="24px" height="24px"/>
                           </span>
                           <span data-bind="if: $root.projectForName(project).auth().admin">
                               <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"

@@ -54,7 +54,7 @@
       </div>
   </div>
 
-  <div class="content-fluid">
+  <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
         <div class="card">

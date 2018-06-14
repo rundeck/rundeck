@@ -108,7 +108,7 @@ data for configuring remote option cascading/dependencies
                    data-bind="attr: { for: fieldId }, click: reloadRemoteValues">
                 <span data-bind="if: hasRemote()">
                     <span data-bind="if: loading() ">
-                        <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                        <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
                     </span>
                     <span class="remotestatus"
                           data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
