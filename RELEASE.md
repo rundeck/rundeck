@@ -1,7 +1,7 @@
-Release 3.0.0-alpha1
+Release 3.0.0-alpha2
 ===========
 
-Date: 2018-06-01
+Date: 2018-06-14
 
 Name: <span style="color: aquamarine"><span class="glyphicon glyphicon-apple"></span> "jalapeño popper aquamarine apple"</span>
 
@@ -65,10 +65,16 @@ See the *Configuration* notes above.
 * Alberto Hormazabal (ahormazabal)
 * Davy Gabard
 * Davy Gabard (Kaldor37)
+* GitHub (web-flow)
 * Greg Schueler (gschueler)
 * Jaime Tobar (jtobard)
 * Jocelyn Thode
+* Joseph Price (PriceChild)
+* Luis Toledo (ltamaster)
+* Martin (martinbydefault)
 * OmriShiv
+* ProTip
+* Romain LEON (PeekLeon)
 * Stephen Joyner
 * Stephen Joyner (sjrd218)
 * carlos (carlosrfranco)
@@ -78,12 +84,15 @@ See the *Configuration* notes above.
 
 * Kaldor37
 * Nomekrax
+* PriceChild
 * ahormazabal
 * gschueler
 * jquick
 * jtobard
 * kino71
+* ltamaster
 * sebastianbello
+* sjrd218
 * turlubullu
 * wcliff
 
@@ -91,6 +100,12 @@ See the *Configuration* notes above.
 
 [Milestone 3.0.0](https://github.com/rundeck/rundeck/milestone/76)
 
+* [Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3483)
+* [Set a max file size of 25mb configurable](https://github.com/rundeck/rundeck/pull/3477)
+* [Error 400 importing projects over 128kb](https://github.com/rundeck/rundeck/issues/3476)
+* [Security Advisory: Zip Slip directory traversal vulnerability](https://github.com/rundeck/rundeck/issues/3471)
+* [ACL for uuid](https://github.com/rundeck/rundeck/pull/3456)
+* [Addresses issue #2062 ](https://github.com/rundeck/rundeck/pull/3432)
 * [Fixed various french translations](https://github.com/rundeck/rundeck/pull/3430)
 * [importOptions missplaced in yaml/xml export.](https://github.com/rundeck/rundeck/issues/3429)
 * [Create project via API with invalid project name does not return error](https://github.com/rundeck/rundeck/issues/3423)
