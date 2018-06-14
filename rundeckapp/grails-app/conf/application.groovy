@@ -13,6 +13,9 @@ dataSource {
     password = ''
 }
 
+grails.controllers.upload.maxFileSize=26214400
+grails.controllers.upload.maxRequestSize=26214400
+
 environments {
     production {
 //        grails.serverURL = "http://www.changeme.com"

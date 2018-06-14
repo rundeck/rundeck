@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-S3_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/${TRAVIS_BUILD_NUMBER}/artifacts"
+export RUNDECK_BUILD_NUMBER="${TRAVIS_BUILD_NUMBER}"
+
+S3_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/${RUNDECK_BUILD_NUMBER}/artifacts"
 
 mkdir -p artifacts/packaging
 

@@ -99,7 +99,7 @@ task wrapper(type: Wrapper) {
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty( "signing.password") && !project.isDevBuild) {
         // Use Java 6's console to read from the console (no good for a CI environment)
-        Console console = System.console()
+        def console = System.console()
         console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
 
         //def id = console.readLine("PGP Key Id: ")

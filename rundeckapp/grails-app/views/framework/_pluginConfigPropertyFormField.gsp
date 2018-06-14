@@ -79,10 +79,9 @@
             default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:set var="inputValues" value="${(prop.selectLabels ?: [:])}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <div class="${valueColTypeSplitA}">
-        <g:textField name="${fieldname}" value="${inputValues&&null!=inputValues[prop.name]?inputValues[prop.name]:prop.defaultValue}"
+        <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
                      id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">

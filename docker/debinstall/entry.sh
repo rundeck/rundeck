@@ -8,6 +8,4 @@ test -f "$HOME"/rundeck/packaging/debdist/rundeck*.deb || {
 
 dpkg -i "$HOME"/rundeck/packaging/debdist/rundeck*.deb
 
-service rundeckd start
-wait_for_start /var/log/rundeck/service.log
-exec "$@"
+entry_start "$*"

@@ -325,8 +325,15 @@ class RundeckInitializer {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);
         }
 
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, new File(config.configDir, config.runtimeConfiguration.getProperty(
-                RundeckInitConfig.RUNDECK_CONFIG_NAME_PROP)).getAbsolutePath());
+        if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)) {
+            System.setProperty(
+                    RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, new File(
+                    config.configDir, config.runtimeConfiguration.getProperty(
+                    RundeckInitConfig.RUNDECK_CONFIG_NAME_PROP
+            )
+            ).getAbsolutePath()
+            );
+        }
 
         if (config.useJaas) {
             System.setProperty("java.security.auth.login.config", new File(config.configDir,

@@ -266,6 +266,9 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     Resource<ResourceMeta> createResource(String ns,Path path, ResourceMeta content) {
+        if (path.path.contains('../')) {
+            throw StorageException.createException(path, "Invalid path: ${path.path}")
+        }
         if(findResource(ns,path)){
             throw StorageException.createException(path,"Exists")
         }
@@ -334,11 +337,14 @@ class DbStorageService implements NamespacedStorage{
 
     @Override
     Resource<ResourceMeta> updateResource(String ns,Path path, ResourceMeta content) {
-        def storage = findResource(ns,path)
-        if (!storage) {
-            throw StorageException.createException(path, "Not found")
+        if (path.path.contains('../')) {
+            throw StorageException.updateException(path, "Invalid path: ${path.path}")
         }
-        storage=saveStorage(storage,content,ns,path,'update')
+        def storage = findResource(ns, path)
+        if (!storage) {
+            throw StorageException.updateException(path, "Not found")
+        }
+        storage = saveStorage(storage, content, ns, path, 'update')
 
         return loadResource(storage)
     }

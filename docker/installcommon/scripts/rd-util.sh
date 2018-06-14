@@ -36,3 +36,16 @@ wait_for_start(){
 	echo "Rundeck started successfully!!"
 	
 }
+entry_start(){
+	service rundeckd start
+	wait_for_start /var/log/rundeck/service.log
+
+
+	if [ "$1" = "-test" ] ; then
+		shift
+		. /init-tests.sh
+		test_all
+	fi
+
+	exec "$@"
+}
