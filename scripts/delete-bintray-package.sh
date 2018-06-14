@@ -27,8 +27,18 @@ shift;
 shift;
 shift;
 
-CURL_CMD="curl --write-out %{http_code} --silent --output /dev/null -u$BINTRAY_USER:$BINTRAY_APIKEY"
 
+PRODUCTION_REPOS=("rundeck-deb rundeck-rpm rundeck-maven")
+
+for repo in ${PRODUCTION_REPOS[@]}; do
+    echo $repo
+    if [[ "${repo}" == ${BINTRAY_REPO} ]] ; then
+        >&2 echo "Refusing to refusing to delete from release repo ${repo}"
+        exit 1
+    fi
+done
+
+CURL_CMD="curl --write-out %{http_code} --silent --output /dev/null -u$BINTRAY_USER:$BINTRAY_APIKEY"
 
 for RPM_NAME in $@; do
     echo "Deleting package $RPM_NAME from Bintray repository $BINTRAY_REPO ..."
