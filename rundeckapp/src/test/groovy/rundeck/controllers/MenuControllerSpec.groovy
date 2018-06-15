@@ -316,15 +316,14 @@ class MenuControllerSpec extends Specification {
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            nextExecutions(_,_) >> [new Date()]
+        }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime=200*1000
         job1.execCount=100
         job1.save()
-        job1.scheduledExecutionService = Mock(ScheduledExecutionService){
-            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
-        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
@@ -362,15 +361,14 @@ class MenuControllerSpec extends Specification {
         def testUUID2 = UUID.randomUUID().toString()
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
-        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            nextExecutions(_,_) >> [new Date()]
+        }
         ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
         job1.serverNodeUUID = testUUID2
         job1.totalTime = 200 * 1000
         job1.execCount = 100
         job1.save()
-        job1.scheduledExecutionService = Mock(ScheduledExecutionService) {
-            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
-        }
         request.addHeader('x-rundeck-ajax', 'true')
 
         when:
