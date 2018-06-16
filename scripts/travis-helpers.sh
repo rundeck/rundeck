@@ -111,6 +111,30 @@ fetch_commit_common_artifacts() {
     extract_artifacts
 }
 
+trigger_travis_build() {
+    set -euo pipefail
+
+    local token="${1:?Must supply token}"
+    local owner="${2:?Must supply owner}"
+    local repo="${3:?Must supply repo}"
+    local branch="${4:?Must spupply branch}"
+
+    local body="{
+        \"request\": {
+            \"branch\":\"${branch}\",
+            \"message\": \"Rundeck OSS triggered build.\"
+        }
+    }"
+
+    curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -H "Accept: application/json" \
+        -H "Travis-API-Version: 3" \
+        -H "Authorization: token ${token}" \
+        -d "$body" \
+        https://api.travis-ci.com/repo/${owner}%2F${repo}/requests
+}
+
 
 
 export_tag_info
@@ -122,3 +146,4 @@ export -f sync_commit_to_s3
 export -f sync_from_s3
 export -f sync_commit_from_s3
 export -f fetch_common_artifacts
+export -f trigger_travis_build
