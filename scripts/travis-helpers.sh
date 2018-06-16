@@ -66,6 +66,7 @@ script_block() {
         travis_time_start
             eval "${@}"
             ret=$?
+            echo "Command [${@}] returned ${ret}"
         travis_time_finish
     travis_fold end "${NAME}"
     return $RET
@@ -112,8 +113,6 @@ fetch_commit_common_artifacts() {
 }
 
 trigger_travis_build() {
-    set -euo pipefail
-
     local token="${1:?Must supply token}"
     local owner="${2:?Must supply owner}"
     local repo="${3:?Must supply repo}"
