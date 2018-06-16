@@ -23,6 +23,8 @@ export RUNDECK_COMMIT="${TRAVIS_COMMIT}"
 S3_BUILD_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/travis-builds/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_COMMIT_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/commits/${RUNDECK_COMMIT}/artifacts"
 
+S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
+
 mkdir -p artifacts/packaging
 
 # Exports tag info for current TRAVIS_TAG and previous tag
@@ -100,10 +102,16 @@ fetch_common_artifacts() {
     extract_artifacts
 }
 
+fetch_common_resources() {
+    aws s3 sync --delete "${S3_CI_RESOURCES}" ci-resources
+}
+
 fetch_commit_common_artifacts() {
     sync_commit_from_s3
     extract_artifacts
 }
+
+
 
 export_tag_info
 export_repo_info
