@@ -33,7 +33,7 @@ please see the this issue: [Security Advisory: Zip Slip directory traversal vuln
 [Milestone 2.11.4](https://github.com/rundeck/rundeck/milestone/78)
 
 * [2.11: backport bug fixes](https://github.com/rundeck/rundeck/issues/3494)
-    * [#3384 duplicate jobs page doesn't show options]((https://github.com/rundeck/rundeck/issues/3384)
-    * [#3423 Create project via API with invalid project name does not return error]((https://github.com/rundeck/rundeck/issues/3423)
+    * [#3384 duplicate jobs page doesn't show options](https://github.com/rundeck/rundeck/issues/3384)
+    * [#3423 Create project via API with invalid project name does not return error](https://github.com/rundeck/rundeck/issues/3423)
     * [2.11: Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3493)
     * [backport: Zip Slip fix for 2.11](https://github.com/rundeck/rundeck/pull/3486)
