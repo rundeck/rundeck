@@ -4,6 +4,8 @@ set -euo pipefail
 
 . common.sh
 
+# Sets the compose file to use for test run
+# Different compose files used for different environments
 export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-api-test.yml}
 export SETUP_TEST_PROJECT=test
 
@@ -15,6 +17,7 @@ if [ -f rd.deb ] ; then
 	mv rd.deb dockers/rundeck/data/
 fi
 
+# Most test images require rdtest:lastest as a base image
 build_rdtest_docker
 
 # clean up docker env
