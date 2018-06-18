@@ -95,7 +95,7 @@ class RundeckInitializer {
         setSystemProperties()
         initSsl()
 
-        File installCompleteMarker = new File(config.baseDir+"/.install_complete")
+        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete")
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
             //installation tasks
             createDirectories()
@@ -359,6 +359,7 @@ class RundeckInitializer {
         workdir = createDir(config.workDir, serverdir, "work")
         toolsdir = createDir(null,basedir,"tools")
         toolslibdir = createDir(null,toolsdir,"lib")
+        createDir(null,basedir,"var")
     }
 
     File createDir(String specifiedPath, File base, String child) {
