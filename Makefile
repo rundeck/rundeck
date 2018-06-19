@@ -29,7 +29,7 @@ rundeck:  app
 app: rundeckapp/build/libs/rundeck-$(VERSION).war
 
 rundeckapp/build/libs/rundeck-$(VERSION).war:
-	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble
+	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) --build-cache -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble --scan
 
 
 #snapshot and release

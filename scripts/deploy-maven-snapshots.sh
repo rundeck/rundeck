@@ -13,9 +13,11 @@ build_number=$5
 
 WORKSPACE=release
 
-if [ ! -d $WORKSPACE ]; then
-    mkdir $WORKSPACE
+if [ -d $WORKSPACE ]; then
+    rm -r $WORKSPACE
 fi
+
+mkdir $WORKSPACE
 
 cp core/build/libs/* $WORKSPACE
 cp rundeckapp/build/libs/*.{jar,war} $WORKSPACE
