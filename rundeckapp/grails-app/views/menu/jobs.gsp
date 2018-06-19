@@ -903,12 +903,28 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-header">
-          <g:render template="workflowsFull" model="${[jobExpandLevel:jobExpandLevel,jobgroups:jobgroups,wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey, clusterModeEnabled:clusterModeEnabled]}"/>
         </div>
         <div class="card-content">
-          <div class="runbox primary jobs" id="indexMain">
-              <div id="error" class="alert alert-danger" style="display:none;"></div>
-          </div>
+            <div class="runbox primary jobs" id="indexMain">
+                <div id="error" class="alert alert-danger" style="display:none;"></div>
+                <g:render template="workflowsFull"
+                          model="${[
+                              jobExpandLevel    : jobExpandLevel,
+                              jobgroups         : jobgroups,
+                              wasfiltered       : wasfiltered ? true : false,
+                              clusterMap        : clusterMap,
+                              nextExecutions    : nextExecutions,
+                              jobauthorizations : jobauthorizations,
+                              authMap           : authMap,
+                              nowrunningtotal   : nowrunningtotal,
+                              max               : max,
+                              offset            : offset,
+                              paginateParams    : paginateParams,
+                              sortEnabled       : true,
+                              rkey              : rkey,
+                              clusterModeEnabled: clusterModeEnabled
+                          ]}"/>
+            </div>
         </div>
       </div>
     </div>
