@@ -825,7 +825,7 @@ class ExecutionController extends ControllerBase{
         response.outputStream<<"""<html>
 <head>
 <title></title>
-<link rel="stylesheet" href="${g.assetPath(src:'rundeck.css')}"  />
+<link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
 <link rel="stylesheet" href="${g.assetPath(src:'ansicolor.css')}"  />
 </head>
 <body>
@@ -2240,5 +2240,3 @@ class ExecutionController extends ControllerBase{
         )
     }
 }
-
-    
