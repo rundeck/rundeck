@@ -134,7 +134,26 @@ trigger_travis_build() {
         https://api.travis-ci.com/repo/${owner}%2F${repo}/requests
 }
 
+build_rdtest() {
+    local buildJar=( $PWD/rundeckapp/build/libs/*.war )
+    cp ${buildJar[0]} test/docker/rundeck-launcher.war
 
+    (
+        set -e
+        cd test/docker/
+        source common.sh
+        build_rdtest_docker
+    )
+
+    # Tag and push to be used as cache source in later test builds
+    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
+    docker push rundeckapp/testdeck:rdtest-latest
+}
+
+pull_rdtest() {
+    docker pull rundeckapp/testdeck:rdtest-latest
+}
 
 export_tag_info
 export_repo_info
@@ -146,3 +165,5 @@ export -f sync_from_s3
 export -f sync_commit_from_s3
 export -f fetch_common_artifacts
 export -f trigger_travis_build
+export -f build_rdtest
+export -f pull_rdtest
