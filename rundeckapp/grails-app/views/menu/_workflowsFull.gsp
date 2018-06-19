@@ -69,31 +69,34 @@
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
     <div>
       <div>
-        <div style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
+        <!-- filter -->
+        <div style="border-bottom:1px solid #ddd; margin-bottom:2em; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
           <g:form action="jobs" params="[project:params.project]" method="POST" class="form" useToken="true">
             <g:if test="${params.compact}">
               <g:hiddenField name="compact" value="${params.compact}"/>
             </g:if>
             <g:hiddenField name="project" value="${params.project}"/>
-              <span class="btn btn-default obs_filtertoggle">
-                <g:message code="filter.title" />
-                <b class="glyphicon glyphicon-chevron-down"></b>
+            <div style="margin-bottom:1em">
+              <span class="btn btn-default btn-xs pull-right obs_filtertoggle">
+                Close
+                <!-- <g:message code="filter.title" /> -->
               </span>
               <g:if test="${!filterName}">
-                <a class="btn btn-xs pull-right btn-success" data-toggle="modal" href="#saveFilterModal" title="${message(code:"job.filter.save.button.title")}">
+                <a class="btn btn-xs btn-success" data-toggle="modal" href="#saveFilterModal" title="${message(code:"job.filter.save.button.title")}">
                   <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
                 </a>
               </g:if>
               <g:else >
                 <div class="filterdef saved clear">
                   <span class="prompt"><g:enc>${filterName}</g:enc></span>
-                  <a class="btn btn-xs btn-simple btn-danger pull-right" data-toggle="modal"
+                  <a class="btn btn-xs btn-simple btn-danger" data-toggle="modal"
                         href="#deleteFilterModal" title="${message(code:"job.filter.delete.button.title")}">
                     <b class="glyphicon glyphicon-remove"></b>
                     <g:message code="job.filter.delete.button" />
                   </a>
                 </div>
               </g:else>
+            </div>
               <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
                       filterset:filterset,update:'wffilterform',
                       deleteActionSubmit:'deleteJobfilter',
@@ -146,9 +149,9 @@
                   <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" name="filterAll" controller='menu' action='jobs' class="btn btn-primary btn-sm"/>
                   <g:actionSubmit value="${message(code:'job.filter.clear.button.title')}" name="clearFilter" controller='menu' action='clearJobsFilter' class="btn btn-default btn-sm"/>
                 </div>
-              </div> <!-- end filter -->
+              </div>
           </g:form>
-        </div>
+        </div><!-- end filter -->
         <div style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
           <div class="jobscontent head">
             <g:if test="${!params.compact}">
@@ -279,26 +282,25 @@
                         <!--<span class="info note">Filter:</span>-->
                     </g:if>
                     </div>
+                    <span title="Click to modify filter" class="btn btn-default btn-xs query obs_filtertoggle"  id='${rkey}filter-toggle'>
+                        <g:each in="${wasfiltered.sort()}" var="qparam">
+                            <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
-                            <span title="Click to modify filter" class="btn btn-default btn-sm query obs_filtertoggle"  id='${rkey}filter-toggle'>
-                                <g:each in="${wasfiltered.sort()}" var="qparam">
-                                    <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
+                            <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
+                                <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
+                                    <g:relativeDate atDate="${paginateParams[qparam]}"/>
+                                </span>
+                            </g:if>
+                            <g:else>
+                                <span class="queryvalue text">
+                                    ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
+                                </span>
+                            </g:else>
 
-                                    <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                                        <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
-                                            <g:relativeDate atDate="${paginateParams[qparam]}"/>
-                                        </span>
-                                    </g:if>
-                                    <g:else>
-                                        <span class="queryvalue text">
-                                            ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
-                                        </span>
-                                    </g:else>
+                        </g:each>
 
-                                </g:each>
-
-                                <b class="glyphicon glyphicon-chevron-right"></b>
-                            </span>
+                        <b class="glyphicon glyphicon-chevron-right"></b>
+                    </span>
                 </g:if>
                 <g:else>
                     <g:if test="${!params.compact}">

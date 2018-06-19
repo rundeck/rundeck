@@ -17,7 +17,7 @@
 <%@ page import="rundeck.Execution" %>
  <%--
     jobDetailFragment.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Jan 7, 2011 2:21:36 PM
  --%>

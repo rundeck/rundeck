@@ -25,20 +25,20 @@
 <g:timerStart key="gtx"/>
 <div class="jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
 <g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
-    <div style="margin-bottom:4px">
+    <div style="margin-bottom:1em; margin-top:1em;">
         <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
             <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>
             <g:set var="newparams" value="${paginateParams}"/>
             %{
                 newparams['groupPath']=uplevel
             }%
-            <g:link controller="menu" action="jobs" class="groupname" title="Previous level" params="${newparams+[project:params.project]}">
+            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Previous level" params="${newparams+[project:params.project]}">
                 <i class="glyphicon glyphicon-arrow-up"></i>
                 Up
             </g:link>
         </g:if>
         <g:else>
-            <g:link controller="menu" action="jobs" class="groupname" title="Top level" params="[project: params.project]">
+            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Top level" params="[project: params.project]">
                 <i class="glyphicon glyphicon-arrow-up"></i>
                 Top
             </g:link>
@@ -90,7 +90,7 @@
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
     <g:set var="groupopen" value="${(wasfiltered || jscallback || (level.size()<= jobExpandLevel || jobExpandLevel<0))}"/>
-    ${raw("<")}div class="expandComponentHolder panel panel-default ${groupopen ? 'expanded' : ''} " style="margin-top:15px" ${raw(">")}
+    ${raw("<")}div class="expandComponentHolder panel panel-default ${groupopen ? 'expanded' : ''} " style="" ${raw(">")}
         %{divcounts++;}%
         <div class="panel-heading">
         <g:if test="${jscallback}">

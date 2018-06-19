@@ -1,0 +1,26 @@
+#page_jobs{
+  .expandComponentHolder{
+    margin-top: 15px;
+  }
+  .panel-group{
+    .panel{
+      .subjobs{
+      }
+      .sub_group{
+        .expandComponentHolder{
+          margin-top: 0;
+        }
+        .panel{
+          background-color: white;
+          border-radius: 0;
+          border: none;
+          .panel-heading{
+            border-top: 1px solid black;
+            background-color: white;
+            border: none;
+          }
+        }
+      }
+    }
+  }
+}

@@ -16,7 +16,7 @@
 
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="row" >
+<div class="row" style="margin-top:1em">
 <div class="col-sm-12">
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
