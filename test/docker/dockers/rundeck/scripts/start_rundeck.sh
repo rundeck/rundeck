@@ -36,12 +36,16 @@ LOGFILE=$RDECK_BASE/var/log/service.log
 mkdir -p $(dirname $LOGFILE)
 FWKPROPS=$HOME/etc/framework.properties
 mkdir -p $(dirname $FWKPROPS)
-export RUNDECK_PORT=4440
-export RUNDECK_URL=http://$RUNDECK_NODE:$RUNDECK_PORT
-if [ -n "$SETUP_SSL" ] ; then
-  export RUNDECK_PORT=4443
-  export RUNDECK_URL=https://$RUNDECK_NODE:$RUNDECK_PORT
-fi
+
+export RUNDECK_PORT=${RUNDECK_PORT:-4440}
+export RUNDECK_URL=${RUNDECK_URL:-http://$RUNDECK_NODE:$RUNDECK_PORT}
+
+
+# if [ -n "$SETUP_SSL" ] ; then
+#   export RUNDECK_PORT=4443
+#   export RUNDECK_URL=https://$RUNDECK_NODE:$RUNDECK_PORT
+# fi
+
 cat > $FWKPROPS <<END
 framework.server.name = $RUNDECK_NODE
 framework.server.hostname = $RUNDECK_NODE
@@ -240,6 +244,32 @@ fi
 if [ -n "$SETUP_SSL" ] ; then
     setup_ssl $RDECK_BASE
 fi
+
+cat > $HOME/server/config/rundeck-config.properties <<END
+loglevel.default=INFO
+rdeck.base=/home/rundeck
+
+#rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
+rss.enabled=false
+server.address=0.0.0.0
+grails.serverURL=${RUNDECK_URL}
+dataSource.dbCreate = update
+dataSource.url = jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true
+
+# Pre Auth mode settings
+rundeck.security.authorization.preauthenticated.enabled=false
+rundeck.security.authorization.preauthenticated.attributeName=REMOTE_USER_GROUPS
+rundeck.security.authorization.preauthenticated.delimiter=,
+# Header from which to obtain user name
+rundeck.security.authorization.preauthenticated.userNameHeader=X-Forwarded-Uuid
+# Header from which to obtain list of roles
+rundeck.security.authorization.preauthenticated.userRolesHeader=X-Forwarded-Roles
+# Redirect to upstream logout url
+rundeck.security.authorization.preauthenticated.redirectLogout=false
+rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
+
+rundeck.log4j.config.file=/home/rundeck/server/config/log4j.properties
+END
 
 if [ -n "$NODE_CACHE_FIRST_LOAD_SYNCH" ] ; then
   cat - >>$RDECK_BASE/server/config/rundeck-config.properties <<END
