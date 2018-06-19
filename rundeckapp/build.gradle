@@ -125,7 +125,7 @@ dependencies {
     compile 'org.grails.plugins:spring-security-core:3.2.1'
     compile 'org.kohsuke:libpam4j:1.5'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
-    compile 'org.codehaus.groovy:groovy-all:2.4.13'
+    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.0"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
