@@ -933,7 +933,7 @@
     <div class="col-xs-12">
       <div class="card"  id="activity_section">
         <div class="card-header">
-          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h4>
+            <h3 class="card-title"><g:message code="page.section.Activity.for.jobs"/></h3>
         </div>
         <div class="card-content">
           <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
