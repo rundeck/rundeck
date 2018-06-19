@@ -30,7 +30,7 @@
                 <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
-        <span id="tagdemo" style="${wdgt.styleVisible(unless: hidetop)}">
+        <span id="tagdemo" style="display:block;${wdgt.styleVisible(unless: hidetop)}">
             <g:if test="${!hidetop}">
                 <i class="glyphicon glyphicon-tags text-primary"></i>
             </g:if>

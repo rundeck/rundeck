@@ -18,31 +18,31 @@
     <g:render template="nodeCurrentStateSimpleKO"/>
 </script>
 
-<div data-bind="if: !stateLoaded()">
+<div data-bind="if: !stateLoaded()" style="margin-top:1em">
         <div class="row">
             <div class="col-sm-12">
+              <div class="card">
+                <div class="card-content">
+                  <div data-bind="if: errorMessage()">
+                      <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
+                          <span class="text-warning" data-bind="text: errorMessage()">
+                          </span>
+                          <div style="margin-top:1em;">
+                              <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') "><g:message code="button.action.view.log.output" /></a>
+                          </div>
+                      </div>
+                  </div>
 
-                <div data-bind="if: errorMessage()">
-                    <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
-                        <span class="text-warning" data-bind="text: errorMessage()">
-                        </span>
-                        <div>
-                            <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') "><g:message code="button.action.view.log.output" /></a>
-                        </div>
-                    </div>
+                  <div data-bind="if: !errorMessage() && !statusMessage()">
+                      <div class="well well-lg text-primary">
+                          <g:message code="waiting.for.state.info" />
+                      </div>
+                  </div>
+                  <div data-bind="if: statusMessage()">
+                      <div class="well well-lg text-primary" data-bind="text: statusMessage()"></div>
+                  </div>
                 </div>
-
-                <div data-bind="if: !errorMessage() && !statusMessage()">
-                    <div class="well well-lg text-primary">
-                        <g:message code="waiting.for.state.info" />
-                    </div>
-                </div>
-                <div data-bind="if: statusMessage()">
-                    <div class="well well-lg text-primary" data-bind="text: statusMessage()">
-
-                    </div>
-                </div>
-
+              </div>
             </div>
         </div>
 </div>
@@ -51,13 +51,12 @@
 <div data-bind="if: stateLoaded()">
 
         <div class="row" data-bind="if: completed()">
-            <div class="col-sm-12">
-                <tmpl:wfstateSummaryScore />
-            </div>
+          <tmpl:wfstateSummaryScore />
         </div>
 
         <div class="row row-space" data-bind="if: !completed()">
             <div class="col-sm-12" >
+
                 <table class="table table-bordered">
 
                     <tr>
@@ -113,51 +112,5 @@
             </div>
         </div>
 
-
-        <div class="row " data-bind="if: !completed()">
-            <div class="col-sm-3 text-primary h4 text-right">
-                Now Running
-            </div>
-            <div class="col-sm-9">
-                <section data-bind="visible: runningNodes().length > 0, if: runningNodes().length > 0" >
-                    <div data-bind="foreach: runningNodes()">
-                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
-                        </div>
-                    </div>
-                </section>
-            </div>
-        </div>
-
-        <div class="row " data-bind="if: failedNodes().length > 0 ">
-            <div class="col-sm-3 text-primary h4 text-right">
-                <span data-bind="text: failedNodes().length"></span>
-                Failed Nodes
-            </div>
-            <div class="col-sm-9">
-                <div data-bind="if: failedNodes().length > 0" >
-                    <div data-bind="foreach: failedNodes()">
-                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            </div>
-
-    <div class="row " data-bind="if: partialNodes().length > 0">
-        <div class="col-sm-3 text-primary h4 text-right">
-            <span data-bind="text: partialNodes().length"></span>
-            Incomplete Nodes
-        </div>
-
-        <div class="col-sm-9">
-                %{--display up to 5 partial nodes nodes--}%
-                <div data-bind="if:  partialNodes().length > 0" >
-                    <div data-bind="foreach: partialNodes()">
-                        <div data-bind="template: {name:'node-current-state-simple',data:$data}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 </div>
 </div>

@@ -105,7 +105,7 @@
   </div>
 
 
-  <div class="row">
+  <!-- <div class="row">
       <div class="col-sm-12 ">
         <div class="card">
           <div class="card-header">
@@ -118,6 +118,20 @@
           </div>
         </div>
       </div>
+  </div> -->
+
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="card card-plain">
+        <div class="card-header">
+          <h3 class="card-title">
+            <g:message code="statistics" />
+          </h3>
+        </div>
+      </div>
+    </div>
+    <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
+
   </div>
 
   <div class="row" id="activity_section">

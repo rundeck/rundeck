@@ -873,7 +873,7 @@
     </style>
 </head>
 <body>
-<div class="container-fluid">
+<div id="page_jobs" class="container-fluid">
   <g:if test="${flash.bulkJobResult?.errors}">
       <div class="alert alert-warning">
           <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>

@@ -13,50 +13,56 @@
 - See the License for the specific language governing permissions and
 - limitations under the License.
 --}%
-<div class="jobstats" style="clear:both;">
-    <table class="table table-bordered table-condensed" >
-
-        <tr>
-            <th style="width: 20%" class="text-primary text-center  text-header">
-                <g:message code="Execution.plural" />
-            </th>
-        <g:if test="${lastrun || reflastrun}">
-            <th style="width: 20%" class="text-primary text-center  text-header">
-                <g:message code="success.rate" />
-            </th>
-        </g:if>
-        <g:if test="${scheduledExecution.execCount > 0}">
-            <th style="width: 20%" class="text-primary text-center  text-header">
-                <g:message code="average.duration" />
-            </th>
-        </g:if>
-        </tr>
-        <tr>
-            <td class="text-center">
-                <span class="h3 ">
-                    <g:formatNumber number="${total}" />
-                </span>
-            </td>
-        <g:if test="${lastrun || reflastrun}">
+<div class="jobstats text-center" style="clear:both;">
+  <div class="col-xs-4">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title">
+          <g:message code="Execution.plural" />
+        </h4>
+        <div class="card-content">
+          <span class="h3 ">
+              <g:formatNumber number="${total}" />
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <g:if test="${lastrun || reflastrun}">
+    <div class="col-xs-4">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">
+            <g:message code="success.rate" />
+          </h4>
+          <div class="card-content">
             <g:set var="successrate" value="${params.float('success')?:successrate}"/>
             <g:set var="ratecolors" value="${['text-success','text-primary','text-warning','text-danger']}"/>
             <g:set var="ratelevels" value="${[0.9f,0.75f,0.5f]}"/>
             <g:set var="successindex" value="${ratelevels.findIndexOf{it<=(successrate)}}"/>
             <g:set var="successcolor" value="${successindex>=0?ratecolors[successindex]:ratecolors[-1]}"/>
-            <td class="text-center">
-                <span class="h3 ${successcolor}">
-                    <g:formatNumber number="${successrate}" type="percent"/>
-                </span>
-            </td>
-        </g:if>
-        <g:if test="${scheduledExecution.execCount>0}">
-            <td class="text-center">
-                    <span class="h3 ">
-                        <g:timeDuration time="${scheduledExecution.execCount>0?  scheduledExecution.totalTime /scheduledExecution.execCount  : 0}"/>
-                    </span>
-                </td>
-        </g:if>
-
-        </tr>
-    </table>
+            <span class="h3 ${successcolor}">
+                <g:formatNumber number="${successrate}" type="percent"/>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </g:if>
+  <g:if test="${scheduledExecution.execCount > 0}">
+    <div class="col-xs-4">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">
+            <g:message code="average.duration" />
+          </h4>
+          <div class="card-content">
+            <span class="h3 ">
+                <g:timeDuration time="${scheduledExecution.execCount>0?  scheduledExecution.totalTime /scheduledExecution.execCount  : 0}"/>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </g:if>
 </div>

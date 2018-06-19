@@ -136,7 +136,7 @@
 </div>
 </g:if>
 <div class="${inlineView?'card-content inlineexecution':''}">
-  <div id="commandFlow" class="outputcontrols" style="margin-bottom:1em;">
+  <div id="commandFlow" class="outputcontrols" style="margin-top: 1em; margin-bottom:1em;">
     <form action="#" id="outputappendform">
       <div class="row" style="border-bottom:1px solid #e8e8e8;">
         <div class="col-sm-8" style="margin-bottom: 10px">

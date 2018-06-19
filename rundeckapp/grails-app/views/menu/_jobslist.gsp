@@ -114,41 +114,40 @@
                                 </span>
                                 <!-- /ko -->
 
-
-                                    <g:link action="show"
-                                            controller="scheduledExecution"
-                                            id="${scheduledExecution.extid}"
-                                            class="hover_show_job_info"
-                                            params="[project: scheduledExecution.project]"
-                                            data-job-id="${scheduledExecution.extid}">
-                                        <g:if test="${showIcon}">
-                                            <i class="glyphicon glyphicon-book"></i>
-                                        </g:if>
-                                        <g:enc>${scheduledExecution.jobName}</g:enc></g:link>
-
-                                <g:render template="/scheduledExecution/description"
-                                          model="[description: scheduledExecution?.description,
-                                                  textCss:'text-primary',
-                                                  mode:'collapsed',
-                                                  rkey:g.rkey(),
-                                                  jobLinkId:scheduledExecution?.extid,
-                                                  cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
-                                          ]"/>
-
-                                  <div class="btn-group pull-right">
-                                      <button type="button"
-                                              class="btn btn-default btn-sm dropdown-toggle act_job_action_dropdown"
-                                              title="${g.message(code: 'click.for.job.actions')}"
-                                              data-job-id="${enc(attr:scheduledExecution.extid)}"
-                                              data-toggle="dropdown"
-                                              aria-expanded="false">
-                                          <span class="caret"></span>
-                                      </button>
-                                      <ul class="dropdown-menu" role="menu">
-                                          <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
-                                      </ul>
-                                  </div>
-
+                                <div class="btn-group pull-right">
+                                    <button type="button"
+                                            class="btn btn-default btn-sm dropdown-toggle act_job_action_dropdown"
+                                            title="${g.message(code: 'click.for.job.actions')}"
+                                            data-job-id="${enc(attr:scheduledExecution.extid)}"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li role="presentation" class="dropdown-header"><g:message code="loading.text" /></li>
+                                    </ul>
+                                </div>
+                                <g:link action="show"
+                                        controller="scheduledExecution"
+                                        id="${scheduledExecution.extid}"
+                                        class="hover_show_job_info"
+                                        params="[project: scheduledExecution.project]"
+                                        data-job-id="${scheduledExecution.extid}">
+                                    <g:if test="${showIcon}">
+                                        <i class="glyphicon glyphicon-book"></i>
+                                    </g:if>
+                                    <g:enc>${scheduledExecution.jobName}</g:enc>
+                                </g:link>
+                                <div>
+                                  <g:render template="/scheduledExecution/description"
+                                            model="[description: scheduledExecution?.description,
+                                                    textCss:'text-primary',
+                                                    mode:'collapsed',
+                                                    rkey:g.rkey(),
+                                                    jobLinkId:scheduledExecution?.extid,
+                                                    cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
+                                            ]"/>
+                                </div>
                             </div>
                             <g:if test="${scheduledExecution.scheduled}">
                             <div class="scheduletime" style="margin-top:5px; margin-left:5px;">
