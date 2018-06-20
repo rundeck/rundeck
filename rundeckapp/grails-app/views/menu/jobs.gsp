@@ -903,10 +903,29 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-header">
-          <g:render template="workflowsFull" model="${[jobExpandLevel:jobExpandLevel,jobgroups:jobgroups,wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey, clusterModeEnabled:clusterModeEnabled]}"/>
+          <h3 class="card-title">
+            <g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
+          </h3>
         </div>
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
+            <g:render template="workflowsFull"
+                      model="${[
+                          jobExpandLevel    : jobExpandLevel,
+                          jobgroups         : jobgroups,
+                          wasfiltered       : wasfiltered ? true : false,
+                          clusterMap        : clusterMap,
+                          nextExecutions    : nextExecutions,
+                          jobauthorizations : jobauthorizations,
+                          authMap           : authMap,
+                          nowrunningtotal   : nowrunningtotal,
+                          max               : max,
+                          offset            : offset,
+                          paginateParams    : paginateParams,
+                          sortEnabled       : true,
+                          rkey              : rkey,
+                          clusterModeEnabled: clusterModeEnabled
+                      ]}"/>             
               <div id="error" class="alert alert-danger" style="display:none;"></div>
           </div>
         </div>
@@ -917,7 +936,7 @@
     <div class="col-xs-12">
       <div class="card"  id="activity_section">
         <div class="card-header">
-          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h4>
+          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
         </div>
         <div class="card-content">
           <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
