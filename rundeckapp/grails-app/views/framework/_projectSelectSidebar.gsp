@@ -42,5 +42,5 @@
           </g:link>
         </li>
     </g:each>
-  </nav>
+  </ul>
 </div>
