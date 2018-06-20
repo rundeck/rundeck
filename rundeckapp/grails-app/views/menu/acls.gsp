@@ -247,17 +247,18 @@
 
                       </div>
                   </div>
-                  <g:render template="/menu/aclManageKO" model="[
-                          deleteModalId: 'deleteStorageAclPolicy',
-                          deleteAction :
-                                  [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
-                          uploadModalId: 'aclStorageUpload',
-                          uploadFormId: 'aclStorageUploadForm',
-                          uploadAction : hasCreateAuth || hasEditAuth ?
-                                  [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
-                                  null
-                  ]"/>
+
               </div>
+              <g:render template="/menu/aclManageKO" model="[
+                  deleteModalId: 'deleteStorageAclPolicy',
+                  deleteAction :
+                      [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
+                  uploadModalId: 'aclStorageUpload',
+                  uploadFormId: 'aclStorageUploadForm',
+                  uploadAction : hasCreateAuth || hasEditAuth ?
+                                 [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
+                                 null
+              ]"/>
           </div>
           <g:if test="${clusterMode}">
               <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
