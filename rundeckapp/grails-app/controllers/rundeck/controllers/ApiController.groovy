@@ -348,7 +348,7 @@ class ApiController extends ControllerBase{
         }
         Date nowDate=new Date();
         String nodeName= servletContext.getAttribute("FRAMEWORK_NODE")
-        String appVersion= grailsApplication.metadata['app.version']
+        String appVersion= grailsApplication.metadata['info.app.version']
         String sUUID= frameworkService.getServerUUID()
         double load= ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
         int processorsCount= ManagementFactory.getOperatingSystemMXBean().availableProcessors

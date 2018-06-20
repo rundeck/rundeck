@@ -1838,7 +1838,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
-        String appVersion = grailsApplication.metadata['app.version']
+        String appVersion = grailsApplication.metadata['info.app.version']
         double load = ManagementFactory.getOperatingSystemMXBean().systemLoadAverage
         int processorsCount = ManagementFactory.getOperatingSystemMXBean().availableProcessors
         String osName = ManagementFactory.getOperatingSystemMXBean().name
