@@ -54,7 +54,7 @@ function NodeFilterLinkParams(params){
         return (self.linktext? ko.unwrap(self.linktext) : self.filter?ko.unwrap(self.filter):ko.unwrap(self.filterval))+ko.unwrap(self.suffix);
     };
 }
-console.log('NodeFilterLinkParams', NodeFilterLinkParams);
+// console.log('NodeFilterLinkParams', NodeFilterLinkParams);
 ko.components.register('node-filter-link', {
     viewModel:NodeFilterLinkParams,
     template: '<a  class="nodefilterlink"  href="#"  data-bind="attr: attributes($root),  css: classnames"  > \
