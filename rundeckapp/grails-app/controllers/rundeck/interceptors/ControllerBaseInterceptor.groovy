@@ -23,6 +23,7 @@ class ControllerBaseInterceptor {
             "menu/securityConfig",
             "menu/acls",
             "menu/editSystemAclFile",
+            "menu/executionMode",
             "menu/createSystemAclFile",
             "menu/saveSystemAclFile",
             "menu/systemInfo",
