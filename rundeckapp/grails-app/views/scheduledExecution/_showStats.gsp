@@ -21,7 +21,7 @@
           <g:message code="Execution.plural" />
         </h4>
         <div class="card-content">
-          <span class="h3 ">
+          <span class="h3 " id="jobstat_execcount_total" data-execcount="${total}">
               <g:formatNumber number="${total}" />
           </span>
         </div>
@@ -41,7 +41,7 @@
             <g:set var="ratelevels" value="${[0.9f,0.75f,0.5f]}"/>
             <g:set var="successindex" value="${ratelevels.findIndexOf{it<=(successrate)}}"/>
             <g:set var="successcolor" value="${successindex>=0?ratecolors[successindex]:ratecolors[-1]}"/>
-            <span class="h3 ${successcolor}">
+            <span class="h3 ${successcolor}" data-successrate="${successrate}">
                 <g:formatNumber number="${successrate}" type="percent"/>
             </span>
           </div>
@@ -57,8 +57,9 @@
             <g:message code="average.duration" />
           </h4>
           <div class="card-content">
-            <span class="h3 ">
-                <g:timeDuration time="${scheduledExecution.execCount>0?  scheduledExecution.totalTime /scheduledExecution.execCount  : 0}"/>
+              <g:set var="avgduration" value="${scheduledExecution.execCount>0?  scheduledExecution.totalTime /scheduledExecution.execCount  : 0}"/>
+            <span class="h3 " data-avgduration="${avgduration}">
+                <g:timeDuration time="${avgduration}"/>
             </span>
           </div>
         </div>
