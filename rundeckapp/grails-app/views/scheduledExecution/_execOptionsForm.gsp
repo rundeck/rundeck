@@ -109,7 +109,6 @@
                 --%>
                 <g:if test="${!nodesetvariables && nodes}">
                 <g:if test="${namegroups}">
-                    <label for=" ">
                     <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
                         <input id="cherrypickradio"
                                type="radio"
@@ -122,11 +121,11 @@
                         <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
-                                      model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
+                                      model="${[tagsummary:tagsummary,action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
                         </g:if>
 
                     </div>
-                    </label>
+
                     <g:each in="${namegroups.keySet().sort()}" var="group">
                         <div class="panel panel-default">
                       <div class="panel-heading">
@@ -150,10 +149,10 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     <g:message code="select.prompt" />
-                                    <span class="btn btn-default textbtn-on-hover selectall" >All</span>
-                                    <span class="btn btn-default textbtn-on-hover selectnone" >None</span>
+                                    <span class="btn btn-xs btn-default textbtn-on-hover selectall" ><g:message code="all" /></span>
+                                    <span class="btn btn-xs btn-default textbtn-on-hover selectnone" ><g:message code="none" /></span>
                                     <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active textbtn  obs_tag_group',onclick:'']]}"/>
+                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
                                 </div>
                                 </g:if>
@@ -318,35 +317,35 @@
                     });
                 });
                 Event.observe($('nodeSelect'), 'nodeset:change', updateSelectCount);
-                $$('div.jobmatchednodes span.textbtn.selectall').each(function (e) {
+                $$('div.jobmatchednodes span.selectall').each(function (e) {
                     Event.observe(e, 'click', function (evt) {
                         $(e).up('.group_section').select('input').each(function (el) {
                             if (el.type == 'checkbox') {
                                 el.checked = true;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
+                        $(e).up('.group_section').select('span.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'true');
                             $(e).addClassName('active');
                         });
                         Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.textbtn.selectnone').each(function (e) {
+                $$('div.jobmatchednodes span.selectnone').each(function (e) {
                     Event.observe(e, 'click', function (evt) {
                         $(e).up('.group_section').select('input').each(function (el) {
                             if (el.type == 'checkbox') {
                                 el.checked = false;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group').each(function (e) {
+                        $(e).up('.group_section').select('span.obs_tag_group').each(function (e) {
                             $(e).setAttribute('data-tagselected', 'false');
                             $(e).removeClassName('active');
                         });
                         Event.fire($('nodeSelect'), 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.textbtn.obs_tag_group').each(function (e) {
+                $$('div.jobmatchednodes span.obs_tag_group').each(function (e) {
                     Event.observe(e, 'click', function (evt) {
                         var ischecked = e.getAttribute('data-tagselected') != 'false';
                         e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
@@ -360,7 +359,7 @@
                                 el.checked = !ischecked;
                             }
                         });
-                        $(e).up('.group_section').select('span.textbtn.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (el) {
+                        $(e).up('.group_section').select('span.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (el) {
                             el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
                                 $(el).addClassName('active');
