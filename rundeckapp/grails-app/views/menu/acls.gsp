@@ -130,189 +130,184 @@
 
 </head>
 <body>
+<div class="container-fluid">
+  <div class="row">
+      <div class="col-sm-12">
 
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-        <g:if test="${hasUploadValidationError}">
-            <div id="uploadedPolicyValidation" class="col-sm-12">
-                <div class="alert alert-default alert-dismissible">
-                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                    <h4><g:message code="aclpolicy.file.upload.failed.acl.policy.validation.message"/></h4>
-                    <span data-bind="template: { name: 'acl-policy-validation', data:$data }"></span>
-                </div>
-            </div>
+          <g:render template="/common/messages"/>
 
-        </g:if>
-    </div>
-</div>
-<div class="row">
-    <div class="col-sm-10 col-sm-offset-1">
-        <div class="panel panel-default">
-            <g:if test="${!clusterMode}">
-                <div class="panel-heading clearfix">
-                    <span class="panel-title pull-left">
-                        <span class="text-info">${aclFileList.size()}</span>
-                        <g:message code="list.of.acl.policy.files.in.directory"/>
-                        <code>${fwkConfigDir.absolutePath}</code>
-                    </span>
-                    <g:if test="${hasCreateAuth}">
-                        <div class="btn-group pull-right">
-                            <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclFSUpload">
-                                <g:icon name="upload"/>
-                                <g:message code="button.action.Upload"/>
-                            </span>
-                            <g:link controller="menu"
-                                    action="createSystemAclFile"
-                                    params="${[fileType: 'fs']}"
-                                    class="btn btn-sm btn-success">
-                                <g:icon name="plus"/>
-                                <g:message code="access.control.action.create.acl.policy.button.title"/>
-                            </g:link>
-                        </div>
-                    </g:if>
-                </div>
+          <g:if test="${hasUploadValidationError}">
+              <div id="uploadedPolicyValidation" class="col-sm-12">
+                  <div class="alert alert-default alert-dismissible">
+                      <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                      <h4><g:message code="aclpolicy.file.upload.failed.acl.policy.validation.message"/></h4>
+                      <span data-bind="template: { name: 'acl-policy-validation', data:$data }"></span>
+                  </div>
+              </div>
 
-                <div class="panel-body panel-content-embed" id="fsPolicies">
+          </g:if>
+      </div>
+  </div>
+  <div class="row">
+      <div class="col-sm-12">
+          <div class="card">
+              <g:if test="${!clusterMode}">
+                  <div class="card-header clearfix">
+                      <span class="panel-title pull-left">
+                          <span class="text-info">${aclFileList.size()}</span>
+                          <g:message code="list.of.acl.policy.files.in.directory"/>
+                          <code>${fwkConfigDir.absolutePath}</code>
+                      </span>
+                      <g:if test="${hasCreateAuth}">
+                          <div class="btn-group pull-right">
+                              <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclFSUpload">
+                                  <g:icon name="upload"/>
+                                  <g:message code="button.action.Upload"/>
+                              </span>
+                              <g:link controller="menu"
+                                      action="createSystemAclFile"
+                                      params="${[fileType: 'fs']}"
+                                      class="btn btn-sm btn-success">
+                                  <g:icon name="plus"/>
+                                  <g:message code="access.control.action.create.acl.policy.button.title"/>
+                              </g:link>
+                          </div>
+                      </g:if>
+                  </div>
 
-                    <table class="table table-hover table-condensed table-embed">
-                        <tbody data-bind="foreach: policies">
-                            <g:render template="/menu/aclValidationRowKO"
-                                      model="${[
-                                              hasEditAuth  : hasEditAuth,
-                                              hasDeleteAuth: hasDeleteAuth,
-                                              editHref     : g.createLink(
-                                                      [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', id: '<$>']]
-                                              ),
-                                              deleteModalId: 'deleteFSAclPolicy',
-                                              uploadModalId: 'aclFSUpload',
-                                      ]}"/>
+                  <div class="card-content panel-content-embed" id="fsPolicies">
 
-                        </tbody>
+                      <div>
+                          <div data-bind="foreach: policies">
+                              <g:render template="/menu/aclValidationRowKO"
+                                        model="${[
+                                                hasEditAuth  : hasEditAuth,
+                                                hasDeleteAuth: hasDeleteAuth,
+                                                editHref     : g.createLink(
+                                                        [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', id: '<$>']]
+                                                ),
+                                                deleteModalId: 'deleteFSAclPolicy',
+                                                uploadModalId: 'aclFSUpload',
+                                        ]}"/>
 
-
-                    </table>
-                </div>
-
-                <g:render template="/menu/aclManageKO" model="[
-                        deleteModalId: 'deleteFSAclPolicy',
-                        deleteAction :
-                                [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']],
-                        uploadModalId: 'aclFSUpload',
-                        uploadFormId: 'aclFSUploadForm',
-                        uploadAction : hasCreateAuth || hasEditAuth ?
-                                [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'fs', upload: true]] :
-                                null
-                ]"/>
-
-            </g:if>
-
-            <div class="panel-heading clearfix">
-                <span class="panel-title pull-left">
-                    <span class="text-info">${aclStoredList.size()}</span>
-                    <g:message code="stored.acl.policy.files.title"/>
-                </span>
-                <g:if test="${hasCreateAuth}">
-                    <div class="btn-group pull-right">
-                        <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload">
-                            <g:icon name="upload"/>
-                            <g:message code="button.action.Upload"/>
-                        </span>
-                        <g:link controller="menu"
-                                action="createSystemAclFile"
-                                params="${[fileType: 'storage']}"
-                                class="btn btn-sm btn-success">
-                            <g:icon name="plus"/>
-                            <g:message code="access.control.action.create.acl.policy.button.title"/>
-                        </g:link>
-                    </div>
-                </g:if>
-            </div>
-
-            <div class="panel-body panel-content-embed" id="storedPolicies">
-                <table class="table table-hover table-condensed table-embed">
-                    <tbody data-bind="foreach: policies">
-                        <g:render template="/menu/aclValidationRowKO"
-                                  model="${[
-                                          hasEditAuth  : hasEditAuth,
-                                          hasDeleteAuth: hasDeleteAuth,
-                                          editHref     : g.createLink(
-                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', id: '<$>']]
-                                          ),
-                                          deleteModalId: 'deleteStorageAclPolicy',
-                                          uploadModalId: 'aclStorageUpload',
-                                  ]}"/>
-
-                    </tbody>
+                          </div>
 
 
+                      </div>
+                  </div>
 
-                </table>
-            </div>
-            <g:render template="/menu/aclManageKO" model="[
-                    deleteModalId: 'deleteStorageAclPolicy',
-                    deleteAction :
-                            [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
-                    uploadModalId: 'aclStorageUpload',
-                    uploadFormId: 'aclStorageUploadForm',
-                    uploadAction : hasCreateAuth || hasEditAuth ?
-                            [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
-                            null
-            ]"/>
+                  <g:render template="/menu/aclManageKO" model="[
+                          deleteModalId: 'deleteFSAclPolicy',
+                          deleteAction :
+                                  [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']],
+                          uploadModalId: 'aclFSUpload',
+                          uploadFormId: 'aclFSUploadForm',
+                          uploadAction : hasCreateAuth || hasEditAuth ?
+                                  [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'fs', upload: true]] :
+                                  null
+                  ]"/>
 
-        </div>
-        <g:if test="${clusterMode}">
-            <div id="clusterModeArea">
-                <span class="btn btn-link btn-muted" data-bind="visible: !show(), click: toggleShow">
-                    ${aclFileList.size()}
-                    <g:message
-                            code="list.of.acl.policy.files.in.directory"/>
-                    <span data-bind="if: !policyFiles().valid()">
+              </g:if>
 
-                        <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-                           title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                    </span>
-                    <g:icon name="chevron-right"/>
-                </span>
+              <div class="card-header clearfix">
+                  <h3 class="card-title pull-left">
+                      <g:message code="stored.acl.policy.files.title"/>
+                      <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
+                  </h3>
+                  <g:if test="${hasCreateAuth}">
+                      <div class="btn-group pull-right">
+                          <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload">
+                              <g:icon name="upload"/>
+                              <g:message code="button.action.Upload"/>
+                          </span>
+                          <g:link controller="menu"
+                                  action="createSystemAclFile"
+                                  params="${[fileType: 'storage']}"
+                                  class="btn btn-sm btn-success">
+                              <g:icon name="plus"/>
+                              <g:message code="access.control.action.create.acl.policy.button.title"/>
+                          </g:link>
+                      </div>
+                  </g:if>
+              </div>
 
-                <div class="panel panel-default" data-bind="visible: show">
-                    <div class="panel-heading clearfix">
-                        <span class="panel-title text-muted pull-left">
-                            <span class="text-info">${aclFileList.size()}</span>
-                            <g:message code="list.of.acl.policy.files.in.directory"/>
-                            <code>${fwkConfigDir.absolutePath}</code>
-                            <span data-bind="if: !policyFiles().valid()">
+              <div class="card-content" id="storedPolicies">
+                  <div>
+                      <div data-bind="foreach: policies">
+                          <g:render template="/menu/aclValidationRowKO"
+                                    model="${[
+                                            hasEditAuth  : hasEditAuth,
+                                            hasDeleteAuth: hasDeleteAuth,
+                                            editHref     : g.createLink(
+                                                    [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', id: '<$>']]
+                                            ),
+                                            deleteModalId: 'deleteStorageAclPolicy',
+                                            uploadModalId: 'aclStorageUpload',
+                                    ]}"/>
 
-                                <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-                                   title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-                            </span>
-                        </span>
-                        <span class="panel-title pull-right">
-
+                      </div>
+                  </div>
+                  <g:render template="/menu/aclManageKO" model="[
+                          deleteModalId: 'deleteStorageAclPolicy',
+                          deleteAction :
+                                  [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
+                          uploadModalId: 'aclStorageUpload',
+                          uploadFormId: 'aclStorageUploadForm',
+                          uploadAction : hasCreateAuth || hasEditAuth ?
+                                  [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
+                                  null
+                  ]"/>
+              </div>
+          </div>
+          <g:if test="${clusterMode}">
+              <div id="clusterModeArea" class="card card-expandable" data-bind="css: { 'card-expandable-open': show }">
+                  <div class="card-header">
+                    <h4 class="card-title" data-bind="click: toggleShow">
+                          ${aclFileList.size()}
+                          <g:message code="list.of.acl.policy.files.in.directory"/>
+                          <span data-bind="if: !policyFiles().valid()">
+                              <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                                 title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                          </span>
+                          <span data-bind="visible: !show()" class="pull-right">
+                            <g:icon name="chevron-down"/>
+                          </span>
+                          <span  data-bind="visible: show" class="pull-right">
                             <button type="button"
                                     class="close"
                                     data-bind="click: toggleShow"
-                                    aria-hidden="true">&times;</button>
-                        </span>
-                    </div>
+                                    aria-hidden="true">
+                                <g:icon name="chevron-up"/>
+                            </button>
+                          </span>
+                    </h4>
+                  </div>
+                  <div class="card-content" data-bind="visible: show">
+                    <div style="margin-bottom:10px;">
+                          <code>${fwkConfigDir.absolutePath}</code>
+                          <span data-bind="if: !policyFiles().valid()">
 
-                    <div class="panel-body">
-                        <table class="table table-condensed table-embed">
-                            <tbody data-bind="foreach: policyFiles().policies">
+                              <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                                 title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                          </span>
+                    </div>
+                    <div>
+                            <div data-bind="foreach: policyFiles().policies">
                                 <g:render template="/menu/aclValidationRowKO"
                                           model="${[
                                                   hasEditAuth  : false,
                                                   hasDeleteAuth: false,
                                           ]}"/>
 
-                            </tbody>
-                        </table>
+                            </div>
                     </div>
                 </div>
-            </div>
-        </g:if>
+              </div>
+          </g:if>
 
-    </div>
+      </div>
+  </div>
+
 </div>
 </body>
 </html>

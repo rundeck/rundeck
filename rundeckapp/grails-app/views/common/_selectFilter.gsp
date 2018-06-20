@@ -15,7 +15,7 @@
   --}%
 <%--
     _selectFilter.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Apr 16, 2010 11:17:06 AM
     $Id$
@@ -68,7 +68,7 @@
     </span>
 </g:elseif>
 <g:elseif test="${filterset}">
-    <g:select name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
+    <g:select class="form-control" name="filterName" optionKey="name" optionValue="name" from="${filterset?filterset.sort({a,b->a.name.compareTo(b.name)}):filterset}" value="${filterName}"
         noSelection="${['':noSelection?noSelection:'-select a filter-']}" onchange="setFilter('${enc(attr:prefName)}',this.value);"/>
 </g:elseif>
 <g:jsonToken id="filter_select_tokens" url="${request.forwardURI}"/>

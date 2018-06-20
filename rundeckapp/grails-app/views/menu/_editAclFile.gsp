@@ -15,39 +15,38 @@
   --}%
 
 
-<div class="panel panel-primary" id="createform">
-    <div class="panel-heading">
-        <span class="panel-title">
+<div class="card" id="createform">
+    <div class="card-header">
+        <h3 class="card-title">
             <g:if test="${backHref}">
-                <a href="${backHref}" class="btn btn-xs btn-link"
+                <a href="${backHref}" class="btn btn-xs btn-simple"
                    title="${titleText ?: g.message(code: 'navigation.back.title')}"><g:icon name="arrow-left"/></a>
             </g:if>
             ${title}
-            <div class="pull-right dropdown panel-title">
-                <bs:dropdownToggle id="aclHelp">
-                    <g:icon name="question-sign"/> Help
-                </bs:dropdownToggle>
+            <div class="buttons pull-right">
+              <div class="dropdown">
+                  <bs:dropdownToggle id="aclHelp" css="btn btn-default btn-sm">Help</bs:dropdownToggle>
 
-                <bs:dropdown labelId="aclHelp">
-                    <bs:menuitem
-                            target="_new"
-                            icon="arrow-right"
-                            iconAfter="true"
-                            href="http://rundeck.org/docs/administration/access-control-policy.html"
-                            code="link.title.access.control.policy"/>
-                    <bs:menuitem
-                            target="_new"
-                            icon="arrow-right"
-                            iconAfter="true"
-                            href="http://rundeck.org/docs/man5/aclpolicy.html"
-                            code="link.title.acl.policy.format"/>
-                </bs:dropdown>
-
+                  <bs:dropdown labelId="aclHelp" css="dropdown-menu-right">
+                      <bs:menuitem
+                              target="_new"
+                              icon="arrow-right"
+                              iconAfter="true"
+                              href="http://rundeck.org/docs/administration/access-control-policy.html"
+                              code="link.title.access.control.policy"/>
+                      <bs:menuitem
+                              target="_new"
+                              icon="arrow-right"
+                              iconAfter="true"
+                              href="http://rundeck.org/docs/man5/aclpolicy.html"
+                              code="link.title.acl.policy.format"/>
+                  </bs:dropdown>
+              </div>
             </div>
-        </span>
+        </h3>
     </div>
 
-    <div class="panel-body">
+    <div class="card-content">
 
         <g:if test="${createField}">
             <div class="form-group ${input?.errors?.hasFieldErrors(createField)?'has-error':''}">
@@ -60,13 +59,13 @@
                     <g:hiddenField name="create" value="true"/>
                     <g:if test="${createFieldHelpCode}">
                         <div class="help-block">
-                            <g:message code="${createFieldHelpCode}"/>
+                          <g:message code="${createFieldHelpCode}"/>
                         </div>
                     </g:if>
                     <g:if test="${input?.errors?.hasFieldErrors(createField)}">
 
                         <div class="help-block">
-                            <g:fieldError field="${createField}" bean="${input}"/>
+                            pee<g:fieldError field="${createField}" bean="${input}"/>
                         </div>
                     </g:if>
                 </div>
@@ -127,7 +126,7 @@
     </div>
 
 
-    <div class="panel-footer buttons">
+    <div class="card-footer">
         <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}"
                         class="btn btn-default reset_page_confirm"/>
         <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}"

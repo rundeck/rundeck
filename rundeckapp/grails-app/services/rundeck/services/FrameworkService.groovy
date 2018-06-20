@@ -353,7 +353,7 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def Map authResourceForJob(ScheduledExecution se){
-        return authResourceForJob(se.jobName,se.groupPath)
+        return authResourceForJob(se.jobName,se.groupPath,se.extid)
     }
 
     /**
@@ -361,8 +361,8 @@ class FrameworkService implements ApplicationContextAware {
      * @param se
      * @return
      */
-    def Map authResourceForJob(String name, String groupPath){
-        return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:''])
+    def Map authResourceForJob(String name, String groupPath, String uuid){
+        return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:'',uuid: uuid])
     }
     /**
      * Return the resource definition for a project for use by authorization checks

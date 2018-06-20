@@ -387,7 +387,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     if(results.nextExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
                         if (futureDate) {
-                            data.futureScheduledExecutions = se.nextExecutions(futureDate)
+                            data.futureScheduledExecutions = scheduledExecutionService.nextExecutions(se,futureDate)
                             if (maxFutures
                                 && data.futureScheduledExecutions
                                 && data.futureScheduledExecutions.size() > maxFutures) {

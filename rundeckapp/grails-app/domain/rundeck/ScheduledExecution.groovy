@@ -51,8 +51,6 @@ class ScheduledExecution extends ExecutionContext {
 
     Workflow workflow
 
-    def scheduledExecutionService
-
     Date nextExecution
     boolean scheduled = false
     Boolean nodesSelectedByDefault = true
@@ -87,6 +85,8 @@ class ScheduledExecution extends ExecutionContext {
     Long refExecCount=0
 
     String defaultTab
+
+    String maxMultipleExecutions
 
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
@@ -167,6 +167,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeThreadcountDynamic(nullable: true)
         notifyAvgDurationThreshold(nullable: true)
         defaultTab(maxSize: 256, blank: true, nullable: true)
+        maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
     }
 
     static mapping = {
@@ -308,6 +309,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(multipleExecutions){
             map.multipleExecutions=true
+        }
+        if(maxMultipleExecutions){
+            map.maxMultipleExecutions = maxMultipleExecutions
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
@@ -457,6 +461,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.multipleExecutions){
             se.multipleExecutions=data.multipleExecutions?true:false
+        }
+        if(data.maxMultipleExecutions){
+            se.maxMultipleExecutions=data.maxMultipleExecutions
         }
         if(data.nodefilters){
             se.nodesSelectedByDefault = null!=data.nodesSelectedByDefault?(data.nodesSelectedByDefault?true:false):true
@@ -617,10 +624,6 @@ class ScheduledExecution extends ExecutionContext {
 
     def boolean hasScheduleEnabled() {
         return (null == scheduleEnabled || scheduleEnabled)
-    }
-
-    def shouldScheduleExecutionProject(){
-        return scheduledExecutionService.shouldScheduleInThisProject(project)
     }
 
     def boolean shouldScheduleExecution() {
@@ -1044,20 +1047,6 @@ class ScheduledExecution extends ExecutionContext {
             return Math.floor(totalTime / execCount)
         }
         return 0;
-    }
-
-    /**
-     * Retrun a list of dates in a time lapse between now and the to Date.
-     * @param to Date in the future
-     * @return list of dates
-     */
-    List<Date> nextExecutions(Date to){
-        def trigger = scheduledExecutionService.createTrigger(this)
-        Calendar cal = new BaseCalendar()
-        if(timeZone){
-            cal.setTimeZone(TimeZone.getTimeZone(timeZone))
-        }
-        return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
     }
 
     //new threadcount value that can be defined using an option value

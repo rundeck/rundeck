@@ -1,5 +1,6 @@
 #!/bin/bash
-set -e
+
+set -eou pipefail
 
 bash clean.sh || echo 'clean had errors..continuing'
 

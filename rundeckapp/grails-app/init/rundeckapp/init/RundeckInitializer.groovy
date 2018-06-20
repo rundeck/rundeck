@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
@@ -94,7 +95,7 @@ class RundeckInitializer {
         setSystemProperties()
         initSsl()
 
-        File installCompleteMarker = new File(config.baseDir+"/.install_complete")
+        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete")
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
             //installation tasks
             createDirectories()
@@ -324,8 +325,15 @@ class RundeckInitializer {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_PROJECTS_DIR, config.cliOptions.projectDir);
         }
 
-        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, new File(config.configDir, config.runtimeConfiguration.getProperty(
-                RundeckInitConfig.RUNDECK_CONFIG_NAME_PROP)).getAbsolutePath());
+        if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION)) {
+            System.setProperty(
+                    RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, new File(
+                    config.configDir, config.runtimeConfiguration.getProperty(
+                    RundeckInitConfig.RUNDECK_CONFIG_NAME_PROP
+            )
+            ).getAbsolutePath()
+            );
+        }
 
         if (config.useJaas) {
             System.setProperty("java.security.auth.login.config", new File(config.configDir,
@@ -351,6 +359,7 @@ class RundeckInitializer {
         workdir = createDir(config.workDir, serverdir, "work")
         toolsdir = createDir(null,basedir,"tools")
         toolslibdir = createDir(null,toolsdir,"lib")
+        createDir(null,basedir,"var")
     }
 
     File createDir(String specifiedPath, File base, String child) {

@@ -1,0 +1,264 @@
+/*             Navigation Tabs                 */
+.vue-tabs {
+  .nav-tabs-navigation{
+    text-align: center;
+    border-bottom: 1px solid #F1EAE0;
+    margin-bottom: 30px;
+
+    .nav > li > a{
+      padding-bottom: 20px;
+    }
+  }
+  .nav-tabs-wrapper{
+    display: inline-block;
+    margin-bottom: -6px;
+    margin-left: 1.25%;
+    margin-right: 1.25%;
+    position: relative;
+    width: auto;
+    &.stacked {
+      float: right;
+    }
+  }
+  .nav-tabs{
+    border-bottom: 0 none;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    > li{
+      > a{
+        border: 0 none;
+        color: $other-medium-gray;
+      }
+      > a:hover{
+        color: $font-color;
+      }
+    }
+    > li.active, .el-tabs__item.is-active{
+      color: $font-color;
+      position: relative;
+
+      > a,
+      > a:hover,
+      > a:focus{
+        background-color: transparent;
+        border: 0 none;
+        //height: 50px;
+      }
+
+      & a:after{
+        border-bottom: 11px solid $white-color;
+        border-left: 11px solid rgba(0, 0, 0, 0);
+        border-right: 11px solid rgba(0, 0, 0, 0);
+        content: "";
+        display: inline-block;
+        position: absolute;
+        right: 40%;
+        bottom: 0;
+      }
+
+      & a:before{
+        border-bottom: 11px solid $medium-pale-bg;
+        border-left: 11px solid rgba(0, 0, 0, 0);
+        border-right: 11px solid rgba(0, 0, 0, 0);
+        content: "";
+        display: inline-block;
+        position: absolute;
+        right: 40%;
+        bottom: 1px;
+      }
+    }
+  }
+  .nav-stacked{
+    border-right: 1px solid $medium-pale-bg;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+    padding: 20px 0;
+
+    > li {
+      > a{
+        color: $other-medium-gray;
+        padding: 7px 25px;
+        text-align: right;
+      }
+      > a:hover{
+        color: $font-color;
+      }
+    }
+    > li.active{
+      > a{
+        color: $font-color;
+      }
+      a:after{
+        border-right: 11px solid $white-color;
+        border-top: 11px solid rgba(0, 0, 0, 0);
+        border-bottom: 11px solid rgba(0, 0, 0, 0);
+        content: "";
+        display: inline-block;
+        position: absolute;
+        right: -1px;
+        bottom: 7px;
+      }
+
+      a:before{
+        border-right: 11px solid $medium-pale-bg;
+        border-top: 11px solid rgba(0, 0, 0, 0);
+        border-bottom: 11px solid rgba(0, 0, 0, 0);
+        content: "";
+        display: inline-block;
+        position: absolute;
+        right: 0;
+        bottom: 7px;
+      }
+    }
+  }
+
+  .left-vertical-tabs{
+    width: 170px;
+    float: left;
+  }
+
+  .right-text-tabs{
+    width: calc(100% - 170px);
+    float: left;
+    padding: 6px 15px;
+
+  }
+  /*             Navigation Pills               */
+  .nav-pills {
+    > li + li {
+      margin-left: 0;
+    }
+    > li > a {
+      border: 2px solid $default-color;
+      border-radius: 0;
+      color: $default-color;
+      font-weight: $font-weight-bold;
+      margin-left: -1px;
+      padding: 10px 20px;
+
+    }
+    > li.active > a,
+    > li.active > a:hover,
+    > li.active > a:focus {
+      background-color: $default-color;
+      color: $white-color;
+    }
+    > li:first-child > a{
+      border-radius: 30px 0 0 30px;
+      margin: 0;
+    }
+    > li:last-child > a{
+      border-radius: 0 30px 30px 0;
+    }
+
+  }
+
+  .tab-content {
+    text-align:center;
+  }
+}
+
+
+
+
+.pagination > li:first-child > a,
+.pagination > li:first-child > span,
+.pagination > li:last-child > a,
+.pagination > li:last-child > span{
+    border-radius: 20px;
+}
+.pagination > li > a,
+.pagination > li > span{
+    background-color: transparent;
+    border: 2px solid $default-color;
+    border-radius: 20px;
+    color: $default-color;
+    height: $line-height;
+    font-weight: $font-weight-bold;
+    margin: 0 2px;
+    min-width: 36px;
+    padding: 6px;
+    line-height: 22px;
+    text-align: center;
+}
+.pagination > li > a:hover,
+.pagination > li > a:focus,
+.pagination > li > a:active,
+.pagination > li.active > a,
+.pagination > li.active > span,
+.pagination > li.active > a:hover,
+.pagination > li.active > span:hover,
+.pagination > li.active > a:focus,
+.pagination > li.active > span:focus {
+    background-color: $default-color;
+    border-color: $default-color;
+    color: $white-color;
+    cursor: pointer;
+}
+
+.pagination{
+  > .disabled{
+    >span,
+    >a
+    {
+      &,
+      &:hover,
+      &:focus{
+        color: $medium-gray;
+        border-color: $medium-gray;
+      }
+    }
+  }
+}
+
+
+@mixin pagination($color, $name){
+  .nav-pills-#{$name} > li > a,
+  .pagination-#{$name} > li > a,
+  .pagination-#{$name} > li > span,
+  .pagination-#{$name} > li:first-child > a,
+  .pagination-#{$name} > li:first-child > span,
+  .pagination-#{$name} > li:last-child > a,
+  .pagination-#{$name} > li:last-child > span{
+    border: 2px solid $color;
+    color: $color;
+  }
+
+  .nav-pills-#{$name} > li.active > a,
+  .nav-pills-#{$name} > li.active > a:hover,
+  .nav-pills-#{$name} > li.active > a:focus,
+  .pagination-#{$name} > li > a:hover,
+  .pagination-#{$name} > li > a:focus,
+  .pagination-#{$name} > li > a:active,
+  .pagination-#{$name} > li.active > a,
+  .pagination-#{$name} > li.active > span,
+  .pagination-#{$name} > li.active > a:hover,
+  .pagination-#{$name} > li.active > span:hover,
+  .pagination-#{$name} > li.active > a:focus,
+  .pagination-#{$name} > li.active > span:focus{
+    background-color: $color;
+    border-color: $color;
+    color: $white-color;
+  }
+
+  .pagination.pagination-#{$name}{
+    > .disabled{
+      >span,
+      >a
+      {
+        &,
+        &:hover,
+        &:focus{
+          color: lighten($color, 30%);
+          border-color: lighten($color, 30%);
+        }
+      }
+    }
+  }
+}
+
+@include pagination($primary-color, 'primary')
+@include pagination($info-color, 'info')
+@include pagination($success-color, 'success')
+@include pagination($warning-color, 'warning')
+@include pagination($danger-color, 'danger')

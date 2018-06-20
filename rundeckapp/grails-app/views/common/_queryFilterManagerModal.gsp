@@ -26,7 +26,7 @@
 <g:if test="${includeSaveButton}">
     <div class=" panel-body saved ">
         <a class="btn btn-default btn-sm pull-right" data-toggle="modal" href="#saveFilterModal">
-            Save this filter&hellip;
+            Save this Filter
         </a>
     </div>
 </g:if>
@@ -35,7 +35,7 @@
         <div class="well-sm well clearfix">
             <span class="h4">Saved filter: <strong><g:enc>${filterName}</g:enc></strong></span>
             <a class="btn btn-danger btn-sm pull-right" data-toggle="modal" href="#deleteFilterModal">
-                Delete this filter&hellip;
+                Delete this Filter
                 <i class="glyphicon glyphicon-remove"></i>
             </a>
 
@@ -44,14 +44,14 @@
 </g:if>
 
 <div class="modal fade" id="deleteFilterModal" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="deleteFilterModalLabel">Delete Saved Filter</h4>
             </div>
 
-            <div class="modal-body container">
+            <div class="modal-body">
                 <div class="form-group">
                     <label class="control-label col-sm-2">Name: </label>
                     <div class="col-sm-10">
@@ -91,21 +91,19 @@
 
 %{--tokens used by the ajax call to delete node filter--}%
 <g:jsonToken id="ajaxDeleteFilterTokens" />
-<div class="modal fade" id="deleteFilterKOModal" role="dialog" aria-labelledby="deleteFilterKOModalLabel" aria-hidden="true"
->
-    <div class="modal-dialog" >
+<div class="modal fade" id="deleteFilterKOModal" role="dialog" aria-labelledby="deleteFilterKOModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content" data-bind="with: nodeSummary().filterToDelete()">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="deleteFilterKOModalLabel">Delete Saved Filter</h4>
             </div>
 
-            <div class="modal-body container">
+            <div class="modal-body">
                 <div class="form-group">
                     <label class="control-label col-sm-2">Name: </label>
                     <div class="col-sm-10">
-                        <span class="form-control-static"
-                              data-bind="text: name"></span>
+                        <span class="form-control-static" data-bind="text: name"></span>
                     </div>
                 </div>
                 <div class="form-group ">
@@ -138,23 +136,23 @@
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="saveFilterModalLabel">Save Filter</h4>
             </div>
-
-            <div class="modal-body container">
-                <div class="form-group">
-                    <label for="newFilterName" class="control-label col-sm-2">Name:</label>
-
-                    <div class="col-sm-10"><g:textField name="newFilterName" class="form-control input-sm"/></div>
+            <div class="modal-body">
+                <div>
+                  <div class="form-group">
+                      <label for="newFilterName" class="control-label col-sm-2">Name:</label>
+                      <div class="col-sm-10"><g:textField name="newFilterName" class="form-control input-sm"/></div>
+                  </div>
+                  <g:if test="${ko}">
+                      <div class="form-group ">
+                          <label class="control-label col-sm-2">
+                              Filter:
+                          </label>
+                          <div class="col-sm-10">
+                              <span data-bind="text: filter" class="form-control-static "></span>
+                          </div>
+                      </div>
+                  </g:if>
                 </div>
-                <g:if test="${ko}">
-                    <div class="form-group ">
-                        <label class="control-label col-sm-2">
-                            Filter:
-                        </label>
-                        <div class="col-sm-10">
-                            <span data-bind="text: filter" class="form-control-static "></span>
-                        </div>
-                    </div>
-                </g:if>
             </div>
 
             <div class="modal-footer">
@@ -163,8 +161,7 @@
                     <g:actionSubmit value="Save Filter" action="${storeActionSubmit}" formmethod="POST" class="btn btn-primary"/>
                 </g:if>
                 <g:elseif test="${storeActionSubmitRemote}">
-                    <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}"
-                                      class="btn btn-primary"/>
+                    <g:submitToRemote value="Save Filter" url="${storeActionSubmitRemote}" update="${update}" class="btn btn-primary"/>
                 </g:elseif>
             </div>
         </div><!-- /.modal-content -->

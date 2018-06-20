@@ -1,0 +1,92 @@
+@import "variables";
+@mixin select($type, $color) {
+  .select-#{$type}.el-select {
+  }
+  .select-#{$type}.el-select .el-input  {
+    .el-input__suffix{
+      display: flex;
+      align-items: center;
+    }
+    &:hover{
+      .el-input__icon,
+      input {
+        &::placeholder{
+          color: white;
+        }
+        color: white;
+      }
+      input,
+      .el-input__icon{
+        background-color: $color;
+      }
+
+    }
+    .el-input__icon{
+      border-radius:20px;
+      height: 20px;
+    }
+
+    input{
+      background-color: white;
+      border-color: $color !important;
+      border-width: 2px;
+      border-radius: 20px;
+      color: $color;
+    }
+    .el-input__icon{
+      color:$color;
+    }
+  }
+  .select-#{$type}{
+
+    .el-tag, .el-tag.el-tag--info {
+      line-height: 24px;
+      background-color: $color !important;
+      border: none !important;
+      .el-tag__close{
+        width: 20px;
+        height: 20px;
+        top: 1px;
+        color: white;
+        background-color: transparent;
+        &:hover {
+         background-color: white;
+        }
+      }
+    }
+    &.el-select-dropdown__item.selected,
+    &.el-select-dropdown__item.selected.hover {
+      background-color: $color;
+      color: white;
+    }
+  }
+
+  &.el-select-dropdown.is-multiple
+  .el-select-dropdown__item.selected{
+    &.select-#{$type}{
+      color: $color;
+    }
+  }
+}
+
+.el-select .el-input {
+  &:hover {
+    .el-input__icon,
+    input {
+      &::placeholder {
+        color: white;
+      }
+      color: white;
+    }
+  }
+}
+.el-select-dropdown {
+  border-radius:10px;
+}
+
+@include select('default', $default-color)
+@include select('info', $info-color)
+@include select('primary', $primary-color)
+@include select('success', $success-color)
+@include select('warning', $warning-color)
+@include select('danger', $danger-color)

@@ -219,7 +219,7 @@ function getCurSEID(){
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:150px;
+        padding-right:170px;
     }
     .wfitem{
         display: block;
@@ -230,7 +230,7 @@ function getCurSEID(){
         position:absolute;
         right:0;
         top:0;
-        width:150px;
+        width:160px;
         text-align:right;
     }
     .controls.autohide{
@@ -367,7 +367,6 @@ function getCurSEID(){
     <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
 </g:if>
 
-
 <div class="alert alert-danger" style="display: none" id="editerror">
 
 </div>
@@ -428,9 +427,7 @@ function getCurSEID(){
             <ul class="nav nav-tabs">
 
                 <li class="active"><a href="#desceditor" data-toggle="tab">Edit</a></li>
-                <li id="previewrunbook" style="${wdgt.styleVisible(
-                        if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER)
-                )}">
+                <li id="previewrunbook" style="${wdgt.styleVisible(if: g.textHasMarker(text:scheduledExecution?.description,marker:ScheduledExecution.RUNBOOK_MARKER))}">
                     <a href="#descpreview" data-toggle="tab">
                         <g:message code="job.editor.preview.runbook" />
                     </a>
@@ -607,7 +604,7 @@ function getCurSEID(){
         </g:hasErrors>
         <g:set var="filtvalue" value="${scheduledExecution.asFilter()}"/>
 
-                <span class="input-group nodefilters">
+                <span class="input-group nodefilters multiple-control-input-group">
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
                         <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
                     </g:if>
@@ -674,7 +671,7 @@ function getCurSEID(){
                     <g:message code="refresh" />
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
-                <span class="text-muted" data-bind="if: loaded" >
+                <span class="text-primary" data-bind="if: loaded" >
                     <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
                 </span>
                 <div id='matchednodes' class="clearfix">
@@ -1056,6 +1053,22 @@ function getCurSEID(){
     %{--Job timeout--}%
     <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.maxMultipleExecutions.label"/>
+        </div>
+
+        <div class="${fieldColHalfSize}">
+
+            <input type='text' name="maxMultipleExecutions" value="${enc(attr:scheduledExecution?.maxMultipleExecutions)}"
+                   id="maxMultipleExecutions" class="form-control"/>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.maxMultipleExecutions.description"/>
+            </span>
+        </div>
+    </div>
+    %{--Job timeout--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
             <g:message code="scheduledExecution.property.timeout.label" default="Timeout"/>
         </div>
 
@@ -1194,13 +1207,13 @@ function getCurSEID(){
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">
-        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-muted">
+        <label for="schedJobUuid" class=" ${enc(attr:labelColClass)} text-primary">
             <g:message code="uuid" />
         </label>
 
         <div class="${fieldColSize}">
             <g:if test="${editSchedExecId && scheduledExecution?.uuid}">
-                <p class="form-control-static text-muted" title="${g.message(code:'uuid.for.this.job')}">
+                <p class="form-control-static text-primary" title="${g.message(code:'uuid.for.this.job')}">
                     <g:enc>${scheduledExecution?.uuid}</g:enc>
                 </p>
             </g:if>

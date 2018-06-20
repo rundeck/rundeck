@@ -1,0 +1,74 @@
+.sidebar{
+  .logo{
+    background-color: #000000;
+    a{
+      font-family: 'Futura';
+      text-transform: uppercase;
+      color: #ffffff;
+      padding: 15px 15px 15px 32px;
+      font-size: 18px;
+      line-height: 20px;
+      height: 50px;
+      span.appTitle{
+        padding-left:15px;
+        opacity: 1;
+        -webkit-transition: opacity 700ms, visibility 700ms;
+        transition: opacity 700ms, visibility 700ms;
+      }
+    }
+  }
+  .nav > li.snapshot-version{
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    a{
+      background: rgba(255, 255, 255, 0.14);
+      opacity: 1;
+      color: #FFFFFF;
+    }
+  }
+}
+
+.sidebar-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1040;
+    background-color: #000;
+}
+body.modal-open{
+  .sidebar .sidebar-modal-backdrop{
+    display: block;
+    max-width:260px;
+    filter: alpha(opacity=50);
+    opacity: .5;
+  }
+  &.sidebar-mini{
+    .sidebar .sidebar-modal-backdrop{
+      display: block;
+      max-width:80px;
+      filter: alpha(opacity=50);
+      opacity: .5;
+    }
+  }
+}
+.sidebar:not(:hover){
+  .sidebar-mini &{
+    span.appTitle{
+      opacity: 0;
+      position: absolute;
+    }
+  }
+}
+
+.sidebar{
+  .subnav-open{
+    .caret{
+      border-top: none;
+      border-bottom:4px dashed;
+    }
+  }
+}

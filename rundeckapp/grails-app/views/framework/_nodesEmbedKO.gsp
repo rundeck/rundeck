@@ -16,15 +16,17 @@
 
 %{--random string for uniqueness--}%
 <g:set var="xkey" value="${g.rkey()}"/>
-<span  class=" ansicolor-on matchednodes embed embed_clean" data-bind="">
-    <span data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
-
-        <a tabindex="0"
-           role="button"
-           class="node_ident textbtn-default textbtn-plain"
-           data-toggle="popover"
-           data-placement="bottom"
+<div  class="nodes-embed ansicolor-on matchednodes embed embed_clean" data-bind="">
+    <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
+        <!-- tabindex="0"
            data-trigger="focus"
+            role="button"
+      -->
+        <a
+           style="display: inline-block; cursor:pointer;"
+           class="col-sm-4 node_ident"
+           data-toggle="popover"
+           data-placement="auto"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
 
@@ -71,8 +73,8 @@
             </div>
         </div>
 
-    </span>
-</span>
+    </div>
+</div>
 
 <g:if test="${showLoading}">
     <div data-bind="if: loading() " class="text-info">
@@ -85,4 +87,3 @@
         <span data-bind="messageTemplate: [maxShown(), total()]" class="text-info"><g:message code="results.truncated.count.results.shown" /></span>
     </div>
 </g:if>
-

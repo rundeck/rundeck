@@ -134,7 +134,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             map.failOnDisable = failOnDisable
         }
         if(importOptions){
-            map.importOptions = importOptions
+            map.jobref.importOptions = importOptions
         }
         if(nodeFilter){
             map.jobref.nodefilters=[filter:nodeFilter]

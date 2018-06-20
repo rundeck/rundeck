@@ -1,0 +1,22 @@
+.modal-dialog{
+  // TODO: Fix modal dialog z-index
+  z-index: 1040; // overrides some weird stuff that's making the modal dialog live under the modal overlay, could be a positioning issue
+  .modal-footer{
+    text-align: left;
+  }
+  .modal-body{
+    .container{
+      width: auto;
+    }
+  }
+}
+
+body.modal-open{
+  // .modal-dialog{
+  //   margin-left: 300px;
+  // }
+  //
+  // &.sidebar-mini{
+  //   margin-left: auto;
+  // }
+}

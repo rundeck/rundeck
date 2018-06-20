@@ -113,7 +113,7 @@
             <i class="glyphicon glyphicon-download-alt"></i>
             <g:enc>${params.project ?: request.project}</g:enc>.rdproject.jar
         </g:link>
-        <div class="text-info">
+        <div class="text-info" style="margin-top:1em;">
             <g:message code="archive.request.will.expire" />
         </div>
         </g:if>
@@ -127,7 +127,7 @@
 
     </div>
     <div class="panel-footer">
-        <g:link controller="menu" action="projectExport" params="${[project: params.project]}">
+        <g:link class="btn btn-default btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
             <g:message code="return.to.configuration" />
         </g:link>
     </div>
@@ -177,7 +177,7 @@
     </div>
 
     <div class="panel-footer">
-        <g:link controller="menu" action="projectExport" params="${[project: params.project]}">
+        <g:link class="btn btn-default btn-sm" controller="menu" action="projectExport" params="${[project: params.project]}">
             <g:message code="return.to.configuration" />
         </g:link>
     </div>
@@ -191,7 +191,7 @@
 
     <div class="panel-body">
         <div class="container ">
-        <div class="col-md-12 text-info ">
+        <div class="col-md-12 text-info" style="margin-bottom:1em">
             <g:message code="archive.request.please.wait" />
         </div>
         <div class="col-md-6">
@@ -199,6 +199,7 @@
                 completePercent:percentage?:0,
                 bind: 'percentage()',
                 showpercent: true,
+                height:28
         ]}"/>
         </div>
         </div>
@@ -207,14 +208,14 @@
 
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token,instance:params.instance, iproject:params.iproject]"
-                class="btn  btn-link reload_button"
+                class="btn btn-default btn-sm reload_button"
                 data-loading="Loading...">
             <i class="glyphicon glyphicon-refresh"></i>
             <g:message code="refresh.this.page" />
         </g:link>
         <div class="checkbox">
-            <label>
-                <input type="checkbox" id="dorefresh" value="true" data-bind="checked: refresh"/>
+          <input type="checkbox" id="dorefresh" value="true" data-bind="checked: refresh"/>
+            <label for="dorefresh">
                 <g:message code="refresh.every.5.seconds" />
             </label>
         </div>

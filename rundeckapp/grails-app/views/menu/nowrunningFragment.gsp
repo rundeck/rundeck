@@ -21,7 +21,7 @@
     <td colspan="5">
     <span class="paginate nowrunning"><g:paginate class="pagination-sm pagination-embed" action="nowrunning" total="${total}"  max="${max}"/></span>
         <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-            <span class="text-muted">Showing <g:enc>${nowrunning.size()} of ${total}</g:enc></span>
+            <span class="text-primary">Showing <g:enc>${nowrunning.size()} of ${total}</g:enc></span>
         </g:if>
     </td>
     </tr>

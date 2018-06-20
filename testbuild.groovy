@@ -40,7 +40,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
 //versions of dependency we want to verify
 def versions=[
-        mysql:'5.1.35',
+        mysql:'5.1.42',
         jetty:'9.4.9.v20180320',
         servlet:'api-3.1.0'
 ]

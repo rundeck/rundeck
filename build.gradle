@@ -21,19 +21,21 @@
  * artifacts, however it allows us to set defaults for the subjects and provides 
  * Groovy syntax highlighting for gradle build files (like this one)
  **/
- import org.gradle.plugins.signing.Sign
- buildscript {
+
+import org.gradle.plugins.signing.Sign
+
+buildscript {
     repositories {
-	maven {
-		name 'mavenCentralProxy'
-		url mavenCentralUrl
-		if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
-			credentials {
-				username mavenUser
-				password mavenPassword
-			}
-		}
-	}
+        maven {
+            name 'mavenCentralProxy'
+            url mavenCentralUrl
+            if (project.hasProperty('mavenUser') && project.hasProperty('mavenPassword')) {
+                credentials {
+                    username mavenUser
+                    password mavenPassword
+                }
+            }
+        }
         mavenCentral()
     }
     dependencies {
@@ -41,12 +43,23 @@
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
     }
 }
-description = 'The master-build project for Rundeck';
+
+plugins {
+    id 'com.gradle.build-scan' version '1.13'
+}
 
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
+
+
+description = 'The master-build project for Rundeck';
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.7'
+}
+
 
 eclipse.project.name = 'rundeck'
 
@@ -78,28 +91,27 @@ subprojects {
     def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag != 'GA' ? '-' + releaseTag : '')
     version = currentVersion + vtag
 }
-allprojects{
+
+allprojects {
     ext.isReleaseBuild = false
     ext.isSnapshotBuild = false
     ext.isDevBuild = false
     if(project.hasProperty('environment') && project.environment == 'release'){
         ext.isReleaseBuild=true
-    }else if(project.hasProperty("snapshot")){
+    }
+    else if(project.hasProperty("snapshot")){
         ext.isSnapshotBuild=true
-    }else{
+    }
+    else{
         ext.isDevBuild=true
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.7'
 }
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.allTasks.any { it instanceof Sign } && project.hasProperty("signing.keyId") && !project.hasProperty( "signing.password") && !project.isDevBuild) {
         // Use Java 6's console to read from the console (no good for a CI environment)
-        Console console = System.console()
+        def console = System.console()
         console.printf "\n\nWe have to sign some things in this build.\n\nPlease enter your signing details.\n\n"
 
         //def id = console.readLine("PGP Key Id: ")
@@ -215,4 +227,9 @@ task alljavadoc(type: Javadoc) {
     if (JavaVersion.current().isJava8Compatible()) {
         options.addStringOption('Xdoclint:none', '-quiet')
     }
+}
+
+buildScan {
+    termsOfServiceUrl = 'https://gradle.com/terms-of-service'
+    termsOfServiceAgree = 'yes'
 }

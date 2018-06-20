@@ -1,58 +1,42 @@
+%{--
+- Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+-
+- Licensed under the Apache License, Version 2.0 (the "License");
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+--}%
+
 <div xdata-bind="if: view()=='table'">
-    <div class="row">
-        <div class="col-sm-12">
-            <div class=" col-inset">
-
-                <span id="tagdemo">
-                <i class="glyphicon glyphicon-tags text-muted"></i>
-
-                <span data-bind="if: nodeSet().tagsummary">
-                    <span data-bind="foreach: nodeSet().tagsummary">
-                        <span class="summary nodetags">
-
-                            <node-filter-link params="
-                                        filterkey: 'tags',
-                                        filterval: tag,
-                                        suffix: ' ('+ko.unwrap(value)+')',
-                                        linktext: tag,
-                                        classnames: 'tag textbtn',
-                                        tag: tag,
-                                        "></node-filter-link>
-                        </span>
-                    </span>
-                    </span>
+    <div id="tagdemo">
+        <span data-bind="if: nodeSet().tagsummary">
+            <span data-bind="foreach: nodeSet().tagsummary">
+                <span class="summary nodetags">
+                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-default', tag: tag"></node-filter-link>
                 </span>
-            </div>
-        </div>
+            </span>
+        </span>
     </div>
     <div class="row row-space">
         <div class="col-sm-12 ">
             <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="nodesTable" >
                 <tr>
-                    <th>%{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  --}%
-
-<g:message code="Node"/></th>
+                    <th>
+                      <g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
-                    <th data-bind="text: $data"></th>
+                    <th data-bind="text: $data" class="text-capitalize"></th>
                     <!--/ko -->
 
                     <!-- ko if: useDefaultColumns -->
-                        <th><g:message code="resource.metadata.entity.tags"/></th>
-                        <th colspan="3" class="text-center"><g:message code="user.at.host" /></th>
+                    <th><g:message code="resource.metadata.entity.tags"/></th>
+                    <th colspan="3"><g:message code="user.at.host" /></th>
                     <!-- /ko -->
                     <th></th>
                 </tr>
@@ -60,11 +44,7 @@
                 <tr class=" node_entry  hover-action-holder ansicolor-on" data-bind="css: {server: islocal}">
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
-                        <a href="#"
-                           data-toggle="collapse"
-                           data-bind="attr: {href: '#detail_'+$index() }"
-                           class="textbtn textbtn-default "
-                        >
+                        <a href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
                             <i class="auto-caret"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
@@ -88,7 +68,7 @@
                                         "></node-filter-link>
 
                         <span class="nodedesc"></span>
-                        <span class="text-muted ">
+                        <span class="text-primary ">
                             <!-- ko if: attributes['ui:badges'] -->
                             <!-- ko foreach:   $root.nodeSet().glyphiconBadges(attributes)-->
                             <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
@@ -103,10 +83,10 @@
                         <span class="value" data-bind="if: $parent.attributes[$data]">
                             <span data-bind="if: $data=='tags'">
                                 <span class="nodetags">
-                                    <i class="" data-bind="css: {'glyphicon glyphicon-tags text-muted': $parent.tags().size()>0}"></i>
+                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
-                                        <node-filter-link params="
+                                        <node-filter-link class="label label-default" params="
                                                     filterkey: 'tags',
                                                     filterval: $data,
                                                     tag: $data
@@ -132,7 +112,7 @@
                     <td  title="Tags" class="nodetags" >
                         <span data-bind="if: tags">
                             <span class="nodetags">
-                                <i class="" data-bind="css: {'glyphicon glyphicon-tags text-muted': tags().size()>0}"></i>
+                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
                                 <span data-bind="foreach: tags">
                                     <node-filter-link params="
                                                     filterkey: 'tags',

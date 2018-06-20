@@ -32,7 +32,7 @@
 
 <input id='runAtTime' type='hidden' name='runAtTime' value='' />
 
-<div class="panel panel-default panel-tab-content panel-modal-content">
+<div>
 <g:if test="${!hideHead}">
     <div class="panel-heading">
         <div class="row">
@@ -43,68 +43,16 @@
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
-<script lang="text/javascript">
-    function init() {
-        var pageParams = loadJsonData('pageParams');
-        jQuery('body').on('click', '.nodefilterlink', function (evt) {
-            evt.preventDefault();
-            nodeFilter.selectNodeFilterLink(this);
-            $('filterradio').checked=true;
-        });
-        jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
-            evt.preventDefault();
-            closeOutputArea();
-        });
-
-
-        //setup node filters knockout bindings
-        var filterParams = loadJsonData('filterParamsJSON');
-        <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
-        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-        var nodeFilter = new NodeFilters(
-                appLinks.frameworkAdhoc,
-                appLinks.scheduledExecutionCreate,
-                appLinks.frameworkNodes,
-                Object.extend(filterParams, {
-                    nodeSummary:nodeSummary,
-                    view: 'embed',
-                    maxShown: 100,
-                    emptyMode: 'blank',
-                    project: pageParams.project,
-                    nodesTitleSingular: message('Node'),
-                    nodesTitlePlural: message('Node.plural')
-                }));
-
-            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-        //show selected named filter
-        nodeFilter.filterName.subscribe(function (val) {
-            if (val) {
-                jQuery('a[data-node-filter-name]').removeClass('active');
-                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
-            }
-        });
-
-        nodeSummary.reload();
-        nodeFilter.updateMatchedNodes();
-
-        var tmpfilt = {};
-        jQuery.data( tmpfilt, "node-filter-name", "" );
-        jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
-        nodeFilter.selectNodeFilterLink(tmpfilt);
-
-        </g:if>
-    }
-    jQuery(document).ready(init);
-</script>
     <div class=" collapse" id="queryFilterHelp">
         <div class="help-block">
             <g:render template="/common/nodefilterStringHelp"/>
         </div>
     </div>
-<div class="list-group list-group-tab-content">
-<div class="list-group-item">
+<div>
+<div>
 <div class="row">
-<div class="${hideHead?'col-sm-9':'col-sm-12'}">
+<div class="col-xs-12">
+<!-- <div class="${hideHead?'col-sm-9':'col-sm-12'}"> -->
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
 
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
@@ -138,12 +86,12 @@
 
             <div class="row">
                 <div class="col-sm-12 checkbox">
-                    <label >
                     <input name="extra._replaceNodeFilters" value="true" type="checkbox"
                            data-toggle="collapse"
                            data-target="#nodeSelect"
                         ${selectedNodes!=null?'checked':''}
                            id="doReplaceFilters"/>
+                    <label for="doReplaceFilters">
                     <g:message code="change.the.target.nodes" />
                     <g:if test="${selectedNodes || nodes}">
                         (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
@@ -152,8 +100,8 @@
                 </div>
 
             </div>
-            <div class="container">
-            <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
+            <div>
+              <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
                 <%--
                  split node names into groups, in several patterns
                   .*\D(\d+)
@@ -170,8 +118,8 @@
                                 value="cherrypick"
                                />
                         <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
-                        <span class="textbtn textbtn-default textbtn-on-hover selectall"><g:message code="all" /></span>
-                        <span class="textbtn textbtn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
+                        <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
+                        <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
@@ -202,8 +150,8 @@
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
                                     <g:message code="select.prompt" />
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
-                                    <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
+                                    <span class="btn btn-default textbtn-on-hover selectall" >All</span>
+                                    <span class="btn btn-default textbtn-on-hover selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
                                         <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active textbtn  obs_tag_group',onclick:'']]}"/>
                                     </g:if>
@@ -278,15 +226,11 @@
                                         <g:hiddenField name="offset" value="${offset}"/>
                                         <g:hiddenField name="formInput" value="true"/>
 
-
-
-                                        <div class="form-group">
-                                            <div class="col-sm-10">
-                                                <span class=" input-group" >
-                                                    <g:render template="/framework/nodeFilterInputGroup"
-                                                              model="[filterFieldName: 'extra.nodefilter',filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
-                                                </span>
-                                            </div>
+                                        <div>
+                                            <span class=" input-group multiple-control-input-group" >
+                                                <g:render template="/framework/nodeFilterInputGroup"
+                                                          model="[filterFieldName: 'extra.nodefilter',filterset: filterset, filtvalue: filtvalue, filterName: filterName]"/>
+                                            </span>
                                         </div>
                                     </g:form>
 
@@ -300,8 +244,7 @@
 
                         </div>
 
-                        <div class="row row-space">
-                            <div class="col-sm-10">
+                        <div>
                                 <div class="spacing text-warning" id="emptyerror"
                                      style="display: none"
                                      data-bind="visible: !loading() && !error() && (!total() || total()==0)">
@@ -327,17 +270,19 @@
                                         <span data-bind="messageTemplate: [ total(), nodesTitle() ]"><g:message code="count.nodes.matched" /></span>.
 
                                         <span data-bind="if: total()>maxShown()">
-                                            <span data-bind="messageTemplate: [maxShown(), total()]" class="text-muted"><g:message code="count.nodes.shown" /></span>
+                                            <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary"><g:message code="count.nodes.shown" /></span>
                                         </span>
-                                        <a class="textbtn textbtn-default pull-right" data-bind="click: nodesPageView">
-                                            <g:message code="view.in.nodes.page.prompt" />
-                                        </a>
+                                        <div class="pull-right">
+                                          <a class="btn btn-default btn-sm" data-bind="click: nodesPageView">
+                                              <g:message code="view.in.nodes.page.prompt" />
+                                          </a>
+                                        </div>
+
                                     </span>
                                 </div>
                                 <span >
                                     <g:render template="/framework/nodesEmbedKO"/>
                                 </span>
-                            </div>
                         </div>
                     </div>
 
@@ -471,77 +416,79 @@
     </div>
 </div>
 <g:if test="${hideHead}">
-<div class="col-sm-3">
+<div class="col-xs-12">
     <div id="formbuttons">
         <g:if test="${!hideCancel}">
-            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
         </g:if>
-        <div class="pull-right">
+        <div class="">
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
                   class="has_tooltip"
                   data-toggle="tooltip"
-                  data-placement="auto right"
-            >%{--Extra div because attr disabled will cancel tooltip from showing --}%
-                <button type="submit"
-                        name="_action_runJobNow"
-                        id="execFormRunButton"
-                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-success">
-                    <g:message code="run.job.now" />
-                    <b class="glyphicon glyphicon-play"></b>
-                </button>
-                <a tabindex="0" role="button"
-                        id="showScheduler"
-                        ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-default"
-                        data-toggle="popover" title="Set start time" data-trigger="click"
-                        data-placement="auto left" data-container="body" data-html="true"
-                        data-trigger="focus" data-content="<div id='scheduler'>
-                                <div class='input-group date' id='datetimepicker'>
-                                    <input type='text' class='form-control' />
-                                    <span class='input-group-addon'>
-                                        <span class='glyphicon glyphicon-calendar'></span>
-                                    </span>
-                                </div>
-                                <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
-                                    ${message(code:"the.time.must.be.in.the.future")}
-                                </div>
-                                <button type='submit'
-                                        id='scheduleSubmitButton'
-                                        name='_action_runJobLater'
-                                        class=' btn btn-success schedule-button'>
-                                    ${message(code:'schedule.job')}
-                                    <b class='glyphicon glyphicon-time'></b>
-                                </button>
-                            </div>">
-                    <g:message code="run.job.later" />
-                    <b class="glyphicon glyphicon-time"></b>
-                </a>
+                  data-placement="auto">
+                %{--Extra div because attr disabled will cancel tooltip from showing --}%
+                <div class="col-xs-12 col-sm-6">
+                  <button type="submit"
+                          name="_action_runJobNow"
+                          id="execFormRunButton"
+                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                          class=" btn btn-success btn-sm">
+                      <g:message code="run.job.now" />
+                      <b class="glyphicon glyphicon-play"></b>
+                  </button>
+                  <a tabindex="0" role="button"
+                          id="showScheduler"
+                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                          class=" btn btn-default btn-sm"
+                          data-toggle="popover" title="Set start time" data-trigger="click"
+                          data-placement="auto" data-container="body" data-html="true"
+                          data-trigger="focus" data-content="<div id='scheduler'>
+                                  <div class='input-group date' id='datetimepicker'>
+                                      <input type='text' class='form-control' />
+                                      <span class='input-group-addon'>
+                                          <span class='glyphicon glyphicon-calendar'></span>
+                                      </span>
+                                  </div>
+                                  <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
+                                      ${message(code:"the.time.must.be.in.the.future")}
+                                  </div>
+                                  <button type='submit'
+                                          id='scheduleSubmitButton'
+                                          name='_action_runJobLater'
+                                          class=' btn btn-success schedule-button'>
+                                      ${message(code:'schedule.job')}
+                                      <b class='glyphicon glyphicon-time'></b>
+                                  </button>
+                              </div>">
+                      <g:message code="run.job.later" />
+                      <b class="glyphicon glyphicon-time"></b>
+                  </a>
+                </div>
+                <div class="col-xs-12 col-sm-6 form-inline text-right">
+                    <label>
+                        <g:checkBox id="followoutputcheck" name="follow"
+                                    checked="${defaultFollow || params.follow == 'true'}"
+                                    value="true"/>
+                        <g:message code="job.run.watch.output"/>
+                    </label>
+                  <select class="form-control " name="followdetail">
+                      <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
+                          <g:message code="execution.page.show.tab.Summary.title"/>
+                      </option>
+                      <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
+                          <g:message code="report"/>
+                      </option>
+                      <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
+                          <g:message code="execution.show.mode.Log.title"/>
+                      </option>
+                      <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
+                          <g:message code="definition"/>
+                      </option>
+                  </select>
+                </div>
             </div>
         </div>
         <div class="clearfix">
-        </div>
-        <div class="pull-right">
-            <label class="control-label">
-                <g:checkBox id="followoutputcheck" name="follow"
-                            checked="${defaultFollow || params.follow == 'true'}"
-                            value="true"/>
-                <g:message code="job.run.watch.output"/>
-                <select name="followdetail">
-                    <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
-                        <g:message code="execution.page.show.tab.Summary.title"/>
-                    </option>
-                    <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
-                        <g:message code="report"/>
-                    </option>
-                    <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
-                        <g:message code="execution.show.mode.Log.title"/>
-                    </option>
-                    <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
-                        <g:message code="definition"/>
-                    </option>
-                </select>
-            </label>
         </div>
     </div>
 </div>
@@ -554,27 +501,28 @@
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">
             <g:if test="${!hideCancel}">
-                <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
             </g:if>
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
                   class="form-group has_tooltip"
                   data-toggle="tooltip"
-                  data-placement="auto right"
+                  data-placement="auto"
             >%{--Extra div because attr disabled will cancel tooltip from showing --}%
                 <button type="submit"
+                        style="margin-bottom:10px;"
                         name="_action_runJobNow"
                         id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-success">
+                        class=" btn btn-success btn-sm">
                     <i class="glyphicon glyphicon-play"></i>
                     <g:message code="run.job.now" />
                 </button>
                 <a tabindex="0" role="button"
                         id="showScheduler"
                         ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                        class=" btn btn-default"
+                        class=" btn btn-default btn-sm"
                         data-toggle="popover" title="Set start time" data-trigger="click"
-                        data-placement="auto bottom" data-container="#formbuttons" data-html="true"
+                        data-placement="auto" data-container="#formbuttons" data-html="true"
                         data-trigger="focus" data-content="<div id='scheduler'>
                                 <div class='input-group date' id='datetimepicker'>
                                     <input type='text' class='form-control' />
@@ -628,7 +576,59 @@
 </g:uploadForm>
 </div> %{--/.col--}%
 </div> %{--/.row--}%
+<script lang="text/javascript">
+    function init() {
+        var pageParams = loadJsonData('pageParams');
+        jQuery('body').on('click', '.nodefilterlink', function (evt) {
+            evt.preventDefault();
+            nodeFilter.selectNodeFilterLink(this);
+            $('filterradio').checked=true;
+        });
+        jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
+            evt.preventDefault();
+            closeOutputArea();
+        });
 
+
+        //setup node filters knockout bindings
+        var filterParams = loadJsonData('filterParamsJSON');
+        <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
+        var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
+        var nodeFilter = new NodeFilters(
+                appLinks.frameworkAdhoc,
+                appLinks.scheduledExecutionCreate,
+                appLinks.frameworkNodes,
+                Object.extend(filterParams, {
+                    nodeSummary:nodeSummary,
+                    view: 'embed',
+                    maxShown: 100,
+                    emptyMode: 'blank',
+                    project: pageParams.project,
+                    nodesTitleSingular: message('Node'),
+                    nodesTitlePlural: message('Node.plural')
+                }));
+
+            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
+        //show selected named filter
+        nodeFilter.filterName.subscribe(function (val) {
+            if (val) {
+                jQuery('a[data-node-filter-name]').removeClass('active');
+                jQuery('a[data-node-filter-name=\'' + val + '\']').addClass('active');
+            }
+        });
+
+        nodeSummary.reload();
+        nodeFilter.updateMatchedNodes();
+
+        var tmpfilt = {};
+        jQuery.data( tmpfilt, "node-filter-name", "" );
+        jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
+        nodeFilter.selectNodeFilterLink(tmpfilt);
+
+        </g:if>
+    }
+    jQuery(document).ready(init);
+</script>
 <content tag="footScripts">
     <asset:stylesheet src="bootstrap-datetimepicker.min.css" />
     <asset:javascript src="scheduler.js" />

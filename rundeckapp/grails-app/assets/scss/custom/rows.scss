@@ -1,0 +1,51 @@
+$padding-base-vertical:          6px;
+$padding-base-horizontal:        9px;
+
+$padding-large-vertical:         10px;
+$padding-large-horizontal:       15px;
+
+$padding-small-vertical:         4px;
+$padding-small-horizontal:       6px;
+
+$padding-xs-vertical:            1px;
+$padding-xs-horizontal:          3px;
+
+
+
+.spacing {
+  margin-top: $padding-base-vertical;
+  margin-bottom: $padding-base-vertical;
+}
+
+.spacing-sm {
+  margin-top: $padding-small-vertical;
+  margin-bottom: $padding-small-vertical;
+}
+
+.spacing-lg {
+  margin-top: $padding-large-vertical;
+  margin-bottom: $padding-large-vertical;
+}
+
+.row {
+  &.row-space {
+    margin-top: $padding-base-vertical;
+    margin-bottom: $padding-base-vertical;
+  }
+
+  &.row-space-sm {
+    margin-top: $padding-small-vertical;
+    margin-bottom: $padding-small-vertical;
+  }
+
+  &.row-space-lg {
+    margin-top: $padding-large-vertical;
+    margin-bottom: $padding-large-vertical;
+  }
+  &.row-space-top{
+    margin-top: $padding-base-vertical;
+  }
+  &.row-space-bottom{
+    margin-bottom: $padding-base-vertical;
+  }
+}

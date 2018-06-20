@@ -49,8 +49,8 @@
                     <g:datepickerUI name="startafterFilter"
                                   value="${query?.startafterFilter?:now}"
                                   id="startafterFilter"
-                                  class="form-control input-sm"/>
-                                  
+                                  class="form-control"/>
+
                 </span>
         </td></tr>
             </div>
@@ -71,8 +71,8 @@
                                   years="${CUR_YEAR == 2007 ? 2007 : CUR_YEAR..2007}"
                                   value="${query?.startbeforeFilter?:now}"
                                   id="startbeforeFilter"
-                                  class="form-control input-sm"/>
-                                  
+                                  class="form-control"/>
+
                 </span>
         </td></tr>
             </div>
@@ -94,7 +94,7 @@
                              years="${CUR_YEAR == 2007 ? 2007 : CUR_YEAR..2007}"
                              value="${query?.endafterFilter?:now}"
                              id="endafterFilter"
-                             class="form-control input-sm"/>
+                             class="form-control"/>
 
            </span>
         </td></tr>
@@ -116,7 +116,7 @@
                              years="${CUR_YEAR == 2007 ? 2007 : CUR_YEAR..2007}"
                              value="${query?.endbeforeFilter?:now}"
                              id="endbeforeFilter"
-                             class="form-control input-sm"/>
+                             class="form-control "/>
            </span>
         </td></tr>
         </div>

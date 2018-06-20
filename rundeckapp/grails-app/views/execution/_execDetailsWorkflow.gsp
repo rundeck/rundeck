@@ -186,7 +186,7 @@ jQuery(function(){
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>
-    <div id="wfnewtypes" style="display:none; margin-top:10px;" class="panel panel-success">
+    <div id="wfnewtypes" style="display:none; margin-top:10px;" class="panel panel-default">
         <g:render template="/execution/wfAddStep"
             model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
         />
@@ -228,14 +228,14 @@ jQuery(function(){
 </div>
 <g:if test="${!edit && !isAdhoc}">
     <div>
-    <span class="text-muted text-em">
+    <span class="text-primary text-em">
         <g:message code="Workflow.property.keepgoing.prompt"/>
         <strong><g:message
             code="Workflow.property.keepgoing.${workflow?.keepgoing ? true : false}.description"/></strong>
     </span>
     </div>
     <div>
-    <span class="text-muted text-em">
+    <span class="text-primary text-em">
         <g:message code="strategy"/>:
         <div id="workflowstrategydetail" data-strategy="${workflow?.strategy}">
             <g:embedJSON id="workflowstrategyconfigdata"
@@ -254,7 +254,7 @@ jQuery(function(){
     <g:if test="${workflowLogFilterPluginConfigs}">
         <div>
 
-            <span class="text-muted text-em">
+            <span class="text-primary text-em">
                 Log Filters:
                 <div id="workflowlogfilterdetail">
                     <g:embedJSON id="workflowlogfilterconfigdata"

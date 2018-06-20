@@ -29,16 +29,17 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
-import geb.spock.GebSpec
-import grails.test.mixin.Mock
-import grails.test.mixin.TestFor
+import grails.testing.gorm.DataTest
+import grails.testing.services.ServiceUnitTest
+import grails.testing.spring.AutowiredTest
+import groovy.mock.interceptor.MockFor
+import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
@@ -53,9 +54,12 @@ import java.time.ZoneId
 /**
  * Created by greg on 2/17/15.
  */
-@TestFor(ExecutionService)
-@Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest])
-class ExecutionServiceSpec {
+class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
+
+    Class[] getDomainClassesToMock() {
+        [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution]
+    }
+
     private Map createJobParams(Map overrides = [:]) {
         [
                 jobName       : 'blue',
@@ -506,8 +510,8 @@ class ExecutionServiceSpec {
         null != se
         def opt1 = new Option(name: 'test1', enforced: false, required: false, secureInput: true)
         def opt2 = new Option(name: 'test2', enforced: false, required: false, secureInput: true, secureExposed: true)
-        assertTrue(opt1.validate())
-        assertTrue(opt2.validate())
+        assert opt1.validate()
+        assert opt2.validate()
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         null != se.save()
@@ -701,8 +705,8 @@ class ExecutionServiceSpec {
                 secureExposed: true,
                 defaultStoragePath: 'keys/test2'
         )
-        assertTrue(opt1.validate())
-        assertTrue(opt2.validate())
+        assert opt1.validate()
+        assert opt2.validate()
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         null != se.save()
@@ -775,8 +779,8 @@ class ExecutionServiceSpec {
         null != se
         def opt1 = new Option(name: 'test1', enforced: false, required: false, secureInput: true)
         def opt2 = new Option(name: 'test2', enforced: false, required: false, secureInput: true, secureExposed: true)
-        assertTrue(opt1.validate())
-        assertTrue(opt2.validate())
+        assert opt1.validate()
+        assert opt2.validate()
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         null != se.save()
@@ -842,9 +846,9 @@ class ExecutionServiceSpec {
         def opt1 = new Option(name: 'test1', enforced: false, required: false, secureInput: true)
         def opt2 = new Option(name: 'test2', enforced: false, required: false, secureInput: true, secureExposed: true)
         def opt3 = new Option(name: 'test3', enforced: false, required: false, secureInput: false)
-        assertTrue(opt1.validate())
-        assertTrue(opt2.validate())
-        assertTrue(opt3.validate())
+        assert opt1.validate()
+        assert opt2.validate()
+        assert opt3.validate()
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         se.addToOptions(opt3)
@@ -2269,6 +2273,14 @@ class ExecutionServiceSpec {
         service.configurationService = Mock(ConfigurationService) {
             getString('executionService.startup.cleanupStatus', _) >> 'incompletestatus'
         }
+        if(!cmatch) {
+            def seventBus = new SynchronousEventBus()
+            service.setTargetEventBus(seventBus)
+            seventBus.subscribe("cluster.abortExecution") { eventData ->
+                println "received event data: ${eventData}"
+                return [:]
+            }
+        }
 
         when:
         def result = service.abortExecution(job, e, user, auth, asuser, forced)
@@ -2296,8 +2308,8 @@ class ExecutionServiceSpec {
                     (wasScheduledPreviously ? 'unique-id' : null)
             1 * service.scheduledExecutionService.interruptJob(_, 'test', 'testgroup', isadhocschedule) >>
                     didinterrupt
-            _ * service.reportService.reportExecutionResult(_) >> [:]
         }
+        _ * service.reportService.reportExecutionResult(_) >> [:]
 
 
         where:
@@ -2842,7 +2854,7 @@ class ExecutionServiceSpec {
 
         def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "10")
 
-        assertTrue(job.validate())
+        assert job.validate()
 
         job.addToOptions(opt1)
         null != job.save()
@@ -2929,7 +2941,7 @@ class ExecutionServiceSpec {
 
         def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "wrongthreadcountvalue")
 
-        assertTrue(job.validate())
+        assert job.validate()
 
         job.addToOptions(opt1)
         null != job.save()
@@ -3084,8 +3096,8 @@ class ExecutionServiceSpec {
         null != se
         def opt1 = new Option(name: 'monkey', enforced: false, required: false)
         def opt2 = new Option(name: 'delay', enforced: false, required: false)
-        assertTrue(opt1.validate())
-        assertTrue(opt2.validate())
+        assert opt1.validate()
+        assert opt2.validate()
         se.addToOptions(opt1)
         se.addToOptions(opt2)
         null != se.save()

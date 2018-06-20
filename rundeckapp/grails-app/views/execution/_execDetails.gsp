@@ -16,7 +16,7 @@
 
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="row" >
+<div class="row" style="margin-top:1em">
 <div class="col-sm-12">
 <table class="simpleForm execdetails">
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
@@ -67,6 +67,11 @@
         <td ><g:message code="scheduledExecution.property.multipleExecutions.label"/></td>
         <td >
             <g:message code="yes" />
+        <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.maxMultipleExecutions}">
+            <code>
+                <g:message code="up.to" /> ${execdata.maxMultipleExecutions}
+            </code>
+        </g:if>
         </td>
         </tr>
     </g:if>
@@ -115,7 +120,7 @@
                 <td><g:message code="Node.plural" />:</td>
                 <td >
                     <span id="matchednodes_${rkey}" class="matchednodes embed">
-                        <span class="text-muted"><g:message code="include.nodes.matching" /></span>
+                        <span class="text-primary"><g:message code="include.nodes.matching" /></span>
                         <g:set var="filterstring" value="${execdata.asFilter()}"/>
                         <g:set var="jsdata" value="${[filter:filterstring]}"/>
                     <g:set var="varStr" value=""/>
@@ -168,7 +173,7 @@
                     </span>
 
                     <div>
-                        <span class="text-muted text-em">
+                        <span class="text-primary text-em">
                             <g:message code="execute.up.to"/>
                             <strong>
                                 <g:enc>${execdata?.nodeThreadcount}</g:enc>
@@ -179,7 +184,7 @@
                     </div>
 
                     <div>
-                        <span class="text-muted text-em">
+                        <span class="text-primary text-em">
                             <g:message code="if.a.node.fails" />:
                             <strong>
                             <g:message
@@ -188,7 +193,7 @@
                         </span>
                     </div>
                     <div>
-                    <span class="text-muted text-em">
+                    <span class="text-primary text-em">
                         <g:set value="${null == execdata?.nodeRankOrderAscending || execdata?.nodeRankOrderAscending}"
                                var="isAscending"/>
 
@@ -204,7 +209,7 @@
                     </div>
                     <g:if test="${execdata instanceof ScheduledExecution}">
                     <div>
-                        <span class="text-muted text-em">
+                        <span class="text-primary text-em">
                             <g:message code="scheduledExecution.property.nodesSelectedByDefault.label" />:
                             <strong>
                                 <g:message
@@ -225,7 +230,7 @@
         <tr>
             <td><g:message code="job.detail.node.prompt" /></td>
             <td class="matchednodes embed" id="matchednodes_${rkey}">
-                <span class="text-muted"><g:message code="execute.on.the.server.node" /></span>
+                <span class="text-primary"><g:message code="execute.on.the.server.node" /></span>
 
                 <g:if test="${knockout}">
                     <span class="ko-wrap">

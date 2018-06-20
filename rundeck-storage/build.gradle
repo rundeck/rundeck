@@ -22,7 +22,7 @@ subprojects {
     }
 
     dependencies {
-        testCompile "org.codehaus.groovy:groovy-all:2.3.7"
+        testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
         testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     }
 

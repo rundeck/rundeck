@@ -1,0 +1,30 @@
+// namespacing
+#loginpage, #fourohfour{
+  overflow-y: hidden;
+  .logo{
+    text-align: center;
+    // background-color: #000000;
+    a{
+
+      font-family: 'Futura';
+      text-transform: uppercase;
+      color: #000000;
+      // float: left;
+      padding: 15px 15px;
+      font-size: 18px;
+      line-height: 20px;
+      height: 50px;
+    }
+  }
+  .alert.alert-danger{
+    background-color: #ca4d3a;
+    color: #ffffff;
+  }
+  .footer,
+  .footer .copyright{
+    color: #d5d5d5!important;
+    & a:not(.btn){
+      text-decoration: underline;
+    }
+  }
+}

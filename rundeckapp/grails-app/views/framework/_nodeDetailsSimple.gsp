@@ -18,14 +18,14 @@
     <table class="table table-condensed table-embed">
         <g:if test="${node.description}">
             <tr>
-                <td class="value text-muted" colspan="4">
+                <td class="value text-primary" colspan="4">
                     <g:enc>${node.description}</g:enc>
                 </td>
             </tr>
         </g:if>
         <g:if test="${!runnable}">
         <tr>
-            <td class="value text-muted" colspan="4">
+            <td class="value text-primary" colspan="4">
                 <i class="glyphicon glyphicon-ban-circle"></i>
                 <g:message code="node.access.not-runnable.message" />
             </td>
@@ -60,7 +60,7 @@
         </tr>
 
         <g:if test="${(!exclude || !exclude.contains('tags')) && node['tags']}">
-        <tr><td class="key"><i class="glyphicon glyphicon-tags text-muted"></i></td>
+        <tr><td class="key"><i class="glyphicon glyphicon-tags text-primary"></i></td>
             <td class="" colspan="3">
                 <span class="nodetags">
                     <g:each var="tag" in="${node.tags.sort()}">

@@ -272,6 +272,12 @@ class ExecutionJob implements InterruptableJob {
                 throw new RuntimeException("JobDataMap contained invalid Execution type: " + initMap.execution.getClass().getName())
             }
             initMap.execution.refresh()
+            def jobArguments=initMap.frameworkService.parseOptsFromString(initMap.execution?.argString)
+            if (initMap.scheduledExecution?.timeout && initMap.scheduledExecution?.timeout.contains('${')) {
+                def timeout = DataContextUtils.replaceDataReferencesInString(initMap.scheduledExecution?.timeout,
+                        DataContextUtils.addContext("option", jobArguments, null))
+                initMap.timeout = timeout ? Sizes.parseTimeDuration(timeout) : -1
+            }
             FrameworkService frameworkService = initMap.frameworkService
             initMap.framework = frameworkService.rundeckFramework
             initMap.authContext = jobDataMap.get('authContext')

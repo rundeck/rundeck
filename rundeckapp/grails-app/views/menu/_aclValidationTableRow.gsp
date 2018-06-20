@@ -20,7 +20,7 @@
     <div class="grid-cell hover-action-holder">
         <g:if test="${editHref}">
             <a href="${editHref}"
-               class=" btn btn-link textbtn-info "
+               class=" btn btn-simple textbtn-info "
                title="Edit">
                 <g:if test="${validation.valid}">
 

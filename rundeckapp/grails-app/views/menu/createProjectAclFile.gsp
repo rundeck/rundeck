@@ -63,7 +63,7 @@
             params="${[project: params.project]}"
             useToken="true"
             class="form-horizontal">
-        <div class="col-sm-10 col-sm-offset-1">
+        <div class="col-sm-12">
             <g:render template="editAclFile" model="${[
                     backHref                : g.createLink(
                             controller: 'menu',

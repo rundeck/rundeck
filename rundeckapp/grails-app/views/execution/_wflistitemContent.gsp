@@ -28,7 +28,7 @@
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
-            <span class="text-muted"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
+            <span class="text-primary"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
         <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
         <g:if test="${edit}">
@@ -93,7 +93,7 @@
             </g:unless>
         </div>
             <g:unless test="${isErrorHandler}">
-            <span class="btn btn-sm btn-link dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
+            <span class="btn btn-sm btn-simple dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
             </g:unless>
         </span>
 
@@ -140,7 +140,7 @@
             <g:if test="${!isErrorHandler && edit}">
                 <div id="logFilter_${enc(attr:i)}">
                 <!-- ko if: filters().length -->
-                    <span class="text-muted"><g:message code="log.filters" /></span>
+                    <span class="text-primary"><g:message code="log.filters" /></span>
                 <!-- /ko -->
                 <!-- ko foreach: filters -->
                 <span class="btn btn-xs btn-info-hollow autohilite"

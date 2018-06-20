@@ -26,10 +26,10 @@ rundeck:  app
 
 #app build via gradle
 
-app: rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar 
+app: rundeckapp/build/libs/rundeck-$(VERSION).war
 
-rundeck-launcher/launcher/build/libs/rundeck-launcher-$(VERSION).jar:
-	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble
+rundeckapp/build/libs/rundeck-$(VERSION).war:
+	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) --build-cache -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble --scan
 
 
 #snapshot and release

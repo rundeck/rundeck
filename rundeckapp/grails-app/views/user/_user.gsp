@@ -41,7 +41,7 @@
                     <th class="table-header">
                         <g:message code="security.groups.label"/>
 
-                        <g:helpTooltip code="security.groups.description" css="text-muted"/>
+                        <g:helpTooltip code="security.groups.description" css="text-primary"/>
                     </th>
                 </g:if>
 
@@ -50,20 +50,20 @@
                 <td>
                     ${user.email}
                     <g:if test="${!user.email}">
-                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <td>
                     <g:enc>${user.firstName}</g:enc>
                     <g:if test="${!user.firstName}">
-                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <td>
                     <g:enc>${user.lastName}</g:enc>
 
                     <g:if test="${!user.lastName}">
-                        <span class="text-muted small text-uppercase"><g:message code="not.set" /></span>
+                        <span class="text-primary small text-uppercase"><g:message code="not.set" /></span>
                     </g:if>
                 </td>
                 <g:if test="${selfprofile}">
@@ -85,7 +85,7 @@
             <div class="col-sm-12">
                 <h3>
                     <g:message code="userController.page.profile.heading.userTokens.label"/>
-                    <a class="small btn btn-link btn-xs"
+                    <a class="btn btn-xs"
                        data-toggle="modal"
                        href="#gentokenmodal">
                         <g:icon name="plus"/>
@@ -107,8 +107,8 @@
                         <a class="btn btn-sm btn-danger"
                            data-toggle="modal"
                            href="#delexpiredtokenmodal">
-                            <g:icon name="remove-circle"/>
-                            <g:message code="button.delete.expired.tokens.ellipsis" />
+                            <i class="fas fa-trash"></i>
+                            <g:message code="button.delete.expired.tokens" />
                         </a>
                     </g:else>
                 </span>
@@ -123,7 +123,7 @@
              aria-hidden="true">
 
             <g:form controller="user" action="removeExpiredTokens" useToken="true">
-                <div class="modal-dialog modal-lg">
+                <div class="modal-dialog modal-sm">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -280,7 +280,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <a class="genusertokenbtn small btn btn-success"
+                        <a class="genusertokenbtn btn btn-success"
                             data-bind="click: actionGenerate"
                            href="${createLink(
                                    controller: 'user',

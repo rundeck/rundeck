@@ -1,0 +1,40 @@
+// // @import '../bootstrap/bootstrap/_variables';
+// @import '../bootstrap/bootstrap/_glyphicons';
+// .auto-caret-open {
+//   @extend .glyphicon;
+//   @extend .glyphicon-chevron-down;
+// }
+//
+// .accordion-toggle.collapsed .auto-caret,
+// .auto-caret {
+//   @extend .glyphicon;
+//   @extend .glyphicon-chevron-right;
+// }
+//
+// .accordion-toggle,
+// .auto-caret-container {
+//   .auto-caret,
+//   .auto-caret-left {
+//     @extend .glyphicon;
+//     @extend .glyphicon-chevron-down;
+//   }
+// }
+//
+// .active {
+//   > .auto-caret-left,
+//   > .auto-caret {
+//     @extend .glyphicon;
+//     @extend .glyphicon-chevron-down;
+//   }
+//
+//   > * > .auto-caret-left,
+//   > * > .auto-caret {
+//     @extend .glyphicon;
+//     @extend .glyphicon-chevron-down;
+//   }
+// }
+//
+// .auto-caret-left {
+//   @extend .glyphicon;
+//   @extend .glyphicon-chevron-left;
+// }

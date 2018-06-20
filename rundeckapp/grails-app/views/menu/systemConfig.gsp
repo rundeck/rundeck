@@ -33,76 +33,74 @@
 </head>
 
 <body>
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
-</div>
-<div class="row">
-
-    <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
-    <g:set var="fwkProps" value="${rundeckFramework.propertyLookup.propertiesMap}"/>
-    <div class="col-sm-10 col-sm-offset-1">
-        <div class="panel panel-default">
-
-            <div class="panel-body">
-    <h4>Server Connection Info</h4>
-        <g:set var="fwkPropFile" value="${FilesystemFramework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
-
-        <div class="text-muted"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
-
-        <g:render template="displayConfigProps" model="[obscurePattern:~/password/,map: fwkProps,
-            keys: fwkProps.keySet().findAll{it=~/^framework.server/}]"/>
-
-        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
-
-        <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['grails.serverURL']]"/>
-
-    <h4>SSH Defaults</h4>
-
-        <div class="text-muted"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
-
-        <g:render template="displayConfigProps" model="[map: fwkProps,keys: fwkProps.keySet().findAll{it=~/^framework\.ssh\./}]"/>
-
-    <h4>Datasource</h4>
-
-        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
-
-        <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.url']]"/>
-
-    <h4>Plugins</h4>
-
-        <div class="text-muted"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
-
-
-    <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
-
-    <h4><g:message code="login.module" /></h4>
-    <div class="text-muted">
-        <g:message code="authentication.is.performed.using.jaas.the.configuration.file.is.defined.using.a.system.property" />
-    </div>
-    <div>
-        <g:render template="displayConfigProps" model="[map:System.properties,keys:['java.security.auth.login.config']]"/>
-    </div>
-    <div class="text-muted">
-        <g:message code="the.currently.used.login.module" />
-    </div>
-    <div>
-        <g:set var="loginmodule" value="${System.getProperty('loginmodule.name', "rundecklogin")}"/>
-
-        <div>
-            <code><g:enc>${loginmodule}</g:enc></code>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <g:render template="/common/messages"/>
         </div>
     </div>
+    <div class="row">
+      <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
+      <g:set var="fwkProps" value="${rundeckFramework.propertyLookup.propertiesMap}"/>
+      <div class="col-xs-12">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title"><g:message code="gui.menu.SystemConfig" /></h3>
+            <hr>
+          </div>
+          <div class="card-content">
+            <g:set var="fwkPropFile" value="${FilesystemFramework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
+            <div class="text-primary"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
+            <g:render template="displayConfigProps" model="[obscurePattern:~/password/,map: fwkProps, keys: fwkProps.keySet().findAll{it=~/^framework.server/}]"/>
+            <div class="text-primary" style="margin-top:1em;"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['grails.serverURL']]"/>
 
-    </div>
-            <div class="panel-footer">
-                <div class="text-info">
-                    <g:message code="page.SystemConfiguration.description"/>
-                </div>
+            <hr>
+
+            <h4>SSH Defaults</h4>
+            <div class="text-primary"><g:enc>${fwkPropFile.absolutePath}</g:enc>:</div>
+            <g:render template="displayConfigProps" model="[map: fwkProps,keys: fwkProps.keySet().findAll{it=~/^framework\.ssh\./}]"/>
+
+            <hr>
+
+            <h4>Datasource</h4>
+            <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.url']]"/>
+
+            <hr>
+
+            <h4>Plugins</h4>
+            <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+            <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
+
+            <hr>
+
+            <h4><g:message code="login.module" /></h4>
+            <div class="text-primary">
+              <g:message code="authentication.is.performed.using.jaas.the.configuration.file.is.defined.using.a.system.property" />
             </div>
+            <div>
+              <g:render template="displayConfigProps" model="[map:System.properties,keys:['java.security.auth.login.config']]"/>
+            </div>
+            <div class="text-primary" style="margin-top:1em;">
+              <g:message code="the.currently.used.login.module" />
+            </div>
+            <div>
+              <g:set var="loginmodule" value="${System.getProperty('loginmodule.name', "rundecklogin")}"/>
+              <div>
+                <code><g:enc>${loginmodule}</g:enc></code>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <hr>
+            <div class="text-info">
+                <g:message code="page.SystemConfiguration.description"/>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
-</div>
+  </div>
 </body>
 </html>

@@ -16,7 +16,97 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
 
-<div class="col-sm-12 jobInfoSection">
+<div class="jobInfoSection">
+  <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
+    <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
+            context: 'application',
+            type: 'project',
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
+            any: true,
+            name: scheduledExecution.project
+    )}"/>
+    <g:set var="authProjectImport" value="${auth.resourceAllowedTest(
+            context: 'application',
+            type: 'project',
+            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT],
+            any: true,
+            name: scheduledExecution.project
+    )}"/>
+    <g:set var="exportStatus" value="${authProjectExport && scmExportEnabled ? scmExportStatus?.get(scheduledExecution.extid) :null}"/>
+    <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
+
+      <h3 class="card-title">
+        <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
+            class="text-primary"
+            params="[project: scheduledExecution.project]"
+                id="${scheduledExecution.extid}"
+                absolute="${absolute ? 'true' : 'false'}">
+            <g:enc>${scheduledExecution?.jobName}</g:enc>
+        </g:link>
+        <g:if test="${jobActionButtons}">
+          <div class="" style="position:absolute; top: 0; right: 0;">
+            <g:render template="/scheduledExecution/jobActionButton" model="[scheduledExecution:scheduledExecution]"/>
+          </div>
+        </g:if>
+      </h3>
+      <g:render template="/scm/statusBadge"
+                model="[
+                        showClean:true,
+                        linkClean:true,
+                        exportStatus: exportStatus?.synchState?.toString(),
+                        importStatus: importStatus?.synchState?.toString(),
+                        text  : '',
+                        notext: false,
+                        link: true,
+                        integration:'export',
+                        job:scheduledExecution,
+                        exportCommit  : exportStatus?.commit,
+                        importCommit  : importStatus?.commit,
+                ]"/>
+
+      <g:if test="${scheduledExecution.scheduled && nextExecution}">
+          <span class="scheduletime">
+              <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
+                  <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
+                        data-placement="right"
+                  >
+                      <g:icon name="alert"/>
+                  </span>
+              </g:if>
+              <g:else>
+                  <g:icon name="time"/>
+              </g:else>
+              <g:set var="titleHint"
+                     value="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0") : ''}"/>
+              <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${enc(attr:g.relativeDate(atDate:nextExecution))}">
+                  <g:relativeDate elapsed="${nextExecution}"
+                                  untilClass="timeuntil"/>
+              </span>
+              <g:if test="${remoteClusterNodeUUID}">
+                  on
+                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}" class="rundeck-server-uuid text-primary">
+                  </span>
+              </g:if>
+          </span>
+      </g:if>
+      <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
+          <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
+              data-placement="auto left"
+                title="${g.message(code: 'disabled.schedule.run')}">
+              <i class="glyphicon glyphicon-time"></i>
+              <span class="detail"><g:message code="disabled.schedule.run" /></span>
+          </span>
+      </g:elseif>
+      <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
+          <span class="scheduletime willnotrun has_tooltip" data-toggle="tooltip"
+              data-placement="auto left"
+                title="${g.message(code: 'job.schedule.will.never.fire')}">
+              <i class="glyphicon glyphicon-time"></i>
+              <span class="detail"><g:message code="never" /></span>
+          </span>
+      </g:elseif>
+
+  </section>
 <g:if test="${scheduledExecution.groupPath}">
     <section>
         <g:set var="parts" value="${scheduledExecution.groupPath.split('/')}"/>
@@ -40,102 +130,11 @@
         </g:each>
     </section>
 </g:if>
-<section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
-    <span class=" h3">
-        <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
-            class="primary"
-            params="[project: scheduledExecution.project]"
-                id="${scheduledExecution.extid}"
-                absolute="${absolute ? 'true' : 'false'}">
-            <i class="glyphicon glyphicon-book"></i>
-            <g:enc>${scheduledExecution?.jobName}</g:enc></g:link>
-    </span>
-
-    <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
-            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT],
-            any: true,
-            name: scheduledExecution.project
-    )}"/>
-    <g:set var="authProjectImport" value="${auth.resourceAllowedTest(
-            context: 'application',
-            type: 'project',
-            action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT],
-            any: true,
-            name: scheduledExecution.project
-    )}"/>
-
-    <g:set var="exportStatus" value="${authProjectExport && scmExportEnabled ? scmExportStatus?.get(scheduledExecution.extid) :null}"/>
-    <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
-        <g:render template="/scm/statusBadge"
-                  model="[
-                          showClean:true,
-                          linkClean:true,
-                          exportStatus: exportStatus?.synchState?.toString(),
-                          importStatus: importStatus?.synchState?.toString(),
-                          text  : '',
-                          notext: false,
-                          link: true,
-                          integration:'export',
-                          job:scheduledExecution,
-                          exportCommit  : exportStatus?.commit,
-                          importCommit  : importStatus?.commit,
-                  ]"/>
-
-
-
-    <g:if test="${jobActionButtons}">
-        <g:render template="/scheduledExecution/jobActionButton" model="[scheduledExecution:scheduledExecution]"/>
-    </g:if>
-        <g:if test="${scheduledExecution.scheduled && nextExecution}">
-            <span class="scheduletime">
-                <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
-                    <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
-                          data-placement="right"
-                    >
-                        <g:icon name="alert"/>
-                    </span>
-                </g:if>
-                <g:else>
-                    <g:icon name="time"/>
-                </g:else>
-                <g:set var="titleHint"
-                       value="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0") : ''}"/>
-                <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${enc(attr:g.relativeDate(atDate:nextExecution))}">
-                    <g:relativeDate elapsed="${nextExecution}"
-                                    untilClass="timeuntil"/>
-                </span>
-                <g:if test="${remoteClusterNodeUUID}">
-                    on
-                    <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}" class="rundeck-server-uuid text-muted">
-                    </span>
-                </g:if>
-            </span>
-        </g:if>
-        <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
-            <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
-                data-placement="auto left"
-                  title="${g.message(code: 'disabled.schedule.run')}">
-                <i class="glyphicon glyphicon-time"></i>
-                <span class="detail"><g:message code="disabled.schedule.run" /></span>
-            </span>
-        </g:elseif>
-        <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-            <span class="scheduletime willnotrun has_tooltip" data-toggle="tooltip"
-                data-placement="auto left"
-                  title="${g.message(code: 'job.schedule.will.never.fire')}">
-                <i class="glyphicon glyphicon-time"></i>
-                <span class="detail"><g:message code="never" /></span>
-            </span>
-        </g:elseif>
-
-</section>
 <section class="section-space">
         <g:render template="/scheduledExecution/description"
                   model="[
                           description : scheduledExecution.description,
-                          textCss     : 'h4 text-muted',
+                          textCss     : 'h5 text-primary',
                           mode        : jobDescriptionMode ?: 'expanded',
                           cutoffMarker: ScheduledExecution.RUNBOOK_MARKER,
                           jobLinkId   : scheduledExecution.extid,
