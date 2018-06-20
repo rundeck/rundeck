@@ -272,43 +272,19 @@
 
                 <g:if test="${wasfiltered}">
                     <div>
-                    <g:if test="${!params.compact}">
-                        <span class="h4"><g:enc>${totalauthorized}</g:enc>
-                        <g:message code="jobs.matching.filter" />
-                    </g:if>
-
-                    <g:if test="${filterset}">
-                        <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
-                        <!--<span class="info note">Filter:</span>-->
-                    </g:if>
+                      <g:if test="${!params.compact}">
+                        <div class="alert alert-info">
+                          <span class="h5"><g:enc>${totalauthorized}</g:enc>
+                          <g:message code="jobs.matching.filter" />
+                        </div>
+                      </g:if>
+                      <g:if test="${filterset}">
+                          <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
+                          <!--<span class="info note">Filter:</span>-->
+                      </g:if>
                     </div>
-                    <span title="Click to modify filter" class="btn btn-default btn-xs query obs_filtertoggle"  id='${rkey}filter-toggle'>
-                        <g:each in="${wasfiltered.sort()}" var="qparam">
-                            <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
-
-                            <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                                <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
-                                    <g:relativeDate atDate="${paginateParams[qparam]}"/>
-                                </span>
-                            </g:if>
-                            <g:else>
-                                <span class="queryvalue text">
-                                    ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
-                                </span>
-                            </g:else>
-
-                        </g:each>
-
-                        <b class="glyphicon glyphicon-chevron-right"></b>
-                    </span>
                 </g:if>
                 <g:else>
-                    <g:if test="${!params.compact}">
-                    <span class="h4">
-                        <g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
-                    </span>
-                    </g:if>
-
                     <span class="btn btn-default btn-xs obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
                         <g:message code="filter.title" />
                         <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
@@ -320,15 +296,35 @@
                         </span>
                     </g:if>
                 </g:else>
+                <g:if test="${wasfiltered}">
+                  <span title="Click to modify filter" class="btn btn-default btn-xs query obs_filtertoggle"  id='${rkey}filter-toggle'>
+                      <g:each in="${wasfiltered.sort()}" var="qparam">
+                          <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
+
+                          <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
+                              <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
+                                  <g:relativeDate atDate="${paginateParams[qparam]}"/>
+                              </span>
+                          </g:if>
+                          <g:else>
+                              <span class="queryvalue text">
+                                  ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
+                              </span>
+                          </g:else>
+
+                      </g:each>
+
+                      <b class="glyphicon glyphicon-chevron-right"></b>
+                  </span>
+                </g:if>
                     <span id="group_controls">
-                    <span class="btn btn-default btn-xs" data-bind="click: expandAllComponents">
-                        <g:message code="expand.all" />
+                      <span class="btn btn-default btn-xs" data-bind="click: expandAllComponents">
+                          <g:message code="expand.all" />
+                      </span>
+                      <span class="btn btn-default btn-xs" data-bind="click: collapseAllComponents">
+                          <g:message code="collapse.all" />
+                      </span>
                     </span>
-                    <span class="btn btn-default btn-xs" data-bind="click: collapseAllComponents">
-                        <g:message code="collapse.all" />
-                    </span>
-                    </span>
-                    <div class="clear"></div>
                 </div>
 
                 <g:if test="${flash.savedJob}">
@@ -549,18 +545,16 @@
                     <div class="presentation">
 
                         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
-                            <ul>
-                            <li style="padding:5px"><g:link controller="scheduledExecution" action="create"
+                          <g:link controller="scheduledExecution" action="create"
                                                             params="[project: params.project ?: request.project]"
-                               class="btn btn-default btn-sm">
+                               class="btn btn-default btn-xs">
                                 <g:message code="job.create.button" />
-                            </g:link></li>
-                            <li style="padding:5px"><g:link controller="scheduledExecution" action="upload"
+                          </g:link>
+                          <g:link controller="scheduledExecution" action="upload"
                                                             params="[project: params.project ?: request.project]"
-                               class="btn btn-default btn-sm">
+                               class="btn btn-default btn-xs">
                                 <g:message code="job.upload.button.title" />
-                            </g:link></li>
-                            </ul>
+                          </g:link>
                         </auth:resourceAllowed>
 
                     </div>
