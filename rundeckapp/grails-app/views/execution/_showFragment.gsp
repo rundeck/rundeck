@@ -113,7 +113,7 @@
                         class="btn btn-default btn-xs"
                         title="${g.message(code: 'execution.job.action.runAgain')}">
                 <i class="glyphicon glyphicon-play"></i>
-                <g:message code="execution.action.runAgain"/>&hellip;
+                <g:message code="execution.action.runAgain"/>
               </g:link>
             </g:if>
           </g:if>
