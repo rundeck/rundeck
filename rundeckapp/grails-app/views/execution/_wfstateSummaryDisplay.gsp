@@ -18,7 +18,7 @@
     <g:render template="nodeCurrentStateSimpleKO"/>
 </script>
 
-<div data-bind="if: !stateLoaded()" style="margin-top:1em">
+<div data-bind="if: !stateLoaded()">
         <div class="row">
             <div class="col-sm-12">
               <div class="card">
@@ -27,7 +27,7 @@
                       <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
                           <span class="text-warning" data-bind="text: errorMessage()">
                           </span>
-                          <div style="margin-top:1em;">
+                          <div>
                               <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') "><g:message code="button.action.view.log.output" /></a>
                           </div>
                       </div>
@@ -54,63 +54,47 @@
           <tmpl:wfstateSummaryScore />
         </div>
 
-        <div class="row row-space" data-bind="if: !completed()">
-            <div class="col-sm-12" >
+        <div class="row" data-bind="if: !completed()">
 
-                <table class="table table-bordered">
+            <div class="col-sm-12">
+              <div class="card">
+                <div class="card-content">
+                  <div class="row">
+                    <div class="col-xs-12 col-sm-4">
+                      <strong>
+                        <g:message code="waiting" />
+                        <span class="text-primary" data-bind="text: waitingNodes().length"></span>
+                      </strong>
+                      <g:render template="/common/helpTooltipIconKO"
+                              model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
+                    </div>
+                    <div class="col-xs-12 col-sm-4">
+                      <strong>
+                        <g:message code="running" />
+                        <span
+                            data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
+                          <span class=" " data-bind="text: runningNodes().length"></span>
+                        </span>
+                      </strong>
+                      <g:render template="/common/helpTooltipIconKO"
+                                model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
+                    </div>
+                    <div class="col-xs-12 col-sm-4">
+                      <strong>
+                        <g:message code="done" />
+                        <span
+                              data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
+                            <span data-bind="text: completedNodes().length"></span>
+                        </span>
+                      </strong>
+                      <g:render template="/common/helpTooltipIconKO"
+                                  model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
 
-                    <tr>
-                        <th colspan="3" class="text-primary table-footer text-small">
-                            <g:message code="node.summary" />
-                        </th>
-                    </tr>
-                    <tr>
-                       <th style="width: 33%" class="text-primary text-center h5 text-header">
-                           <g:message code="waiting" />
-                           <g:render template="/common/helpTooltipIconKO"
-                                   model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
-                       </th>
-                       <th style="width: 33%" class="text-primary text-center h5 text-header">
-                           <g:message code="running" />
-                           <g:render template="/common/helpTooltipIconKO"
-                                     model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
-                       </th>
-                       <th style="width: 33%" class="text-primary text-center h5 text-header">
-                           <g:message code="done" />
-                           <g:render template="/common/helpTooltipIconKO"
-                                     model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
-                       </th>
-                    </tr>
-                    <tr>
-                        <td>
-                                <div class="text-center">
-                                    <span class="h3 text-primary" data-bind="text: waitingNodes().length"></span>
-                                </div>
-                        </td>
-                        <td>
-
-                            <div class="text-center">
-                                <span class=" h3"
-                                      data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
-                                    <span class=" " data-bind="text: runningNodes().length"></span>
-                                </span>
-                            </div>
-
-
-                        </td>
-                        <td >
-
-                            <div class="text-center">
-                                <span class=" h3"
-                                      data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
-                                    <span data-bind="text: completedNodes().length"></span>
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
         </div>
-
 </div>
 </div>

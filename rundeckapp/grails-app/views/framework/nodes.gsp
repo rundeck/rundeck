@@ -291,7 +291,7 @@
 
                             <!-- ko foreach: nodeSummary().filters -->
                             <li>
-                                <a href="#" class=" nodefilterlink btn btn-default" data-bind="attr: { 'data-node-filter-name': name(), 'data-node-filter': filter(), 'title': filter(), 'href': $root.nodeSummary().linkForFilterName($data)}">
+                                <a href="#" class=" nodefilterlink btn btn-default btn-xs" data-bind="attr: { 'data-node-filter-name': name(), 'data-node-filter': filter(), 'title': filter(), 'href': $root.nodeSummary().linkForFilterName($data)}">
                                     <span data-bind="text: name"></span>
                                 </a>
                                 <div class="btn-group">

@@ -66,16 +66,17 @@
                                         filterval: nodename,
                                         linkicon: 'glyphicon glyphicon-circle-arrow-right',
                                         "></node-filter-link>
-
-                        <span class="nodedesc"></span>
-                        <span class="text-primary ">
-                            <!-- ko if: attributes['ui:badges'] -->
-                            <!-- ko foreach:   $root.nodeSet().glyphiconBadges(attributes)-->
-                            <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
-                            <!-- /ko -->
-                            <!-- /ko -->
-                            <span data-bind="text: attributes.description"></span>
-                        </span>
+                        <div>
+                          <span class="nodedesc"></span>
+                          <span class="text-primary ">
+                              <!-- ko if: attributes['ui:badges'] -->
+                              <!-- ko foreach:   $root.nodeSet().glyphiconBadges(attributes)-->
+                              <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                              <!-- /ko -->
+                              <!-- /ko -->
+                              <span data-bind="text: attributes.description"></span>
+                          </span>                          
+                        </div>
                     </td>
 
                     <!--ko foreach: $root.filterColumns -->
