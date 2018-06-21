@@ -57,7 +57,7 @@
                   <g:message code="system.executionMode.status.active"/>
                   <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
-                <p class="col-sm-12 help-block ">
+                <p class="help-block ">
                   <g:message code="system.executionMode.description.active"/>
                 </p>
               </div>
@@ -68,7 +68,7 @@
                   <g:message code="system.executionMode.status.passive"/>
                   <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
-                <p class="col-sm-12 help-block ">
+                <p class="help-block ">
                   <g:message code="system.executionMode.description.passive"/>
                 </p>
               </div>
@@ -84,7 +84,7 @@
                   <div class="alert alert-info">
                     <span><g:message code="action.executionMode.set.active.help"/></span>
                   </div>
-                </div>                
+                </div>
               </g:ifExecutionMode>
             </div>
           </div>
