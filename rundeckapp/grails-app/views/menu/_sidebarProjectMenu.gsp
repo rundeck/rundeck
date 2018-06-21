@@ -153,5 +153,5 @@
         <span class="sidebar-mini"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>
       </g:link>
     </li>
-  <ul>
+  </ul>
 </div>
