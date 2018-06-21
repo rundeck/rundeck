@@ -16,6 +16,8 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 /**
  * Created by greg on 2/19/15.
  */
@@ -28,5 +30,12 @@ class Project {
     static constraints={
         name(matches: '^[a-zA-Z0-9\\.,@\\(\\)_\\\\/-]+$',unique: true)
         description(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
+    }
+
+    static mapping = {
+        cache: true
+        DomainIndexHelper.generate(delegate) {
+            index '_IDX_PROJECT_NAME', ['name']
+        }
     }
 }

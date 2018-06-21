@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -198,6 +199,10 @@ class ScheduledExecution extends ExecutionContext {
         retry(type: 'text')
         retryDelay(type: 'text')
         notifyAvgDurationThreshold(type: 'text')
+
+        DomainIndexHelper.generate(delegate) {
+            index '_IDX_SCHEDULED_EXECUTION_PROJECT', ['project']
+        }
     }
 
     static namedQueries = {

@@ -124,6 +124,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def SessionBinderJobListener sessionBinderListener
     ApplicationContext applicationContext
 
+    def grailsApplication
     def MessageSource messageSource
     def pluginService
     def executionUtilService
@@ -183,10 +184,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }.sort { a, b -> a.name <=> b.name }
     }
 
+    boolean getPaginationEnabled() {
+        grailsApplication.config.rundeck.gui.paginatejobs.enabled in ["true",true]
+    }
+
+    def getConfiguredMaxPerPage(int defaultMax) {
+        if(paginationEnabled) {
+            return grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.isEmpty() ? defaultMax : grailsApplication.config.rundeck.gui.paginatejobs.max.per.page.toInteger()
+        }
+        return defaultMax
+    }
+
     def Map finishquery ( query,params,model){
 
         if(!params.max){
-            params.max=20
+            params.max=getConfiguredMaxPerPage(10)
         }
         if(!params.offset){
             params.offset=0
@@ -213,7 +225,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
-        def tmod=[max: query?.max?query.max:20,
+        def tmod=[max: query?.max?query.max:getConfiguredMaxPerPage(10),
             offset:query?.offset?query.offset:0,
             paginateParams:paginateParams,
             displayParams:displayParams]
@@ -226,6 +238,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
         def xfilters = ScheduledExecutionQuery.X_FILTERS
+
+        if(paginationEnabled) {
+            if (!query.max) {
+                query.max = getConfiguredMaxPerPage(10)
+            }
+            if (!query.offset) {
+                query.offset = 0
+            }
+        }
 
         def idlist=[]
         if(query.idlist){

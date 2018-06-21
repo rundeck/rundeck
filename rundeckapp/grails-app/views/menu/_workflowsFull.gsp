@@ -103,7 +103,7 @@
                       storeActionSubmit:'storeJobfilter']}"/>
               <div class="filter">
                 <g:hiddenField name="max" value="-1"/>
-                <g:hiddenField name="offset" value="${offset}"/>
+                <g:hiddenField name="offset" value="0"/>
                 <g:if test="${params.idlist}">
                   <div class="form-group">
                     <label for="${enc(attr:rkey)}idlist"><g:message code="jobquery.title.idlist"/></label>:
