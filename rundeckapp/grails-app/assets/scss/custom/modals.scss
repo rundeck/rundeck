@@ -20,3 +20,22 @@ body.modal-open{
   //   margin-left: auto;
   // }
 }
+
+// TODO: This is really really hacky. The modal's content gets loaded from a template that's used in not-modals.
+#execDiv{
+  // this is a modal for running jobs from the jobs page
+  #execDivContent{
+    padding: 0 15px;
+    margin-top: -30px;
+    .panel-footer{
+      margin: 0 -15px;
+      .form-group{
+        margin-right:20px!important;
+        margin-left: 0!important;
+        #execFormRunButton{
+          margin-bottom:0!important;
+        }
+      }
+    }
+  }
+}

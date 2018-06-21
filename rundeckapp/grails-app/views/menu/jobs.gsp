@@ -925,7 +925,7 @@
                           sortEnabled       : true,
                           rkey              : rkey,
                           clusterModeEnabled: clusterModeEnabled
-                      ]}"/>             
+                      ]}"/>
               <div id="error" class="alert alert-danger" style="display:none;"></div>
           </div>
         </div>
