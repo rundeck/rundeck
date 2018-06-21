@@ -177,7 +177,7 @@ tasks.withType(Test) {
 assets {
     minifyJs = false
     minifyCss = false
-    excludes = ["**/*.less",'gulpfile.js','**/*~','*.json']
+    excludes = ['gulpfile.js','**/*~','*.json']
 }
 
 
