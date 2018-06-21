@@ -1431,11 +1431,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
         if (input.upload) {
-            if (!(request instanceof MultipartHttpServletRequest)) {
+            if(request instanceof MultipartHttpServletRequest){
+                def file = request.getFile('uploadFile')
+                input.fileText = new String(file.bytes)
+            }
+            else {
                 response.status = HttpServletResponse.SC_BAD_REQUEST
                 return renderErrorView("Expected multipart file upload request")
             }
-            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
         }
         input.validate()
         if(!input.id && !input.name) {
@@ -1685,11 +1688,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         if (input.upload) {
-            if (!(request instanceof MultipartHttpServletRequest)) {
+            if(request instanceof MultipartHttpServletRequest){
+                def file = request.getFile('uploadFile')
+                input.fileText = new String(file.bytes)
+            }
+            else {
                 response.status = HttpServletResponse.SC_BAD_REQUEST
                 return renderErrorView("Expected multipart file upload request")
             }
-            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
+
         }
         input.validate()
         if (!input.id && !input.name) {
