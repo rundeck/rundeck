@@ -202,10 +202,10 @@
                                   <div class="modal-footer">
                                     <g:form controller="execution" action="delete" method="post" useToken="true">
                                       <g:hiddenField name="id" value="${execution.id}"/>
-                                      <button type="submit" class="btn btn-default btn-sm " data-dismiss="modal">
+                                      <button type="submit" class="btn btn-default btn-xs " data-dismiss="modal">
                                         <g:message code="cancel" />
                                       </button>
-                                      <input type="submit" value="${g.message(code:'button.action.Delete')}" class="btn btn-danger btn-sm"/>
+                                      <input type="submit" value="${g.message(code:'button.action.Delete')}" class="btn btn-danger btn-xs"/>
                                     </g:form>
                                   </div>
                                 </div>
@@ -230,7 +230,7 @@
                               <div data-bind="if: canKillExec()">
                                   <span data-bind="visible: !completed() ">
                                       <!-- ko if: !killRequested() || killStatusFailed() -->
-                                          <span class="btn btn-danger btn-sm"
+                                          <span class="btn btn-danger btn-xs"
                                                 data-bind="click: killExecAction">
                                               <g:message code="button.action.kill.job" />
                                               <i class="glyphicon glyphicon-remove"></i>
@@ -243,7 +243,7 @@
                                       <span class="loading" data-bind="text: killStatusText"></span>
                                       <!-- /ko -->
                                       <!-- ko if: killedbutNotSaved() -->
-                                      <span class="btn btn-danger btn-sm"
+                                      <span class="btn btn-danger btn-xs"
                                             data-bind="click: markExecAction">
                                           <g:message code="button.action.incomplete.job" default="Mark as Incomplete"/>
                                           <i class="glyphicon glyphicon-remove"></i>
@@ -284,14 +284,14 @@
                                       >
 
                                           <b class="glyphicon glyphicon-play"></b>
-                                          <g:message code="execution.action.runAgain"/>&hellip;
+                                          <g:message code="execution.action.runAgain"/>
                                       </g:link>
                                           %{--run again and retry failed --}%
                                       <div class="btn-group execRetry"
                                            style="${wdgt.styleVisible(if: null != execution.dateCompleted && null!=execution.failedNodeList )}"
                                            data-bind="visible: failed()"
                                       >
-                                          <button class="btn btn-default btn-sm dropdown-toggle force-last-child" data-target="#"
+                                          <button class="btn btn-default btn-xs dropdown-toggle force-last-child" data-target="#"
                                                   data-toggle="dropdown">
                                               <g:message code="execution.action.runAgain" />
                                               <i class="caret"></i>
@@ -330,7 +330,7 @@
 
                               <g:if test="${deleteExecAuth}">
                                   <div class="spacing" data-bind="visible: completed()">
-                                      <a href="#execdelete" class="btn-simple btn-sm btn btn-danger "
+                                      <a href="#execdelete" class="btn-simple btn-xs btn btn-danger "
                                          data-toggle="modal">
                                           <b class="glyphicon glyphicon-remove-circle"></b>
                                           <g:message code="button.action.delete.this.execution" />
@@ -359,7 +359,7 @@
                                       <div class="btn-group execRetry"
                                            style="${wdgt.styleVisible(if: null != execution.dateCompleted && null != execution.failedNodeList)};"
                                            data-bind="visible: failed()">
-                                          <button class="btn btn-default btn-sm dropdown-toggle"
+                                          <button class="btn btn-default btn-xs dropdown-toggle"
                                                   data-target="#"
                                                   data-toggle="dropdown">
                                               <g:message code="execution.action.runAgain" />
@@ -673,7 +673,7 @@
         updatepagetitle:${enc(js:null == execution?.dateCompleted)},
         killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
       <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-          killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+          killjobhtml: '<span class="btn btn-danger btn-xs textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
       </g:if>
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
