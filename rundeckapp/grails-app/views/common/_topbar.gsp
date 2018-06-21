@@ -85,7 +85,7 @@
                 <li class="dropdown" id="projectSelect">
                     <g:render template="/framework/projectSelect"
                               model="${[
-                                      projects    : session.frameworkProjects,
+                                      projects    : new ArrayList(session.frameworkProjects),
                                       labels      : session.frameworkLabels,
                                       project     : params.project ?: request.project,
                                       selectParams: selectParams
