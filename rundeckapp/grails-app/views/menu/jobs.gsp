@@ -23,6 +23,8 @@
     <meta name="tabpage" content="jobs"/>
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
+    <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
+    <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
@@ -870,6 +872,8 @@
         #histcontent table{
             width:100%;
         }
+        .gsp-pager .step { padding: 0 2px; }
+        .gsp-pager .currentStep { padding: 0 2px; }
     </style>
 </head>
 <body>
@@ -909,6 +913,7 @@
         </div>
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
+            <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
             <g:render template="workflowsFull"
                       model="${[
                           jobExpandLevel    : jobExpandLevel,
@@ -928,7 +933,18 @@
                       ]}"/>
               <div id="error" class="alert alert-danger" style="display:none;"></div>
           </div>
+          <g:if test="${paginateJobs && !wasfiltered}">
+          <div>
+            Showing ${offset+max > total ? total : offset+max} of ${total}
+          </div>
+           <div class="gsp-pager">
+            <g:paginate next="Next" prev="Previous" max="${paginateJobsPerPage}"
+            controller="menu" maxsteps="10"
+            action="jobs" total="${total}" params="${[max:params.max,offset:params.offset,project:params.project]}" />
+            </div>
+            </g:if>
         </div>
+
       </div>
     </div>
   </div>

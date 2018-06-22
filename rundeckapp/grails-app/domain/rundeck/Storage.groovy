@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.storage.api.PathUtil
 
@@ -58,10 +59,16 @@ class Storage {
         setupSha()
     }
     static mapping= {
+        cache: true
         data(type: 'binary')
         dir(type: 'string')
         jsonData(type: 'text')
         name(type: 'string')
+
+        DomainIndexHelper.generate(delegate) {
+            index '_IDX_STORAGE_NAMESPACE', ['namespace']
+            index '_IDX_STORAGE_DIR', ['dir']
+        }
     }
     //ignore fake property 'storageMeta' and 'path' and do not store it
     static transients = ['storageMeta','path']

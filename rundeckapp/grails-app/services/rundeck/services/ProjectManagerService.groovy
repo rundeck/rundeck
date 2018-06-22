@@ -99,7 +99,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     Collection<IRundeckProject> listFrameworkProjects() {
-        return Project.findAll().collect {
+        return Project.list().collect {
             getFrameworkProject(it.name)
         }
     }
@@ -127,7 +127,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     boolean existsFrameworkProject(final String project) {
         Project.withSession{
-            Project.findByName(project) ? true : false
+            Project.countByName(project) > 0
         }
     }
 
