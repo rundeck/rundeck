@@ -95,6 +95,7 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/404.gsp',        access: ['permitAll']],
         [pattern: '/static/**',      access: ['permitAll']],
         [pattern: '/assets/**',      access: ['permitAll']],
+        [pattern: '/favicon.ico',    access: ['permitAll']],
         [pattern: '/user/login',     access: ['permitAll']],
         [pattern: '/user/error',     access: ['permitAll']],
         [pattern: '/user/logout',    access: ['permitAll']],
@@ -116,6 +117,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/plugin/**',      filters: 'JOINED_FILTERS'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
+        [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
 

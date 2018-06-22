@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 
 class UrlMappings {
     static mappings = {
+        "/favicon.ico"(redirect: [uri: "/static/images/favicon.ico"])
         "/$controller/$action?/$id?" {
             constraints {
                 // apply constraints here

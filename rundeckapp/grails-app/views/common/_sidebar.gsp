@@ -53,6 +53,7 @@
         </g:ifPageProperty>
     </g:ifPageProperty>
 </g:if>
+<g:if test="${session?.user && request.subject }">
 <g:if test="${session.frameworkProjects}">
     <li id="projectSelect">
       <a href="#" data-toggle="collapse" href="javascript:void(0)">
@@ -159,6 +160,7 @@
           <g:render template="/menu/sidebarProjectMenu"/>
         </li>
     </g:if>
+</g:if>
 </g:if>
   <li class="snapshot-version">
     <span class="rundeck-version-identity"
