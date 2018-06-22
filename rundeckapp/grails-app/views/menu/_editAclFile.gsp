@@ -65,7 +65,7 @@
                     <g:if test="${input?.errors?.hasFieldErrors(createField)}">
 
                         <div class="help-block">
-                            pee<g:fieldError field="${createField}" bean="${input}"/>
+                            <g:fieldError field="${createField}" bean="${input}"/>
                         </div>
                     </g:if>
                 </div>
@@ -95,7 +95,7 @@
             </div>
         </g:if>
         <div class="form-group ${input?.errors?.hasFieldErrors('fileText') ? 'has-error' : ''}">
-            <div class="col-sm-12">
+            <div class="col-sm-12" id="acl_text_editor_content">
                 <textarea
                         name="fileText"
                         class="form-control code apply_ace"
