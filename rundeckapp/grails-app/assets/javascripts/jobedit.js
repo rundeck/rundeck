@@ -564,6 +564,7 @@ function _hideWFItemControls(item) {
     jQuery('#workflowContent').find('span.wfitemcontrols').hide();
     jQuery('#wfundoredo,#wfnewbutton').hide();
     _iseditting=item;
+    _disableWfDragdrop();
 }
 function _updateEmptyMessage() {
     var x = jQuery('#workflowContent').find('ol li');
@@ -721,26 +722,33 @@ function _updateWFUndoRedo() {
 
 ///Drag drop
 var wfDragger;
+var wfDragDropSelect = "#workflowContent ol>li";
+
+function _disableWfDragdrop() {
+    jQuery(wfDragDropSelect).attr('draggable', false);
+    jQuery(wfDragDropSelect).off();
+}
 function _enableWFDragdrop() {
     "use strict";
-    var select = "#workflowContent ol>li";
 
     wfDragger = _enableDragdrop(
-        select,
+        wfDragDropSelect,
         null,
         function (elem) {
-            return jQuery.extend({}, jQuery(elem).data('wfitemnum'));
+            return jQuery.extend({}, jQuery(elem).data());
         },
         function (datafrom, datato) {
-            if (datafrom < datato) {
+            if (datafrom.wfitemnum < datato.wfitemnum) {
                 return 'hoverActiveDown';
-            } else if (datafrom > datato) {
+            } else if (datafrom.wfitemnum > datato.wfitemnum) {
                 return 'hoverActiveUp';
             }
             return null;
         },
         ['hoverActiveUp', 'hoverActiveDown'],
-        _doMoveItem
+        function (from, to) {
+            _doMoveItem(from.wfitemnum, to.wfitemnum);
+        }
     );
 }
 
@@ -869,14 +877,20 @@ function _showOptControls() {
 }
 
 var optsDragger;
+
+var optsDragDropSelect = "#optionContent ul>li";
+
+function _disableOptDragdrop() {
+    jQuery(optsDragDropSelect).attr('draggable', false).off();
+    jQuery("#optionDropFinal").attr('draggable', false).off();
+}
 function _enableOptDragDrop(){
     "use strict";
-    var select = "#optionContent ul>li";
     optsDragger = _enableDragdrop(
-        select,
+        optsDragDropSelect,
         'optionDropFinal',
         function (elem) {
-            return jQuery(elem).data();
+            return jQuery.extend({}, jQuery(elem).data());
         },
         function (datafrom, datato) {
             if (datato.isFinal) {
@@ -905,6 +919,7 @@ function _hideOptControls() {
     $$('#optionsContent .opteditcontrols').each(Element.hide);
     $('optnewbutton').hide();
     clearHtml('optsload');
+    _disableOptDragdrop();
 }
 function _updateOptsUndoRedo() {
     var params = {};
