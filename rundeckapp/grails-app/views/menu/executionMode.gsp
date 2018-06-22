@@ -51,8 +51,8 @@
             <g:hiddenField name="project" value="${params.project}"/>
             <div>
               <div class="radio">
-                <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
-                <label>
+                <g:radio name="mode" value="active" id="activemode" checked="${g.executionMode(active: true)}"/>
+                <label for="activemode">
                   <g:icon name="play" />
                   <g:message code="system.executionMode.status.active"/>
                   <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
@@ -62,8 +62,8 @@
                 </p>
               </div>
               <div class="radio">
-                <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
-                <label>
+                <g:radio name="mode" value="passive" id="passivemode" checked="${g.executionMode(active: false)}"/>
+                <label for="passivemode">
                   <g:icon name="pause" />
                   <g:message code="system.executionMode.status.passive"/>
                   <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
