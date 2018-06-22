@@ -95,17 +95,12 @@ grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/404.gsp',        access: ['permitAll']],
         [pattern: '/static/**',      access: ['permitAll']],
         [pattern: '/assets/**',      access: ['permitAll']],
-        [pattern: '/**/js/**',       access: ['permitAll']],
-        [pattern: '/**/css/**',      access: ['permitAll']],
-        [pattern: '/**/images/**',   access: ['permitAll']],
-        [pattern: '/**/favicon.ico', access: ['permitAll']],
         [pattern: '/user/login',     access: ['permitAll']],
         [pattern: '/user/error',     access: ['permitAll']],
         [pattern: '/user/logout',    access: ['permitAll']],
         [pattern: '/user/loggedout', access: ['permitAll']],
         [pattern: '/feed/**',        access: ['permitAll']],
         [pattern: '/api/**',         access: ['permitAll']],
-        [pattern: '/test/**',        access: ['permitAll']],
         [pattern: '/**',             access: ['IS_AUTHENTICATED_REMEMBERED']]
 ]
 
@@ -117,15 +112,10 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/static/**',      filters: 'none'],
         [pattern: '/assets/**',      filters: 'none'],
         [pattern: '/feed/**',        filters: 'none'],
-        [pattern: '/test/**',        filters: 'none'],
         [pattern: '/api/**',         filters: 'JOINED_FILTERS'],
         [pattern: '/plugin/**',      filters: 'JOINED_FILTERS'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
-        [pattern: '/**/js/**',       filters: 'none'],
-        [pattern: '/**/css/**',      filters: 'none'],
-        [pattern: '/**/images/**',   filters: 'none'],
-        [pattern: '/**/favicon.ico', filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
 
