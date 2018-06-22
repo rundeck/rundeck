@@ -5,17 +5,12 @@ import com.dtolabs.rundeck.core.authentication.Username
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
-import org.springframework.security.authentication.jaas.JaasAuthenticationToken
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
-import java.security.AccessController
-
 
 class SetUserInterceptor {
     @Autowired
