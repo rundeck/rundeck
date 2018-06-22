@@ -25,7 +25,7 @@ class ApiAccessInterceptor {
      * Disallow api access if a request comes for non-api url after login
      */
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
 
         if(allowed_pre_api_reqs[controllerName] && (actionName in allowed_pre_api_reqs[controllerName])){
             return true

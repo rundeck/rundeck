@@ -26,10 +26,11 @@ class SetUserInterceptor {
         //let them through, which is not desirable, so instead we do a manual match exclusion(see line 33)
 
     }
-    static List<String> SERVLET_PATH_ALLOWED = ['/error', '/favicon.ico']
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
-        if (request.pathInfo == "/error" || request.servletPath in SERVLET_PATH_ALLOWED) {
+        if (InterceptorHelper.matchesStaticAssets(controllerName, request)) {
+            return true
+        }
+        if (request.pathInfo == "/error") {
             response.status = 200
             return true
         }
