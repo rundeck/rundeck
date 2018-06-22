@@ -1039,7 +1039,7 @@ class ExecutionController extends ControllerBase{
             }
         }
         if (filterparms) {
-            jsonoutput.filter(filterparms)
+            jsonoutput.filter=filterparms
         }
 
 
