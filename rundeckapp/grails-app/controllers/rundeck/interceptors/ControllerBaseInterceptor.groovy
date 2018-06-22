@@ -100,7 +100,7 @@ class ControllerBaseInterceptor {
 
     boolean after() {
         if(!currentRequestAttributes().isRequestActive()) return true
-        if(InterceptorHelper.matchesStaticAssets(controllerName) || !model) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName, request) || !model) return true
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
         model.uipluginsorder = sortUiPlugins(model.uiplugins)
         model.uipluginsPath = controllerName + "/" + actionName

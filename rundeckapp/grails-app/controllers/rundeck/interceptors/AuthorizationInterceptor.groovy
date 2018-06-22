@@ -2,8 +2,6 @@ package rundeck.interceptors
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
-import groovy.json.JsonBuilder
-
 
 class AuthorizationInterceptor {
 
@@ -14,7 +12,7 @@ class AuthorizationInterceptor {
     }
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
         if (request.invalidApiAuthentication) {
             response.setStatus(403)
             def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
