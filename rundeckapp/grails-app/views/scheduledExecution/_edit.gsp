@@ -206,13 +206,21 @@ function getCurSEID(){
     .draggableitem{
         padding:0;
     }
-    .draggableitem.hoverActive{
-        border-top: 2px solid blue;
-    }
-    .dragdropfinal.hoverActive{
-        border-top: 2px solid blue;
-        padding:8px;
 
+    .droppableitem.hoverActiveAll {
+        border: 3px solid #0000ff88;
+    }
+
+    .droppableitem.hoverActiveUp {
+        border-top: 3px solid #0000ff88;
+    }
+
+    .droppableitem.hoverActiveDown {
+        border-bottom: 3px solid #0000ff88;
+    }
+    .dragdropfinal{
+        height: 25px;
+        background: #ddd;
     }
 
 
