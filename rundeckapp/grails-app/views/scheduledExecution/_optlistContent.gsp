@@ -21,7 +21,7 @@
     $Id$
  --%>
 <g:each in="${options}" var="optionsel" status="i">
-    <li id="optli_${i}" class="optEntry draggableitem ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}"
+    <li id="optli_${i}" class="optEntry draggableitem droppableitem ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}"
         data-opt-index="${i}" data-opt-name="${optionsel?.name}">
         <g:render template="/scheduledExecution/optlistitemContent" model="${[option:optionsel,edit:edit,optIndex:i,optCount:options.size()]}"/>
     </li>
