@@ -79,14 +79,57 @@
         .errmsg {
             color: gray;
         }
+        .executionshow.affix:before,
+        .executionshow.affix:after {
+            content: " ";
+            display: table;
+        }
+        .executionshow.affix:after {
+            clear: both;
+        }
+        .executionshow .runoutput {
+            display: none;
+        }
+        .executionshow.affix .runoutput {
+            display: block;
+        }
+        .executionshow.affix {
+            top: 0;
+            width: 80%;
+            z-index: 1;
+            margin-right: auto;
+            margin-left: auto;
+            padding-left: 15px;
+            padding-right: 15px;
+            padding-top: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eeeeee;
+        }
+        .executionshow.affix.panel-heading-affix {
+            background-color: #eeeeee;
+            width: auto;
+            margin: 0 15px;
+            padding: 8px 10px;
+        }
+        .affixed-shown {
+            display: none;
+        }
+        .affix .affixed-shown {
+            display: block;
+            margin-top: 0px;
+            margin-left: 15px;
+        }
+        .affix .affixed-shown.affixed-shown-inline {
+            display: inline;
+        }
       </style>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
     <div class="container-fluid">
       <div id="execution_main">
-        <div class="executionshow_wrap">
-          <div class="executionshow">
+        <div class="executionshow_wrap" data-affix="wrap">
+          <div class="executionshow" data-affix="top" data-affix-padding-top="21">
             <div class="row">
             %{--job or adhoc title--}%
               <div class="col-sm-7">
@@ -214,15 +257,8 @@
                           </g:if>
                           %{--/delete execution modal--}%
 
-                          %{--scroll up shown only when scroll affix happens--}%
-                          <!--
-                          <div class="affixed-shown pull-right">
-                            <a class="btn btn-default textbtn-on-hover btn-xs" href="#top">
-                              <g:message code="scroll.to.top" />
-                              <i class="glyphicon glyphicon-arrow-up"></i>
-                            </a>
-                          </div>
-                          -->
+
+
                         </div>
                       </div>
                         <div class="card-footer">
@@ -407,6 +443,14 @@
 
                               </div>
                           </g:else>
+                        %{--scroll up shown only when scroll affix happens--}%
+
+                            <div class="affixed-shown">
+                                <a class="btn btn-default textbtn-on-hover btn-xs" href="#top">
+                                    <g:message code="scroll.to.top" />
+                                    <i class="glyphicon glyphicon-arrow-up"></i>
+                                </a>
+                            </div>
                         </div>
                       </div>
                   </div>
