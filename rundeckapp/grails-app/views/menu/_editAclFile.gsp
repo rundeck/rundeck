@@ -65,7 +65,7 @@
                     <g:if test="${input?.errors?.hasFieldErrors(createField)}">
 
                         <div class="help-block">
-                            pee<g:fieldError field="${createField}" bean="${input}"/>
+                            <g:fieldError field="${createField}" bean="${input}"/>
                         </div>
                     </g:if>
                 </div>
