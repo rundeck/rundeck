@@ -52,23 +52,24 @@
 
 <body>
 
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <g:render template="/common/messages"/>
+        </div>
     </div>
-</div>
 
-<div class="row">
-    <g:form action="saveProjectAclFile" method="post"
-            params="${[project: params.project]}"
-            useToken="true"
-            class="form-horizontal">
-        <div class="col-sm-12">
-            <g:render template="editAclFile" model="${[
+    <div class="row">
+        <g:form action="saveProjectAclFile" method="post"
+                params="${[project: params.project]}"
+                useToken="true"
+                class="form-horizontal">
+            <div class="col-xs-12">
+                <g:render template="editAclFile" model="${[
                     backHref                : g.createLink(
-                            controller: 'menu',
-                            action: 'projectAcls',
-                            params: [project: project]
+                        controller: 'menu',
+                        action: 'projectAcls',
+                        params: [project: project]
                     ),
                     title                   : g.message(code: 'create.project.acl.file'),
                     primaryLabel            : g.message(code: 'project.label.prompt'),
@@ -80,9 +81,10 @@
                     createFieldValue        : name,
                     createFieldHelpCode     : 'policy.name.description',
                     input                   : input
-            ]}"/>
-        </div>
-    </g:form>
+                ]}"/>
+            </div>
+        </g:form>
+    </div>
 </div>
 
 <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
