@@ -152,7 +152,7 @@
                   Time
                 </label>
                 <label class="action  join" title="Click to change" id="colNodeShowLabel">
-                  <g:checkBox name="coltime id="colNodeShow value="true checked="true class="opt_display_col_node"/>
+                  <g:checkBox name="coltime" id="colNodeShow" value="true" checked="true" class="opt_display_col_node"/>
                   Node
                 </label>
                 <label class="action" title="Click to change" id="colStepShowLabel">

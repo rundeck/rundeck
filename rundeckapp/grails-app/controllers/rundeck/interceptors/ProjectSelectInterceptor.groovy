@@ -49,7 +49,7 @@ class ProjectSelectInterceptor {
 
 
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName, request)) return true
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
             //only default the project if not an api request
             return true

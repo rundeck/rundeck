@@ -40,15 +40,15 @@
             <div class="list-group-item">
               <h4 class="list-group-item-heading"><g:message code="imported.jobs"/></h4>
               <div class="radio">
-                <input type="radio" name="jobUuidOption" value="preserve" checked/>
-                <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced">
+                <input type="radio" name="jobUuidOption" id="jobuuidpreserve" value="preserve" checked/>
+                <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced" for="jobuuidpreserve">
                     <g:message code="project.archive.import.jobUuidOption.preserve.label"/>
                 </label>
                 <p class="help-block"><g:message code="project.archive.import.jobUuidOption.preserve.description"/></p>
               </div>
               <div class="radio">
-                <input type="radio" name="jobUuidOption" value="remove"/>
-                  <label title="New UUIDs will be generated for every imported Job">
+                <input type="radio" name="jobUuidOption" id="jobuuidremove" value="remove"/>
+                  <label title="New UUIDs will be generated for every imported Job" for="jobuuidremove">
                       <g:message code="project.archive.import.jobUuidOption.remove.label"/>
                   </label>
                   <p class="help-block"><g:message code="project.archive.import.jobUuidOption.remove.description"/></p>
@@ -57,15 +57,15 @@
             <div class="list-group-item">
                 <h4 class="list-group-item-heading"><g:message code="Execution.plural"/></h4>
                 <div class="radio">
-                  <input type="radio" name="importExecutions" value="true" checked/>
-                  <label title="All executions and reports will be imported">
+                  <input type="radio" name="importExecutions" id="exectrue" value="true" checked/>
+                  <label title="All executions and reports will be imported" for="exectrue">
                       <g:message code="archive.import.importExecutions.true.title"/>
                   </label>
                   <span class="help-block"><g:message code="archive.import.importExecutions.true.help"/></span>
                 </div>
                 <div class="radio">
-                  <input type="radio" name="importExecutions" value="false"/>
-                  <label title="No executions or reports will be imported">
+                  <input type="radio" name="importExecutions" id="execfalse" value="false"/>
+                  <label title="No executions or reports will be imported" for="execfalse">
                     <g:message code="archive.import.importExecutions.false.title"/>
                   </label>
                   <span class="help-block"><g:message code="archive.import.importExecutions.false.help"/></span>
@@ -74,8 +74,8 @@
             <div class="list-group-item">
                 <h4 class="list-group-item-heading">Configuration</h4>
                 <div class="radio">
-                  <input type="radio" name="importConfig" value="true" checked/>
-                  <label title="">
+                  <input type="radio" name="importConfig" id="configtrue" value="true" checked/>
+                  <label title="" for="configtrue">
                     <g:message code="archive.import.importConfig.true.title"/>
                   </label>
                   <span class="help-block">
@@ -83,8 +83,8 @@
                   </span>
                 </div>
                 <div class="radio">
-                  <input type="radio" name="importConfig" value="false"/>
-                  <label title="">
+                  <input type="radio" name="importConfig" id="configfalse" value="false"/>
+                  <label title="" for="configfalse">
                     <g:message code="archive.import.importExecutions.false.title"/>
                   </label>
                   <span class="help-block">
@@ -96,8 +96,8 @@
               <div class="list-group-item">
                 <h4 class="list-group-item-heading">ACL Policies</h4>
                   <div class="radio">
-                    <input type="radio" name="importACL" value="true" checked/>
-                    <label title="">
+                    <input type="radio" name="importACL" id="acltrue" value="true" checked/>
+                    <label title="" for="acltrue">
                       <g:message code="archive.import.importACL.true.title"/>
                     </label>
                     <span class="help-block">
@@ -105,8 +105,8 @@
                     </span>
                   </div>
                   <div class="radio">
-                    <input type="radio" name="importACL" value="false"/>
-                    <label title="">
+                    <input type="radio" name="importACL" id="aclfalse" value="false"/>
+                    <label title="" for="aclfalse">
                       <g:message code="archive.import.importExecutions.false.title"/>
                     </label>
                     <span class="help-block">

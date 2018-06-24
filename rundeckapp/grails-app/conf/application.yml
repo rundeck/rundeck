@@ -229,21 +229,5 @@ beans:
         shared: true
 
 
-plugin:
-    platformCore:
-        security:
-            disabled: true
-        navigation:
-            disabled: true
-        ui:
-            disabled: true
-        events:
-            disabled: false
-            gorm:
-                disabled: true
-        show:
-            startup:
-                info: true
-
 server:
     port: 4440

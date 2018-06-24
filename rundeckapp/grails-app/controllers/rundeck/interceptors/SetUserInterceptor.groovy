@@ -5,17 +5,12 @@ import com.dtolabs.rundeck.core.authentication.Username
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
-import org.springframework.security.authentication.jaas.JaasAuthenticationToken
-import org.springframework.security.core.Authentication
-import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
-import java.security.AccessController
-
 
 class SetUserInterceptor {
     @Autowired
@@ -31,10 +26,11 @@ class SetUserInterceptor {
         //let them through, which is not desirable, so instead we do a manual match exclusion(see line 33)
 
     }
-
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
-        if(request.pathInfo == "/error") {
+        if (InterceptorHelper.matchesStaticAssets(controllerName, request)) {
+            return true
+        }
+        if (request.pathInfo == "/error") {
             response.status = 200
             return true
         }
