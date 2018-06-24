@@ -17,6 +17,9 @@
       }
     }
   }
+  .nav{
+    margin-bottom: 40px;
+  }
   .nav > li.snapshot-version{
     position: absolute;
     width: 100%;
@@ -25,6 +28,26 @@
       background: rgba(255, 255, 255, 0.14);
       opacity: 1;
       color: #FFFFFF;
+    }
+  }
+  .snapshot-version{
+    margin-top:20px;
+    padding: 10px 0;
+    // border-top:1px solid #fa2501;
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    max-width: 258px;
+    background: #000;
+    // background: #212120;
+    a{
+      // background: rgba(255, 255, 255, 0.14);
+      opacity: 1;
+      color: #FFFFFF;
+    }
+    .badge{
+      color: #000;
     }
   }
 }
@@ -60,6 +83,9 @@ body.modal-open{
     span.appTitle{
       opacity: 0;
       position: absolute;
+    }
+    .snapshot-version{
+      display: none;
     }
   }
 }

@@ -40,6 +40,7 @@
     <!-- /themify icons -->
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="fontawesome.css"/>
+    <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="app.scss.css"/>
     <asset:stylesheet href="custom.less.css"/>
     <!-- <asset:stylesheet href="app.less.css"/> -->
@@ -54,6 +55,7 @@
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
+    <asset:javascript src="perfect-scrollbar.js"/>
     <asset:javascript src="bootstrap-all.js"/>
     <asset:javascript src="prototype-bundle.js"/>
     <asset:javascript src="application.js"/>
