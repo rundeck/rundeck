@@ -1,4 +1,4 @@
-Release 3.0.0-alpha2
+Release 3.0.0-alpha3
 ===========
 
 Date: 2018-06-14
@@ -100,6 +100,7 @@ See the *Configuration* notes above.
 
 [Milestone 3.0.0](https://github.com/rundeck/rundeck/milestone/76)
 
+* [Feature switch to enable job pagination](https://github.com/rundeck/rundeck/pull/3561)
 * [Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3483)
 * [Set a max file size of 25mb configurable](https://github.com/rundeck/rundeck/pull/3477)
 * [Error 400 importing projects over 128kb](https://github.com/rundeck/rundeck/issues/3476)
