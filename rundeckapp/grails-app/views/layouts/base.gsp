@@ -33,12 +33,14 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
 
     <!-- fontawesome -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous">
+    <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous"> -->
     <!-- /fontawesome -->
     <!-- themify icons -->
     <!-- <asset:stylesheet  href="themify.css" /> -->
     <!-- /themify icons -->
     <asset:stylesheet href="bootstrap.min.css"/>
+    <asset:stylesheet href="fontawesome.css"/>
+    <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="app.scss.css"/>
     <asset:stylesheet href="custom.less.css"/>
     <!-- <asset:stylesheet href="app.less.css"/> -->
@@ -46,12 +48,14 @@
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
+    <asset:javascript src="perfect-scrollbar.js"/>
     <asset:javascript src="bootstrap-all.js"/>
     <asset:javascript src="prototype-bundle.js"/>
     <asset:javascript src="application.js"/>
@@ -156,7 +160,7 @@
                 </g:else>
               </span>
           </a>
-      </div>      
+      </div>
       <div class="sidebar-wrapper">
           <g:render template="/common/sidebar"/>
           <div class="sidebar-modal-backdrop"></div>

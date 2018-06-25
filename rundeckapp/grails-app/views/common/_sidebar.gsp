@@ -162,7 +162,7 @@
     </g:if>
 </g:if>
 </g:if>
-  <li class="snapshot-version">
+  <!-- <li class="snapshot-version">
     <span class="rundeck-version-identity"
           data-version-string="${enc(attr: buildIdent)}"
           data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
@@ -170,7 +170,7 @@
     <g:link controller="menu" action="welcome" class="version link-bare">
         <g:appTitle/> ${buildIdent}
     </g:link>
-  </li>
+  </li> -->
 </ul>
 
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
@@ -212,12 +212,27 @@
         </auth:resourceAllowed>
     </g:ifExecutionMode>
 </g:if>
+
+<div class="snapshot-version">
+  <span class="rundeck-version-identity"
+        data-version-string="${enc(attr: buildIdent)}"
+        data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
+        data-app-id="${enc(attr: appId)}"
+        style="display:block;"></span>
+  <g:link controller="menu" action="welcome" class="version link-bare">
+      <g:appTitle/> ${buildIdent}
+  </g:link>
+</div>
+
 <g:javascript>
   jQuery(function(){
     jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
       jQuery(this).next().slideToggle();
       jQuery(this).toggleClass('subnav-open');
     });
-
   })
+  // Sidebar - Perfect Sidebar Scroller
+  const ps = new PerfectScrollbar('.sidebar-wrapper', {
+    suppressScrollX: true
+  });
 </g:javascript>

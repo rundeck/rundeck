@@ -24,5 +24,8 @@
     "gulp-util": "^3.0.8",
     "node-notifier": "^5.2.1",
     "path": "^0.12.7"
+  },
+  "dependencies": {
+    "perfect-scrollbar": "^1.4.0"
   }
 }
