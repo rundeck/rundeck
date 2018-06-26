@@ -70,6 +70,8 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
+import rundeckapp.init.ExternalStaticResourceConfigurer
+import rundeckapp.init.RundeckInitConfig
 
 import javax.security.auth.login.Configuration
 
@@ -103,6 +105,11 @@ beans={
         return
     }
 
+    if(application.config.rundeck.gui.staticUserResources.enabled in ['true',true]) {
+        externalStaticResourceConfigurer(ExternalStaticResourceConfigurer) {
+            resourceUriLocation = application.config.rundeck.gui.staticUserResources.filesystemLocation.isEmpty() ? "file:${rdeckBase}/user-assets/" : application.config.rundeck.gui.staticUserResources.filesystemLocation
+        }
+    }
 
     def cfgRundeckLogDir = application.config.rundeck?.log?.dir
     if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
