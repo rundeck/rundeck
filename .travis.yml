@@ -49,9 +49,11 @@ jobs:
     - shopt -s globstar
     - source scripts/travis-helpers.sh
 
+    # Build artifacts: jars, wars, and docker images
     - script_block 'build' 'make TAG=$RUNDECK_RELEASE_TAG BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
     - script_block 'build.docker.rdtest' build_rdtest
 
+    # Copy artifacts and upload to s3
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
@@ -59,9 +61,11 @@ jobs:
     - cp -r --parents core/build/libs artifacts/
     - cp -r --parents rundeckapp/**/build/libs artifacts/
     - cp -r --parents rundeck-storage/**/build/libs artifacts/
-
     - script_block 'sync-artifacts' sync_to_s3
-  
+
+    # Trigger rundeck/testdeck build
+    - script_block 'travis-trigger.testdeck' 'trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck testdeck ${RUNDECK_BRANCH} || true'
+
   # Stage: test
   - stage: test
     env: JOB='Test Grails'
@@ -138,7 +142,7 @@ jobs:
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
     - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
     - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
-    - script_block 'travis-trigger.rdpro' 'trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" rundeckpro rundeckpro master'
+    - script_block 'travis-trigger.rdpro' 'trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master'
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release

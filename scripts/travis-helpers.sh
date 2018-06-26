@@ -17,8 +17,12 @@ set -e
 
 source scripts/helpers.sh
 
-export RUNDECK_BUILD_NUMBER="${TRAVIS_BUILD_NUMBER}"
-export RUNDECK_COMMIT="${TRAVIS_COMMIT}"
+## Overrides: Should be commented out in master
+# RUNDECK_BUILD_NUMBER = "3347"
+
+export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-TRAVIS_BUILD_NUMBER}"
+export RUNDECK_COMMIT="${RUNDECK_COMMIT:-TRAVIS_COMMIT}"
+export RUNDECK_BRANCH="${RUNDECK_BRANCH:-TRAVIS_BRANCH}"
 
 S3_BUILD_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/travis-builds/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_COMMIT_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/commits/${RUNDECK_COMMIT}/artifacts"
@@ -114,16 +118,28 @@ fetch_commit_common_artifacts() {
 
 trigger_travis_build() {
     local token="${1:?Must supply token}"
-    local owner="${2:?Must supply owner}"
-    local repo="${3:?Must supply repo}"
-    local branch="${4:?Must spupply branch}"
+    local travis_flav="${2:?Must supply org or com}"
+    local owner="${3:?Must supply owner}"
+    local repo="${4:?Must supply repo}"
+    local branch="${5:?Must spupply branch}"
 
-    local body="{
-        \"request\": {
-            \"branch\":\"${branch}\",
-            \"message\": \"Rundeck OSS triggered build.\"
+    local body=$(cat <<EOF
+    {
+        "request": {
+            "branch": "${branch}",
+            "message": "Rundeck OSS triggered build.",
+            "config": {
+                "merge_mode": "deep_merge",
+                "env": {
+                    "UPSTREAM_PROJECT": "rundeck",
+                    "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
+                    "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}"
+                }
+            }
         }
-    }"
+    }
+EOF
+)
 
     curl -s -X POST \
         -H "Content-Type: application/json" \
@@ -131,7 +147,7 @@ trigger_travis_build() {
         -H "Travis-API-Version: 3" \
         -H "Authorization: token ${token}" \
         -d "$body" \
-        https://api.travis-ci.com/repo/${owner}%2F${repo}/requests
+        https://api.travis-ci.${travis_flav}/repo/${owner}%2F${repo}/requests
 }
 
 build_rdtest() {
@@ -147,12 +163,22 @@ build_rdtest() {
 
     # Tag and push to be used as cache source in later test builds
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
-    docker push rundeckapp/testdeck:rdtest-latest
+
+    # Pusheen
+    if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
+        docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
+        docker push rundeckapp/testdeck:rdtest-latest
+    fi
+
+    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
 }
 
 pull_rdtest() {
-    docker pull rundeckapp/testdeck:rdtest-latest
+    docker pull rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
 }
 
 export_tag_info
