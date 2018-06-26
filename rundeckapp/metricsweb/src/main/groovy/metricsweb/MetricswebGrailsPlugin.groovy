@@ -19,6 +19,8 @@ import com.codahale.metrics.JmxReporter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
 import grails.core.GrailsClass
+import org.grails.plugins.metricsweb.DisablingAdminServlet
+import org.springframework.boot.web.servlet.ServletRegistrationBean
 
 class MetricswebGrailsPlugin {
     // the plugin version
@@ -125,6 +127,9 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
     }
 
     def doWithSpring = {
+        disablingAdminServlet(ServletRegistrationBean, new DisablingAdminServlet(), '/metrics/*') {
+            loadOnStartup = 2
+        }
         metricRegistry(MetricRegistry)
         healthCheckRegistry(HealthCheckRegistry)
     }
@@ -204,7 +209,6 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
                 applicationContext.getBean(MetricRegistry))
         applicationContext.servletContext.setAttribute('com.codahale.metrics.servlets.HealthCheckServlet.registry',
                 applicationContext.getBean(HealthCheckRegistry))
-
         if (!(grailsApplication.config.rundeck.metrics.enabled in [true, 'true'])) {
             return
         }
