@@ -72,7 +72,7 @@ public final class VersionConstants {
             e.printStackTrace();
         }
         DATE_STRING = versionProperties.getProperty("version.date", "2016-06-25T07:29:23Z");
-        SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
         Date parse = null;
         try {
             parse = iso8601.parse(DATE_STRING);

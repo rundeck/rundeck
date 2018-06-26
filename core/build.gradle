@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+plugins {
+    id "org.dvaske.gradle.git-build-info"
+    id 'de.fuerstenau.buildconfig' version '1.1.8'
+}
 import java.text.SimpleDateFormat
 
 /**
  * The Rundeck Core API build file
  **/
 evaluationDependsOn(':rundeck-storage')
+apply plugin: 'idea'
 description = 'The Rundeck Core API project'
 
 archivesBaseName = 'rundeck-core'
@@ -79,6 +84,38 @@ dependencies {
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
     testCompile "com.squareup.retrofit2:retrofit-mock:2.2.0"
 }
+buildConfig {
+    clsName = 'BuildConfig'
+    packageName = project.group + '.meta'
+    charset = 'UTF-8'
+    appName = project.name
+    version = project.version
+    buildConfigField 'String', 'GIT_COMMIT', {
+        project.gitCommit
+    }
+    buildConfigField 'String', 'GIT_BRANCH', {
+        project.gitBranch
+    }
+    buildConfigField 'String', 'GIT_DESCRIPTION', {
+        project.gitDescribeInfo
+    }
+    buildConfigField 'String', 'BUILD_DATE', {
+        new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
+    }
+    buildConfigField 'String', 'BUILD_NUM', buildNum
+    buildConfigField 'String', 'BUILD_IDENT', (version + '-' + buildNum)
+
+}
+
+task gitInfo {
+    doLast {
+        println "HEAD:     $project.gitHead"
+        println "Describe: $project.gitDescribeInfo"
+        println "Commit:   $project.gitCommit"
+        println "Branch:   $project.gitBranch"
+        println "Remote:   $project.gitRemote"
+    }
+}
 
 jar.doFirst {
     manifest {
@@ -90,7 +127,7 @@ jar.doFirst {
 
 def expandTemplate = {
     ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
-    def datestring=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(new Date())
+    def datestring = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").format(new Date())
     println("Building: $version-$buildNum ($datestring)")
     copy{
         expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum,date:datestring)
