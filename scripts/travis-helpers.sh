@@ -17,10 +17,12 @@ set -e
 
 source scripts/helpers.sh
 
-# export RUNDECK_BUILD_NUMBER="${TRAVIS_BUILD_NUMBER}"
-export RUNDECK_BUILD_NUMBER="3467"
-export RUNDECK_COMMIT="${TRAVIS_COMMIT}"
-export RUNDECK_BRANCH="${TRAVIS_BRANCH}"
+## Overrides: Should be commented out in master
+# RUNDECK_BUILD_NUMBER = "3347"
+
+export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-TRAVIS_BUILD_NUMBER}"
+export RUNDECK_COMMIT="${RUNDECK_COMMIT:-TRAVIS_COMMIT}"
+export RUNDECK_BRANCH="${RUNDECK_BRANCH:-TRAVIS_BRANCH}"
 
 S3_BUILD_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/travis-builds/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_COMMIT_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/commits/${RUNDECK_COMMIT}/artifacts"
