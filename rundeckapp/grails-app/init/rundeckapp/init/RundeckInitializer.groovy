@@ -360,6 +360,7 @@ class RundeckInitializer {
         toolsdir = createDir(null,basedir,"tools")
         toolslibdir = createDir(null,toolsdir,"lib")
         createDir(null,basedir,"var")
+        createDir(null,basedir,"user-assets")
     }
 
     File createDir(String specifiedPath, File base, String child) {
