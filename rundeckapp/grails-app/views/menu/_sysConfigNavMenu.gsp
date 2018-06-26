@@ -58,5 +58,10 @@
       <g:message code="gui.menu.ListPlugins"/>
     </g:link>
   </li>
+  <li>
+    <g:link controller="passwordUtility" action="index">
+      <g:message code="gui.menu.PasswordUtility"/>
+    </g:link>
+  </li>
   <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
 </ul>
