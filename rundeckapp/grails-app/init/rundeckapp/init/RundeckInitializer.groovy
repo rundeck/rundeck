@@ -53,6 +53,8 @@ class RundeckInitializer {
     public static final String SPRING_BOOT_ENABLE_SSL_PROP = "server.ssl.enabled"
     private static final String LINESEP = System.getProperty("line.separator");
 
+    private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
+
     private File basedir;
     private File serverdir;
     String coreJarName
@@ -190,7 +192,7 @@ class RundeckInitializer {
             final String jarpath = "WEB-INF/lib";
             for (final String jarName : jars) {
                 ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
-                if (!new File(toolslibdir, jarName).exists()) {
+                if (!new File(toolslibdir, jarName).exists() && !SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) {
                     ERR(
                             "Failed to extract dependent jar for tools into " + toolslibdir.getAbsolutePath() +
                             ": " +
