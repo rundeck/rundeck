@@ -18,7 +18,7 @@
 <g:set var="selectParams" value="${[:]}"/>
 <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
 <g:set var="appId" value="${g.appTitle()}"/>
-<g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
+<g:if test="${pageScope._metaTabPage && !(pageScope._metaTabPage in ['configure','projectconfigure','home'])}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
 
