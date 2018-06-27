@@ -77,13 +77,13 @@ class SetUserInterceptor {
                 session.subject=null
                 session.user=null
                 if(authtoken){
-                    request.invalidAuthToken = "Token:" + (authtoken.size()>5?authtoken.substring(0, 5):'') + "****"
+                    request.invalidAuthToken = "Token:" + AuthToken.printable(authtoken)
                 }
                 request.authenticatedToken = null
                 request.authenticatedUser = null
                 request.invalidApiAuthentication = true
                 if(authtoken){
-                    log.error("Invalid API token used: ${authtoken}");
+                    log.error("Invalid API token used: ${AuthToken.printable(authtoken)}");
                 }else{
                     log.error("Unauthenticated API request");
                 }
@@ -145,18 +145,18 @@ class SetUserInterceptor {
             if (tokens[authtoken]) {
                 def userLine = tokens[authtoken]
                 def user = userLine.toString().split(",")[0]
-                log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
+                log.debug("loginCheck found user ${user} via tokens file, token: ${AuthToken.printable(authtoken)}");
                 return user
             }
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
             if (tokenobj.tokenIsExpired()) {
-                log.debug("loginCheck token is expired ${tokenobj?.user}, token: ${tokenobj.uuid?:tokenobj.token}");
+                log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");
                 return null
             }
             User user = tokenobj?.user
-            log.debug("loginCheck found user ${user} via DB, token: ${tokenobj.uuid?:tokenobj.token}");
+            log.debug("loginCheck found user ${user.login} via DB, ${tokenobj}");
             return user.login
         }
         null
@@ -180,14 +180,14 @@ class SetUserInterceptor {
                 if(userLine.toString().split(",").length>1){
                     roles = userLine.toString().split(",").drop(1) as List
                 }
-                log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken}");
+                log.debug("loginCheck found roles ${roles} via tokens file, token: ${AuthToken.printable(authtoken)}");
                 return roles
             }
         }
-        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        AuthToken tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
             roles = tokenobj?.authRoles?.split(",") as List
-            log.debug("loginCheck found roles ${roles} via DB, token: ${authtoken}");
+            log.debug("loginCheck found roles ${roles} via DB, ${tokenobj}");
             return roles
         }
         null
