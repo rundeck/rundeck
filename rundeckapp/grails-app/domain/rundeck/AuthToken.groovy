@@ -67,7 +67,7 @@ class AuthToken {
         uuid ? "[ID: $uuid]" : (printable(token))
     }
     /**
-     * @return Printable value for token: the uuid, or a truncated token value
+     * @return Printable truncated token value
      */
     static String printable(String authtoken) {
         (authtoken.size() > 5 ? authtoken.substring(0, 5) : '') + "****"
