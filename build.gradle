@@ -37,6 +37,7 @@ buildscript {
             }
         }
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
@@ -46,6 +47,7 @@ buildscript {
 
 plugins {
     id 'com.gradle.build-scan' version '1.13'
+    id "org.dvaske.gradle.git-build-info" version "0.8"
 }
 
 apply plugin: 'nexus-workflow'
