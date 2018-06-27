@@ -27,7 +27,7 @@ class AuthToken {
     Date dateCreated
     Date lastUpdated
     static belongsTo = [user:User]
-
+    static transients = ['printableToken']
     static constraints = {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
@@ -59,5 +59,22 @@ class AuthToken {
 
     boolean tokenIsExpired() {
         expiration!=null && (expiration < Date.from(Clock.systemUTC().instant()))
+    }
+    /**
+     * @return Printable value for token: the uuid, or a truncated token value
+     */
+    String getPrintableToken() {
+        uuid ? "[ID: $uuid]" : (printable(token))
+    }
+    /**
+     * @return Printable truncated token value
+     */
+    static String printable(String authtoken) {
+        (authtoken.size() > 5 ? authtoken.substring(0, 5) : '') + "****"
+    }
+
+    @Override
+    String toString() {
+        "Auth Token: ${printableToken}"
     }
 }
