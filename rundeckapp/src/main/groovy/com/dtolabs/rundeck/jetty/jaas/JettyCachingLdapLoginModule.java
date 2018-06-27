@@ -414,7 +414,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             return roleList;
         }
 
+        String[] attrIDs = { _roleNameAttribute };
         SearchControls ctls = new SearchControls();
+        ctls.setReturningAttributes(attrIDs);
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
