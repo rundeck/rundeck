@@ -1860,6 +1860,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Date startupDate = new Date(nowDate.getTime() - durationTime)
         int threadActiveCount = Thread.activeCount()
         def build = grailsApplication.metadata['build.ident']
+        def buildGit = grailsApplication.metadata['build.core.git.description']
         def base = servletContext.getAttribute("RDECK_BASE")
         boolean executionModeActive=configurationService.executionModeActive
         String apiVersion = ApiVersions.API_CURRENT_VERSION
@@ -1888,6 +1889,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             startupDate: startupDate,
             threadActiveCount: threadActiveCount,
             build: build,
+            buildGit: buildGit,
             base: base,
             memmax: memmax,
             memfree: memfree,
@@ -1957,6 +1959,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             [rundeck:
             [version: info.appVersion,
                 build: info.build,
+                buildGit: info.buildGit,
                 node: info.nodeName,
                 base: info.base,
                 serverUUID: info.serverUUID,
