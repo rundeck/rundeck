@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 
@@ -374,6 +375,10 @@ class ApiController extends ControllerBase{
                     args: [response.format]
             ])
         }
+        def extMeta = [:]
+        ServiceLoader.load(ApplicationExtension).each {
+            extMeta[it.name] = it.infoMetadata
+        }
         withFormat{
             xml{
                 return apiService.renderSuccessXml(request,response){
@@ -435,6 +440,17 @@ class ApiController extends ControllerBase{
                         metrics(href:metricsJsonUrl,contentType:'application/json')
                         threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
                         healthcheck(href:metricsHealthcheckUrl,contentType:'application/json')
+
+                        if (extMeta) {
+                            extended {
+
+                                def dl = delegate
+                                extMeta.each { k, v ->
+                                    dl."$k"(v)
+                                }
+                            }
+
+                        }
                     }
                 }
 
@@ -503,6 +519,17 @@ class ApiController extends ControllerBase{
                         metrics=[href:metricsJsonUrl,contentType:'application/json']
                         threadDump=[href:metricsThreadDumpUrl,contentType:'text/plain']
                         healthcheck=[href:metricsHealthcheckUrl,contentType:'application/json']
+
+                        if (extMeta) {
+                            extended = {
+
+                                def dl = delegate
+                                extMeta.each { k, v ->
+                                    dl."$k" = v
+                                }
+
+                            }
+                        }
                     }
                 }
             }
