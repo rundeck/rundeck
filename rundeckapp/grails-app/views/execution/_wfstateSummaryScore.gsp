@@ -13,41 +13,33 @@
   See the License for the specific language governing permissions and
   limitations under the License.
   --}%
-<div>
-  <div class="col-xs-12">
-    <div class="card">
 
-      <div class="card-content">
-        <div class="row">
-          <div class="col-xs-12 col-sm-4">
-            <g:message code="complete" />:
-            <strong><span class="text-primary" data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span></strong>
-            <strong><span class="text-primary"data-bind="text: completedNodes().length+'/'+activeNodes().length"></span></strong>
-            <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
-          </div>
-          <div class="col-xs-12 col-sm-2">
-            <g:message code="status.label.failed" />:
-            <span data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-primary': failedNodes().length < 1 } ">
-                <strong><span data-bind="text: failedNodes().length"></span></strong>
-            </span>
-            <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.failed.description']"/>
-          </div>
-          <div class="col-xs-12 col-sm-3">
-            <g:message code="incomplete" />:
-            <span data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-primary': partialNodes().length < 1 } ">
-              <strong><span class="" data-bind="text: partialNodes().length"></span></strong>
-            </span>
-            <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.incomplete.description']"/>
-          </div>
-          <div class="col-xs-12 col-sm-3">
-            <g:message code="not.started" />:
-            <span data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-primary': notstartedNodes().length < 1 } ">
-              <strong><span class="" data-bind="text: notstartedNodes().length"></span></strong>
-            </span>
-            <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.notstarted.description']"/>
-          </div>
-        </div>
-      </div>
+  <div class="row">
+    <div class="col-xs-12 col-sm-4">
+      <g:message code="complete" />:
+      <strong><span class="text-primary" data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span></strong>
+      <strong><span class="text-primary"data-bind="text: completedNodes().length+'/'+activeNodes().length"></span></strong>
+      <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
+    </div>
+    <div class="col-xs-12 col-sm-2">
+      <g:message code="status.label.failed" />:
+      <span data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-primary': failedNodes().length < 1 } ">
+          <strong><span data-bind="text: failedNodes().length"></span></strong>
+      </span>
+      <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.failed.description']"/>
+    </div>
+    <div class="col-xs-12 col-sm-3">
+      <g:message code="incomplete" />:
+      <span data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-primary': partialNodes().length < 1 } ">
+        <strong><span class="" data-bind="text: partialNodes().length"></span></strong>
+      </span>
+      <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.incomplete.description']"/>
+    </div>
+    <div class="col-xs-12 col-sm-3">
+      <g:message code="not.started" />:
+      <span data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-primary': notstartedNodes().length < 1 } ">
+        <strong><span class="" data-bind="text: notstartedNodes().length"></span></strong>
+      </span>
+      <g:render template="/common/helpTooltipIconKO" model="[messageCode: 'workflowState.summary.nodes.notstarted.description']"/>
     </div>
   </div>
-</div>
