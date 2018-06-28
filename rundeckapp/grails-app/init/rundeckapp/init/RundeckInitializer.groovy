@@ -311,11 +311,24 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
+        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed()) {
+            destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
+        }
 
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
+
+        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed()) {
+            List<String> rundeckConfig = destinationFile.readLines()
+            destinationFile.withOutputStream { out ->
+                rundeckConfig.each { line ->
+                    if(line.startsWith("rundeck.log4j.config.file")) out << "#"
+                    out << line + "\n"
+                }
+            }
+        }
     }
 
     void setSystemProperties() {
