@@ -41,7 +41,7 @@ def version=props.currentVersion+tag
 //versions of dependency we want to verify
 def versions=[
         mysql:'5.1.42',
-        jetty:'9.4.9.v20180320',
+        jetty:'9.4.11.v20180605',
         servlet:'api-3.1.0'
 ]
 
