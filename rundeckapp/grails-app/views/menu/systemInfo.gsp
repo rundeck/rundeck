@@ -57,15 +57,15 @@
             <h4 class="card-title">
               <g:message code="gui.menu.SystemInfo" />
               <div class="btn-group pull-right">
-                <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data">
+                <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data" target="_blank">
                   Metrics (json)
                   <i class="glyphicon glyphicon-file"></i>
                 </g:link>
-                <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump">
+                <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump"  target="_blank">
                   Thread Dump
                   <i class="glyphicon glyphicon-file"></i>
                 </g:link>
-                <g:link uri='/metrics/healthcheck' class="btn btn-sm btn-info" title="Healthcheck">
+                <g:link uri='/metrics/healthcheck' class="btn btn-sm btn-info" title="Healthcheck"  target="_blank">
                   <g:message code="healthcheck.json" />
                   <i class="glyphicon glyphicon-file"></i>
                 </g:link>
