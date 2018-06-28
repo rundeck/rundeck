@@ -480,8 +480,8 @@
                       <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
                           <g:message code="execution.show.mode.Log.title"/>
                       </option>
-                      <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
-                          <g:message code="definition"/>
+                      <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
+                          <g:message code="html"/>
                       </option>
                   </select>
                 </div>
@@ -561,8 +561,8 @@
                         <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
                             <g:message code="execution.show.mode.Log.title"/>
                         </option>
-                        <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
-                            <g:message code="definition"/>
+                        <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
+                            <g:message code="html"/>
                         </option>
                     </select>
                 </label>

@@ -1201,10 +1201,10 @@ function getCurSEID(){
             </label>
 
             <label class="radio-inline">
-                <g:radio name="defaultTab" value="definition"
-                         checked="${scheduledExecution.defaultTab=='definition'}"
-                         id="tabDefinition"/>
-                <g:message code="definition"/>
+                <g:radio name="defaultTab" value="html"
+                         checked="${scheduledExecution.defaultTab=='html'}"
+                         id="tabHTML"/>
+                <g:message code="html"/>
             </label>
 
             <span class="help-block">
