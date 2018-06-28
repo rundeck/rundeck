@@ -53,6 +53,8 @@ class RundeckInitializer {
     public static final String SPRING_BOOT_ENABLE_SSL_PROP = "server.ssl.enabled"
     private static final String LINESEP = System.getProperty("line.separator");
 
+    private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
+
     private File basedir;
     private File serverdir;
     String coreJarName
@@ -190,7 +192,7 @@ class RundeckInitializer {
             final String jarpath = "WEB-INF/lib";
             for (final String jarName : jars) {
                 ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
-                if (!new File(toolslibdir, jarName).exists()) {
+                if (!new File(toolslibdir, jarName).exists() && !SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) {
                     ERR(
                             "Failed to extract dependent jar for tools into " + toolslibdir.getAbsolutePath() +
                             ": " +
@@ -309,11 +311,24 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
+        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed()) {
+            destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
+        }
 
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
+
+        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed()) {
+            List<String> rundeckConfig = destinationFile.readLines()
+            destinationFile.withOutputStream { out ->
+                rundeckConfig.each { line ->
+                    if(line.startsWith("rundeck.log4j.config.file")) out << "#"
+                    out << line + "\n"
+                }
+            }
+        }
     }
 
     void setSystemProperties() {
@@ -360,6 +375,7 @@ class RundeckInitializer {
         toolsdir = createDir(null,basedir,"tools")
         toolslibdir = createDir(null,toolsdir,"lib")
         createDir(null,basedir,"var")
+        createDir(null,basedir,"user-assets")
     }
 
     File createDir(String specifiedPath, File base, String child) {

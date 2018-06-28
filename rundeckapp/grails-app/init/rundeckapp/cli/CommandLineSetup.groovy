@@ -24,6 +24,7 @@ import org.apache.commons.cli.Option
 import org.apache.commons.cli.OptionBuilder
 import org.apache.commons.cli.Options
 import org.apache.commons.cli.ParseException
+import org.rundeck.security.passwordutil.PasswordUtilityEncrypter
 import rundeckapp.Application
 import rundeckapp.init.RundeckInitConfig
 
@@ -36,6 +37,9 @@ class CommandLineSetup {
 
     public static final String FLAG_INSTALLONLY = "installonly";
     public static final String FLAG_SKIPINSTALL = "skipinstall";
+    public static final String FLAG_ENCRYPT_PWD = "encryptpwd";
+
+    private static final Map<String,PasswordUtilityEncrypter> encrypters = getEncrypters()
 
     private final Options options = new Options();
 
@@ -97,6 +101,12 @@ class CommandLineSetup {
                                           .withDescription("Perform installation only and do not start the server.")
                                           .create();
 
+        Option encryptpwd = OptionBuilder.withLongOpt(FLAG_ENCRYPT_PWD)
+                                         .withArgName("ENCRYPTION-SERVICE")
+                                         .hasArg()
+                                         .withDescription("Encrypt a password for use in a property file using the specified service. Available services: " + encrypters.values().collect { it.name() }.join(", "))
+                                         .create();
+
         options.addOption(baseDir);
         options.addOption(dataDir);
         options.addOption(serverDir);
@@ -108,6 +118,7 @@ class CommandLineSetup {
         options.addOption(skipInstall);
         options.addOption(installonly);
         options.addOption(projectDir);
+        options.addOption(encryptpwd);
     }
 
     RundeckCliOptions runSetup(String[] args) {
@@ -129,6 +140,10 @@ class CommandLineSetup {
                 ERR("--" + FLAG_INSTALLONLY + " and --" + FLAG_SKIPINSTALL + " are mutually exclusive");
                 printUsage();
                 System.exit(1);
+            }
+            if(cl.hasOption(FLAG_ENCRYPT_PWD)) {
+                encryptPassword(cl);
+                System.exit(0);
             }
 
         } catch (ParseException e) {
@@ -156,7 +171,7 @@ class CommandLineSetup {
 
     }
 
-    //This happens when no RDECK_DIR was specified so we have to make a sane default
+//This happens when no RDECK_DIR was specified so we have to make a sane default
     String getLaunchLocationParentDir() {
         if(Environment.current == Environment.DEVELOPMENT) {
             File baseRundeckDir = new File(System.getProperty("user.dir"),"rundeck-runtime")
@@ -204,4 +219,37 @@ class CommandLineSetup {
         System.err.println("ERROR: " + s);
     }
 
+    static void encryptPassword(CommandLine cl) {
+        String service = cl.getOptionValue(FLAG_ENCRYPT_PWD)
+        PasswordUtilityEncrypter encrypter = encrypters[service.toUpperCase()]
+        if(!encrypter) {
+            System.err.println("No encryption service named: ${service}")
+            System.exit(1)
+        }
+        Map input = [:]
+        String rqMarker = "*"
+        System.out.println("Required values are marked with: ${rqMarker} ")
+        encrypter.formProperties().each { prop ->
+            System.out.println((prop.isRequired() ? rqMarker : "") + prop.title + " (${prop.description}):")
+            String val = System.console().readLine()
+            if(prop.isRequired() && val.isEmpty()) {
+                System.out.println("${prop.title} is required.")
+                System.exit(1)
+            }
+            input[prop.name] = val
+        }
+        System.out.println("\n==ENCRYPTED OUTPUT==")
+        encrypter.encrypt(input).each { k, v ->
+            System.out.println("${k}: ${v}")
+        }
+    }
+
+    static Map<String,PasswordUtilityEncrypter> getEncrypters() {
+        def encrypters= [:]
+        ServiceLoader<PasswordUtilityEncrypter> encrypterServices = ServiceLoader.load(
+                PasswordUtilityEncrypter
+        )
+        encrypterServices.each { encrypters[it.name().toUpperCase()] = it }
+        return encrypters
+    };
 }

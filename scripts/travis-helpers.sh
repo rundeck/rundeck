@@ -4,6 +4,7 @@
 # Exported variables
 # ==================
 # RUNDECK_BUILD_NUMBER = build number from TRAVIS_BUILD_NUMBER
+# RUNDECK_TAG = Git tag used for this build and extracted from TRAVIS_TAG
 # RUNDECK_RELEASE_TAG = (SNAPSHOT|GA|other) extracted from TRAVIS_TAG
 # RUNDECK_RELEASE_VERSION = version number extracted from TRAVIS_TAG
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
@@ -13,17 +14,37 @@
 # BINTRAY_RPM_REPO = selected rpm bintray repo based on release tag
 # BINTRAY_MAVEN_REPO = selected maven(jar,war) bintray repo based on release tag
 
-set -e
+set -eo pipefail
+shopt -s globstar
 
 source scripts/helpers.sh
 
-export RUNDECK_BUILD_NUMBER="${TRAVIS_BUILD_NUMBER}"
-export RUNDECK_COMMIT="${TRAVIS_COMMIT}"
+## Overrides: Should be commented out in master
+# RUNDECK_BUILD_NUMBER="3347"
+# RUNDECK_TAG="v3.0.0-alpha4"
 
-S3_BUILD_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/travis-builds/${RUNDECK_BUILD_NUMBER}/artifacts"
-S3_COMMIT_ARTIFACT_PATH="s3://rundeck-travis-artifacts/oss/${TRAVIS_BRANCH}/commits/${RUNDECK_COMMIT}/artifacts"
+export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
+export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
+export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
+export RUNDECK_TAG="${RUNDECK_TAG:-$TRAVIS_TAG}"
 
+# Location of CI resources such as private keys
 S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
+
+# Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
+# The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
+S3_ARTIFACT_BASE="s3://rundeck-travis-artifacts/oss/rundeck"
+
+S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
+S3_COMMIT_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/commit/${RUNDECK_COMMIT}/artifacts"
+S3_TAG_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/tag/${RUNDECK_TAG}/artifacts"
+
+# Store artifacts in a predictable location in the case of version tags.
+# This will allow us to locate them across repos without passing information explicitly.
+S3_ARTIFACT_PATH="${S3_BUILD_ARTIFACT_PATH}"
+if [[ "${RUNDECK_TAG}" =~ ^v ]] ; then
+    S3_ARTIFACT_PATH="${S3_TAG_ARTIFACT_PATH}"
+fi
 
 mkdir -p artifacts/packaging
 
@@ -36,7 +57,7 @@ export_tag_info() {
         TAG_PARTS=( $TAG_PARTS )
     fi
 
-    PREV_TAG_PARTS=( $(tag_parts `git describe --abbrev=0 --tags $(git describe --abbrev=0)^ `) )
+    local PREV_TAG_PARTS=( $(tag_parts `git describe --abbrev=0 --tags $(git describe --abbrev=0)^ `) )
 
     export RUNDECK_RELEASE_VERSION="${TAG_PARTS[0]}"
     export RUNDECK_RELEASE_TAG="${TAG_PARTS[1]:-SNAPSHOT}"
@@ -57,27 +78,28 @@ export_repo_info() {
 
 # Wraps bash command in code folding and timing "stamps"
 script_block() {
-    NAME="${1}"
+    local NAME="${1}"; shift;
+    local COMMAND="${@}"
 
-    # Remove block name from arg array
-    shift
+    # Return from 
+    local ret
 
     travis_fold start "${NAME}"
         travis_time_start
-            eval "${@}"
+            eval "${COMMAND}"
             ret=$?
-            echo "Command [${@}] returned ${ret}"
+            echo "Command [${COMMAND}] returned ${ret}"
         travis_time_finish
     travis_fold end "${NAME}"
-    return $RET
+    return $ret
 }
 
 sync_from_s3() {
-    aws s3 sync --delete "${S3_BUILD_ARTIFACT_PATH}" artifacts
+    aws s3 sync --delete "${S3_ARTIFACT_PATH}" artifacts
 }
 
 sync_to_s3() {
-    aws s3 sync --delete ./artifacts "$S3_BUILD_ARTIFACT_PATH"
+    aws s3 sync --delete ./artifacts "${S3_ARTIFACT_PATH}"
 }
 
 sync_commit_from_s3() {
@@ -85,7 +107,7 @@ sync_commit_from_s3() {
 }
 
 sync_commit_to_s3() {
-    aws s3 sync --delete ./artifacts "$S3_COMMIT_ARTIFACT_PATH"
+    aws s3 sync --delete ./artifacts "${S3_COMMIT_ARTIFACT_PATH}"
 }
 
 extract_artifacts() {
@@ -114,16 +136,29 @@ fetch_commit_common_artifacts() {
 
 trigger_travis_build() {
     local token="${1:?Must supply token}"
-    local owner="${2:?Must supply owner}"
-    local repo="${3:?Must supply repo}"
-    local branch="${4:?Must spupply branch}"
+    local travis_flav="${2:?Must supply org or com}"
+    local owner="${3:?Must supply owner}"
+    local repo="${4:?Must supply repo}"
+    local branch="${5:?Must spupply branch}"
 
-    local body="{
-        \"request\": {
-            \"branch\":\"${branch}\",
-            \"message\": \"Rundeck OSS triggered build.\"
+    local body=$(cat <<EOF
+    {
+        "request": {
+            "branch": "${branch}",
+            "message": "Rundeck OSS triggered build.",
+            "config": {
+                "merge_mode": "deep_merge",
+                "env": {
+                    "UPSTREAM_PROJECT": "rundeck",
+                    "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
+                    "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}",
+                    "UPSTREAM_TAG": "${RUNDECK_TAG}"
+                }
+            }
         }
-    }"
+    }
+EOF
+)
 
     curl -s -X POST \
         -H "Content-Type: application/json" \
@@ -131,7 +166,7 @@ trigger_travis_build() {
         -H "Travis-API-Version: 3" \
         -H "Authorization: token ${token}" \
         -d "$body" \
-        https://api.travis-ci.com/repo/${owner}%2F${repo}/requests
+        https://api.travis-ci.${travis_flav}/repo/${owner}%2F${repo}/requests
 }
 
 build_rdtest() {
@@ -147,12 +182,22 @@ build_rdtest() {
 
     # Tag and push to be used as cache source in later test builds
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
-    docker push rundeckapp/testdeck:rdtest-latest
+
+    # Pusheen
+    if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
+        docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
+        docker push rundeckapp/testdeck:rdtest-latest
+    fi
+
+    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
 }
 
 pull_rdtest() {
-    docker pull rundeckapp/testdeck:rdtest-latest
+    docker pull rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
 }
 
 export_tag_info

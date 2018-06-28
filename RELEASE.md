@@ -1,4 +1,4 @@
-Release 3.0.0-alpha2
+Release 3.0.0-alpha4
 ===========
 
 Date: 2018-06-14
@@ -100,10 +100,12 @@ See the *Configuration* notes above.
 
 [Milestone 3.0.0](https://github.com/rundeck/rundeck/milestone/76)
 
+* [Feature switch to enable job pagination](https://github.com/rundeck/rundeck/pull/3561)
 * [Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3483)
 * [Set a max file size of 25mb configurable](https://github.com/rundeck/rundeck/pull/3477)
 * [Error 400 importing projects over 128kb](https://github.com/rundeck/rundeck/issues/3476)
 * [Security Advisory: Zip Slip directory traversal vulnerability](https://github.com/rundeck/rundeck/issues/3471)
+* [Fixed various french translations](https://github.com/rundeck/rundeck/pull/3458)
 * [ACL for uuid](https://github.com/rundeck/rundeck/pull/3456)
 * [Addresses issue #2062 ](https://github.com/rundeck/rundeck/pull/3432)
 * [Fixed various french translations](https://github.com/rundeck/rundeck/pull/3430)
@@ -111,10 +113,14 @@ See the *Configuration* notes above.
 * [Create project via API with invalid project name does not return error](https://github.com/rundeck/rundeck/issues/3423)
 * [BUG: Job Options not appearing in Duplicated Jobs](https://github.com/rundeck/rundeck/issues/3421)
 * [Using variable in Storage path job options](https://github.com/rundeck/rundeck/pull/3420)
+* [merge 2.11.3 changes ](https://github.com/rundeck/rundeck/pull/3392)
+* [Documentation: remove docs/ subdir in favor of new repo](https://github.com/rundeck/rundeck/issues/3390)
 * [duplicate jobs page doesn't show options ](https://github.com/rundeck/rundeck/issues/3384)
 * [rundeck access log contains "\[Ljava.lang.String;" instead of project](https://github.com/rundeck/rundeck/issues/3379)
 * [Grails 3 Update](https://github.com/rundeck/rundeck/pull/3290)
 * [Using variable in Storage path job options](https://github.com/rundeck/rundeck/issues/2092)
 * [Encrypt passwords stored in configuration files](https://github.com/rundeck/rundeck/issues/2062)
+* [Don't allow starting rundeckd multiple times.](https://github.com/rundeck/rundeck/pull/1873)
+* [ACL based on a job's UUID](https://github.com/rundeck/rundeck/issues/1812)
 * [Limit Multiple Executions](https://github.com/rundeck/rundeck/issues/1387)
 * [i18n Update: node filter help](https://github.com/rundeck/rundeck/pull/3383)

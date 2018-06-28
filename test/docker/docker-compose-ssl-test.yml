@@ -7,7 +7,8 @@ services:
 #    entrypoint: bash /home/rundeck/run.sh
     environment:
       - RUNDECK_NODE=rundeck1
-      - RUNDECK_URL=http://rundeck1:4440/
+      - RUNDECK_PORT=4443
+      - RUNDECK_URL=https://rundeck1:4443
       - LAUNCHER_URL=${LAUNCHER_URL}
       - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}

@@ -35,10 +35,6 @@ for jar in $WORKSPACE/*.jar $WORKSPACE/*.war ; do
     bash $DIR/replace-filename-token.sh $jar SNAPSHOT $build_number
 done
 
-for war in $WORKSPACE/*.war ; do 
-    bash $DIR/replace-filename-token.sh $war rundeck- rundeckapp-
-done
-
 for jar in $WORKSPACE/*.jar $WORKSPACE/*.war ; do
     bash $DIR/publish-jar-to-bintray.sh $bintray_user $bintray_api_key $bintray_org $bintray_repo $jar "org/rundeck/" ;
 done

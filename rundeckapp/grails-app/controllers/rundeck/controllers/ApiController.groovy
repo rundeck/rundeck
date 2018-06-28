@@ -389,6 +389,7 @@ class ApiController extends ControllerBase{
                         rundeck{
                             version(appVersion)
                             build(grailsApplication.metadata['build.ident'])
+                            buildGit(grailsApplication.metadata['build.core.git.description'])
                             node(nodeName)
                             base(servletContext.getAttribute("RDECK_BASE"))
                             apiversion(ApiVersions.API_CURRENT_VERSION)
@@ -450,6 +451,7 @@ class ApiController extends ControllerBase{
                         rundeck={
                             version=(appVersion)
                             build=(grailsApplication.metadata['build.ident'])
+                            buildGit=(grailsApplication.metadata['build.core.git.description'])
                             node=(nodeName)
                             base=(servletContext.getAttribute("RDECK_BASE"))
                             apiversion=(ApiVersions.API_CURRENT_VERSION)

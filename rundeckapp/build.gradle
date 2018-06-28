@@ -14,9 +14,9 @@ buildscript {
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.10"
     }
 }
-
-//version "0.1"
-//group "rundeckapp"
+plugins {
+    id "org.dvaske.gradle.git-build-info"
+}
 
 apply plugin:"eclipse"
 apply plugin:"idea"
@@ -100,7 +100,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
-    compile "org.springframework.boot:spring-boot-starter-actuator"
+    //compile "org.springframework.boot:spring-boot-starter-actuator"
     //provided "org.springframework.boot:spring-boot-starter-tomcat"
     provided "org.springframework.boot:spring-boot-starter-jetty"
     compile "org.grails:grails-web-boot"
@@ -177,7 +177,7 @@ tasks.withType(Test) {
 assets {
     minifyJs = false
     minifyCss = false
-    excludes = ['gulpfile.js','**/*~','*.json']
+    excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less']
 }
 
 
@@ -195,6 +195,17 @@ buildProperties.doLast {
     }
 
     properties.setProperty("build.ident",properties.getProperty("info.app.version"))
+    properties.setProperty("core.version",properties.getProperty("info.app.version"))
+
+    if (project.gitDescribeInfo) {
+        properties.setProperty("build.core.git.description", project.gitDescribeInfo)
+    }
+    if (project.gitCommit) {
+        properties.setProperty("build.core.git.commit", project.gitCommit)
+    }
+    if (project.gitBranch) {
+        properties.setProperty("build.core.git.branch", project.gitBranch)
+    }
 
     grailsBuildInfoFile.withOutputStream {
         properties.store(it,null)

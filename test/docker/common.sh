@@ -27,7 +27,7 @@ build_rdtest_docker(){
 	# create base image for rundeck
 	docker build \
 		-t rdtest:latest \
-		--cache-from rundeckapp/testdeck:rdtest-latest \
+		--cache-from rdtest:latest \
 		--build-arg LAUNCHER_URL=$LAUNCHER_URL \
 		--build-arg CLI_DEB_URL=$CLI_DEB_URL \
 		--build-arg CLI_VERS=$CLI_VERS \

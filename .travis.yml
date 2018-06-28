@@ -35,6 +35,7 @@ before_install:
 - pip install awscli --upgrade --user
 install: true
 before_script:
+- source scripts/travis-helpers.sh
 - export -f travis_nanoseconds
 - export -f travis_fold
 - export -f travis_time_start
@@ -45,13 +46,11 @@ jobs:
   # Stage: build
   - stage: build
     script:
-    - set -o errexit
-    - shopt -s globstar
-    - source scripts/travis-helpers.sh
-
+    # Build artifacts: jars, wars, and docker images
     - script_block 'build' 'make TAG=$RUNDECK_RELEASE_TAG BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
     - script_block 'build.docker.rdtest' build_rdtest
 
+    # Copy artifacts and upload to s3
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
@@ -59,22 +58,20 @@ jobs:
     - cp -r --parents core/build/libs artifacts/
     - cp -r --parents rundeckapp/**/build/libs artifacts/
     - cp -r --parents rundeck-storage/**/build/libs artifacts/
-
     - script_block 'sync-artifacts' sync_to_s3
-  
+
+    # Trigger rundeck/testdeck build
+    - script_block 'travis-trigger.testdeck' 'trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck testdeck ${RUNDECK_BRANCH} || true'
+
   # Stage: test
   - stage: test
     env: JOB='Test Grails'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'grails-test' './gradlew -g gradle-cache --build-cache test'
 
   - env: JOB='Docker API tests'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker.pull' pull_rdtest
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
@@ -82,38 +79,28 @@ jobs:
   - stage: test
     env: JOB='Test deb install'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
   
   - env: JOB='Test rpm install'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
 
   - env: JOB='Docker tests'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-test' 'bash test/run-docker-tests.sh'
   
   - env: JOB='Docker SSL tests'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'
 
   - env: JOB='Docker Ansible tests'
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-ansible-test' 'bash test/run-docker-ansible-tests.sh'
@@ -121,8 +108,6 @@ jobs:
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     # Sync artifacts under commit so we can use them for tag releases
     - script_block 'sync.artifacts' fetch_common_artifacts
     - script_block 'sync.ci-resources' fetch_common_resources
@@ -138,13 +123,11 @@ jobs:
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
     - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
     - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
-    - script_block 'travis-trigger.rdpro' 'trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" rundeckpro rundeckpro master'
+    - script_block 'travis-trigger.rdpro' 'trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master'
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'sync-artifacts' fetch_common_artifacts
     - export VCS_URL=https://github.com/rundeck/rundeck.git
 
@@ -157,8 +140,6 @@ jobs:
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
   - stage: fork
     script:
-    - set -o errexit
-    - source scripts/travis-helpers.sh
     - script_block 'gradle-build' './gradlew clean && ./gradlew build'
     - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
     - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'

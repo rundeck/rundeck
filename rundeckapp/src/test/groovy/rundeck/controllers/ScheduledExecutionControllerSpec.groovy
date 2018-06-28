@@ -751,25 +751,35 @@ class ScheduledExecutionControllerSpec extends Specification {
         setupFormTokens(params)
         when:
         request.method = 'POST'
+        params.project='testproject'
         params.followdetail = follow
         controller.runJobInline(command, extra)
 
         then:
         response.status == 200
         response.contentType.contains 'application/json'
-        response.json == [
-                href   : "/execution/follow/${exec.id}#"+follow,
-                success: true,
-                id     : exec.id,
-                follow : false
-        ]
+        if(follow != 'html'){
+            response.json == [
+                    href   : "/execution/follow/${exec.id}#"+follow,
+                    success: true,
+                    id     : exec.id,
+                    follow : false
+            ]
+        }else{
+            response.json == [
+                    href : "/project/${params.project}/execution/renderOutput/${exec.id}?convertContent=on&loglevels=on&ansicolor=on&reload=true",
+                    success: true,
+                    id     : exec.id,
+                    follow : false
+            ]
+        }
 
         where:
         follow      |_
         'output'    |_
         'summary'   |_
         'monitor'   |_
-        'definition'|_
+        'html'      |_
 
     }
 
@@ -894,24 +904,35 @@ class ScheduledExecutionControllerSpec extends Specification {
         params.runAtTime = 'dummy'
         when:
         request.method = 'POST'
+        params.project='testproject'
         params.followdetail = follow
         controller.scheduleJobInline(command, extra)
 
         then:
         response.status == 200
         response.contentType.contains 'application/json'
-        response.json == [
-                href   : "/execution/follow/${exec.id}#"+follow,
-                success: true,
-                id     : exec.id,
-                follow : false
-        ]
+        if(follow != 'html') {
+            response.json == [
+                    href   : "/execution/follow/${exec.id}#" + follow,
+                    success: true,
+                    id     : exec.id,
+                    follow : false
+            ]
+        } else {
+            response.json == [
+                    href   : "/project/${params.project}/execution/renderOutput/${exec.id}?convertContent=on&loglevels=on&ansicolor=on&reload=true",
+                    success: true,
+                    id     : exec.id,
+                    follow : false
+            ]
+        }
+
         where:
         follow      |_
         'output'    |_
         'summary'   |_
         'monitor'   |_
-        'definition'|_
+        'html'      |_
     }
     def "run job later at time"() {
         given:

@@ -808,7 +808,35 @@ class ExecutionController extends ControllerBase{
             log.error("Output file reader error: ${msg}")
             response.outputStream << msg
             return
-        }else if (reader.state != ExecutionLogState.AVAILABLE) {
+        }else if(reader.state == ExecutionLogState.WAITING){
+            if(params.reload=='true') {
+                response.outputStream << '''<html>
+                <head>
+                <title></title>
+                </head>
+                <body>
+                <div class="container">
+                <div class="row">
+                <div class="col-sm-12">
+                '''
+                response.outputStream << g.message(code: "execution.html.waiting")
+                response.outputStream << '''
+                </div>
+                <script>
+                setTimeout(function(){
+                   window.location.reload(1);
+                }, 5000);
+                </script>
+                </body>
+                </html>
+                '''
+            }else{
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND)
+                log.error("Output file not available")
+            }
+            return
+
+        } else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not available")
@@ -871,14 +899,29 @@ class ExecutionController extends ControllerBase{
             response.outputStream<<lineSep
         }
         iterator.close()
-
-        response.outputStream << '''</div>
+        if(jobcomplete || params.reload!='true'){
+            response.outputStream << '''</div>
 </div>
 </div>
 </div>
 </body>
 </html>
 '''
+        }else{
+            response.outputStream << '''</div>
+</div>
+</div>
+</div>
+<script>
+setTimeout(function(){
+   window.location.reload(1);
+}, 5000);
+</script>
+</body>
+</html>
+'''
+        }
+
     }
 
     /**
