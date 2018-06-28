@@ -2913,7 +2913,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def link
         if(params.followdetail){
-            link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+            if(params.followdetail=='html'){
+                link =createLink(controller: "execution", action: "renderOutput", id: results.id,
+                        params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
+            }else{
+                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+            }
         } else {
             link = createLink(controller: "execution", action: "follow", id: results.id)
         }
@@ -2956,7 +2961,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def link
         if(params.followdetail){
-            link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+            if(params.followdetail=='html'){
+                link =createLink(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
+            }else{
+                link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+            }
         }else {
             link = createLink(controller: "execution", action: "follow", id: results.id)
         }
@@ -3013,7 +3022,11 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             return renderErrorView(results)
         } else if (params.follow == 'true') {
-            redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
+            if(params.followdetail=='html'){
+                redirect(controller: "execution", action: "renderOutput", id: results.id, params:[convertContent:'on', loglevels:'on', ansicolor:'on', project:params.project, reload:'true'])
+            }else{
+                redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
+            }
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }
