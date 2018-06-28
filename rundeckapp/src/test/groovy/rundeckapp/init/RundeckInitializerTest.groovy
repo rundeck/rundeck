@@ -15,6 +15,7 @@
  */
 package rundeckapp.init
 
+import grails.util.Environment
 import spock.lang.Specification
 
 class RundeckInitializerTest extends Specification {
@@ -43,4 +44,54 @@ class RundeckInitializerTest extends Specification {
         assert filecount == sourceFileCount
     }
 
+    def "copy to destination and expand templates log4j file war mode"() {
+        given:
+        File sourceTemplates = new File(System.getProperty("user.dir"),"templates")
+        File destination = new File(File.createTempFile("test-et","zzz").parentFile,"expandTest-"+UUID.randomUUID().toString().substring(0,8))
+        File warWebAppDir = new File(File.createTempFile("webappWar","zzz").parentFile,"expandTest-"+UUID.randomUUID().toString().substring(0,8))
+
+        destination.mkdir()
+        warWebAppDir.mkdir()
+
+        Properties testTemplateProperties = new Properties()
+
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        cfg.runtimeConfiguration = testTemplateProperties
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+        initializer.thisJar = warWebAppDir
+        File log4Jfile = new File(sourceTemplates,"config/log4j.properties.template")
+        Environment.metaClass.static.isWarDeployed = { return true }
+
+        when:
+        initializer.copyToDestinationAndExpandProperties(destination,sourceTemplates.toPath(),log4Jfile,testTemplateProperties,false)
+
+        then:
+        warWebAppDir.exists()
+        int filecount
+        warWebAppDir.traverse(type: groovy.io.FileType.FILES) { filecount++ }
+        filecount == 1
+    }
+
+    def "ensure rundeck config has log4j path commented war mode"() {
+        given:
+        File sourceTemplates = new File(System.getProperty("user.dir"),"templates")
+        File destination = new File(File.createTempFile("test-et","zzz").parentFile,"expandTest-"+UUID.randomUUID().toString().substring(0,8))
+
+        destination.mkdir()
+
+        Properties testTemplateProperties = new Properties()
+
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        cfg.runtimeConfiguration = testTemplateProperties
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+        
+        File rcprops = new File(sourceTemplates,"config/rundeck-config.properties.template")
+        Environment.metaClass.static.isWarDeployed = { return true }
+
+        when:
+        initializer.copyToDestinationAndExpandProperties(destination,sourceTemplates.toPath(),rcprops,testTemplateProperties,false)
+        List<String> rcpropsContents = new File(destination,"config/rundeck-config.properties").readLines()
+        then:
+        rcpropsContents.findAll { it.startsWith("#rundeck.log4j.config.file")}
+    }
 }
