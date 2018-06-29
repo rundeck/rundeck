@@ -36,6 +36,7 @@ S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
 S3_ARTIFACT_BASE="s3://rundeck-travis-artifacts/oss/rundeck"
 
 S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
+S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
 S3_COMMIT_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/commit/${RUNDECK_COMMIT}/artifacts"
 S3_TAG_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/tag/${RUNDECK_TAG}/artifacts"
 
@@ -120,11 +121,7 @@ extract_artifacts() {
 
 # Add marker to indicate artifacts are whole
 seal_artifacts() {
-    if [[ ! -d artifacts ]] ; then
-        sync_from_s3
-    fi
-    touch artifacts/build.seal
-    sync_to_s3
+    echo -n | aws s3 cp - "${S3_BUILD_ARTIFACT_SEAL}"
 }
 
 # Helper function that syncs artifacts from s3
