@@ -118,6 +118,15 @@ extract_artifacts() {
     )
 }
 
+# Add marker to indicate artifacts are whole
+seal_artifacts() {
+    if [[ ! -d artifacts ]] ; then
+        sync_from_s3
+    fi
+    touch artifacts/build.seal
+    sync_to_s3
+}
+
 # Helper function that syncs artifacts from s3
 # and copies the most common into place.
 fetch_common_artifacts() {
