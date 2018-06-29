@@ -29,51 +29,41 @@
     %>
 </g:if>
 
-<div class="container">
-<div class="row">
-<div class="col-sm-12">
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h2 class="panel-title ">An Error Occurred</h2>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card ">
+        <div class="card-header">
+          <h2 class="card-title ">An Error Occurred</h2>
         </div>
-
-        <div class="panel-body text-danger">
-            <b><g:enc>${exception.message}</g:enc></b>
+        <div class="card-content text-danger">
+          <b><g:enc>${exception.message}</g:enc></b>
         </div>
-    </div>
-<g:set var="hideStacktrace"
-value="${(grailsApplication.config?.rundeck?.gui?.errorpage?.hidestacktrace in [true, 'true']) ||
-
-               Boolean.valueOf(System.getProperty("org.rundeck.gui.errorpage.hidestacktrace", "false"))}"/>
-<g:if test="${!hideStacktrace}">
-    <div class="panel-group" id="accordion">
-        <div class="panel panel-default">
+      </div>
+      <g:set var="hideStacktrace"
+      value="${(grailsApplication.config?.rundeck?.gui?.errorpage?.hidestacktrace in [true, 'true']) || Boolean.valueOf(System.getProperty("org.rundeck.gui.errorpage.hidestacktrace", "false"))}"/>
+      <g:if test="${!hideStacktrace}">
+        <div class="panel-group" id="accordion">
+          <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#internalerror">
-                        Error Details <i class="glyphicon glyphicon-chevron-right"></i>
-                    </a>
-                </h4>
+              <h4 class="panel-title">
+                <a data-toggle="collapse" data-parent="#accordion" href="#internalerror">
+                  Error Details <i class="glyphicon glyphicon-chevron-right"></i>
+                </a>
+              </h4>
             </div>
-
-    <div class="panel-collapse collapse collapse-expandable" id="internalerror">
-        <div class="panel panel-default">
-        <div class="panel-body">
-        <div class="container">
-        <div class="row">
-        <div class="col-sm-12">
-            <g:renderException exception="${exception}" />
+            <div class="panel-collapse collapse collapse-expandable" id="internalerror">
+              <div class="panel panel-default">
+                <div class="panel-body">
+                  <g:renderException exception="${exception}" />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</g:if>
-</div>
-</div>
+      </g:if>
+    </div>
+  </div>
 </div>
 </body>
 </html>
