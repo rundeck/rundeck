@@ -49,7 +49,6 @@ jobs:
     # Build artifacts: jars, wars, and docker images
     - script_block 'build' 'make TAG=$RUNDECK_RELEASE_TAG BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
     - script_block 'build.docker.rdtest' build_rdtest
-
     # Copy artifacts and upload to s3
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
@@ -58,7 +57,9 @@ jobs:
     - cp -r --parents core/build/libs artifacts/
     - cp -r --parents rundeckapp/**/build/libs artifacts/
     - cp -r --parents rundeck-storage/**/build/libs artifacts/
+    # Sync artifacts and trigger downstream snapshot builds if appropriate
     - script_block 'sync-artifacts' sync_to_s3
+    - script_block 'trigger.downstream' trigger_downstream_snapshots
 
     # Trigger rundeck/testdeck build
     - script_block 'travis-trigger.testdeck' 'trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck testdeck ${RUNDECK_BRANCH} || true'
