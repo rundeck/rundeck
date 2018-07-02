@@ -124,7 +124,6 @@ jobs:
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
     - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
     - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
-    - script_block 'travis-trigger.rdpro' 'trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
 
