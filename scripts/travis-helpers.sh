@@ -206,6 +206,17 @@ pull_rdtest() {
     docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
 }
 
+# If this is a snapshot build we will trigger pro
+trigger_downstream_snapshots() {
+    if [[ -z "${RUNDECK_TAG}" && "${RUNDECK_BRANCH}" == "master" && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
+        echo "Triggering downstream snapshot build..."
+        seal_artifacts
+        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master
+    else
+        echo "Skippping downstream snapshot build for non-master/snapshot build..."
+    fi
+}
+
 export_tag_info
 export_repo_info
 
@@ -218,3 +229,4 @@ export -f fetch_common_artifacts
 export -f trigger_travis_build
 export -f build_rdtest
 export -f pull_rdtest
+export -f trigger_downstream_snapshots
