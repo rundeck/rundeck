@@ -116,7 +116,7 @@ fi
 /var/lib/rundeck/cli/snakeyaml-1.14.jar
 /var/lib/rundeck/cli/jackson-annotations-2.8.0.jar
 /var/lib/rundeck/cli/jackson-core-2.8.11.jar
-/var/lib/rundeck/cli/jackson-databind-2.8.11.1.jar
+/var/lib/rundeck/cli/jackson-databind-2.8.11.2.jar
 /var/lib/rundeck/cli/converter-jackson-2.2.0.jar
 /var/lib/rundeck/cli/okhttp-3.6.0.jar
 /var/lib/rundeck/cli/okio-1.11.0.jar
