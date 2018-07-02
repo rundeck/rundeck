@@ -82,7 +82,8 @@ body.modal-open{
   .sidebar-mini &{
     span.appTitle{
       opacity: 0;
-      position: absolute;
+      display: none;
+      // position: absolute;
     }
     .snapshot-version{
       display: none;
