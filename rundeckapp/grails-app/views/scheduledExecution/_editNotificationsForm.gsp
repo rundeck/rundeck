@@ -50,20 +50,22 @@
         <g:message code="scheduledExecution.property.notified.label.text" />
     </div>
     <div class="col-sm-10">
-        <label class="radio-inline">
-            <g:radio value="false" name="notified"
-                     checked="${!(notifications || params.notified=='true')}"
-                     id="notifiedFalse"/>
-            <g:message code="no" />
-        </label>
-
-        <label class="radio-inline">
-            <g:radio name="notified" value="true"
-                     checked="${notifications || params.notified == 'true'}"
-                     id="notifiedTrue"/>
+      <div class="radio radio-inline">
+        <g:radio value="false" name="notified"
+                 checked="${!(notifications || params.notified=='true')}"
+                 id="notifiedFalse"/>
+         <label for="notifiedFalse">
+             <g:message code="no" />
+         </label>
+      </div>
+      <div class="radio radio-inline">
+        <g:radio name="notified" value="true"
+                 checked="${notifications || params.notified == 'true'}"
+                 id="notifiedTrue"/>
+        <label for="notifiedTrue">
             <g:message code="yes" />
         </label>
-
+      </div>
         <g:javascript>
             <wdgt:eventHandlerJS for="notifiedTrue" state="unempty">
                 <wdgt:action visible="true" targetSelector=".notifyFields.form-group"/>
