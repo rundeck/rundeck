@@ -494,7 +494,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
 
-    Map clusterFixJobs(final List<JobExportReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, final List<JobExportReference> jobs){
         def retSt = [:]
         retSt.deleted = []
         retSt.restored = []
@@ -526,7 +526,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if(toPull){
             retSt.pull = true
             try{
-                git.pull().call()
+                gitPull(context)
             }catch (JGitInternalException e){
                 retSt.error=e
             }catch(GitAPIException e){

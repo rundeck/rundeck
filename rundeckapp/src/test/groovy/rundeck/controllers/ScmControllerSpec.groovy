@@ -88,7 +88,7 @@ class ScmControllerSpec extends Specification {
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobs([]) >> [:]
+            1 * exportStatusForJobs(_,[]) >> [:]
             1 * exportFilePathsMapForJobs([]) >> [:]
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * performExportAction(actionName, _, projectName, _, _, _) >>
@@ -213,7 +213,7 @@ class ScmControllerSpec extends Specification {
 
             1 * projectHasConfiguredPlugin(integration, projectName) >> true
             1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
-            1 * exportStatusForJobs(_) >> [
+            1 * exportStatusForJobs(_,_) >> [
                 job1: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job2: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
                 job3: new JobStateImpl(synchState: SynchState.EXPORT_NEEDED),
@@ -519,7 +519,7 @@ class ScmControllerSpec extends Specification {
             1 * getRenamedJobPathsForProject(projectName) >> [:]
             1 * loadProjectPluginDescriptor(projectName, integration)
             1 * getTrackingItemsForAction(projectName, actionName) >> null
-            1 * importStatusForJobs([])
+            1 * importStatusForJobs(_,[])
             1 * getPluginStatus(_,integration, projectName)
             0 * _(*_)
         }
@@ -533,12 +533,6 @@ class ScmControllerSpec extends Specification {
         controller.performAction(integration, projectName, actionName)
 
         then:
-        /*response.json == [
-            success         : true,
-            validationErrors: null,
-            nextAction      : 'someAction',
-            message         : 'api.scm.action.integration.success.message'
-        ]*/
         response.status == 200
 
         where:
