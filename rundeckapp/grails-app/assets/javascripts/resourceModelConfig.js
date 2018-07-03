@@ -174,6 +174,11 @@ editConfig: function (elem, type, prefix, index) {
             if (ajax.request.success()) {
                 self.didChange();
                 self.addConfigChrome(elem, type, prefix, index);
+                if (typeof(_setupAceTextareaEditor) === 'function') {
+                    jQuery(elem).find('.apply_ace').each(function () {
+                        _setupAceTextareaEditor(this, this.didChange);
+                    });
+                }
             } else {
                 self.error(ajax);
             }
