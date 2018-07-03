@@ -311,18 +311,18 @@
 
                     <div class="col-sm-10">
                         <div class="radio">
+                          <g:radio name="nodeRankOrderAscending" value=""
+                                   checked="${item?.nodeRankOrderAscending == null}"
+                                   data-bind="enable: filter()"/>
                             <label>
-                                <g:radio name="nodeRankOrderAscending" value=""
-                                         checked="${item?.nodeRankOrderAscending == null}"
-                                         data-bind="enable: filter()"/>
                                 <g:message code="JobExec.property.nodeRankOrder.null.description"/>
                             </label>
                         </div>
                         <div class="radio">
+                          <g:radio name="nodeRankOrderAscending" value="true"
+                                   checked="${item?.nodeRankOrderAscending == Boolean.TRUE}"
+                                   data-bind="enable: filter()"/>
                             <label>
-                                <g:radio name="nodeRankOrderAscending" value="true"
-                                         checked="${item?.nodeRankOrderAscending == Boolean.TRUE}"
-                                         data-bind="enable: filter()"/>
                                 <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/>
                             </label>
                         </div>

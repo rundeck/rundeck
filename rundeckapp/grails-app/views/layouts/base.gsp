@@ -131,7 +131,7 @@
     </g:if>
     <g:layoutHead/>
 </head>
-<body>
+<body class="sidebar-mini">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
       <div class="logo">
@@ -188,5 +188,11 @@ disable for now because profiler plugin is not compatible with grails 3.x
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
+<g:javascript>
+  var sidebarOpen = localStorage.getItem('sidebarOpen')
+  if(sidebarOpen === 'true'){
+    document.body.classList.remove('sidebar-mini')
+  }
+</g:javascript>
 </body>
 </html>

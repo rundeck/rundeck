@@ -552,26 +552,28 @@ function getCurSEID(){
     </label>
 
     <div class="${fieldColSize} ">
-        <label id="doNodedispatchLabelTrue" class="radio-inline">
-
-            <input type="radio"
-                   name="doNodedispatch"
-                   value="true"
-                    class="node_dispatch_radio"
-                ${scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchTrue"/>
-            <g:message code="dispatch.to.nodes" />
+      <div class="radio radio-inline">
+        <input type="radio"
+               name="doNodedispatch"
+               value="true"
+                class="node_dispatch_radio"
+            ${scheduledExecution?.doNodedispatch ? 'checked' : ''}
+               id="doNodedispatchTrue"/>
+        <label for="doNodedispatchTrue">
+             <g:message code="dispatch.to.nodes" />
         </label>
-        <label id="doNodedispatchLabelFalse" class="radio-inline">
-
-            <input type="radio"
-                   name="doNodedispatch"
-                   value="false"
-                   class="node_dispatch_radio"
-                ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}
-                   id="doNodedispatchFalse"/>
+      </div>
+      <div class="radio radio-inline">
+        <input id="doNodedispatchFalse"
+               type="radio"
+               name="doNodedispatch"
+               value="false"
+               class="node_dispatch_radio"
+            ${!scheduledExecution?.doNodedispatch ? 'checked' : ''}/>
+        <label for="doNodedispatchFalse">
             <g:message code="execute.locally" />
         </label>
+      </div>
     </div>
 </div>
 
@@ -698,19 +700,22 @@ function getCurSEID(){
             </div>
 
             <div class="${fieldColSize}">
-                <label class="radio-inline">
-                    <g:radio value="false" name="nodeFilterEditable"
-                             checked="${!scheduledExecution.nodeFilterEditable}"
-                             id="editableFalse"/>
+              <div class="radio radio-inline">
+                <g:radio value="false" name="nodeFilterEditable"
+                         checked="${!scheduledExecution.nodeFilterEditable}"
+                         id="editableFalse"/>
+                <label for="editableFalse">
                     <g:message code="no"/>
                 </label>
-
-                <label class="radio-inline">
-                    <g:radio name="nodeFilterEditable" value="true"
-                             checked="${scheduledExecution.nodeFilterEditable}"
-                             id="editableTrue"/>
+              </div>
+              <div class="radio radio-inline">
+                <g:radio name="nodeFilterEditable" value="true"
+                         checked="${scheduledExecution.nodeFilterEditable}"
+                         id="editableTrue"/>
+                <label for="editableTrue">
                     <g:message code="yes"/>
                 </label>
+              </div>
             </div>
         </div>
 
@@ -772,17 +777,22 @@ function getCurSEID(){
             </label>
 
             <div class="${fieldColSize}">
-                <label class="radio-inline">
-                    <g:radio name="nodeRankOrderAscending" value="true"
-                             checked="${scheduledExecution?.nodeRankOrderAscending || null == scheduledExecution?.nodeRankOrderAscending}"
-                             id="nodeRankOrderAscending"/>
-                    <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/></label>
-                <label class="radio-inline">
-                    <g:radio name="nodeRankOrderAscending" value="false"
-                             checked="${!scheduledExecution?.nodeRankOrderAscending && null != scheduledExecution?.nodeRankOrderAscending}"
-                             id="nodeRankOrderDescending"/>
-                    <g:message code="scheduledExecution.property.nodeRankOrder.descending.label"/></label>
-
+              <div class="radio radio-inline">
+                <g:radio name="nodeRankOrderAscending" value="true"
+                         checked="${scheduledExecution?.nodeRankOrderAscending || null == scheduledExecution?.nodeRankOrderAscending}"
+                         id="nodeRankOrderAscending"/>
+                 <label for="nodeRankOrderAscending">
+                   <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/>
+                 </label>
+              </div>
+              <div class="radio radio-inline">
+                <g:radio name="nodeRankOrderAscending" value="false"
+                         checked="${!scheduledExecution?.nodeRankOrderAscending && null != scheduledExecution?.nodeRankOrderAscending}"
+                         id="nodeRankOrderDescending"/>
+                 <label for="nodeRankOrderDescending">
+                     <g:message code="scheduledExecution.property.nodeRankOrder.descending.label"/>
+                 </label>
+              </div>
             </div>
         </div>
 
@@ -791,26 +801,15 @@ function getCurSEID(){
 
             <div class="${fieldColSize}">
                 <div class="radio">
-                    <label>
-                        <g:radio name="nodeKeepgoing"
-                                 value="false"
-
-                                 checked="${!scheduledExecution?.nodeKeepgoing}"
-
-                                 id="nodeKeepgoingFalse"/>
+                    <g:radio name="nodeKeepgoing" value="false" checked="${!scheduledExecution?.nodeKeepgoing}" id="nodeKeepgoingFalse"/>
+                    <label for="nodeKeepgoingFalse">
                         <g:message code="scheduledExecution.property.nodeKeepgoing.false.description"/>
                     </label>
                 </div>
 
                 <div class="radio">
-                    <label>
-                        <g:radio
-                                name="nodeKeepgoing"
-                                value="true"
-
-                                checked="${scheduledExecution?.nodeKeepgoing}"
-
-                                id="nodeKeepgoingTrue"/>
+                    <g:radio name="nodeKeepgoing" value="true" checked="${scheduledExecution?.nodeKeepgoing}" id="nodeKeepgoingTrue"/>
+                    <label for="nodeKeepgoingTrue">
                         <g:message code="scheduledExecution.property.nodeKeepgoing.true.description"/>
                     </label>
                 </div>
@@ -821,52 +820,40 @@ function getCurSEID(){
 
             <div class="${fieldColSize}">
                 <div class="radio">
-                    <label>
-                        <g:radio name="successOnEmptyNodeFilter"
-                                 value="false"
-
-                                 checked="${!scheduledExecution?.successOnEmptyNodeFilter}"
-
-                                 id="successOnEmptyNodeFilterFalse"/>
+                    <g:radio name="successOnEmptyNodeFilter"
+                           value="false" checked="${!scheduledExecution?.successOnEmptyNodeFilter}" id="successOnEmptyNodeFilterFalse"/>
+                    <label for="successOnEmptyNodeFilterFalse">
                         <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.false.description"/>
                     </label>
                 </div>
-
                 <div class="radio">
-                    <label>
-                        <g:radio
-                                name="successOnEmptyNodeFilter"
-                                value="true"
-
-                                checked="${scheduledExecution?.successOnEmptyNodeFilter}"
-
-                                id="successOnEmptyNodeFilterTrue"/>
+                    <g:radio name="successOnEmptyNodeFilter" value="true" checked="${scheduledExecution?.successOnEmptyNodeFilter}" id="successOnEmptyNodeFilterTrue"/>
+                    <label for="successOnEmptyNodeFilterTrue">
                         <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.true.description"/>
                     </label>
                 </div>
             </div>
         </div>
-
         <div class="form-group">
             <label class="${labelColClass}"><g:message code="scheduledExecution.property.nodesSelectedByDefault.label"/></label>
 
             <div class="${fieldColSize}">
                 <div class="radio">
-                    <label>
-                        <g:radio
-                                name="nodesSelectedByDefault"
-                                value="true"
-                                checked="${scheduledExecution.nodesSelectedByDefault==null||scheduledExecution.nodesSelectedByDefault}"
-                                id="nodesSelectedByDefaultTrue"/>
+                  <g:radio
+                          name="nodesSelectedByDefault"
+                          value="true"
+                          checked="${scheduledExecution.nodesSelectedByDefault==null||scheduledExecution.nodesSelectedByDefault}"
+                          id="nodesSelectedByDefaultTrue"/>
+                    <label for="nodesSelectedByDefaultTrue">                        
                         <g:message code="scheduledExecution.property.nodesSelectedByDefault.true.description"/>
                     </label>
                 </div>
                 <div class="radio">
-                    <label>
-                        <g:radio name="nodesSelectedByDefault"
-                                 value="false"
-                                 checked="${scheduledExecution.nodesSelectedByDefault!=null && !scheduledExecution.nodesSelectedByDefault}"
-                                 id="nodesSelectedByDefaultFalse"/>
+                  <g:radio name="nodesSelectedByDefault"
+                           value="false"
+                           checked="${scheduledExecution.nodesSelectedByDefault!=null && !scheduledExecution.nodesSelectedByDefault}"
+                           id="nodesSelectedByDefaultFalse"/>
+                    <label for="nodesSelectedByDefaultFalse">
                         <g:message code="scheduledExecution.property.nodesSelectedByDefault.false.description"/>
                     </label>
                 </div>
@@ -1147,25 +1134,25 @@ function getCurSEID(){
         </label>
 
         <div class="${fieldColShortSize}">
-            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
-                <g:radio name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
+            <div class="radio">
+              <g:radio id="logOutputThresholdAction" name="logOutputThresholdAction" value="halt" checked="${!scheduledExecution?.logOutputThresholdAction || scheduledExecution?.logOutputThresholdAction=='halt'}"/>
+              <label for="logOutputThresholdAction" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.halt.description")}">
+                  <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
+              </label>
+            </div>
 
-                <g:message code="scheduledExecution.property.logOutputThresholdAction.halt.label"/>
-            </label>
             <div class="input-group">
                 <g:helpTooltip code="scheduledExecution.property.logOutputThresholdAction.halt.description" placement="left"/>
             <input type='text' name="logOutputThresholdStatus" value="${enc(attr: scheduledExecution?.logOutputThresholdStatus)}"
                        id="schedJobLogOutputThresholdStatus" class="form-control"
                        placeholder="${message(code:"scheduledExecution.property.logOutputThresholdStatus.placeholder")}"/>
             </div>
-
-            <label class="radio" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
-                <g:radio name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
-
+            <div class="radio">
+              <g:radio id="logOutputThresholdActionTruncateAndContinue" name="logOutputThresholdAction" value="truncate" checked="${scheduledExecution?.logOutputThresholdAction=='truncate'}"/>
+              <label for="logOutputThresholdActionTruncateAndContinue" title="${message(code: "scheduledExecution.property.logOutputThresholdAction.truncate.description")}">
                 <g:message code="scheduledExecution.property.logOutputThresholdAction.truncate.label"/>
-            </label>
-
-
+              </label>
+            </div>
             <span class="help-block">
                 <g:message code="scheduledExecution.property.logOutputThresholdAction.description" default=""/>
             </span>
@@ -1179,33 +1166,40 @@ function getCurSEID(){
         </div>
 
         <div class="${fieldColSize}">
-            <label class="radio-inline">
-                <g:radio value="summary" name="defaultTab"
-                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
-                         id="tabSummary"/>
-                <g:message code="execution.page.show.tab.Summary.title"/>
-            </label>
+            <div class="radio radio-inline">
+              <g:radio value="summary" name="defaultTab"
+                       checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                       id="tabSummary"/>
+              <label for="tabSummary">
+                  <g:message code="execution.page.show.tab.Summary.title"/>
+              </label>
+            </div>
+            <div class="radio radio-inline">
+              <g:radio name="defaultTab" value="monitor"
+                       checked="${scheduledExecution.defaultTab=='monitor'}"
+                       id="tabMonitor"/>
+              <label for="tabMonitor">
+                  <g:message code="report"/>
+              </label>
+            </div>
+            <div class="radio radio-inline">
+              <g:radio name="defaultTab" value="output"
+                       checked="${scheduledExecution.defaultTab=='output'}"
+                       id="tabOutput"/>
+              <label for="tabOutput">
+                  <g:message code="execution.show.mode.Log.title"/>
+              </label>
+            </div>
+            <div class="radio radio-inline">
+              <g:radio name="defaultTab" value="html"
+                       checked="${scheduledExecution.defaultTab=='html'}"
+                       id="tabHTML"/>
+              <label for="tabHTML">
+                  <g:message code="html"/>
+              </label>
+            </div>
 
-            <label class="radio-inline">
-                <g:radio name="defaultTab" value="monitor"
-                         checked="${scheduledExecution.defaultTab=='monitor'}"
-                         id="tabMonitor"/>
-                <g:message code="report"/>
-            </label>
 
-            <label class="radio-inline">
-                <g:radio name="defaultTab" value="output"
-                         checked="${scheduledExecution.defaultTab=='output'}"
-                         id="tabOutput"/>
-                <g:message code="execution.show.mode.Log.title"/>
-            </label>
-
-            <label class="radio-inline">
-                <g:radio name="defaultTab" value="html"
-                         checked="${scheduledExecution.defaultTab=='html'}"
-                         id="tabHTML"/>
-                <g:message code="html"/>
-            </label>
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.defaultTab.description"/>

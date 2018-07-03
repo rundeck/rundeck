@@ -213,13 +213,12 @@
                                     <g:link controller="scheduledExecution"
                                             action="execute"
                                             id="${scheduledExecution.extid}"
-                                            class="btn btn-default btn-xs execRerun pull-right"
+                                            class="btn btn-default btn-sm execRerun"
                                             params="${[retryExecId: execution.id, project: execution.project]}"
                                             title="${g.message(code: 'execution.job.action.runAgain')}"
                                             style="${wdgt.styleVisible(if: null != execution.dateCompleted && null == execution.failedNodeList)};"
                                             data-bind="visible: completed() && !failed()">
-                                        <b class="glyphicon glyphicon-play"></b>
-                                        <g:message code="execution.action.runAgain"/>&hellip;
+                                          <i class="fas fa-redo-alt"></i>
                                     </g:link>
                                     %{--Run again and retry failed links in a dropdown --}%
                                     <div class="btn-group execRetry"
@@ -242,7 +241,7 @@
                                                     <b class="glyphicon glyphicon-play"></b>
 
 
-                                                    <g:message code="execution.action.runAgain"/>&hellip;
+                                                    <g:message code="execution.action.runAgain"/>
                                                 </g:link>
                                             </li>
                                             <li class="divider">
@@ -254,7 +253,7 @@
                                                         params="${[retryFailedExecId: execution.id, project: execution.project]}"
                                                         title="${g.message(code: 'retry.job.failed.nodes')}">
                                                     <b class="glyphicon glyphicon-play"></b>
-                                                    <g:message code="retry.failed.nodes"/>&hellip;
+                                                    <g:message code="retry.failed.nodes"/>
                                                 </g:link>
                                             </li>
                                         </ul>
