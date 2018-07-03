@@ -351,13 +351,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
     
     public void testGetNodes() throws Exception {
         final FrameworkProject project = createProject();
-        FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), nodesfile);
-        assertTrue(nodesfile.exists());
         INodeSet nodes = project.getNodeSet();
         assertNotNull(nodes);
-        assertEquals("nodes was incorrect size", 2, nodes.getNodes().size());
+        assertEquals("nodes was incorrect size", 1, nodes.getNodes().size());
         assertNotNull("nodes did not have correct test node1", nodes.getNode("test1"));
-        assertNotNull("nodes did not have correct test node2", nodes.getNode("testnode2"));
     }
 
 
@@ -375,12 +372,12 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
          Properties p = new Properties();
         loadProps(p,propFile);
-        assertEquals("file", p.get("resources.source.1.type"));
+        assertEquals("local", p.get("resources.source.1.type"));
         assertEquals(null, p.get("a.b"));
 
         assertTrue(project.hasProperty("resources.source.1.type"));
         assertFalse(project.hasProperty("a.b"));
-        assertEquals("file", project.getProperty("resources.source.1.type"));
+        assertEquals("local", project.getProperty("resources.source.1.type"));
 
         boolean overwrite = true;
         Properties newprops = new Properties();
@@ -389,13 +386,13 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
         p = new Properties();
         loadProps(p,propFile);
-        assertEquals("file", p.get("resources.source.1.type"));
+        assertEquals("local", p.get("resources.source.1.type"));
         assertEquals("value", p.get("a.b"));
 
         assertTrue(project.hasProperty("resources.source.1.type"));
         assertTrue(project.hasProperty("a.b"));
         assertEquals("value",project.getProperty("a.b"));
-        assertEquals("file", project.getProperty("resources.source.1.type"));
+        assertEquals("local", project.getProperty("resources.source.1.type"));
 
 
     }
@@ -542,9 +539,10 @@ public class TestFrameworkProject extends AbstractBaseTest {
         factory1.returnProvider=provider1;
 
 
-        service.registerInstance("file", factory1);
-        service.registerInstance("url", factory1);
-        service.registerInstance("directory", factory1);
+//        service.registerInstance("file", factory1);
+//        service.registerInstance("url", factory1);
+//        service.registerInstance("directory", factory1);
+        service.registerInstance("local", factory1);
 
 
         FrameworkProject project = createProject();
