@@ -478,16 +478,39 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         create.expand()
         return create
     }
+    public static final Map<String, String> DEFAULT_PROJ_PROPS = Collections.unmodifiableMap(
+        [
+            'resources.source.1.type'              : 'local',
+            'service.NodeExecutor.default.provider': 'jsch-ssh',
+            'service.FileCopier.default.provider'  : 'jsch-scp',
+            'project.ssh-keypath'                  :
+                new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath(),
+            'project.ssh-authentication'           : 'privateKey'
+        ]
+    )
 
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
         def description = properties.get('project.description')
+        boolean generateInitProps = false
         if (!found) {
             def project = new Project(name: projectName, description: description)
             project.save(failOnError: true)
+            generateInitProps = true
         }
-        def res = storeProjectConfig(projectName, properties)
+        Properties storedProps = new Properties()
+        storedProps.putAll(properties)
+        if (generateInitProps) {
+            Properties newProps = new Properties()
+            DEFAULT_PROJ_PROPS.each { k, v ->
+                if (null == properties || !properties.containsKey(k)) {
+                    newProps.setProperty(k, v);
+                }
+            }
+            storedProps.putAll(newProps)
+        }
+        def res = storeProjectConfig(projectName, storedProps)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
                                                        createProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
