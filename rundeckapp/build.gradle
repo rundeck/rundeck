@@ -120,8 +120,7 @@ dependencies {
     compile "org.hibernate:hibernate-core:5.1.5.Final"
     compile "org.grails.plugins:gsp"
     compile "com.google.code.gson:gson:2.8.2"
-
-    compile 'org.eclipse.jetty:jetty-jaas:9.4.9.v20180320'
+    compile 'org.eclipse.jetty:jetty-jaas:9.4.11.v20180605'
     compile 'org.grails.plugins:spring-security-core:3.2.1'
     compile 'org.kohsuke:libpam4j:1.5'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'

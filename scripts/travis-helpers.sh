@@ -36,6 +36,7 @@ S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
 S3_ARTIFACT_BASE="s3://rundeck-travis-artifacts/oss/rundeck"
 
 S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
+S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
 S3_COMMIT_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/commit/${RUNDECK_COMMIT}/artifacts"
 S3_TAG_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/tag/${RUNDECK_TAG}/artifacts"
 
@@ -116,6 +117,11 @@ extract_artifacts() {
         cd artifacts
         cp -r --parents * ../
     )
+}
+
+# Add marker to indicate artifacts are whole
+seal_artifacts() {
+    echo -n | aws s3 cp - "${S3_BUILD_ARTIFACT_SEAL}"
 }
 
 # Helper function that syncs artifacts from s3
@@ -200,6 +206,17 @@ pull_rdtest() {
     docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
 }
 
+# If this is a snapshot build we will trigger pro
+trigger_downstream_snapshots() {
+    if [[ -z "${RUNDECK_TAG}" && "${RUNDECK_BRANCH}" == "master" && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
+        echo "Triggering downstream snapshot build..."
+        seal_artifacts
+        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master
+    else
+        echo "Skippping downstream snapshot build for non-master/snapshot build..."
+    fi
+}
+
 export_tag_info
 export_repo_info
 
@@ -212,3 +229,4 @@ export -f fetch_common_artifacts
 export -f trigger_travis_build
 export -f build_rdtest
 export -f pull_rdtest
+export -f trigger_downstream_snapshots

@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -1903,6 +1904,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(serverUUID){
             info['serverUUID']=serverUUID
         }
+
+        def extMeta = []
+        def loader = ServiceLoader.load(ApplicationExtension)
+        loader.each {
+            extMeta<<[(it.name):it.infoMetadata]
+        }
         return [
                 schedulerThreadRatio:schedulerThreadRatio,
                 schedulerRunningCount:info.schedulerRunningCount,
@@ -1986,7 +1993,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 implementationVersion: info.vmVersion
             ],
             ],
-        ]]
+        ] + extMeta]
     }
 
     def metrics(){

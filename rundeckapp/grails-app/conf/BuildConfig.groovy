@@ -115,7 +115,7 @@ grails.project.dependency.resolution = {
                 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',
                 'com.fasterxml.jackson.core:jackson-core:2.8.11',
-                'com.fasterxml.jackson.core:jackson-databind:2.8.11.1',
+                'com.fasterxml.jackson.core:jackson-databind:2.8.11.2',
                 'com.fasterxml.jackson.core:jackson-annotations:2.8.11',
                 'com.codahale.metrics:metrics-core:3.0.1',
                 'com.google.guava:guava:24.1.1-jre',
