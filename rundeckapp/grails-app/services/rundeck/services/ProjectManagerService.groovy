@@ -758,13 +758,6 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             );
 
     /**
-     * @return specific nodes resources file path for the project, based on the framework.nodes.file.name property
-     */
-    public String getNodesResourceFilePath(IRundeckProject project) {
-        ProjectNodeSupport.getNodesResourceFilePath(project, frameworkService.getRundeckFramework())
-    }
-
-    /**
      * Import any projects that do not exist from the source
      * @param source
      */
