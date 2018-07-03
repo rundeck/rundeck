@@ -156,7 +156,7 @@ public interface ScmExportPlugin {
      * @param jobs rundeck jobs
      * @return map with information on the process
      */
-    default Map clusterFixJobs(List<JobExportReference> jobs){
+    default Map clusterFixJobs(ScmOperationContext context, List<JobExportReference> jobs){
         return null;
     }
 }
