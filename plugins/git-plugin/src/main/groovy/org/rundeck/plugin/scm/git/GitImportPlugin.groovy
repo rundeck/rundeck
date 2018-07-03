@@ -653,7 +653,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     refreshJobStatus(job,null)
                 }
             } catch (TransportException e) {
-                log.warn("cant automatic fox jobs between cluster on https configuration")
+                log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
             return [updated:true]
         }
