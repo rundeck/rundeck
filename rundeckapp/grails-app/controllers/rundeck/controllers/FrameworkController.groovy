@@ -881,18 +881,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
-        def defaultResourceFile= new File(framework.getFrameworkProjectsBaseDir(),'${project.name}/etc/resources.xml').getAbsolutePath()
-        def configs=[
-            [
-                type: FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
-                props:[
-                        (FileResourceModelSource.Configuration.FILE): defaultResourceFile,
-                        (FileResourceModelSource.Configuration.FORMAT): 'resourcexml',
-                        (FileResourceModelSource.Configuration.GENERATE_FILE_AUTOMATICALLY): 'true',
-                        (FileResourceModelSource.Configuration.INCLUDE_SERVER_NODE): 'true',
-                ]
-            ]
-        ]
+
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
