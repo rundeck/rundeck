@@ -562,24 +562,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return list;
     }
 
-    /**
-     * @return specific nodes resources file path for the project, based on the framework.nodes.file.name property
-     */
-    public static String getNodesResourceFilePath(IRundeckProject project, Framework framework) {
-        if(project.hasProperty(ProjectNodeSupport.PROJECT_RESOURCES_FILE_PROPERTY)) {
-            return new File(project.getProperty(ProjectNodeSupport.PROJECT_RESOURCES_FILE_PROPERTY)).getAbsolutePath();
-        }
-        if(null!=framework) {
-            File etcDir = new File(framework.getFrameworkProjectsBaseDir(), project.getName() + "/etc/");
-            if (framework.hasProperty(Framework.NODES_RESOURCES_FILE_PROP)) {
-                return new File(etcDir, framework.getProperty(Framework.NODES_RESOURCES_FILE_PROP)).getAbsolutePath();
-            } else {
-                return new File(etcDir, ProjectNodeSupport.NODES_XML).getAbsolutePath();
-            }
-        }else{
-            return null;
-        }
-    }
 
     public IRundeckProjectConfig getProjectConfig() {
         return projectConfig;
