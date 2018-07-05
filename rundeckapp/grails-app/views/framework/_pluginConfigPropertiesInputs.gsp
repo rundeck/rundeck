@@ -94,21 +94,19 @@
         <hr/>
     </g:if>
 
-    <div class="form-group">
-        <span class="col-sm-12 ">
-            <g:if test="${isSecondary}">
+    <div class="" style="margin-top:10px;">
+      <g:if test="${isSecondary}">
 
-                <g:collapser text="${group!='-'?group:defaultGroupName}"
-                             key="propgroup_${gkey}"
-                             open="${hasValue?'true':'false'}"
-                             classnames=""
-                />
+          <g:collapser text="${group!='-'?group:defaultGroupName}"
+                       key="propgroup_${gkey}"
+                       open="${hasValue?'true':'false'}"
+                       classnames="btn btn-default btn-sm"
+          />
 
-            </g:if>
-            <g:else>
-                <span class="control-label input-lg">${group!='-'?group:defaultGroupName}</span>
-            </g:else>
-        </span>
+      </g:if>
+      <g:else>
+          <span class="control-label input-lg">${group!='-'?group:defaultGroupName}</span>
+      </g:else>
     </div>
 
     <div id="propgroup_${gkey}" class="${wdgt.css(if:isSecondary,then:'collapse collapse-expandable')} ${wdgt.css(if:hasValue,then:'in')}">

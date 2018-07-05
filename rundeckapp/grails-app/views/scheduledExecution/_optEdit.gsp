@@ -263,7 +263,7 @@
 
                     <div class="radio">
                         <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
-                        <label>
+                        <label for="inputdate_${rkey}">
                           <g:message code="form.option.date.label"/>
                         </label>
                         <span class="text-primary">
@@ -293,7 +293,7 @@
                                 checked="${option?.secureInput && option?.secureExposed}"
                                 id="sectrue_${rkey}"
                         />
-                        <label>
+                        <label for="sectrue_${rkey}">
                             <g:message code="form.option.secureExposed.true.label"/> <span class="text-danger small">&dagger;</span>
                         </label>
                         <span class="text-primary">
@@ -306,7 +306,7 @@
                         <g:radio name="inputType" value="secure"
                                  checked="${option?.secureInput && !option?.secureExposed}"
                                  id="secexpfalse_${rkey}"/>
-                        <label>
+                        <label for="secexpfalse_${rkey}">
                             <g:message code="form.option.secureExposed.false.label"/>
                             <span class="text-danger small">&dagger;</span>
                         </label>
@@ -367,21 +367,21 @@
             <div class="col-sm-10">
                 <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
                 <div>
-                    <div class="radio-inline">
-                        <label class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
-                            <g:radio name="valuesType"
-                                     value="list"
-                                     checked="${valueTypeListChecked}"
-                                     id="vtrlist_${rkey}"/>
+                    <div class="radio radio-inline">
+                      <g:radio name="valuesType"
+                               value="list"
+                               checked="${valueTypeListChecked}"
+                               id="vtrlist_${rkey}"/>
+                        <label for="vtrlist_${rkey}" class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
                             <g:message code="form.label.valuesType.list.label" />
                         </label>
                     </div>
 
-                    <div class="radio-inline">
-                        <label class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
-                            <g:radio name="valuesType" value="url"
-                                     checked="${option?.realValuesUrl || params.valuesType == 'url' ? true : false}"
-                                     id="vtrurl_${rkey}"/>
+                    <div class="radio radio-inline">
+                      <g:radio name="valuesType" value="url"
+                               checked="${option?.realValuesUrl || params.valuesType == 'url' ? true : false}"
+                               id="vtrurl_${rkey}"/>
+                        <label for="vtrurl_${rkey}" class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
                             <g:message code="form.option.valuesType.url.label" />
                         </label>
                     </div>
@@ -452,7 +452,7 @@
                     <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
                         id="enforcedType_none"
                              class="evnonregex"/>
-                    <label>
+                    <label for="enforcedType_none">
                         <g:message code="none" />
                     </label>
                     <span class="text-primary"><g:message code="form.option.enforcedType.none.label" /></span>
@@ -461,13 +461,13 @@
                     <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
                              id="enforcedType_enforced"
                     />
-                    <label class="${hasErrors(bean:option,field:'enforced','fieldError')}">
+                    <label for="enforcedType_enforced" class="${hasErrors(bean:option,field:'enforced','fieldError')}">
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
                 <div class="radio">
                     <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
-                    <label class="${hasErrors(bean:option,field:'regex','fieldError')}">
+                    <label for="etregex_${enc(attr:rkey)}" class="${hasErrors(bean:option,field:'regex','fieldError')}">
                         <g:message code="form.option.regex.label" />
                     </label>
                 </div>
@@ -498,15 +498,15 @@
         <div class="form-group">
             <label class="col-sm-2 control-label"><g:message code="Option.required.label" /></label>
             <div class="col-sm-10">
-                <div class="radio-inline">
-                    <label>
-                        <g:radio name="required" value="false" checked="${!option || !option.required}"/>
+                <div class="radio radio-inline">
+                    <g:radio id="option-required-no" name="required" value="false" checked="${!option || !option.required}"/>
+                    <label for="option-required-no">
                         <g:message code="no" />
                     </label>
                 </div>
-                <div class="radio-inline">
-                    <label>
-                        <g:radio name="required" value="true" checked="${option?.required}"/>
+                <div class="radio radio-inline">
+                    <g:radio id="option-required-yes" name="required" value="true" checked="${option?.required}"/>
+                    <label for="option-required-yes">
                         <g:message code="yes" />
                     </label>
                 </div>
@@ -522,15 +522,15 @@
             </label>
             <div class="col-sm-10">
                 <div class=" opt_sec_disabled" style="${wdgt.styleVisible(unless: option?.secureInput)}">
-                    <div class="radio-inline">
-                        <label>
-                            <g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}" id="mvfalse_${rkey}"/>
+                    <div class="radio radio-inline">
+                        <g:radio name="multivalued" value="false" checked="${!option || !option.multivalued}" id="mvfalse_${rkey}"/>
+                        <label for="mvfalse_${rkey}">
                             <g:message code="no" />
                         </label>
                     </div>
-                    <div class="radio-inline">
-                        <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
-                            <g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/>
+                    <div class="radio radio-inline">
+                        <g:radio name="multivalued" value="true" checked="${option?.multivalued}" id="cdelimiter_${rkey}"/>
+                        <label for="cdelimiter_${rkey}" class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
                             <g:message code="yes" />
                         </label>
                     </div>
@@ -562,8 +562,8 @@
 
 
                             <div class="checkbox">
-                                <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
-                                    <g:checkBox name="multivalueAllSelected" value="true" checked="${option?.multivalueAllSelected}" id="mvalltrue_${rkey}"/>
+                              <g:checkBox name="multivalueAllSelected" value="true" checked="${option?.multivalueAllSelected}" id="mvalltrue_${rkey}"/>
+                                <label for="mvalltrue_${rkey}" class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
                                     <g:message code="form.option.multivalueAllSelected.label" />
                                 </label>
                             </div>
@@ -679,12 +679,11 @@
             </g:else>
         </div>
         <g:jsonToken id="reqtoken_${rkey}" url="${request.forwardURI}"/>
-        <div class="clear"></div>
     </div>
-<g:javascript>
-                fireWhenReady('optedit_${enc(js: rkey)}',function(){
-                    var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
-                    ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
-                });
-</g:javascript>
+    <g:javascript>
+      fireWhenReady('optedit_${enc(js: rkey)}',function(){
+          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
+          ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
+      });
+    </g:javascript>
 </div>

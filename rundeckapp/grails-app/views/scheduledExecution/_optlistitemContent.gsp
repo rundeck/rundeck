@@ -15,14 +15,54 @@
   --}%
 <%--
     _optlistitemContent.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Aug 2, 2010 4:11:05 PM
     $Id$
  --%>
 <g:set var="ukey" value="${g.rkey()}"/>
+
 <div id="optvis_${enc(attr:option.name)}" >
+    <g:set var="canMoveUp" value="${optIndex!=0}"/>
+    <g:set var="canMoveDown" value="${optIndex<optCount-1}"/>
     <div class="optitem optctrlholder">
+      <g:if test="${edit}">
+          <span class="optctrl opteditcontrols controls ">
+            <g:if test="${canMoveUp || canMoveDown}">
+                <span class="dragHandle btn btn-xs" title="${message(code:"drag.to.reorder")}">
+                  <g:icon name="resize-vertical"/>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="btn btn-xs btn-default disabled" ><g:icon name="resize-vertical"/></span>
+            </g:else>
+              <div class="btn-group">
+                <g:if test="${canMoveUp}">
+                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
+                          title="${message(code:"move.up")}">
+                        <i class="glyphicon glyphicon-arrow-up"></i>
+                    </span>
+                </g:if>
+                <g:else>
+                    <span class="btn btn-xs btn-default disabled" >
+                        <i class="glyphicon glyphicon-arrow-up"></i>
+                    </span>
+                </g:else>
+                <g:if test="${canMoveDown}">
+
+                    <span class="btn btn-xs btn-default" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
+                          title="${message(code:"move.down")}">
+                        <i class="glyphicon glyphicon-arrow-down"></i>
+                    </span>
+                </g:if>
+                <g:else>
+                    <span class="btn btn-xs btn-default disabled" >
+                        <i class="glyphicon glyphicon-arrow-down"></i>
+                    </span>
+                </g:else>
+              </div>
+          </span>
+      </g:if>
         <span class="opt item " id="opt_${enc(attr:option.name)}" >
             <g:render template="/scheduledExecution/optView" model="${[option:option,edit:edit]}"/>
         </span>
@@ -47,63 +87,34 @@
         </div>
 
     <g:if test="${edit}">
-        <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}">
-            <span class="textbtn textbtn-danger "
-                  data-toggle="collapse"
-                  data-target="#optdel_${enc(attr:ukey)}"
-                  title="${message(code:"delete.this.option")}">
-                <i class="glyphicon glyphicon-remove"></i></span>
-            <span class="textbtn textbtn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
+        <span class="optctrl opteditcontrols controls " id="optctrls_${enc(attr:option.name)}" style="position:absolute; right:0;">
+            <span class="btn btn-xs btn-info" onclick="_optedit('${enc(js:option.name)}',$(this).up('li.optEntry'));"
                   title="${message(code:"edit.this.option")}">
                 <i class="glyphicon glyphicon-edit"></i>
                 <g:message code="edit" />
             </span>
-            <g:set var="canMoveUp" value="${optIndex!=0}"/>
-            <g:set var="canMoveDown" value="${optIndex<optCount-1}"/>
-            <g:if test="${canMoveUp}">
-                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:-1});"
-                      title="${message(code:"move.up")}">
-                    <i class="glyphicon glyphicon-arrow-up"></i>
-                </span>
-            </g:if>
-            <g:else>
-                <span class="textbtn textbtn-info disabled" >
-                    <i class="glyphicon glyphicon-arrow-up"></i>
-                </span>
-            </g:else>
-            <g:if test="${canMoveDown}">
-
-                <span class="textbtn textbtn-info" onclick="_doReorderOption('${enc(js:option.name)}',{pos:1});"
-                      title="${message(code:"move.down")}">
-                    <i class="glyphicon glyphicon-arrow-down"></i>
-                </span>
-            </g:if>
-            <g:else>
-                <span class="textbtn textbtn-info disabled" >
-                    <i class="glyphicon glyphicon-arrow-down"></i>
-                </span>
-            </g:else>
-            <g:if test="${canMoveUp || canMoveDown}">
-                <span class="dragHandle" title="${message(code:"drag.to.reorder")}"><g:icon name="resize-vertical"/></span>
-            </g:if>
-            <g:else>
-                <span class="textbtn textbtn-info disabled" ><g:icon name="resize-vertical"/></span>
-            </g:else>
+            <span class="btn btn-xs btn-danger "
+                  data-toggle="collapse"
+                  data-target="#optdel_${enc(attr:ukey)}"
+                  title="${message(code:"delete.this.option")}">
+                <i class="glyphicon glyphicon-remove"></i>
+              </span>
         </span>
-
-        <g:javascript>
-        fireWhenReady('opt_${enc(js:option.name)}',function(){
-            $('opt_${enc(js:option.name)}').select('span.autoedit').each(function(e){
-                Event.observe(e,'click',function(evt){
-                    var f=$('optionsContent').down('form');
-                    if(!f || 0==f.length){
-                        _optedit('${enc(js:option.name)}',$(e).up('li.optEntry'));
-                    }
-                });
-            });
-            });
-        </g:javascript>
     </g:if>
-        <div class="clear"></div>
-</div>
+    <g:if test="${edit}">
+
+            <g:javascript>
+            fireWhenReady('opt_${enc(js:option.name)}',function(){
+                $('opt_${enc(js:option.name)}').select('span.autoedit').each(function(e){
+                    Event.observe(e,'click',function(evt){
+                        var f=$('optionsContent').down('form');
+                        if(!f || 0==f.length){
+                            _optedit('${enc(js:option.name)}',$(e).up('li.optEntry'));
+                        }
+                    });
+                });
+                });
+            </g:javascript>
+    </g:if>
+  </div>
 </div>

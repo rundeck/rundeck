@@ -15,14 +15,13 @@
   --}%
 <%--
     _optlistContent.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Aug 2, 2010 4:15:39 PM
     $Id$
  --%>
 <g:each in="${options}" var="optionsel" status="i">
-    <li id="optli_${i}" class="optEntry draggableitem droppableitem ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}"
-        data-opt-index="${i}" data-opt-name="${optionsel?.name}">
+    <li id="optli_${i}" class="el-collapse-item optEntry draggableitem droppableitem ${highlight==optionsel?.name?'dohighlight':''} ${i%2==1?'alternate':''}" style="" data-opt-index="${i}" data-opt-name="${optionsel?.name}">
         <g:render template="/scheduledExecution/optlistitemContent" model="${[option:optionsel,edit:edit,optIndex:i,optCount:options.size()]}"/>
     </li>
 </g:each>

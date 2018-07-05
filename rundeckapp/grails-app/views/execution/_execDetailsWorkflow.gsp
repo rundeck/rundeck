@@ -25,15 +25,19 @@
 <g:unless test="${isAdhoc}">
 <g:if test="${edit}">
 <div>
-    <span class=""><g:message code="Workflow.property.keepgoing.prompt" /></span>
-    <label>
-        <input type="radio" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
-        <g:message code="Workflow.property.keepgoing.false.description"/>
-    </label>
-    <label>
-        <input type="radio" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
-        <g:message code="Workflow.property.keepgoing.true.description"/>
-    </label>
+    <div class=""><g:message code="Workflow.property.keepgoing.prompt" /></div>
+    <div class="radio radio-inline">
+      <input type="radio" id="workflowKeepGoingFail" name="workflow.keepgoing" value="false" ${workflow?.keepgoing?'':'checked'}/>
+      <label for="workflowKeepGoingFail">
+          <g:message code="Workflow.property.keepgoing.false.description"/>
+      </label>
+    </div>
+    <div class="radio radio-inline">
+      <input type="radio" id="workflowKeepGoingRemainingSteps" name="workflow.keepgoing" value="true" ${workflow?.keepgoing?'checked':''}/>
+      <label for="workflowKeepGoingRemainingSteps">
+          <g:message code="Workflow.property.keepgoing.true.description"/>
+      </label>
+    </div>
 </div>
 <div class="" id="workflowstrategyplugins">
     <g:set var="wfstrat" value="${params?.workflow?.strategy?:workflow?.strategy=='step-first'?'sequential':workflow?.strategy?:'node-first'}"/>
@@ -96,53 +100,54 @@ jQuery(function(){
 </g:javascript>
 
 </div>
+<hr>
     <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigDataList('LogFilter')}"/>
     <g:if test="${logFilterPlugins}">
-        <div id="logfilterplugins_wf">
-            <div class="form-inline">
-                <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
-                    <label class=""><g:message code="global.log.filters" /></label>
+        <div id="logfilterplugins_wf" style="margin: 10px 0;">
+            <div class="">
+                <div class="${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
+                    <label class="">
+                      <g:message code="global.log.filters" />
+                      <span class="btn btn-default btn-xs" data-bind="click: addFilterPopup">
+                          <g:icon name="plus"/>
+                          <g:message code="add" />
+                      </span>
+                    </label>
 
-                    <div class="">
+                    <div>
                         <!-- ko foreach: {data: filters, as: 'filter' } -->
-                        <span class="btn btn-xs btn-info-hollow autohilite"
-                              data-bind="click: $root.editFilter"
-                              title="${message(code:"click.to.edit.filter")}">
-                            <!-- ko if: plugin() -->
-                            <!-- ko with: plugin() -->
-                            <!-- ko if: iconSrc -->
-                            <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
-                            <!-- /ko -->
-                            <!-- ko if: !iconSrc() -->
-                            <i class="rdicon icon-small plugin"></i>
-                            <!-- /ko -->
-                            <!-- /ko -->
-                            <!-- /ko -->
-
-
-                            <span data-bind="text: title"></span>
-                        </span>
-                        <span class="textbtn textbtn-danger textbtn-deemphasize"
-                              data-bind="click: $root.removeFilter"
-                              title="${message(code:"remove.filter")}">
-                            <g:icon name="remove"/></span>
-
-                        <!--define hidden inputs for the configured filter -->
-                        <input type="hidden"
-                               data-bind="attr: { name: 'workflow.globalLogFilters.'+index()+'.type', value: type}"/>
-                        <!--config values-->
-                        <span data-bind="foreachprop: config">
-
-                            <input type="hidden"
-                                   data-bind="attr: { name: 'workflow.globalLogFilters.'+filter.index()+'.config.'+key, value: value}"/>
-                        </span>
-
-
+                        <div class="btn-group" style="margin-top:15px;">
+                          <span class="btn btn-sm btn-default autohilite"
+                                style="border-right:0;"
+                                data-bind="click: $root.editFilter"
+                                title="${message(code:"click.to.edit.filter")}">
+                              <!-- ko if: plugin() -->
+                              <!-- ko with: plugin() -->
+                              <!-- ko if: iconSrc -->
+                              <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                              <!-- /ko -->
+                              <!-- ko if: !iconSrc() -->
+                              <i class="rdicon icon-small plugin"></i>
+                              <!-- /ko -->
+                              <!-- /ko -->
+                              <!-- /ko -->
+                              <span data-bind="text: title"></span>
+                          </span>
+                          <!--define hidden inputs for the configured filter -->
+                          <input type="hidden"
+                                 data-bind="attr: { name: 'workflow.globalLogFilters.'+index()+'.type', value: type}"/>
+                          <!--config values-->
+                          <span data-bind="foreachprop: config">
+                              <input type="hidden"
+                                     data-bind="attr: { name: 'workflow.globalLogFilters.'+filter.index()+'.config.'+key, value: value}"/>
+                          </span>
+                          <span class="btn btn-danger btn-sm"
+                                data-bind="click: $root.removeFilter"
+                                title="${message(code:"remove.filter")}">
+                              <g:icon name="remove"/></span>
+                        </div>
                         <!-- /ko -->
-                        <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
-                            <g:icon name="plus"/>
-                            <g:message code="add" />
-                        </span>
+
                         <g:embedJSON id="logFilterData_wf" data="${[
                                 global: true,
                                 description: "All workflow steps",
@@ -163,6 +168,7 @@ jQuery(function(){
             </div>
         </div>
     </g:if>
+    <hr>
 </g:if>
 </g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">

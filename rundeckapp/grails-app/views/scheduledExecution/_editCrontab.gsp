@@ -84,33 +84,35 @@ jQuery(window).load(function(){
             <g:set var="hourString" value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.hour)}"/>
             <g:set var="minString"
                    value="${rundeck.ScheduledExecution.zeroPaddedString(2, scheduledExecution?.minute)}"/>
-            <g:select name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${hourString}"/>
+            <g:select class="form-control" name="hour" from="${(0..23).collect{it<10?'0'+it.toString():it.toString()}}" value="${hourString}"/>
             :
-            <g:select name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${minString}"/>
+            <g:select class="form-control" name="minute" from="${(0..59).collect{it<10?'0'+it.toString():it.toString()}}" value="${minString}"/>
         </div>
     </div>
 
     <div class="col-sm-4">
         <g:set var="isDayOfWeekDefault" value="${(scheduledExecution?.dayOfWeek.equals('*'))? true: false }"/>
-        <g:checkBox name="everyDayOfWeek"
-                    id="everyDayOfWeek"
-                    value="true"
-                    checked="${isDayOfWeekDefault}"
-        />
-
-        <label for="everyDayOfWeek">Every Day</label>
+        <div class="checkbox">
+          <g:checkBox name="everyDayOfWeek"
+                      id="everyDayOfWeek"
+                      value="true"
+                      checked="${isDayOfWeekDefault}"
+          />
+          <label for="everyDayOfWeek">Every Day</label>
+        </div>
         <div  class="checklist sepT"
              style="${wdgt.styleVisible(unless:scheduledExecution?.dayOfWeek.equals('*'))}"
              id="DayOfWeekDialog"
              >
             <g:each in="${UtilityTagLib.daysofweekord}" var="day">
-                <div>
-                    <label for="crontab.dayOfWeek.${day}">
+                <div class="checkbox" style="display:block;">
                     <g:checkBox name="crontab.dayOfWeek.${day}" id="crontab.dayOfWeek.${day}" class="crontab.dayOfWeek"
                                 value="true"
                                 checked="${crontab?crontab['dayOfWeek.'+day]:false}"
                     />
-                    <g:dayOfWeek name="${day}"/></label>
+                    <label for="crontab.dayOfWeek.${day}">
+                      <g:dayOfWeek name="${day}"/>
+                    </label>
                 </div>
             </g:each>
         </div>
@@ -118,33 +120,32 @@ jQuery(window).load(function(){
     </div>
 
     <div class="col-sm-4">
-        <g:set var="isMonthDefault" value="${(scheduledExecution?.month.equals('*'))? true: false }"/>
+      <g:set var="isMonthDefault" value="${(scheduledExecution?.month.equals('*'))? true: false }"/>
+      <div class="checkbox">
         <g:checkBox
             name="everyMonth"
             id="everyMonth"
             value="true"
             checked="${isMonthDefault}"
         />
-
         <label for="everyMonth">Every Month</label>
-
-        <div class="checklist sepT"
-             style="${wdgt.styleVisible(unless:scheduledExecution?.month.equals('*'))}"
-             id="MonthDialog">
-            <g:each in="${UtilityTagLib.monthsofyearord}" var="month">
-                <div>
-                    <label for="crontab.month.${month}">
-                        <g:checkBox name="crontab.month.${month}" id="crontab.month.${month}" class="crontab.month"
-                                checked="${crontab?crontab['month.'+month]:false}"
-                                value="true"
-                    />
-                    <g:month name="${month}"/></label>
-                </div>
-            </g:each>
-        </div>
-        <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
+      </div>
+      <div class="checklist sepT" style="${wdgt.styleVisible(unless:scheduledExecution?.month.equals('*'))}" id="MonthDialog">
+        <g:each in="${UtilityTagLib.monthsofyearord}" var="month">
+          <div class="checkbox" style="display:block;">
+            <g:checkBox name="crontab.month.${month}" id="crontab.month.${month}" class="crontab.month"
+                        checked="${crontab?crontab['month.'+month]:false}"
+                        value="true"
+            />
+            <label for="crontab.month.${month}">
+              <g:month name="${month}"/>
+            </label>
+          </div>
+        </g:each>
+      </div>
+      <wdgt:eventHandler for="everyMonth" state="unempty" visible="false" target="MonthDialog"/>
     </div>
-    </div>
+  </div>
 </div>
 </div>
 
@@ -168,7 +169,7 @@ jQuery(window).load(function(){
         </div>
     </div>
     <div class="col-sm-4">
-        <span id="crontooltip" class="label label-info form-control-static"></span>
+        <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
     </div>
     <span id="cronstrinfo"></span>
 

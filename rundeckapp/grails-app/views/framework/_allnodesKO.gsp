@@ -75,7 +75,7 @@
                               <!-- /ko -->
                               <!-- /ko -->
                               <span data-bind="text: attributes.description"></span>
-                          </span>                          
+                          </span>
                         </div>
                     </td>
 

@@ -64,7 +64,7 @@
                         });
                         </g:javascript>
 
-                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
+                        <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
@@ -97,11 +97,11 @@
                     <label class="col-sm-2 control-label"></label>
                     <div class="col-sm-10">
                         <div class="checkbox">
-                            <label>
-                                <g:checkBox name="importOptions"
-                                            checked="${item?.importOptions}"
-                                            id="importOptionsCheck" value="true"
-                                />
+                            <g:checkBox name="importOptions"
+                                        checked="${item?.importOptions}"
+                                        id="importOptionsCheck" value="true"
+                            />
+                            <label for="importOptionsCheck">
                                 <g:message code="Workflow.Step.jobreference.import.options.label" />
                             </label>
                             <span class="text-primary"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
@@ -113,11 +113,11 @@
                     <label class="col-sm-2 control-label"></label>
                     <div class="col-sm-10">
                         <div class="checkbox">
-                            <label>
-                                <g:checkBox name="failOnDisable"
-                                            checked="${item?.failOnDisable}"
-                                            id="failOnDisableCheck" value="true"
-                                            />
+                            <g:checkBox name="failOnDisable"
+                                        checked="${item?.failOnDisable}"
+                                        id="failOnDisableCheck" value="true"
+                                        />
+                            <label for="failOnDisableCheck">
                                 <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
                             </label>
                             <span class="text-primary"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
@@ -129,7 +129,7 @@
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
     <div class="row">
     <div class="col-sm-2 control-label">
-    <span class="btn ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'active')}" data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
+    <span class="btn btn-sm ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'active')}" data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
         <g:message code="override.node.filters" />
         <i class="glyphicon ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
     </span>
@@ -138,13 +138,13 @@
     </section>
 
     <section id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'in')} node_filter_link_holder section-separator-solo">
-    <div class="form-group">
-        <div class="col-sm-12 ">
-            <div class="text-info">
-                <g:message code="JobExec.property.nodeFilter.help.description" />
-            </div>
-        </div>
-    </div>
+                <div class="form-group" style="margin-top:1em;">
+                    <div class="col-sm-12 ">
+                        <div class="text-info">
+                            <g:message code="JobExec.property.nodeFilter.help.description" />
+                        </div>
+                    </div>
+                </div>
 
                 <div class="form-group" >
                     <label class="col-sm-2 control-label ">
@@ -153,15 +153,15 @@
 
                     <div class="col-sm-10">
                         <div class="radio">
-                            <label >
-                                <g:radio name="nodeIntersect" value="" checked="${item?.nodeIntersect==null}"/>
+                            <g:radio id="nodeIntersectFalse" name="nodeIntersect" value="" checked="${item?.nodeIntersect==null}"/>
+                            <label for="nodeIntersectFalse">
                                 <g:message code="scheduledExecution.property.nodeIntersect.false"/>
                             </label>
                         </div>
 
                         <div class="radio">
-                            <label>
-                                <g:radio name="nodeIntersect" value="true" checked="${item?.nodeIntersect!=null&&item?.nodeIntersect}"/>
+                            <g:radio id="nodeIntersectTrue" name="nodeIntersect" value="true" checked="${item?.nodeIntersect!=null&&item?.nodeIntersect}"/>
+                            <label for="nodeIntersectTrue">
                                 <g:message code="scheduledExecution.property.nodeIntersect.true"/>
                             </label>
                         </div>
@@ -177,7 +177,7 @@
                     <div class="col-sm-10">
                         <g:set var="filtvalue" value="${item?.nodeFilter}"/>
 
-                        <span class="input-group nodefilters">
+                        <span class="input-group multiple-control-input-group nodefilters">
                             <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
                                 <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
                             </g:if>
@@ -260,25 +260,22 @@
 
                     <div class="col-sm-10">
                         <div class="radio">
-                            <label >
-                                <g:radio name="nodeKeepgoing" value="" checked="${item?.nodeKeepgoing==null}"
-                                         data-bind="enable: filter()"/>
+                            <g:radio name="nodeKeepgoing" value="" checked="${item?.nodeKeepgoing==null}" data-bind="enable: filter()" id="nodeKeepgoingNull"/>
+                            <label for="nodeKeepgoingNull">
                                 <g:message code="JobExec.property.nodeKeepgoing.null.description"/>
                             </label>
                         </div>
 
                         <div class="radio">
-                            <label >
-                                <g:radio name="nodeKeepgoing" value="true" checked="${item?.nodeKeepgoing!=null&&item?.nodeKeepgoing}"
-                                         data-bind="enable: filter()"/>
+                            <g:radio name="nodeKeepgoing" value="true" checked="${item?.nodeKeepgoing!=null&&item?.nodeKeepgoing}" data-bind="enable: filter()" id="nodeKeepgoingTrue"/>
+                            <label for="nodeKeepgoingTrue">
                                 <g:message code="Workflow.property.keepgoing.true.description"/>
                             </label>
                         </div>
 
                         <div class="radio">
-                            <label >
-                                <g:radio name="nodeKeepgoing" value="false" checked="${item?.nodeKeepgoing!=null&&!item?.nodeKeepgoing}"
-                                         data-bind="enable: filter()"/>
+                            <g:radio name="nodeKeepgoing" value="false" checked="${item?.nodeKeepgoing!=null&&!item?.nodeKeepgoing}" data-bind="enable: filter()" id="nodeKeepgoingFalse"/>
+                            <label for="nodeKeepgoingFalse">
                                 <g:message  code="Workflow.property.keepgoing.false.description"/>
                             </label>
                         </div>
@@ -311,26 +308,30 @@
 
                     <div class="col-sm-10">
                         <div class="radio">
-                          <g:radio name="nodeRankOrderAscending" value=""
+                            <g:radio name="nodeRankOrderAscending" value=""
                                    checked="${item?.nodeRankOrderAscending == null}"
-                                   data-bind="enable: filter()"/>
-                            <label>
+                                   data-bind="enable: filter()"
+                                   id="nodeRankOrderAscendingNull"/>
+                            <label for="nodeRankOrderAscendingNull">
                                 <g:message code="JobExec.property.nodeRankOrder.null.description"/>
                             </label>
                         </div>
                         <div class="radio">
                           <g:radio name="nodeRankOrderAscending" value="true"
                                    checked="${item?.nodeRankOrderAscending == Boolean.TRUE}"
-                                   data-bind="enable: filter()"/>
-                            <label>
+                                   data-bind="enable: filter()"
+                                   id="nodeRankOrderAscending"/>
+                            <label for="nodeRankOrderAscending">
                                 <g:message code="scheduledExecution.property.nodeRankOrder.ascending.label"/>
                             </label>
                         </div>
                         <div class="radio">
-                            <label>
-                                <g:radio name="nodeRankOrderAscending" value="false"
-                                         checked="${item?.nodeRankOrderAscending == Boolean.FALSE}"
-                                         data-bind="enable: filter()"/>
+                          <g:radio name="nodeRankOrderAscending" value="false"
+                                   checked="${item?.nodeRankOrderAscending == Boolean.FALSE}"
+                                   data-bind="enable: filter()"
+                                   id="nodeRankOrderDescending"/>
+
+                            <label for="nodeRankOrderDescending">
                                 <g:message code="scheduledExecution.property.nodeRankOrder.descending.label"/>
                             </label>
                         </div>
@@ -343,19 +344,16 @@
                     <label class="col-sm-2 control-label"><g:message code="JobExec.nodeStep.title" /></label>
                     <div class="col-sm-10">
                         <div class="radio">
-                            <label>
-                                <g:radio id="jobNodeStepFieldTrue"  name="nodeStep" value="true"
-                                         checked="${!!isNodeStep}"/>
-
+                            <g:radio id="jobNodeStepFieldTrue"  name="nodeStep" value="true"
+                                   checked="${!!isNodeStep}"/>
+                            <label for="jobNodeStepFieldTrue">
                                 <g:message code="JobExec.nodeStep.true.label" />
                             </label>
                             <span class="text-primary"><g:message code="JobExec.nodeStep.true.description"/></span>
                         </div>
                         <div class="radio">
-                            <label>
-                                <g:radio id="jobNodeStepFieldFalse"  name="nodeStep" value="false"
-                                         checked="${!isNodeStep}"/>
-
+                            <g:radio id="jobNodeStepFieldFalse"  name="nodeStep" value="false" checked="${!isNodeStep}"/>
+                            <label for="jobNodeStepFieldFalse">
                                 <g:message code="JobExec.nodeStep.false.label" />
                             </label>
                             <span class="text-primary"><g:message code="JobExec.nodeStep.false.description"/></span>
@@ -441,7 +439,7 @@
                     <g:set var="hasAdvanced" value="${item?.scriptInterpreter || item?.interpreterArgsQuoted || item?.fileExtension}"/>
                     <div class="row">
                         <div class="col-sm-2 control-label">
-                            <span class="btn ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
+                            <span class="btn btn-sm ${wdgt.css(if: hasAdvanced, then:'active')}" data-toggle="collapse" data-target="#scriptInterpreter${rkey}">
                                 Advanced
                                 <i class="glyphicon ${wdgt.css(if: hasAdvanced, then: 'glyphicon-chevron-down', else:'glyphicon-chevron-right')} "></i>
                             </span>
@@ -488,11 +486,11 @@
                         <div class="form-group">
                             <div class="col-sm-offset-2 col-sm-10">
                                 <div class="checkbox">
-                                    <label>
-                                        <g:checkBox name="interpreterArgsQuoted"
-                                                    checked="${item?.interpreterArgsQuoted}"
-                                                    id="interpreterArgsQuotedField" value="true"
-                                                    data-bind="checked: argsQuoted"/>
+                                  <g:checkBox name="interpreterArgsQuoted"
+                                              checked="${item?.interpreterArgsQuoted}"
+                                              id="interpreterArgsQuotedField" value="true"
+                                              data-bind="checked: argsQuoted"/>
+                                    <label for="interpreterArgsQuotedField">
                                         <g:message code="Workflow.Step.interpreterArgsQuoted.label"/>
                                     </label>
                                     <span class="action"
@@ -637,9 +635,9 @@
             </div>
         </g:elseif>
         <g:if test="${isErrorHandler}">
-            <div class="presentation">
-                <label>
-                    <g:checkBox name="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
+            <div class="presentation checkbox">
+                <g:checkBox name="keepgoingOnSuccess" id="keepgoingOnSuccess" value="true" checked="${item?.keepgoingOnSuccess}"/>
+                <label for="keepgoingOnSuccess">
                     <g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.label" />
                 </label>
                 <span class="text-primary"><g:message code="Workflow.stepErrorHandler.keepgoingOnSuccess.description" /></span>
