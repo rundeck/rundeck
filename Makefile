@@ -1,14 +1,16 @@
 SHELL=/bin/bash
 
-VNUMBER=$(shell grep version.number= $${PWD}/version.properties | cut -d= -f 2)
-ifndef TAG
-TAG=$(shell grep version.tag= $${PWD}/version.properties | cut -d= -f 2)
-endif
-VERSION=${VNUMBER}-${TAG}
-ifeq ($(strip $(TAG)),GA)
-VERSION=${VNUMBER}
-endif
-RELEASE=$(shell grep version.release.number= $${PWD}/version.properties | cut -d= -f 2)
+ENV=development
+
+# Grab the version information from gradle
+IGNORE := $(shell TERM=dumb $${PWD}/gradlew -q -Penvironment=$(ENV) bashVersionInfo | sed 's/=/:=/' | sed 's/^/export /' > makeenv)
+include makeenv
+
+# Assign to new variables that can be overriden in the make call
+VERSION=${VERSION_FULL}
+VTAG=${VERSION_TAG}
+VNUM=${VERSION_NUMBER}
+VDATE=${VERSION_DATE}
 
 PROXY_DEFS=
 ifdef http_proxy
@@ -17,7 +19,6 @@ gradle_proxy_host=$(shell echo ${http_proxy}|sed 's/http:\/\///'|awk -F ':' '{ p
 gradle_proxy_port=$(shell echo ${http_proxy}|awk -F ':' '{ print $NF }')
 PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
 endif
-
 
 .PHONY: clean rundeck release core-snapshot test app notes
 
@@ -29,7 +30,11 @@ rundeck:  app
 app: rundeckapp/build/libs/rundeck-$(VERSION).war
 
 rundeckapp/build/libs/rundeck-$(VERSION).war:
-	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) --build-cache -Penvironment=release -PreleaseTag=$(TAG) -PbuildNum=$(RELEASE) assemble --scan
+	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) \
+		--build-cache \
+		--scan \
+		-Penvironment=$(ENV) \
+		assemble
 
 
 #snapshot and release
@@ -50,10 +55,10 @@ test:
 #rpm and deb packaging
 
 rpm: app
-	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) rpmclean rpm
+	cd packaging; $(MAKE) VERSION=$(VERSION) VNUM=$(VNUM) ENV=$(ENV) VDATE=$(VDATE) rpmclean rpm
 
 deb: app
-	cd packaging; $(MAKE) VERSION=$(VNUMBER) VNAME=$(VERSION) RELEASE=$(RELEASE) debclean deb
+	cd packaging; $(MAKE) VERSION=$(VERSION) VNUM=$(VNUM) ENV=$(ENV) VDATE=$(VDATE) debclean deb
 
 #doc build
 
