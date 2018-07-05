@@ -881,18 +881,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
         final descriptions = framework.getResourceModelSourceService().listDescriptions()
         final filecopydescs = framework.getFileCopierService().listDescriptions()
-        def defaultResourceFile= new File(framework.getFrameworkProjectsBaseDir(),'${project.name}/etc/resources.xml').getAbsolutePath()
-        def configs=[
-            [
-                type: FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
-                props:[
-                        (FileResourceModelSource.Configuration.FILE): defaultResourceFile,
-                        (FileResourceModelSource.Configuration.FORMAT): 'resourcexml',
-                        (FileResourceModelSource.Configuration.GENERATE_FILE_AUTOMATICALLY): 'true',
-                        (FileResourceModelSource.Configuration.INCLUDE_SERVER_NODE): 'true',
-                ]
-            ]
-        ]
+
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
 
@@ -1920,13 +1909,21 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
         resourcesPasswordFieldsService.track(resourceConfig,true, *resourceDescs)
-        execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], true, *execDesc)
-        fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]],true, *filecopyDesc)
+        if(defaultNodeExec) {
+            execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], true, *execDesc)
+        }
+        if(defaultFileCopy) {
+            fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], true, *filecopyDesc)
+        }
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
         //replace password values with hashed values
-        frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projectProps, filecopyConfig)
-        frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projectProps, nodeConfig)
+        if(defaultFileCopy) {
+            frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projectProps, filecopyConfig)
+        }
+        if(defaultNodeExec) {
+            frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projectProps, nodeConfig)
+        }
         def count = 1
         final service = framework.getResourceModelSourceService()
         resourceConfig.each {resconfig ->

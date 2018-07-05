@@ -174,13 +174,7 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
         if (addDefaultProps) {
             if (null == properties || !properties.containsKey("resources.source.1.type")) {
                 //add default file source
-                newProps.setProperty("resources.source.1.type", "file");
-                newProps.setProperty(
-                        "resources.source.1.config.file",
-                        new File(destfile.getParentFile(), "resources.xml").getAbsolutePath()
-                );
-                newProps.setProperty("resources.source.1.config.includeServerNode", "true");
-                newProps.setProperty("resources.source.1.config.generateFileAutomatically", "true");
+                newProps.setProperty("resources.source.1.type", "local");
             }
             if (null == properties || !properties.containsKey("service.NodeExecutor.default.provider")) {
                 newProps.setProperty("service.NodeExecutor.default.provider", "jsch-ssh");

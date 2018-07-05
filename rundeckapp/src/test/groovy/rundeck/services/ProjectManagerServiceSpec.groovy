@@ -292,7 +292,7 @@ class ProjectManagerServiceSpec extends Specification {
         0*service.nodeService.getNodes('test1')
 
         result.name=='test1'
-        2==result.getProjectProperties().size()
+        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 
@@ -357,7 +357,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         0*service.nodeService._(*_)
         result.name=='test1'
-        2==result.getProjectProperties().size()
+        (2+ProjectManagerService.DEFAULT_PROJ_PROPS.size())==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
         'def'==result.getProjectProperties().get('abc')
 

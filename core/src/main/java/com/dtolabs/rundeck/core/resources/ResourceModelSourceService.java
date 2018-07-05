@@ -51,6 +51,7 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
     public ResourceModelSourceService(final Framework framework) {
         super(framework);
 
+        registry.put(LocalResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, LocalResourceModelSourceFactory.class);
         registry.put(FileResourceModelSourceFactory.SERVICE_PROVIDER_TYPE, FileResourceModelSourceFactory.class);
         registry.put(DirectoryResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
             DirectoryResourceModelSourceFactory.class);

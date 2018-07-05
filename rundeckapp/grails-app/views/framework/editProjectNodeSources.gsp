@@ -43,12 +43,15 @@
     function init(){
         configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}',confirm.setNeedsConfirm);
         configControl.pageInit();
-        $$('input').each(function(elem){
+        jQuery('input').each(function(elem){
             if(elem.type=='text'){
                 elem.observe('keypress',noenter);
             }
         });
-    }
+        jQuery('.apply_ace').each(function () {
+            _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
+        });
+        }
     var _storageBrowseSelected=confirm.setNeedsConfirm;
     jQuery(init);
     </g:javascript>
@@ -178,5 +181,6 @@
         </g:form>
     </div>
   </div>
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>
 </html>
