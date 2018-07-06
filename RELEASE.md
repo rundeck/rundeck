@@ -22,7 +22,9 @@ Database with over 1000 projects.
 
 ## Bug Reporters
 
+* isuftin
 * jtobard
+* sebastianbello
 
 ## Issues
 
