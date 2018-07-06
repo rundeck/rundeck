@@ -1,6 +1,6 @@
 package rundeck.controllers
 
-import org.rundeck.security.passwordutil.PasswordUtilityEncrypter
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 
 class PasswordUtilityController {
     Map<String,PasswordUtilityEncrypter> encrypters = [:]
