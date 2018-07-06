@@ -91,7 +91,7 @@
         </p>
       </g:link>
     </li>
-    <li class="${enc(attr: wfselected)}">
+    <li id="nav-jobs-link" class="${enc(attr: wfselected)}">
         <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: params.project ?: request.project]">
             <i class="fas fa-tasks"></i>
             <p>
@@ -99,7 +99,7 @@
             </p>
         </g:link>
     </li>
-    <li class="${enc(attr:resselected)}">
+    <li id="nav-nodes-link" class="${enc(attr:resselected)}">
         <g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}" params="[project: params.project ?: request.project]">
             <i class="fas fa-sitemap"></i>
             <p>
@@ -108,7 +108,7 @@
         </g:link>
     </li>
     <g:if test="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN, project: params.project ?: request.project)}">
-        <li class="${enc(attr: adhocselected)}">
+        <li id="nav-commands-link" class="${enc(attr: adhocselected)}">
             <g:link controller="framework" action="adhoc" class=" toptab ${enc(attr: adhocselected)}" params="[project: params.project ?: request.project]">
                 <i class="fas fa-terminal"></i>
                 <p>
@@ -117,7 +117,7 @@
             </g:link>
         </li>
     </g:if>
-    <li class="${enc(attr: eventsselected)}">
+    <li id="nav-activity-link" class="${enc(attr: eventsselected)}">
       <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: params.project ?: request.project]">
         <i class="fas fa-history"></i>
         <p>
@@ -213,7 +213,7 @@
     </g:ifExecutionMode>
 </g:if>
 
-<div class="snapshot-version">
+<div id="snapshot-version" class="snapshot-version">
   <span class="rundeck-version-identity"
         data-version-string="${enc(attr: buildIdent)}"
         data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
