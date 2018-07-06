@@ -1,9 +1,9 @@
-Release 2.11.4
+Release 2.11.5
 ===========
 
-Date: 2018-06-07
+Date: 2018-07-06
 
-Name: <span style="color: SaddleBrown"><span class="glyphicon glyphicon-pushpin"></span> "cappuccino saddlebrown pushpin"</span>
+Name: <span style="color: SeaGreen"><span class="glyphicon glyphicon-tower"></span> "cappuccino seagreen tower"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,29 +11,22 @@ Name: <span style="color: SaddleBrown"><span class="glyphicon glyphicon-pushpin"
 
 ## Notes
 
-Bug and security fixes.
+Bug fix.
 
-This release addresses a potential security issue in processing of zip files,
-please see the this issue: [Security Advisory: Zip Slip directory traversal vulnerability #3471](https://github.com/rundeck/rundeck/issues/3471).
+This release addresses the error **ORA-01795** in `menu/home` when using Oracle
+Database with over 1000 projects.
 
 ## Contributors
 
 * Greg Schueler (gschueler)
 * Jaime Tobar (jtobard)
-* Stephen Joyner (sjrd218)
 
 ## Bug Reporters
 
-* gschueler
 * jtobard
-* kino71
 
 ## Issues
 
-[Milestone 2.11.4](https://github.com/rundeck/rundeck/milestone/78)
+[Milestone 2.11.5](https://github.com/rundeck/rundeck/milestone/79)
 
-* [2.11: backport bug fixes](https://github.com/rundeck/rundeck/issues/3494)
-    * [#3384 duplicate jobs page doesn't show options](https://github.com/rundeck/rundeck/issues/3384)
-    * [#3423 Create project via API with invalid project name does not return error](https://github.com/rundeck/rundeck/issues/3423)
-    * [2.11: Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3493)
-    * [backport: Zip Slip fix for 2.11](https://github.com/rundeck/rundeck/pull/3486)
+* [Fix Error message: ORA-01795](https://github.com/rundeck/rundeck/pull/3650)
