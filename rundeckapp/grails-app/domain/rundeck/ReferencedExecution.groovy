@@ -17,7 +17,7 @@ class ReferencedExecution {
     static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
         def refExecs = findAllByScheduledExecution(se)?.collect{ re ->
             re.execution?.scheduledExecution
-        }?.unique()
+        }?.unique().findAll(){it!=null}
         refExecs.subList(0, (max!=0 && refExecs.size()>max)?max:refExecs.size())
 
     }
