@@ -11,7 +11,7 @@ Name: <span style="color: SeaGreen"><span class="glyphicon glyphicon-tower"></sp
 
 ## Notes
 
-Bug fix.
+Bug fixes.
 
 This release addresses the error **ORA-01795** in `menu/home` when using Oracle
 Database with over 1000 projects.
@@ -29,4 +29,5 @@ Database with over 1000 projects.
 
 [Milestone 2.11.5](https://github.com/rundeck/rundeck/milestone/79)
 
+* [NPE on referenced Job](https://github.com/rundeck/rundeck/pull/3655)
 * [Fix Error message: ORA-01795](https://github.com/rundeck/rundeck/pull/3650)
