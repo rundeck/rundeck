@@ -2201,13 +2201,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj2 = System.currentTimeMillis()
         def executionResults = projectNames?Execution.createCriteria().list {
             gt('dateStarted', lastday)
-            inList('project', projectNames)
+            //inList('project', projectNames)
             projections {
                 property('project')
                 property('status')
                 property('user')
             }
         }:[]
+        executionResults = executionResults.findAll{projectNames.contains(it[0])}
+
         proj2 = System.currentTimeMillis() - proj2
         long proj3 = System.currentTimeMillis()
         def projexecs = executionResults.groupBy { it[0] }
@@ -2257,12 +2259,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj2=System.currentTimeMillis()
         def projects2 = projectNames?Execution.createCriteria().list {
             gt('dateStarted', today)
-            inList('project', projectNames)
+            //inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
             }
         }:[]
+        projects2 = projects2.findAll{projectNames.contains(it[0])}
         proj2=System.currentTimeMillis()-proj2
         def execCount= 0 //Execution.countByDateStartedGreaterThan( today)
         projects2.each{val->
@@ -2278,12 +2281,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def failedExecs = projectNames? Execution.createCriteria().list {
             gt('dateStarted', today)
             inList('status', ['false', 'failed'])
-            inList('project', projectNames)
+            //inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
             }
         }:[]
+        failedExecs = failedExecs.findAll{projectNames.contains(it[0])}
         failedExecs.each{val->
             if(val.size()==2){
                 if(summary[val[0]]) {
@@ -2296,12 +2300,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj3=System.currentTimeMillis()
         def users2 = projectNames?Execution.createCriteria().list {
             gt('dateStarted', today)
-            inList('project', projectNames)
+            //inList('project', projectNames)
             projections {
                 distinct('user')
                 property('project')
             }
         }:[]
+        users2=users2.findAll {projectNames.contains(it[1])}
         proj3=System.currentTimeMillis()-proj3
         def users = new HashSet<String>()
         users2.each{val->
