@@ -18,26 +18,31 @@
 
 //Test the result of the build to verify expected artifacts are created
 
+cli = new CliBuilder(usage: 'slide')
+cli._(longOpt: 'buildType', args: 1, 'Build type [development | release]')
+def options = cli.parse(args)
+
 def target="build/libs"
 
 def props=new Properties()
-new File('gradle.properties').withReader{
+new File('version.properties').withReader{
     props.load(it)
 }
-args.each{
-    def m=it=~/^-[PD](.+?)(=(.+))?$/
-    if(m.matches()){
-        props[m[0][1]]=m[0][2]?m[0][3]:true
-    }
+
+def vNum = props.get('version.number')
+
+def version
+
+if(options.buildType == 'development'){
+    version = "${vNum}-SNAPSHOT".toString()
+} else if (options.buildType == 'release'){
+    version = props.get('version.version')
+} else {
+    throw new Exception("Unknown build type [${options.buildType}]".toString())
 }
 
-
-def tag="-SNAPSHOT"
-if(props.'release'){
-    tag= props.releaseTag && props.releaseTag!='GA' ? '-'+props.releaseTag : ''
-}
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
-def version=props.currentVersion+tag
+
 //versions of dependency we want to verify
 def versions=[
         mysql:'5.1.42',

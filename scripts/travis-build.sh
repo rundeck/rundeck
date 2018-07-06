@@ -9,4 +9,4 @@ if [[ ! -z "${RUNDECK_TAG:-}" ]] ; then
 fi
 
 make ENV="${ENV}" rpm deb
-groovy testbuild.groovy -gradle
+groovy testbuild.groovy --buildType="${ENV}"
