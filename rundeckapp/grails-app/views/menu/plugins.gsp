@@ -32,6 +32,20 @@ To change this template use File | Settings | File Templates.
   <title><g:message code="page.Plugins.title"/></title>
 </head>
 <body>
+  <g:if test="${flash.errors}">
+      <div class="alert alert-warning">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <g:each in="${flash.errors}" var="message">
+             <g:message code="${message}" default="${message}" />
+          </g:each>
+      </div>
+  </g:if>
+  <g:if test="${flash.installSuccess}">
+      <div class="alert alert-info">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <g:message code="plugin.install.success" default="Plugin Installed Successfully" />
+      </div>
+  </g:if>
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
@@ -51,10 +65,16 @@ To change this template use File | Settings | File Templates.
                 <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
                 <g:set var="pluginLinkUrl"
                 value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-                <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success pull-right">
-                  <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-                  <i class="glyphicon glyphicon-arrow-right"></i>
-                </a>
+                <div class="btn-toolbar">
+                  <a href="${enc(attr:pluginLinkUrl)}" class="btn-group btn btn-success pull-right">
+                    <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                    <i class="glyphicon glyphicon-arrow-right"></i>
+                  </a>
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
+                  </a>
+                </div>
               </g:else>
             </h3>
           </div>
@@ -261,5 +281,6 @@ To change this template use File | Settings | File Templates.
     </div>
   </div>
 </div>
+<g:render template="pluginInstallForm" />
 </body>
 </html>

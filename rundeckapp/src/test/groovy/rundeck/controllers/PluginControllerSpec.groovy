@@ -1,6 +1,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.Framework
+
+import org.grails.plugins.testing.GrailsMockMultipartFile
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -17,9 +19,10 @@ import spock.lang.Specification
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
 
     String fakePluginId = "fake".encodeAsSHA256().substring(0,12)
+    static final String PLUGIN_FILE = "rundeck-ui-plugin-examples-1.0-plugin.zip"
 
-    def setup() {
-    }
+    File uploadTestBaseDir = File.createTempDir()
+    File uploadTestTargetDir = File.createTempDir()
 
     def cleanup() {
     }
@@ -123,23 +126,39 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
 
     def "plugin service descriptions"() {
         given:
-            controller.pluginService = Mock(PluginService)
-            controller.uiPluginService = Mock(UiPluginService)
-            def fakePluginDesc1 = new PluginApiServiceSpec.FakePluginDescription()
-            fakePluginDesc1.name = 'XYZfake'
-            def fakePluginDesc2 = new PluginApiServiceSpec.FakePluginDescription()
-            fakePluginDesc2.name = 'ABCfake'
-            request.addHeader('x-rundeck-ajax', 'true')
-            params.service = svcName
-            messageSource.addMessage("framework.service.${svcName}.label", Locale.ENGLISH, "framework.service.${svcName}.label")
-            messageSource.addMessage("framework.service.${svcName}.label.indexed", Locale.ENGLISH, "framework.service.${svcName}.label.indexed")
-            messageSource.addMessage("framework.service.${svcName}.label.plural", Locale.ENGLISH, "framework.service.${svcName}.label.plural")
-            messageSource.addMessage("framework.service.${svcName}.add.title", Locale.ENGLISH, "framework.service.${svcName}.add.title")
+        controller.pluginService = Mock(PluginService)
+        controller.uiPluginService = Mock(UiPluginService)
+        def fakePluginDesc1 = new PluginApiServiceSpec.FakePluginDescription()
+        fakePluginDesc1.name = 'XYZfake'
+        def fakePluginDesc2 = new PluginApiServiceSpec.FakePluginDescription()
+        fakePluginDesc2.name = 'ABCfake'
+        request.addHeader('x-rundeck-ajax', 'true')
+        params.service = svcName
+        messageSource.addMessage(
+                "framework.service.${svcName}.label",
+                Locale.ENGLISH,
+                "framework.service.${svcName}.label"
+        )
+        messageSource.addMessage(
+                "framework.service.${svcName}.label.indexed",
+                Locale.ENGLISH,
+                "framework.service.${svcName}.label.indexed"
+        )
+        messageSource.addMessage(
+                "framework.service.${svcName}.label.plural",
+                Locale.ENGLISH,
+                "framework.service.${svcName}.label.plural"
+        )
+        messageSource.addMessage(
+                "framework.service.${svcName}.add.title",
+                Locale.ENGLISH,
+                "framework.service.${svcName}.add.title"
+        )
         when:
-            def result = controller.pluginServiceDescriptions(svcName)
+        def result = controller.pluginServiceDescriptions(svcName)
         then:
-            1 * controller.pluginService.getPluginTypeByService(svcName) >> NotificationPlugin
-            1 * controller.pluginService.listPlugins(NotificationPlugin) >> [
+        1 * controller.pluginService.getPluginTypeByService(svcName) >> NotificationPlugin
+        1 * controller.pluginService.listPlugins(NotificationPlugin) >> [
                 XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
                 ABCfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc2, 'ABCfake')
             ]
@@ -158,24 +177,95 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             json.descriptions
             json.descriptions == [
                 [
-                    name       : 'ABCfake',
-                    title      : 'ABC title',
-                    description: 'ABC desc'
+                        name       : 'ABCfake',
+                        title      : 'ABC title',
+                        description: 'ABC desc'
                 ],
                 [
-                    name       : 'XYZfake',
-                    title      : 'XYZ title',
-                    description: 'XYZ desc'
+                        name       : 'XYZfake',
+                        title      : 'XYZ title',
+                        description: 'XYZ desc'
                 ],
-            ]
-            json.labels
-            json.labels.singular == 'framework.service.Notification.label'
-            json.labels.indexed == 'framework.service.Notification.label.indexed'
-            json.labels.plural == 'framework.service.Notification.label.plural'
-            json.labels.addButton == 'framework.service.Notification.add.title'
+        ]
+        json.labels
+        json.labels.singular == 'framework.service.Notification.label'
+        json.labels.indexed == 'framework.service.Notification.label.indexed'
+        json.labels.plural == 'framework.service.Notification.label.plural'
+        json.labels.addButton == 'framework.service.Notification.add.title'
 
         where:
-            svcName        | _
-            'Notification' | _
+        svcName        | _
+        'Notification' | _
+    }
+
+    void "upload plugin no file specified"() {
+        when:
+        controller.uploadPlugin()
+
+        then:
+        response.redirectUrl == "/menu/plugins"
+        flash.errors == ["plugin.error.missing.upload.file"]
+    }
+
+    void "install plugin no plugin url specified"() {
+        when:
+        controller.installPlugin()
+
+        then:
+        response.redirectUrl == "/menu/plugins"
+        flash.errors == ["plugin.error.missing.url"]
+    }
+
+    void "upload plugin"() {
+        setup:
+        File uploaded = new File(uploadTestTargetDir,PLUGIN_FILE)
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+
+
+        when:
+        !uploaded.exists()
+        def pluginInputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(PLUGIN_FILE)
+        request.addFile(new GrailsMockMultipartFile("pluginFile",PLUGIN_FILE,"application/octet-stream",pluginInputStream))
+        controller.uploadPlugin()
+
+        then:
+        response.redirectUrl == "/menu/plugins"
+        flash.installSuccess
+        uploaded.exists()
+
+        cleanup:
+        uploaded.delete()
+    }
+
+    void "install plugin"() {
+        setup:
+        File installed = new File(uploadTestTargetDir,PLUGIN_FILE)
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework) {
+            getBaseDir() >> uploadTestBaseDir
+            getLibextDir() >> uploadTestTargetDir
+        }
+        fwksvc.getRundeckFramework() >> fwk
+        controller.frameworkService = fwksvc
+
+        when:
+        !installed.exists()
+        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
+        params.pluginUrl = pluginUrl.toString()
+        controller.installPlugin()
+
+        then:
+        response.redirectUrl == "/menu/plugins"
+        flash.installSuccess
+        installed.exists()
+
+        cleanup:
+        installed.delete()
     }
 }
