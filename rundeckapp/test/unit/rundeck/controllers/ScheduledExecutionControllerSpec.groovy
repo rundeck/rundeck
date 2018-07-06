@@ -1707,4 +1707,99 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
+
+        def "isReference deleted parent"(){
+        given:
+        def refTotal = 10
+        def se = new ScheduledExecution(
+                uuid: jobuuid,
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def seb = new ScheduledExecution(
+                jobName: 'test2',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: null
+        ).save()
+
+        //if(expected){
+            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        //}
+
+
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+        testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAny(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet(_,_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+
+        def model = controller.show()
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.isReferenced==false
+
+        where:
+        jobuuid     | expected
+        '000000'    | false
+        '111111'    | false
+
+    }
 }
