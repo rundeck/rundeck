@@ -40,7 +40,7 @@ perl  -i'.orig' -p -e "s#^version\.tag\s*=.*\$#version.tag=$VTAG#" `pwd`/version
 perl  -i'.orig' -p -e "s#^version\.date\s*=.*\$#version.date=$VDATE#" `pwd`/version.properties
 perl  -i'.orig' -p -e "s#^version\.version\s*=.*\$#version.version=$VNAME#" `pwd`/version.properties
 
-perl  -i'.orig' -p -e "s#^currentVersion\s*=.*\$#currentVersion = $VERSION#" `pwd`/gradle.properties
+perl  -i'.orig' -p -e "s#^currentVersion\s*=.*\$#currentVersion = $VNUM#" `pwd`/gradle.properties
 
 echo MODIFIED: `pwd`/version.properties
 
