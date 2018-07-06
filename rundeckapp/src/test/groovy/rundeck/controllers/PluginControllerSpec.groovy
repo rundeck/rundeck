@@ -14,6 +14,7 @@ import rundeck.services.PluginApiService
 import rundeck.services.PluginApiServiceSpec
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
@@ -24,8 +25,6 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     File uploadTestBaseDir = File.createTempDir()
     File uploadTestTargetDir = File.createTempDir()
 
-    def cleanup() {
-    }
     static final String TEST_JSON1 = '''{"config":{"actions._indexes":"dbd3da9c_1","actions._type":"list",
 "actions.entry[dbd3da9c_1].type":"testaction1","actions.entry[dbd3da9c_1].config.actions._type":"embedded",
 "actions.entry[dbd3da9c_1].config.actions.type":"","actions.entry[dbd3da9c_1].config.actions.config.stringvalue":"asdf",
@@ -203,6 +202,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.uploadPlugin()
 
         then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
         response.redirectUrl == "/menu/plugins"
         flash.errors == ["plugin.error.missing.upload.file"]
     }
@@ -212,6 +213,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
         response.redirectUrl == "/menu/plugins"
         flash.errors == ["plugin.error.missing.url"]
     }
@@ -235,6 +238,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.uploadPlugin()
 
         then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
         response.redirectUrl == "/menu/plugins"
         flash.installSuccess
         uploaded.exists()
@@ -261,11 +266,26 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         controller.installPlugin()
 
         then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
         response.redirectUrl == "/menu/plugins"
         flash.installSuccess
         installed.exists()
 
         cleanup:
         installed.delete()
+    }
+
+    void "unauthorized install plugin fails"() {
+        when:
+        def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
+        params.pluginUrl = pluginUrl.toString()
+        controller.installPlugin()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> false
+        response.redirectUrl == "/menu/plugins"
+        flash.errors == ["request.error.unauthorized.title"]
     }
 }

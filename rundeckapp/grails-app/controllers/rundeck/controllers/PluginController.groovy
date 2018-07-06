@@ -1,7 +1,9 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.PluginValidator
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.springframework.web.multipart.MultipartFile
@@ -308,6 +310,15 @@ class PluginController extends ControllerBase {
     }
 
     def uploadPlugin() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+                                                          "system",
+                                                          AuthConstants.ACTION_ADMIN)
+        if (!authorized) {
+            flash.errors = ["request.error.unauthorized.title"]
+            redirectToPluginMenu()
+            return
+        }
         if(!params.pluginFile || params.pluginFile.isEmpty()) {
             flash.errors = ["plugin.error.missing.upload.file"]
             redirectToPluginMenu()
@@ -323,6 +334,15 @@ class PluginController extends ControllerBase {
     }
 
     def installPlugin() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+                                                                               "system",
+                                                                               AuthConstants.ACTION_ADMIN)
+        if (!authorized) {
+            flash.errors = ["request.error.unauthorized.title"]
+            redirectToPluginMenu()
+            return
+        }
         if(!params.pluginUrl) {
             flash.errors = ["plugin.error.missing.url"]
             redirectToPluginMenu()
