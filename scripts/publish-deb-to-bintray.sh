@@ -52,14 +52,13 @@ function main() {
   ORG=$3
   REPO=$4
   DEB=$5
-  PCK_RELEASE="${6:-}"
 
   DEB_FILE=`basename ${DEB}`
 
   PCK_NAME=${PCK_NAME:-$(dpkg-deb -f ${DEB} Package)}
   PCK_VERSION=${PCK_VERSION:-$(dpkg-deb -f ${DEB} Version)}
 
-  if [ -z "$PCK_NAME" ] || [ -z "$PCK_VERSION" ] || [ -z "$PCK_RELEASE" ]; then
+  if [ -z "$PCK_NAME" ] || [ -z "$PCK_VERSION" ] ; then
    echo "no DEB metadata information in $DEB_FILE, aborting..."
    exit -1
   fi
@@ -71,8 +70,7 @@ function main() {
   echo "[DEBUG] DEB        : ${DEB_FILE}"
   echo "[DEBUG] PCK_NAME   : ${PCK_NAME}"
   echo "[DEBUG] PCK_VERSION: ${PCK_VERSION}"
-  echo "[DEBUG] PCK_RELEASE: ${PCK_RELEASE}"
-  
+
   init_curl
   check_package_exists
   local pkg_exists=$?
