@@ -120,7 +120,7 @@ jobs:
     # Deploy new snapshot packages
     - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb'
     - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm'
-    - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven'
+    - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
 
