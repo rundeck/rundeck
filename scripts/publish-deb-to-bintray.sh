@@ -52,7 +52,7 @@ function main() {
   ORG=$3
   REPO=$4
   DEB=$5
-  PCK_RELEASE=$6
+  PCK_RELEASE="${6:-}"
 
   DEB_FILE=`basename ${DEB}`
 
@@ -124,7 +124,7 @@ function upload_content() {
     -H X-Bintray-Debian-Component:$DEB_COMPONENT \
     -H X-Bintray-Debian-Architecture:$DEB_ARCH \
     -H X-Bintray-Package:${PCK_NAME} \
-    -H X-Bintray-Version:${PCK_VERSION}-${PCK_RELEASE} \
+    -H X-Bintray-Version:${PCK_VERSION} \
     ${API}/content/${ORG}/${REPO}/${DEB_FILE})
   [ $CURLRESULT -eq ${CREATED} ]
   uploaded=$?
