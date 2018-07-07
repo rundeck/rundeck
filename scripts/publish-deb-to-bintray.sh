@@ -133,7 +133,7 @@ function deploy_deb() {
   
   if ( upload_content); then
     echo "[DEBUG] Publishing ${DEB_FILE}..."
-    ${CURL} -X POST ${API}/content/${ORG}/${REPO}/${PCK_NAME}/${PCK_VERSION}-${PCK_RELEASE}/publish -d "{ \"discard\": \"false\" }"
+    ${CURL} -X POST ${API}/content/${ORG}/${REPO}/${PCK_NAME}/${PCK_VERSION}/publish -d "{ \"discard\": \"false\" }"
   else
     echo "[SEVERE] First you should upload your deb ${DEB_FILE}"
     exit 2
