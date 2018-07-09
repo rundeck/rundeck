@@ -99,7 +99,7 @@ data for configuring remote option cascading/dependencies
             </div>
         </div>
     </g:if>
-    
+
     <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
         <div class="form-group " data-bind="
     css: { 'has-warning': hasError, 'remote': hasRemote }
@@ -149,9 +149,13 @@ data for configuring remote option cascading/dependencies
 
 
     <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT}">
-        <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">
-            <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
-        </div>
+      <div class="col-xs-12 col-sm-10-col-sm-offset-2">
+        <div class="well">
+          <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">
+              <div><span data-bind="text: option.name"></span>=<span data-bind="text: option.value"></span></div>
+          </div>
+        </div>        
+      </div>
     </g:if>
 
     <g:if test="${showDTFormat}">

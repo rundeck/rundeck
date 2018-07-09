@@ -158,18 +158,20 @@
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
-                                        <div>
+                                        <div class="checkbox checkbox-inline">
+                                          <input id="${enc(attr:nkey)}"
+                                                 type="checkbox"
+                                                 name="extra.nodeIncludeName"
+                                                 value="${enc(attr:node.nodename)}"
+                                                 ${selectedNodes!=null ? '':'disabled' }
+                                                 data-tag="${enc(attr:node.tags?.join(' '))}"
+                                                  ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
+                                                 />
                                             <label for="${enc(attr:nkey)}"
-                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident  checkbox-inline"
+                                                   class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
                                                    id="${enc(attr:nkey)}_key">
-                                            <input id="${enc(attr:nkey)}"
-                                                   type="checkbox"
-                                                   name="extra.nodeIncludeName"
-                                                   value="${enc(attr:node.nodename)}"
-                                                   ${selectedNodes!=null ? '':'disabled' }
-                                                   data-tag="${enc(attr:node.tags?.join(' '))}"
-                                                    ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
-                                                   /><g:enc>${node.nodename}</g:enc></label>
+                                                   <g:enc>${node.nodename}</g:enc>
+                                                 </label>
 
                                         </div>
                                     </g:each>
