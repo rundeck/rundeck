@@ -15,6 +15,7 @@
  */
 package org.rundeck.security.passwordutil
 
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
 import org.eclipse.jetty.util.security.Credential
