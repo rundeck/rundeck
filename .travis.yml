@@ -169,6 +169,7 @@ branches:
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/
+    - properties-loader
 
 notifications:
   irc:

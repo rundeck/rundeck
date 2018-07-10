@@ -179,7 +179,6 @@ assets {
     excludes = ['gulpfile.js','**/*~','*.json','bootstrap/**/*.less']
 }
 
-
 artifacts {
     war war
 }
@@ -263,6 +262,10 @@ war {
     from("templates") {
         into("templates")
     }
+    // This file specifies the class paths for the spring boot loader to use
+    from("loader.properties") {
+        into("BOOT-INF/classes")
+    }
 }
 
 //spring boot 1.5.x bootRepackage is not a good gradle citizen
@@ -280,4 +283,33 @@ if (signArchives) {
     }
     bootRepackage.dependsOn(war)
     signArchives.dependsOn(bootRepackage)
+}
+
+
+task explodeWar {
+    dependsOn bootRepackage
+    doLast {
+        copy {
+            from zipTree("$buildDir/libs/$war.archiveName")
+            into "$buildDir/war-contents"
+        }
+    }
+}
+
+task customRepackage(type: War) {
+    dependsOn explodeWar
+
+    entryCompression = org.gradle.api.tasks.bundling.ZipEntryCompression.STORED
+
+    // Prevent picking up files from /src/main/webapp again
+    classpath = '/dev/null'
+
+    from "$buildDir/war-contents"
+
+    manifest {
+        attributes('Start-Class': 'rundeckapp.Application')
+        attributes('Spring-Boot-Classes': 'WEB-INF/classes/')
+        attributes('Spring-Boot-Lib': 'WEB-INF/lib/')
+        attributes('Main-Class': 'org.springframework.boot.loader.PropertiesLauncher')
+    }
 }
