@@ -113,6 +113,11 @@ public class ResourceModelSourceService
         return closeableProviderOfType(type).convert(factoryConverter(configuration));
     }
 
+    /**
+     * Given input configuration, produce a function to convert from a factory to model source
+     * @param configuration
+     * @return
+     */
     public static Function<ResourceModelSourceFactory, ResourceModelSource> factoryConverter(
         final Properties configuration
     )
