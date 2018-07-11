@@ -11,21 +11,25 @@ VERSION=${VERSION_FULL}
 VTAG=${VERSION_TAG}
 VNUM=${VERSION_NUMBER}
 VDATE=${VERSION_DATE}
+VREVISION=${VERSION_REVISION}
+
+BUILD_TIMESTAMP=$(shell date "+%Y%m%d%H%M")
 
 # Tilde separates version number from tag for sortability
 # Yum and apt consider any version with ~ to be older than those without
 ifeq ($(VTAG),GA)
   RPM_VERSION=$(VNUM)
-  DEB_VERSION=$(VNUM)
+  DEB_VERSION=$(VNUM)-$(VREVISION).$(BUILD_TIMESTAMP)
 else
   RPM_VERSION=$(VNUM)~$(VTAG)
-  DEB_VERSION=$(VNUM)~$(VTAG)
+  DEB_VERSION=$(VNUM)~$(VTAG)-$(VREVISION).$(BUILD_TIMESTAMP)
 endif
+
+RPM_RELEASE=$(VREVISION).$(BUILD_TIMESTAMP)
 
 RPMBUILD_DEFINES = --define "_topdir ${PWD}/rpmdist" 
 RPMBUILD_DEFINES+= --define "_version ${RPM_VERSION}"
-RPMBUILD_DEFINES+= --define "_release 1.$(shell date "+%Y%m%d%H%M")"
-
+RPMBUILD_DEFINES+= --define "_release ${RPM_RELEASE}"
 
 RPMBUILD_DEFINES+= --define "_vname ${VERSION}"
 
@@ -76,7 +80,7 @@ deb:
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template debdist/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
 	fakeroot dpkg-deb --build -Zgzip debdist
-	@mv debdist.deb debdist/rundeck_$(VERSION)_all.deb
+	@mv debdist.deb debdist/rundeck_$(DEB_VERSION)_all.deb
 
 clean: rpmclean debclean
 
