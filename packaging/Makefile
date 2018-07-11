@@ -18,11 +18,11 @@ BUILD_TIMESTAMP=$(shell date "+%Y%m%d%H%M")
 # Tilde separates version number from tag for sortability
 # Yum and apt consider any version with ~ to be older than those without
 ifeq ($(VTAG),GA)
-  RPM_VERSION=$(VNUM)
-  DEB_VERSION=$(VNUM)-$(VREVISION).$(BUILD_TIMESTAMP)
+  RPM_VERSION=$(VNUM).$(VDATE)
+  DEB_VERSION=$(VNUM).$(VDATE)-$(VREVISION).$(BUILD_TIMESTAMP)
 else
-  RPM_VERSION=$(VNUM)~$(VTAG)
-  DEB_VERSION=$(VNUM)~$(VTAG)-$(VREVISION).$(BUILD_TIMESTAMP)
+  RPM_VERSION=$(VNUM).$(VDATE)~$(VTAG)
+  DEB_VERSION=$(VNUM).$(VDATE)~$(VTAG)-$(VREVISION).$(BUILD_TIMESTAMP)
 endif
 
 RPM_RELEASE=$(VREVISION).$(BUILD_TIMESTAMP)
