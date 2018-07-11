@@ -31,13 +31,25 @@ import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
+import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
+import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
+import com.dtolabs.rundeck.plugins.step.StepPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -2005,21 +2017,36 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def plugins(){
         //list plugins and config settings for project/framework props
-
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
 
         //framework level plugin descriptions
+        //TODO: use pluginService.listPlugins for these services/plugintypes
         def pluginDescs= [
             framework.getNodeExecutorService(),
             framework.getFileCopierService(),
             framework.getNodeStepExecutorService(),
             framework.getStepExecutionService(),
-            framework.getResourceModelSourceService(),
-            framework.getResourceFormatParserService(),
-            framework.getResourceFormatGeneratorService(),
-            framework.getOrchestratorService(),
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
+        }
+
+        //load via pluginService to include spring-based app plugins
+        pluginDescs['ResourceModelSource'] = pluginService.listPlugins(
+            ResourceModelSourceFactory,
+            framework.getResourceModelSourceService()
+        ).findAll { it.value.description }.collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
+
+        //TODO: use pluginService.listPlugins for these services/plugintypes
+        [
+            framework.getResourceFormatParserService(),
+            framework.getResourceFormatGeneratorService(),
+            framework.getOrchestratorService()
+        ].each {
+
+            pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
         }
 
         //web-app level plugin descriptions
