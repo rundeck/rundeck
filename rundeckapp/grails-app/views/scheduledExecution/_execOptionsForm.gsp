@@ -466,12 +466,15 @@
                   </a>
                 </div>
                 <div class="col-xs-12 col-sm-6 form-inline text-right">
-                    <label>
-                        <g:checkBox id="followoutputcheck" name="follow"
-                                    checked="${defaultFollow || params.follow == 'true'}"
-                                    value="true"/>
+                  <div class="checkbox checkbox-inline" style="margin-top:-8px;margin-right:10px;">
+                    <g:checkBox id="followoutputcheck" name="follow"
+                                checked="${defaultFollow || params.follow == 'true'}"
+                                value="true"/>
+                    <label for="followoutputcheck">
                         <g:message code="job.run.watch.output"/>
                     </label>
+
+                  </div>
                   <select class="form-control " name="followdetail">
                       <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
                           <g:message code="execution.page.show.tab.Summary.title"/>

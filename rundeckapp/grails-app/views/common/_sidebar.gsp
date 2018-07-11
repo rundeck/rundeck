@@ -187,6 +187,7 @@
         </ul>
     </g:ifPageProperty>
 </g:if>
+%{--
 <g:if test="${session?.user && request.subject }">
     <g:ifExecutionMode passive="true">
         <p class="navbar-text has_tooltip navbar-text-warning"
@@ -212,7 +213,7 @@
         </auth:resourceAllowed>
     </g:ifExecutionMode>
 </g:if>
-
+--}%
 <div class="snapshot-version">
   <span class="rundeck-version-identity"
         data-version-string="${enc(attr: buildIdent)}"

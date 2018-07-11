@@ -56,18 +56,21 @@
     <label class="col-sm-2 control-label" for="extra.loglevel">Log level</label>
 
     <div class="col-sm-10">
-        <label class="radio-inline">
-            <g:radio name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
+      <div class="radio radio-inline">
+        <g:radio id="logLevelNormal" name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
+        <label for="logLevelNormal">
             <g:message code="loglevel.normal" />
         </label>
-        <label class="radio-inline">
-            <g:radio name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
+      </div>
+      <div class="radio radio-inline">
+        <g:radio id="logLevelDebug" name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
+        <label for="logLevelDebug">
             <g:message code="loglevel.debug" />
         </label>
-
-        <div class="help-block">
-            <g:message code="scheduledExecution.property.loglevel.help" />
-        </div>
+      </div>
+      <div class="help-block">
+          <g:message code="scheduledExecution.property.loglevel.help" />
+      </div>
     </div>
 </div>
 
