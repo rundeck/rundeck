@@ -82,14 +82,15 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
     }
     
-    private String createServiceName(final String simpleName) {
+    String createServiceName(final String simpleName) {
         if (simpleName.endsWith("Plugin")) {
             return simpleName.substring(0, simpleName.length() - "Plugin".length());
         }
-        return simpleName + "Service";
+        return simpleName;
     }
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
-        def name = createServiceName(type.getSimpleName())
+        String found = ServiceTypes.TYPES.find { it.value == type }?.key
+        def name = found ?: createServiceName(type.getSimpleName())
         rundeckServerServiceProviderLoader.createPluginService(type, name)
     }
     /**
