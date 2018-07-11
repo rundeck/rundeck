@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
@@ -37,7 +38,6 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncListenableTaskExecutor
-import rundeck.Project
 import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CachedProjectNodes
 
@@ -54,6 +54,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     def metricService
     def frameworkService
     def configurationService
+    def pluginService
     def AsyncListenableTaskExecutor nodeTaskExecutor
 
     String category='resourceModelSource'
@@ -196,13 +197,21 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         def enabled = isCacheEnabled(rdprojectconfig)
         log.debug("loadNodes for ${project}... (cacheEnabled: ${enabled})")
 
-        /**
-         * base node support object for loading all node data synchronously
-         */
+        def resourceModelSourceService = framework.getResourceModelSourceService()
+
         def nodeSupport = new ProjectNodeSupport(
-                rdprojectconfig,
-                framework.getResourceFormatGeneratorService(),
-                framework.getResourceModelSourceService()
+            rdprojectconfig,
+            framework.getResourceFormatGeneratorService(),
+            resourceModelSourceService,
+            { String type, Properties config ->
+                //load via pluginService to enable app-level plugins
+                pluginService.retainPlugin(
+                    type,
+                    resourceModelSourceService
+                ).convert(
+                    ResourceModelSourceService.factoryConverter(config)
+                )
+            }
         )
 
 

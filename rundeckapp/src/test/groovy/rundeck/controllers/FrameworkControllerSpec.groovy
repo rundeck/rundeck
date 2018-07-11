@@ -39,6 +39,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
@@ -1074,15 +1075,13 @@ class FrameworkControllerSpec extends Specification {
         setup:
         controller.metricService = Mock(MetricService)
         def rdframework=Mock(Framework){
-            1 * getNodeExecutorService() >> Mock(NodeExecutorService)
-            1 * getResourceModelSourceService() >> Mock(ResourceModelSourceService)
-            1 * getFileCopierService() >> Mock(FileCopierService)
         }
         controller.frameworkService=Mock(FrameworkService){
-            1 * getRundeckFramework() >> rdframework
+            getRundeckFramework() >> rdframework
             1 * getAuthContextForSubject(_) >> null
             1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
 
 

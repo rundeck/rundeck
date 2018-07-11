@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -309,6 +310,15 @@ class PluginService {
 
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
         listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
+    }
+    /**
+     * List all plugins with a valid Description
+     * @param clazz
+     * @param service
+     * @return List of Description
+     */
+    def <T> List<Description> listPluginDescriptions(Class<T> clazz, PluggableProviderService<T> service) {
+        listPlugins(clazz, service).findAll { it.value.description }.collect { it.value.description }
     }
     /**
      * @param clazz
