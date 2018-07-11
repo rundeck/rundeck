@@ -268,24 +268,6 @@ war {
     }
 }
 
-//spring boot 1.5.x bootRepackage is not a good gradle citizen
-// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
-[install, buildArchives, uploadArchives].each { it.dependsOn assemble }
-
-def signArchives = project.tasks.findByName('signArchives')
-if (signArchives) {
-    project.tasks.matching {it.name == "bootRepackage"}.each {
-        Set<Object> deps =  it.taskDependencies.mutableValues
-        def toBeRemoved = deps.find {
-            it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
-        }
-        deps.removeAll(toBeRemoved)
-    }
-    bootRepackage.dependsOn(war)
-    signArchives.dependsOn(bootRepackage)
-}
-
-
 task explodeWar {
     dependsOn bootRepackage
     doLast {
@@ -312,4 +294,22 @@ task customRepackage(type: War) {
         attributes('Spring-Boot-Lib': 'WEB-INF/lib/')
         attributes('Main-Class': 'org.springframework.boot.loader.PropertiesLauncher')
     }
+}
+assemble.dependsOn customRepackage
+
+//spring boot 1.5.x bootRepackage is not a good gradle citizen
+// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
+[install, buildArchives, uploadArchives].each { it.dependsOn assemble }
+
+def signArchives = project.tasks.findByName('signArchives')
+if (signArchives) {
+    project.tasks.matching {it.name == "bootRepackage"}.each {
+        Set<Object> deps =  it.taskDependencies.mutableValues
+        def toBeRemoved = deps.find {
+            it.class.name.startsWith("org.gradle.api.internal.artifacts.DefaultPublishArtifactSet")
+        }
+        deps.removeAll(toBeRemoved)
+    }
+    bootRepackage.dependsOn(war)
+    signArchives.dependsOn(customRepackage)
 }
