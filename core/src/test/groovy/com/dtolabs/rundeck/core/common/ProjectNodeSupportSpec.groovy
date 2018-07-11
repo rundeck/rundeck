@@ -80,4 +80,47 @@ class ProjectNodeSupportSpec extends Specification {
         result2.nodeNames.size() == 1
 
     }
+
+    def "supports factory function for source"() {
+
+        given:
+        Date modifiedTime = new Date()
+        def config = Mock(IRundeckProjectConfig) {
+            getName() >> PROJECT_NAME
+            getProperties() >> (
+                [
+                    'resources.source.1.type'                            : 'file',
+                    'resources.source.1.config.file'                     : '/tmp/file',
+                    'resources.source.1.config.requireFileExists'        : 'false',
+                    'resources.source.1.config.includeServerNode'        : 'true',
+                    'resources.source.1.config.generateFileAutomatically': 'false',
+                    'resources.source.1.config.format'                   : 'resourcexml',
+                ] as Properties
+            )
+            getConfigLastModifiedTime() >> modifiedTime
+        }
+        def generatorService = new ResourceFormatGeneratorService(framework)
+        def sourceService = new ResourceModelSourceService(framework)
+
+        def factory = { String type, Properties props ->
+            sourceService.getCloseableSourceForConfiguration(type, props)
+        }
+        def support = new ProjectNodeSupport(config, generatorService, sourceService, factory)
+
+        when:
+
+        def result = support.getNodeSet()
+        support.close()
+        def result2 = support.getNodeSet()
+
+        then:
+        result != null
+
+        result.nodeNames != null
+        result.nodeNames.size() == 1
+
+        result2 != null
+        result2.nodeNames != null
+        result2.nodeNames.size() == 1
+    }
 }

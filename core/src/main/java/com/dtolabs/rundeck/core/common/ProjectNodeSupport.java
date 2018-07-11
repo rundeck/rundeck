@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.CloseableProvider;
 import com.dtolabs.rundeck.core.plugins.Closeables;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
@@ -31,6 +32,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -47,24 +49,48 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
-    private IRundeckProjectConfig projectConfig;
-    private Map<String,Exception> nodesSourceExceptions;
-    private long nodesSourcesLastReload = -1L;
-    private List<LoadedResourceModelSource> nodesSourceList;
+    private IRundeckProjectConfig                                                  projectConfig;
+    private Map<String, Exception>                                                 nodesSourceExceptions;
+    private long                                                                   nodesSourcesLastReload = -1L;
+    private List<LoadedResourceModelSource>                                        nodesSourceList;
     /**
      * Closeables for releasing plugin loaders when sources are disposed
      */
-    private Set<Closeable> nodeSourceReferences = new HashSet<>();
-    private ResourceFormatGeneratorService resourceFormatGeneratorService;
-    private ResourceModelSourceService resourceModelSourceService;
-    private boolean sourcesOpened;
+    private Set<Closeable>
+                                                                                   nodeSourceReferences   =
+        new HashSet<>();
+    private ResourceFormatGeneratorService                                         resourceFormatGeneratorService;
+    private ResourceModelSourceService                                             resourceModelSourceService;
+    private BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> factoryFunction;
+    private boolean                                                                sourcesOpened;
 
+    /**
+     * @param projectConfig
+     * @param resourceFormatGeneratorService
+     * @param factoryFunction factory for closeable model source provider
+     */
     public ProjectNodeSupport(
-            final IRundeckProjectConfig projectConfig,
-            final ResourceFormatGeneratorService resourceFormatGeneratorService,
-            final ResourceModelSourceService resourceModelSourceService
-    )
-    {
+        final IRundeckProjectConfig projectConfig,
+        final ResourceFormatGeneratorService resourceFormatGeneratorService,
+        final ResourceModelSourceService resourceModelSourceService,
+        final BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> factoryFunction
+    ) {
+        this.projectConfig = projectConfig;
+        this.resourceFormatGeneratorService = resourceFormatGeneratorService;
+        this.resourceModelSourceService = resourceModelSourceService;
+        this.factoryFunction = factoryFunction;
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+    }
+    /**
+     * @param projectConfig
+     * @param resourceFormatGeneratorService
+     * @deprecated use {@link #ProjectNodeSupport(IRundeckProjectConfig, ResourceFormatGeneratorService, ResourceModelSourceService, BiFunction)}
+     */
+    public ProjectNodeSupport(
+        final IRundeckProjectConfig projectConfig,
+        final ResourceFormatGeneratorService resourceFormatGeneratorService,
+        final ResourceModelSourceService resourceModelSourceService
+    ) {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
@@ -374,7 +400,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     )
     {
         final File file = getResourceModelSourceFileCacheForType(ident);
-        final ResourceModelSourceService nodesSourceService = getResourceModelSourceService();
+        final ResourceModelSourceService nodesSourceService = resourceModelSourceService;
         final ResourceFormatGeneratorService resourceFormatGeneratorService = getResourceFormatGeneratorService();
         final Properties fileSourceConfig = generateFileSourceConfigurationProperties(
                 file.getAbsolutePath(),
@@ -413,8 +439,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return resourceFormatGeneratorService;
     }
 
-    private ResourceModelSourceService getResourceModelSourceService() {
-        return resourceModelSourceService;
+    private BiFunction<String, Properties, CloseableProvider<ResourceModelSource>> getFactoryFunction() {
+        return factoryFunction;
     }
 
     static interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
@@ -437,15 +463,20 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     ) throws ExecutionServiceException
     {
 
-        final ResourceModelSourceService nodesSourceService =
-                getResourceModelSourceService();
         configuration.put("project", projectConfig.getName());
 
-        CloseableProvider<ResourceModelSource> sourceForConfiguration =
-                nodesSourceService.getCloseableSourceForConfiguration(
-                        type,
-                        configuration
-                );
+        CloseableProvider<ResourceModelSource> sourceForConfiguration = null;
+
+        if (null == factoryFunction) {
+            sourceForConfiguration =
+                resourceModelSourceService.getCloseableSourceForConfiguration(type, configuration);
+        } else {
+            try {
+                sourceForConfiguration = getFactoryFunction().apply(type, configuration);
+            } catch (Throwable e) {
+                throw new ExecutionServiceException(e, "Could not create node source: " + e.getMessage());
+            }
+        }
 
         nodeSourceReferences.add(sourceForConfiguration);
         if (useCache) {
