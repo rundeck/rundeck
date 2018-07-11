@@ -763,14 +763,17 @@ function _enableDragdrop(select, finalid, getdata, hovercss, allcss, callback) {
     };
 
     var dragStart = function (evt) {
-        dragger.draggedElem = evt.originalEvent.target;
-        dragger.dragged = getdata(evt.originalEvent.target);
-        evt.originalEvent.dataTransfer.dropEffect = 'move';
-        evt.originalEvent.dataTransfer.effectAllowed = 'move';
+        var oEvt = evt.originalEvent;
+        dragger.draggedElem = oEvt.target;
+        dragger.dragged = getdata(oEvt.target);
+        oEvt.dataTransfer.setData('text/x-rd-data', dragger.dragged);
+        oEvt.dataTransfer.dropEffect = 'move';
+        oEvt.dataTransfer.effectAllowed = 'move';
 
         if (finalid) {
             jQuery("#" + finalid).show();
         }
+        return true;
     };
     var allowDrop = function (evt) {
         if (!dragger.draggedElem) {
@@ -789,6 +792,7 @@ function _enableDragdrop(select, finalid, getdata, hovercss, allcss, callback) {
         if (css) {
             jQuery(evt.originalEvent.currentTarget).addClass(css);
         }
+        return false;
     };
     var dragend = function (evt) {
         jQuery(dragger.allowed).removeClass(allcss.join(' '));
@@ -796,10 +800,12 @@ function _enableDragdrop(select, finalid, getdata, hovercss, allcss, callback) {
             jQuery("#" + finalid).hide();
         }
         dragger.draggedElem = null;
+        return false;
     };
     var dragleave = function (evt) {
         evt.preventDefault();
         jQuery(evt.originalEvent.target).removeClass(allcss.join(' '));
+        return false;
     };
     var drop = function (evt) {
         evt.preventDefault();
@@ -808,6 +814,7 @@ function _enableDragdrop(select, finalid, getdata, hovercss, allcss, callback) {
         jQuery(dragger.allowed).off();
         dragend();
         callback(jQuery.extend({}, fromdata), jQuery.extend({}, todata));
+        return false;
     };
 
 

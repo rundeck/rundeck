@@ -13,7 +13,7 @@ echo "usage: setversion.sh <version> [release] [GA]"
 exit 2
 fi
 
-VERSION=$1
+VNUM=$1
 
 shift
 if [ -z "$1" ]; then
@@ -22,29 +22,25 @@ else
     RELEASE=$1
 fi
 shift
-if [ "$1" = "GA" ]; then
-    TAG=
-    PTAG="GA"
-elif [ -n "$1" ]; then
-    TAG="-$1"
-    PTAG="$1"
-else
-    TAG="-SNAPSHOT"
-    PTAG="SNAPSHOT"
-fi
+VTAG="${1}"
 
-VNAME="${VERSION}"
 
-echo "new NUMBER: $VERSION${TAG}"
-echo "new RELEASE: $RELEASE"
+VDATE=`date +%Y%m%d`
+VNAME=${VNUM}-${VTAG}-${VDATE}
+
+echo "new NUMBER: ${VNUM}"
+echo "new RELEASE: ${RELEASE}"
+echo "new DATE: ${VDATE}"
 echo "new VERSION: ${VNAME}"
 
 #alter version.properties
-perl  -i'.orig' -p -e "s#^version\.number\s*=.*\$#version.number=$VERSION#" `pwd`/version.properties
+perl  -i'.orig' -p -e "s#^version\.number\s*=.*\$#version.number=$VNUM#" `pwd`/version.properties
 perl  -i'.orig' -p -e "s#^version\.release\.number\s*=.*\$#version.release.number=$RELEASE#" `pwd`/version.properties
-perl  -i'.orig' -p -e "s#^version\.tag\s*=.*\$#version.tag=$PTAG#" `pwd`/version.properties
+perl  -i'.orig' -p -e "s#^version\.tag\s*=.*\$#version.tag=$VTAG#" `pwd`/version.properties
+perl  -i'.orig' -p -e "s#^version\.date\s*=.*\$#version.date=$VDATE#" `pwd`/version.properties
+perl  -i'.orig' -p -e "s#^version\.version\s*=.*\$#version.version=$VNAME#" `pwd`/version.properties
 
-perl  -i'.orig' -p -e "s#^currentVersion\s*=.*\$#currentVersion = $VERSION#" `pwd`/gradle.properties
+perl  -i'.orig' -p -e "s#^currentVersion\s*=.*\$#currentVersion = $VNUM#" `pwd`/gradle.properties
 
 echo MODIFIED: `pwd`/version.properties
 

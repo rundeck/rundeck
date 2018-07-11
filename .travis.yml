@@ -47,7 +47,7 @@ jobs:
   - stage: build
     script:
     # Build artifacts: jars, wars, and docker images
-    - script_block 'build' 'make TAG=$RUNDECK_RELEASE_TAG BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
+    - script_block 'build' 'bash scripts/travis-build.sh'
     - script_block 'build.docker.rdtest' build_rdtest
     # Copy artifacts and upload to s3
     - mkdir -p artifacts/packaging
@@ -111,7 +111,6 @@ jobs:
     script:
     # Sync artifacts under commit so we can use them for tag releases
     - script_block 'sync.artifacts' fetch_common_artifacts
-    - script_block 'sync.ci-resources' fetch_common_resources
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
     # Delete existing packages
@@ -119,11 +118,9 @@ jobs:
     - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck'
     - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck-config'
     # Deploy new snapshot packages
-    - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb "${RUNDECK_RELEASE_TAG}" "${RUNDECK_BUILD_NUMBER}"'
-    - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm "${RUNDECK_RELEASE_TAG}"'
+    - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb'
+    - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm'
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
-    - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
-    - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
 
@@ -131,12 +128,16 @@ jobs:
   - stage: tag release
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'sync.ci-resources' fetch_common_resources
     - export VCS_URL=https://github.com/rundeck/rundeck.git
 
     # Deploy new snapshot packages
-    - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_DEB_REPO}" "${RUNDECK_RELEASE_TAG}" "${RUNDECK_BUILD_NUMBER}"
-    - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}" "${RUNDECK_RELEASE_TAG}"
-    - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
+    - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_DEB_REPO}"
+    - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}"
+    - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}"
+    # Upload to sonatype
+    - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
+    - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
 
   # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.

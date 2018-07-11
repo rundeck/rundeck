@@ -57,7 +57,8 @@
     <div class="card-footer">
       <g:actionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
                       onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
-                      class="btn btn-default reset_page_confirm"/>
+                      class="btn btn-default reset_page_confirm"
+                      action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm "/>
     </div>
 

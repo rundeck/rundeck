@@ -24,7 +24,7 @@ import org.apache.commons.cli.Option
 import org.apache.commons.cli.OptionBuilder
 import org.apache.commons.cli.Options
 import org.apache.commons.cli.ParseException
-import org.rundeck.security.passwordutil.PasswordUtilityEncrypter
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import rundeckapp.Application
 import rundeckapp.init.RundeckInitConfig
 

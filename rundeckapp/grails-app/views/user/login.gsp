@@ -124,7 +124,7 @@
                           <span><g:enc>${flash.loginerror}</g:enc></span>
                       </div>
                     </g:if>
-                    <button type="submit" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
+                    <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
 
                       <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
                           <div class='form-group'>

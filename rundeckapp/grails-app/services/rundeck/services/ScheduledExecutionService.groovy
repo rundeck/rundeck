@@ -338,6 +338,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(query && query.sortBy && xfilters[query.sortBy]){
                 order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
+                if(paginationEnabled) {
+                    order("groupPath","asc")
+                }
                 order("jobName","asc")
             }
         };

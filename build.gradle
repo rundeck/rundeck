@@ -55,13 +55,17 @@ apply plugin: 'eclipse';
 apply plugin: 'idea'
 apply plugin: 'com.google.osdetector'
 
-
-description = 'The master-build project for Rundeck';
-
 task wrapper(type: Wrapper) {
     gradleVersion = '4.7'
 }
 
+/* 
+ * Project configuration:
+ * Configure build context(release, publish, etc)
+ * Setup global project attributes
+*/
+
+description = 'The master-build project for Rundeck';
 
 eclipse.project.name = 'rundeck'
 
@@ -73,6 +77,38 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-conf",
         ":rundeck"
 ]
+
+project.ext.environment = project.hasProperty('environment') ? environment : 'development'
+
+def versionProps = new Properties()
+file("version.properties").withInputStream { versionProps.load(it) }
+
+def vVersion = versionProps.getProperty('version.version')
+def vNum = ext.vNum = versionProps.getProperty('version.number')
+def vTag = ext.vTag = project.environment == 'release'? versionProps.getProperty('version.tag') : 'SNAPSHOT'
+def vDate = ext.vDate = versionProps.getProperty('version.date')
+def vRevision = ext.vRevision = versionProps.getProperty('version.release.number')
+
+if (ext.environment == 'release') {
+    project.ext.resolvedVersion = vVersion
+} else {
+    project.ext.resolvedVersion = "${vNum}-SNAPSHOT".toString()
+}
+
+logger.lifecycle("Building version {}", project.resolvedVersion)
+
+allprojects {
+    version = project.resolvedVersion
+    ext.isReleaseBuild = false
+    ext.isSnapshotBuild = false
+    ext.isDevBuild = false
+    if(project.environment == 'release'){
+        ext.isReleaseBuild=true
+    } else {
+        ext.isDevBuild=true
+    }
+}
+
 /**
  * Defaults for all projects
  */
@@ -82,32 +118,9 @@ subprojects {
     apply from: "${rootDir}/gradle/java.gradle"
     apply plugin: 'eclipse'
     eclipse.project.name = "${project.getParent().eclipse.project.name}:${name}"
-
-    // the environment can be set by adding -Penvironment={value} as a command
-    // line switch. by default we run as 'development'
-    ext.environment = project.hasProperty('environment') ? environment : 'development';
-
-    // Unless we're doing a release build, append -SNAPSHOT to the end of the
-    // artifacts. Otherwise use the currentVersion as defined in gradle.properties and
-    // the releaseTag if it is not 'GA'
-    def vtag = environment != 'release' ? '-SNAPSHOT' : (project.hasProperty('releaseTag') && releaseTag != 'GA' ? '-' + releaseTag : '')
-    version = currentVersion + vtag
 }
 
-allprojects {
-    ext.isReleaseBuild = false
-    ext.isSnapshotBuild = false
-    ext.isDevBuild = false
-    if(project.hasProperty('environment') && project.environment == 'release'){
-        ext.isReleaseBuild=true
-    }
-    else if(project.hasProperty("snapshot")){
-        ext.isSnapshotBuild=true
-    }
-    else{
-        ext.isDevBuild=true
-    }
-}
+
 
 // prompt for PGP key passphrase if not set
 gradle.taskGraph.whenReady { taskGraph ->
@@ -218,6 +231,17 @@ exportedProjects.each {
                 publishPom.writeTo("pom.xml")
             }
         }
+    }
+}
+
+task bashVersionInfo {
+    doLast {
+        println """\
+        |VERSION_FULL=${project.resolvedVersion}
+        |VERSION_NUMBER=${project.vNum}
+        |VERSION_TAG=${project.vTag}
+        |VERSION_DATE=${project.vDate}
+        |VERSION_REVISION=${project.vRevision}""".stripMargin()
     }
 }
 
