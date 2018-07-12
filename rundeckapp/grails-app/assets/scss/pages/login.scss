@@ -27,4 +27,14 @@
       text-decoration: underline;
     }
   }
+    $rdlogo-color: rgba(255, 0, 0, 1);
+    $bgbgcol: rgba(80, 80, 80, 1);
+    $bgbgcol2: rgba(153, 153, 153, 1);
+    .full-page:after {
+        background: $bgbgcol repeating-linear-gradient(
+                180deg,
+                $bgbgcol,
+                $bgbgcol2
+        );
+    }
 }
