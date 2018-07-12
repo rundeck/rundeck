@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit
 class NodeService implements InitializingBean, RundeckProjectConfigurable,IProjectNodesFactory, ProjectNodeService {
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
+    public static final String PROJECT_NODECACHE_FIRSTLOAD_SYNCH = 'project.nodeCache.firstLoadSynch'
     static transactional = false
     public static final String DEFAULT_CACHE_SPEC = "refreshInterval=30s"
     def metricService
@@ -61,7 +62,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     @Override
     Map<String, String> getCategories() {
-        [enabled: 'resourceModelSource', delay: 'resourceModelSource']
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource', firstLoadSynch: 'resourceModelSource']
     }
     @Override
     List<Property> getProjectConfigProperties() {
@@ -79,13 +80,20 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
                     description 'Delay in seconds, at least 30.\n\nRefresh results after this many seconds have passed. Results may be this many seconds old. Cache refreshes no more frequently that 30s.'
                     required(false)
                     defaultValue '30'
+                }.build(),
+                PropertyBuilder.builder().with {
+                    booleanType  'firstLoadSynch'
+                    title 'Synchronous First Load'
+                    description 'When the cache is empty, forces the first load to happen synchronously to prevent empty node results.'
+                    required(false)
+                    defaultValue 'true'
                 }.build()
         ]
     }
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED]
+        ['delay': PROJECT_NODECACHE_DELAY, 'enabled': PROJECT_NODECACHE_ENABLED, 'firstLoadSynch': PROJECT_NODECACHE_FIRSTLOAD_SYNCH]
     }
 
     //basic creation, created via spec string in afterPropertiesSet()
@@ -143,6 +151,12 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     boolean isCacheEnabled(IRundeckProjectConfig projectConfig){
         def globalEnabled = configurationService.getCacheEnabledFor('nodeService','nodeCache', true)
         return globalEnabled && projectNodeCacheEnabledConfig(projectConfig)
+    }
+
+    boolean isCacheFirstloadSynchEnabled(IRundeckProjectConfig projectConfig, Boolean defval) {
+        projectConfig.hasProperty(PROJECT_NODECACHE_FIRSTLOAD_SYNCH) ?
+        Boolean.parseBoolean(projectConfig.getProperty(PROJECT_NODECACHE_FIRSTLOAD_SYNCH)) :
+        defval
     }
 
     boolean needsReload(String project, CachedProjectNodes oldNodes) {
@@ -263,7 +277,9 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         /**
          * asynchronous first load, unless disabled by configuration
          */
-        def asynchronousFirstLoad = configurationService.getBoolean('nodeService.nodeCache.firstLoadAsynch', true)
+        def asynchronousFirstLoad = configurationService.getBoolean('nodeService.nodeCache.firstLoadAsynch', false)
+        //project config will override app config
+        asynchronousFirstLoad = !isCacheFirstloadSynchEnabled(rdprojectconfig, !asynchronousFirstLoad)
         def firstLoadInBg = null==oldValue && (preloadedNodes?.nodes?.size()>0 || asynchronousFirstLoad)
         if(null==oldValue && !firstLoadInBg){
             log.debug("Empty preload cache, loading nodes synchronously for $project ...")
