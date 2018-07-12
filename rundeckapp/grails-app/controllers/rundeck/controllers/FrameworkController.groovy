@@ -29,10 +29,14 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -52,6 +56,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 
 import javax.servlet.http.HttpServletResponse
@@ -98,6 +103,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
     def MenuService menuService
+    def PluginService pluginService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -836,9 +842,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             request.errors = errors
         }
         //get list of node executor, and file copier services
-        final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
-        final descriptions = framework.getResourceModelSourceService().listDescriptions()
-        final filecopydescs = framework.getFileCopierService().listDescriptions()
+        def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
+
         return render(view:'createProject',
                 model: [
                 newproject: params.newproject,
@@ -878,9 +883,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
         final sshkeypath = new File(System.getProperty("user.home"), ".ssh/id_rsa").getAbsolutePath()
         //get list of node executor, and file copier services
-        final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
-        final descriptions = framework.getResourceModelSourceService().listDescriptions()
-        final filecopydescs = framework.getFileCopierService().listDescriptions()
+
+        def (descriptions, nodeexecdescriptions, filecopydescs) = frameworkService.listDescriptions()
 
         //get grails services that declare project configurations
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput('extraConfig.', [:])
@@ -1342,7 +1346,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
         final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+        final resourceDescs = frameworkService.listResourceModelSourceDescriptions()
 
         //get list of model source configes
         final resourceConfig = frameworkService.listResourceModelConfigurations(project)
@@ -1402,7 +1406,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         def framework = frameworkService.getRundeckFramework()
-        final resourceModelSourceDescriptions = framework.getResourceModelSourceService().listDescriptions()
+        final resourceModelSourceDescriptions = frameworkService.listResourceModelSourceDescriptions()
 
         def prefixKey = 'plugin'
         def errors = []
@@ -1428,20 +1432,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 log.warn("missing type def for prefix: " + prefixKey + '.' + ndx);
                 return
             }
-            final service = framework.getResourceModelSourceService()
-            def provider
+
             def description
             if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "Invalid Resource Model Source definition for source #${ndx}"
             } else {
-                try {
-                    provider = service.providerOfType(type)
-                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
+                def described = pluginService.getPluginDescriptor(type, framework.getResourceModelSourceService())
+                if (!described) {
                     errors << "Resource Model Source was not found: ${type}"
                 }
 
-                if (provider && provider instanceof Describable) {
-                    description = provider.description
+                if (described && described.description) {
+                    description = described.description
                 }
             }
 
@@ -1529,7 +1531,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
         final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
+        final resourceDescs = frameworkService.listResourceModelSourceDescriptions()
 
         //get list of model source configes
         final resourceConfig = frameworkService.listResourceModelConfigurations(project)
@@ -1611,8 +1613,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
         def providerType = source.type;
-        def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
-                listDescriptions()?.find { it.name == providerType }
+        def desc = pluginService.getPluginDescriptor(
+            providerType,
+            frameworkService.rundeckFramework.getResourceModelSourceService()
+        )?.description
 
         [
                 project     : project,
@@ -1694,8 +1698,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
         def providerType = source.type;
-        def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
-                listDescriptions()?.find { it.name == providerType }
+        def desc = pluginService.getPluginDescriptor(
+            providerType,
+            frameworkService.rundeckFramework.getResourceModelSourceService()
+        )?.description
         return render(
                 view: 'editProjectNodeSourceFile',
                 model: [
@@ -1925,7 +1931,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projectProps, nodeConfig)
         }
         def count = 1
-        final service = framework.getResourceModelSourceService()
+
         resourceConfig.each {resconfig ->
             def type = resconfig.type
 
@@ -1975,15 +1981,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(!params.type){
             error = "Plugin provider type must be specified"
         }
-        final service = framework.getResourceModelSourceService()
-        def provider=null
-        try {
-            provider = service.providerOfType(params.type)
-        } catch (ExecutionServiceException e) {
-        }
+        def described = pluginService.getPluginDescriptor(
+            params.type,
+            framework.getResourceModelSourceService()
+        )
 
-        if(provider && provider instanceof Describable){
-            def desc = provider.description
+        if (described && described.description) {
+            def desc = described.description
             return [description:desc,prefix:params.prefix,type:params.type,isCreate:true]
         }else{
             error="Invalid provider type: ${params.type}, not available for configuration"
@@ -2016,13 +2020,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!type) {
             result.error = "Plugin provider type must be specified"
         }else{
-            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
-            result.valid=validate.valid
-            result.error=validate.error
+            def validated = pluginService.validatePluginConfig(
+                type,
+                framework.getResourceModelSourceService(),
+                selectParamsPrefix(prefix + 'config.', params)
+            )
+            result.valid = validated?.valid
+            result.error = !validated?.valid ? validated?.report?.toString() : null
         }
         render result as JSON
     }
 
+    private Map selectParamsPrefix(final String prefix, final Map params) {
+        params.findAll { it.key.startsWith(prefix) }.collectEntries { [it.key.substring(prefix.length()), it.value] }
+    }
 
     def editResourceModelConfig(PluginConfigParams pluginConfig) {
         if (pluginConfig.hasErrors()) {
@@ -2039,17 +2050,23 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             request.errors = newparams.errors
             return render(template: '/common/messages')
         }
-        Properties props
+        def props
         def report
         def desc
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(type, prefix + 'config.', params, framework.getResourceModelSourceService())
-            error = validate.error
-            desc=validate.desc
-            props=validate.props
-            report=validate.report
+            props = selectParamsPrefix(prefix + 'config.', params)
+            def descriptor = pluginService.getPluginDescriptor(type, framework.getResourceModelSourceService())
+            def validated = pluginService.validatePluginConfig(
+                type,
+                framework.getResourceModelSourceService(),
+                props
+            )
+            error = !validated ? 'No such plugin: ' + type : null
+            desc = descriptor.description
+            props = props
+            report = validated?.report
         }
 
         render(view: 'createResourceModelConfig', model: [ prefix: prefix, values: props, description: desc, report: report, error: error, isEdit: "true"!=params.iscreate,type:type, isCreate:params.isCreate])
@@ -2073,11 +2090,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!type) {
             error = "Plugin provider type must be specified"
         } else {
-            def validate = frameworkService.validateServiceConfig(type, useprefix + 'config.', params, framework.getResourceModelSourceService())
-            error = validate.error
-            desc = validate.desc
-            props = validate.props
-            report = validate.report
+            props = selectParamsPrefix(useprefix + 'config.', params)
+            def descriptor = pluginService.getPluginDescriptor(type, framework.getResourceModelSourceService())
+            def validated = pluginService.validatePluginConfig(
+                type,
+                framework.getResourceModelSourceService(),
+                props
+            )
+            error = !validated ? 'No such plugin: ' + type : null
+            desc = descriptor.description
+            props = props
+            report = validated?.report
         }
 
         return [
@@ -2266,7 +2289,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         final IProjectNodes projectNodes = fwkProject.projectNodes
         final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
 
         //get list of model source configes
         final resourceConfig = projectNodes.listResourceModelConfigurations()
@@ -2461,7 +2483,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         final IProjectNodes projectNodes = fwkProject.projectNodes
         final fmk = frameworkService.getRundeckFramework()
-        final resourceDescs = fmk.getResourceModelSourceService().listDescriptions()
 
         //get list of model source configes
         final resourceConfig = projectNodes.listResourceModelConfigurations()

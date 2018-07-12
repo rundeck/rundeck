@@ -23,11 +23,14 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.configuration.*
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import grails.core.GrailsApplication
@@ -59,6 +62,7 @@ class FrameworkService implements ApplicationContextAware {
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry
+    def PluginService pluginService
     def PluginControlService pluginControlService
 
     def getRundeckBase(){
@@ -1045,15 +1049,24 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
-     * Return all the descriptions for the Rundeck Framework
-     * @return tuple(resourceConfigs, nodeExec
+     * Return all the Node Exec plugin type descriptions for the Rundeck Framework, in the order:
+
+     * @return tuple(resourceConfigs, nodeExec, filecopier)
      */
     public def listDescriptions() {
         final fmk = getRundeckFramework()
-        final descriptions = fmk.getResourceModelSourceService().listDescriptions()
-        final nodeexecdescriptions = getNodeExecutorService().listDescriptions()
-        final filecopydescs = getFileCopierService().listDescriptions()
+        final descriptions = pluginService.listPluginDescriptions(ResourceModelSourceFactory, fmk.getResourceModelSourceService())
+        final nodeexecdescriptions = pluginService.listPluginDescriptions(NodeExecutor, fmk.getNodeExecutorService())
+        final filecopydescs = pluginService.listPluginDescriptions(FileCopier, fmk.getFileCopierService())
         return [descriptions, nodeexecdescriptions, filecopydescs]
+    }
+
+
+    List<Description> listResourceModelSourceDescriptions() {
+        pluginService.listPluginDescriptions(
+            ResourceModelSourceFactory,
+            getRundeckFramework().getResourceModelSourceService()
+        )
     }
 
     public getDefaultNodeExecutorService(String project) {

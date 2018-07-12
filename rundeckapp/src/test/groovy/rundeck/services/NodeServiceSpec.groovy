@@ -80,9 +80,9 @@ class NodeServiceSpec extends Specification {
                 name: 'test1',
                 configLastModifiedTime: new Date()
         )
-        def modelSource = Mock(ResourceModelSource) {
-            getNodes() >> nodeSet
-        }
+        def modelSourceFactory = Mock(ResourceModelSourceFactory)
+        def modelSource = Mock(ResourceModelSource)
+        service.pluginService = Mock(PluginService)
         when:
         def result = service.getNodes('test1')
         def nodes1 = result.getNodeSet()
@@ -95,9 +95,11 @@ class NodeServiceSpec extends Specification {
                 loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                1 * getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(modelSource)
+                0 * getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(modelSource)
             }
         }
+        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * modelSourceFactory.createResourceModelSource(_) >> modelSource
         _ * modelSource.getNodes() >> nodeSet
         null != nodes1.getNode('anode')
         nodes1.nodeNames as List == ['anode']
@@ -155,10 +157,6 @@ class NodeServiceSpec extends Specification {
                 1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-
-                _ * getCloseableSourceForConfiguration('file', {args->
-                    args['file']=='/tmp/test.xml'
-                }) >> Closeables.closeableProvider(modelSource)
                 _ * getCloseableSourceForConfiguration('file', {args->
                     args['file']!='/tmp/test.xml'
                 }) >> Closeables.closeableProvider(cacheModelsource)
@@ -169,6 +167,12 @@ class NodeServiceSpec extends Specification {
                 }
             }
         }
+        def modelSourceFactory = Mock(ResourceModelSourceFactory)
+        service.pluginService = Mock(PluginService)
+        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * modelSourceFactory.createResourceModelSource({args->
+            args['file']=='/tmp/test.xml'
+        }) >> modelSource
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()
@@ -288,6 +292,7 @@ class NodeServiceSpec extends Specification {
                 configLastModifiedTime: new Date()
         )
         def modelSource = Mock(ResourceModelSource)
+        def modelSourceFactory = Mock(ResourceModelSourceFactory)
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
@@ -296,9 +301,7 @@ class NodeServiceSpec extends Specification {
                 1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                _ * getCloseableSourceForConfiguration('file', {args->
-                    args['file']=='/tmp/test.xml'
-                }) >> Closeables.closeableProvider(modelSource)
+
                 _ * getSourceForConfiguration('file', {args->
                     args['file']!='/tmp/test.xml'
                 }) >> cacheModelsource
@@ -309,6 +312,11 @@ class NodeServiceSpec extends Specification {
                 }
             }
         }
+        service.pluginService = Mock(PluginService)
+        1 * service.pluginService.retainPlugin('file', _) >> Closeables.closeableProvider(modelSourceFactory)
+        1 * modelSourceFactory.createResourceModelSource({args->
+            args['file']=='/tmp/test.xml'
+        }) >> modelSource
         when:
         def result1 = service.getNodes('test1')
         def nodes1 = result1.getNodeSet()

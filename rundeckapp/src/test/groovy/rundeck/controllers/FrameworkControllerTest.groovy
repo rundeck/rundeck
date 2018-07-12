@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import groovy.mock.interceptor.MockFor
+import rundeck.services.PluginService
 
 import static org.junit.Assert.*
 
@@ -506,8 +507,20 @@ class FrameworkControllerTest {
             }
         }
 
+        controller.pluginService = mockWith(PluginService) {
+            validatePluginConfig{type,svc,props->
+
+                assertEquals('abc', type)
+                assertEquals('data2', props.test1)
+
+                [props: new Properties(),desc:'desc1',report:'report',valid:true]
+            }
+        }
+
         def config = new PluginConfigParams()
         controller.params.type='abc'
+        controller.params['orig.config.test1']='data1'
+        controller.params['config.test1']='data2'
         controller.checkResourceModelConfig(config)
         assertEquals(true,response.json.valid)
         assertNull(response.json.error)
@@ -522,9 +535,20 @@ class FrameworkControllerTest {
             }
         }
 
+        controller.pluginService = mockWith(PluginService) {
+            validatePluginConfig{type,svc,props->
+
+                assertEquals('abc', type)
+                assertEquals('data1', props.test1)
+
+                [props: new Properties(),desc:'desc1',report:'report',valid:true]
+            }
+        }
+
         def config = new PluginConfigParams()
         controller.params.type='abc'
         controller.params.revert='true'
+        controller.params['orig.config.test1']='data1'
         controller.checkResourceModelConfig(config)
         assertEquals(true,response.json.valid)
         assertNull(response.json.error)
@@ -556,6 +580,16 @@ class FrameworkControllerTest {
             }
         }
 
+        controller.pluginService = mockWith(PluginService) {
+            getPluginDescriptor {type,svc-> [description:'desc1'] }
+            validatePluginConfig{type,svc,props->
+
+                assertEquals('abc', type)
+
+                [props: new Properties(),desc:'desc1',report:'report']
+            }
+        }
+
         def params = new PluginConfigParams()
         controller.params.type = 'abc'
         def model = controller.viewResourceModelConfig(params)
@@ -577,10 +611,21 @@ class FrameworkControllerTest {
                 [props: new Properties(),desc:'desc1',report:'report']
             }
         }
+        controller.pluginService = mockWith(PluginService) {
+            getPluginDescriptor {type,svc-> [description:'desc1'] }
+            validatePluginConfig{type,svc,props->
+
+                assertEquals('abc', type)
+                assertEquals('data1', props.test1)
+
+                [props: new Properties(),desc:'desc1',report:'report']
+            }
+        }
 
         def params = new PluginConfigParams()
         controller.params.type = 'abc'
         controller.params.revert = 'true'
+        controller.params['orig.config.test1'] = 'data1'
         def model = controller.viewResourceModelConfig(params)
         assertEquals('', model.prefix)
         assertNotNull(model.values)

@@ -34,14 +34,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Function;
 
 /**
  * ResourceModelSourceService provides NodeSource factories
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ResourceModelSourceService extends PluggableProviderRegistryService<ResourceModelSourceFactory> implements
-    ConfigurableService<ResourceModelSource>, DescribableService {
+public class ResourceModelSourceService
+    extends PluggableProviderRegistryService<ResourceModelSourceFactory>
+    implements ConfigurableService<ResourceModelSource>,
+               DescribableService,
+               PluggableProviderService<ResourceModelSourceFactory>
+{
 
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceModelSource;
 
@@ -101,29 +106,34 @@ public class ResourceModelSourceService extends PluggableProviderRegistryService
      * @throws ExecutionServiceException on error
      */
     public CloseableProvider<ResourceModelSource> getCloseableSourceForConfiguration(
-            final String type,
-            final Properties configuration
-    ) throws
-            ExecutionServiceException
+        final String type,
+        final Properties configuration
+    ) throws ExecutionServiceException
     {
+        return closeableProviderOfType(type).convert(factoryConverter(configuration));
+    }
 
-        //load factory instance with closeable reference
-        final CloseableProvider<ResourceModelSourceFactory> reference = closeableProviderOfType(type);
-        try {
-            ResourceModelSource resourceModelSource = reference.getProvider().createResourceModelSource(configuration);
-            //wrap the built source into another closeable provider
-            return Closeables.closeableProvider(
-                    resourceModelSource,
-                    //close both the model source if it is closeable, and the original plugin loader reference, when
-                    // released
-                    Closeables.single(
-                            Closeables.maybeCloseable(resourceModelSource),
-                            reference
-                    )
-            );
-        } catch (Throwable e) {
-            throw new ResourceModelSourceServiceException(e);
-        }
+    /**
+     * Given input configuration, produce a function to convert from a factory to model source
+     * @param configuration
+     * @return
+     */
+    public static Function<ResourceModelSourceFactory, ResourceModelSource> factoryConverter(
+        final Properties configuration
+    )
+    {
+        //nb: not using lambda due to inability to mock this class within grails tests, some conflict with cglib and
+        // j8 lambdas
+        return new Function<ResourceModelSourceFactory, ResourceModelSource>() {
+            @Override
+            public ResourceModelSource apply(final ResourceModelSourceFactory resourceModelSourceFactory) {
+                try {
+                    return resourceModelSourceFactory.createResourceModelSource(configuration);
+                } catch (ConfigurationException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
     }
 
     public boolean isValidProviderClass(Class clazz) {
