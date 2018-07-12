@@ -153,7 +153,7 @@
           </g:form>
         </div><!-- end filter -->
         <div style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
-          <div class="jobscontent head">
+          <div class="jobscontent head" style="margin-bottom:1em;">
             <g:if test="${!params.compact}">
               <div class=" pull-right" id="jobpageactionbuttons">
                 <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">

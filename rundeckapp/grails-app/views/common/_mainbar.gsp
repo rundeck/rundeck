@@ -100,6 +100,18 @@
             </g:ifServletContextAttribute>
           </g:ifServletContextAttributeExists>
           <g:if test="${session?.user && request.subject}">
+            <g:ifExecutionMode passive="true">
+              <li style="margin: 13px 20px 0 0;">
+                <span class="has_tooltip"
+                   title="${g.message(code:'passive.mode')} - ${g.message(code:'system.executionMode.description.passive')}"
+                   data-toggle="tooltip"
+                   data-placement="bottom"
+                >
+                  <i class="fas fa-pause-circle fa-2x"></i>
+                </span>
+              </li>
+
+            </g:ifExecutionMode>
             <li id="appAdmin">
               <div class="dropdown" style="margin-top:3px;">
                 <a data-toggle="dropdown" class="dropdown-toggle">

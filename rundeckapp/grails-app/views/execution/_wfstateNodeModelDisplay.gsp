@@ -116,8 +116,7 @@
           <div data-bind="foreach: steps">
               <div data-bind="if: !$data.parameterizedStep()">
               <div class="wfnodesteps" data-bind="attr: { 'data-node': node.name }">
-              <div class=" wfnodestep"
-                   data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
+              <div class=" wfnodestep" data-bind="css: { open: followingOutput() }, attr: { 'data-node': node.name, 'data-stepctx': $data.stepctx }">
                   <div class="row action" data-bind="click: $root.toggleOutputForNodeStep,
                                  event: { mouseover: function(){hovering(true);}, mouseout: function(){hovering(false);} } ">
                       <div class="col-sm-3 " >
