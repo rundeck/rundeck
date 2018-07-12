@@ -2461,7 +2461,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def boolean validateOptionValues(
             ScheduledExecution scheduledExecution,
             Map optparams,
-            AuthContext authContext = null
+            AuthContext authContext = null,
+            isJobRef = false
     ) throws ExecutionServiceValidationException
     {
 
@@ -2488,7 +2489,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def validate = fileUploadService.validateFileRefForJobOption(
                             optparams[opt.name],
                             scheduledExecution.extid,
-                            opt.name
+                            opt.name,
+                            isJobRef
                     )
                     if (!validate.valid) {
                         invalidOpt opt, lookupMessage('domain.Option.validation.file.' + validate.error, validate.args)
@@ -3193,7 +3195,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //validate the option values
         if(dovalidate){
-            validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts,executionContext.authContext)
+            validateOptionValues(se, evalPlainOpts + evalSecOpts + evalSecAuthOpts,executionContext.authContext,true)
         }
 
         //arg list for new context
@@ -3234,6 +3236,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     nodeRankAttribute,
                     nodeRankOrderAscending,
                     nodeIntersect
+            )
+        }
+        if(dovalidate){
+            fileUploadService.executionBeforeStart(
+                    new ExecutionPrepareEvent(
+                            execution: exec,
+                            job: se,
+                            context: newContext
+                    ),true
             )
         }
         return newContext
