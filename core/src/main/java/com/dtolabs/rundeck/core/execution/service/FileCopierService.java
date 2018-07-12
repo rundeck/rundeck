@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -45,7 +46,10 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileCopierService extends NodeSpecifiedService<FileCopier> implements DescribableService {
+public class FileCopierService
+    extends NodeSpecifiedService<FileCopier>
+    implements DescribableService, PluggableProviderService<FileCopier>
+{
     private static final String SERVICE_NAME = ServiceNameConstants.FileCopier;
     public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
