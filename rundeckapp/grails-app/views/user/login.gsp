@@ -40,11 +40,7 @@
     <g:render template="/common/css"/>
     <script language="javascript">
         //<!--
-        Event.observe(window, 'load', loadFocus, false);
-
-        function loadFocus() {
-            $('login').focus();
-        }
+        jQuery(function() {jQuery('#login').focus();});
         if (typeof(oopsEmbeddedLogin) == 'function') {
             oopsEmbeddedLogin();
         }
