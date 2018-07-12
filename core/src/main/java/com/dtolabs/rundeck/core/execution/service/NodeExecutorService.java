@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -46,7 +47,10 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> implements DescribableService {
+public class NodeExecutorService
+    extends NodeSpecifiedService<NodeExecutor>
+    implements DescribableService, PluggableProviderService<NodeExecutor>
+{
     private static final String SERVICE_NAME = ServiceNameConstants.NodeExecutor;
     public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
     private static final String SERVICE_DEFAULT_LOCAL_PROVIDER_PROPERTY =
