@@ -285,19 +285,28 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         return new UserInfo(username, credential, roles);
     }
 
-    private String decodeBase64EncodedPwd(String encoded) {
+    String decodeBase64EncodedPwd(String encoded) {
         String chkString = null;
-        String prefix = null;
+        String prefix = "";
         if(encoded.startsWith(CRYPT_TYPE)) {
             chkString = encoded.substring(CRYPT_TYPE.length(),encoded.length());
             prefix = CRYPT_TYPE;
         } else if(encoded.startsWith(MD5_TYPE)) {
             chkString = encoded.substring(MD5_TYPE.length(), encoded.length());
             prefix = MD5_TYPE;
+        } else {
+            return encoded; //make no attempt to further decode because we don't know what value this might be
         }
 
-        return org.apache.commons.codec.binary.Base64.isBase64(chkString) ? prefix+org.apache.commons.codec.binary.Hex.encodeHexString(org.apache.commons.codec.binary.Base64.decodeBase64(chkString)) : chkString;
+        return prefix+(isBase64(chkString) ? org.apache.commons.codec.binary.Hex.encodeHexString(org.apache.commons.codec.binary.Base64.decodeBase64(chkString)) : chkString);
+    }
 
+    boolean isBase64(String chkBase64) {
+        try {
+            Base64.getDecoder().decode(chkBase64);
+            return chkBase64.replace(" ","").length() % 4 == 0;
+        } catch(IllegalArgumentException iaex) {}
+        return false;
     }
 
     protected String doRFC2254Encoding(String inputString) {
