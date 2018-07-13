@@ -122,7 +122,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
-
+grails.plugin.springsecurity.useHttpSessionEventPublisher=true
 grails.plugin.springsecurity.apf.filterProcessesUrl = "/user/j_security_check"
 grails.plugin.springsecurity.apf.usernameParameter = "j_username"
 grails.plugin.springsecurity.apf.passwordParameter = "j_password"
@@ -130,6 +130,9 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+grails.plugin.springsecurity.failureHandler.exceptionMappings = [
+        [exception: 'org.springframework.security.web.authentication.session.SessionAuthenticationException', url: '/user/error?code=6']
+]
 
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',

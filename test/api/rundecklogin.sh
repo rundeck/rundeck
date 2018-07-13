@@ -47,3 +47,35 @@ if [ -z "$RDAUTH" ] ; then
 fi
 
 echo "Login OK"
+
+if [ "$TEST_SECOND_AUTH_FAILS" == "true" ] ; then
+    echo "Second Login Attempt"
+    loginurl="${url}/user/j_security_check"
+
+    # curl opts to use a cookie jar, and follow redirects, showing only errors
+    CURLOPTS="-s -S -L -c $DIR/cookies2 -b $DIR/cookies2"
+    CURL="curl $CURLOPTS"
+
+    # get main page for login
+    RDUSER=${2:-"admin"}
+    RDPASS=${3:-"admin"}
+    echo "Login... to $url"
+    $CURL $url > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "failed login request to ${loginurl}"
+        exit 2
+    fi
+    $CURL -X POST -d j_username=$RDUSER -d j_password=$RDPASS $loginurl > $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "failed login request to ${loginurl}"
+        exit 2
+    fi
+
+    grep 'Too many sessions detected' -q $DIR/curl.out
+    if [ 0 != $? ] ; then
+        errorMsg "Should have received too many sessions error"
+        exit 2
+    fi
+    echo "Second Login Failed as expected"
+fi
+

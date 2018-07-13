@@ -55,7 +55,11 @@ class UserController extends ControllerBase{
     }
 
     def error = {
-        flash.loginerror=message(code:"invalid.username.and.password")
+        if(params.code == "6") {
+            flash.loginerror=message(code:"loginfail.too.many.sessions")
+        } else {
+            flash.loginerror = message(code: "invalid.username.and.password")
+        }
         return render(view:'login')
     }
 

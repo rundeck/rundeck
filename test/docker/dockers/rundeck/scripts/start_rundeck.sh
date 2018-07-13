@@ -269,6 +269,9 @@ rundeck.security.authorization.preauthenticated.redirectLogout=false
 rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
 
 rundeck.log4j.config.file=/home/rundeck/server/config/log4j.properties
+if [ "$TEST_SECOND_AUTH_FAILS" == "true" ] ; then
+rundeck.security.enforceMaxSessions=true
+fi
 END
 
 if [ -n "$NODE_CACHE_FIRST_LOAD_SYNCH" ] ; then

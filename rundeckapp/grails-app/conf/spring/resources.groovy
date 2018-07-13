@@ -63,9 +63,14 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
+import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
+import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy
+import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy
+import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy
+import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
@@ -394,6 +399,28 @@ beans={
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
+
+    if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
+        sessionRegistry(SessionRegistryImpl)
+        registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
+        concurrentSessionControlAuthenticationStrategy(
+                ConcurrentSessionControlAuthenticationStrategy,
+                ref('sessionRegistry')
+        ) {
+            exceptionIfMaximumExceeded = true
+            maximumSessions = grailsApplication.config.rundeck.security.maxSessions ?: 1
+        }
+        sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
+            migrateSessionAttributes = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.migrate
+            // true
+            alwaysCreateSession = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.alwaysCreateSession
+            // false
+        }
+        sessionAuthenticationStrategy(
+                CompositeSessionAuthenticationStrategy,
+                [concurrentSessionControlAuthenticationStrategy, sessionFixationProtectionStrategy, registerSessionAuthenticationStrategy]
+        )
+    }
 
     //spring security preauth filter configuration
     if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
