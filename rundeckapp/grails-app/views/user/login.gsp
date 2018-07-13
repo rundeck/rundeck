@@ -31,6 +31,7 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="app.scss.css"/>
+    <asset:stylesheet href="custom.less.css"/>
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
@@ -39,11 +40,7 @@
     <g:render template="/common/css"/>
     <script language="javascript">
         //<!--
-        Event.observe(window, 'load', loadFocus, false);
-
-        function loadFocus() {
-            $('login').focus();
-        }
+        jQuery(function() {jQuery('#login').focus();});
         if (typeof(oopsEmbeddedLogin) == 'function') {
             oopsEmbeddedLogin();
         }
