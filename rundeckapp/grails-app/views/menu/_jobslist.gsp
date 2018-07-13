@@ -72,7 +72,8 @@
                                                     class=" btn btn-default btn-xs has_tooltip act_execute_job"
                                                     params="[project: scheduledExecution.project]"
                                                     data-toggle="tooltip"
-                                                    title="Choose options and Run Job…"
+                                                    data-placement="auto right"
+                                                    title="Choose options and Run Job"
                                                     data-job-id="${scheduledExecution.extid}"
                                             >
                                                 <b class="glyphicon glyphicon-play"></b>
