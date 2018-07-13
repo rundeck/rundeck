@@ -68,6 +68,61 @@ class ApiController extends ControllerBase{
     }
 
     /**
+     * /api/25/metrics/* forwards to /metrics/* path if enabled
+     * @param name
+     * @return
+     */
+    def apiMetrics(String name) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
+            return
+        }
+        def names = ['metrics', 'ping', 'threads', 'healthcheck']
+        def enabled =
+            names.collectEntries { mname ->
+                [mname,
+                 configurationService.getBoolean("web.metrics.servlets.${mname}.enabled", true) &&
+                 configurationService.getBoolean("api.metrics.${mname}.enabled", true),
+                ]
+            }
+        if (!name) {
+            //list enabled endpoints
+            return respond(
+                [
+                    '_links':
+                        enabled.findAll { it.value }.collectEntries {
+                            [
+                                it.key,
+                                [
+                                    href: createLink(
+                                        uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/$it.key",
+                                        absolute: true
+                                    )
+                                ]
+                            ]
+                        }
+                ]
+                ,
+                formats: ['json']
+            )
+        }
+        if (!enabled[name]) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    format: 'json',
+                    code  : 'api.error.invalid.request',
+                    args  : [
+                        request.forwardURI,
+                    ],
+                    status: HttpServletResponse.SC_NOT_FOUND
+                ]
+            )
+        }
+        def servletPath = configurationService.getString('metrics.servletUrlPattern', '/metrics/*')
+        forward(uri: servletPath.replace('/*', "/$name"))
+    }
+
+    /**
      * API endpoints
      */
     /**

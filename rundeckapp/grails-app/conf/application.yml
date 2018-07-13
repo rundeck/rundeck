@@ -194,6 +194,16 @@ rundeck:
                     enabled: true
                 healthcheck:
                     enabled: true
+    api:
+        metrics:
+            metrics:
+                enabled: true
+            ping:
+                enabled: true
+            threads:
+                enabled: true
+            healthcheck:
+                enabled: true
     gui:
         job:
             description:
