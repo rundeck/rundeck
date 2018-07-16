@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
+import grails.web.mapping.LinkGenerator
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 
@@ -40,6 +41,7 @@ class ApiController extends ControllerBase{
     def apiService
     def userService
     def configurationService
+    LinkGenerator grailsLinkGenerator
 
     static allowedMethods = [
             apiTokenList         : ['GET'],
@@ -93,10 +95,7 @@ class ApiController extends ControllerBase{
                             [
                                 it.key,
                                 [
-                                    href: createLink(
-                                        uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/$it.key",
-                                        absolute: true
-                                    )
+                                    href: grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/$it.key", absolute: true)
                                 ]
                             ]
                         }
