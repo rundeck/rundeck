@@ -188,13 +188,13 @@
 
                             <div class="list-group-item">
                                 <div class="form-group">
-                                    <g:each in="${deletedPaths.keySet().sort()}" var="path">
+                                    <g:each in="${deletedPaths.keySet().sort()}" var="path" status="counter">
 
                                         <div class="checkbox col-sm-12">
                                                 <g:checkBox name="deletePaths" value="${path}"
-                                                            id="deletePaths${path}"
+                                                            id="deletePaths${counter}"
                                                             checked="${selectedPaths?.contains(path)}"/>
-                                            <label for="deletePaths${path}">
+                                            <label for="deletePaths${counter}">
                                                 <g:set var="deletedJobText" value="${
                                                     deletedPaths[path].jobNameAndGroup ?:
                                                             message(code: "deleted.job.label")
