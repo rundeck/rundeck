@@ -15,7 +15,6 @@ services:
       - TEST_NC_PORT=4444
       - TEST_NC_HOST=rundeck1
       - WAIT_NODES=rundeck1
-      - TEST_SECOND_AUTH_FAILS=true
     volumes:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw

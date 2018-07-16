@@ -409,8 +409,8 @@ beans={
                 ConcurrentSessionControlAuthenticationStrategy,
                 ref('sessionRegistry')
         ) {
-            exceptionIfMaximumExceeded = grailsApplication.config.rundeck.security.disallowMoreThanMax ?: true
-            maximumSessions = grailsApplication.config.rundeck.security.maxSessions ?: 1
+            exceptionIfMaximumExceeded = false
+            maximumSessions = grailsApplication.config.rundeck.security.maxSessions?.toInteger() ?: 1
         }
         sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
             migrateSessionAttributes = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.migrate
