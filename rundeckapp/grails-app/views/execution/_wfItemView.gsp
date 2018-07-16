@@ -44,10 +44,10 @@
                             <i class="glyphicon glyphicon-book"></i>
                         </g:else>
                     </g:if>
-                    <g:if test="${!edit }">
-                        <b><g:message code="jobreference.wrong" /></b>
-                    </g:if>
                     <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+(item.jobName?:item.uuid) + (item.jobProject?' (' + item.jobProject+') ':'') }</g:enc>
+                    <g:if test="${!edit }">
+                        <label class="text-danger"><g:message code="jobreference.wrong" /></label>
+                    </g:if>
                 </g:else>
 
                 %{--display step description--}%
