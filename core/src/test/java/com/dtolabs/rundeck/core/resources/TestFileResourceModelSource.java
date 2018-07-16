@@ -534,10 +534,12 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
     }*/
 
     public void testGetNodesWritableEmpty() throws Exception {
-        System.out.println("testGetNodesWritableEmpty");
         Properties props = new Properties();
+        File temp = File.createTempFile("test-nodesX", ".xml");
+        temp.delete();
+        temp.deleteOnExit();
         props.setProperty("project", PROJ_NAME);
-        props.setProperty("file", "src/test/resources/com/dtolabs/rundeck/core/common/test-nodesX.xml");
+        props.setProperty("file", temp.getAbsolutePath());
         props.setProperty("generateFileAutomatically", "true");
         props.setProperty("includeServerNode", "false");
         final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
