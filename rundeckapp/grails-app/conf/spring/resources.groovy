@@ -72,6 +72,7 @@ import org.springframework.security.web.authentication.session.ConcurrentSession
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
+import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -402,12 +403,13 @@ beans={
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
         sessionRegistry(SessionRegistryImpl)
+        concurrentSessionFilter(ConcurrentSessionFilter, sessionRegistry)
         registerSessionAuthenticationStrategy(RegisterSessionAuthenticationStrategy, ref('sessionRegistry')) {}
         concurrentSessionControlAuthenticationStrategy(
                 ConcurrentSessionControlAuthenticationStrategy,
                 ref('sessionRegistry')
         ) {
-            exceptionIfMaximumExceeded = true
+            exceptionIfMaximumExceeded = grailsApplication.config.rundeck.security.disallowMoreThanMax ?: true
             maximumSessions = grailsApplication.config.rundeck.security.maxSessions ?: 1
         }
         sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
