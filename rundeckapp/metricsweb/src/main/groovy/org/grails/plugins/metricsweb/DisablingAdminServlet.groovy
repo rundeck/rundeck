@@ -67,10 +67,12 @@ class DisablingAdminServlet extends AdminServlet {
         def threadsUri = notNullParam(config.getInitParameter("threads-uri"), DEFAULT_THREADS_URI);
         def healthcheckUri = notNullParam(config.getInitParameter("healthcheck-uri"), DEFAULT_HEALTHCHECK_URI);
 
-        map[metricsUri] = gapp.config.rundeck?.web?.metrics?.servlets?.metrics?.enabled in [true, 'true']
-        map[pingUri] = gapp.config.rundeck?.web?.metrics?.servlets?.ping?.enabled in [true, 'true']
-        map[threadsUri] = gapp.config.rundeck?.web?.metrics?.servlets?.threads?.enabled in [true, 'true']
-        map[healthcheckUri] = gapp.config.rundeck?.web?.metrics?.servlets?.healthcheck?.enabled in [true, 'true']
+        def apiEnabled = (gapp.config.rundeck?.metrics?.enabled in [true, 'true']) &&
+                         (gapp.config.rundeck?.metrics?.api?.enabled in [true, 'true'])
+        map[metricsUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.metrics?.enabled in [true, 'true']
+        map[pingUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.ping?.enabled in [true, 'true']
+        map[threadsUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.threads?.enabled in [true, 'true']
+        map[healthcheckUri] = apiEnabled && gapp.config.rundeck?.metrics?.api?.healthcheck?.enabled in [true, 'true']
         this.enabledMap = Collections.unmodifiableMap(map)
     }
 

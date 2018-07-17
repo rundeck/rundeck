@@ -96,11 +96,12 @@ class ApiController extends ControllerBase{
             )
         }
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
+        def globalEnabled=configurationService.getBoolean("metrics.enabled", true) &&
+                          configurationService.getBoolean("metrics.api.enabled", true)
         def enabled =
             names.collectEntries { mname ->
                 [mname,
-                 configurationService.getBoolean("web.metrics.servlets.${mname}.enabled", true) &&
-                 configurationService.getBoolean("api.metrics.${mname}.enabled", true),
+                 globalEnabled && configurationService.getBoolean("metrics.api.${mname}.enabled", true)
                 ]
             }
         if (!name) {

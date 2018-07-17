@@ -221,12 +221,13 @@ class ApiControllerSpec extends Specification {
         )
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
+        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
         for (def i = 0; i < endpoints.size(); i++) {
             def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean("web.metrics.servlets.${endp}.enabled", true) >>
-            (enabledServlet[endp] ? true : false)
-            (enabledServlet[endp] ? 1 : 0) * controller.configurationService.getBoolean(
-                "api.metrics.${endp}.enabled",
+            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
                 true
             ) >> (enabledApi[endp] ? true : false)
         }
@@ -234,30 +235,15 @@ class ApiControllerSpec extends Specification {
         '/metrics/*'
 
         where:
-        input | enabledApi                                                    | enabledServlet   | forwarded | links
-        ''    | [:]                                                           | [:]              | false     | [:]
-        ''    | [:]                                                           | [metrics: true]  | false     | [:]
-        ''    | [metrics: true]                                               | [metrics: false] | false     | [:]
-        ''    | [metrics: true]                                               |
-        [metrics: true]                                                                          |
-        false                                                                                                |
-        [metrics: [href: '/api/25/metrics/metrics']]
-        ''    | [healthcheck: true]                                           |
-        [healthcheck: true]                                                                      |
-        false                                                                                                |
-        [healthcheck: [href: '/api/25/metrics/healthcheck']]
-        ''    | [ping: true]                                                  |
-        [ping: true]                                                                             |
-        false                                                                                                |
-        [ping: [href: '/api/25/metrics/ping']]
-        ''    | [threads: true]                                               |
-        [threads: true]                                                                          |
-        false                                                                                                |
-        [threads: [href: '/api/25/metrics/threads']]
-        ''    | [threads: true, ping: true, metrics: true, healthcheck: true] |
-        [threads: true, ping: true, metrics: true, healthcheck: true]                            |
-        false                                                                                                |
-        [
+        input | enabledApi                                                    | enabledAll   | forwarded | links
+        ''    | [:]                                                           | false              | false     | [:]
+        ''    | [:]                                                           | false  | false     | [:]
+        ''    | [metrics: true]                                               | false | false     | [:]
+        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/25/metrics/metrics']]
+        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/25/metrics/healthcheck']]
+        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/25/metrics/ping']]
+        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/25/metrics/threads']]
+        ''    | [threads: true, ping: true, metrics: true, healthcheck: true] | true                            | false                                                                                                | [
             metrics    : [href: '/api/25/metrics/metrics'],
             threads    : [href: '/api/25/metrics/threads'],
             healthcheck: [href: '/api/25/metrics/healthcheck'],
@@ -290,12 +276,14 @@ class ApiControllerSpec extends Specification {
 
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
+        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
         for (def i = 0; i < endpoints.size(); i++) {
             def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean("web.metrics.servlets.${endp}.enabled", true) >>
-            true
             1 * controller.configurationService.getBoolean(
-                "api.metrics.${endp}.enabled",
+                "metrics.api.${endp}.enabled",
                 true
             ) >> true
         }
@@ -368,12 +356,13 @@ class ApiControllerSpec extends Specification {
 
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
+        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
         for (def i = 0; i < endpoints.size(); i++) {
             def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean("web.metrics.servlets.${endp}.enabled", true) >>
-            true
             1 * controller.configurationService.getBoolean(
-                "api.metrics.${endp}.enabled",
+                "metrics.api.${endp}.enabled",
                 true
             ) >> true
         }
@@ -411,12 +400,13 @@ class ApiControllerSpec extends Specification {
         response.status == 404
 
         1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
+        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
         for (def i = 0; i < endpoints.size(); i++) {
             def endp = endpoints[i]
-            1 * controller.configurationService.getBoolean("web.metrics.servlets.${endp}.enabled", true) >>
-            (enabledServlet[endp] ? true : false)
-            (enabledServlet[endp] ? 1 : 0) * controller.configurationService.getBoolean(
-                "api.metrics.${endp}.enabled",
+            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
                 true
             ) >> (enabledApi[endp] ? true : false)
         }
@@ -427,11 +417,11 @@ class ApiControllerSpec extends Specification {
         ) >> { it[0].status = it[1].status }
 
         where:
-        input         | enabledApi       | enabledServlet
-        'metrics'     | [metrics: false] | [metrics: true]
-        'metrics'     | [metrics: true]  | [metrics: false]
-        'healthcheck' | [metrics: true]  | [metrics: true]
-        'ping'        | [metrics: true]  | [metrics: true]
-        'threads'     | [metrics: true]  | [metrics: true]
+        input         | enabledApi       | enabledAll
+        'metrics'     | [metrics: false] | true
+        'metrics'     | [metrics: true]  | false
+        'healthcheck' | [metrics: true]  | true
+        'ping'        | [metrics: true]  | true
+        'threads'     | [metrics: true]  | true
     }
 }
