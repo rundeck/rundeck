@@ -159,6 +159,16 @@ rundeck:
                 delimiter: ','
         useHMacRequestTokens: true
     storage:
+    execution:
+        finalize:
+            retryMax: 10
+            retryDelay: 5000
+        status:
+            retryMax: 5
+            retryDelay: 5000
+        logs:
+            fileStorage:
+                cancelOnStorageFailure: true
     mail:
         template:
             subject: '${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
@@ -167,22 +177,6 @@ rundeck:
         jmxEnabled: true
         requestFilterEnabled: true
         servletUrlPattern: '/metrics/*'
-        execution:
-            finalize:
-                retryMax: 10
-                retryDelay: 5000
-            status:
-                retryMax: 5
-                retryDelay: 5000
-            logs:
-                fileStorage:
-                    cancelOnStorageFailure: true
-        gui:
-            execution:
-                tail:
-                    lines:
-                        default: 20
-                        max: 500
         api:
             enabled: true
             metrics:
@@ -194,6 +188,11 @@ rundeck:
             healthcheck:
                 enabled: true
     gui:
+        execution:
+            tail:
+                lines:
+                    default: 20
+                    max: 500
         job:
             description:
                 disableHTML: false
