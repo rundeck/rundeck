@@ -409,7 +409,7 @@ class ApiController extends ControllerBase{
     /**
      * /api/1/system/info: display stats and info about the server
      */
-    def apiSystemInfo={
+    def apiSystemInfo(){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -436,9 +436,12 @@ class ApiController extends ControllerBase{
         Date startupDate = new Date(nowDate.getTime()-durationTime)
         int threadActiveCount=Thread.activeCount()
         boolean executionModeActive=configurationService.executionModeActive
-        def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
-        def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
-        def metricsHealthcheckUrl = createLink(uri: '/metrics/healthcheck',absolute: true)
+
+        def metricsJsonUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/metrics?pretty=true", absolute: true)
+        def metricsThreadDumpUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/threads", absolute: true)
+        def metricsHealthcheckUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/healthcheck", absolute: true)
+        def metricsPingUrl = grailsLinkGenerator.link(uri: "/api/${ApiVersions.API_CURRENT_VERSION}/metrics/ping", absolute: true)
+
         if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
@@ -511,6 +514,7 @@ class ApiController extends ControllerBase{
                         metrics(href:metricsJsonUrl,contentType:'application/json')
                         threadDump(href:metricsThreadDumpUrl,contentType:'text/plain')
                         healthcheck(href:metricsHealthcheckUrl,contentType:'application/json')
+                        ping(href:metricsPingUrl,contentType:'text/plain')
 
                         if (extMeta) {
                             extended {
@@ -590,6 +594,7 @@ class ApiController extends ControllerBase{
                         metrics=[href:metricsJsonUrl,contentType:'application/json']
                         threadDump=[href:metricsThreadDumpUrl,contentType:'text/plain']
                         healthcheck=[href:metricsHealthcheckUrl,contentType:'application/json']
+                        ping=[href:metricsPingUrl,contentType:'text/plain']
 
                         if (extMeta) {
                             extended = {
