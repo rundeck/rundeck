@@ -204,6 +204,10 @@ class ApiControllerSpec extends Specification {
             }
             0 * _(*_)
         }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
         when:
         def result = controller.apiMetrics(input)
 
@@ -273,6 +277,10 @@ class ApiControllerSpec extends Specification {
             }
             0 * _(*_)
         }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
         when:
         def result = controller.apiMetrics(input)
 
@@ -299,6 +307,42 @@ class ApiControllerSpec extends Specification {
     }
 
     @Unroll
+    def "api metrics unauthorized"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> false
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.status == 403
+
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.code == 'api.error.item.unauthorized' && it.status == 403
+        }
+        ) >> { it[0].status = it[1].status }
+
+        where:
+        input << ['metrics', 'ping', 'threads', 'healthcheck']
+    }
+
+    @Unroll
     def "api metrics bad endpoint"() {
         given:
         def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
@@ -309,6 +353,10 @@ class ApiControllerSpec extends Specification {
                 it[0].uri
             }
             0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
         }
         when:
         def result = controller.apiMetrics(input)
@@ -349,6 +397,10 @@ class ApiControllerSpec extends Specification {
                 it[0].uri
             }
             0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
         }
         when:
         def result = controller.apiMetrics(input)

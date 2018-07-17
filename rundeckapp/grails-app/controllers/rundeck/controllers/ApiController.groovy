@@ -78,6 +78,23 @@ class ApiController extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiVersions.V25)) {
             return
         }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(
+            authContext,
+            AuthConstants.RESOURCE_TYPE_SYSTEM,
+            AuthConstants.ACTION_READ
+        )) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code  : 'api.error.item.unauthorized',
+                    args  : ['Read System Metrics', 'Rundeck', ""],
+                    format: 'json'
+                ]
+            )
+        }
         def names = ['metrics', 'ping', 'threads', 'healthcheck']
         def enabled =
             names.collectEntries { mname ->
