@@ -88,7 +88,7 @@ grails.config.locations << "classpath:${appName}-config.properties"
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
 grails.plugin.springsecurity.interceptUrlMap = [
-        [pattern: '/user/j_security_check', access: ['permitAll']],
+        [pattern: '/j_security_check', access: ['permitAll']],
         [pattern: '/error',          access: ['permitAll']],
         [pattern: '/common/error',   access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
@@ -122,8 +122,8 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
-
-grails.plugin.springsecurity.apf.filterProcessesUrl = "/user/j_security_check"
+grails.plugin.springsecurity.useHttpSessionEventPublisher=true
+grails.plugin.springsecurity.apf.filterProcessesUrl = "/j_security_check"
 grails.plugin.springsecurity.apf.usernameParameter = "j_username"
 grails.plugin.springsecurity.apf.passwordParameter = "j_password"
 grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
