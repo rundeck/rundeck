@@ -38,14 +38,15 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 
+import ch.qos.logback.classic.Level;
 import grails.boot.config.GrailsAutoConfiguration;
 import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.Credential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -98,7 +99,14 @@ import org.eclipse.jetty.util.security.Credential;
  */
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
-    private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JettyCachingLdapLoginModule.class);
+    static {
+        String logLevelSysProp = System.getProperty("com.dtolabs.rundeck.jetty.jaas.LEVEL");
+        if(logLevelSysProp != null) {
+            Level level = Level.toLevel(logLevelSysProp);
+            ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
+        }
+    }
 
     private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)", Pattern.CASE_INSENSITIVE);
     private static final String CRYPT_TYPE   = "CRYPT:";
@@ -806,7 +814,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     System.currentTimeMillis() + _cacheDuration));
             LOG.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
         }
-        setCurrentUser(new JAASUserInfo(userInfo));
+        JAASUserInfo jaasUserInfo = new JAASUserInfo(userInfo);
+        try {
+            jaasUserInfo.fetchRoles();
+        } catch(Exception ex) {
+            if(_debug) {
+                LOG.debug("Failed to fetch roles",ex);
+            }
+        }
+        setCurrentUser(jaasUserInfo);
         setAuthenticated(true);
         return true;
     }
@@ -845,7 +861,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         try {
             _rootContext = new InitialDirContext(getEnvironment());
         } catch (NamingException ex) {
-            LOG.warn(ex);
+            LOG.error("Naming error",ex);
             throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());
         }
     }
