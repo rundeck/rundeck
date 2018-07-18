@@ -410,7 +410,7 @@ beans={
                 ref('sessionRegistry')
         ) {
             exceptionIfMaximumExceeded = false
-            maximumSessions = grailsApplication.config.rundeck.security.maxSessions?.toInteger() ?: 1
+            maximumSessions = grailsApplication.config.rundeck.security.maxSessions ? grailsApplication.config.rundeck.security.maxSessions.toInteger() : 1
         }
         sessionFixationProtectionStrategy(SessionFixationProtectionStrategy) {
             migrateSessionAttributes = grailsApplication.config.grails.plugin.springsecurity.sessionFixationPrevention.migrate
