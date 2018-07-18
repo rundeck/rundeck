@@ -399,7 +399,9 @@ beans={
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
 
     rundeckUserDetailsService(RundeckUserDetailsService)
-    rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
+    rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
+        rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:'ROLE_'
+    }
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
         sessionRegistry(SessionRegistryImpl)
