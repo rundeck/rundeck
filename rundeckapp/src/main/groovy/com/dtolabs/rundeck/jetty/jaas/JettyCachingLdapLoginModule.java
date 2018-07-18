@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,10 +37,10 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
+import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
 import ch.qos.logback.classic.Level;
-import grails.boot.config.GrailsAutoConfiguration;
 import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
@@ -99,7 +100,9 @@ import org.slf4j.LoggerFactory;
  */
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JettyCachingLdapLoginModule.class);
+    private static final Logger LOG                 = LoggerFactory.getLogger(JettyCachingLdapLoginModule.class);
+    public static final  String OBJECT_CLASS_FILTER = "(&(objectClass={0})({1}={2}))";
+
     static {
         String logLevelSysProp = System.getProperty("com.dtolabs.rundeck.jetty.jaas.LEVEL");
         if(logLevelSysProp != null) {
@@ -363,13 +366,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
-
 
         try {
             Object[] filterArguments = { _userObjectClass, _userIdAttribute, username };
-            NamingEnumeration results = _rootContext.search(_userBaseDn, filter, filterArguments,
-                    ctls);
+            NamingEnumeration results = _rootContext.search(_userBaseDn, OBJECT_CLASS_FILTER, filterArguments, ctls);
 
             LOG.debug("Found user?: " + results.hasMoreElements());
 
@@ -437,7 +437,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
+        String filter = OBJECT_CLASS_FILTER;
         final NamingEnumeration results;
 
         if(null!=_roleUsernameMemberAttribute){
@@ -629,10 +629,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             Object[] userPass= getCallBackAuth();
             if (null == userPass || userPass.length < 2) {
                 setAuthenticated(false);
-            } else {
-                String name = (String) userPass[0];
-                Object pass = userPass[1];
-                setAuthenticated(authenticate(name, pass));
+                throw new FailedLoginException();
+            }
+            String name = (String) userPass[0];
+            Object pass = userPass[1];
+            boolean authenticated = authenticate(name, pass);
+            setAuthenticated(authenticated);
+
+            if (!isAuthenticated()) {
+                throw new FailedLoginException();
             }
             return isAuthenticated();
         } catch (UnsupportedCallbackException e) {
@@ -730,6 +735,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 e.printStackTrace();
             }
             throw new LoginException("IO Error performing login.");
+        } catch (LoginException e) {
+            throw e;
         } catch (Exception e) {
             if (_debug) {
                 e.printStackTrace();
@@ -792,18 +799,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String userDn = searchResult.getNameInNamespace();
 
-        LOG.info("Attempting authentication: " + userDn);
-
-        Hashtable environment = getEnvironment();
-        environment.put(Context.SECURITY_PRINCIPAL, userDn);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
-
-        DirContext dirContext = new InitialDirContext(environment);
+        DirContext dirContext;
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
             dirContext = _rootContext;
             LOG.debug("Using _rootContext for role lookup.");
+        } else {
+            LOG.info("Attempting authentication: " + userDn);
+            dirContext = createBindUserDirContext(userDn, password);
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
@@ -821,10 +825,26 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             if(_debug) {
                 LOG.debug("Failed to fetch roles",ex);
             }
+            throw new LoginException("Error obtaining user info.");
         }
         setCurrentUser(jaasUserInfo);
         setAuthenticated(true);
         return true;
+    }
+
+    BindDirContextCreator userBindDirContextCreator;
+    static interface BindDirContextCreator{
+        DirContext createBindUserDirContext(final String userDn, final Object password) throws NamingException;
+    }
+
+    private DirContext createBindUserDirContext(final String userDn, final Object password) throws NamingException {
+        if (null != userBindDirContextCreator) {
+            return userBindDirContextCreator.createBindUserDirContext(userDn, password);
+        }
+        Hashtable environment = getEnvironment();
+        environment.put(Context.SECURITY_PRINCIPAL, userDn);
+        environment.put(Context.SECURITY_CREDENTIALS, password);
+        return new InitialDirContext(environment);
     }
 
     @SuppressWarnings("unchecked")
@@ -834,7 +854,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
+        String filter = OBJECT_CLASS_FILTER;
 
         LOG.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
                 + _userBaseDn);
@@ -874,7 +894,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
-        String bindPassword = Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString();
+        String
+            bindPassword =
+            null != Holders.getConfig() &&
+            null != Holders.getConfig().get("rundeck.security.ldap.bindPassword")
+            ? Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString()
+            : null;
         if(bindPassword != null && !"null".equals(bindPassword)) {
             _bindPassword = bindPassword;
         } else {
