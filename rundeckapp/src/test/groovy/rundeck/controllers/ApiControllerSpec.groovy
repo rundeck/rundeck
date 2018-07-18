@@ -22,11 +22,14 @@ import grails.converters.JSON
 import grails.converters.XML
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.web.mapping.LinkGenerator
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 @TestFor(ApiController)
 @Mock([User, AuthToken])
@@ -187,5 +190,238 @@ class ApiControllerSpec extends Specification {
         apivers | _
         19      | _
 
+    }
+
+    @Unroll
+    def "api metrics links response"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.forwardedUrl == (forwarded ? "/metrics/$input?" : null)
+        response.json == (
+            forwarded ? null : [
+                '_links': links
+            ]
+        )
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
+        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
+        for (def i = 0; i < endpoints.size(); i++) {
+            def endp = endpoints[i]
+            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
+                true
+            ) >> (enabledApi[endp] ? true : false)
+        }
+        (forwarded ? 1 : 0) * controller.configurationService.getString('metrics.servletUrlPattern', '/metrics/*') >>
+        '/metrics/*'
+
+        where:
+        input | enabledApi                                                    | enabledAll   | forwarded | links
+        ''    | [:]                                                           | false              | false     | [:]
+        ''    | [:]                                                           | false  | false     | [:]
+        ''    | [metrics: true]                                               | false | false     | [:]
+        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/25/metrics/metrics']]
+        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/25/metrics/healthcheck']]
+        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/25/metrics/ping']]
+        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/25/metrics/threads']]
+        ''    | [threads: true, ping: true, metrics: true, healthcheck: true] | true                            | false                                                                                                | [
+            metrics    : [href: '/api/25/metrics/metrics'],
+            threads    : [href: '/api/25/metrics/threads'],
+            healthcheck: [href: '/api/25/metrics/healthcheck'],
+            ping       : [href: '/api/25/metrics/ping'],
+        ]
+    }
+
+    @Unroll
+    def "api metrics forwarding"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.forwardedUrl == "/metrics/$input?"
+
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
+        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
+        for (def i = 0; i < endpoints.size(); i++) {
+            def endp = endpoints[i]
+            1 * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
+                true
+            ) >> true
+        }
+        1 * controller.configurationService.getString('metrics.servletUrlPattern', '/metrics/*') >>
+        '/metrics/*'
+
+        where:
+        input << ['metrics', 'ping', 'threads', 'healthcheck']
+    }
+
+    @Unroll
+    def "api metrics unauthorized"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> false
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.status == 403
+
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.code == 'api.error.item.unauthorized' && it.status == 403
+        }
+        ) >> { it[0].status = it[1].status }
+
+        where:
+        input << ['metrics', 'ping', 'threads', 'healthcheck']
+    }
+
+    @Unroll
+    def "api metrics bad endpoint"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.forwardedUrl == null
+        response.status == 404
+
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> true
+        1 * controller.configurationService.getBoolean("metrics.api.enabled", true) >> true
+        for (def i = 0; i < endpoints.size(); i++) {
+            def endp = endpoints[i]
+            1 * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
+                true
+            ) >> true
+        }
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.code == 'api.error.invalid.request' && it.status == 404
+        }
+        ) >> { it[0].status = it[1].status }
+        where:
+        input << ['blah', 'asdfasdf']
+    }
+
+    @Unroll
+    def "api metrics disabled"() {
+        given:
+        def endpoints = ['metrics', 'healthcheck', 'ping', 'threads']
+        controller.apiService = Mock(ApiService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> {
+                it[0].uri
+            }
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubject(_)
+            1 * authorizeApplicationResource(_, [type: 'resource', kind: 'system'], 'read') >> true
+        }
+        when:
+        def result = controller.apiMetrics(input)
+
+        then:
+
+        response.forwardedUrl == null
+        response.status == 404
+
+        1 * controller.apiService.requireVersion(_, _, 25) >> true
+
+        1 * controller.configurationService.getBoolean("metrics.enabled", true) >> enabledAll
+        (enabledAll?1:0) * controller.configurationService.getBoolean("metrics.api.enabled", true) >> enabledAll
+        for (def i = 0; i < endpoints.size(); i++) {
+            def endp = endpoints[i]
+            (enabledAll ? 1 : 0) * controller.configurationService.getBoolean(
+                "metrics.api.${endp}.enabled",
+                true
+            ) >> (enabledApi[endp] ? true : false)
+        }
+        1 * controller.apiService.renderErrorFormat(
+            _, {
+            it.code == 'api.error.invalid.request' && it.status == 404
+        }
+        ) >> { it[0].status = it[1].status }
+
+        where:
+        input         | enabledApi       | enabledAll
+        'metrics'     | [metrics: false] | true
+        'metrics'     | [metrics: true]  | false
+        'healthcheck' | [metrics: true]  | true
+        'ping'        | [metrics: true]  | true
+        'threads'     | [metrics: true]  | true
     }
 }
