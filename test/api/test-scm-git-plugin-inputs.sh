@@ -38,9 +38,11 @@ exprops="committerName
 committerEmail
 exportUuidBehavior
 pullAutomatically
+createBranch
+baseBranch
 $commonprops
 "
-expcount=13
+expcount=15
 
 test_git_plugin_input_xml(){
 	local integration=$1

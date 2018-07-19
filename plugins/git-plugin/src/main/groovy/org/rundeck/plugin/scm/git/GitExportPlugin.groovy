@@ -23,10 +23,12 @@ import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -118,10 +120,62 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         File base = new File(config.dir)
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
         cloneOrCreate(context, base, config.url)
-
+        //check clone was ok
+        if (git?.repository.getFullBranch() != "refs/heads/$branch") {
+            logger.debug("branch differs")
+            if(config.shouldCreateBranch()){
+                if(config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")){
+                    createBranch(context, config.branch, config.baseBranch)
+                    cloneOrCreate(context, base, config.url)
+                }else{
+                    logger.debug("Non existent remote branch: ${config.baseBranch}")
+                    throw new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
+                }
+            }else{
+                throw new ScmPluginException("Non existent remote branch: ${this.branch}")
+            }
+        }
         workingDir = base
         inited = true
     }
+
+    private void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
+        def createCommand = git.branchCreate()
+                .setName(newBranch)
+                .setStartPoint("${REMOTE_NAME}/${baseBranch}")
+                .setForce(true)
+
+        try {
+            createCommand.call()
+        } catch (Exception e) {
+            logger.debug("Failed creating branch ${newBranch}: ${e.message}", e)
+            throw new ScmPluginException("Failed creating branch ${newBranch}: ${e.message}", e)
+        }
+        def pushb = git.push()
+        pushb.setRemote(REMOTE_NAME)
+        pushb.add(branch)
+        setupTransportAuthentication(sshConfig, context, pushb)
+
+        def push
+        try {
+            push = pushb.call()
+        } catch (Exception e) {
+            plugin.logger.debug("Failed push to remote: ${e.message}", e)
+            throw new ScmPluginException("Failed push to remote: ${e.message}", e)
+        }
+
+    }
+
+    private boolean existBranch(String remoteName){
+        List<Ref> call = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call()
+        for (Ref ref : call) {
+            if (remoteName == ref.getName()) {
+                return true
+            }
+        }
+        return false
+    }
+
 
     @Override
     void cleanup() {

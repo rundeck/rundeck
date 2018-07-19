@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.RebaseCommand
 import org.eclipse.jgit.api.RebaseResult
@@ -33,6 +34,7 @@ import org.eclipse.jgit.lib.BranchConfig
 import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
@@ -570,10 +572,10 @@ class BaseGitPlugin {
         return msgs.join("; ")
     }
 
-    private void performClone(File base, String url, ScmOperationContext context) {
+    private void performClone(File base, String url, ScmOperationContext context, String branch=this.branch) {
         logger.debug("cloning...");
         def cloneCommand = Git.cloneRepository().
-                setBranch(this.branch).
+                setBranch(branch).
                 setRemote(REMOTE_NAME).
                 setDirectory(base).
                 setURI(url)
@@ -586,6 +588,7 @@ class BaseGitPlugin {
         }
         repo = git.getRepository()
     }
+
 
     /**
      * Configure authentication for the git command depending on the configured ssh private Key storage path, or password

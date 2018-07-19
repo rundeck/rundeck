@@ -80,6 +80,35 @@ Template".
     )
     String pullAutomatically
 
+    @PluginProperty(
+            title = "Create Branch if it doesn't exist",
+            description = "If the entered branch doesnt exist on remote repo, create a new one. If false, it will fail if the branch doesn't exist",
+            defaultValue = 'false',
+            required = false
+    )
+    @SelectValues(values = ['true', 'false'])
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String createBranch
+
+    @PluginProperty(
+            title = "Base branch on:",
+            description = "Create the new branch based on the existen branch",
+            defaultValue = 'master',
+            required = false
+
+    )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String baseBranch
+
+
+
+
     boolean isExportPreserve() {
         exportUuidBehavior == 'preserve' || !exportUuidBehavior
     }
@@ -92,5 +121,9 @@ Template".
 
     boolean shouldPullAutomatically(){
         return pullAutomatically in ['true']
+    }
+
+    boolean shouldCreateBranch(){
+        return createBranch in ['true']
     }
 }
