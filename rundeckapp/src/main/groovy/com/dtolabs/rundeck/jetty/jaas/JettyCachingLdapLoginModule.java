@@ -782,8 +782,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 if (System.currentTimeMillis() < cached.expires) {
                     LOG.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
-
-                    setCurrentUser(new JAASUserInfo(cached.userInfo));
+                    JAASUserInfo jaasUserInfo = new JAASUserInfo(cached.userInfo);
+                    try {
+                        jaasUserInfo.fetchRoles();
+                    } catch(Exception ex) {
+                        if(_debug) {
+                            LOG.debug("Failed to fetch roles",ex);
+                        }
+                        throw new LoginException("Error obtaining user info.");
+                    }
+                    setCurrentUser(jaasUserInfo);
                     setAuthenticated(true);
                     return true;
                 } else {
