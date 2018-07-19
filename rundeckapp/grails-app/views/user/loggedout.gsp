@@ -56,24 +56,21 @@
                             <g:set var="appTitle"
                                    value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
                             <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
-                            <g:set var="brandHtml"
-                                   value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
-                            <g:set var="brandDefaultHtml"
-                                   value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
                             <i class="rdicon app-logo"></i>
-                            <g:if test="${brandHtml}">
-                                ${enc(sanitize:brandHtml)}
-                            </g:if>
-                            <g:elseif test="${appTitle}">
+                            <g:if test="${appTitle}">
                                 ${appTitle}
-                            </g:elseif>
-                            <g:elseif test="${brandDefaultHtml}">
-                                ${enc(sanitize:brandDefaultHtml)}
-                            </g:elseif>
+                            </g:if>
                             <g:else>
                                 ${appDefaultTitle}
                             </g:else>
                         </a>
+                        <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+                        <g:if test="${userDefinedLogo}">
+                          <g:set var="userAssetBase" value="/user-assets" />
+                          <div style="margin-top:2em">
+                            <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}">
+                          </div>
+                        </g:if>
                     </div>
                     <p class="text-center h4">
                       <g:message code="you.are.now.logged.out"/>

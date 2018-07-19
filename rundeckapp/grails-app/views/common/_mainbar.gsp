@@ -18,6 +18,13 @@
           <span class="icon-bar bar2"></span>
           <span class="icon-bar bar3"></span>
         </button>
+
+        <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+        <g:if test="${userDefinedLogo}">
+        <g:set var="userAssetBase" value="/user-assets" />
+          <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+        </g:if>
+
         <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
           <g:ifPageProperty name='meta.tabpage'>
             <g:ifPageProperty name='meta.tabpage' equals='configure'>

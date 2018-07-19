@@ -32,13 +32,16 @@
 
 <style type="text/css">
 
-    .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
+    /*
+    If I turn this off, will it break things? ~ Jesse
+    .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
+
           width: ${enc(rawtext:appLogoW)};
           height: ${enc(rawtext:appLogoH)};
         vertical-align: baseline;
     }
 
-    .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
         background-image: url("${logoResource}");
         background-repeat: no-repeat;
     }
@@ -50,17 +53,11 @@
     only screen and (        min-device-pixel-ratio: 2),
     only screen and (                min-resolution: 192dpi),
     only screen and (                min-resolution: 2dppx) {
-    .rdicon.app-logo, .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
         background-image: url("${logoResourceHires}");
         background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
     }
-    }
-
-    <g:if test="${grailsApplication.config.rundeck.gui.navbar.background}">
-    .navbar-overrides {
-        background: ${grailsApplication.config.rundeck.gui.navbar.background};
-    }
-    </g:if>
+    } */
 
     ${enc(rawtext:customCss)}
 </style>
