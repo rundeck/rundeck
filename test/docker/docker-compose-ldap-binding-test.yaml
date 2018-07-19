@@ -20,7 +20,7 @@ services:
       - JAAS_LDAP_BASE_DN=dc=rdtest,dc=com
       - JAAS_LDAP_ADMIN_DN=cn=admin,dc=rdtest,dc=com
       - JAAS_LDAP_URL=ldap://ldap:389
-      - JAAS_LDAP_BINDING_LOGIN=false
+      - JAAS_LDAP_BINDING_LOGIN=true
       - RDECK_JVM_OPTS=-Dloginmodule.name=ldap -Dloginmodule.conf.name=jaas-ldap.conf -Drundeck.jaaslogin=true -Dcom.dtolabs.rundeck.jetty.jaas.LEVEL=DEBUG 
     volumes:
       - logs:/home/rundeck/logs:rw

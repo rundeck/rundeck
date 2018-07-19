@@ -36,6 +36,7 @@ run_tests(){
     cd $DIR
     bash $DIR/test-ssl.sh
 }
+
 run_docker_test(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}

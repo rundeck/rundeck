@@ -4,7 +4,7 @@ set -euo pipefail
 
 . common.sh
 
-export DOCKER_COMPOSE_SPEC=docker-compose-ldap-test.yaml
+export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-ldap-test.yaml}
 export CLI_VERS=1.0.29-1
 
 if [ -f rundeck-launcher.war ] ; then
