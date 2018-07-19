@@ -313,11 +313,17 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     boolean isBase64(String chkBase64) {
+        if(isHex(chkBase64)) return false;
         try {
             Base64.getDecoder().decode(chkBase64);
             return chkBase64.replace(" ","").length() % 4 == 0;
         } catch(IllegalArgumentException iaex) {}
         return false;
+    }
+
+    boolean isHex(String chkHex) {
+        if(chkHex.length() != 32 || chkHex.endsWith("=")) return false;
+        return chkHex.matches("^[0-9a-fA-F]+$");
     }
 
     protected String doRFC2254Encoding(String inputString) {

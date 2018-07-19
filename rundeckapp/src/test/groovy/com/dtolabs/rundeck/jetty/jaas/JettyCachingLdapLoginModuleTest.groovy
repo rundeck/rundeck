@@ -35,6 +35,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         expect:
         module.decodeBase64EncodedPwd("noencoding") == "noencoding"
         module.decodeBase64EncodedPwd("MD5:tmXytOxIA6rGWhEKPFfv3A==") == "MD5:b665f2b4ec4803aac65a110a3c57efdc"
+        module.decodeBase64EncodedPwd("MD5:038703c7230ae012e3c783ace1d09d64") == "MD5:038703c7230ae012e3c783ace1d09d64"
     }
 
     def "IsBase64"() {
@@ -44,6 +45,15 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         !module.isBase64("noencoding")
         module.isBase64("bXl0ZXN0c3RyaW5n")
         module.isBase64("bXl0ZXN0c3RyaW5nCg==")
+    }
+
+    def "IsHex"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        expect:
+        module.isHex("b665f2b4ec4803aac65a110a3c57efdc")
+        !module.isHex("b665f2b4ec4803aac65a110a3c57efd")
+        !module.isHex("dWJlcjE3NjAzdGFzdGljc3dlZXRuZXNz")
+        !module.isHex("dWJlcjE5MjJ0YXN0aWNzd2VldG5lc3M=")
     }
 
     def "bindingLogin user not found"() {
