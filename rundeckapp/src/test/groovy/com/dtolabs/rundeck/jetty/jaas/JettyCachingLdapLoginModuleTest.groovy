@@ -19,6 +19,7 @@ import org.eclipse.jetty.jaas.JAASRole
 import spock.lang.Specification
 
 import javax.naming.NamingEnumeration
+import javax.naming.NamingException
 import javax.naming.directory.Attribute
 import javax.naming.directory.Attributes
 import javax.naming.directory.DirContext
@@ -80,6 +81,58 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | _
         'auser'  | _
+    }
+
+    def "bindingLogin invalid password"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = useRootContext
+        module._roleBaseDn = 'roleBaseDn'
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.callbackHandler = Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        }
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >>
+            Mock(NamingEnumeration) {
+                hasMoreElements() >> {
+                    found.size() > 0
+                }
+                nextElement() >> {
+                    found.remove(0)
+                }
+            }
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+
+        module.userBindDirContextCreator = { String user, Object pass ->
+            throw new LoginException("Login failure")
+        }
+        when:
+        boolean result = module.login()
+
+        then:
+        !result
+
+        LoginException thrown = thrown()
+        thrown.message == 'Error obtaining user info.'
+
+
+        where:
+        username | useRootContext
+        'auser'  | true
+        'auser'  | false
     }
 
     def "bindingLogin should set user roles"() {

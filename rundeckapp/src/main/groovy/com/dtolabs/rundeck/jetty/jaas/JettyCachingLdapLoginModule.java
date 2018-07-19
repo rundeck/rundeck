@@ -799,15 +799,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String userDn = searchResult.getNameInNamespace();
 
-        DirContext dirContext;
+        LOG.info("Attempting authentication: " + userDn);
+        DirContext dirContext = createBindUserDirContext(userDn, password);
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
             dirContext = _rootContext;
             LOG.debug("Using _rootContext for role lookup.");
-        } else {
-            LOG.info("Attempting authentication: " + userDn);
-            dirContext = createBindUserDirContext(userDn, password);
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
