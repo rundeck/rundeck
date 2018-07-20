@@ -13,22 +13,9 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<g:set var="userAssetBase" value="/user-assets" />
-<g:set var="userStaticEnabled" value="${grailsApplication.config.rundeck.gui.staticUserResources.enabled in ['true',true]}" />
-<g:set var="appLogo"
-       value="${grailsApplication.config.rundeck.gui.logo && userStaticEnabled ?: g.message(code: 'main.app.logo')}"/>
-<g:set var="appLogoHires"
-       value="${grailsApplication.config.rundeck.gui.logoHires && userStaticEnabled ?: g.message(code: 'main.app.logo.hires')}"/>
-<g:set var="appLogoW"
-       value="${grailsApplication.config.rundeck.gui.'logo-width' ?: g.message(code: 'main.app.logo.width')}"/>
-<g:set var="appLogoH"
-       value="${grailsApplication.config.rundeck.gui.'logo-height' ?: g.message(code: 'main.app.logo.height')}"/>
 <g:if test="${session[org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME]?.language=='de'}">
     <g:set var="customCss" value=".navbar-brand,.navbar-default{border-radius: 0 0 10px 10px; }"/>
 </g:if>
-
-<g:set var="logoResource" value="${grailsApplication.config.rundeck.gui.logo && userStaticEnabled ? createLink(resource:grailsApplication.config.rundeck.gui.logo,base:userAssetBase) : resource(dir: 'images', file: appLogo)}" />
-<g:set var="logoResourceHires" value="${grailsApplication.config.rundeck.gui.logoHires && userStaticEnabled ? createLink(resource:grailsApplication.config.rundeck.gui.logoHires,base:userAssetBase) : resource(dir: 'images', file: appLogoHires)}" />
 
 <style type="text/css">
 
