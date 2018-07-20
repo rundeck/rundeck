@@ -9,7 +9,8 @@
 # RUNDECK_RELEASE_VERSION = version number extracted from TRAVIS_TAG
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
 # RUNDECK_PREV_RELEASE_VERSION = same as above extracted from second oldest tag in git history
-#
+# RUNDECK_MASTER_BUILD = (true|false) resolves Travis funkyness to determine if this is a true master build
+
 # BINTRAY_DEB_REPO = selected deb bintray repo based on release tag
 # BINTRAY_RPM_REPO = selected rpm bintray repo based on release tag
 # BINTRAY_MAVEN_REPO = selected maven(jar,war) bintray repo based on release tag
@@ -27,6 +28,12 @@ export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
 export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
 export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
 export RUNDECK_TAG="${RUNDECK_TAG:-$TRAVIS_TAG}"
+
+if [[ "${TRAVIS_EVENT_TYPE:-}" = "push" && "${RUNDECK_BRANCH}" = "master" ]]; then
+    export RUNDECK_MASTER_BUILD=true
+else
+    export RUNDECK_MASTER_BUILD=false
+fi
 
 # Location of CI resources such as private keys
 S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
@@ -175,6 +182,10 @@ EOF
         https://api.travis-ci.${travis_flav}/repo/${owner}%2F${repo}/requests
 }
 
+docker_login() {
+    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+}
+
 build_rdtest() {
     local buildJar=( $PWD/rundeckapp/build/libs/*.war )
     cp ${buildJar[0]} test/docker/rundeck-launcher.war
@@ -187,7 +198,7 @@ build_rdtest() {
     )
 
     # Tag and push to be used as cache source in later test builds
-    docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    docker_login
 
     # Pusheen
     if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
@@ -227,6 +238,7 @@ export -f sync_from_s3
 export -f sync_commit_from_s3
 export -f fetch_common_artifacts
 export -f trigger_travis_build
+export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
 export -f trigger_downstream_snapshots
