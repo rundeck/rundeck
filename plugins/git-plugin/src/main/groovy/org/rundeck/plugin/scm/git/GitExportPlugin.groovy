@@ -139,44 +139,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         inited = true
     }
 
-    private void createBranch(ScmOperationContext context, String newBranch, String baseBranch){
-        def createCommand = git.branchCreate()
-                .setName(newBranch)
-                .setStartPoint("${REMOTE_NAME}/${baseBranch}")
-                .setForce(true)
-
-        try {
-            createCommand.call()
-        } catch (Exception e) {
-            logger.debug("Failed creating branch ${newBranch}: ${e.message}", e)
-            throw new ScmPluginException("Failed creating branch ${newBranch}: ${e.message}", e)
-        }
-        def pushb = git.push()
-        pushb.setRemote(REMOTE_NAME)
-        pushb.add(branch)
-        setupTransportAuthentication(sshConfig, context, pushb)
-
-        def push
-        try {
-            push = pushb.call()
-        } catch (Exception e) {
-            plugin.logger.debug("Failed push to remote: ${e.message}", e)
-            throw new ScmPluginException("Failed push to remote: ${e.message}", e)
-        }
-
-    }
-
-    private boolean existBranch(String remoteName){
-        List<Ref> call = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call()
-        for (Ref ref : call) {
-            if (remoteName == ref.getName()) {
-                return true
-            }
-        }
-        return false
-    }
-
-
     @Override
     void cleanup() {
         git?.close()

@@ -94,7 +94,7 @@ Template".
     String createBranch
 
     @PluginProperty(
-            title = "Base branch on:",
+            title = "Base branch on",
             description = "Create the new branch based on the existen branch",
             defaultValue = 'master',
             required = false
