@@ -1,0 +1,66 @@
+version: '2'
+
+services:
+  rundeck1:
+    hostname: rundeck1
+    image: rdtest:latest
+    links:
+      - ldap
+    environment:
+      - RUNDECK_NODE=rundeck1
+      - RUNDECK_URL=http://rundeck1:4440
+      - LAUNCHER_URL=${LAUNCHER_URL}
+      - CLI_DEB_URL=${CLI_DEB_URL}
+      - CLI_VERS=${CLI_VERS}
+      - WAIT_NODES=rundeck1
+      - CONFIG_SCRIPT_PRESTART=scripts/config-jaas.sh
+      - JAAS_FILE_NAME=jaas-ldap.conf
+      - JAAS_MODULE_NAME=ldap
+      - JAAS_LDAP_PASS=AdminPass123
+      - JAAS_LDAP_BASE_DN=dc=rdtest,dc=com
+      - JAAS_LDAP_ADMIN_DN=cn=admin,dc=rdtest,dc=com
+      - JAAS_LDAP_URL=ldap://ldap:389
+      - JAAS_LDAP_BINDING_LOGIN=true
+      - RDECK_JVM_OPTS=-Dloginmodule.name=ldap -Dloginmodule.conf.name=jaas-ldap.conf -Drundeck.jaaslogin=true -Dcom.dtolabs.rundeck.jetty.jaas.LEVEL=DEBUG 
+    volumes:
+      - logs:/home/rundeck/logs:rw
+      - resources:/home/rundeck/resources:rw
+      - tests:/home/rundeck/tests:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.11
+    ports:
+      - "2222:22"
+      - "4440:4440"
+
+  ldap:
+    hostname: ldap
+    image: osixia/openldap:1.2.1 
+    environment:
+      - LDAP_ORGANISATION=RD Test
+      - LDAP_DOMAIN=rdtest.com
+      - LDAP_ADMIN_PASSWORD=AdminPass123
+    volumes:
+      - ./dockers/ldap/ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.2
+    ports:
+      - "389:389"
+    command: --copy-service
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.234.0/24
+        gateway: 192.168.234.1
+
+volumes:
+  logs:
+  resources:
+  tests:
+
+

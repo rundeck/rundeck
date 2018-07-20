@@ -106,6 +106,18 @@ jobs:
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-ansible-test' 'bash test/run-docker-ansible-tests.sh'
 
+  - env: JOB='Docker LDAP tests'
+    script:
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker.pull' pull_rdtest
+    - script_block 'docker-ldap-test' 'bash test/run-docker-ldap-tests.sh'
+
+  - env: JOB='Docker LDAP Bind tests'
+    script:
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker.pull' pull_rdtest
+    - script_block 'docker-ldap-bind-test' 'DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh'
+
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
     script:
@@ -152,6 +164,8 @@ jobs:
     - script_block 'docker-test' 'bash test/run-docker-tests.sh'
     - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'
     - script_block 'docker-ansible-test' 'bash test/run-docker-ansible-tests.sh'
+    - script_block 'docker-ldap-test' 'bash test/run-docker-ldap-tests.sh'
+    - script_block 'docker-ldap-bind-test' 'DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh'
 
 addons:
   hostname: rdbuild

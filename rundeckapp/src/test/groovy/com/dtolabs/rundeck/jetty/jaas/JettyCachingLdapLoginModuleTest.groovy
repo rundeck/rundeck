@@ -19,6 +19,7 @@ import org.eclipse.jetty.jaas.JAASRole
 import spock.lang.Specification
 
 import javax.naming.NamingEnumeration
+import javax.naming.NamingException
 import javax.naming.directory.Attribute
 import javax.naming.directory.Attributes
 import javax.naming.directory.DirContext
@@ -92,6 +93,50 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         'auser'  | _
     }
 
+    def "bindingLogin invalid password"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = useRootContext
+        module._roleBaseDn = 'roleBaseDn'
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.callbackHandler = Mock(CallbackHandler) {
+            1 * handle(_) >> { it[0][0].name = username; it[0][1].object = 'apassword' }
+        }
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >>{new EnumImpl<SearchResult>(found)}
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+
+        module.userBindDirContextCreator = { String user, Object pass ->
+            throw new NamingException("Login failure")
+        }
+        when:
+        boolean result = module.login()
+
+        then:
+        !result
+
+        LoginException thrown = thrown()
+        thrown.message == 'Error obtaining user info.'
+
+
+        where:
+        username | useRootContext
+        'auser'  | true
+        'auser'  | false
+    }
+
     def "bindingLogin should set user roles"() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
         module._debug = true
@@ -112,15 +157,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
                 _,
                 JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
                 [module._userObjectClass, module._userIdAttribute, username], _
-            ) >>
-            Mock(NamingEnumeration) {
-                hasMoreElements() >> {
-                    found.size() > 0
-                }
-                nextElement() >> {
-                    found.remove(0)
-                }
-            }
+            ) >> {new EnumImpl<SearchResult>(found)}
             0 * search(*_)
         }
         module._rootContext = dirContext
@@ -128,14 +165,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         def foundRoles = [Mock(SearchResult) {
             getAttributes() >> Mock(Attributes) {
                 get(module._roleNameAttribute) >> Mock(Attribute) {
-                    getAll() >> Mock(NamingEnumeration) {
-                        hasMore() >> {
-                            stringRoles.size() > 0
-                        }
-                        next() >> {
-                            stringRoles.remove(0)
-                        }
-                    }
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
                 }
             }
         }]
@@ -145,17 +175,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
                 JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
                 [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
                 _
-            ) >> Mock(NamingEnumeration) {
-                hasMoreElements() >> {
-                    foundRoles.size() > 0
-                }
-                hasMore() >> {
-                    foundRoles.size() > 0
-                }
-                nextElement() >> {
-                    foundRoles.remove(0)
-                }
-            }
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
             0 * _(*_)
         }
         module.userBindDirContextCreator = { String user, Object pass ->
@@ -178,5 +198,105 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         where:
         username | _
         'auser'  | _
+    }
+    class EnumImpl<T> implements NamingEnumeration<T>{
+        List<T> list
+
+        EnumImpl(final List<T> list) {
+            this.list = new ArrayList<>(list)
+        }
+
+        @Override
+        T next() throws NamingException {
+            return list.remove(0)
+        }
+
+        @Override
+        boolean hasMore() throws NamingException {
+            return list.size()> 0
+        }
+
+        @Override
+        void close() throws NamingException {
+
+        }
+
+        @Override
+        boolean hasMoreElements() {
+            hasMore()
+        }
+
+        @Override
+        T nextElement() {
+            next()
+        }
+    }
+
+    def "bindingLogin while cached"() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule()
+        module._debug = true
+        module._cacheDuration = Integer.MAX_VALUE
+        module._forceBindingLogin = true
+        module._contextFactory = "notnull"
+        module._providerUrl = "notnull"
+        module._forceBindingLoginUseRootContextForRoles = false
+        module._roleBaseDn = 'roleBaseDn'
+        module._roleUsernameMemberAttribute = 'roleUsernameMemberAttribute'
+        module.callbackHandler = Mock(CallbackHandler) {
+            2 * handle(_) >> { it[0][0].name = username; it[0][1].object = password }
+        }
+        def found = [Mock(SearchResult) {
+            getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+        }]
+        def dirContext = Mock(DirContext) {
+            1 * search(
+                _,
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._userObjectClass, module._userIdAttribute, username], _
+            ) >> {new EnumImpl<SearchResult>(found)}
+
+            0 * search(*_)
+        }
+        module._rootContext = dirContext
+        def stringRoles = ['role1', 'role2']
+        def foundRoles = [Mock(SearchResult) {
+            getAttributes() >> Mock(Attributes) {
+                get(module._roleNameAttribute) >> Mock(Attribute) {
+                    getAll() >> {new EnumImpl<String>(stringRoles)}
+                }
+            }
+        }]
+        DirContext userDir = Mock(DirContext) {
+            1 * search(
+                'roleBaseDn',
+                JettyCachingLdapLoginModule.OBJECT_CLASS_FILTER,
+                [module._roleObjectClass, 'roleUsernameMemberAttribute', username],
+                _
+            ) >> {new EnumImpl<SearchResult>(foundRoles)}
+
+            0 * _(*_)
+        }
+        module.userBindDirContextCreator = { String user, Object pass ->
+            userDir
+        }
+        Subject testSubject = new Subject()
+        when:
+        boolean result = module.login()
+        boolean result2 = module.login()
+        module.currentUser.setJAASInfo(testSubject)
+
+        then:
+        result
+        result2
+        null != testSubject.getPrincipals(Principal)
+        username == testSubject.getPrincipals(Principal).first().name
+        null != testSubject.getPrincipals(JAASRole)
+        2 == testSubject.getPrincipals(JAASRole).size()
+        ['role1', 'role2'] == testSubject.getPrincipals(JAASRole)*.name
+
+
+        where:
+        username | password
+        'auser'  | 'apassword'
     }
 }

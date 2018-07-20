@@ -1,6 +1,8 @@
 #!/bin/bash
 #/ trigger local ci test run
 
+. scripts/rd_versions.sh
+
 set -euo pipefail
 IFS=$'\n\t'
 readonly ARGS=("$@")
@@ -34,13 +36,12 @@ run_tests(){
     local DIR=${FARGS[0]}
 
     cd $DIR
-    bash $DIR/test-ssl.sh
+    bash $DIR/test-ldap.sh
 }
-
 run_docker_test(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}
-    ( copy_jar $DIR ) || die "Failed to copy jar"
+    local launcherJar=$( copy_jar $DIR ) || die "Failed to copy jar"
     run_tests $DIR
 }
 

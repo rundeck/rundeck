@@ -788,8 +788,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 if (System.currentTimeMillis() < cached.expires) {
                     LOG.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
-
-                    setCurrentUser(new JAASUserInfo(cached.userInfo));
+                    JAASUserInfo jaasUserInfo = new JAASUserInfo(cached.userInfo);
+                    try {
+                        jaasUserInfo.fetchRoles();
+                    } catch(Exception ex) {
+                        if(_debug) {
+                            LOG.debug("Failed to fetch roles",ex);
+                        }
+                        throw new LoginException("Error obtaining user info.");
+                    }
+                    setCurrentUser(jaasUserInfo);
                     setAuthenticated(true);
                     return true;
                 } else {
@@ -805,15 +813,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String userDn = searchResult.getNameInNamespace();
 
-        DirContext dirContext;
+        LOG.info("Attempting authentication: " + userDn);
+        DirContext dirContext = createBindUserDirContext(userDn, password);
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
             dirContext = _rootContext;
             LOG.debug("Using _rootContext for role lookup.");
-        } else {
-            LOG.info("Attempting authentication: " + userDn);
-            dirContext = createBindUserDirContext(userDn, password);
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 

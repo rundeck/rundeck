@@ -102,7 +102,7 @@ done
 export CLI_CP
 
 # force UTF-8 default encoding
-export RDECK_JVM="-Dfile.encoding=UTF-8"
+export RDECK_JVM="-Dfile.encoding=UTF-8 $RDECK_JVM_OPTS"
 END
 
 # prevent CLI tool warning
