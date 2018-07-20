@@ -1659,7 +1659,8 @@ class GitExportPluginSpec extends Specification {
 
         then:
         ScmPluginException e = thrown()
-        e.message=="Non existent remote branch: dev2"
+        e.message=="Could not clone the remote branch: dev2, because it does not exist. " +
+                "To create it, you need to set the Create Branch option to true."
     }
 
     def "initialize plugin with unknown branch with create config"() {

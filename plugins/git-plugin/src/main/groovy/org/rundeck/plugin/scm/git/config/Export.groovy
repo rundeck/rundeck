@@ -82,16 +82,13 @@ Template".
 
     @PluginProperty(
             title = "Create Branch if it doesn't exist",
-            description = "If the entered branch doesnt exist on remote repo, create a new one. If false, it will fail if the branch doesn't exist",
-            defaultValue = 'false',
-            required = false
+            description = "If the entered branch doesnt exist on remote repo, create a new one. If false, it will fail if the branch doesn't exist"
     )
-    @SelectValues(values = ['true', 'false'])
     @RenderingOption(
             key = StringRenderingConstants.GROUP_NAME,
             value = "Git Repository"
     )
-    String createBranch
+    boolean createBranch
 
     @PluginProperty(
             title = "Base branch on",
@@ -121,9 +118,5 @@ Template".
 
     boolean shouldPullAutomatically(){
         return pullAutomatically in ['true']
-    }
-
-    boolean shouldCreateBranch(){
-        return createBranch in ['true']
     }
 }

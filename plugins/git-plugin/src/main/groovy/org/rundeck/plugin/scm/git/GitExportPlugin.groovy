@@ -123,7 +123,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         //check clone was ok
         if (git?.repository.getFullBranch() != "refs/heads/$branch") {
             logger.debug("branch differs")
-            if(config.shouldCreateBranch()){
+            if(config.createBranch){
                 if(config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")){
                     createBranch(context, config.branch, config.baseBranch)
                     cloneOrCreate(context, base, config.url)
@@ -132,7 +132,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     throw new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
                 }
             }else{
-                throw new ScmPluginException("Non existent remote branch: ${this.branch}")
+                throw new ScmPluginException("Could not clone the remote branch: ${this.branch}, " +
+                        "because it does not exist. To create it, you need to set the Create Branch option to true.")
             }
         }
         workingDir = base
