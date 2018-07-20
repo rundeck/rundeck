@@ -19,16 +19,22 @@
     <!-- ko if: project.showMotd() -->
     <div class="row">
       <div class="col-xs-12">
+        <div class="alert alert-info">
+          <span data-bind="html: project.readme().motdHTML()"></span>          
+        </div>
+        <!--
         <div class="card">
           <div class="card-content">
             <span data-bind="html: project.readme().motdHTML()"></span>
           </div>
         </div>
+        -->
       </div>
     </div>
     <!-- /ko -->
     <div class="row">
         <div class="col-xs-12">
+          <!--
           <div class="card">
             <div class="card-content">
               <div class="row">
@@ -99,13 +105,14 @@
               </div>
             </div>
           </div>
+          -->
           <div class="card" data-bind="if: project.description">
             <div class="card-content">
                 <span class="text-primary" data-bind="text: project.description"></span>
             </div>
           </div>
           <div class="row">
-            <div class="col-xs-12 col-md-6">
+            <div class="col-xs-12">
               <div class="card">
                 <div class="card-content">
                       <span data-bind="if: project">
@@ -171,6 +178,11 @@
             <div class="col-sm-12">
                 <!-- ko if: project.showReadme() -->
                 <div class="card">
+                  <div class="card-header">
+                    <h4 class="card-title">
+                      Readme
+                    </h4>
+                  </div>
                   <div class="card-content">
                     <span data-bind="html: project.readme().readmeHTML()"></span>
                   </div>
