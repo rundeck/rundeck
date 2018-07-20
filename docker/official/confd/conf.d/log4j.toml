@@ -1,0 +1,5 @@
+[template]
+src = "log4j.properties.tmpl"
+dest = "/home/rundeck/server/config/log4j.properties"
+keys = [
+]
