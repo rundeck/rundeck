@@ -233,3 +233,10 @@ server:
       cookie:
         http-only: true
       tracking-modes: 'cookie'
+rundeck:
+    web:
+      jetty:
+        servlet:
+          initParams:
+            'org.eclipse.jetty.servlet.SessionIdPathParameterName': "none"
+            'org.eclipse.jetty.servlet.SessionCookie': "JSESSIONID"
