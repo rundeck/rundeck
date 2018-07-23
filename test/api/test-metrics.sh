@@ -10,102 +10,102 @@ file=$DIR/curl.out
 
 test_metrics_list(){
 
-	ENDPOINT="${APIURL}/metrics"
-	ACCEPT="application/json"
+    ENDPOINT="${APIURL}/metrics"
+    ACCEPT="application/json"
 
-	test_begin "List Metrics Links (json)"
+    test_begin "List Metrics Links (json)"
 
-	api_request "$ENDPOINT" "${file}"
+    api_request "$ENDPOINT" "${file}"
 
-	assert_json_value '4' '._links | length'  "${file}"
-	assert_json_value "${APIURL}/metrics/metrics"  '._links.metrics.href' "${file}"
-	assert_json_value "${APIURL}/metrics/ping"  '._links.ping.href' "${file}"
-	assert_json_value "${APIURL}/metrics/healthcheck"  '._links.healthcheck.href' "${file}"
-	assert_json_value "${APIURL}/metrics/threads"  '._links.threads.href' "${file}"
-	
-	test_succeed
+    assert_json_value '4' '._links | length'  "${file}"
+    assert_json_value "${APIURL}/metrics/metrics"  '._links.metrics.href' "${file}"
+    assert_json_value "${APIURL}/metrics/ping"  '._links.ping.href' "${file}"
+    assert_json_value "${APIURL}/metrics/healthcheck"  '._links.healthcheck.href' "${file}"
+    assert_json_value "${APIURL}/metrics/threads"  '._links.threads.href' "${file}"
+    
+    test_succeed
 
-	rm "${file}"
+    rm "${file}"
 }
 test_metrics_metrics(){
 
-	ENDPOINT="${APIURL}/metrics/metrics"
-	ACCEPT="application/json"
+    ENDPOINT="${APIURL}/metrics/metrics"
+    ACCEPT="application/json"
 
-	test_begin "Get Metrics Data (json)"
+    test_begin "Get Metrics Data (json)"
 
-	api_request "$ENDPOINT" "${file}"
+    api_request "$ENDPOINT" "${file}"
 
-   	local VAL=$(jq -r '.gauges | length'  "${file}")
-	[ "$VAL" -gt 0 ] || fail "Expected > 0 for .gauges in $file but was $VAL"
-	VAL=$(jq -r '.counters | length'  "${file}" )
-	[ "$VAL" -gt 0 ] || fail "Expected > 0 for .counters in $file but was $VAL"
-	assert_json_value '8' '.meters | length'  "${file}"
-	assert_json_value '26' '.timers | length'  "${file}"
-	
-	test_succeed
+    local VAL=$(jq -r '.gauges | length'  "${file}")
+    [ "$VAL" -gt 0 ] || fail "Expected > 0 for .gauges in $file but was $VAL"
+    VAL=$(jq -r '.counters | length'  "${file}" )
+    [ "$VAL" -gt 0 ] || fail "Expected > 0 for .counters in $file but was $VAL"
+    assert_json_value '8' '.meters | length'  "${file}"
+    assert_json_value '26' '.timers | length'  "${file}"
+    
+    test_succeed
 
-	rm "${file}"
+    rm "${file}"
 }
 test_metrics_healthcheck(){
 
-	ENDPOINT="${APIURL}/metrics/healthcheck"
-	ACCEPT="application/json"
+    ENDPOINT="${APIURL}/metrics/healthcheck"
+    ACCEPT="application/json"
 
-	test_begin "Get Metrics healthcheck (json)"
+    test_begin "Get Metrics healthcheck (json)"
 
-	api_request "$ENDPOINT" "${file}"
+    api_request "$ENDPOINT" "${file}"
 
-	assert_json_value '2' 'length'  "${file}"
-	assert_json_value 'true' '.["dataSource.connection.time"].healthy'  "${file}"
-	assert_json_value 'true' '.["quartz.scheduler.threadPool"].healthy'  "${file}"
-	
-	test_succeed
+    assert_json_value '2' 'length'  "${file}"
+    assert_json_value 'true' '.["dataSource.connection.time"].healthy'  "${file}"
+    assert_json_value 'true' '.["quartz.scheduler.threadPool"].healthy'  "${file}"
+    
+    test_succeed
 
-	rm "${file}"
+    rm "${file}"
 }
 test_metrics_ping(){
 
-	ENDPOINT="${APIURL}/metrics/ping"
-	ACCEPT="text/plain"
+    ENDPOINT="${APIURL}/metrics/ping"
+    ACCEPT="text/plain"
 
-	test_begin "Get Metrics ping (text)"
+    test_begin "Get Metrics ping (text)"
 
-	api_request "$ENDPOINT" "${file}"
+    api_request "$ENDPOINT" "${file}"
 
-	local VAL=$(head -n 1 "${file}")
-	assert "pong" "$VAL"
-	local LEN=$(wc -l "$file"| awk \{'print $1'\} )
-	assert "1" "$LEN"
-	
-	test_succeed
+    local VAL=$(head -n 1 "${file}")
+    assert "pong" "$VAL"
+    local LEN=$(wc -l "$file"| awk \{'print $1'\} )
+    assert "1" "$LEN"
+    
+    test_succeed
 
-	rm "${file}"
+    rm "${file}"
 }
 test_metrics_threads(){
 
-	ENDPOINT="${APIURL}/metrics/threads"
-	ACCEPT="text/plain"
+    ENDPOINT="${APIURL}/metrics/threads"
+    ACCEPT="text/plain"
 
-	test_begin "Get Metrics threads (text)"
+    test_begin "Get Metrics threads (text)"
 
-	api_request "$ENDPOINT" "${file}"
+    api_request "$ENDPOINT" "${file}"
 
-	local VAL=$(wc -l "$file"| awk \{'print $1'\} )
-	
-	if [ "$VAL" -lt 10 ] ; then
+    local VAL=$(wc -l "$file"| awk \{'print $1'\} )
+    
+    if [ "$VAL" -lt 10 ] ; then
         fail "Expected threads output to have > 10 lines"
     fi
-	
-	test_succeed
+    
+    test_succeed
 
-	rm "${file}"
+    rm "${file}"
 }
 main(){
-	test_metrics_list
-	test_metrics_metrics
-	test_metrics_healthcheck
-	test_metrics_ping
-	test_metrics_threads
+    test_metrics_list
+    test_metrics_metrics
+    test_metrics_healthcheck
+    test_metrics_ping
+    test_metrics_threads
 }
 main
