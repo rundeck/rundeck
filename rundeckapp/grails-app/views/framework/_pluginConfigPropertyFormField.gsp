@@ -103,7 +103,7 @@
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
         <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
-               value="${selectValues.collect { [key: it.encodeAsHTML(), value: stepplugin.messageText(
+               value="${selectValues.collect { [key: it, value: stepplugin.messageText(
                    service: service,
                    name: provider,
                    messagesType:messagesType,
@@ -114,7 +114,7 @@
         <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"
                   optionKey="key" optionValue="value"
                   noSelection="${ noSelectionValue }"
-                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)}"
                   class="${formControlType}"/>
         </div>
     </g:else>
@@ -134,7 +134,7 @@
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
         <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
-               value="${selectValues.collect { [value: it.encodeAsHTML(), label: stepplugin.messageText(
+               value="${selectValues.collect { [value: it, label: stepplugin.messageText(
                    service: service,
                    name: provider,
                    code: (messagePrefix?:'')+'property.' + prop.name + '.options.'+it+'.label',
