@@ -5,12 +5,12 @@
   </g:if>
   <nav class="navbar navbar-default mainbar">
     <div class="container-fluid">
-      <div class="navbar-minimize">
+      <!-- <div class="navbar-minimize">
         <button class="btn btn-fill btn-icon">
           <i class="fas fa-ellipsis-v"></i>
           <i class="fas fa-ellipsis-h"></i>
         </button>
-      </div>
+      </div> -->
       <div class="navbar-header">
         <button type="button" class="navbar-toggle">
           <span class="sr-only">Toggle navigation</span>
@@ -18,6 +18,18 @@
           <span class="icon-bar bar2"></span>
           <span class="icon-bar bar3"></span>
         </button>
+
+        <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+        <g:set var="userDefinedSmallLogo" value="${grailsApplication.config.rundeck?.gui?.logoSmall}"/>
+        <g:set var="userAssetBase" value="/user-assets" />
+        <g:if test="${userDefinedLogo && !userDefinedSmallLogo}">
+          <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+
+        </g:if>
+        <g:elseif test="${userDefinedLogo && userDefinedSmallLogo}">
+          <img src="${userAssetBase}/${enc(sanitize:userDefinedSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+        </g:elseif>
+
         <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
           <g:ifPageProperty name='meta.tabpage'>
             <g:ifPageProperty name='meta.tabpage' equals='configure'>
@@ -90,6 +102,18 @@
       </div>
       <div class="collapse navbar-collapse">
         <ul class="nav navbar-nav navbar-right">
+
+          <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+          <g:if test="${userDefinedInstanceName}">
+            <li>
+              <span class="label label-default instance-label" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
+                  ${enc(sanitize:userDefinedInstanceName)}
+              </span>
+            </li>
+
+          </g:if>
+
+
           <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
             <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
               <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInHeader in [true,'true']}">
@@ -123,7 +147,7 @@
             <li id="appUser">
               <div class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
-                  ${session.user}
+                  <i class="fas fa-user"></i>
                 </a>
                 <g:render template="/menu/appUserMenu"/>
               </div>

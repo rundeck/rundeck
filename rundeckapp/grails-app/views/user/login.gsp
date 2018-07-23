@@ -54,6 +54,14 @@
       <div class="content">
         <div class="container">
           <div class="row">
+            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <g:if test="${userDefinedInstanceName}">
+              <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
+                  <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
+                      ${enc(sanitize:userDefinedInstanceName)}
+                  </span>
+              </div>
+            </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
               <form action="${g.createLink(uri:"/j_security_check")}" method="post" class="form " role="form">
                 <div class="card" data-background="color" data-color="blue">
@@ -62,34 +70,30 @@
                       <div class="logo">
                           <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
                              title="Home">
-                              <g:set var="appTitle"
-                                     value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
+                              <g:set var="appTitle" value="${g.message(code: 'main.app.name',default:'')}"/>
                               <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
-                              <g:set var="brandHtml"
-                                     value="${grailsApplication.config.rundeck?.gui?.brand?.html ?: g.message(code: 'main.app.brand.html',default:'')}"/>
-                              <g:set var="brandDefaultHtml"
-                                     value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
                               <i class="rdicon app-logo"></i>
-                              <g:if test="${brandHtml}">
-                                  ${enc(sanitize:brandHtml)}
-                              </g:if>
-                              <g:elseif test="${appTitle}">
+                              <g:if test="${appTitle}">
                                   ${appTitle}
-                              </g:elseif>
-                              <g:elseif test="${brandDefaultHtml}">
-                                  ${enc(sanitize:brandDefaultHtml)}
-                              </g:elseif>
+                              </g:if>
                               <g:else>
                                   ${appDefaultTitle}
                               </g:else>
                           </a>
+                          <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
+                          <g:if test="${userDefinedLogo}">
+                            <g:set var="userAssetBase" value="/user-assets" />
+                            <div style="margin-top:2em">
+                              <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}">
+                            </div>
+                          </g:if>
                       </div>
                     </h3>
                   </div>
                   <div class="card-content">
                     <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>
                     <g:if test="${loginhtml}">
-                      <div>
+                      <div style="margin-bottom:2em;">
                         <span>
                           ${enc(sanitize:loginhtml)}
                         </span>
@@ -97,11 +101,11 @@
                     </g:if>
                     <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
                     <g:if test="${loginmsg}">
-                      <div>
+                      <div style="margin-bottom:2em;">
                         <span>
-                          <h3 class="text-primary">
+                          <h4 class="text-default">
                             <g:enc>${loginmsg}</g:enc>
-                          </h3>
+                          </h4>
                         </span>
                       </div>
                     </g:if>

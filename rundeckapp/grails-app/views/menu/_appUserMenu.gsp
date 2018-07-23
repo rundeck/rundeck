@@ -16,7 +16,13 @@
 
 <ul class="dropdown-menu">
   <li>
-    <g:link controller="user" action="profile">    
+    <div style="padding: 10px 15px;">
+      Hi ${session.user}!
+    </div>
+  </li>
+  <li role="separator" class="divider"></li>
+  <li>
+    <g:link controller="user" action="profile">
       <g:message code="profile"/>
     </g:link>
   </li>
