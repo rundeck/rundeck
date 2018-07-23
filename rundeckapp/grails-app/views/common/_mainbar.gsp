@@ -30,13 +30,6 @@
           <img src="${userAssetBase}/${enc(sanitize:userDefinedSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
         </g:elseif>
 
-        <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
-        <g:if test="${userDefinedInstanceName}">
-          <span class="label label-default" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
-              ${enc(sanitize:userDefinedInstanceName)}
-          </span>
-        </g:if>
-
         <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
           <g:ifPageProperty name='meta.tabpage'>
             <g:ifPageProperty name='meta.tabpage' equals='configure'>
@@ -109,6 +102,18 @@
       </div>
       <div class="collapse navbar-collapse">
         <ul class="nav navbar-nav navbar-right">
+
+          <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+          <g:if test="${userDefinedInstanceName}">
+            <li>
+              <span class="label label-default instance-label" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
+                  ${enc(sanitize:userDefinedInstanceName)}
+              </span>
+            </li>
+
+          </g:if>
+
+
           <g:ifServletContextAttributeExists attribute="CLUSTER_MODE_ENABLED">
             <g:ifServletContextAttribute attribute="CLUSTER_MODE_ENABLED" value="true">
               <g:if test="${grailsApplication.config.rundeck?.gui?.clusterIdentityInHeader in [true,'true']}">
@@ -142,7 +147,7 @@
             <li id="appUser">
               <div class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
-                  ${session.user}
+                  <i class="fas fa-user"></i>
                 </a>
                 <g:render template="/menu/appUserMenu"/>
               </div>

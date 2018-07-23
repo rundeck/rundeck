@@ -21,6 +21,9 @@
 <g:set var="sidebarTextColor" value="${grailsApplication.config.rundeck.gui.sidebarTextColor}"/>
 <g:set var="sidebarTextActiveColor" value="${grailsApplication.config.rundeck.gui.sidebarTextActiveColor}"/>
 
+<g:set var="instanceNameLabelColor" value="${grailsApplication.config.rundeck.gui.instanceNameLabelColor}"/>
+<g:set var="instanceNameLabelTextColor" value="${grailsApplication.config.rundeck.gui.instanceNameLabelTextColor}"/>
+
 <style type="text/css">
   <g:if test="sidebarColor">
     .sidebar:after,
@@ -42,6 +45,18 @@
     .off-canvas-sidebar .nav li.active > a,
     .off-canvas-sidebar .nav li.active > a {
       color: ${sidebarTextActiveColor} !important;
+    }
+  </g:if>
+
+  <g:if test="instanceNameLabelColor">
+    .label-default.instance-label{
+      background-color: ${instanceNameLabelColor} !important;
+    }
+  </g:if>
+
+  <g:if test="instanceNameLabelTextColor">
+    .label-default.instance-label{
+      color: ${instanceNameLabelTextColor} !important;
     }
   </g:if>
 </style>
