@@ -123,6 +123,7 @@ jobs:
     script:
     # Sync artifacts under commit so we can use them for tag releases
     - script_block 'sync.artifacts' fetch_common_artifacts
+    - script_block 'sync.ci-resources' fetch_common_resources
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
     # Delete existing packages
