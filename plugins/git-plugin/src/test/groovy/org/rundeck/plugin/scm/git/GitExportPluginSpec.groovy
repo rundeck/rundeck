@@ -1620,4 +1620,135 @@ class GitExportPluginSpec extends Specification {
         status.state==SynchState.CLEAN
         status.message=='Automatic pull from the repository failed: Could not get advertised Ref for branch master'
     }
+
+    def "initialize plugin with unknown branch without create config"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create dev branch
+        def git2 = openGit(origindir)
+        git2.branchCreate().setName('dev').call()
+        git2.checkout().setName('dev').call()
+        def commit2 = addCommitFile(origindir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        Export config2 = createTestConfig(gitdir, origindir,[
+                branch:'dev2'
+        ])
+        def plugin = new GitExportPlugin(config2)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        ScmPluginException e = thrown()
+        e.message=="Could not clone the remote branch: dev2, because it does not exist. " +
+                "To create it, you need to set the Create Branch option to true."
+    }
+
+    def "initialize plugin with unknown branch with create config"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create dev branch
+        def git2 = openGit(origindir)
+        git2.branchCreate().setName('dev').call()
+        git2.checkout().setName('dev').call()
+        def commit2 = addCommitFile(origindir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        Export config2 = createTestConfig(gitdir, origindir,[
+                branch:'dev2',
+                createBranch:'true',
+                baseBranch: 'dev'
+
+        ])
+        def plugin = new GitExportPlugin(config2)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        gitdir.isDirectory()
+        new File(gitdir, '.git').isDirectory()
+        openGit(gitdir).repository.getFullBranch()=='refs/heads/dev2'
+
+    }
+
+    def "initialize plugin with unknown branch with create config and bad remote"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create dev branch
+        def git2 = openGit(origindir)
+        git2.branchCreate().setName('dev').call()
+        git2.checkout().setName('dev').call()
+        def commit2 = addCommitFile(origindir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        Export config2 = createTestConfig(gitdir, origindir,[
+                branch:'dev2',
+                createBranch:'true',
+                baseBranch: 'wrong'
+        ])
+        def plugin = new GitExportPlugin(config2)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        ScmPluginException e = thrown()
+        e.message=="Non existent remote branch: wrong"
+    }
 }
