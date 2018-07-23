@@ -36,9 +36,10 @@ test_metrics_metrics(){
 
 	api_request "$ENDPOINT" "${file}"
 
-	local VAL=$($JQ -r '.gauges | length'  "${file}")
-	[ "$VAL" -gt 0 ] || die "Expected > 0 for .gauges in $file but was $VAL"
-	assert_json_value '1' '.counters | length'  "${file}"
+   	local VAL=$(jq -r '.gauges | length'  "${file}")
+	[ "$VAL" -gt 0 ] || fail "Expected > 0 for .gauges in $file but was $VAL"
+	VAL=$(jq -r '.counters | length'  "${file}" )
+	[ "$VAL" -gt 0 ] || fail "Expected > 0 for .counters in $file but was $VAL"
 	assert_json_value '8' '.meters | length'  "${file}"
 	assert_json_value '26' '.timers | length'  "${file}"
 	
