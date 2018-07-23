@@ -5,12 +5,12 @@
   </g:if>
   <nav class="navbar navbar-default mainbar">
     <div class="container-fluid">
-      <div class="navbar-minimize">
+      <!-- <div class="navbar-minimize">
         <button class="btn btn-fill btn-icon">
           <i class="fas fa-ellipsis-v"></i>
           <i class="fas fa-ellipsis-h"></i>
         </button>
-      </div>
+      </div> -->
       <div class="navbar-header">
         <button type="button" class="navbar-toggle">
           <span class="sr-only">Toggle navigation</span>
@@ -20,9 +20,21 @@
         </button>
 
         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
-        <g:if test="${userDefinedLogo}">
+        <g:set var="userDefinedSmallLogo" value="${grailsApplication.config.rundeck?.gui?.logoSmall}"/>
         <g:set var="userAssetBase" value="/user-assets" />
+        <g:if test="${userDefinedLogo && !userDefinedSmallLogo}">
           <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+
+        </g:if>
+        <g:elseif test="${userDefinedLogo && userDefinedSmallLogo}">
+          <img src="${userAssetBase}/${enc(sanitize:userDefinedSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+        </g:elseif>
+
+        <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+        <g:if test="${userDefinedInstanceName}">
+          <span class="label label-default" style="float:left;font-size: 20px;margin: 10px 15px 0 0;">
+              ${enc(sanitize:userDefinedInstanceName)}
+          </span>
         </g:if>
 
         <g:if test="${request.getAttribute(RequestConstants.PAGE)}">

@@ -46,6 +46,14 @@
       <div class="content">
         <div class="container">
           <div class="row">
+            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <g:if test="${userDefinedInstanceName}">
+              <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
+                  <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
+                      ${enc(sanitize:userDefinedInstanceName)}
+                  </span>
+              </div>
+            </g:if>
             <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
               <div class="card">
                 <div class="card-header">
@@ -64,6 +72,7 @@
                                 ${appDefaultTitle}
                             </g:else>
                         </a>
+
                         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
                         <g:if test="${userDefinedLogo}">
                           <g:set var="userAssetBase" value="/user-assets" />

@@ -17,7 +17,37 @@
     <g:set var="customCss" value=".navbar-brand,.navbar-default{border-radius: 0 0 10px 10px; }"/>
 </g:if>
 
+<g:set var="sidebarColor" value="${grailsApplication.config.rundeck.gui.sidebarColor}"/>
+<g:set var="sidebarTextColor" value="${grailsApplication.config.rundeck.gui.sidebarTextColor}"/>
+<g:set var="sidebarTextActiveColor" value="${grailsApplication.config.rundeck.gui.sidebarTextActiveColor}"/>
+
 <style type="text/css">
+  <g:if test="sidebarColor">
+    .sidebar:after,
+    .sidebar:before,
+    .off-canvas-sidebar:after,
+    .off-canvas-sidebar:before {
+        background-color: ${sidebarColor} !important;
+    }
+  </g:if>
+  <g:if test="sidebarTextColor">
+    .sidebar .nav li:not(.active) > a,
+    .off-canvas-sidebar .nav li:not(.active) > a {
+      color: ${sidebarTextColor} !important;
+    }
+  </g:if>
+  <g:if test="sidebarTextActiveColor">
+    .sidebar .nav li.active > a,
+    .off-canvas-sidebar .nav li.active > a,
+    .off-canvas-sidebar .nav li.active > a,
+    .off-canvas-sidebar .nav li.active > a {
+      color: ${sidebarTextActiveColor} !important;
+    }
+  </g:if>
+</style>
+<style type="text/css">
+
+
 
     /*
     If I turn this off, will it break things? ~ Jesse

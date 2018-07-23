@@ -150,6 +150,12 @@
                 </g:else>
               </span>
           </a>
+          <div class="navbar-minimize">
+            <button class="btn btn-fill btn-icon">
+              <i class="fas fa-ellipsis-v"></i>
+              <i class="fas fa-ellipsis-h"></i>
+            </button>
+          </div>
       </div>
       <div class="sidebar-wrapper">
           <g:render template="/common/sidebar"/>

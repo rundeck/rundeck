@@ -24,6 +24,25 @@
         transition: opacity 700ms, visibility 700ms;
       }
     }
+    .navbar-minimize{
+      display: none;
+    }
+    // sidebar open
+    i.fas.fa-ellipsis-v{
+      display: block;
+    }
+    i.fas.fa-ellipsis-h{
+      display: none;
+    }
+    // sidebar closed
+    .sidebar-mini &{
+      i.fas.fa-ellipsis-v{
+        display: none;
+      }
+      i.fas.fa-ellipsis-h{
+        display: block;
+      }
+    }
   }
   .nav{
     margin-bottom: 40px;
@@ -104,6 +123,17 @@ body.modal-open{
     .caret{
       border-top: none;
       border-bottom:4px dashed;
+    }
+  }
+}
+
+.sidebar:hover{
+  .logo{
+    .navbar-minimize{
+      display: inline-block;
+      position: absolute;
+      right: 1em;
+      top: 1em;
     }
   }
 }
