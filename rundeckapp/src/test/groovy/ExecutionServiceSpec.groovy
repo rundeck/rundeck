@@ -523,6 +523,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -579,6 +580,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -641,6 +643,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -718,6 +721,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
         service.storageService = Mock(StorageService)
@@ -792,6 +796,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -861,6 +866,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -1764,10 +1770,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             }
         }
         service.fileUploadService = Mock(FileUploadService) {
-            1 * validateFileRefForJobOption('aref', 'asdf', 'test1') >> [
+            1 * validateFileRefForJobOption('aref', 'asdf', 'test1', false) >> [
                     valid: false, error: ecode, args: []
             ]
         }
+
         when:
 
         def validation = service.validateOptionValues(se, opts)
@@ -2558,7 +2565,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
-
+        service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
@@ -2659,6 +2666,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
@@ -3005,6 +3013,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
 
+        service.fileUploadService = Mock(FileUploadService)
         service.executionUtilService = Mock(ExecutionUtilService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
@@ -3109,6 +3118,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             0 * _(*_)
         }
 
+        service.fileUploadService = Mock(FileUploadService)
         service.storageService = Mock(StorageService)
         service.jobStateService = Mock(JobStateService)
 
@@ -3266,5 +3276,75 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         'keys/${node.hostname}/pass'       | _
         'keys/${node.username}/pass'       | _
 
+    }
+
+    def "createJobReferenceContext file type option"() {
+        given:
+        def context = ExecutionContextImpl.builder().
+                threadCount(1).
+                keepgoing(false).
+                dataContext(['option': ['monkey': 'wakeful', 'file':'0000000'], 'secureOption': [:], 'job': ['execid': '123']]).
+                privateDataContext(['option': [:],]).
+                user('aUser').
+                build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        null != se
+        def opt1 = new Option(name: 'monkey', enforced: false, required: false)
+        def opt2 = new Option(name: 'delay', enforced: false, required: false)
+        def opt3 = new Option(name: 'file', required: true, enforced: false, optionType: 'file')
+        assert opt3.validate()
+        assert opt1.validate()
+        assert opt2.validate()
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        se.addToOptions(opt3)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.fileUploadService = Mock(FileUploadService) {
+            1 * validateFileRefForJobOption(_, _, _, _) >> [
+                    valid: true
+            ]
+            1 * executionBeforeStart(_,true)
+        }
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                ['-test3', 'fix'] as String[],
+                null, null, null, null, null, null, false,
+                importOptions,
+                true
+        )
+
+        then:
+        newCtxt.dataContext.option
+        expectedSize == newCtxt.dataContext.option.size()
+
+        where:
+        importOptions | expectedSize
+        true          | 3
     }
 }

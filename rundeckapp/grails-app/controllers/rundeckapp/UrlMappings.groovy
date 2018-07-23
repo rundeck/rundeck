@@ -234,6 +234,8 @@ class UrlMappings {
             moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
         }
 
+        "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
+
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

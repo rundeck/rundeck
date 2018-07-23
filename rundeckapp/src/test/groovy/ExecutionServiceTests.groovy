@@ -1721,6 +1721,12 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.fileUploadService = mockWith(FileUploadService){
+            executionBeforeStart { evt, skip->
+                null
+            }
+        }
+
         def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,false,true);
 
         //verify nodeset
@@ -1795,6 +1801,12 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        service.fileUploadService = mockWith(FileUploadService){
+            executionBeforeStart { evt, skip->
+                null
+            }
+        }
+
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
         def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,null, false,false,true);
@@ -1870,6 +1882,11 @@ class ExecutionServiceTests  {
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+        }
+        service.fileUploadService = mockWith(FileUploadService){
+            executionBeforeStart { evt, skip->
                 null
             }
         }
@@ -1961,6 +1978,13 @@ class ExecutionServiceTests  {
             }
 
         }
+
+        service.fileUploadService = mockWith(FileUploadService){
+            executionBeforeStart { evt, skip->
+                null
+            }
+        }
+
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
                 null

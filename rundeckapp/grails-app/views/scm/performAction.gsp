@@ -103,16 +103,17 @@
                             <div class="list-group-item">
                                 <div class="form-group">
                                     <g:each in="${jobs}" var="job">
-
+                                        <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
                                         <div class="checkbox col-sm-12">
-                                            <label>
-                                                <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
+
+
                                                 <g:if test="${jobstatus?.synchState?.toString() != 'CLEAN'}">
 
                                                     <g:checkBox name="id" value="${job.extid}"
+                                                                id="id${job.extid}"
                                                                 checked="${selected?.contains(job.extid)}"/>
                                                 </g:if>
-
+                                            <label for="id${job.extid}">
                                                 <g:render template="statusIcon"
                                                           model="[iscommit          : true,
                                                                   exportStatus: jobstatus?.synchState?.toString(),
@@ -187,14 +188,13 @@
 
                             <div class="list-group-item">
                                 <div class="form-group">
-                                    <g:each in="${deletedPaths.keySet().sort()}" var="path">
+                                    <g:each in="${deletedPaths.keySet().sort()}" var="path" status="counter">
 
                                         <div class="checkbox col-sm-12">
-                                            <label>
-
                                                 <g:checkBox name="deletePaths" value="${path}"
+                                                            id="deletePaths${counter}"
                                                             checked="${selectedPaths?.contains(path)}"/>
-
+                                            <label for="deletePaths${counter}">
                                                 <g:set var="deletedJobText" value="${
                                                     deletedPaths[path].jobNameAndGroup ?:
                                                             message(code: "deleted.job.label")
@@ -250,10 +250,11 @@
                                     <g:each in="${trackingItems}" var="trackedItem">
                                         <g:set var="job" value="${trackedItem.jobId?jobMap[trackedItem.jobId]:null}"/>
                                         <div class="checkbox col-sm-12">
-                                            <label title="${trackedItem.id}">
                                                 <g:checkBox name="chosenTrackedItem"
+                                                            id="chosenTrackedItem${trackedItem.id}"
                                                             value="${trackedItem.id}"
                                                             checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected||(trackedItem.jobId && selected?.contains(trackedItem.jobId))}"/>
+                                            <label title="${trackedItem.id}" for="chosenTrackedItem${trackedItem.id}">
                                                 <g:if test="${job}">
 
                                                     <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>
@@ -336,10 +337,12 @@
                                         <g:set var="jobst" value="${job?scmStatus?.get(job.extid)?.synchState?.toString():null}"/>
 
                                         <div class="checkbox col-sm-12">
-                                            <label title="${toDeleteItem.id}">
+
                                                 <g:checkBox name="chosenDeleteItem"
+                                                    id="chosenDeleteItem${toDeleteItem.id}"
                                                             value="${(jobst == 'DELETE_NEEDED')?toDeleteItem.jobId:toDeleteItem.id}"
                                                             checked="${selectedItems?.contains(toDeleteItem.id)||toDeleteItem.selected||(toDeleteItem.jobId && selected?.contains(toDeleteItem.jobId))}"/>
+                                            <label title="${toDeleteItem.id}" for="chosenDeleteItem${toDeleteItem.id}">
                                                 <g:if test="${job}">
 
                                                     <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>

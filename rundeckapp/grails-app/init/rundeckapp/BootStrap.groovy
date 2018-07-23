@@ -275,6 +275,10 @@ class BootStrap {
              log.info("Preauthentication is disabled")
          }
 
+         if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
+             SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
+         }
+
          if(grailsApplication.config.execution.follow.buffersize){
              servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
          }else{

@@ -23,10 +23,12 @@ import com.dtolabs.rundeck.core.plugins.views.ActionBuilder
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.ListBranchCommand
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
@@ -118,7 +120,22 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         File base = new File(config.dir)
         mapper = new TemplateJobFileMapper(expand(config.pathTemplate, [format: config.format], "config"), base)
         cloneOrCreate(context, base, config.url)
-
+        //check clone was ok
+        if (git?.repository.getFullBranch() != "refs/heads/$branch") {
+            logger.debug("branch differs")
+            if(config.createBranch){
+                if(config.baseBranch && existBranch("refs/remotes/${this.REMOTE_NAME}/${config.baseBranch}")){
+                    createBranch(context, config.branch, config.baseBranch)
+                    cloneOrCreate(context, base, config.url)
+                }else{
+                    logger.debug("Non existent remote branch: ${config.baseBranch}")
+                    throw new ScmPluginException("Non existent remote branch: ${config.baseBranch}")
+                }
+            }else{
+                throw new ScmPluginException("Could not clone the remote branch: ${this.branch}, " +
+                        "because it does not exist. To create it, you need to set the Create Branch option to true.")
+            }
+        }
         workingDir = base
         inited = true
     }

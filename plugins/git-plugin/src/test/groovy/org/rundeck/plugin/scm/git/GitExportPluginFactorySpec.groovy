@@ -46,7 +46,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 13
+        desc.properties.size() == 15
     }
 
     def "base description properties"() {
@@ -68,7 +68,9 @@ class GitExportPluginFactorySpec extends Specification {
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
-                'pullAutomatically'
+                'pullAutomatically',
+                'createBranch',
+                'baseBranch'
         ] as Set
     }
 
@@ -91,7 +93,9 @@ class GitExportPluginFactorySpec extends Specification {
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
-                'pullAutomatically'
+                'pullAutomatically',
+                'createBranch',
+                'baseBranch'
         ] as Set
         def dirprop = properties.find { it.name == 'dir' }
         dirprop.defaultValue == null
@@ -120,7 +124,9 @@ class GitExportPluginFactorySpec extends Specification {
                 'committerName',
                 'committerEmail',
                 'exportUuidBehavior',
-                'pullAutomatically'
+                'pullAutomatically',
+                'createBranch',
+                'baseBranch'
         ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }

@@ -285,22 +285,22 @@ class FileUploadService {
      * @param option
      * @return [valid: true/false, error: 'code', args: [...]]
      */
-    def validateFileRefForJobOption(String fileuuid, String jobid, String option) {
+    def validateFileRefForJobOption(String fileuuid, String jobid, String option, boolean isJobRef = false) {
         JobFileRecord jfr = findUuid(fileuuid)
         if (!jfr) {
             return [valid: false, error: 'notfound', args: [fileuuid, jobid, option]]
         }
-        return validateJobFileRecordForJobOption(jfr, jobid, option)
+        return validateJobFileRecordForJobOption(jfr, jobid, option, isJobRef)
     }
 
-    def validateJobFileRecordForJobOption(JobFileRecord jfr, String jobid, String option) {
+    def validateJobFileRecordForJobOption(JobFileRecord jfr, String jobid, String option, boolean isJobRef = false) {
         if (!jfr) {
             return [valid: false, error: 'notfound', args: [null, jobid, option]]
         }
-        if (jfr.jobId != jobid || jfr.recordName != option) {
+        if ((!isJobRef && jfr.jobId != jobid) || jfr.recordName != option) {
             return [valid: false, error: 'invalid', args: [jfr.uuid, jobid, option]]
         }
-        if (jfr.execution != null) {
+        if (!isJobRef && jfr.execution != null) {
             return [valid: false, error: 'inuse', args: [jfr.uuid, jfr.execution.id]]
         }
         if (!jfr.canBecomeRetained()) {
@@ -317,9 +317,9 @@ class FileUploadService {
      * @param fileuuid
      * @return
      */
-    JobFileRecord attachFileForExecution(String fileuuid, Execution execution, String option) {
+    JobFileRecord attachFileForExecution(String fileuuid, Execution execution, String option, boolean skip = false) {
         JobFileRecord jfr = findUuid(fileuuid)
-        def validate = validateJobFileRecordForJobOption(jfr, execution.scheduledExecution.extid, option)
+        def validate = validateJobFileRecordForJobOption(jfr, execution.scheduledExecution.extid, option, skip)
 
         if (!validate.valid) {
             if (validate.error in ['notfound', 'invalid']) {
@@ -472,7 +472,8 @@ class FileUploadService {
     Map<String, String> loadFileOptionInputs(
             Execution execution,
             ScheduledExecution scheduledExecution,
-            StepExecutionContext context
+            StepExecutionContext context,
+            boolean skip = false
     )
     {
         def loadedFiles = [:]
@@ -480,7 +481,7 @@ class FileUploadService {
         fileopts?.each {
             def key = context.dataContext['option'][it.name]
             if (key) {
-                JobFileRecord jfr = attachFileForExecution(key, execution, it.name)
+                JobFileRecord jfr = attachFileForExecution(key, execution, it.name, skip)
                 File file = retrieveFileForExecution(jfr)
                 loadedFiles[it.name] = file.absolutePath
                 loadedFiles[it.name + '.fileName'] = jfr.fileName
@@ -521,13 +522,14 @@ class FileUploadService {
      * @return
      */
     @Subscriber
-    def executionBeforeStart(ExecutionPrepareEvent evt) {
+    def executionBeforeStart(ExecutionPrepareEvent evt, boolean skip = false) {
         if (evt.job) {
             //handle uploaded files
             Map loadedFilePaths = loadFileOptionInputs(
                     evt.execution,
                     evt.job,
-                    evt.context
+                    evt.context,
+                    skip
             )
             if (loadedFilePaths) {
                 evt.context.dataContext['file'] = loadedFilePaths

@@ -18,6 +18,7 @@ check_args(){
         DOCKER_DIR=$1
     fi
 }
+
 copy_jar(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}
@@ -39,7 +40,7 @@ run_tests(){
 run_docker_test(){
     local FARGS=("$@")
     local DIR=${FARGS[0]}
-    (copy_jar $DIR) || die "Failed to copy jar"
+    ( copy_jar $DIR ) || die "Failed to copy jar"
     run_tests $DIR
 }
 

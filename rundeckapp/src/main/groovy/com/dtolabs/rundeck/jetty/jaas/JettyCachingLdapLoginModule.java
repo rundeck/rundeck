@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,16 +37,17 @@ import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
+import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
-import grails.boot.config.GrailsAutoConfiguration;
+import ch.qos.logback.classic.Level;
 import grails.util.Holders;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
-import org.eclipse.jetty.util.log.Log;
-import org.eclipse.jetty.util.log.Logger;
 import org.eclipse.jetty.util.security.Credential;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -98,7 +100,16 @@ import org.eclipse.jetty.util.security.Credential;
  */
 public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
-    private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
+    private static final Logger LOG                 = LoggerFactory.getLogger(JettyCachingLdapLoginModule.class);
+    public static final  String OBJECT_CLASS_FILTER = "(&(objectClass={0})({1}={2}))";
+
+    static {
+        String logLevelSysProp = System.getProperty("com.dtolabs.rundeck.jetty.jaas.LEVEL");
+        if(logLevelSysProp != null) {
+            Level level = Level.toLevel(logLevelSysProp);
+            ((ch.qos.logback.classic.Logger) LOG).setLevel(level);
+        }
+    }
 
     private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)", Pattern.CASE_INSENSITIVE);
     private static final String CRYPT_TYPE   = "CRYPT:";
@@ -285,19 +296,34 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         return new UserInfo(username, credential, roles);
     }
 
-    private String decodeBase64EncodedPwd(String encoded) {
+    String decodeBase64EncodedPwd(String encoded) {
         String chkString = null;
-        String prefix = null;
+        String prefix = "";
         if(encoded.startsWith(CRYPT_TYPE)) {
             chkString = encoded.substring(CRYPT_TYPE.length(),encoded.length());
             prefix = CRYPT_TYPE;
         } else if(encoded.startsWith(MD5_TYPE)) {
             chkString = encoded.substring(MD5_TYPE.length(), encoded.length());
             prefix = MD5_TYPE;
+        } else {
+            return encoded; //make no attempt to further decode because we don't know what value this might be
         }
 
-        return org.apache.commons.codec.binary.Base64.isBase64(chkString) ? prefix+org.apache.commons.codec.binary.Hex.encodeHexString(org.apache.commons.codec.binary.Base64.decodeBase64(chkString)) : chkString;
+        return prefix+(isBase64(chkString) ? org.apache.commons.codec.binary.Hex.encodeHexString(org.apache.commons.codec.binary.Base64.decodeBase64(chkString)) : chkString);
+    }
 
+    boolean isBase64(String chkBase64) {
+        if(isHex(chkBase64)) return false;
+        try {
+            Base64.getDecoder().decode(chkBase64);
+            return chkBase64.replace(" ","").length() % 4 == 0;
+        } catch(IllegalArgumentException iaex) {}
+        return false;
+    }
+
+    boolean isHex(String chkHex) {
+        if(chkHex.length() != 32 || chkHex.endsWith("=")) return false;
+        return chkHex.matches("^[0-9a-fA-F]+$");
     }
 
     protected String doRFC2254Encoding(String inputString) {
@@ -346,13 +372,10 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
-
 
         try {
             Object[] filterArguments = { _userObjectClass, _userIdAttribute, username };
-            NamingEnumeration results = _rootContext.search(_userBaseDn, filter, filterArguments,
-                    ctls);
+            NamingEnumeration results = _rootContext.search(_userBaseDn, OBJECT_CLASS_FILTER, filterArguments, ctls);
 
             LOG.debug("Found user?: " + results.hasMoreElements());
 
@@ -420,7 +443,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
+        String filter = OBJECT_CLASS_FILTER;
         final NamingEnumeration results;
 
         if(null!=_roleUsernameMemberAttribute){
@@ -612,10 +635,15 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             Object[] userPass= getCallBackAuth();
             if (null == userPass || userPass.length < 2) {
                 setAuthenticated(false);
-            } else {
-                String name = (String) userPass[0];
-                Object pass = userPass[1];
-                setAuthenticated(authenticate(name, pass));
+                throw new FailedLoginException();
+            }
+            String name = (String) userPass[0];
+            Object pass = userPass[1];
+            boolean authenticated = authenticate(name, pass);
+            setAuthenticated(authenticated);
+
+            if (!isAuthenticated()) {
+                throw new FailedLoginException();
             }
             return isAuthenticated();
         } catch (UnsupportedCallbackException e) {
@@ -713,6 +741,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 e.printStackTrace();
             }
             throw new LoginException("IO Error performing login.");
+        } catch (LoginException e) {
+            throw e;
         } catch (Exception e) {
             if (_debug) {
                 e.printStackTrace();
@@ -758,8 +788,16 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 if (System.currentTimeMillis() < cached.expires) {
                     LOG.debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
-
-                    setCurrentUser(new JAASUserInfo(cached.userInfo));
+                    JAASUserInfo jaasUserInfo = new JAASUserInfo(cached.userInfo);
+                    try {
+                        jaasUserInfo.fetchRoles();
+                    } catch(Exception ex) {
+                        if(_debug) {
+                            LOG.debug("Failed to fetch roles",ex);
+                        }
+                        throw new LoginException("Error obtaining user info.");
+                    }
+                    setCurrentUser(jaasUserInfo);
                     setAuthenticated(true);
                     return true;
                 } else {
@@ -776,12 +814,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         String userDn = searchResult.getNameInNamespace();
 
         LOG.info("Attempting authentication: " + userDn);
-
-        Hashtable environment = getEnvironment();
-        environment.put(Context.SECURITY_PRINCIPAL, userDn);
-        environment.put(Context.SECURITY_CREDENTIALS, password);
-
-        DirContext dirContext = new InitialDirContext(environment);
+        DirContext dirContext = createBindUserDirContext(userDn, password);
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
@@ -797,9 +830,33 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     System.currentTimeMillis() + _cacheDuration));
             LOG.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
         }
-        setCurrentUser(new JAASUserInfo(userInfo));
+        JAASUserInfo jaasUserInfo = new JAASUserInfo(userInfo);
+        try {
+            jaasUserInfo.fetchRoles();
+        } catch(Exception ex) {
+            if(_debug) {
+                LOG.debug("Failed to fetch roles",ex);
+            }
+            throw new LoginException("Error obtaining user info.");
+        }
+        setCurrentUser(jaasUserInfo);
         setAuthenticated(true);
         return true;
+    }
+
+    BindDirContextCreator userBindDirContextCreator;
+    static interface BindDirContextCreator{
+        DirContext createBindUserDirContext(final String userDn, final Object password) throws NamingException;
+    }
+
+    private DirContext createBindUserDirContext(final String userDn, final Object password) throws NamingException {
+        if (null != userBindDirContextCreator) {
+            return userBindDirContextCreator.createBindUserDirContext(userDn, password);
+        }
+        Hashtable environment = getEnvironment();
+        environment.put(Context.SECURITY_PRINCIPAL, userDn);
+        environment.put(Context.SECURITY_CREDENTIALS, password);
+        return new InitialDirContext(environment);
     }
 
     @SuppressWarnings("unchecked")
@@ -809,7 +866,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         ctls.setDerefLinkFlag(true);
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 
-        String filter = "(&(objectClass={0})({1}={2}))";
+        String filter = OBJECT_CLASS_FILTER;
 
         LOG.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
                 + _userBaseDn);
@@ -836,7 +893,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         try {
             _rootContext = new InitialDirContext(getEnvironment());
         } catch (NamingException ex) {
-            LOG.warn(ex);
+            LOG.error("Naming error",ex);
             throw new IllegalStateException("Unable to establish root context: "+ex.getMessage());
         }
     }
@@ -849,7 +906,12 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _providerUrl = (String) options.get("providerUrl");
         _contextFactory = (String) options.get("contextFactory");
         _bindDn = (String) options.get("bindDn");
-        String bindPassword = Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString();
+        String
+            bindPassword =
+            null != Holders.getConfig() &&
+            null != Holders.getConfig().get("rundeck.security.ldap.bindPassword")
+            ? Holders.getConfig().get("rundeck.security.ldap.bindPassword").toString()
+            : null;
         if(bindPassword != null && !"null".equals(bindPassword)) {
             _bindPassword = bindPassword;
         } else {
