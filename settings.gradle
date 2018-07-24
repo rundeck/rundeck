@@ -34,6 +34,7 @@ include	'rundeck-storage',
 	'plugins:git-plugin',
 	'plugins:upvar-plugin',
     'rundeckapp',
-    'rundeckapp:metricsweb'
+    'rundeckapp:metricsweb',
+    'grails-persistlocale'
 
 project(":rundeckapp").name = "rundeck"
