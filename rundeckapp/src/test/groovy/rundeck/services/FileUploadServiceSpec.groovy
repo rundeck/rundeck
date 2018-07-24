@@ -450,4 +450,95 @@ class FileUploadServiceSpec extends Specification {
         FileUploadPlugin.InternalState.Deleted  | 'deleted'
         FileUploadPlugin.InternalState.Retained | 'retained'
     }
+
+    @Unroll
+    def "validate inuse file for execution"() {
+        given:
+        String jobid = 'ajobid'
+        String user = 'auser'
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        Execution exec = mkexec(job)
+        exec.validate()
+
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: 'retained',
+                uuid: '44a26bb3-5013-4906-9997-286306005408',
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: 'abcd',
+                project: 'testproj',
+                execution: exec
+        ).save()
+        def ref = '44a26bb3-5013-4906-9997-286306005408'
+        def inputjobid = 'ajobid'
+        def inputoptname = 'myopt'
+        when:
+        def result = service.validateFileRefForJobOption(ref, inputjobid, inputoptname)
+        then:
+        result.valid == false
+        result.error == 'inuse'
+    }
+
+    def "attach file for scheduled execution"() {
+        given:
+        UUID uuid = UUID.randomUUID()
+        String ref = uuid.toString()
+        String jobid = 'abjobid'
+        String user = 'auser'
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
+        }
+        service.frameworkService = Mock(FrameworkService) {
+
+        }
+        service.pluginService = Mock(PluginService)
+        service.taskService = Mock(TaskService)
+
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: JobFileRecord.STATE_TEMP,
+                uuid: uuid.toString(),
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: 'abcd',
+                project: 'testproj'
+        ).save()
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        Execution exec = mkexec(job)
+        exec.status='scheduled'
+        exec.save()
+        exec.validate()
+
+        when:
+        def result = service.attachFileForExecution(ref, exec, optionName)
+        then:
+        result
+        result.fileName==origName
+    }
 }
