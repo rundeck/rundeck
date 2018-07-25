@@ -397,7 +397,7 @@
                         </label>
                     </div>
                 </g:each>
-                    <g:set var="pluginDescription" value="${optionValuesPlugins.find { it.key == option?.optionValuesPluginType}?.value.description}" />
+                    <g:set var="pluginDescription" value="${optionValuesPlugins.find { it.key == option?.optionValuesPluginType}?.value?.description}" />
                     <g:set var="listvalue" value="${option?.valuesList}"/>
                     <g:set var="listjoin" value="${option?.values }"/>
 
@@ -460,8 +460,6 @@
                         </g:if>
                     </div>
                 </g:if>
-
-                </div>
 
                 %{--automatically check appropriate radio button when text is entered in the list or url field--}%
                 <wdgt:eventHandler for="vlist_${rkey}" state="unempty" target="vtrlist_${rkey}"
