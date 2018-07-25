@@ -201,7 +201,7 @@ class ScheduledExecution extends ExecutionContext {
         notifyAvgDurationThreshold(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
-            index '_IDX_SCHEDULED_EXECUTION_PROJECT', ['project']
+            index 'JOB_IDX_PROJECT', ['project']
         }
     }
 

@@ -66,8 +66,8 @@ class Storage {
         name(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
-            index '_IDX_STORAGE_NAMESPACE', ['namespace']
-            index '_IDX_STORAGE_DIR', ['dir']
+            index 'STORAGE_IDX_NAMESPACE', ['namespace']
+            index 'STORAGE_IDX_DIR', ['dir']
         }
     }
     //ignore fake property 'storageMeta' and 'path' and do not store it
