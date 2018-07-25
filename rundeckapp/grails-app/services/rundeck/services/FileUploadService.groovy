@@ -293,14 +293,15 @@ class FileUploadService {
         return validateJobFileRecordForJobOption(jfr, jobid, option, isJobRef)
     }
 
-    def validateJobFileRecordForJobOption(JobFileRecord jfr, String jobid, String option, boolean isJobRef = false) {
+    def validateJobFileRecordForJobOption(JobFileRecord jfr, String jobid, String option, boolean isJobRef = false,
+                                          Execution execution = null) {
         if (!jfr) {
             return [valid: false, error: 'notfound', args: [null, jobid, option]]
         }
         if ((!isJobRef && jfr.jobId != jobid) || jfr.recordName != option) {
             return [valid: false, error: 'invalid', args: [jfr.uuid, jobid, option]]
         }
-        if (!isJobRef && jfr.execution != null) {
+        if (!isJobRef && jfr.execution != null && execution?.id != jfr.execution.id) {
             return [valid: false, error: 'inuse', args: [jfr.uuid, jfr.execution.id]]
         }
         if (!jfr.canBecomeRetained()) {
@@ -319,7 +320,7 @@ class FileUploadService {
      */
     JobFileRecord attachFileForExecution(String fileuuid, Execution execution, String option, boolean skip = false) {
         JobFileRecord jfr = findUuid(fileuuid)
-        def validate = validateJobFileRecordForJobOption(jfr, execution.scheduledExecution.extid, option, skip)
+        def validate = validateJobFileRecordForJobOption(jfr, execution.scheduledExecution.extid, option, skip, execution)
 
         if (!validate.valid) {
             if (validate.error in ['notfound', 'invalid']) {
