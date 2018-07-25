@@ -136,9 +136,11 @@ jobs:
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
+    # Publish official docker snapshot
+    - script_block 'docker.official' 'docker_login && ./gradlew officialPush'
     # Upload to sonatype
-    - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
-    - script_block 'build.artifacts' 'bash jenkins-build.sh upload SNAPSHOT'
+    # - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
+    # - script_block 'build.artifacts' 'bash jenkins-build.sh upload SNAPSHOT'
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release
@@ -187,6 +189,7 @@ branches:
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/
+    - exp/official-docker
 
 notifications:
   irc:
