@@ -22,12 +22,14 @@
         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
         <g:set var="userDefinedSmallLogo" value="${grailsApplication.config.rundeck?.gui?.logoSmall}"/>
         <g:set var="userAssetBase" value="/user-assets" />
+        <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
+        <g:set var="safeUserSmallLogo" value="${userDefinedSmallLogo.toString().encodeAsSanitizedHTML()}" />
         <g:if test="${userDefinedLogo && !userDefinedSmallLogo}">
-          <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+          <img src="${createLink(uri:userAssetBase+"/"+safeUserLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
 
         </g:if>
         <g:elseif test="${userDefinedLogo && userDefinedSmallLogo}">
-          <img src="${userAssetBase}/${enc(sanitize:userDefinedSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
+          <img src="${createLink(uri:userAssetBase+"/"+safeUserSmallLogo)}" height="40px" style="float: left; margin-top:10px; margin-right: 20px;">
         </g:elseif>
 
         <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
