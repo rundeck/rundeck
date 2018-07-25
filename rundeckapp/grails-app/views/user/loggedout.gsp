@@ -59,18 +59,8 @@
                 <div class="card-header">
                   <h4 class="card-title">
                     <div class="logo">
-                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-                           title="Home">
-                            <g:set var="appTitle"
-                                   value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
-                            <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
-                            <i class="rdicon app-logo"></i>
-                            <g:if test="${appTitle}">
-                                ${appTitle}
-                            </g:if>
-                            <g:else>
-                                ${appDefaultTitle}
-                            </g:else>
+                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
+                          <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
                         </a>
 
                         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
