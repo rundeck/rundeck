@@ -2,4 +2,6 @@
 src = "log4j.properties.tmpl"
 dest = "/home/rundeck/server/config/log4j.properties"
 keys = [
+    "/rundeck/logging/strategy",
+    "/rundeck/logging/audit/enabled",
 ]
