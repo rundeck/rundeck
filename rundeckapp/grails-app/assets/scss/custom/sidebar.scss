@@ -17,7 +17,14 @@
       font-size: 18px;
       line-height: 20px;
       height: 50px;
-      span.appTitle{
+      background-image: url("logos/rundeck-text.png");
+      background-size: 50%;
+      background-repeat: no-repeat;
+      width: 100%;
+      display: block;
+      background-position-y: 15px;
+      background-position-x: 65px;
+      .appTitle{
         padding-left:8px;
         opacity: 1;
         -webkit-transition: opacity 700ms, visibility 700ms;
