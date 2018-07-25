@@ -137,18 +137,8 @@
       <div class="logo">
           <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
              title="Home">
-              <g:set var="appTitle"
-                     value="${grailsApplication.config.rundeck?.gui?.title ?: g.message(code: 'main.app.name',default:'')}"/>
-              <g:set var="appDefaultTitle" value="${g.message(code: 'main.app.default.name',default:'')}"/>
               <i class="rdicon app-logo"></i>
-              <span class="appTitle">
-                <g:if test="${appTitle}">
-                    ${appTitle}
-                </g:if>
-                <g:else>
-                    ${appDefaultTitle}
-                </g:else>
-              </span>
+              <span class="appTitle"></span>
           </a>
           <div class="navbar-minimize">
             <button class="btn btn-fill btn-icon">

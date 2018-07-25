@@ -17,12 +17,19 @@
       font-size: 18px;
       line-height: 20px;
       height: 50px;
-      span.appTitle{
-        padding-left:8px;
-        opacity: 1;
-        -webkit-transition: opacity 700ms, visibility 700ms;
-        transition: opacity 700ms, visibility 700ms;
-      }
+      background-image: url("logos/rundeck-text.png");
+      background-size: 50%;
+      background-repeat: no-repeat;
+      width: 100%;
+      display: block;
+      background-position-y: 15px;
+      background-position-x: 65px;
+      // .appTitle{
+      //   padding-left:8px;
+      //   opacity: 1;
+      //   -webkit-transition: opacity 700ms, visibility 700ms;
+      //   transition: opacity 700ms, visibility 700ms;
+      // }
     }
     .navbar-minimize{
       display: none;
@@ -107,7 +114,10 @@ body.modal-open{
 }
 .sidebar:not(:hover){
   .sidebar-mini &{
-    span.appTitle{
+    a{
+      background-image: none;
+    }
+    .appTitle{
       opacity: 0;
       display: none;
       // position: absolute;

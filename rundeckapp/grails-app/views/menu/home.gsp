@@ -75,7 +75,7 @@
               </div>
             </div>
         </g:if>
-        <div class="col-sm-12 col-md-6">
+        <div class="col-sm-12 col-md-5">
           <div class="card">
             <div class="card-content" style="padding-bottom: 20px;">
               <span class="h3 text-primary">
@@ -107,7 +107,7 @@
           -->
           </div>
         </div>
-        <div class="col-sm-12 col-md-6">
+        <div class="col-sm-12 col-md-7">
           <div class="card">
             <div class="card-content">
               <span data-bind="if: !loaded()">
