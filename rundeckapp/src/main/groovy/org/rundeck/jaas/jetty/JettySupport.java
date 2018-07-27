@@ -20,10 +20,7 @@ import org.eclipse.jetty.jaas.JAASPrincipal;
 import org.eclipse.jetty.jaas.JAASRole;
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
 
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 import java.io.IOException;
 import java.security.Principal;
@@ -33,9 +30,10 @@ import java.security.Principal;
  */
 public class JettySupport {
     private static Callback[] createCallbacks() {
-        Callback[] calls = new Callback[2];
+        Callback[] calls = new Callback[3];
         calls[0] = new NameCallback("Username: ");
         calls[1] = new ObjectCallback();
+        calls[2] = new PasswordCallback("Enter password", false);
         return calls;
     }
 
@@ -48,6 +46,9 @@ public class JettySupport {
         handler.handle(callbacks);
         String name = ((NameCallback) callbacks[0]).getName();
         Object creds = ((ObjectCallback) callbacks[1]).getObject();
+        if (creds == null) {
+            creds = ((PasswordCallback)callbacks[2]).getPassword();
+        }
         return new Object[]{name, getPassword(creds)};
     }
 
