@@ -121,7 +121,7 @@ dependencies {
     compile "com.google.code.gson:gson:2.8.2"
     compile 'org.eclipse.jetty:jetty-jaas:9.4.11.v20180605'
     compile 'org.grails.plugins:spring-security-core:3.2.1'
-    compile 'org.kohsuke:libpam4j:1.5'
+    compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.0"
