@@ -9,7 +9,7 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 DRYRUN=1
 SIGN=0
-. rd_versions.sh
+. scripts/rd_versions.sh
 
 die(){
     echo >&2 "$@" ; exit 2
