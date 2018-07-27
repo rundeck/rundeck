@@ -118,6 +118,12 @@ jobs:
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-ldap-bind-test' 'DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh'
 
+  - env: JOB='Docker PAM tests'
+    script:
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'docker.pull' pull_rdtest
+    - script_block 'docker-pam-test' 'bash test/run-docker-pam-tests.sh'
+
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
     script:
