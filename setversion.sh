@@ -26,7 +26,12 @@ VTAG="${1}"
 
 
 VDATE="$(date +%Y%m%d)"
-VNAME="$VNUM-$VTAG-$VDATE"
+
+if [ "$VTAG" == "GA" ] ; then
+	VNAME="$VNUM-$VDATE"
+else
+	VNAME="$VNUM-$VTAG-$VDATE"
+fi
 
 echo "new NUMBER: $VNUM"
 echo "new RELEASE: $RELEASE"
