@@ -11,7 +11,7 @@ dataSource.url = {{getv "/rundeck/database/url" "jdbc:h2:file:/home/rundeck/serv
 dataSource.username = {{getv "/rundeck/database/username" ""}}
 dataSource.password = {{getv "/rundeck/database/password" ""}}
 {{if exists "/rundeck/database/driver"}}
-    dataSource.driver = {{getv "/rundeck/database/driver"}}
+    dataSource.driverClassName = {{getv "/rundeck/database/driver"}}
 {{end}}
 {{if exists "/rundeck/database/dialect"}}
     dataSource.dialect = {{getv "/rundeck/database/dialect"}}
@@ -56,3 +56,5 @@ rundeck.config.storage.converter.1.config.algorithm=PBEWITHSHA256AND128BITAES-CB
 rundeck.config.storage.converter.1.config.provider=BC
 
 rundeck.clusterMode.enabled=true
+
+loginmodule.name=RDpropertyfilelogin
