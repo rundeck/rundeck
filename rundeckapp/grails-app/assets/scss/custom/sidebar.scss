@@ -35,18 +35,22 @@
       display: none;
     }
     // sidebar open
-    i.fas.fa-ellipsis-v{
+    i.fas.fa-ellipsis-v,
+    i.fas.fa-sign-out-alt{
       display: block;
     }
-    i.fas.fa-ellipsis-h{
+    i.fas.fa-ellipsis-h,
+    i.fas.fa-sign-in-alt{
       display: none;
     }
     // sidebar closed
     .sidebar-mini &{
-      i.fas.fa-ellipsis-v{
+      i.fas.fa-ellipsis-v,
+      i.fas.fa-sign-out-alt{
         display: none;
       }
-      i.fas.fa-ellipsis-h{
+      i.fas.fa-ellipsis-h,
+      i.fas.fa-sign-in-alt{
         display: block;
       }
     }

@@ -198,7 +198,7 @@
                                     </span>
                                 </span>
                             </g:if>
-                            <a href="#" class="btn-sm btn toggle-card-collapse" data-card="header-card-content">
+                            <a href="#" class="btn-sm btn toggle-card-collapse" style="display:inline-block;" data-card="header-card-content">
                               <i class="fas fa-info-circle"></i>
                             </a>
                             <g:if test="${deleteExecAuth}">
