@@ -140,8 +140,8 @@
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
-          <div class="navbar-minimize">
-            <button class="btn btn-fill btn-icon">
+          <div class="navbar-minimize" style="margin-top:8px;">
+            <button class="btn btn-default btn-sm btn-icon">
               <!-- <i class="fas fa-ellipsis-v"></i>
               <i class="fas fa-ellipsis-h"></i> -->
               <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
