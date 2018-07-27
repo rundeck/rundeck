@@ -140,7 +140,7 @@ class ScheduledExecution extends ExecutionContext {
         uuid(unique: true, nullable:true, blank:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         orchestrator(nullable:true)
         multipleExecutions(nullable: true)
-        serverNodeUUID(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
+        serverNodeUUID(maxSize: 36, size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
             try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
                 return false
@@ -199,9 +199,10 @@ class ScheduledExecution extends ExecutionContext {
         retry(type: 'text')
         retryDelay(type: 'text')
         notifyAvgDurationThreshold(type: 'text')
+        serverNodeUUID(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
-            index '_IDX_SCHEDULED_EXECUTION_PROJECT', ['project']
+            index 'JOB_IDX_PROJECT', ['project']
         }
     }
 

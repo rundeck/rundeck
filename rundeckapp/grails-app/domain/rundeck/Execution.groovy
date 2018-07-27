@@ -89,7 +89,7 @@ class Execution extends ExecutionContext {
         failedNodeList(nullable:true, blank:true)
         succeededNodeList(nullable:true, blank:true)
         abortedby(nullable:true, blank:true)
-        serverNodeUUID(size:36..36, blank: true, nullable: true, validator: { val, obj ->
+        serverNodeUUID(maxSize: 36, size:36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
             try { return null!= UUID.fromString(val) } catch (IllegalArgumentException e) {
                 return false
@@ -136,6 +136,7 @@ class Execution extends ExecutionContext {
         timeout( type: 'text')
         retry( type: 'text')
         userRoleList(type: 'text')
+        serverNodeUUID(type: 'string')
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
