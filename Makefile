@@ -66,6 +66,12 @@ deb: app
 javadoc:
 	./gradlew $(PROXY_DEFS) -Psnapshot -PbuildNum=$(RELEASE) alljavadoc
 
+# changelog
+
+CHANGELOG.md: RELEASE.md
+	( cat $< ; echo ; echo "---" ; echo; cat $@ ) > $@.tmp
+	mv $@.tmp $@
+
 #clean various components
 
 clean:

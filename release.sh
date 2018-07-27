@@ -120,6 +120,8 @@ generate_release_notes_documentation(){
     sed "s#Name: <span.*/span>#Name: $RELNAME#" < RELEASE.md > RELEASE.md.new
     mv RELEASE.md.new RELEASE.md
 
+    make CHANGELOG.md
+
     git add RELEASE.md
     git add CHANGELOG.md
     out=$( git status --porcelain | grep "^M  CHANGELOG.md") || die "CHANGELOG.md was not modified"
