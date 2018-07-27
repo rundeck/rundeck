@@ -1,3 +1,84 @@
+Release 2.11.5
+===========
+
+Date: 2018-07-06
+
+Name: <span style="color: SeaGreen"><span class="glyphicon glyphicon-tower"></span> "cappuccino seagreen tower"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bug fixes.
+
+This release addresses the error **ORA-01795** in `menu/home` when using Oracle
+Database with over 1000 projects.
+
+## Contributors
+
+* Jaime Tobar (jtobard)
+
+## Bug Reporters
+
+* isuftin
+* jtobard
+* sebastianbello
+
+## Issues
+
+[Milestone 2.11.5](https://github.com/rundeck/rundeck/milestone/79)
+
+* ["Cannot get property 'extid' on null object" when viewing job definition](https://github.com/rundeck/rundeck/issues/3474)
+* [NPE on referenced Job](https://github.com/rundeck/rundeck/pull/3655)
+* [Error message:  ORA-01795: maximum number of expressions in a list is 1000](https://github.com/rundeck/rundeck/issues/3526)
+* [Fix Error message: ORA-01795](https://github.com/rundeck/rundeck/pull/3650)
+
+---
+
+Release 2.11.4
+===========
+
+Date: 2018-06-07
+
+Name: <span style="color: SaddleBrown"><span class="glyphicon glyphicon-pushpin"></span> "cappuccino saddlebrown pushpin"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bug and security fixes.
+
+This release addresses a potential security issue in processing of zip files,
+please see the this issue: [Security Advisory: Zip Slip directory traversal vulnerability #3471](https://github.com/rundeck/rundeck/issues/3471).
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Jaime Tobar (jtobard)
+* Stephen Joyner (sjrd218)
+
+## Bug Reporters
+
+* gschueler
+* jtobard
+* kino71
+
+## Issues
+
+[Milestone 2.11.4](https://github.com/rundeck/rundeck/milestone/78)
+
+* [2.11: backport bug fixes](https://github.com/rundeck/rundeck/issues/3494)
+    * [#3384 duplicate jobs page doesn't show options]((https://github.com/rundeck/rundeck/issues/3384)
+    * [#3423 Create project via API with invalid project name does not return error]((https://github.com/rundeck/rundeck/issues/3423)
+    * [2.11: Git plugin setup page does not preserve current values in Select fields](https://github.com/rundeck/rundeck/issues/3493)
+    * [backport: Zip Slip fix for 2.11](https://github.com/rundeck/rundeck/pull/3486)
+
+---
+
 Release 2.11.3
 ===========
 
