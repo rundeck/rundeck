@@ -137,8 +137,13 @@ class RundeckInitializer {
         coreJar.createNewFile()
         if(thisJar.isDirectory()) {
             def coreJarLoc = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs().find { it.toString().endsWith(coreJarName) }
-            coreJarLoc.withInputStream {
-                coreJar << it
+            if(!coreJarLoc && thisJar.name == "classes") {
+                coreJarLoc = new File(thisJar.parentFile,"lib/"+coreJarName)
+            }
+            if(coreJarLoc) {
+                coreJarLoc.withInputStream {
+                    coreJar << it
+                }
             }
         } else {
             ZipFile springBootJar = new ZipFile(thisJar)
@@ -216,11 +221,15 @@ class RundeckInitializer {
         def classlibList = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs()
         jarNamesToCopy.each { jarName ->
             def sourceJar = classlibList.find { it.toString().endsWith(jarName) }
+            if(!sourceJar && thisJar.name == "classes") {  //thisJar is WEB-INF/classes
+                sourceJar = new File(thisJar.parentFile,"lib/"+jarName)
+                if(!sourceJar.exists()) sourceJar = null
+            }
             if(sourceJar) {
                 File jarDest = new File(toolslibdir,jarName)
                 jarDest << sourceJar.newInputStream()
             } else {
-                ERR("Failed to extract dependant jar ${jarName} into tools dir: ${toolslibdir.absolutePath}")
+                if(!SUPPRESS_JAR_EXTRACT_FAILURE_LIST.contains(jarName)) ERR("Failed to extract dependant jar ${jarName} into tools dir: ${toolslibdir.absolutePath}")
             }
         }
     }

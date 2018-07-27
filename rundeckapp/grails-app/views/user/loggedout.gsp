@@ -65,9 +65,10 @@
 
                         <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
                         <g:if test="${userDefinedLogo}">
+                          <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
                           <g:set var="userAssetBase" value="/user-assets" />
                           <div style="margin-top:2em">
-                            <img src="${userAssetBase}/${enc(sanitize:userDefinedLogo)}">
+                            <img src="${g.createLink(uri:userAssetBase+"/"+safeUserLogo)}">
                           </div>
                         </g:if>
                     </div>
