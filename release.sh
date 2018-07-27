@@ -9,7 +9,7 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 DRYRUN=1
 SIGN=0
-. rd_versions.sh
+. scripts/rd_versions.sh
 
 die(){
     echo >&2 "$@" ; exit 2
@@ -119,6 +119,8 @@ generate_release_notes_documentation(){
     fi
     sed "s#Name: <span.*/span>#Name: $RELNAME#" < RELEASE.md > RELEASE.md.new
     mv RELEASE.md.new RELEASE.md
+
+    make CHANGELOG.md
 
     git add RELEASE.md
     git add CHANGELOG.md
