@@ -48,7 +48,6 @@ import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
-
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -78,6 +77,7 @@ import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.RundeckInitConfig
+import rundeckapp.init.servlet.JettyServletContainerCustomizer
 
 import javax.security.auth.login.Configuration
 
@@ -463,6 +463,14 @@ beans={
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
             userDetailsService = ref('realmPropertyFileDataSource')
+        }
+    }
+
+    jettyServletCustomizer(JettyServletContainerCustomizer) {
+        def configParams = grailsApplication.config.rundeck?.web?.jetty?.servlet?.initParams
+
+        initParams = configParams?.toProperties()?.collectEntries {
+            [it.key.toString(), it.value.toString()]
         }
     }
 }

@@ -1,0 +1,42 @@
+version: '2'
+
+services:
+  rundeck1:
+    hostname: rundeck1
+    image: rdtest:latest
+    environment:
+      - RUNDECK_NODE=rundeck1
+      - RUNDECK_URL=http://rundeck1:4440
+      - LAUNCHER_URL=${LAUNCHER_URL}
+      - CLI_DEB_URL=${CLI_DEB_URL}
+      - CLI_VERS=${CLI_VERS}
+      - WAIT_NODES=rundeck1
+      - CONFIG_SCRIPT_PRESTART=scripts/config-pam.sh
+      - JAAS_FILE_NAME=jaas-pam.conf
+      - JAAS_MODULE_NAME=pam
+      - RDECK_JVM_OPTS=-Dloginmodule.name=pam -Dloginmodule.conf.name=jaas-pam.conf -Drundeck.jaaslogin=true -Dlogging.level.org.rundeck.jaas.pam=DEBUG
+    volumes:
+      - logs:/home/rundeck/logs:rw
+      - resources:/home/rundeck/resources:rw
+      - tests:/home/rundeck/tests:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.11
+    ports:
+      - "4440:4440"
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.234.0/24
+        gateway: 192.168.234.1
+
+volumes:
+  logs:
+  resources:
+  tests:
+
+

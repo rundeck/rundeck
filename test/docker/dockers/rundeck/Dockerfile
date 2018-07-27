@@ -9,6 +9,9 @@ ENV USERNAME=rundeck \
 ARG CLI_DEB_URL
 ARG CLI_VERS
 
+#Add PAM test user
+RUN useradd -p $(echo "pampwd123" | openssl passwd -1 -stdin) -m --shell /bin/bash pamlogintest
+
     # Add gpg key
 RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key \
     && apt-key add - < /tmp/bintray.gpg.key \
@@ -17,7 +20,8 @@ RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > 
     # RUNDECK - create user
     && adduser --shell /bin/bash --home $HOME --gecos "" --disabled-password $USERNAME && \
         passwd -d $USERNAME && \
-        addgroup $USERNAME sudo
+        addgroup $USERNAME sudo && \
+        addgroup $USERNAME shadow
 
 WORKDIR $HOME
 

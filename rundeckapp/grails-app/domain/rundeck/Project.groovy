@@ -35,7 +35,7 @@ class Project {
     static mapping = {
         cache: true
         DomainIndexHelper.generate(delegate) {
-            index '_IDX_PROJECT_NAME', ['name']
+            index 'PROJECT_IDX_NAME', ['name']
         }
     }
 }

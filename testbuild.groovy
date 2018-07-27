@@ -105,7 +105,7 @@ def manifest=[
         "WEB-INF/lib-provided/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-1.2.17.jar",
         "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar",
-        "WEB-INF/lib/libpam4j-1.5.jar",
+        "WEB-INF/lib/libpam4j-1.10.jar",
         "WEB-INF/lib/not-yet-commons-ssl-0.3.17.jar",
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],

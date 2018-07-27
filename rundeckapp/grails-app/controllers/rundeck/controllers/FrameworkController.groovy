@@ -685,7 +685,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         redirect(controller:'framework',action:'nodes',params:[filterName:filter.name,project:params.project])
         }.invalidToken{
             response.status=HttpServletResponse.SC_BAD_REQUEST
-            renderErrorView(g.message('request.error.invalidtoken.message'))
+            renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
     }
     def deleteNodeFilter={

@@ -1,0 +1,61 @@
+project.evaluationDependsOn(":rundeck")
+
+task ensureWar {
+    def rundeckapp = project(":rundeck")
+
+    /* A bit dirty but will allow building container between Travis stages without rebuilding the war */
+    def warFile = file(rundeckapp.war.archivePath)
+    if (! warFile.exists()) {
+        dependsOn rundeckapp.bootRepackage
+    }
+}
+
+task officialBuild {
+    dependsOn ensureWar
+
+    doLast {
+        def rundeckapp = project(":rundeck")
+        copy {
+            from rundeckapp.war.archivePath
+            into "$projectDir/official/.build"
+            rename "$rundeckapp.war.archiveName", "rundeck.war"
+        }
+
+        exec {
+            workingDir "./official"
+
+            commandLine "docker", "build", "-t=rundeck/rundeck:$vTag", "."
+        }
+    }
+
+    clean {
+        delete "$projectDir/official/.build"
+    }
+}
+
+task officialPush {
+    dependsOn officialBuild
+    doLast {
+        exec {
+            commandLine "docker", "push", "rundeck/rundeck:$vTag"
+        }
+    }
+}
+
+task buildUbuntuBase {
+    doLast {
+        exec {
+            workingDir "./ubuntu-base"
+            commandLine "docker", "build", "-t=rundeck/ubuntu-base", "."
+        }
+    }
+}
+
+task pushUbuntuBase {
+    dependsOn buildUbuntuBase
+    doLast {
+        exec {
+            commandLine "docker", "push", "rundeck/ubuntu-base"
+        }
+    }
+}
