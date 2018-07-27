@@ -40,6 +40,13 @@ appender('STDOUT', TrueConsoleAppender) {
     logger it, ERROR, ['STDOUT'], false
 }
 
+// Provides critical visibility into jaas config issues
+['com.dtolabs.rundeck.jetty.jaas',
+ 'grails.plugin.springsecurity.web.authentication.GrailsUsernamePasswordAuthenticationFilter',
+ 'org.rundeck.jaas'].each {
+    logger it, DEBUG, ['STDOUT'], false
+}
+
 logger "rundeckapp.BootStrap", INFO, ["STDOUT"], false
 if (Environment.isDevelopmentMode()) {
 
@@ -85,4 +92,4 @@ if (Environment.isDevelopmentMode()) {
         }
     }
 }
-root(ERROR, ['STDOUT'])
+root(WARN, ['STDOUT'])
