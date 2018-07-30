@@ -360,8 +360,9 @@ class RundeckInitializer {
         }
 
         if (config.useJaas) {
-            System.setProperty("java.security.auth.login.config", new File(config.configDir,
-                                                                           config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
+            if(! System.getProperty("java.security.auth.login.config"))
+                System.setProperty("java.security.auth.login.config", new File(config.configDir,
+                                                                               config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
             System.setProperty(PROP_LOGINMODULE_NAME, config.runtimeConfiguration.getProperty(PROP_LOGINMODULE_NAME));
         }
     }
