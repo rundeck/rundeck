@@ -33,6 +33,7 @@ RUNDECK_LOGDIR="${RUNDECK_LOGDIR:-$RDECK_BASE/logs}"
 RDECK_JVM_SETTINGS="${RDECK_JVM_SETTINGS:- -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server}"
 RDECK_TRUSTSTORE_FILE="${RDECK_TRUSTSTORE_FILE:-$RDECK_CONFIG/ssl/truststore}"
 RDECK_TRUSTSTORE_TYPE="${RDECK_TRUSTSTORE_TYPE:-jks}"
+JAAS_LOGIN="${JAAS_LOGIN:-true}"
 JAAS_CONF="${JAAS_CONF:-$RDECK_CONFIG/jaas-loginmodule.conf}"
 LOGIN_MODULE="${LOGIN_MODULE:-RDpropertyfilelogin}"
 RDECK_HTTP_PORT=${RDECK_HTTP_PORT:-4440}
@@ -56,7 +57,8 @@ for war in $(find $RDECK_INSTALL/bootstrap -name '*.war') ; do
   EXECUTABLE_WAR=$war
 done
 
-RDECK_JVM="-Djava.security.auth.login.config=$JAAS_CONF \
+RDECK_JVM="-Drundeck.jaaslogin=$JAAS_LOGIN \
+           -Djava.security.auth.login.config=$JAAS_CONF \
            -Dloginmodule.name=$LOGIN_MODULE \
            -Drdeck.config=$RDECK_CONFIG \
            -Drundeck.server.configDir=$RDECK_SERVER_CONFIG \
