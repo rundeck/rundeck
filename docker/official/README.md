@@ -32,6 +32,30 @@ Kubernetes documentation [Use-Case: Pod with ssh keys](https://kubernetes.io/doc
 The JVM is configured to use cgroup information to set the max heap allocation size.
 The RAM ratio is set to `1`, so the JVM will utilize up to about the container limit.
 
+## user authentication
+> **NOTE:** For extra reference and clarity, refer to the official [docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap). For example configurations check out the [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined).
+
+**Default**
+The default setup utilizes the `/home/rundeck/server/config/realm.properties` file. Mount
+or otherwise replace this file to manage further users through this method.
+
+**JAAS**
+There is initial support for composing the JAAS modules talk about in the docks.
+The convention for listing the modules to use in environment variables:
+```
+RUNDECK_JAAS_MODULES_0=JettyCombinedLdapLoginModule
+RUNDECK_JAAS_MODULES_1=PropertyFileLoginModule
+```
+
+Config keys are located under:
+```
+RUNDECK_JAAS_LDAP_*
+RUNDECK_JAAS_FILE_*
+```
+
+By convention the module name matches the name in the docs, and the config keys match
+the config options listed in the docs uppercase, and all one word.
+
 ## Environment Variables
 
 ### `RUNDECK_GRAILS_URL=http://127.0.0.1:4440`

@@ -16,11 +16,20 @@ USER rundeck
 WORKDIR /home/rundeck
 
 COPY --chown=rundeck:rundeck .build .
-COPY --chown=rundeck:rundeck confd /etc/confd
-
 RUN java -jar rundeck.war --installonly
+
+COPY --chown=rundeck:rundeck confd /etc/confd
 
 VOLUME ["/home/rundeck/server/data"]
 
 EXPOSE 4440
-CMD confd -onetime -backend env && java -XX:+UnlockExperimentalVMOptions -XX:MaxRAMFraction=1 -XX:+UseCGroupMemoryLimitForHeap -jar rundeck.war
+CMD confd -onetime -backend env \
+    && \
+    java \
+        -XX:+UnlockExperimentalVMOptions \
+        -XX:MaxRAMFraction=1 \
+        -XX:+UseCGroupMemoryLimitForHeap \
+        -Dloginmodule.conf.name=jaas-loginmodule.conf \
+        -Dloginmodule.name=rundeck \
+        -Drundeck.jaaslogin=true \
+        -jar rundeck.war
