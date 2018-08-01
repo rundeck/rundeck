@@ -3,11 +3,14 @@
 
 # Supported tags
 
-- `SNAPSHOT`
+- `SNAPSHOT` (latest master build)
 
 # What is Rundeck?
 
 ![logo](https://www.rundeck.com/hs-fs/hubfs/rundeck-logotype-512.png?t=1532143389217&width=171&name=rundeck-logotype-512.png)
+
+**Check out the [Docker Zoo](https://github.com/rundeck/docker-zoo) for configuration examples
+in Docker Compose!**
 
 ## start with persistent storage
 
@@ -33,7 +36,11 @@ The JVM is configured to use cgroup information to set the max heap allocation s
 The RAM ratio is set to `1`, so the JVM will utilize up to about the container limit.
 
 ## user authentication
-> **NOTE:** For extra reference and clarity, refer to the official [docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap). For example configurations check out the [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined).
+> **NOTE:** For extra reference and clarity, refer to the official docs.
+For example configurations check out the Zoo.
+
+* [Docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap)
+* [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined)
 
 **Default**
 The default setup utilizes the `/home/rundeck/server/config/realm.properties` file. Mount
