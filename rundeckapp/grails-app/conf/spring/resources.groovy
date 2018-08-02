@@ -48,6 +48,7 @@ import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
+import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -457,11 +458,13 @@ beans={
             ]
         }
     } else {
+        jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
         //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
         realmProperties.load(new File(grailsApplication.config.rundeck.security.fileUserDataSource).newInputStream())
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
+            passwordEncoder = ref("jettyCompatiblePasswordEncoder")
             userDetailsService = ref('realmPropertyFileDataSource')
         }
     }
