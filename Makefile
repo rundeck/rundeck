@@ -21,7 +21,7 @@ gradle_proxy_port=$(shell echo ${http_proxy}|awk -F ':' '{ print $NF }')
 PROXY_DEFS="-Dhttp.proxyHost=$gradle_proxy_host -Dhttp.proxyPort=$gradle_proxy_port"
 endif
 
-.PHONY: clean rundeck release core-snapshot test app notes
+.PHONY: clean rundeck release core-snapshot test app notes pkgbuild-docker-image rpm-docker deb-docker rdcentos6-util rdubuntu16.04-util rddebinstall rdrpminstall
 
 rundeck:  app
 	@echo $(VERSION)-$(RELEASE)
@@ -71,6 +71,33 @@ javadoc:
 CHANGELOG.md: RELEASE.md
 	( cat $< ; echo ; echo "---" ; echo; cat $@ ) > $@.tmp
 	mv $@.tmp $@
+
+pkgbuild-docker-image: docker/package/Dockerfile
+	docker build -t $@ docker/package
+
+rpm-docker: pkgbuild-docker-image app
+	docker run -it -v $(PWD):/home/rundeck/rundeck pkgbuild-docker-image make rpm
+
+deb-docker: pkgbuild-docker-image app
+	docker run -it -v $(PWD):/home/rundeck/rundeck pkgbuild-docker-image make deb
+
+rdubuntu16.04-util: docker/installcommon/ubuntu.Dockerfile
+	docker build -t "$@" -f docker/installcommon/ubuntu.Dockerfile docker/installcommon
+
+rddebinstall: rdubuntu16.04-util docker/debinstall/Dockerfile docker/debinstall/entry.sh
+	docker build -t $@ docker/debinstall
+
+deb-test-install: rddebinstall
+	docker run -it -v $(PWD):/home/rundeck/rundeck rddebinstall bash
+
+rdcentos6-util: docker/installcommon/centos6.Dockerfile
+	docker build -t "$@" -f docker/installcommon/centos6.Dockerfile docker/installcommon
+
+rdrpminstall: rdcentos6-util docker/rpminstall/Dockerfile docker/rpminstall/entry.sh
+	docker build -t $@ docker/rpminstall
+
+rpm-test-install: rdrpminstall
+	docker run -it -v $(PWD):/home/rundeck/rundeck rdrpminstall bash
 
 #clean various components
 
