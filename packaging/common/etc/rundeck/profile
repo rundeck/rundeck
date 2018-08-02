@@ -9,15 +9,27 @@
 #
 # To override variables in this file, you can instead create a file at:
 #
+#     # Centos/Redhat default:
+#
 #     /etc/sysconfig/rundeckd
+#
+# Or
+#
+#     # Ubuntu/Debian default:
+#
+#     /etc/default/rundeckd
 #
 # which contains exports for any of the variables listed below. E.g.:
 #
-#    export RUNDECK_TEMPDIR=/path/to/tmpdir
+#     RUNDECK_TEMPDIR=/path/to/tmpdir
 #
 # That file will be sourced before this one, allowing your exports to take precedence.
 #
 ###############
+
+prog="rundeckd"
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+[ -e /etc/default/$prog ] && . /etc/default/$prog
 
 RDECK_INSTALL="${RDECK_INSTALL:-/var/lib/rundeck}"
 RDECK_BASE="${RDECK_BASE:-/var/lib/rundeck}"
