@@ -133,9 +133,9 @@ jobs:
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
     # Delete existing packages
-    - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-snapshot-deb rundeck'
-    - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck'
-    - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck ci-staging-rpm rundeck-config'
+    - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck  dev-deb rundeck'
+    - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck'
+    - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck-config'
     # Deploy new snapshot packages
     - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-deb'
     - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm'
