@@ -31,3 +31,4 @@ Bug fixes
 * [Authentification with a encrypted password don't work](https://github.com/rundeck/rundeck/issues/3768)
 * [Rundeck 3 Date format i18n](https://github.com/rundeck/rundeck/issues/3764)
 * [Restore JAAS config compatibility with 2.x configuration and current docs.](https://github.com/rundeck/rundeck/pull/3758)
+* [Bundle custom Oracle dialect.](https://github.com/rundeck/rundeck/pull/3774)
