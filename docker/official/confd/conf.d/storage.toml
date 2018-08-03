@@ -1,0 +1,9 @@
+[template]
+src = "storage.properties.tmpl"
+dest = "/tmp/config/rundeck-config/storage.properties"
+keys = [
+    "/rundeck/storage/converter/",
+    "/rundeck/storage/provider",
+    "/rundeck/config/storage",
+    "/rundeck/projectsStorageType"
+]

@@ -16,5 +16,19 @@ RUN set -euxo pipefail \
         ssh-client \
         sudo \
         openjdk-8-jdk \
+        uuid-runtime \
         wget \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    # Install confd
+    && wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64 \
+    && mv confd* /usr/local/bin/confd \
+    && chmod ugo+x /usr/local/bin/confd \
+    # Setup rundeck user
+    && adduser --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
+    && passwd -d rundeck \
+    && addgroup rundeck sudo \
+    && echo | sudo -u rundeck ssh-keygen -N ''
+
+USER rundeck
+
+WORKDIR /home/rundeck
