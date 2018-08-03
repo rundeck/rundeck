@@ -1,14 +1,18 @@
 #!/bin/bash
 #/ Update version to release version, create a release tag and, then update to new snapshot version.
-#/ usage: [--dryrun|--commit]
+#/ usage: [--dryrun|--commit|--notes] [--sign]
 #/   --dryrun: don't commit changes
 #/   --commit: commit changes
+#/   --sign: sign committed changes
+#/   --notes: update date/name of RELEASE.md file
 
 set -euo pipefail
 IFS=$'\n\t'
 readonly ARGS=("$@")
 DRYRUN=1
 SIGN=0
+NOTESONLY=0
+
 . scripts/rd_versions.sh
 
 die(){
@@ -64,14 +68,16 @@ check_args(){
     fi
     if [ ${#ARGS[@]} -gt 0 ] && [ "${ARGS[0]}" == "--commit" ] ; then
         DRYRUN=0
+        if [ ${#ARGS[@]} -gt 1 ] && [ "${ARGS[1]}" == "--sign" ] ; then
+            SIGN=1
+        fi
     elif [ ${#ARGS[@]} -gt 0 ] && [ "${ARGS[0]}" == "--dryrun" ] ; then
         DRYRUN=1
+    elif [ ${#ARGS[@]} -gt 0 ] && [ "${ARGS[0]}" == "--notes" ] ; then
+        NOTESONLY=1
     else
         usage
         exit 2
-    fi
-    if [ ${#ARGS[@]} -gt 1 ] && [ "${ARGS[1]}" == "--sign" ] ; then
-        SIGN=1
     fi
 }
 check_release_notes(){
@@ -107,8 +113,9 @@ generate_release_name(){
             | sed "s#\$REL_TEXT#$REL_TEXT#"
     fi
 }
-#/ Update date/name for release notes in RELEASE.md and git add the changes.
-generate_release_notes_documentation(){
+
+#/ Update date/name for release notes in RELEASE.md 
+update_release_notes_date(){
     local NEW_VERS=$1
     local DDATE=$(date "+%Y-%m-%d")
     sed "s#Date: ....-..-..#Date: $DDATE#" < RELEASE.md > RELEASE.md.new
@@ -119,6 +126,13 @@ generate_release_notes_documentation(){
     fi
     sed "s#Name: <span.*/span>#Name: $RELNAME#" < RELEASE.md > RELEASE.md.new
     mv RELEASE.md.new RELEASE.md
+}
+
+#/ Update date/name for release notes in RELEASE.md and git add the changes.
+generate_release_notes_documentation(){
+    local NEW_VERS=$1
+    
+    update_release_notes_date "$NEW_VERS"
 
     make CHANGELOG.md
 
@@ -132,12 +146,16 @@ main() {
     check_args
 
     local -a VERS=( $( rd_get_version ) )
+    local -a NEW_VERS=( $( rd_make_release_version "${VERS[@]}" ) )
+
+    if [ "1" == "$NOTESONLY" ] ; then
+        update_release_notes_date "$NEW_VERS"
+        return 0
+    fi
 
     rd_check_current_version_is_not_GA  "${VERS[@]}"
 
     check_git_is_clean
-
-    local -a NEW_VERS=( $( rd_make_release_version "${VERS[@]}" ) )
     
     check_release_notes "Release ${NEW_VERS[0]}"
 
