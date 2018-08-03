@@ -22,7 +22,7 @@ else
     RELEASE="$1"
 fi
 shift
-VTAG="${1}"
+VTAG="${1:-GA}"
 
 
 VDATE="$(date +%Y%m%d)"
