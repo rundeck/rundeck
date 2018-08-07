@@ -484,7 +484,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         if(pluginData.scmExportEnabled){
 
                             if(!minScm){
-                                pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                                pluginData.scmStatus = scmService.exportStatusForJobs(authContext, results.nextScheduled)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                                 pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                             }
