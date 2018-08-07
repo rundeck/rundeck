@@ -31,14 +31,8 @@
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
-    <script type=text/javascript>
-      window._rundeck = {
-        rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        projectName: '${project}',
-        route: 'dashboard'
-      }
-    </script>
-    <asset:stylesheet href="pages/project-dashboard/dist/static/css/app.css"/>
+    <asset:javascript src="menu/projectHome.js"/>
+
 </head>
 
 <body>
@@ -48,10 +42,10 @@
             <g:render template="/common/messages"/>
         </div>
     </div>
-    <div id=project-dashboard-vue></div>
+    <script id="project-home" type="text/html"><g:render template="projectHomeKO"/></script>
+    <!-- ko if: project -->
+    <div data-bind="template: {name:'project-home', data: {project: project(), projectName: project().name() }}"></div>
+    <!-- /ko -->        
   </div>
-  <asset:javascript src="pages/project-dashboard/dist/static/js/manifest.js"/>
-  <asset:javascript src="pages/project-dashboard/dist/static/js/vendor.js"/>
-  <asset:javascript src="pages/project-dashboard/dist/static/js/app.js"/>
 </body>
 </html>
