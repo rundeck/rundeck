@@ -17,6 +17,7 @@
 package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -32,6 +33,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ScheduledExecutorService
 
 import static rundeck.services.logging.ExecutionLogState.AVAILABLE
@@ -40,6 +42,7 @@ import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE
 import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE_PARTIAL
 import static rundeck.services.logging.ExecutionLogState.NOT_FOUND
 import static rundeck.services.logging.ExecutionLogState.PENDING_REMOTE
+import static rundeck.services.logging.ExecutionLogState.WAITING
 
 /**
  * Created by greg on 3/28/16.
@@ -717,5 +720,251 @@ class LogFileStorageServiceSpec extends Specification {
         'rdlog'  | false | true    | true     | false  | false  | true   | false  | 120  | AVAILABLE_REMOTE
         'rdlog'  | false | true    | true     | false  | false  | false  | true   | 120  | AVAILABLE_REMOTE_PARTIAL
         'rdlog'  | false | true    | true     | false  | false  | true   | true   | 120  | AVAILABLE_REMOTE
+    }
+
+    def "requestLogFileLoad before output set"() {
+        given:
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService)
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == WAITING
+    }
+
+    def "requestLogFileLoad with missing file"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs')
+
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+            outputfilepath: '/tmp/file'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (
+                [
+                    'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                ] as Properties
+            )
+        }
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService)
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == NOT_FOUND
+    }
+
+    def "requestLogFileLoad with existing file"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs')
+        def logsDir = tempDir.resolve('rundeck')
+
+
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+            outputfilepath: '/tmp/file'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        createLogFile(logsDir, exec, filetype)
+
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (
+                [
+                    'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                ] as Properties
+            )
+        }
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService)
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == AVAILABLE
+    }
+
+    public void createLogFile(Path logsDir, Execution exec, filetype) {
+        def outfilePath = logsDir.resolve("test/run/logs/${exec.id}.${filetype}")
+        outfilePath.toFile().parentFile.mkdirs()
+        outfilePath.toFile() << 'output'
+        outfilePath.toFile().deleteOnExit()
+    }
+
+    static class TestEFSPlugin implements ExecutionFileStoragePlugin, ExecutionFileStorageOptions {
+        boolean partialRetrieveSupported
+        boolean retrieveSupported = true
+        boolean storeSupported = false
+
+        @Override
+        void initialize(final Map<String, ?> context) {
+
+        }
+
+        @Override
+        boolean isAvailable(final String filetype) throws ExecutionFileStorageException {
+            return false
+        }
+
+        @Override
+        boolean store(final String filetype, final InputStream stream, final long length, final Date lastModified)
+            throws IOException, ExecutionFileStorageException {
+            return false
+        }
+
+        @Override
+        boolean retrieve(final String filetype, final OutputStream stream)
+            throws IOException, ExecutionFileStorageException {
+            return false
+        }
+    }
+
+    def "requestLogFileLoad cluster mode, running, no plugin, no file"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs')
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+            outputfilepath: '/tmp/file'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+            getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            getFrameworkProperties() >> (
+                [
+                    'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                ] as Properties
+            )
+        }
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService)
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == NOT_FOUND
+    }
+
+    def "requestLogFileLoad running, cluster mode, with plugin, no partial"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs')
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+            outputfilepath: '/tmp/file'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+            getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            getFrameworkProperties() >> (
+                [
+                    'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                ] as Properties
+            )
+        }
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
+        }
+        service.pluginService = Mock(PluginService) {
+            configurePlugin('testplugin', _, _, PropertyScope.Instance) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(new TestEFSPlugin(partialRetrieveSupported: false),[:])
+        }
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == PENDING_REMOTE
+    }
+
+    def "requestLogFileLoad cluster mode with local file no plugin"() {
+        given:
+        def tempDir = Files.createTempDirectory('test_logs')
+        def logsDir = tempDir.resolve('rundeck')
+
+        def exec = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+            outputfilepath: '/tmp/file'
+        ).save()
+        def filetype = 'rdlog'
+        def performLoad = true
+
+        createLogFile(logsDir, exec, filetype)
+
+        service.frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> true
+            getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            getFrameworkProperties() >> (
+                [
+                    'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                ] as Properties
+            )
+        }
+        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+        service.configurationService = Mock(ConfigurationService)
+        when:
+
+        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+
+
+        then:
+        result != null
+        result.state == AVAILABLE
     }
 }
