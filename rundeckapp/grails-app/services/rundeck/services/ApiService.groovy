@@ -106,7 +106,7 @@ class ApiService {
                 creator: ownerUsername
         )
 
-        if (token.save()) {
+        if (token.save(flush:true)) {
             log.info(
                     "GENERATE TOKEN: ID:${uuid} creator:${ownerUsername} username:${u.login} roles:"
                             + "${token.authRoles} expiration:${expiration}"
