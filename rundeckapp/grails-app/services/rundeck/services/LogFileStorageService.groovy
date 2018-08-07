@@ -1315,7 +1315,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
 
         if (isRunning) {
             //execution is running
-            if (isClusterExec) {
+            if (isClusterExec && plugin) {
                 //execution on another rundeck server, we have to wait until it is complete
                 if (!partialRetrieveSupported) {
                     return new LogFileLoader(state: ExecutionLogState.PENDING_REMOTE)
