@@ -156,6 +156,7 @@ dependencies {
 }
 
 bootRun {
+    dependsOn 'copySpa'
     jvmArgs('-Dspring.output.ansi.enabled=always')
     systemProperties(System.properties)
     systemProperty "build.ident", project.version
@@ -255,8 +256,17 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     }
 }
 
+task copySpa(type: Copy) {
+    dependsOn ':rundeck:grails-spa:buildSpa'
+    from project(':rundeck:grails-spa').buildDir
+    into "$projectDir/grails-app/assets"
+    outputs.dir "$projectDir/grails-app/assets/provided"
+}
+tasks.assetCompile.dependsOn copySpa
+
 war {
     it.dependsOn copyPluginLibs
+
     from("${buildDir}/WEB-INF/rundeck/plugins") {
         into("WEB-INF/rundeck/plugins")
     }
@@ -280,4 +290,8 @@ if (signArchives) {
     }
     bootRepackage.dependsOn(war)
     signArchives.dependsOn(bootRepackage)
+}
+
+clean {
+    delete "$projectDir/grails-app/assets/provided"
 }
