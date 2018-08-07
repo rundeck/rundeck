@@ -10,10 +10,10 @@ dataSource.dbCreate = {{getv "/rundeck/database/create" "update"}}
 dataSource.url = {{getv "/rundeck/database/url" "jdbc:h2:file:/home/rundeck/server/data/grailsdb;MVCC=true"}}
 dataSource.username = {{getv "/rundeck/database/username" ""}}
 dataSource.password = {{getv "/rundeck/database/password" ""}}
-{{if exists "/rundeck/database/driver"}}
+{{if exists "/rundeck/database/driver" -}}
     dataSource.driverClassName = {{getv "/rundeck/database/driver"}}
 {{end}}
-{{if exists "/rundeck/database/dialect"}}
+{{if exists "/rundeck/database/dialect" -}}
     dataSource.dialect = {{getv "/rundeck/database/dialect"}}
 {{end}}
 
@@ -34,27 +34,10 @@ rundeck.log4j.config.file=/home/rundeck/server/config/log4j.properties
 
 rundeck.gui.startpage=projectHome
 
-# Encryption for key storage
-rundeck.storage.provider.1.type=db
-rundeck.storage.provider.1.path=keys
-
-rundeck.storage.converter.1.type=jasypt-encryption
-rundeck.storage.converter.1.path=keys
-rundeck.storage.converter.1.config.encryptorType=custom
-rundeck.storage.converter.1.config.password=njc2van65nmdhp1
-rundeck.storage.converter.1.config.algorithm=PBEWITHSHA256AND128BITAES-CBC-BC
-rundeck.storage.converter.1.config.provider=BC
-
-# Encryption for project config storage
-rundeck.projectsStorageType=db
-
-rundeck.config.storage.converter.1.type=jasypt-encryption
-rundeck.config.storage.converter.1.path=projects
-rundeck.config.storage.converter.1.config.encryptorType=custom
-rundeck.config.storage.converter.1.config.password=njc2van65nmdhp1
-rundeck.config.storage.converter.1.config.algorithm=PBEWITHSHA256AND128BITAES-CBC-BC
-rundeck.config.storage.converter.1.config.provider=BC
-
 rundeck.clusterMode.enabled=true
 
 loginmodule.name=RDpropertyfilelogin
+
+{{- if exists "/rundeck/plugin/executionfilestorage" }}
+rundeck.execution.logs.fileStoragePlugin={{getv "/rundeck/plugin/executionfilestorage"}}
+{{ end }}

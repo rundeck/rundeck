@@ -1,6 +1,5 @@
 > **!! NOTICE !!** This image is experimental, unstable, and unsupported!
 
-
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
@@ -35,6 +34,17 @@ Kubernetes documentation [Use-Case: Pod with ssh keys](https://kubernetes.io/doc
 The JVM is configured to use cgroup information to set the max heap allocation size.
 The RAM ratio is set to `1`, so the JVM will utilize up to about the container limit.
 
+## key store security
+By defualt keystorage is set to use the database, and the encryption converters are
+**disabled**. To enable encryption, supply a password for one or both of the default converters:
+```
+RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD=supersecret
+RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD=supersecret
+```
+
+> **Note:** It is not recommended to enable/disable encryption after initial project setup!
+Refer to the [docs](http://rundeck.org/docs/administration/configuration/storage-facility.html) for more information.
+
 ## user authentication
 > **NOTE:** For extra reference and clarity, refer to the official docs.
 For example configurations check out the Zoo.
@@ -42,11 +52,11 @@ For example configurations check out the Zoo.
 * [Docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap)
 * [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined)
 
-**Default**
+**Default**  
 The default setup utilizes the `/home/rundeck/server/config/realm.properties` file. Mount
 or otherwise replace this file to manage further users through this method.
 
-**JAAS**
+**JAAS**  
 There is initial support for composing the JAAS modules talk about in the docks.
 The convention for listing the modules to use in environment variables:
 ```
@@ -101,3 +111,9 @@ Set to `FILE` to log into `/home/rundeck/server/logs` .
 ### `RUNDECK_LOGGING_AUDIT_ENABLED`
 
 Set to anything enables audit logging. This can be very verbose so use with caution.
+
+### `RUNDECK_STORAGE_PROVIDER_#_[[TYPE|PATH]|CONFIG_[...]]`
+### `RUNDECK_STORAGE_CONVERTER_#_[[TYPE|PATH]|CONFIG_[...]]`
+
+Configuration options for key storage providers and converts. These map to the
+[Storage Facility Docs](http://rundeck.org/docs/administration/configuration/storage-facility.html).

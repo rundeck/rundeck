@@ -1,0 +1,43 @@
+description: API project level access control
+context:
+  project: '.*' # all projects
+for:
+  resource:
+    - equals:
+        kind: job
+      allow: [create,delete] # allow create and delete jobs
+    - equals:
+        kind: node
+      allow: [read,create,update,refresh] # allow refresh node sources
+    - equals:
+        kind: event
+      allow: [read,create] # allow read/create events
+  adhoc:
+    - allow: [read,run,kill] # allow running/killing adhoc jobs and read output
+  job: 
+    - allow: [create,read,update,delete,run,kill] # allow create/read/write/delete/run/kill of all jobs
+  node:
+    - allow: [read,run] # allow read/run for all nodes
+by:
+  group: api_token_group
+
+---
+
+description: API Application level access control
+context:
+  application: 'rundeck'
+for:
+  resource:
+    - equals:
+        kind: system
+      allow: [read] # allow read of system info
+  project:
+    - match:
+        name: '.*'
+      allow: [read] # allow view of all projects
+  storage:
+    - match:
+        path: '(keys|keys/.*)'
+      allow: '*' # allow all access to manage stored keys
+by:
+  group: api_token_group
