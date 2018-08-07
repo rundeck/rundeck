@@ -94,4 +94,31 @@ class RundeckInitializerTest extends Specification {
         then:
         rcpropsContents.findAll { it.startsWith("#rundeck.log4j.config.file")}
     }
+
+    def "translate legacy system property settings to grails 3 compatible settings"() {
+        given:
+        System.setProperty("rundeck.config.location","config")
+        Properties testTemplateProperties = new Properties()
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        cfg.cliOptions.baseDir = "base"
+        cfg.cliOptions.configDir = "config"
+        cfg.cliOptions.serverBaseDir = "server"
+        cfg.runtimeConfiguration = testTemplateProperties
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+        initializer.thisJar = File.createTempFile("this","jar")
+        initializer.initConfigurations()
+        !System.getProperty("server.port")
+        !System.getProperty("server.host")
+        !System.getProperty("server.address")
+
+        when:
+        System.setProperty("server.http.port","4441")
+        System.setProperty("server.http.host","hostoverride")
+        initializer.setSystemProperties()
+
+        then:
+        System.getProperty("server.port") == "4441"
+        System.getProperty("server.host") == "hostoverride"
+        System.getProperty("server.address") == "hostoverride"
+    }
 }

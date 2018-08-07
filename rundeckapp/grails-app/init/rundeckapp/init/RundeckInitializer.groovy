@@ -73,7 +73,6 @@ class RundeckInitializer {
         "server.http.port",
         "server.https.port",
         "server.hostname",
-        "server.web.context",
         "rdeck.base",
         SERVER_DATASTORE_PATH,
         "default.user.name",
@@ -341,7 +340,19 @@ class RundeckInitializer {
     }
 
     void setSystemProperties() {
+        //LEGACY translation OLD: server.http.port NEW server.port
+        if(System.getProperty("server.http.port")) {
+            System.setProperty("server.port", System.getProperty("server.http.port"));
+        }
+
         System.setProperty("server.http.port", config.runtimeConfiguration.getProperty("server.http.port"));
+
+        //LEGACY translation OLD: server.http.host NEW server.host or server.address
+        if(System.getProperty("server.http.host")) {
+            System.setProperty("server.host", System.getProperty("server.http.host"));
+            System.setProperty("server.address", System.getProperty("server.http.host"));
+        }
+
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
@@ -367,7 +378,7 @@ class RundeckInitializer {
         }
     }
 
-    private void initConfigurations() {
+    void initConfigurations() {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         final Properties configuration = createConfiguration(defaults);
         configuration.put(PROP_REALM_LOCATION, forwardSlashPath(config.configDir)
