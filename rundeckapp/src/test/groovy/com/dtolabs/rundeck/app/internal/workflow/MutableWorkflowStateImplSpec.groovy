@@ -130,5 +130,63 @@ class MutableWorkflowStateImplSpec extends Specification {
 
     }
 
+    /**
+     * A workflow step (non-node-step) with subworkflow should be success after the workflow succeeds
+     */
+    def "workflow step subworkflow resolve"(){
+        given:
+        def date = new Date()
+
+        def nodeA='a'
+        def nodeB='b'
+
+        //step 1, a subworkflow
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        def mutableStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep2.nodeStep=false
+
+
+        //top workflow runs on one node
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl([nodeA], 2, [0: mutableStep1,1:mutableStep2], null, nodeA);
+
+        //workflow start
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA])
+        //step 1 start
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0,stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //step1; sub workflow start
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.RUNNING, date, [nodeA], null)
+
+        //step 1 /1 start
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0,stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //step 1/1; start on node a
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0, stepStateChange(stepState(ExecutionState.RUNNING), nodeA), date)
+        //step 1/1: succeed on node a
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeA), date)
+        //step 1 /1 end
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0,stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+
+
+
+        when:
+
+
+        //step1; sub workflow end
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.SUCCEEDED, date, [nodeA], null)
+        //node step finishes for nodeC
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED),nodeA), date)
+
+
+        then:
+
+//        new StateMapping().mapOf(1L,mutableWorkflowState)==[:]
+
+        mutableWorkflowState.stepStates[0].subWorkflowState.stepStates[0].nodeStateMap[nodeA].executionState.toString()=='SUCCEEDED'
+        mutableWorkflowState.stepStates[0].subWorkflowState.executionState.toString()=='SUCCEEDED'
+        mutableWorkflowState.stepStates[0].stepState.executionState.toString()=='SUCCEEDED'
+
+    }
 
 }
