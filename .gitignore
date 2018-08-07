@@ -53,3 +53,4 @@ rundeckapp/env.bash
 rundeckapp/out
 rundeckapp/rundeck-runtime
 /rundeckapp/grails-app/assets/node_modules
+/rundeckapp/grails-app/assets/**/node_modules
