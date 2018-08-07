@@ -1181,4 +1181,45 @@ class MenuControllerSpec extends Specification {
         model.nextSchedListIds.size() == model.nextScheduled.size()
         model.nextSchedListIds.get(0) == model.nextScheduled.get(0).extid
     }
+
+
+    def "job list with scm active"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        ScmPluginConfig data = Mock(ScmPluginConfig)
+        controller.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(Framework) {
+                getProjectManager() >> Mock(ProjectManager)
+            }
+            authorizeApplicationResourceAny(_,_,_)>>true
+        }
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        controller.userService = Mock(UserService)
+        def query = new ScheduledExecutionQuery()
+        params.project='test'
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+
+        when:
+        def model = controller.jobsFragment(query)
+        then:
+        1 * controller.frameworkService.authResourceForJob(_) >>
+                [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.scmService.projectHasConfiguredExportPlugin(_)>>true
+        controller.scmService.loadScmConfig(_,'export')>>Mock(ScmPluginConfig){
+            getEnabled()>>true
+        }
+        1 * controller.scmService.exportStatusForJobs(_,_)
+        1 * controller.scmService.exportPluginActions(_,_)
+    }
 }
