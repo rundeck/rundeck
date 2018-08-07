@@ -66,6 +66,8 @@ class RundeckInitializer {
     File toolsdir;
     File toolslibdir;
 
+    private static boolean vfsDirectoryDetected = false
+
     /**
      * Config properties are defaulted in config-defaults.properties, but can be overridden by system properties
      */
@@ -136,9 +138,13 @@ class RundeckInitializer {
         if(!coreJar.parentFile.exists()) coreJar.parentFile.mkdirs()
         coreJar.createNewFile()
         if(thisJar.isDirectory()) {
-            def coreJarLoc = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs().find { it.toString().endsWith(coreJarName) }
-            if(!coreJarLoc && thisJar.name == "classes") {
-                coreJarLoc = new File(thisJar.parentFile,"lib/"+coreJarName)
+            def coreJarLoc = null
+            if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
+                coreJarLoc = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs().
+                        find { it.toString().endsWith(coreJarName) }
+            }
+            if (!coreJarLoc && thisJar.name == "classes") {
+                coreJarLoc = new File(thisJar.parentFile, "lib/" + coreJarName)
             }
             if(coreJarLoc) {
                 coreJarLoc.withInputStream {
@@ -218,10 +224,13 @@ class RundeckInitializer {
     }
 
     void copyLibsToToolsNonJar(final File toolslibdir, final String[] jarNamesToCopy) {
-        def classlibList = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs()
+        def classlibList = []
+        if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
+            classlibList = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs()
+        }
         jarNamesToCopy.each { jarName ->
             def sourceJar = classlibList.find { it.toString().endsWith(jarName) }
-            if(!sourceJar && thisJar.name == "classes") {  //thisJar is WEB-INF/classes
+            if(thisJar.name == "classes") {  //thisJar is WEB-INF/classes
                 sourceJar = new File(thisJar.parentFile,"lib/"+jarName)
                 if(!sourceJar.exists()) sourceJar = null
             }
@@ -277,7 +286,15 @@ class RundeckInitializer {
             protectionDomain = baseClass.getProtectionDomain()
         }
 
-        final URL location = protectionDomain.getCodeSource().getLocation();
+        URL location = protectionDomain.getCodeSource().getLocation();
+        if(location.toString().startsWith("vfs:")) {
+            //This is probably a jboss based server
+            def vfsFile = location.getContent()
+            vfsDirectoryDetected = true
+            if(location.toString().endsWith("WEB-INF/classes")) {
+                return vfsFile.getPhysicalFile()
+            }
+        }
 
         try {
             return new File(location.toURI());
@@ -320,7 +337,7 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed()) {
+        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
 
@@ -329,7 +346,7 @@ class RundeckInitializer {
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
 
-        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed()) {
+        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             List<String> rundeckConfig = destinationFile.readLines()
             destinationFile.withOutputStream { out ->
                 rundeckConfig.each { line ->
@@ -657,7 +674,7 @@ class RundeckInitializer {
      *
      * @param s
      */
-    private void LOG(final String s) {
+    static private void LOG(final String s) {
         System.out.println(s);
     }
     /**
@@ -665,7 +682,7 @@ class RundeckInitializer {
      *
      * @param s
      */
-    private void ERR(final String s) {
+    static private void ERR(final String s) {
         System.err.println("ERROR: " + s);
     }
 
