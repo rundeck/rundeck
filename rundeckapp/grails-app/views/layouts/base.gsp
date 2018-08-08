@@ -62,6 +62,10 @@
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
+    <!-- VUE CSS MODULES -->
+    <asset:stylesheet href="components/motd/dist/static/css/app.css"/>
+    <!-- /VUE CSS MODULES -->
+
     <script language="javascript">
         function oopsEmbeddedLogin() {
         <%
@@ -130,6 +134,13 @@
 
     </g:if>
     <g:layoutHead/>
+    <script type=text/javascript>
+      window._rundeck = {
+        rdBase: '${g.createLink(uri:"/",absolute:true)}',
+        apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        projectName: '${enc(js:project?:params.project)}'
+      }
+    </script>
 </head>
 <body class="sidebar-mini">
   <div class="wrapper">
@@ -159,7 +170,10 @@
         <g:render template="/common/mainbar"/>
       </div>
       <div class="content">
-          <g:layoutBody/>
+        <div class="container-fluid">
+          <div id=project-motd-vue></div>
+        </div>
+        <g:layoutBody/>
       </div>
       <g:render template="/common/footer"/>
     </div>
@@ -182,5 +196,12 @@ disable for now because profiler plugin is not compatible with grails 3.x
     document.body.classList.remove('sidebar-mini')
   }
 </g:javascript>
+
+<!-- VUE JS MODULES -->
+<asset:javascript src="components/motd/dist/static/js/manifest.js"/>
+<asset:javascript src="components/motd/dist/static/js/vendor.js"/>
+<asset:javascript src="components/motd/dist/static/js/app.js"/>
+<!-- /VUE JS MODULES -->
+
 </body>
 </html>

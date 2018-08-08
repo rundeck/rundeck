@@ -1,27 +1,17 @@
 <template>
-  <div id="app" v-if="project">
-    <!-- <motd v-if="project && project.readme && project.readme.motd" :project="project"></motd> -->
-    <project-description v-if="project && project.description" :project="project"></project-description>
-    <project-activity v-if="project" :project="project"></project-activity>
-    <project-readme v-if="project" :project="project"></project-readme>
-    <!-- <pre>{{project}}</pre> -->
+  <div v-if="project">
+    <motd v-if="project && project.readme && project.readme.motd" :project="project"></motd>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
-// import motd from '@/components/motd'
-import projectDescription from '@/components/description'
-import projectReadme from '@/components/projectReadme'
-import projectActivity from '@/components/activity'
+import motd from '@/components/motd'
 
 export default {
   name: 'App',
   components: {
-    // motd,
-    projectDescription,
-    projectReadme,
-    projectActivity
+    motd
   },
   data () {
     return {
@@ -39,6 +29,7 @@ export default {
         },
         withCredentials: true
       }).then((response) => {
+        console.log('response', response)
         if (response.data.projects[0]) {
           this.project = response.data.projects[0]
         }

@@ -31,13 +31,6 @@
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
-    <script type=text/javascript>
-      window._rundeck = {
-        rdBase: '${g.createLink(uri:"/",absolute:true)}',
-        projectName: '${project}',
-        route: 'dashboard'
-      }
-    </script>
     <asset:stylesheet href="pages/project-dashboard/dist/static/css/app.css"/>
 </head>
 
