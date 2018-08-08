@@ -12,12 +12,14 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.10"
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 plugins {
     id "org.dvaske.gradle.git-build-info"
 }
 
+apply plugin:"com.jfrog.bintray"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"war"
@@ -26,6 +28,7 @@ apply plugin:"com.energizedwork.webdriver-binaries"
 apply plugin:"com.energizedwork.idea-project-components"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
+
 
 configurations {
     war{}
@@ -66,7 +69,7 @@ dependencies {
     // Rundeck project dependencies.
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
-    compile project('metricsweb')
+    compile project(':rundeck:metricsweb')
     compile project(':grails-persistlocale')
 
     // From BuildConfig.groovy.
@@ -294,4 +297,46 @@ if (signArchives) {
 
 clean {
     delete "$projectDir/grails-app/assets/provided"
+}
+
+bintray {
+    user = findProperty("bintrayUser")
+    key = findProperty("bintrayApiKey")
+    publish = true
+    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+
+    if (findProperty('bintrayUseExisting')) {
+        filesSpec {
+            from 'build/libs'
+            from 'build/poms'
+            into "${project.group}.rundeck".replace('.', '/')
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "rundeck-${version}.pom"
+                else
+                    return file
+            }
+        }
+    } else {
+        configurations =  ['archives']
+    }
+
+    pkg {
+        repo = 'maven'
+        name = 'rundeck'
+        userOrg = 'rundeck'
+
+        version {
+            // mavenCentralSync {
+            //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+            //     user = findProperty('ossUserToken') //OSS user token: mandatory
+            //     password = findProperty('ossUserPassword') //OSS user password: mandatory
+            // }
+
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
 }
