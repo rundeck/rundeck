@@ -54,4 +54,10 @@ rundeckapp/out
 rundeckapp/rundeck-runtime
 /rundeckapp/grails-app/assets/node_modules
 /rundeckapp/grails-app/assets/**/node_modules
-!/rundeckapp/grails-app/assets/javascripts/**/build
+!/rundeckapp/grails-app/assets/javascripts/components/**/build
+!/rundeckapp/grails-app/assets/javascripts/pages/**/build
+!/rundeckapp/grails-app/assets/javascripts/**/.babelrc
+!/rundeckapp/grails-app/assets/javascripts/**/.editorconfig
+!/rundeckapp/grails-app/assets/javascripts/**/.eslintignore
+!/rundeckapp/grails-app/assets/javascripts/**/.eslintrc.js
+!/rundeckapp/grails-app/assets/javascripts/**/.postcssrc
