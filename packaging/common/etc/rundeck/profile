@@ -9,15 +9,27 @@
 #
 # To override variables in this file, you can instead create a file at:
 #
+#     # Centos/Redhat default:
+#
 #     /etc/sysconfig/rundeckd
+#
+# Or
+#
+#     # Ubuntu/Debian default:
+#
+#     /etc/default/rundeckd
 #
 # which contains exports for any of the variables listed below. E.g.:
 #
-#    export RUNDECK_TEMPDIR=/path/to/tmpdir
+#     RUNDECK_TEMPDIR=/path/to/tmpdir
 #
 # That file will be sourced before this one, allowing your exports to take precedence.
 #
 ###############
+
+prog="rundeckd"
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+[ -e /etc/default/$prog ] && . /etc/default/$prog
 
 RDECK_INSTALL="${RDECK_INSTALL:-/var/lib/rundeck}"
 RDECK_BASE="${RDECK_BASE:-/var/lib/rundeck}"
@@ -33,6 +45,7 @@ RUNDECK_LOGDIR="${RUNDECK_LOGDIR:-$RDECK_BASE/logs}"
 RDECK_JVM_SETTINGS="${RDECK_JVM_SETTINGS:- -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server}"
 RDECK_TRUSTSTORE_FILE="${RDECK_TRUSTSTORE_FILE:-$RDECK_CONFIG/ssl/truststore}"
 RDECK_TRUSTSTORE_TYPE="${RDECK_TRUSTSTORE_TYPE:-jks}"
+JAAS_LOGIN="${JAAS_LOGIN:-true}"
 JAAS_CONF="${JAAS_CONF:-$RDECK_CONFIG/jaas-loginmodule.conf}"
 LOGIN_MODULE="${LOGIN_MODULE:-RDpropertyfilelogin}"
 RDECK_HTTP_PORT=${RDECK_HTTP_PORT:-4440}
@@ -56,7 +69,8 @@ for war in $(find $RDECK_INSTALL/bootstrap -name '*.war') ; do
   EXECUTABLE_WAR=$war
 done
 
-RDECK_JVM="-Djava.security.auth.login.config=$JAAS_CONF \
+RDECK_JVM="-Drundeck.jaaslogin=$JAAS_LOGIN \
+           -Djava.security.auth.login.config=$JAAS_CONF \
            -Dloginmodule.name=$LOGIN_MODULE \
            -Drdeck.config=$RDECK_CONFIG \
            -Drundeck.server.configDir=$RDECK_SERVER_CONFIG \

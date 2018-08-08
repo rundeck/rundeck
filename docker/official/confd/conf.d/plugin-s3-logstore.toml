@@ -1,0 +1,7 @@
+[template]
+src = "plugin-s3-logstore.tmpl"
+dest = "/tmp/config/framework/plugin-s3-logstore.properties"
+keys = [
+    "/rundeck/plugin/executionfilestorage",
+    "/rundeck/plugin/executionfilestorage/s3"
+]

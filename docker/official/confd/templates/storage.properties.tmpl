@@ -1,0 +1,54 @@
+{{- $providerBase := "/rundeck/storage/provider" -}}
+{{- $converterBase := "/rundeck/storage/converter" -}}
+{{- $configConverterBase := "/rundeck/config/storage/converter" -}}
+
+{{- if not (lsdir $providerBase) -}}
+rundeck.storage.provider.1.type=db
+rundeck.storage.provider.1.path=keys
+{{ end }}
+
+{{- range lsdir $providerBase -}}
+    {{- $provider := printf "%s/%s" $providerBase . -}}
+    {{- template "storage-provider" $provider -}}
+{{- end -}}
+
+{{- range lsdir $converterBase -}}
+    {{- $converter := printf "%s/%s" $converterBase . -}}
+    {{- template "storage-converter" $converter -}}
+{{- end }}
+
+rundeck.projectsStorageType={{ getv "rundeck/projectsStorageType" "db"}}
+
+{{ range lsdir $configConverterBase -}}
+    {{- $converter := printf "%s/%s" $configConverterBase . -}}
+    {{ template "config-storage-converter" $converter }}
+{{- end -}}
+
+{{ define "storage-provider" }}
+    {{- $provider := . -}}
+    {{- $index := base . -}}
+rundeck.provider.{{$index}}.type={{ $type := printf "%s/type" $provider }}{{ getv $type "db"}}
+rundeck.provider.{{$index}}.path={{ $path := printf "%s/path" $provider }}{{ getv $path "keys"}}
+{{ end -}}
+
+{{- define "storage-converter" -}}
+    {{- $provider := . -}}
+    {{- $index := base . -}}
+rundeck.storage.converter.{{$index}}.type={{ $type := printf "%s/type" $provider }}{{ getv $type "jasypt-encryption"}}
+rundeck.storage.converter.{{$index}}.path={{ $type := printf "%s/type" $provider }}{{ getv $type "keys"}}
+rundeck.storage.converter.{{$index}}.config.encryptorType = {{ $type := printf "%s/config/encryptorType" $provider }}{{ getv $type "custom"}}
+rundeck.storage.converter.{{$index}}.config.password={{ $type := printf "%s/config/password" $provider }}{{ getv $type }}
+rundeck.storage.converter.{{$index}}.config.algorithm={{ $type := printf "%s/config/algorithm" $provider }}{{ getv $type "PBEWITHSHA256AND128BITAES-CBC-BC"}}
+rundeck.storage.converter.{{$index}}.config.provider={{ $type := printf "%s/config/provider" $provider }}{{ getv $type "BC"}}
+{{- end }}
+
+{{- define "config-storage-converter" -}}
+    {{- $provider := . -}}
+    {{- $index := base . -}}
+rundeck.config.storage.converter.{{$index}}.type={{ $type := printf "%s/type" $provider }}{{ getv $type "jasypt-encryption"}}
+rundeck.config.storage.converter.{{$index}}.path={{ $type := printf "%s/type" $provider }}{{ getv $type "keys"}}
+rundeck.config.storage.converter.{{$index}}.config.encryptorType={{ $type := printf "%s/config/encryptorType" $provider }}{{ getv $type "custom"}}
+rundeck.config.storage.converter.{{$index}}.config.password={{ $type := printf "%s/config/password" $provider }}{{ getv $type }}
+rundeck.config.storage.converter.{{$index}}.config.algorithm={{ $type := printf "%s/config/algorithm" $provider }}{{ getv $type "PBEWITHSHA256AND128BITAES-CBC-BC"}}
+rundeck.config.storage.converter.{{$index}}.config.provider={{ $type := printf "%s/config/provider" $provider }}{{ getv $type "BC"}}
+{{- end }}

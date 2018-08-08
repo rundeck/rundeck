@@ -37,8 +37,12 @@ wait_for_start(){
 	
 }
 entry_start(){
-	service rundeckd start
-	wait_for_start /var/log/rundeck/service.log
+	if [ "$1" != "-skipstart" ]; then
+		service rundeckd start
+		wait_for_start /var/log/rundeck/service.log
+	else
+		shift
+	fi
 
 
 	if [ "$1" = "-test" ] ; then

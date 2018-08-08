@@ -44,10 +44,8 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
-import grails.plugin.springsecurity.SecurityFilterPosition
-import grails.plugin.springsecurity.SpringSecurityUtils
-import grails.util.Environment
 import groovy.io.FileType
+import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -60,10 +58,8 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
-import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
-import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy
@@ -76,9 +72,8 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
-import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
-
+import rundeckapp.init.RundeckExtendedMessageBundle
 import javax.security.auth.login.Configuration
 
 beans={
@@ -110,6 +105,8 @@ beans={
         System.err.println("rdeck.base was not defined in application config or as a system property")
         return
     }
+
+    rundeckI18nEnhancer(RundeckExtendedMessageBundle, ref("messageSource"),"file:${rdeckBase}/i18n/messages".toString())
 
     if(application.config.rundeck.gui.staticUserResources.enabled in ['true',true]) {
         externalStaticResourceConfigurer(ExternalStaticResourceConfigurer) {
@@ -457,11 +454,13 @@ beans={
             ]
         }
     } else {
+        jettyCompatiblePasswordEncoder(JettyCompatibleSpringSecurityPasswordEncoder)
         //if not using jaas for security provide a simple default
         Properties realmProperties = new Properties()
         realmProperties.load(new File(grailsApplication.config.rundeck.security.fileUserDataSource).newInputStream())
         realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
         realmAuthProvider(DaoAuthenticationProvider) {
+            passwordEncoder = ref("jettyCompatiblePasswordEncoder")
             userDetailsService = ref('realmPropertyFileDataSource')
         }
     }

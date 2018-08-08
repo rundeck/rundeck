@@ -66,6 +66,8 @@ class RundeckInitializer {
     File toolsdir;
     File toolslibdir;
 
+    private static boolean vfsDirectoryDetected = false
+
     /**
      * Config properties are defaulted in config-defaults.properties, but can be overridden by system properties
      */
@@ -73,7 +75,6 @@ class RundeckInitializer {
         "server.http.port",
         "server.https.port",
         "server.hostname",
-        "server.web.context",
         "rdeck.base",
         SERVER_DATASTORE_PATH,
         "default.user.name",
@@ -136,9 +137,13 @@ class RundeckInitializer {
         if(!coreJar.parentFile.exists()) coreJar.parentFile.mkdirs()
         coreJar.createNewFile()
         if(thisJar.isDirectory()) {
-            def coreJarLoc = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs().find { it.toString().endsWith(coreJarName) }
-            if(!coreJarLoc && thisJar.name == "classes") {
-                coreJarLoc = new File(thisJar.parentFile,"lib/"+coreJarName)
+            def coreJarLoc = null
+            if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
+                coreJarLoc = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs().
+                        find { it.toString().endsWith(coreJarName) }
+            }
+            if (!coreJarLoc && thisJar.name == "classes") {
+                coreJarLoc = new File(thisJar.parentFile, "lib/" + coreJarName)
             }
             if(coreJarLoc) {
                 coreJarLoc.withInputStream {
@@ -218,10 +223,13 @@ class RundeckInitializer {
     }
 
     void copyLibsToToolsNonJar(final File toolslibdir, final String[] jarNamesToCopy) {
-        def classlibList = ((URLClassLoader)Thread.currentThread().contextClassLoader).getURLs()
+        def classlibList = []
+        if(Thread.currentThread().contextClassLoader instanceof URLClassLoader) {
+            classlibList = ((URLClassLoader) Thread.currentThread().contextClassLoader).getURLs()
+        }
         jarNamesToCopy.each { jarName ->
             def sourceJar = classlibList.find { it.toString().endsWith(jarName) }
-            if(!sourceJar && thisJar.name == "classes") {  //thisJar is WEB-INF/classes
+            if(thisJar.name == "classes") {  //thisJar is WEB-INF/classes
                 sourceJar = new File(thisJar.parentFile,"lib/"+jarName)
                 if(!sourceJar.exists()) sourceJar = null
             }
@@ -277,7 +285,15 @@ class RundeckInitializer {
             protectionDomain = baseClass.getProtectionDomain()
         }
 
-        final URL location = protectionDomain.getCodeSource().getLocation();
+        URL location = protectionDomain.getCodeSource().getLocation();
+        if(location.toString().startsWith("vfs:")) {
+            //This is probably a jboss based server
+            def vfsFile = location.getContent()
+            vfsDirectoryDetected = true
+            if(location.toString().endsWith("WEB-INF/classes")) {
+                return vfsFile.getPhysicalFile()
+            }
+        }
 
         try {
             return new File(location.toURI());
@@ -320,7 +336,7 @@ class RundeckInitializer {
         String destinationFilePath = props.getProperty(renamedDestFileName+LOCATION_SUFFIX) ?: destDir.absolutePath +"/" + sourceDirPath.relativize(sourceTemplate.parentFile.toPath()).toString()+"/"+renamedDestFileName
 
         File destinationFile = new File(destinationFilePath)
-        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed()) {
+        if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
 
@@ -329,7 +345,7 @@ class RundeckInitializer {
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
 
-        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed()) {
+        if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             List<String> rundeckConfig = destinationFile.readLines()
             destinationFile.withOutputStream { out ->
                 rundeckConfig.each { line ->
@@ -341,7 +357,19 @@ class RundeckInitializer {
     }
 
     void setSystemProperties() {
+        //LEGACY translation OLD: server.http.port NEW server.port
+        if(System.getProperty("server.http.port")) {
+            System.setProperty("server.port", System.getProperty("server.http.port"));
+        }
+
         System.setProperty("server.http.port", config.runtimeConfiguration.getProperty("server.http.port"));
+
+        //LEGACY translation OLD: server.http.host NEW server.host or server.address
+        if(System.getProperty("server.http.host")) {
+            System.setProperty("server.host", System.getProperty("server.http.host"));
+            System.setProperty("server.address", System.getProperty("server.http.host"));
+        }
+
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_DATA_DIR, forwardSlashPath(config.serverBaseDir));
@@ -360,13 +388,14 @@ class RundeckInitializer {
         }
 
         if (config.useJaas) {
-            System.setProperty("java.security.auth.login.config", new File(config.configDir,
-                                                                           config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
+            if(! System.getProperty("java.security.auth.login.config"))
+                System.setProperty("java.security.auth.login.config", new File(config.configDir,
+                                                                               config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
             System.setProperty(PROP_LOGINMODULE_NAME, config.runtimeConfiguration.getProperty(PROP_LOGINMODULE_NAME));
         }
     }
 
-    private void initConfigurations() {
+    void initConfigurations() {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         final Properties configuration = createConfiguration(defaults);
         configuration.put(PROP_REALM_LOCATION, forwardSlashPath(config.configDir)
@@ -656,7 +685,7 @@ class RundeckInitializer {
      *
      * @param s
      */
-    private void LOG(final String s) {
+    static private void LOG(final String s) {
         System.out.println(s);
     }
     /**
@@ -664,7 +693,7 @@ class RundeckInitializer {
      *
      * @param s
      */
-    private void ERR(final String s) {
+    static private void ERR(final String s) {
         System.err.println("ERROR: " + s);
     }
 

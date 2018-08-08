@@ -1,13 +1,15 @@
 > **!! NOTICE !!** This image is experimental, unstable, and unsupported!
 
-
 # Supported tags
 
-- `SNAPSHOT`
+- `SNAPSHOT` (latest master build)
 
 # What is Rundeck?
 
 ![logo](https://www.rundeck.com/hs-fs/hubfs/rundeck-logotype-512.png?t=1532143389217&width=171&name=rundeck-logotype-512.png)
+
+**Check out the [Docker Zoo](https://github.com/rundeck/docker-zoo) for configuration examples
+in Docker Compose!**
 
 ## start with persistent storage
 
@@ -31,6 +33,45 @@ Kubernetes documentation [Use-Case: Pod with ssh keys](https://kubernetes.io/doc
 
 The JVM is configured to use cgroup information to set the max heap allocation size.
 The RAM ratio is set to `1`, so the JVM will utilize up to about the container limit.
+
+## key store security
+By defualt keystorage is set to use the database, and the encryption converters are
+**disabled**. To enable encryption, supply a password for one or both of the default converters:
+```
+RUNDECK_STORAGE_CONVERTER_1_CONFIG_PASSWORD=supersecret
+RUNDECK_CONFIG_STORAGE_CONVERTER_1_CONFIG_PASSWORD=supersecret
+```
+
+> **Note:** It is not recommended to enable/disable encryption after initial project setup!
+Refer to the [docs](http://rundeck.org/docs/administration/configuration/storage-facility.html) for more information.
+
+## user authentication
+> **NOTE:** For extra reference and clarity, refer to the official docs.
+For example configurations check out the Zoo.
+
+* [Docs](http://rundeck.org/docs/administration/security/authenticating-users.html#ldap)
+* [Zoo](https://github.com/rundeck/docker-zoo/tree/master/ldap-combined)
+
+**Default**  
+The default setup utilizes the `/home/rundeck/server/config/realm.properties` file. Mount
+or otherwise replace this file to manage further users through this method.
+
+**JAAS**  
+There is initial support for composing the JAAS modules talk about in the docks.
+The convention for listing the modules to use in environment variables:
+```
+RUNDECK_JAAS_MODULES_0=JettyCombinedLdapLoginModule
+RUNDECK_JAAS_MODULES_1=PropertyFileLoginModule
+```
+
+Config keys are located under:
+```
+RUNDECK_JAAS_LDAP_*
+RUNDECK_JAAS_FILE_*
+```
+
+By convention the module name matches the name in the docs, and the config keys match
+the config options listed in the docs uppercase, and all one word.
 
 ## Environment Variables
 
@@ -70,3 +111,9 @@ Set to `FILE` to log into `/home/rundeck/server/logs` .
 ### `RUNDECK_LOGGING_AUDIT_ENABLED`
 
 Set to anything enables audit logging. This can be very verbose so use with caution.
+
+### `RUNDECK_STORAGE_PROVIDER_#_[[TYPE|PATH]|CONFIG_[...]]`
+### `RUNDECK_STORAGE_CONVERTER_#_[[TYPE|PATH]|CONFIG_[...]]`
+
+Configuration options for key storage providers and converts. These map to the
+[Storage Facility Docs](http://rundeck.org/docs/administration/configuration/storage-facility.html).

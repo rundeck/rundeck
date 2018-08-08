@@ -49,6 +49,7 @@ rpm:
 	@mkdir -p rpmdist/SOURCES/var/rundeck/projects
 	@mkdir -p rpmdist/SOURCES/var/rundeck/user-assets
 	@cp -R root/* rpmdist/SOURCES
+	@cp -R common/* rpmdist/SOURCES
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(VERSION).jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../rundeckapp/build/libs/rundeck-$(VERSION).war rpmdist/SOURCES/var/lib/rundeck/bootstrap
@@ -70,6 +71,7 @@ deb:
 	@mkdir -p debdist/var/rundeck/projects
 	@mkdir -p debdist/var/rundeck/user-assets
 	@cp -R debroot/* debdist
+	@cp -R common/* debdist
 	@# set version
 	@cat debroot/DEBIAN/control | sed -e "s/%VERSION%/$(DEB_VERSION)/" > debdist/DEBIAN/control
 	@cp -R ../core/build/tools/lib/*.jar debdist/var/lib/rundeck/cli

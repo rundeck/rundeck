@@ -22,8 +22,6 @@
 prog="rundeckd"
 USER="rundeck"
 
-[ -e /etc/default/$prog ] && . /etc/default/$prog
-
 . /etc/rundeck/profile
 
 RETVAL=0

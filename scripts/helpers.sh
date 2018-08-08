@@ -29,37 +29,37 @@ release_tag_repo() {
     if [[ "${TYPE}" == 'deb' ]]; then
         case $RELEASE_TAG in
             'SNAPSHOT')
-                echo -n 'ci-snapshot-deb'
+                echo -n 'dev-deb'
                 ;;
             'GA')
                 echo -n 'rundeck-deb'
                 ;;
             *)
-                echo -n 'beta-deb'
+                echo -n 'testing-deb'
                 ;;
         esac
     elif [[ "${TYPE}" == 'rpm' ]] ; then
         case $RELEASE_TAG in
             'SNAPSHOT')
-                echo -n 'ci-snapshot-rpm'
+                echo -n 'dev-rpm'
                 ;;
             'GA')
                 echo -n 'rundeck-rpm'
                 ;;
             *)
-                echo -n 'beta-rpm'
+                echo -n 'testing-rpm'
                 ;;
         esac
     elif [[ "${TYPE}" == 'maven' ]] ; then
         case $RELEASE_TAG in
             'SNAPSHOT')
-                echo -n 'ci-snapshot-maven'
+                echo -n 'dev-maven'
                 ;;
             'GA')
                 echo -n 'rundeck-maven'
                 ;;
             *)
-                echo -n 'beta-maven'
+                echo -n 'testing-maven'
                 ;;
         esac
     fi

@@ -1,0 +1,45 @@
+# framework.properties -
+#
+
+# ----------------------------------------------------------------
+# Server connection information
+# ----------------------------------------------------------------
+
+framework.server.name = ubuntu
+framework.server.hostname = ubuntu
+framework.server.port = 4440
+framework.server.url = http://ubuntu:4440
+
+# ----------------------------------------------------------------
+# Installation locations
+# ----------------------------------------------------------------
+
+rdeck.base=/home/rundeck
+
+framework.projects.dir=/home/rundeck/projects
+framework.etc.dir=/home/rundeck/etc
+framework.var.dir=/home/rundeck/var
+framework.tmp.dir=/home/rundeck/var/tmp
+framework.logs.dir=/home/rundeck/var/logs
+framework.libext.dir=/home/rundeck/libext
+
+# ----------------------------------------------------------------
+# SSH defaults for node executor and file copier
+# ----------------------------------------------------------------
+
+framework.ssh.keypath = /home/rundeck/.ssh/id_rsa
+framework.ssh.user = rundeck
+
+# ssh connection timeout after a specified number of milliseconds.
+# "0" value means wait forever.
+framework.ssh.timeout = 0
+
+# ----------------------------------------------------------------
+# System-wide global variables.
+# ----------------------------------------------------------------
+
+# Expands to ${globals.var1}
+#framework.globals.var1 = value1
+
+# Expands to ${globals.var2}
+#framework.globals.var2 = value2

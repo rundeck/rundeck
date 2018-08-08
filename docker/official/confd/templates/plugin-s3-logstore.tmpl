@@ -1,0 +1,4 @@
+{{ if eq (getv "/rundeck/plugin/executionfilestorage" "") "org.rundeck.amazon-s3"}}
+framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.bucket={{getv "/rundeck/plugin/executionfilestorage/s3/bucket"}}
+framework.plugin.ExecutionFileStorage.org.rundeck.amazon-s3.region={{getv "/rundeck/plugin/executionfilestorage/s3/region"}}
+{{ end }}

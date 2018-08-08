@@ -36,4 +36,16 @@ public interface NodeStepExecutionItem extends StepExecutionItem {
      * @return the type name of the StepExecution provider to use.
      */
     public String getNodeStepType();
+
+    /**
+     * @return true if the step item is a node step
+     */
+    default boolean isNodeStep() {
+        return true;
+    }
+
+    static boolean isNodeStep(StepExecutionItem item) {
+        boolean nodeExecItem = item instanceof NodeStepExecutionItem;
+        return nodeExecItem && ((NodeStepExecutionItem) item).isNodeStep();
+    }
 }

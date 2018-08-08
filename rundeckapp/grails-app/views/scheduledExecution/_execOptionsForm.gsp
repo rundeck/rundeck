@@ -161,6 +161,7 @@
                                         <div class="checkbox checkbox-inline">
                                           <input id="${enc(attr:nkey)}"
                                                  type="checkbox"
+                                                 data-ident="node"
                                                  name="extra.nodeIncludeName"
                                                  value="${enc(attr:node.nodename)}"
                                                  ${selectedNodes!=null ? '':'disabled' }
@@ -190,6 +191,7 @@
                                 <input id="${enc(attr:nkey)}"
                                        type="checkbox"
                                        name="extra.nodeIncludeName"
+                                       data-ident="node"
                                        value="${enc(attr:node.nodename)}"
                                        disabled="true"
                                        data-tag="${enc(attr:node.tags?.join(' '))}"
@@ -301,7 +303,7 @@
             <g:javascript>
                 var updateSelectCount = function (evt) {
                     var count = 0;
-                    $$('.node_ident input[type=checkbox]').each(function (e2) {
+                    $$('[data-ident="node"]').each(function (e2) {
                         if (e2.checked) {
                             count++;
                         }
@@ -313,7 +315,7 @@
                         $(e2).addClassName(count>0?'text-info':'text-danger');
                     });
                 };
-                $$('.node_ident input[type=checkbox]').each(function (e) {
+                $$('[data-ident="node"]').each(function (e) {
                     Event.observe(e, 'change', function (evt) {
                       Event.fire($('nodeSelect'), 'nodeset:change');
                     });

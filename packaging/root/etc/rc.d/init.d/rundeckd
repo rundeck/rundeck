@@ -15,8 +15,6 @@ servicelog=/var/log/rundeck/service.log
 
 . /etc/rc.d/init.d/functions
 
-[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
-
 . /etc/rundeck/profile
 
 start() {
