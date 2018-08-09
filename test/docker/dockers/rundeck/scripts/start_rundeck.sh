@@ -306,6 +306,13 @@ do
       echo "Still working. hang on..."; # output a progress character.
     else  break; # found successful startup message.
     fi
+    if [ -n "$STARTUP_FAILURE_MSG" ] ; then
+      if grep "${STARTUP_FAILURE_MSG}" "$LOGFILE" ; then
+        >&2 grep "${STARTUP_FAILURE_MSG}" "$LOGFILE"
+        echo >&2 "FAIL: found startup failure message: ${STARTUP_FAILURE_MSG}"
+        exit 1
+      fi
+    fi
     (( count += 1 ))  ; # increment attempts counter.
     (( count == MAX_ATTEMPTS )) && {
         echo >&2 "FAIL: Reached max attempts to find success message in logfile. Exiting."
