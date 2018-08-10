@@ -2026,19 +2026,27 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-        def stepTypes = frameworkService.getStepPluginDescriptions()
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+        }
+        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+        }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
-        def notificationPlugins = notificationService.listNotificationPlugins()
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+        }
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
 
         def timeZones = scheduledExecutionService.getTimeZones()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+        }
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
@@ -2100,18 +2108,27 @@ class ScheduledExecutionController  extends ControllerBase{
                     params[it]='false'
                 }
             }
-            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-            def stepTypes = frameworkService.getStepPluginDescriptions()
+            def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+            }
+            def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+            }
             def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
             def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+            }
+            def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
+                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+            }
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
                     nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
                     strategyPlugins: strategyPlugins,
-                    notificationPlugins: notificationService.listNotificationPlugins(),
+                    notificationPlugins: notificationPlugins,
                     orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                     params:params,
                     globalVars:globals,
@@ -2181,13 +2198,22 @@ class ScheduledExecutionController  extends ControllerBase{
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-        def stepTypes = frameworkService.getStepPluginDescriptions()
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+        }
+        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+        }
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+        }
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def fprojects = frameworkService.projectNames(authContext)
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+        }
         render(
                 view: 'create',
                 model: [
@@ -2199,7 +2225,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         nodeStepDescriptions: nodeStepTypes,
                         stepDescriptions    : stepTypes,
                         strategyPlugins     : strategyPlugins,
-                        notificationPlugins : notificationService.listNotificationPlugins(),
+                        notificationPlugins : notificationPlugins,
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
                         projectNames        : fprojects,
@@ -2334,18 +2360,27 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('redoOPTS');
         }
 
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-        def stepTypes = frameworkService.getStepPluginDescriptions()
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+        }
+        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+        }
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
 
         def timeZones = scheduledExecutionService.getTimeZones()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+        }
         def fprojects = frameworkService.projectNames(authContext)
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+        }
         return ['scheduledExecution':scheduledExecution, params:params, crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
-                notificationPlugins : notificationService.listNotificationPlugins(),
+                notificationPlugins : notificationPlugins,
                 strategyPlugins     :strategyPlugins,
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
@@ -2547,15 +2582,24 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
 
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
-        def stepTypes = frameworkService.getStepPluginDescriptions()
+        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+        }
+        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+        }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
-            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
+                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+            }
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
+            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+        }
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
-                notificationPlugins: notificationService.listNotificationPlugins(),
+                notificationPlugins: notificationPlugins,
                 strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation'],
