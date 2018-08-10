@@ -3,6 +3,8 @@ plugins {
 }
 
 task buildSpa(type: NpmTask, group: 'build') {
+    dependsOn npmInstall
+
     inputs.dir 'build'
     inputs.dir 'config'
     inputs.dir 'src'
