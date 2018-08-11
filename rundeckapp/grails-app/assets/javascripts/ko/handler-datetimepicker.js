@@ -24,17 +24,14 @@ jQuery(function () {
             if (ko.isObservable(val)) {
                 val = ko.unwrap(val);
             }
-            if (typeof(val) == 'string') {
+            if (typeof(val) === 'string') {
                 opts.defaultDate = val;
             }
             var dateFormat = allBindings.get('dateFormat');
-            if (typeof(dateFormat) == 'string') {
-                opts.format = dateFormat;
-            }
             if (ko.isObservable(dateFormat)) {
                 dateFormat = ko.unwrap(dateFormat);
             }
-            if (typeof(dateFormat) == 'string') {
+            if (typeof(dateFormat) === 'string') {
                 opts.format = dateFormat;
             }
             if (opts.defaultDate) {
@@ -55,31 +52,30 @@ jQuery(function () {
             jQuery(element).datetimepicker(opts);
 
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
-                jQuery(element).datetimepicker("destroy");
+                var picker = jQuery(element).data("DateTimePicker");
+                if (picker) {
+                    picker.destroy();
+                }
             });
             //when a user changes the date, update the view model
             ko.utils.registerEventHandler(element, "dp.change", function (event) {
                 var value = valueAccessor();
                 if (ko.isObservable(value)) {
-                    // value(event.date);
-                    // console.log(event.date);
-                    if (event.date) {
+                    if (event.date != null && !(event.date instanceof Date)) {
                         value(moment(event.date).format(dateFormat));
                     } else {
-                        value(null);
+                        value(event.date);
                     }
                 }
             });
         },
         update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             "use strict";
-            var widget = jQuery(element).data("datepicker");
+            var widget = jQuery(element).data("DateTimePicker");
             //when the view model is updated, update the widget
             if (widget) {
-                widget.date = ko.utils.unwrapObservable(valueAccessor());
-                if (widget.date) {
-                    widget.setValue();
-                }
+                var koDate = ko.utils.unwrapObservable(valueAccessor());
+                widget.date(koDate);
             }
         }
     };
