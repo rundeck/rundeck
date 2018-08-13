@@ -118,6 +118,19 @@ sync_commit_to_s3() {
     aws s3 sync --delete ./artifacts "${S3_COMMIT_ARTIFACT_PATH}"
 }
 
+copy_artifacts() {
+    if [[ ! -d artifacts ]]; then mkdir artifacts; fi
+    (
+        find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+        cp -r --parents core/build/libs artifacts/
+        cp -r --parents core/build/poms artifacts/
+        cp -r --parents rundeckapp/**/build/libs artifacts/
+        cp -r --parents rundeckapp/**/build/poms artifacts/
+        cp -r --parents rundeck-storage/**/build/libs artifacts/
+        cp -r --parents rundeck-storage/**/build/poms artifacts/
+    )
+}
+
 extract_artifacts() {
     # Drop to subshell and change dir; courtesy roundup
     (

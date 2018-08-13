@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 
+buildscript {
+    dependencies {
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
+    }
+}
+
 plugins {
     id "org.dvaske.gradle.git-build-info"
     id 'de.fuerstenau.buildconfig' version '1.1.8'
@@ -23,6 +29,7 @@ import java.text.SimpleDateFormat
 /**
  * The Rundeck Core API build file
  **/
+apply plugin: 'com.jfrog.bintray'
 evaluationDependsOn(':rundeck-storage')
 apply plugin: 'idea'
 description = 'The Rundeck Core API project'
@@ -300,4 +307,46 @@ def buildpom={deps->
 
 task('createPom').doLast {
     buildpom(rundeckToolsDependencies).writeTo("pom.xml")
+}
+
+bintray {
+    user = findProperty("bintrayUser")
+    key = findProperty("bintrayApiKey")
+    publish = true
+    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+
+    if (findProperty('bintrayUseExisting')) {
+        filesSpec {
+            from 'build/libs'
+            from 'build/poms'
+            into "${project.group}.rundeck-${project.name}".replace('.', '/')
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "rundeck-$project.name-${version}.pom"
+                else
+                    return file
+            }
+        }
+    } else {
+        configurations =  ['archives']
+    }
+
+    pkg {
+        repo = 'maven'
+        name = archivesBaseName
+        userOrg = 'rundeck'
+
+        version {
+            // mavenCentralSync {
+            //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+            //     user = findProperty('ossUserToken') //OSS user token: mandatory
+            //     password = findProperty('ossUserPassword') //OSS user password: mandatory
+            // }
+
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
 }

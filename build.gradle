@@ -42,6 +42,7 @@ buildscript {
     dependencies {
         classpath 'com.adaptc.gradle:nexus-workflow:0.6'
         classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 
@@ -49,6 +50,7 @@ plugins {
     id 'com.gradle.build-scan' version '1.13'
     id "org.dvaske.gradle.git-build-info" version "0.8"
 }
+
 
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
@@ -144,6 +146,50 @@ gradle.taskGraph.whenReady { taskGraph ->
 //subproject libs that are uploaded to maven central
 exportedProjects.each {
     project(it) {
+
+        configurations {
+            existing
+        }
+
+        /* Modify auto-gen POM which gets picked up by Bintray */
+        install {
+            repositories.mavenInstaller {
+                pom.project {
+                    groupId project.group
+                    inceptionYear '2014'
+                    packaging 'jar'
+                    version version
+                    name "Rundeck library ${project.name}"
+                    description project.description?:'Rundeck'
+                    url 'http://rundeck.org'
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    scm {
+                        url 'https://github.com/rundeck/rundeck'
+                        connection 'scm:git:git@github.com/rundeck/rundeck.git'
+                        developerConnection 'scm:git:git@github.com:rundeck/rundeck.git'
+                    }
+                    developers {
+                        developer {
+                            id('gschueler')
+                            name('Greg Schueler')
+                            email('greg@rundeck.com')
+                        }
+                    }
+                    parent {
+                        groupId('org.sonatype.oss')
+                        artifactId('oss-parent')
+                        version('7')
+                    }
+                }
+            }
+        }
+
         apply plugin: 'signing'
 
         //********* artifact signing *********
@@ -195,34 +241,68 @@ exportedProjects.each {
             }
         }
 
-
         uploadArchives {
-            if (isDevBuild) {
-                repositories {
-                    repositories.mavenDeployer {
-                        configuration = configurations.archives
-                        pom = project.publishPom
+            repositories.mavenDeployer {
+                configuration = configurations.archives
+                    repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
+                        authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
                     }
-                }
-            } else {
-                repositories.mavenDeployer {
-                    if (isReleaseBuild) {
-                        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+                    snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                        authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
                     }
+                pom = project.publishPom
+            }
+        }
 
-                    configuration = configurations.archives
-                    if (project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')) {
-                        repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
-                            authentication(userName: sonatypeUsername, password: sonatypePassword)
-                        }
-                        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
-                            authentication(userName: sonatypeUsername, password: sonatypePassword)
-                        }
+        task copyExisting {
+            inputs.dir 'build/libs'
+            inputs.dir 'build/poms'
+            outputs.dir 'build/existing'
+
+            doLast {
+                copy {
+                    from "build/libs"
+                    from "build/poms"
+                    into "build/existing"
+                    exclude "*.original"
+                    rename { file ->
+                        if (file =~ /^pom/)
+                            return "$project.name-${version}.pom"
                     }
-                    pom = project.publishPom
                 }
             }
         }
+
+        task discoverExisting {
+            dependsOn copyExisting
+
+            doLast {
+                file("build/existing").eachFile {f ->
+                    artifacts {
+                        existing f
+                    }
+                }
+            }
+        }
+
+        task configureUploadExisting {
+            dependsOn discoverExisting
+            doLast {
+                uploadExisting {
+                    repositories.mavenDeployer {
+                        dependsOn "discoverExisting"
+                        configuration = configurations.existing
+                            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2') {
+                                authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
+                            }
+                            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                                authentication(userName: findProperty('sonatypeUsername'), password: findProperty('sonatypePassword'))
+                            }
+                    }
+                }
+            }
+        }
+        uploadExisting.dependsOn(configureUploadExisting)
 
         //utility to create a pom for building
         if(!(project.name in ['core','launcher'])){
@@ -252,6 +332,16 @@ task alljavadoc(type: Javadoc) {
 
     if (JavaVersion.current().isJava8Compatible()) {
         options.addStringOption('Xdoclint:none', '-quiet')
+    }
+}
+
+/* Workaround for Bintray plugin attaching task to subprojects */
+gradle.taskGraph.whenReady { taskGraph ->
+    def tasks = taskGraph.getAllTasks()
+    tasks.each { task ->
+        if (task.name == 'bintrayUpload' && ! exportedProjects.contains(task.project.path)) {
+            task.enabled = false
+        }
     }
 }
 

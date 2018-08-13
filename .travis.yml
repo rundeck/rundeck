@@ -20,13 +20,12 @@ stages:
   if: fork = true
 
 before_cache:
-  - rm -f  gradle-cache/caches/modules-2/modules-2.lock
-  - rm -fr gradle-cache/caches/*/plugin-resolution/
-
+- rm -f $HOME/.gradle/caches/modules-2/modules-2.lock
+- rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
-    - gradle-cache/wrapper/
-    - gradle-cache/caches/
+  - "$HOME/.gradle/caches/"
+  - "$HOME/.gradle/wrapper/"
 
 before_install:
 - sudo apt-get update -qq
@@ -47,18 +46,14 @@ jobs:
   - stage: build
     script:
     # Build artifacts: jars, wars, and docker images
-    - script_block 'build' 'bash scripts/travis-build.sh'
+    - script_block 'build' 'bash scripts/travis-build.sh build'
     - script_block 'build.docker.rdtest' build_rdtest
     # Copy artifacts and upload to s3
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
-    - find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
-    - cp -r --parents core/build/libs artifacts/
-    - cp -r --parents rundeckapp/**/build/libs artifacts/
-    - cp -r --parents rundeck-storage/**/build/libs artifacts/
     # Sync artifacts and trigger downstream snapshot builds if appropriate
-    - script_block 'sync-artifacts' sync_to_s3
+    - script_block 'sync-artifacts' 'copy_artifacts && sync_to_s3'
     - script_block 'trigger.downstream' trigger_downstream_snapshots
 
     # Trigger rundeck/testdeck build
@@ -145,8 +140,7 @@ jobs:
     # Publish official docker snapshot
     - script_block 'docker.official' 'docker_login && ./gradlew -g gradle-cache officialPush'
     # Upload to sonatype
-    # - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
-    # - script_block 'build.artifacts' 'bash jenkins-build.sh upload SNAPSHOT'
+    - script_block 'oss.publish' './gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}"'
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release
@@ -158,10 +152,9 @@ jobs:
     # Deploy new snapshot packages
     # - bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_DEB_REPO}"
     # - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}"
-    - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
+    # - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
     # Upload to sonatype
-    - export RELEASE_OPTS="-Psigning.keyId=${RUNDECK_SIGNING_KEYID} -Psigning.password=${RUNDECK_SIGNING_PASSWORD} -PsonatypeUsername=${SONATYPE_USERNAME} -PsonatypePassword=${SONATYPE_PASSWORD} -Poss-releases.username=${OSS_RELEASES_USERNAME} -Poss-releases.password=${OSS_RELEASES_PASSWORD} -Poss-releases.url=https://oss.sonatype.org/index.html#stagingRepositories -Psigning.secretKeyRingFile=$(pwd)/ci-resources/secring.gpg"
-    - script_block 'build.artifacts' 'bash jenkins-build.sh upload "${RUNDECK_RELEASE_TAG}"'
+    - script_block 'publish.maven' 'bash scripts/travis-build.sh publish'
 
   # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
