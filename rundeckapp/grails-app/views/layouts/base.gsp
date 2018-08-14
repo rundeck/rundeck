@@ -138,7 +138,8 @@
       window._rundeck = {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        projectName: '${enc(js:project?:params.project)}'
+        projectName: '${enc(js:project?:params.project)}',
+        action: '${actionName}'
       }
     </script>
 </head>
@@ -195,7 +196,7 @@ disable for now because profiler plugin is not compatible with grails 3.x
   if(sidebarOpen === 'true'){
     document.body.classList.remove('sidebar-mini')
   }
-</g:javascript> 
+</g:javascript>
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/manifest.js"/>

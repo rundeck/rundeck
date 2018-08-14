@@ -46,15 +46,15 @@
             pagingDelay:grailsApplication.config.rundeck?.gui?.home?.projectList?.pagingDelay?:2000
     ]}" id="homeDataPagingParams"/>
     <asset:javascript src="menu/home.js"/>
-
+    <asset:stylesheet href="static/css/pages/home.css"/>
 </head>
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
-</div>
+  <div class="row">
+      <div class="col-sm-12">
+          <g:render template="/common/messages"/>
+      </div>
+  </div>
+  <div id="home-dashboard-vue"></div>
 <div class="container-fluid" data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row">
         <g:if test="${isFirstRun}">
@@ -337,5 +337,8 @@
     </div>
   </div>
 </div>
+<asset:javascript src="static/manifest.js"/>
+<asset:javascript src="static/vendor.js"/>
+<asset:javascript src="static/pages/home.js"/>
 </body>
 </html>

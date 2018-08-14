@@ -439,6 +439,31 @@
                       <g:message code="run.job.now" />
                       <b class="glyphicon glyphicon-play"></b>
                   </button>
+                  <div class="checkbox checkbox-inline" style="margin-top:-8px;margin-right:10px;">
+                    <g:checkBox id="followoutputcheck" name="follow"
+                                checked="${defaultFollow || params.follow == 'true'}"
+                                value="true"/>
+                    <label for="followoutputcheck">
+                        <g:message code="job.run.watch.output"/>
+                    </label>
+
+                  </div>
+                  <select class="form-control " name="followdetail">
+                      <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
+                          <g:message code="execution.page.show.tab.Summary.title"/>
+                      </option>
+                      <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
+                          <g:message code="report"/>
+                      </option>
+                      <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
+                          <g:message code="execution.show.mode.Log.title"/>
+                      </option>
+                      <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
+                          <g:message code="html"/>
+                      </option>
+                  </select>                  
+                </div>
+                <div class="col-xs-12 col-sm-6 form-inline text-right">
                   <a tabindex="0" role="button"
                           id="showScheduler"
                           ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
@@ -466,31 +491,6 @@
                       <g:message code="run.job.later" />
                       <b class="glyphicon glyphicon-time"></b>
                   </a>
-                </div>
-                <div class="col-xs-12 col-sm-6 form-inline text-right">
-                  <div class="checkbox checkbox-inline" style="margin-top:-8px;margin-right:10px;">
-                    <g:checkBox id="followoutputcheck" name="follow"
-                                checked="${defaultFollow || params.follow == 'true'}"
-                                value="true"/>
-                    <label for="followoutputcheck">
-                        <g:message code="job.run.watch.output"/>
-                    </label>
-
-                  </div>
-                  <select class="form-control " name="followdetail">
-                      <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
-                          <g:message code="execution.page.show.tab.Summary.title"/>
-                      </option>
-                      <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
-                          <g:message code="report"/>
-                      </option>
-                      <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
-                          <g:message code="execution.show.mode.Log.title"/>
-                      </option>
-                      <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
-                          <g:message code="html"/>
-                      </option>
-                  </select>
                 </div>
             </div>
         </div>
