@@ -472,11 +472,16 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
-        Map data = basicProjectDetails(pject)
+        Map data = basicProjectDetails(pject,vers)
         def pmap = vers < ApiVersions.V11 ? [:] : [url: data.url]
         delegate.'project'(pmap) {
             name(data.name)
             description(data.description)
+            if (vers >= ApiVersions.V26) {
+                if (pject.hasProperty("project.label")) {
+                    label(data.label)
+                }
+            }
             if (vers < ApiVersions.V11) {
                 if (pject.hasProperty("project.resources.url")) {
                     resources {
@@ -510,8 +515,11 @@ class ProjectController extends ControllerBase{
      * @param vers api version requested
      */
     private def renderApiProjectJson (def pject, hasConfigAuth=false, vers=1){
-        Map data=basicProjectDetails(pject)
+        Map data=basicProjectDetails(pject,vers)
         Map json = [url: data.url, name: data.name, description: data.description]
+        if(data.label){
+            json.label = data.label
+        }
         def ctrl=this
         if(hasConfigAuth){
             json.config = frameworkService.loadProjectProperties(pject)
@@ -519,15 +527,22 @@ class ProjectController extends ControllerBase{
         json
     }
 
-    private Map basicProjectDetails(def pject) {
-        final def projectDescription = Project.withNewSession {
-            Project.findByName(pject.name)?.description
+    private Map basicProjectDetails(def pject, def version) {
+        if(version>=ApiVersions.V26){
+            [
+                    url:generateProjectApiUrl(pject.name),
+                    name:pject.name,
+                    description: pject.getProjectProperties()?.get("project.description")?:'',
+                    label: pject.getProjectProperties()?.get("project.label")?:''
+            ]
+        }else{
+            [
+                    url:generateProjectApiUrl(pject.name),
+                    name:pject.name,
+                    description: pject.getProjectProperties()?.get("project.description")?:''
+            ]
         }
-        [
-                url:generateProjectApiUrl(pject.name),
-                name:pject.name,
-                description : projectDescription ? projectDescription : ''
-        ]
+
     }
 
     /**
@@ -574,7 +589,7 @@ class ProjectController extends ControllerBase{
                 List details = []
                 projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                     //don't include config data
-                    details.add(basicProjectDetails(pject))
+                    details.add(basicProjectDetails(pject,request.api_version))
                 }
 
                 render details as JSON

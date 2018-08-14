@@ -239,15 +239,15 @@ class ApiControllerSpec extends Specification {
         ''    | [:]                                                           | false              | false     | [:]
         ''    | [:]                                                           | false  | false     | [:]
         ''    | [metrics: true]                                               | false | false     | [:]
-        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/25/metrics/metrics']]
-        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/25/metrics/healthcheck']]
-        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/25/metrics/ping']]
-        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/25/metrics/threads']]
+        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/26/metrics/metrics']]
+        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/26/metrics/healthcheck']]
+        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/26/metrics/ping']]
+        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/26/metrics/threads']]
         ''    | [threads: true, ping: true, metrics: true, healthcheck: true] | true                            | false                                                                                                | [
-            metrics    : [href: '/api/25/metrics/metrics'],
-            threads    : [href: '/api/25/metrics/threads'],
-            healthcheck: [href: '/api/25/metrics/healthcheck'],
-            ping       : [href: '/api/25/metrics/ping'],
+            metrics    : [href: '/api/26/metrics/metrics'],
+            threads    : [href: '/api/26/metrics/threads'],
+            healthcheck: [href: '/api/26/metrics/healthcheck'],
+            ping       : [href: '/api/26/metrics/ping'],
         ]
     }
 
