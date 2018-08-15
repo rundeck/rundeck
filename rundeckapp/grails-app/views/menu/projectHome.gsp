@@ -32,6 +32,7 @@
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <asset:javascript src="menu/projectHome.js"/>
 </head>
 
 <body>
@@ -41,7 +42,10 @@
             <g:render template="/common/messages"/>
         </div>
     </div>
-    <div id=project-dashboard-vue></div>
+
+    <div id="projectHome-content">
+      <div id=project-dashboard-vue></div>
+    </div>
   </div>
   <asset:javascript src="static/manifest.js"/>
   <asset:javascript src="static/vendor.js"/>
