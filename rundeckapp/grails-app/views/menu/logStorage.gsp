@@ -146,6 +146,9 @@
                           <td>
 
                               <div data-bind="if: queuedCount()>0">
+                                  <g:message code="menu.logStorage.stats.queuedRequestCount.label.prompt" /> <span data-bind="text: queuedRequestCount, css: { 'text-info': queuedRequestCount()>0 , 'text-primary': queuedRequestCount()<1 } "></span>
+                                  <g:message code="menu.logStorage.stats.queuedRetriesCount.label.prompt" /> <span data-bind="text: queuedRetriesCount, css: { 'text-info': queuedRetriesCount()>0 , 'text-primary': queuedRetriesCount()<1 } "></span>
+                                  <g:message code="menu.logStorage.stats.queuedIncompleteCount.label.prompt" /> <span data-bind="text: queuedIncompleteCount, css: { 'text-info': queuedIncompleteCount()>0 , 'text-primary': queuedIncompleteCount()<1 } "></span>
 
                                   <g:form useToken="true" action="haltIncompleteLogStorage" controller="menu"
                                           params="[project: params.project]">

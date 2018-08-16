@@ -599,6 +599,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         def missing = countMissingLogStorageExecutions()
         def incompleteRequests = countIncompleteLogStorageRequests()
         def queued = storageQueueCounter.count
+        def queuedIncomplete = retryIncompleteRequests.size()
+        def queuedRetries = retryRequests.size()
+        def queuedRequests = storageRequests.size()
         def failed = storageFailedCounter.count
         def succeeded = storageSuccessCounter.count
         def total = storageTotalCounter.count
@@ -612,6 +615,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
                 succeededCount : succeeded,
                 failedCount    : failed,
                 queuedCount    : queued,
+                queuedRequestCount    : queuedRequests,
+                queuedRetriesCount    : queuedRetries,
+                queuedIncompleteCount    : queuedIncomplete,
                 totalCount     : total,
                 incompleteCount: incomplete,
                 missingCount   : missing,
@@ -649,6 +655,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         if(!taskId){
             return
         }
+        storageQueueCounter?.dec()
         log.debug("dequeueIncompleteLogStorage, processing ${taskId}")
         Long invalidId
         String serverUuid
@@ -738,6 +745,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         incomplete.each { LogFileStorageRequest request ->
             if(!retryIncompleteRequests.contains(request.id)){
                 retryIncompleteRequests.add(request.id)
+                storageQueueCounter?.inc()
                 failedRequests.remove(request.id)
                 failures.remove(request.id)
 
@@ -1590,9 +1598,16 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
      */
     private void queueLogStorageRequest(Map task, int delay=0) {
         if (delay > 0) {
-            retryRequests.add(task.requestId)
+
+            if (!task.partial) {
+                retryRequests.add(task.requestId)
+                storageQueueCounter?.inc()
+            }
             logFileStorageTaskScheduler.schedule({
-                retryRequests.remove(task.requestId)
+                if (!task.partial) {
+                    retryRequests.remove(task.requestId)
+                    storageQueueCounter?.dec()
+                }
                 queueLogStorageRequest(task, -1)
             }, new Date(System.currentTimeMillis() + (delay * 1000)))
         } else {
