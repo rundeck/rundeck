@@ -172,6 +172,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         metricService?.counter(this.class.name + ".storageRequests","total")
     }
 
+    Counter getStorageRetryCounter(){
+        metricService?.counter(this.class.name + ".storageRequests","retries")
+    }
+
     Counter getStoragePartialCounter() {
         metricService?.counter(this.class.name + ".storageRequests", "partial")
     }
@@ -205,8 +209,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
     void runStorageRequest(Map task){
         if (!task.partial && !task.count) {
             storageTotalCounter?.inc()
-        } else {
+        } else if(task.partial){
             storagePartialCounter?.inc()
+        } else if(task.count){
+            storageRetryCounter?.inc()
         }
         int retry = getConfiguredStorageRetryCount()
         int delay = getConfiguredStorageRetryDelay()
@@ -604,6 +610,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         def queuedRequests = storageRequests.size()
         def failed = storageFailedCounter.count
         def succeeded = storageSuccessCounter.count
+        def retries = storageRetryCounter.count
         def total = storageTotalCounter.count
         def partialCount = storagePartialCounter.count
         def running = storageRunningCounter.count
@@ -622,7 +629,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
                 incompleteCount: incomplete,
                 missingCount   : missing,
                 running        : running,
-                partialCount   : partialCount
+                partialCount   : partialCount,
+                retriesCount   : retries
         ]
         data
     }

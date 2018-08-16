@@ -60,6 +60,7 @@ function StorageStats(data) {
     self.queuedCount = ko.observable(0);
     self.totalCount = ko.observable(0);
     self.partialCount = ko.observable(0);
+    self.retriesCount = ko.observable(0);
     self.queuedRequestCount = ko.observable(0);
     self.queuedRetriesCount = ko.observable(0);
     self.queuedIncompleteCount = ko.observable(0);

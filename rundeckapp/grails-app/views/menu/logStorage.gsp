@@ -161,8 +161,10 @@
                                   </g:form>
                               </div>
                           </td>
-                          <td></td>
-                          <td>
+                          <td class="text-center">
+                              <g:message code="menu.logStorage.stats.retriesCount.label.prompt" /> <span data-bind="text: retriesCount, css: { 'text-info': retriesCount()>0 , 'text-primary': retriesCount()<1 } "></span>
+                          </td>
+                          <td class="text-center">
                               <div data-bind="if: incompleteCount()>0">
 
                                   <div class="btn-group">

@@ -2540,7 +2540,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 'queuedIncompleteCount',
                 'totalCount',
                 'incompleteCount',
-                'missingCount'
+                'missingCount',
+                'retriesCount'
         ]
         withFormat {
             json {
