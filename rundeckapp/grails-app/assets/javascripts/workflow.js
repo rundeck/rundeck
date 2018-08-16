@@ -147,6 +147,24 @@ RDWorkflow.unescape=function(input,echar,chars,breakchars){
     return {text:arr.join(""),bchar:bchar,rest:i<=input.length-1?input.substring(i+1):null};
 };
 /**
+ * escape listed chars in the string with the escape char
+ * @param str input string
+ * @param echar escape char
+ * @param chars chars to be escaped
+ * @returns {string}
+ */
+RDWorkflow.escapeStr = function (str, echar, chars) {
+    var arr = [];
+    for (var i = 0; i < str.length; i++) {
+        var c = str.charAt(i);
+        if(chars.indexOf(c)>=0){
+            arr.push(echar);
+        }
+        arr.push(c);
+    }
+    return arr.join("");
+};
+/**
  *
  * @param input
  * @param sep
@@ -165,6 +183,23 @@ RDWorkflow.splitEscaped=function(input,sep){
     return parts;
 };
 /**
+ * join array strings into single string using the separator, escaping
+ * internal chars with backslash
+ * @param arr array of strings
+ * @param sep separator char
+ * @returns {string}
+ */
+RDWorkflow.joinEscaped = function (arr, sep) {
+    var res = [];
+    for (var i = 0; i < arr.length; i++) {
+        if (i > 0) {
+            res.push(sep);
+        }
+        res.push(RDWorkflow.escapeStr(arr[i], '\\', ['\\', sep]));
+    }
+    return res.join("");
+};
+/**
  * Returns array of step context strings given the context identifier
  * @param context
  * @returns {*}
@@ -174,9 +209,29 @@ RDWorkflow.parseContextId= function (context) {
     if (context == null) {
         return null;
     }
+    //if context is already array, return it
+    if (jQuery.isArray(context)) {
+        return context;
+    }
     //split context into project,type,object
     var t = RDWorkflow.splitEscaped(context,RDWorkflow.contextStringSeparator);
     return t.slice();
+};
+/**
+ * Create context ID string by joining context array with appropriate escaping
+ * @param contextArr
+ * @returns {*}
+ */
+RDWorkflow.createContextId = function (contextArr) {
+    if (contextArr == null) {
+        return null;
+    }
+    //if context is already array, return it
+    if (!jQuery.isArray(contextArr)) {
+        contextArr = [contextArr];
+    }
+    //split context into project,type,object
+    return RDWorkflow.joinEscaped(contextArr, RDWorkflow.contextStringSeparator);
 };
 
 /**
