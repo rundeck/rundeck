@@ -55,7 +55,7 @@
         <div class="col-sm-12">
           <div class="card">
             <div class="card-header">
-              <h3 class="card-title"><g:message code="menu.logStorage.page.title"/>
+              <h3 class="card-title"><g:message code="menu.logStorage.table.title"/>
                   <span data-bind="if: !loaded() || loading()">
                       <asset:image class="loading-spinner" src="spinner-blue.gif" width="20px" height="20px"/>
                   </span>
@@ -67,14 +67,10 @@
 
                   <table class="table table-bordered table-condensed">
 
-                      <tr>
-                          <th colspan="5" class="text-primary table-footer text-small">
-                              <g:message code="menu.logStorage.table.title"/>
-                          </th>
-                      </tr>
+
                       <tr>
                           <th style="width: 20%" class="text-primary text-center h5 text-header">
-                              <g:message code="menu.logStorage.stats.progress.title"/>
+                              <g:message code="menu.logStorage.stats.successRatio.title"/>
                           </th>
                           <th style="width: 20%" class="text-primary text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.queueCount.title"/>
@@ -116,7 +112,7 @@
                           </g:each>
                           <td class="text-center h3">
                               <span class="text-success" data-bind="text: succeededCount"></span>
-                              <span class="text-primary">/</span>
+                              <span class="text-muted">:</span>
                               <span data-bind="text: failedCount, css: {'text-warning': failedCount()>0, 'text-primary': failedCount()<1 }"></span>
 
                           </td>
@@ -141,9 +137,12 @@
                       </tr>
                       <tr>
                           <td class=" text-center">
-                              Running: <span data-bind="text: running, css: { 'text-info': running()>0 , 'text-primary': running()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.running.label.prompt" /><span data-bind="text: running, css: { 'text-info': running()>0 , 'text-primary': running()<1 } "></span>
                           </td>
-                          <td>
+                          <td class="text-center">
+                              <g:message code="menu.logStorage.stats.queuedRequestCount.label.prompt" /> <span data-bind="text: queuedRequestCount, css: { 'text-info': queuedRequestCount()>0 , 'text-primary': queuedRequestCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.queuedRetriesCount.label.prompt" /> <span data-bind="text: queuedRetriesCount, css: { 'text-info': queuedRetriesCount()>0 , 'text-primary': queuedRetriesCount()<1 } "></span>
+                              <g:message code="menu.logStorage.stats.queuedIncompleteCount.label.prompt" /> <span data-bind="text: queuedIncompleteCount, css: { 'text-info': queuedIncompleteCount()>0 , 'text-primary': queuedIncompleteCount()<1 } "></span>
 
                               <div data-bind="if: queuedCount()>0">
 
@@ -158,8 +157,10 @@
                                   </g:form>
                               </div>
                           </td>
-                          <td></td>
-                          <td>
+                          <td class="text-center">
+                              <g:message code="menu.logStorage.stats.retriesCount.label.prompt" /> <span data-bind="text: retriesCount, css: { 'text-info': retriesCount()>0 , 'text-primary': retriesCount()<1 } "></span>
+                          </td>
+                          <td class="text-center">
                               <div data-bind="if: incompleteCount()>0">
 
                                   <div class="btn-group">
