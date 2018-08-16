@@ -74,7 +74,7 @@
                       </tr>
                       <tr>
                           <th style="width: 20%" class="text-primary text-center h5 text-header">
-                              <g:message code="menu.logStorage.stats.progress.title"/>
+                              <g:message code="menu.logStorage.stats.successRatio.title"/>
                           </th>
                           <th style="width: 20%" class="text-primary text-center h5 text-header">
                               <g:message code="menu.logStorage.stats.queueCount.title"/>
