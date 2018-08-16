@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.converters.JSON
 import grails.converters.XML
@@ -239,15 +240,15 @@ class ApiControllerSpec extends Specification {
         ''    | [:]                                                           | false              | false     | [:]
         ''    | [:]                                                           | false  | false     | [:]
         ''    | [metrics: true]                                               | false | false     | [:]
-        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/25/metrics/metrics']]
-        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/25/metrics/healthcheck']]
-        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/25/metrics/ping']]
-        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/25/metrics/threads']]
+        ''    | [metrics: true]                                               | true                                                                          | false                                                                                                | [metrics: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/metrics']]
+        ''    | [healthcheck: true]                                           | true                                                                      | false                                                                                                | [healthcheck: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/healthcheck']]
+        ''    | [ping: true]                                                  | true                                                                             | false                                                                                                | [ping: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/ping']]
+        ''    | [threads: true]                                               | true                                                                          | false                                                                                                | [threads: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/threads']]
         ''    | [threads: true, ping: true, metrics: true, healthcheck: true] | true                            | false                                                                                                | [
-            metrics    : [href: '/api/25/metrics/metrics'],
-            threads    : [href: '/api/25/metrics/threads'],
-            healthcheck: [href: '/api/25/metrics/healthcheck'],
-            ping       : [href: '/api/25/metrics/ping'],
+            metrics    : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/metrics'],
+            threads    : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/threads'],
+            healthcheck: [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/healthcheck'],
+            ping       : [href: '/api/'+ApiVersions.API_CURRENT_VERSION+'/metrics/ping'],
         ]
     }
 
