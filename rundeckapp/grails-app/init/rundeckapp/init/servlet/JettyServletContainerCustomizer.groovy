@@ -15,6 +15,7 @@
  */
 package rundeckapp.init.servlet
 
+import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.AbstractConfiguration
 import org.eclipse.jetty.webapp.WebAppContext
 import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer
@@ -29,11 +30,15 @@ class JettyServletContainerCustomizer implements EmbeddedServletContainerCustomi
      * Set of init parameters to set in the web app context
      */
     Map<String, String> initParams = [:]
+    boolean useForwardHeaders
 
     @Override
     void customize(final ConfigurableEmbeddedServletContainer container) {
         if(container instanceof JettyEmbeddedServletContainerFactory) {
             container.addConfigurations(new JettyConfigPropsInitParameterConfiguration(initParams))
+            if(useForwardHeaders) {
+                container.useForwardHeaders = useForwardHeaders
+            }
         }
     }
 }
