@@ -191,7 +191,7 @@ function WorkflowStepInfo(multiworkflow,stepctx,data){
     self.parentStepInfo=ko.computed(function(){
         var ctx=self.stepctxArray();
         if(ctx.length>1) {
-            var parent = ctx.slice(0, -1).join('/');
+            var parent = RDWorkflow.createContextId(ctx.slice(0, -1));
             return self.multiworkflow.getStepInfoForStepctx(parent);
         }
         return null;
@@ -574,7 +574,7 @@ function MultiWorkflow(workflowInfo,data){
         var ndx = RDWorkflow.workflowIndexForContextId(lastctx);
 
         //get the parent workflow, and then fill in the current step
-        self.getParentJobStepInfoForStepctx(ctx.join('/'),function(parentjobinfo){
+        self.getParentJobStepInfoForStepctx(RDWorkflow.createContextId(ctx),function(parentjobinfo){
             //TODO: currently node summary state context string does not indicate errorHandler, but
             //in case it does in the future, force use of correct job info
             var iseh=ctx.length>0?RDWorkflow.isErrorhandlerForContextId(ctx[ctx.length-1]):false;
