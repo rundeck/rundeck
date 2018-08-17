@@ -154,7 +154,7 @@ jobs:
     # - bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_RPM_REPO}"
     # - bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck "${BINTRAY_MAVEN_REPO}" "${RUNDECK_BUILD_NUMBER}"
     # Upload to sonatype
-    - script_block 'publish.maven' 'bash scripts/travis-build.sh publish'
+    - script_block 'publish.maven' 'DRY_RUN=false bash scripts/travis-build.sh publish'
 
   # Stage: fork consolidates all tests into one job.
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
