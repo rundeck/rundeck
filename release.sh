@@ -149,7 +149,7 @@ main() {
     local -a NEW_VERS=( $( rd_make_release_version "${VERS[@]}" ) )
 
     if [ "1" == "$NOTESONLY" ] ; then
-        update_release_notes_date "$NEW_VERS"
+        generate_release_notes_documentation "$NEW_VERS"
         return 0
     fi
 
