@@ -355,20 +355,23 @@ class RundeckInitializer {
             }
         }
     }
+    private static final Map<String, List<String>> LEGACY_SYS_PROP_CONVERSION = [
+        'server.http.port'                      : ['server.port'],
+        'server.http.host'                      : ['server.host', 'server.address'],
+        (RundeckInitConfig.SYS_PROP_WEB_CONTEXT): ['server.contextPath'],
+        'rundeck.jetty.connector.forwarded'     : ['server.useForwardHeaders']
+    ]
 
     void setSystemProperties() {
-        //LEGACY translation OLD: server.http.port NEW server.port
-        if(System.getProperty("server.http.port")) {
-            System.setProperty("server.port", System.getProperty("server.http.port"));
-        }
 
+        LEGACY_SYS_PROP_CONVERSION.each { String k, vals ->
+            if (System.getProperty(k)) {
+                vals.each { String newkey ->
+                    System.setProperty(newkey, System.getProperty(k))
+                }
+            }
+        }
         System.setProperty("server.http.port", config.runtimeConfiguration.getProperty("server.http.port"));
-
-        //LEGACY translation OLD: server.http.host NEW server.host or server.address
-        if(System.getProperty("server.http.host")) {
-            System.setProperty("server.host", System.getProperty("server.http.host"));
-            System.setProperty("server.address", System.getProperty("server.http.host"));
-        }
 
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, forwardSlashPath(config.baseDir));
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
