@@ -17,6 +17,7 @@ package rundeckapp.init
 
 import grails.util.Environment
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class RundeckInitializerTest extends Specification {
 
@@ -95,7 +96,8 @@ class RundeckInitializerTest extends Specification {
         rcpropsContents.findAll { it.startsWith("#rundeck.log4j.config.file")}
     }
 
-    def "translate legacy system property settings to grails 3 compatible settings"() {
+    @Unroll
+    def "translate legacy system property #origProp to grails 3 compatible settings"() {
         given:
         System.setProperty("rundeck.config.location","config")
         Properties testTemplateProperties = new Properties()
@@ -107,18 +109,21 @@ class RundeckInitializerTest extends Specification {
         RundeckInitializer initializer = new RundeckInitializer(cfg)
         initializer.thisJar = File.createTempFile("this","jar")
         initializer.initConfigurations()
-        !System.getProperty("server.port")
-        !System.getProperty("server.host")
-        !System.getProperty("server.address")
+        !System.getProperty(origProp)
 
         when:
-        System.setProperty("server.http.port","4441")
-        System.setProperty("server.http.host","hostoverride")
+        System.setProperty(origProp, val)
         initializer.setSystemProperties()
 
         then:
-        System.getProperty("server.port") == "4441"
-        System.getProperty("server.host") == "hostoverride"
-        System.getProperty("server.address") == "hostoverride"
+        System.getProperty(newProp) == val
+
+        where:
+        origProp                            | newProp                    | val
+        'server.http.port'                  | 'server.port'              | '4441'
+        'server.http.host'                  | 'server.host'              | 'hostoverride'
+        'server.http.host'                  | 'server.address'           | 'hostoverride'
+        'server.web.context'                | 'server.contextPath'       | '/rundeck'
+        'rundeck.jetty.connector.forwarded' | 'server.useForwardHeaders' | 'true'
     }
 }
