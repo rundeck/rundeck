@@ -319,7 +319,7 @@ bintray {
         filesSpec {
             from 'build/libs'
             from 'build/poms'
-            into "${project.group}.rundeck-${project.name}".replace('.', '/')
+            into "${project.group}.rundeck-${project.name}".replace('.', '/') + "/$version"
             rename { file ->
                 if (file =~ /^pom/)
                     return "rundeck-$project.name-${version}.pom"
