@@ -430,44 +430,54 @@
                   data-toggle="tooltip"
                   data-placement="auto">
                 %{--Extra div because attr disabled will cancel tooltip from showing --}%
-                <div class="col-xs-12 col-sm-9">
-                  <button type="submit"
-                          name="_action_runJobNow"
-                          id="execFormRunButton"
-                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                          class=" btn btn-success btn-sm">
-                      <g:message code="run.job.now" />
-                      <b class="glyphicon glyphicon-play"></b>
-                  </button>
-                  <div class="checkbox checkbox-inline" style="margin-top:-8px;margin-right:10px;">
-                    <g:checkBox id="followoutputcheck" name="follow"
-                                checked="${defaultFollow || params.follow == 'true'}"
-                                value="true"/>
-                    <label for="followoutputcheck">
-                        <g:message code="job.run.watch.output"/>
-                    </label>
+                <div class="col-xs-12 col-sm-8">
+                  <div class="row">
+                    <div class="col-xs-3">
+                      <button type="submit"
+                              name="_action_runJobNow"
+                              id="execFormRunButton"
+                              ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                              class=" btn btn-success btn-sm">
+                          <g:message code="run.job.now" />
+                          <b class="glyphicon glyphicon-play"></b>
+                      </button>
+                    </div>
+                    <div class="col-xs-4">
+                      <div class="checkbox" style="margin-top:7px;">
+                        <g:checkBox id="followoutputcheck" name="follow"
+                                    checked="${defaultFollow || params.follow == 'true'}"
+                                    value="true"/>
+                        <label for="followoutputcheck">
+                            <g:message code="job.run.watch.output"/>
+                        </label>
+                      </div>
+                    </div>
+                    <div class="col-xs-4">
+                      <select class="form-control " name="followdetail">
+                          <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
+                              <g:message code="execution.page.show.tab.Summary.title"/>
+                          </option>
+                          <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
+                              <g:message code="report"/>
+                          </option>
+                          <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
+                              <g:message code="execution.show.mode.Log.title"/>
+                          </option>
+                          <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
+                              <g:message code="html"/>
+                          </option>
+                      </select>
+                    </div>
                   </div>
-                  <select class="form-control " name="followdetail">
-                      <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
-                          <g:message code="execution.page.show.tab.Summary.title"/>
-                      </option>
-                      <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
-                          <g:message code="report"/>
-                      </option>
-                      <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
-                          <g:message code="execution.show.mode.Log.title"/>
-                      </option>
-                      <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
-                          <g:message code="html"/>
-                      </option>
-                  </select>
+
+
+
                 </div>
-                <div class="col-xs-12 col-sm-3 form-inline text-right">
+                <div class="col-xs-12 col-sm-4">
                   <a tabindex="0" role="button"
                           id="showScheduler"
                           ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                          class=" btn btn-default btn-sm"
-                          style="margin-top:6px;"
+                          class=" btn btn-default btn-sm pull-right"
                           data-toggle="popover" title="Set start time" data-trigger="click"
                           data-placement="auto" data-container="body" data-html="true"
                           data-trigger="focus" data-content="<div id='scheduler'>
