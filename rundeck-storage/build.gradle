@@ -52,8 +52,8 @@ project(':rundeck-storage:rundeck-storage-api') {
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
-                from 'build/libs'
-                from 'build/poms'
+                from "$artifactDir/rundeck-storage/$project.name/build/libs"
+                from "$artifactDir/rundeck-storage/$project.name/build/poms"
                 into "${project.group}.${project.name}".replace('.', '/') + "/$version"
                 rename { file ->
                     if (file =~ /^pom/)
@@ -100,8 +100,8 @@ project(':rundeck-storage:rundeck-storage-data') {
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
-                from 'build/libs'
-                from 'build/poms'
+                from "$artifactDir/rundeck-storage/$project.name/build/libs"
+                from "$artifactDir/rundeck-storage/$project.name/build/poms"
                 into "${project.group}.${project.name}".replace('.', '/') + "/$version"
                 rename { file ->
                     if (file =~ /^pom/)
@@ -147,8 +147,8 @@ project(':rundeck-storage:rundeck-storage-conf') {
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
-                from 'build/libs'
-                from 'build/poms'
+                from "$artifactDir/rundeck-storage/$project.name/build/libs"
+                from "$artifactDir/rundeck-storage/$project.name/build/poms"
                 into "${project.group}.${project.name}".replace('.', '/') + "/$version"
                 rename { file ->
                     if (file =~ /^pom/)
@@ -196,8 +196,8 @@ project(':rundeck-storage:rundeck-storage-filesys') {
 
         if (findProperty('bintrayUseExisting')) {
             filesSpec {
-                from 'build/libs'
-                from 'build/poms'
+                from "$artifactDir/rundeck-storage/$project.name/build/libs"
+                from "$artifactDir/rundeck-storage/$project.name/build/poms"
                 into "${project.group}.${project.name}".replace('.', '/') + "/$version"
                 rename { file ->
                     if (file =~ /^pom/)

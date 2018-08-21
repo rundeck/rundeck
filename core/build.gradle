@@ -317,8 +317,8 @@ bintray {
 
     if (findProperty('bintrayUseExisting')) {
         filesSpec {
-            from 'build/libs'
-            from 'build/poms'
+            from "$artifactDir/core/build/libs"
+            from "$artifactDir/core/build/poms"
             into "${project.group}.rundeck-${project.name}".replace('.', '/') + "/$version"
             rename { file ->
                 if (file =~ /^pom/)
