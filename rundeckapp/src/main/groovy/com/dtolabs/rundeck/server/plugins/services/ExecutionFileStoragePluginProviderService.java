@@ -45,9 +45,4 @@ public class ExecutionFileStoragePluginProviderService extends BasePluggableProv
         this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
-    }
 }

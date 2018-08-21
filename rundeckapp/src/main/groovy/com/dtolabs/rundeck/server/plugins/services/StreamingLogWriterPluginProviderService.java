@@ -43,9 +43,4 @@ public class StreamingLogWriterPluginProviderService extends BasePluggableProvid
         this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
-    }
 }

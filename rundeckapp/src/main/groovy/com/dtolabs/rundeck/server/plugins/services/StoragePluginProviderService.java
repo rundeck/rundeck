@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.server.plugins.services;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
@@ -50,6 +51,26 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
         builtinResourceStoragePluginProviderService =
                 new BuiltinResourceStoragePluginProviderService(framework, SERVICE_NAME);
         serviceList.add(builtinResourceStoragePluginProviderService);
+    }
+
+    @Override
+    public boolean canLoadWithLoader(final ProviderLoader loader) {
+        return pluggableStoragePluginProviderService.canLoadWithLoader(loader);
+    }
+
+    @Override
+    public StoragePlugin loadWithLoader(final String providerName, final ProviderLoader loader)
+        throws ProviderLoaderException
+    {
+        return pluggableStoragePluginProviderService.loadWithLoader(providerName, loader);
+    }
+
+    @Override
+    public CloseableProvider<StoragePlugin> loadCloseableWithLoader(
+        final String providerName, final ProviderLoader loader
+    ) throws ProviderLoaderException
+    {
+        return pluggableStoragePluginProviderService.loadCloseableWithLoader(providerName, loader);
     }
 
     public List<String> getBundledProviderNames() {
@@ -84,24 +105,4 @@ public class StoragePluginProviderService extends ChainedProviderService<Storage
         serviceList.add(this.pluggableStoragePluginProviderService);
     }
 
-    @Override
-    public boolean isValidProviderClass(Class aClass) {
-        return getPluggableStoragePluginProviderService().isValidProviderClass(aClass);
-    }
-
-    @Override
-    public <X extends StoragePlugin> StoragePlugin createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
-        return getPluggableStoragePluginProviderService().createProviderInstance(clazz, name);
-    }
-
-    @Override
-    public boolean isScriptPluggable() {
-        return getPluggableStoragePluginProviderService().isScriptPluggable();
-    }
-
-    @Override
-    public StoragePlugin createScriptProviderInstance(ScriptPluginProvider scriptPluginProvider) throws
-            PluginException {
-        return null;
-    }
 }
