@@ -1,0 +1,14 @@
+plugins {
+  id "com.moowork.node" version "1.2.0"
+}
+
+task buildSpa(type: NpmTask, group: 'build') {
+    dependsOn npmInstall
+
+    inputs.dir 'build'
+    inputs.dir 'config'
+    inputs.dir 'src'
+
+    outputs.dir("$buildDir")
+    args = ['run', 'build']
+}

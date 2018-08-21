@@ -298,6 +298,8 @@ class UrlMappings {
         "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
         "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
         "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
+        "/plugin/list"(controller: 'plugin', action: 'listPlugins')
+        "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
 
         "404"(view: '/404')
         "500"(view: '/error')

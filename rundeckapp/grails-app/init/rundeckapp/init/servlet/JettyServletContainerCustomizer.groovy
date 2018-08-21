@@ -15,6 +15,7 @@
  */
 package rundeckapp.init.servlet
 
+import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.AbstractConfiguration
 import org.eclipse.jetty.webapp.WebAppContext
 import org.springframework.boot.context.embedded.ConfigurableEmbeddedServletContainer

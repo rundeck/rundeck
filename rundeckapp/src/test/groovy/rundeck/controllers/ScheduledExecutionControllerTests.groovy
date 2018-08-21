@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 
 import static org.junit.Assert.*
@@ -3340,5 +3341,48 @@ class ScheduledExecutionControllerTests  {
         sec.uploadPost()
         def result = sec.modelAndView.model
         assertEquals "No file was uploaded.", sec.request.getAttribute('message')
+    }
+
+    public void testCreateExcludeInactivePlugins() {
+        def sec = new ScheduledExecutionController()
+        def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+        se.save()
+        assertNotNull se.id
+        def plgControlSrv = new MockFor(PluginControlService)
+        plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
+        plgControlSrv.demand.isDisabledPlugin {name, type-> name=='test' }
+        //try to do update of the ScheduledExecution
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getNodeStepPluginDescriptions { [[name:'test'],[name:'test2']] }
+        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
+        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
+        fwkControl.demand.getStepPluginDescriptions { [] }
+        fwkControl.demand.getProjectGlobals { [:] }
+        fwkControl.demand.projectNames { [] }
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getWorkflowStrategyPluginDescriptions{->[]}
+            getTimeZones{->[]}
+        }
+        def oServiceControl = new MockFor(OrchestratorPluginService, true)
+        oServiceControl.demand.listDescriptions{[]}
+        sec.orchestratorPluginService = oServiceControl.proxyInstance()
+        def pControl = new MockFor(NotificationService)
+        pControl.demand.listNotificationPlugins() {->
+            []
+        }
+        sec.notificationService = pControl.proxyInstance()
+        sec.pluginService = mockWith(PluginService){
+            listPlugins(){[]}
+        }
+        def params = [id: se.id.toString()]
+        sec.params.putAll(params)
+        def ret = sec.create()
+        assertNotNull(ret)
+        assertNotNull(ret.nodeStepDescriptions)
+        assertEquals(1,ret.nodeStepDescriptions.size())
     }
 }

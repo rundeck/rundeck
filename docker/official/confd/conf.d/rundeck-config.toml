@@ -8,6 +8,7 @@ keys = [
     "/rundeck/database/",
     "/rundeck/database/url",
     "/rundeck/server/address",
+    "/rundeck/server/forwarded",
     "/rundeck/grails/url",
     "/rundeck/plugin"
 ]

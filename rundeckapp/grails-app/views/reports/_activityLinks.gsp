@@ -308,7 +308,6 @@
                                           showpercent: true,
                                           progressId: 'progressBar',
                                           bind: 'jobPercentageFixed()',
-                                          bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + MomentUtil.formatDurationHumanize(jobAverageDuration())',
                                           progressBind: progressBind,
                                   ]"/>
                     </div>

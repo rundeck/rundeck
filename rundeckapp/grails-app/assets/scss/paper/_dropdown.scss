@@ -7,7 +7,6 @@
   @include box-shadow($dropdown-shadow);
 
   .dropdown &,
-  &.bootstrap-datetimepicker-widget,
   .bootstrap-table .btn-group &,
   .btn-group &,
   .dropup &{
@@ -27,8 +26,8 @@
     visibility: visible;
   }
 
-  .dropup &,
-  &.bootstrap-datetimepicker-widget.top{
+  .dropup &
+  {
     @include transform-translate-y(30px);
     @include transition($fast-transition-time, $transition-linear);
     @include opacity(0);

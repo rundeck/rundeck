@@ -35,7 +35,7 @@ release_tag_repo() {
                 echo -n 'rundeck-deb'
                 ;;
             *)
-                echo -n 'testing-deb'
+                echo -n 'test-deb'
                 ;;
         esac
     elif [[ "${TYPE}" == 'rpm' ]] ; then
@@ -47,7 +47,7 @@ release_tag_repo() {
                 echo -n 'rundeck-rpm'
                 ;;
             *)
-                echo -n 'testing-rpm'
+                echo -n 'test-rpm'
                 ;;
         esac
     elif [[ "${TYPE}" == 'maven' ]] ; then
@@ -59,7 +59,7 @@ release_tag_repo() {
                 echo -n 'rundeck-maven'
                 ;;
             *)
-                echo -n 'testing-maven'
+                echo -n 'test-maven'
                 ;;
         esac
     fi

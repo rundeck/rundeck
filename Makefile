@@ -31,12 +31,11 @@ rundeck:  app
 app: rundeckapp/build/libs/rundeck-$(VERSION).war
 
 rundeckapp/build/libs/rundeck-$(VERSION).war:
-	./gradlew -g $$(pwd)/gradle-cache $(PROXY_DEFS) \
+	./gradlew $(PROXY_DEFS) \
 		--build-cache \
 		--scan \
 		-Penvironment=$(ENV) \
 		assemble
-
 
 #snapshot and release
 

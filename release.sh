@@ -102,11 +102,11 @@ check_git_is_clean(){
 }
 generate_release_name(){
     local vers=$1
-    local osascript=$(which osascript)
+    local node=$(which node)
     local TEMPL='<span style="color: $REL_COLOR"><span class="glyphicon glyphicon-$REL_ICON"></span> "$REL_TEXT"</span>'
-    if [ -n "$osascript" ] ; then
+    if [ -n "$node" ] ; then
         # run javascript file with osascript (mac)
-        local vars=$(cat rundeckapp/grails-app/assets/javascripts/version.js  releaseversion.js  | osascript -l JavaScript - $vers )
+        local vars=$(node releaseversion.js $vers )
         eval $vars
         echo $TEMPL | sed "s#\$REL_COLOR#$REL_COLOR#" \
             | sed "s#\$REL_ICON#$REL_ICON#" \
@@ -149,7 +149,7 @@ main() {
     local -a NEW_VERS=( $( rd_make_release_version "${VERS[@]}" ) )
 
     if [ "1" == "$NOTESONLY" ] ; then
-        update_release_notes_date "$NEW_VERS"
+        generate_release_notes_documentation "$NEW_VERS"
         return 0
     fi
 

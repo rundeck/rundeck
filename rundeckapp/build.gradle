@@ -12,12 +12,14 @@ buildscript {
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
         classpath "com.bertramlabs.plugins:asset-pipeline-gradle:2.14.10"
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
     }
 }
 plugins {
     id "org.dvaske.gradle.git-build-info"
 }
 
+apply plugin:"com.jfrog.bintray"
 apply plugin:"eclipse"
 apply plugin:"idea"
 apply plugin:"war"
@@ -26,6 +28,7 @@ apply plugin:"com.energizedwork.webdriver-binaries"
 apply plugin:"com.energizedwork.idea-project-components"
 apply plugin:"asset-pipeline"
 apply plugin:"org.grails.grails-gsp"
+
 
 configurations {
     war{}
@@ -58,7 +61,7 @@ dependencies {
                 project(':plugins:git-plugin'),
                 project(':plugins:source-refresh-plugin'),
                 project(':plugins:upvar-plugin'),
-                "com.github.Batix:rundeck-ansible-plugin:2.3.0",
+                "com.github.Batix:rundeck-ansible-plugin:2.5.0",
                 "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
                 "com.github.rundeck-plugins:py-winrm-plugin:1.0.4",
                 "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
@@ -66,7 +69,7 @@ dependencies {
     // Rundeck project dependencies.
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
-    compile project('metricsweb')
+    compile project(':rundeck:metricsweb')
     compile project(':grails-persistlocale')
 
     // From BuildConfig.groovy.
@@ -156,6 +159,7 @@ dependencies {
 }
 
 bootRun {
+    dependsOn 'copySpa'
     jvmArgs('-Dspring.output.ansi.enabled=always')
     systemProperties(System.properties)
     systemProperty "build.ident", project.version
@@ -255,8 +259,17 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     }
 }
 
+task copySpa(type: Copy) {
+    dependsOn ':rundeck:grails-spa:buildSpa'
+    from project(':rundeck:grails-spa').buildDir
+    into "$projectDir/grails-app/assets"
+    outputs.dir "$projectDir/grails-app/assets/provided"
+}
+tasks.assetCompile.dependsOn copySpa
+
 war {
     it.dependsOn copyPluginLibs
+
     from("${buildDir}/WEB-INF/rundeck/plugins") {
         into("WEB-INF/rundeck/plugins")
     }
@@ -280,4 +293,51 @@ if (signArchives) {
     }
     bootRepackage.dependsOn(war)
     signArchives.dependsOn(bootRepackage)
+}
+
+clean {
+    delete "$projectDir/grails-app/assets/provided"
+}
+
+bintray {
+    user = findProperty("bintrayUser")
+    key = findProperty("bintrayApiKey")
+    publish = true
+    dryRun = (findProperty('dryRun') ?: 'true').toBoolean()
+
+    if (findProperty('bintrayUseExisting')) {
+        filesSpec {
+            from "$artifactDir/rundeckapp/build/libs"
+            from "$artifactDir/rundeckapp/build/poms"
+            into "${project.group}.${project.name}".replace('.', '/') + "/$version"
+            exclude '*.original'
+            rename { file ->
+                if (file =~ /^pom/)
+                    return "rundeck-${version}.pom"
+                else
+                    return file
+            }
+        }
+    } else {
+        configurations =  ['archives']
+    }
+
+    pkg {
+        repo = 'maven'
+        name = 'rundeck'
+        userOrg = 'rundeck'
+
+        version {
+            // mavenCentralSync {
+            //     sync = true //[Default: true] Determines whether to sync the version to Maven Central.
+            //     user = findProperty('ossUserToken') //OSS user token: mandatory
+            //     password = findProperty('ossUserPassword') //OSS user password: mandatory
+            // }
+
+            gpg {
+                sign = true //Determines whether to GPG sign the files. The default is false
+                passphrase = findProperty('signingPassword') //Optional. The passphrase for GPG signing'
+            }
+        }
+    }
 }

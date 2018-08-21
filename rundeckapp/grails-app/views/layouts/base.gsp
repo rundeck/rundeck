@@ -63,7 +63,7 @@
     <g:render template="/common/css"/>
 
     <!-- VUE CSS MODULES -->
-    <asset:stylesheet href="components/motd/dist/static/css/app.css"/>
+    <asset:stylesheet href="static/css/components/motd.css"/>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -171,7 +171,7 @@
       </div>
       <div class="content">
         <div class="container-fluid">
-          <div id=project-motd-vue></div>
+          <div id=project-motd-vue project=blah key=foo></div>
         </div>
         <g:layoutBody/>
       </div>
@@ -195,12 +195,12 @@ disable for now because profiler plugin is not compatible with grails 3.x
   if(sidebarOpen === 'true'){
     document.body.classList.remove('sidebar-mini')
   }
-</g:javascript>
+</g:javascript> 
 
 <!-- VUE JS MODULES -->
-<asset:javascript src="components/motd/dist/static/js/manifest.js"/>
-<asset:javascript src="components/motd/dist/static/js/vendor.js"/>
-<asset:javascript src="components/motd/dist/static/js/app.js"/>
+<asset:javascript src="static/manifest.js"/>
+<asset:javascript src="static/vendor.js"/>
+<asset:javascript src="static/components/motd.js"/>
 <!-- /VUE JS MODULES -->
 
 </body>

@@ -21,7 +21,7 @@
 jQuery(function () {
     "use strict";
     new TestHarness("workflow.test.js", {
-        workflowTest: function () {
+        unescapeTest: function () {
 
             this.assert("unescape", RDWorkflow.unescape('abc/123', '\\', ['\\', '/'], ['/']), {
                 text: 'abc',
@@ -39,9 +39,18 @@ jQuery(function () {
                 rest: '123/456'
             });
         },
+        escapeStrTest: function(){
+            this.assert("escapeStr", RDWorkflow.escapeStr('abc/123', '\\', ['\\', '/']), 'abc\\/123');
+            this.assert("escapeStr", RDWorkflow.escapeStr('abc\\123', '\\', ['\\', '/']), 'abc\\\\123');
+        },
         splitEscapedTest: function () {
             this.assert("splitEscaped", RDWorkflow.splitEscaped('a\\/bc/123/456', '/'), ['a/bc', '123', '456']);
             this.assert("splitEscaped", RDWorkflow.splitEscaped('a\\/b@c/1,2=3/4\\\\56', '/'), ['a/b@c', '1,2=3', '4\\56']);
+
+        },
+        joinEscapedTest: function () {
+            this.assert("joinEscaped", RDWorkflow.joinEscaped(['a/bc','123','456'], '/'), 'a\\/bc/123/456');
+            this.assert("joinEscaped", RDWorkflow.joinEscaped(['a/b@c','1,2=3','4\\56'], '/'), 'a\\/b@c/1,2=3/4\\\\56');
 
         },
         isErrorhandlerForContextIdTest: function () {
@@ -85,6 +94,18 @@ jQuery(function () {
             this.assert("parseContextId", RDWorkflow.parseContextId('1e@abc/2/3'), ['1e@abc', '2', '3']);
             this.assert("parseContextId", RDWorkflow.parseContextId('1/2e@asdf=xyz/3'), ['1', '2e@asdf=xyz', '3']);
             this.assert("parseContextId", RDWorkflow.parseContextId('2@node=crub\\/dub-1/1'), ['2@node=crub/dub-1', '1']);
+
+
+        },
+        createContextIdTest: function () {
+            //parse context id
+            this.assert("createContextId", RDWorkflow.createContextId(['1']),'1');
+            this.assert("createContextId", RDWorkflow.createContextId(['1', '1']), '1/1');
+            this.assert("createContextId", RDWorkflow.createContextId(['1', '1', '1']),'1/1/1' );
+            this.assert("createContextId", RDWorkflow.createContextId(['1', '2', '3']),'1/2/3' );
+            this.assert("createContextId", RDWorkflow.createContextId(['1e@abc', '2', '3']), '1e@abc/2/3');
+            this.assert("createContextId", RDWorkflow.createContextId(['1', '2e@asdf=xyz', '3']),'1/2e@asdf=xyz/3' );
+            this.assert("createContextId", RDWorkflow.createContextId(['2@node=crub/dub-1', '1']),'2@node=crub\\/dub-1/1' );
 
 
         },

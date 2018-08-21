@@ -18,6 +18,9 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.server.projects.RundeckProject
+import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
 
@@ -99,21 +102,27 @@ class ProjectControllerTest {
     }
     @Test
     void apiProjectList_json(){
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
         controller.frameworkService = mockWith(FrameworkService) {
             getAuthContextForSubject(1..1) { subj ->
                 null
             }
             projects(1..1) { auth ->
                 [
-                        [name: 'testproject'],
-                        [name: 'testproject2'],
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
                 ]
             }
         }
         controller.apiService=mockWith(ApiService){
             requireApi(1..1){req,resp->true}
         }
-
+        request.setAttribute('api_version', 24)
         response.format='json'
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
@@ -126,6 +135,85 @@ class ProjectControllerTest {
         assert response.json[1].description==''
         assert response.json[1].url==base+'/project/testproject2'
     }
+    @Test
+    void apiProjectList_v26_json(){
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        request.setAttribute('api_version', 26)
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].label==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].label==''
+        assert response.json[1].url==base+'/project/testproject2'
+    }
+
+    @Test
+    void apiProjectList_withLabels_json(){
+        def labelA = 'Test Project'
+        def labelB = 'Test Project 2'
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> ['project.label':labelA]}
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> ['project.label':labelB]}
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        request.setAttribute('api_version', 26)
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].label==labelA
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].label==labelB
+        assert response.json[1].url==base+'/project/testproject2'
+    }
+
+
     @Test
     void apiProjectList_unacceptableReceivesXml(){
         controller.frameworkService = mockWith(FrameworkService) {
@@ -241,6 +329,11 @@ class ProjectControllerTest {
 
     private Object createFrameworkService(boolean configAuth, String projectName, LinkedHashMap<String,
     String> projectProperties=[:]) {
+        def prja = new StubFor(IRundeckProject)
+        prja.demand.getName(0..10) { -> 'test1'}
+        prja.demand.getProjectProperties(0..1){ -> [:]}
+        prja.demand.hasProperty(0..1){ String prop -> false}
+        def pInstance = prja.proxyInstance()
         mockWith(FrameworkService) {
             getAuthContextForSubject(1..1) { subj ->
                 null
@@ -282,11 +375,11 @@ class ProjectControllerTest {
             }
             getFrameworkProject(1..1) { String name ->
                 assertEquals(projectName, name)
-                [name: projectName]
+                pInstance
             }
             if(configAuth){
                 loadProjectProperties(1..1){pject->
-                    assertEquals([name:projectName],pject)
+                    assertEquals(pInstance,pject)
                     projectProperties
                 }
             }
@@ -811,6 +904,10 @@ class ProjectControllerTest {
     private Object mockFrameworkServiceForProjectCreate(boolean authorized, boolean exists, ArrayList createErrors,
                                                        LinkedHashMap<String, String> inputProps,
                                                        LinkedHashMap<String, String> configProps) {
+        def prja = new StubFor(IRundeckProject)
+        prja.demand.getName(0..10) { -> 'test1'}
+        prja.demand.getProjectProperties(0..1){ -> [:]}
+
         mockWith(FrameworkService) {
             getAuthContextForSubject(1..1) { subject -> null }
             authorizeApplicationResourceTypeAll { auth, type, actions ->
@@ -831,7 +928,7 @@ class ProjectControllerTest {
             createFrameworkProject { name, props ->
                 assertEquals 'test1', name
                 assertEquals(inputProps, props)
-                [createErrors.size() > 0 ? null: [name: 'test1'], createErrors]
+                [createErrors.size() > 0 ? null: prja.proxyInstance(), createErrors]
             }
             if(createErrors.size()>0){
                 return
