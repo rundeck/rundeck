@@ -113,16 +113,18 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         if (null == loaderForIdent) {
             throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
         }
-        final CloseableProvider<T> load = loaderForIdent.loadCloseable(service, providerName);
-        if (null != load) {
-            return load;
-        } else {
-            throw new ProviderLoaderException(
-                    "Unable to load provider: " + providerName + ", for service: " + service.getName(),
-                    service.getName(),
-                    providerName
-            );
+        if (service.canLoadWithLoader(loaderForIdent)) {
+            final CloseableProvider<T> load = service.loadCloseableWithLoader(providerName, loaderForIdent);
+            if (null != load) {
+                return load;
+            }
         }
+        throw new ProviderLoaderException(
+                "Unable to load provider: " + providerName + ", for service: " + service.getName(),
+                service.getName(),
+                providerName
+        );
+
     }
 
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
@@ -131,14 +133,17 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         if (null == loaderForIdent) {
             throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
         }
-        final T load = loaderForIdent.load(service, providerName);
-        if (null != load) {
-            return load;
-        } else {
-            throw new ProviderLoaderException(
-                "Unable to load provider: " + providerName + ", for service: " + service.getName(), service.getName(),
-                providerName);
+        if (service.canLoadWithLoader(loaderForIdent)) {
+            final T load = service.loadWithLoader(providerName, loaderForIdent);
+            if (null != load) {
+                return load;
+            }
         }
+        throw new ProviderLoaderException(
+            "Unable to load provider: " + providerName + ", for service: " + service.getName(), service.getName(),
+            providerName
+        );
+
     }
 
     @Override

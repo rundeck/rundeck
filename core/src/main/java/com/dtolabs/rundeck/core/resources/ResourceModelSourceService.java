@@ -45,7 +45,9 @@ public class ResourceModelSourceService
     extends PluggableProviderRegistryService<ResourceModelSourceFactory>
     implements ConfigurableService<ResourceModelSource>,
                DescribableService,
-               PluggableProviderService<ResourceModelSourceFactory>
+               PluggableProviderService<ResourceModelSourceFactory>,
+               JavaClassProviderLoadable<ResourceModelSourceFactory>,
+               ScriptPluginProviderLoadable<ResourceModelSourceFactory>
 {
 
     public static final String SERVICE_NAME = ServiceNameConstants.ResourceModelSource;
@@ -147,10 +149,7 @@ public class ResourceModelSourceService
         return createProviderInstanceFromType(clazz, name);
     }
 
-    public boolean isScriptPluggable() {
-        return true;
-    }
-
+    @Override
     public ResourceModelSourceFactory createScriptProviderInstance(final ScriptPluginProvider provider) throws
         PluginException {
         ScriptPluginResourceModelSourceFactory.validateScriptPlugin(provider);

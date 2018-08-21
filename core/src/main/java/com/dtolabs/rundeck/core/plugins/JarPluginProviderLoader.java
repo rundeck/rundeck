@@ -37,6 +37,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
@@ -50,6 +51,8 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
  *
  * Calls to load a provider instance should be synchronized as this class will
  * perform file copy operations.
+ *
+ * Services that want to use this loader need to implement {@link JavaClassProviderLoadable}
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -106,6 +109,11 @@ class JarPluginProviderLoader implements ProviderLoader,
         this.pluginJarCacheDirectory = pluginJarCacheDirectory;
         this.cachedir = cachedir;
         this.loadLibsFirst = loadLibsFirst;
+    }
+
+    @Override
+    public boolean canLoadForService(final FrameworkSupportService service) {
+        return service instanceof JavaClassProviderLoadable;
     }
 
     private boolean supportsResources(final String pluginVersion) {
@@ -279,17 +287,20 @@ class JarPluginProviderLoader implements ProviderLoader,
     static <T,X extends T> T createProviderForClass(final PluggableService<T> service, final Class<X> cls) throws PluginException,
             ProviderCreationException {
         debug("Try loading provider " + cls.getName());
-
+        if(!(service instanceof JavaClassProviderLoadable)){
+            return null;
+        }
+        JavaClassProviderLoadable<T> loadable = (JavaClassProviderLoadable<T>) service;
         final Plugin annotation = getPluginMetadata(cls);
 
         final String pluginname = annotation.name();
 
-        if (!service.isValidProviderClass(cls)) {
+        if (!loadable.isValidProviderClass(cls)) {
             throw new PluginException("Class " + cls.getName() + " was not a valid plugin class for service: " 
                     + service.getName() + ". Expected class " + cls.getName() + ", with a public constructor with no parameter");
         }
         debug("Succeeded loading plugin " + cls.getName() + " for service: " + service.getName());
-        return service.createProviderInstance(cls, pluginname);
+        return loadable.createProviderInstance(cls, pluginname);
     }
 
     private static void debug(final String s) {

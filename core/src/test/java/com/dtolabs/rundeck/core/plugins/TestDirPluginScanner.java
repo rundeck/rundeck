@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
@@ -109,6 +110,11 @@ public class TestDirPluginScanner extends TestCase {
                     idents.add(new ProviderIdent(ab[0], ab[1]));
                 }
             }
+        }
+
+        @Override
+        public boolean canLoadForService(final FrameworkSupportService service) {
+            return true;
         }
 
         public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException {

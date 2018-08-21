@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
@@ -34,7 +33,9 @@ import java.util.List;
  * Date: 4/12/13
  * Time: 4:52 PM
  */
-public abstract class BasePluggableProviderService<T> implements PluggableProviderService<T> {
+public abstract class BasePluggableProviderService<T>
+    implements PluggableProviderService<T>, JavaClassProviderLoadable<T>
+{
     protected Class<? extends T> implementationClass;
     protected String name;
 
@@ -97,18 +98,6 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
         return providerIdents;
     }
 
-    /**
-     * default implementation returns false, subclasses should override to
-     */
-    public boolean isScriptPluggable() {
-        return false;
-    }
-
-    public T createScriptProviderInstance(ScriptPluginProvider provider)
-            throws PluginException {
-        throw new UnsupportedOperationException("This service does not support script plugins");
-    }
-
     protected T createProviderInstanceFromType(final Class<? extends T> execClass, final String providerName) throws
             ProviderCreationException {
 
@@ -158,7 +147,7 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
      * @param <X> provider type
      * @param converter converter
      */
-    public <X> ProviderService<X> adapter(final Converter<T, X> converter) {
+    public <X> PluggableProviderService<X> adapter(final Converter<T, X> converter) {
         return AdapterService.adaptFor(this, converter);
     }
 

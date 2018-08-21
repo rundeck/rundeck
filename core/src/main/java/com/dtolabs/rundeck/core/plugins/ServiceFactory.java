@@ -1,7 +1,6 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.ProviderService;
 
 import java.util.Map;
 
@@ -30,18 +29,11 @@ public class ServiceFactory {
             final Class<T> providerClass
     )
     {
-        FrameworkPluggableProviderService<T> frameworkPluggableProviderService = new
+        return new
                 FrameworkPluggableProviderService<T>(
                 serviceName,
                 framework,
                 providerClass
-        )
-        {
-            @Override
-            public boolean isScriptPluggable() {
-                return false;
-            }
-        };
-        return frameworkPluggableProviderService;
+        );
     }
 }
