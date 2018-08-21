@@ -81,6 +81,7 @@ ext.exportedProjects = [
 ]
 
 project.ext.environment = project.hasProperty('environment') ? environment : 'development'
+project.ext.artifactDir = "$projectDir/artifacts"
 
 def versionProps = new Properties()
 file("version.properties").withInputStream { versionProps.load(it) }
