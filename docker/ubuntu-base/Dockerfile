@@ -26,7 +26,7 @@ RUN set -euxo pipefail \
         curl \
         ssh-client \
         sudo \
-        openjdk-8-jdk \
+        openjdk-8-jdk-headless \
         uuid-runtime \
         wget \
     && rm -rf /var/lib/apt/lists/* \
