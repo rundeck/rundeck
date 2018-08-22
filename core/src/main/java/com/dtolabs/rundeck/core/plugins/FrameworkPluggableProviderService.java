@@ -35,7 +35,7 @@ import java.lang.reflect.Constructor;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class FrameworkPluggableProviderService<T> extends BasePluggableProviderService<T> {
+public class FrameworkPluggableProviderService<T> extends BasePluggableProviderService<T> {
     private Framework framework;
 
     protected FrameworkPluggableProviderService(final String name,

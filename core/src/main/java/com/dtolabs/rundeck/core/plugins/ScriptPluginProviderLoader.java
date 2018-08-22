@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.metadata.ProviderDef;
@@ -47,6 +48,8 @@ import static com.dtolabs.rundeck.core.plugins.JarPluginProviderLoader.RESOURCES
 
 /**
  * ScriptPluginProviderLoader can load a provider instance for a service from a script plugin zip file.
+ *
+ * Services that want to use this loader need to implement {@link ScriptPluginProviderLoadable}
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
@@ -88,6 +91,11 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     public ScriptPluginProviderLoader(final File file, final File cachedir) {
         this.file = file;
         this.cachedir = cachedir;
+    }
+
+    @Override
+    public boolean canLoadForService(final FrameworkSupportService service) {
+        return service instanceof ScriptPluginProviderLoadable;
     }
 
     private PluginResourceLoader getResourceLoader() throws PluginException {
@@ -133,9 +141,10 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      */
     public synchronized <T> T load(final PluggableService<T> service, final String providerName) throws
         ProviderLoaderException {
-        if (!service.isScriptPluggable()) {
+        if (!(service instanceof ScriptPluginProviderLoadable)) {
             return null;
         }
+        ScriptPluginProviderLoadable<T> loader =(ScriptPluginProviderLoadable<T>) service;
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
 
         if (null == pluginProviderDefs.get(ident)) {
@@ -167,7 +176,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
 
         if (null != scriptPluginProvider) {
             try {
-                return service.createScriptProviderInstance(scriptPluginProvider);
+                return loader.createScriptProviderInstance(scriptPluginProvider);
             } catch (PluginException e) {
                 throw new ProviderLoaderException(e, service.getName(), providerName);
             }

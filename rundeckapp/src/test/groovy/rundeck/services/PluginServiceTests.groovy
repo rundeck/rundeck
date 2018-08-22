@@ -66,29 +66,10 @@ class PluginServiceTests extends Specification {
             return null
         }
 
-        @Override
-        boolean isValidProviderClass(Class clazz) {
-            return false
-        }
-
-        @Override
-        boolean isScriptPluggable() {
-            return false
-        }
 
         @Override
         List<ProviderIdent> listProviders() {
             return null
-        }
-
-        String createProviderInstance(Class clazz, String name) {
-
-            return null;
-        }
-
-        String createScriptProviderInstance(ScriptPluginProvider name) {
-
-            return null;
         }
 
         String providerOfType(String name){

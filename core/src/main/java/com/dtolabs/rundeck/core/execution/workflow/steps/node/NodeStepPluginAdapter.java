@@ -79,6 +79,11 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
         this.plugin = plugin;
     }
 
+    public static boolean canAdaptType(Class<?> testType){
+        return NodeStepPlugin.class.isAssignableFrom(testType);
+    }
+
+
     static class Convert implements Converter<NodeStepPlugin, NodeStepExecutor> {
         public NodeStepExecutor convert(final NodeStepPlugin plugin) {
             return new NodeStepPluginAdapter(plugin);

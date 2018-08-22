@@ -38,12 +38,6 @@ public class OrchestratorService extends FrameworkPluggableProviderService<Orche
         super(SERVICE_NAME, framework, OrchestratorPlugin.class);
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        
-        return false;
-    }
-
     public Description getDescription(String name){
         for(Description description: listDescriptions()){
             if(description.getName().equals(name)){

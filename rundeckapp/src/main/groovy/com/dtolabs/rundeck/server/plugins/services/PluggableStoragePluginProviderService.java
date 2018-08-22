@@ -37,12 +37,6 @@ public class PluggableStoragePluginProviderService extends BasePluggableProvider
         return getRundeckServerServiceProviderLoader();
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
-    }
-
     public ServiceProviderLoader getRundeckServerServiceProviderLoader() {
         return rundeckServerServiceProviderLoader;
     }

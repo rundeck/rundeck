@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -60,6 +61,26 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
 
         serviceList.add(builtinService);
         serviceList.add(pluginService);
+    }
+
+    @Override
+    public boolean canLoadWithLoader(final ProviderLoader loader) {
+        return pluginService.canLoadWithLoader(loader);
+    }
+
+    @Override
+    public WorkflowStrategy loadWithLoader(final String providerName, final ProviderLoader loader)
+        throws ProviderLoaderException
+    {
+        return pluginService.loadWithLoader(providerName,loader);
+    }
+
+    @Override
+    public CloseableProvider<WorkflowStrategy> loadCloseableWithLoader(
+        final String providerName, final ProviderLoader loader
+    ) throws ProviderLoaderException
+    {
+        return pluginService.loadCloseableWithLoader(providerName,loader);
     }
 
     @Override
@@ -173,28 +194,6 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
 
     public List<ProviderIdent> listDescribableProviders() {
         return DescribableServiceUtil.listDescribableProviders(this);
-    }
-
-    @Override
-    public boolean isValidProviderClass(final Class clazz) {
-        return pluginService.isValidProviderClass(clazz);
-    }
-
-    @Override
-    public <X extends WorkflowStrategy> WorkflowStrategy createProviderInstance(final Class<X> clazz, final String name)
-            throws PluginException, ProviderCreationException
-    {
-        return pluginService.createProviderInstance(clazz, name);
-    }
-
-    @Override
-    public boolean isScriptPluggable() {
-        return pluginService.isScriptPluggable();
-    }
-
-    @Override
-    public WorkflowStrategy createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {
-        return pluginService.createScriptProviderInstance(provider);
     }
 
     public void registerClass(String name, Class<? extends WorkflowStrategy> clazz) {

@@ -85,6 +85,10 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         this.scriptUtils = scriptUtils;
     }
 
+    public static boolean canAdaptType(Class<?> testType){
+        return RemoteScriptNodeStepPlugin.class.isAssignableFrom(testType);
+    }
+
     static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
         @Override
         public NodeStepExecutor convert(final RemoteScriptNodeStepPlugin plugin) {

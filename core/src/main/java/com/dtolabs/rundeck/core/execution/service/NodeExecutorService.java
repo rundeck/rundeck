@@ -28,19 +28,13 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.resources.ResourceModelSource;
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * CommandExecutorFactory is ...
@@ -49,7 +43,10 @@ import java.util.Properties;
  */
 public class NodeExecutorService
     extends NodeSpecifiedService<NodeExecutor>
-    implements DescribableService, PluggableProviderService<NodeExecutor>
+    implements DescribableService,
+               PluggableProviderService<NodeExecutor>,
+               JavaClassProviderLoadable<NodeExecutor>,
+               ScriptPluginProviderLoadable<NodeExecutor>
 {
     private static final String SERVICE_NAME = ServiceNameConstants.NodeExecutor;
     public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
@@ -109,10 +106,6 @@ public class NodeExecutorService
     @Override
     public <X extends NodeExecutor> NodeExecutor createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
-    }
-
-    public boolean isScriptPluggable() {
-        return true;
     }
 
     public NodeExecutor createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {

@@ -844,7 +844,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         jarstream.closeEntry();
     }
 
-    public static class testService1 implements PluggableService<JarTestType1> {
+    public static class testService1 implements PluggableService<JarTestType1>,JavaClassProviderLoadable<JarTestType1> {
         private boolean isvalid;
         JarTestType1 createScriptInstance;
         private String name;

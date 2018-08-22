@@ -26,8 +26,8 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.ChainedProviderService;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -43,10 +43,13 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class NodeStepExecutionService extends ChainedProviderService<NodeStepExecutor> implements DescribableService {
-    public static final String SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
-    public static final String PLUGIN_SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
-    public static final String REMOTE_SCRIPT_PLUGIN_SERVICE_NAME = ServiceNameConstants.RemoteScriptNodeStep;
+public class NodeStepExecutionService
+    extends ChainedProviderService<NodeStepExecutor>
+    implements PluggableProviderService<NodeStepExecutor>, DescribableService
+{
+    public static final String                                     SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
+    private final       PluggableProviderService<NodeStepExecutor> nodeStepPluginAdapterService;
+    private final       PluggableProviderService<NodeStepExecutor> remoteScriptNodeStepPluginAdapterService;
 
     private List<ProviderService<NodeStepExecutor>> serviceList;
 
@@ -62,16 +65,53 @@ public class NodeStepExecutionService extends ChainedProviderService<NodeStepExe
          */
         this.primaryService = new BuiltinNodeStepExecutionService(framework, SERVICE_NAME);
 
-        final ProviderService<NodeStepExecutor> pluginService =
-            new NodeStepPluginService(PLUGIN_SERVICE_NAME, framework).adapter(NodeStepPluginAdapter.CONVERTER);
+        NodeStepPluginService
+            nodeStepPluginService =
+            new NodeStepPluginService(ServiceNameConstants.WorkflowNodeStep, framework);
+        nodeStepPluginAdapterService = nodeStepPluginService.adapter(NodeStepPluginAdapter.CONVERTER);
 
-        final ProviderService<NodeStepExecutor> generatorPluginService =
-            new RemoteScriptNodeStepPluginService(REMOTE_SCRIPT_PLUGIN_SERVICE_NAME, framework)
-                .adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
+        RemoteScriptNodeStepPluginService
+            remoteScriptNodeStepPluginService =
+            new RemoteScriptNodeStepPluginService(ServiceNameConstants.RemoteScriptNodeStep, framework);
+        remoteScriptNodeStepPluginAdapterService =
+            remoteScriptNodeStepPluginService.adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
 
         serviceList.add(primaryService);
-        serviceList.add(pluginService);
-        serviceList.add(generatorPluginService);
+        serviceList.add(nodeStepPluginAdapterService);
+        serviceList.add(remoteScriptNodeStepPluginAdapterService);
+    }
+
+    @Override
+    public boolean canLoadWithLoader(final ProviderLoader loader) {
+        return nodeStepPluginAdapterService.canLoadWithLoader(loader) ||
+               remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader);
+    }
+
+    @Override
+    public NodeStepExecutor loadWithLoader(final String providerName, final ProviderLoader loader)
+        throws ProviderLoaderException
+    {
+        if (nodeStepPluginAdapterService.canLoadWithLoader(loader)) {
+            return nodeStepPluginAdapterService.loadWithLoader(providerName, loader);
+        } else if (remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader)) {
+            return remoteScriptNodeStepPluginAdapterService.loadWithLoader(providerName, loader);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public CloseableProvider<NodeStepExecutor> loadCloseableWithLoader(
+        final String providerName, final ProviderLoader loader
+    ) throws ProviderLoaderException
+    {
+        if (nodeStepPluginAdapterService.canLoadWithLoader(loader)) {
+            return nodeStepPluginAdapterService.loadCloseableWithLoader(providerName, loader);
+        } else if (remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader)) {
+            return remoteScriptNodeStepPluginAdapterService.loadCloseableWithLoader(providerName, loader);
+        } else {
+            return null;
+        }
     }
 
     @Override

@@ -44,9 +44,4 @@ public class StorageConverterPluginProviderService extends BasePluggableProvider
         this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
-    }
 }

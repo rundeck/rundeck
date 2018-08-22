@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 
 package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.common.ProviderService;
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
-import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
-
 /**
- * A pluggable provider service
+ * Indicates that the provider can be created via a {@link ScriptPluginProvider} instance
+ * @param <T>
  */
-public interface PluggableProviderService<T> extends ProviderService<T>, PluggableService<T>, DescribableService {
+public interface ScriptPluginProviderLoadable<T> {
+    /**
+     * @return the instance for a ScriptPluginProvider definition
+     *
+     * @param provider the script plugin provider
+     *
+     *              @throws PluginException if the plugin has an error
+     */
+    public T createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException;
 }

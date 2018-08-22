@@ -23,6 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
 
@@ -33,7 +34,9 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface ProviderLoader extends FileCache.Cacheable {
+public interface ProviderLoader
+    extends FileCache.Cacheable
+{
     /**
      * Return an provider instance for a service and provider name
      */
@@ -43,6 +46,13 @@ interface ProviderLoader extends FileCache.Cacheable {
      * Return true if this loader can load the given ident
      */
     public boolean isLoaderFor(ProviderIdent ident);
+
+    /**
+     * @param service service
+     * @return true if the service can be used to load with this loader, e.g. if it implements any necessary interface
+     */
+    boolean canLoadForService(FrameworkSupportService service);
+
     /**
      * List providers available
      */

@@ -47,9 +47,4 @@ public class NotificationPluginProviderService extends BasePluggableProviderServ
         this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
     }
 
-    @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
-    }
 }

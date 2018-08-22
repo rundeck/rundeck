@@ -25,44 +25,51 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 
 /**
- * PluggableService is a service that supports plugin provider classes and optionally supports plugin provider scripts.
+ * PluggableService is a service that supports loading plugins via provider loaders.
  *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @author Greg Schueler <a href="mailto:greg@rundeck.com">greg@rundeck.com</a>
  */
-public interface PluggableService<T> extends FrameworkSupportService {
+public interface PluggableService<T>
+    extends FrameworkSupportService
+{
     /**
-     * @return true if the class is a valid provider class for the service
-     *
-     * @param clazz the class
+     * @param loader loader
+     * @return true if the loader can be used for this service, by default delegates to the loader's
+     * {@link ProviderLoader#canLoadForService(FrameworkSupportService)}
      */
-    public boolean isValidProviderClass(Class clazz);
+    default boolean canLoadWithLoader(ProviderLoader loader) {
+        return loader.canLoadForService(this);
+    }
 
     /**
-     * @return Create provider instance from a class
+     * Load provider with the given loader
      *
-     * @param clazz the class
-     * @param name  the provider name
-     * @param <X> subtype of T
-     *              @throws PluginException if the plugin has an error
-     *              @throws ProviderCreationException if creating the instance has an error
+     * @param providerName provider name
+     * @param loader       loader
+     * @return loaded provider instance, by default delegates to the loader's
+     * {@link ProviderLoader#load(PluggableService,
+     *         String)}
+     * @throws ProviderLoaderException if an error occurs
      */
-    public <X extends T> T createProviderInstance(Class<X> clazz, final String name) throws PluginException,
-        ProviderCreationException;
+    default T loadWithLoader(String providerName, ProviderLoader loader) throws ProviderLoaderException {
+        return loader.load(this, providerName);
+    }
 
     /**
-     * @return true if the service supports script plugins
-     */
-    public boolean isScriptPluggable();
-
-    /**
-     * @return the instance for a ScriptPluginProvider definition
+     * Load a closeable provider with the given loader
      *
-     * @param provider the script plugin provider
-     *
-     *              @throws PluginException if the plugin has an error
+     * @param providerName provider name
+     * @param loader       loader
+     * @return closeable provider for instance, by default delegates to the loader's {@link
+     *         ProviderLoader#loadCloseable(PluggableService, String)}
+     * @throws ProviderLoaderException if an error occurs
      */
-    public T createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException;
-
+    default CloseableProvider<T> loadCloseableWithLoader(String providerName, ProviderLoader loader)
+        throws ProviderLoaderException
+    {
+        return loader.loadCloseable(this, providerName);
+    }
 }

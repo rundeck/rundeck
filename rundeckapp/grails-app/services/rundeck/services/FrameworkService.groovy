@@ -29,9 +29,11 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import grails.core.GrailsApplication
 import org.springframework.context.ApplicationContext
@@ -825,7 +827,8 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
-        rundeckFramework.getNodeStepExecutorService().providerOfType(type).description
+        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
+        described.description
     }
     /**
      * Return step plugin description of a certain type
@@ -834,7 +837,8 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def Description getStepPluginDescription(String type) throws MissingProviderException{
-        rundeckFramework.getStepExecutionService().providerOfType(type).description
+        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
+        described.description
     }
 
     /**
@@ -843,7 +847,8 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def getStepPlugin(String type) throws MissingProviderException{
-        rundeckFramework.getStepExecutionService().providerOfType(type)
+        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
+        described.instance
     }
 
     /**
@@ -852,7 +857,8 @@ class FrameworkService implements ApplicationContextAware {
      * @return
      */
     def getNodeStepPlugin(String type){
-        rundeckFramework.getNodeStepExecutorService().providerOfType(type)
+        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
+        described.instance
     }
 
 
@@ -915,18 +921,18 @@ class FrameworkService implements ApplicationContextAware {
      * @return validation results, keys: "valid" (true/false), "error" (error message), "desc" ({@link Description} object),
      *   "props" (parsed property values map), "report" (Validation report {@link Validator.Report))
      */
-    public Map validateServiceConfig(String type, String prefix, Map params, ProviderService<?> service) {
+    public Map validateServiceConfig(String type, String prefix, Map params, PluggableProviderService<?> service) {
         Map result = [:]
         result.valid=false
-        def provider=null
+        DescribedPlugin provider = null
         try {
-            provider = service.providerOfType(type)
+            provider = pluginService.getPluginDescriptor(type, service)
         } catch (ExecutionServiceException e) {
             result.error = e.message
         }
         if (!provider) {
             result.error = "Invalid provider type: ${type}, not found"
-        } else if (!(provider instanceof Describable)) {
+        } else if (!provider.description) {
             result.error = "Invalid provider type: ${type}, not available for configuration"
         } else {
             def validated=validateDescription(provider.description, prefix, params)
@@ -1133,7 +1139,8 @@ class FrameworkService implements ApplicationContextAware {
         def properties = [:]
         if (serviceType) {
             try {
-                final desc = service.providerOfType(serviceType).description
+                def described = pluginService.getPluginDescriptor(serviceType, service)
+                final desc = described.description
                 properties = Validator.demapProperties(props, desc)
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
@@ -1153,7 +1160,8 @@ class FrameworkService implements ApplicationContextAware {
         def properties = [:]
         if (serviceType) {
             try {
-                final desc = service.providerOfType(serviceType).description
+                def described = pluginService.getPluginDescriptor(serviceType, service)
+                final desc = described.description
                 properties = Validator.mapProperties(report.errors, desc)
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
@@ -1183,18 +1191,31 @@ class FrameworkService implements ApplicationContextAware {
         demapPropertiesForType(type, getFileCopierService(), projectProps, FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY, config, removePrefixes)
     }
 
-    private void demapPropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
-        final executor = service.providerOfType(type)
-        final Description desc = executor.description
-
+    private void demapPropertiesForType(
+        String type,
+        PluggableProviderService service,
+        Properties projProps,
+        String defaultProviderProp,
+        config,
+        Set removePrefixes
+    ) {
+        final described = pluginService.getPluginDescriptor(type, service)
+        final Description desc = described.description
         projProps[defaultProviderProp] = type
         mapProperties(config, desc, projProps)
         accumulatePrefixesToRemoveFrom(desc, removePrefixes)
     }
-    private void addProjectServicePropertiesForType(String type, ProviderService service, Properties projProps, String defaultProviderProp, config, Set removePrefixes) {
-        final executor = service.providerOfType(type)
-        final Description desc = executor.description
 
+    private void addProjectServicePropertiesForType(
+        String type,
+        PluggableProviderService service,
+        Properties projProps,
+        String defaultProviderProp,
+        config,
+        Set removePrefixes
+    ) {
+        final described = pluginService.getPluginDescriptor(type, service)
+        final Description desc = described.description
         projProps[defaultProviderProp] = type
         mapProperties(config, desc, projProps)
         accumulatePrefixesToRemoveFrom(desc, removePrefixes)

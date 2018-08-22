@@ -27,11 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschScpFileCopier;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalFileCopier;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ProviderIdent;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
@@ -48,7 +44,10 @@ import java.util.List;
  */
 public class FileCopierService
     extends NodeSpecifiedService<FileCopier>
-    implements DescribableService, PluggableProviderService<FileCopier>
+    implements DescribableService,
+               PluggableProviderService<FileCopier>,
+               JavaClassProviderLoadable<FileCopier>,
+               ScriptPluginProviderLoadable<FileCopier>
 {
     private static final String SERVICE_NAME = ServiceNameConstants.FileCopier;
     public static final String SERVICE_DEFAULT_PROVIDER_PROPERTY = "service." + SERVICE_NAME + ".default.provider";
@@ -111,10 +110,6 @@ public class FileCopierService
     @Override
     public <X extends FileCopier> FileCopier createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
         return createProviderInstanceFromType(clazz, name);
-    }
-
-    public boolean isScriptPluggable() {
-        return true;
     }
 
     public FileCopier createScriptProviderInstance(final ScriptPluginProvider provider) throws PluginException {

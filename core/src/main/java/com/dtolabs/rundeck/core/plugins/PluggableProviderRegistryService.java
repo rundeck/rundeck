@@ -36,7 +36,7 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class PluggableProviderRegistryService<T> extends BaseProviderRegistryService<T> implements
-    PluggableService<T> {
+    PluggableProviderService<T> {
     protected PluggableProviderRegistryService(final Framework framework) {
         super(framework);
     }

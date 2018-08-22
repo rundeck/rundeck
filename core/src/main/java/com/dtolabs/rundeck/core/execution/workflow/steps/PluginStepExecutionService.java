@@ -36,15 +36,11 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class PluginStepExecutionService extends FrameworkPluggableProviderService<StepPlugin>
-    implements FrameworkSupportService, DescribableService {
+    implements FrameworkSupportService, DescribableService, ScriptPluginProviderLoadable<StepPlugin>
+{
 
     PluginStepExecutionService(final String name, final Framework framework) {
         super(name, framework, StepPlugin.class);
-    }
-
-    @Override
-    public boolean isScriptPluggable() {
-        return true;
     }
 
     @Override

@@ -18,14 +18,14 @@ package com.dtolabs.rundeck.server.plugins.services;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.*;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
-import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 
 /**
  * Created by greg on 8/26/16.
  */
-public class UIPluginProviderService extends FrameworkPluggableProviderService<UIPlugin> {
+public class UIPluginProviderService extends FrameworkPluggableProviderService<UIPlugin>
+    implements ScriptPluginProviderLoadable<UIPlugin>
+{
     public static final String SERVICE_NAME = "UI";
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
@@ -44,11 +44,6 @@ public class UIPluginProviderService extends FrameworkPluggableProviderService<U
 
     public void setRundeckServerServiceProviderLoader(ServiceProviderLoader rundeckServerServiceProviderLoader) {
         this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
-    }
-
-    @Override
-    public boolean isScriptPluggable() {
-        return true;
     }
 
     @Override

@@ -34,17 +34,15 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class NodeStepPluginService extends FrameworkPluggableProviderService<NodeStepPlugin> implements DescribableService {
+class NodeStepPluginService extends FrameworkPluggableProviderService<NodeStepPlugin> implements DescribableService,
+                                                                                                 ScriptPluginProviderLoadable<NodeStepPlugin>
+{
 
     /**
      * Create the service with a given name
      */
     public NodeStepPluginService(final String name, final Framework framework) {
         super(name, framework, NodeStepPlugin.class);
-    }
-
-    public boolean isScriptPluggable() {
-        return true;
     }
 
     public NodeStepPlugin createScriptProviderInstance(ScriptPluginProvider provider) throws PluginException {
