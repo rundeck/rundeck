@@ -4,12 +4,16 @@
       <div class="alert alert-info">
         <button type="button" class="close" @click="dismissMessage">×</button>
         <h4>Message of The Day</h4>
-        <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
-          <span v-html="message.fullMessage"></span>
+        <div v-show="showMessageTeaser">
+          <span v-html="message.shortMessage"></span>
+          <a v-show="message.fullMessage" class="btn btn-sm btn-simple" style="margin: 0; padding: 0 0 0 .5em;" @click="showMessageTeaser = !showMessageTeaser">[read more]</a>
         </div>
-        <div style="margin-top:1em;">
-          <a v-show="!showFullMOTD" class="btn btn-sm btn-default text-center" @click="showFullMOTD = !showFullMOTD">show more</a>
-          <a v-show="showFullMOTD" class="btn btn-sm btn-default text-center" @click="showFullMOTD = !showFullMOTD">show less</a>
+
+        <div v-show="!showMessageTeaser">
+          <span v-html="message.fullMessage"></span>
+          <p class="text-center">
+            <a class="btn btn-sm btn-simple text-center" @click="showMessageTeaser = !showMessageTeaser">[show less]</a>
+          </p>
         </div>
       </div>
     </div>
@@ -27,7 +31,7 @@ export default {
   data () {
     return {
       message: false,
-      showFullMOTD: false
+      showMessageTeaser: true
     }
   },
   methods: {
@@ -63,6 +67,7 @@ export default {
     let message = this.checkMessage()
 
     if (message) {
+      this.showMessageTeaser = true
       this.message = {
         shortMessage: _.truncate(this.project.readme.motd, {
           'length': 250
@@ -74,13 +79,6 @@ export default {
 }
 </script>
 
-<style lang="scss" scoped>
-.motd-content {
-  height: 200px;
-  overflow-y: hidden;
-  &.full {
-    height: 100%;
-    overflow: auto;
-  }
-}
+<style scoped>
+
 </style>
