@@ -77,10 +77,7 @@ function HomeData(data) {
         return ko.utils.arrayFilter(names,function(val,ndx){
             var proj = self.projectForName(val);
             var label = proj.label();
-            if (regex) {
-                return val.match(regex) || label && label.match(regex);
-            }
-            return val.indexOf(search) >= 0 || label && label.indexOf(search) >= 0;
+            return val.match(regex) || label && label.match(regex);
         });
     });
     self.searchedProjectsCount = ko.pureComputed(function () {
