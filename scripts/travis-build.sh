@@ -11,6 +11,7 @@ main() {
 
     case "${1}" in
         build) build ;;
+        buildDocker) buildDocker ;;
         publish) publish ;;
     esac
 }
@@ -19,6 +20,14 @@ build() {
     ./gradlew -Penvironment="${ENV}" -x check install
     groovy testbuild.groovy --buildType="${ENV}"
     make ENV="${ENV}" rpm deb
+}
+
+buildDocker() {
+    if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
+        docker_login && ./gradlew -g gradle-cache officialPush
+    else
+        echo "Skipping docker build for non-master build."
+    fi
 }
 
 publish() {
