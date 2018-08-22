@@ -1578,7 +1578,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             success = true
                         }
                     }
-                } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
+                } catch (org.springframework.dao.ConcurrencyFailureException ex) {
                     log.error("Could not abort ${eid}, the execution was modified")
                 } catch (StaleObjectStateException ex) {
                     log.error("Could not abort ${eid}, the execution was modified")
@@ -2801,8 +2801,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 success = true
             }
-        } catch (org.springframework.dao.OptimisticLockingFailureException e) {
-            log.error("Caught OptimisticLockingFailure, will retry updateScheduledExecStatistics for ${eId}")
+        } catch (org.springframework.dao.ConcurrencyFailureException e) {
+            log.error("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
         } catch (StaleObjectStateException e) {
             log.error("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
         }
