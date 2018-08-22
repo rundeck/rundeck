@@ -15,7 +15,6 @@
  */
 package org.rundeck.security
 
-import org.eclipse.jetty.jaas.JAASPrincipal
 import org.eclipse.jetty.jaas.JAASRole
 import org.springframework.security.authentication.jaas.AuthorityGranter
 import org.springframework.util.Assert
