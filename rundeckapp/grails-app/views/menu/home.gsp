@@ -60,17 +60,16 @@
         <g:if test="${isFirstRun}">
             <div class="col-sm-12">
               <div class="card">
-                  <div class="content">
-                    <div class="alert alert-dismissable alert-welcome">
-                        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                        <h1><g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/></h1>
-                        <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
-                        <span class="text-small text-primary">
-                            <g:message code="you.can.see.this.message.again.by.clicking.the" />
-                            <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
-                            <g:message code="in.the.page.footer" />
-                        </span>
-                    </div>
+                  <div class="card-content">
+                    <h1>
+                      <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
+                    </h1>
+                    <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
+                    <p class="h6 text-primary" style="margin-top:1em;">
+                        <g:message code="you.can.see.this.message.again.by.clicking.the" />
+                        <g:link action="welcome" controller="menu"><g:message code="version.number" /></g:link>
+                        <g:message code="in.the.page.footer" />
+                    </p>
                   </div>
               </div>
             </div>
