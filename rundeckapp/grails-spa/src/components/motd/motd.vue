@@ -5,7 +5,7 @@
         <button type="button" class="close" @click="dismissMessage">×</button>
         <h4>Message of The Day</h4>
         <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
-          <span v-html="message.fullMessage"></span>
+          <span v-html="message"></span>
         </div>
         <div style="margin-top:1em;">
           <a v-show="!showFullMOTD" class="btn btn-sm btn-default text-center" @click="showFullMOTD = !showFullMOTD">show more</a>
@@ -26,7 +26,7 @@ export default {
   ],
   data () {
     return {
-      message: false,
+      message: '',
       showFullMOTD: false
     }
   },
@@ -63,12 +63,7 @@ export default {
     let message = this.checkMessage()
 
     if (message) {
-      this.message = {
-        shortMessage: _.truncate(this.project.readme.motd, {
-          'length': 250
-        }),
-        fullMessage: (this.project.readme.motd.length <= 250 ? false : this.project.readme.motdHTML)
-      }
+      this.message =  this.project.readme.motdHTML
     }
   }
 }
@@ -76,9 +71,10 @@ export default {
 
 <style lang="scss" scoped>
 .motd-content {
-  height: 200px;
+  max-height: 200px;
   overflow-y: hidden;
   &.full {
+    max-height: 100%;
     height: 100%;
     overflow: auto;
   }
