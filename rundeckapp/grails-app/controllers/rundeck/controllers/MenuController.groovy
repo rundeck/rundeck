@@ -17,41 +17,16 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
-import com.dtolabs.rundeck.app.support.AclFile
-import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ProjAclFile
-import com.dtolabs.rundeck.app.support.QueueQuery
-import com.dtolabs.rundeck.app.support.SaveProjAclFile
-import com.dtolabs.rundeck.app.support.SaveSysAclFile
-import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
-import com.dtolabs.rundeck.app.support.StoreFilterCommand
-import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
-import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.StepPlugin
-import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
-import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
@@ -62,27 +37,10 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.Execution
-import rundeck.LogFileStorageRequest
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.ScheduledExecutionFilter
-import rundeck.User
+import rundeck.*
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
-import com.dtolabs.rundeck.app.api.ApiVersions
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.LogFileStorageService
-import rundeck.services.LoggingService
-import rundeck.services.NotificationService
-import rundeck.services.PluginApiService
-import rundeck.services.PluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.ScmService
-import rundeck.services.UserService
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
@@ -2040,10 +1998,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
-        def fprojects = frameworkService.projectNames(authContext)
-        def flabels = frameworkService.projectLabels(authContext)
-        session.frameworkProjects = fprojects
-        session.frameworkLabels = flabels
+
+        def fprojects = frameworkService.refreshSessionProjects(authContext, session)
+
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
         

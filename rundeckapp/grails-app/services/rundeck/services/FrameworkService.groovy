@@ -197,6 +197,18 @@ class FrameworkService implements ApplicationContextAware {
         }
         projectMap
     }
+    /**
+     * Refresh the session.frameworkProjects and session.frameworkLabels
+     * @param authContext
+     * @param session @param var @return
+     */
+    def refreshSessionProjects(AuthContext authContext, session){
+        def fprojects = projectNames(authContext)
+        def flabels = projectLabels(authContext)
+        session.frameworkProjects = fprojects
+        session.frameworkLabels = flabels
+        fprojects
+    }
 
     def existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)

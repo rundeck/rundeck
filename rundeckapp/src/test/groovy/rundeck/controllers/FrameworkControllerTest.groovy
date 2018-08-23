@@ -407,8 +407,7 @@ class FrameworkControllerTest {
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
-        fwk.demand.getFrameworkProject { project -> [name:project] }
-        fwk.demand.getNodeExecutorService { -> null }
+        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
 
         controller.frameworkService = fwk.proxyInstance()
@@ -659,6 +658,7 @@ class FrameworkControllerTest {
             assertEquals('Label----',props.getProperty('project.label'))
             ["success":props.size() != 0]
         }
+        fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         controller.frameworkService = fwk.proxyInstance()
 
