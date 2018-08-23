@@ -51,24 +51,16 @@
             </g:if>
             <g:if test="${!homeselected}">
               <g:set var="projconfigselected" value=""/>
-              <g:if test="${params.project ?: request.project}">
+                <g:if test="${project ?: params.project ?: request.project}">
+                    <g:set var="projectName" value="${project ?: params.project ?: request.project}"/>
+                    <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
-                <li id="projectHomeLink">
-                  <a
-                    href="${createLink(
-                                  controller: 'menu',
-                                  action: 'projectHome',
-                                  params: [project: project ?: params.project ?: request.project]
-                          )}">
-                    <g:if test="${session.frameworkLabels}">
-                      <g:enc>${project ?session.frameworkLabels[project]: params.project ? session.frameworkLabels[params.project]: request.project ? session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
-                    </g:if>
-                    <g:if test="${!session.frameworkLabels}">
-                      <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
-                    </g:if>
-                  </a>
-                </li>
-              </g:if>
+                    <li id="projectHomeLink">
+                        <g:link controller="menu" action="projectHome" params="[project: projectName]">
+                            <g:enc>${projectLabel}</g:enc>
+                        </g:link>
+                    </li>
+                </g:if>
               <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
                 <g:ifPageProperty name='meta.tabpage'>
                   <g:ifPageProperty name='meta.tabpage' equals='projectconfigure'>
@@ -76,23 +68,6 @@
                   </g:ifPageProperty>
                 </g:ifPageProperty>
               </g:if>
-              <g:if test="${session.frameworkProjects}">
-                %{-- Removed and placed in the sidebar
-                <li id="projectSelect">
-                  <g:render
-                    template="/framework/projectSelect"
-                    model="${[
-                                            projects    : session.frameworkProjects,
-                                            labels      : session.frameworkLabels,
-                                            project     : params.project ?: request.project,
-                                            selectParams: selectParams
-                                    ]}"/>
-                </li>
-                --}%
-              </g:if>
-              <g:else>
-                <!-- There's no reason for an empty dropdown -->
-              </g:else>
               <g:unless test="${session.frameworkProjects}">
                 <g:javascript>
                   jQuery(function(){ jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){ jQuery('#projectSelect').removeClass('disabled'); }); });
