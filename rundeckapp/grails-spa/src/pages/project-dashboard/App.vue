@@ -2,7 +2,7 @@
   <div id="app" v-if="project">
     <!-- <motd v-if="project && project.readme && project.readme.motd" :project="project"></motd> -->
     <project-description v-if="project && project.description" :project="project"></project-description>
-    <project-activity v-if="project" :project="project"></project-activity>
+    <project-activity v-if="project" :project="project" :rdBase="rdBase"></project-activity>
     <project-readme v-if="project" :project="project"></project-readme>
     <!-- <pre>{{project}}</pre> -->
   </div>
@@ -25,15 +25,17 @@ export default {
   },
   data () {
     return {
-      project: null
+      project: null,
+      rdBase: null
     }
   },
   mounted () {
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
+      this.rdBase = window._rundeck.rdBase
       axios({
         method: 'get',
         headers: {'x-rundeck-ajax': true},
-        url: `${window._rundeck.rdBase}menu/homeAjax`,
+        url: `${this.rdBase}menu/homeAjax`,
         params: {
           projects: `${window._rundeck.projectName}`
         },
