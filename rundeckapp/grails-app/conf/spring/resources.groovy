@@ -397,7 +397,7 @@ beans={
 
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
-        rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:'ROLE_'
+        rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:''
     }
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
