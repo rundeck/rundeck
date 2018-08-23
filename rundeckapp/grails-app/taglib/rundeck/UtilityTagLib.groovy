@@ -38,6 +38,7 @@ class UtilityTagLib{
             'nodeStatusColorCss',
             'logStorageEnabled',
             'executionMode',
+            'scheduleMode',
             'appTitle',
             'rkey',
             'w3cDateValue',
@@ -1142,6 +1143,11 @@ class UtilityTagLib{
 
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
+            out<<body()
+        }
+    }
+    def ifScheduleMode={attrs,body->
+        if(scheduleMode(attrs,body)){
             out<<body()
         }
     }

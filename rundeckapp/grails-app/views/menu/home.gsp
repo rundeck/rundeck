@@ -233,6 +233,16 @@
                       <span data-bind="text: project"></span>
                     </span>
                   </a>
+                    <span data-bind="if: !$root.projectForName(project).executionEnabled()">
+                        <span class=" text-warning  has_tooltip" data-placement="right" data-bind="bootstrapTooltip: true" title="${message(code:'project.execution.disabled')}">
+                            <i class="glyphicon glyphicon-pause"></i>
+                        </span>
+                    </span>
+                    <span data-bind="if: !$root.projectForName(project).scheduleEnabled()">
+                        <span class=" text-warning has_tooltip"  data-placement="right"  data-bind="bootstrapTooltip: true" title="${message(code:'project.schedule.disabled')}">
+                            <i class="glyphicon glyphicon-ban-circle"></i>
+                        </span>
+                    </span>
                   <!-- <span data-bind="if: $root.projectForName(project)">
                     <span class="text-primary" data-bind="text: $root.projectForName(project).description"></span>
                   </span> -->
