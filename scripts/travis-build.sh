@@ -24,7 +24,7 @@ build() {
 
 buildDocker() {
     if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
-        docker_login && ./gradlew -g gradle-cache officialPush
+        docker_login && ./gradlew officialPush
     else
         echo "Skipping docker build for non-master build."
     fi
