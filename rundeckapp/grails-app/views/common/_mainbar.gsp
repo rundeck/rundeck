@@ -102,7 +102,20 @@
           </ul>
         </g:if>
       </div>
+
       <div class="collapse navbar-collapse">
+          <g:if test="${(project?: params.project ?: request.project)}">
+          <g:ifExecutionMode is="passive" project="${project?:params.project?:request.project}">
+              <p class="navbar-text text-warning  has_tooltip" data-placement="right" title="${message(code:'project.execution.disabled')}">
+                  <i class="glyphicon glyphicon-pause"></i>
+              </p>
+          </g:ifExecutionMode>
+          <g:ifScheduleMode is="passive" project="${project?:params.project?:request.project}">
+              <p class="navbar-text text-warning has_tooltip"  data-placement="right" title="${message(code:'project.schedule.disabled')}">
+                  <i class="glyphicon glyphicon-ban-circle"></i>
+              </p>
+          </g:ifScheduleMode>
+      </g:if>
         <ul class="nav navbar-nav navbar-right">
 
           <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
