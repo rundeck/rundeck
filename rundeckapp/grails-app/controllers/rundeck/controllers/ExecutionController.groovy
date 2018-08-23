@@ -447,10 +447,21 @@ class ExecutionController extends ControllerBase{
             render data as JSON
         }
     }
-    def ajaxExecNodeState(){
+
+    def ajaxExecNodeState(ExecutionViewParams viewparams) {
+        if (viewparams.hasErrors()) {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            render(contentType: 'application/json') {
+                error = 'invalid'
+                errorMessage = g.message(code: 'api.error.invalid.request', args: [error: viewparams.errors.toString()])
+            }
+            return
+        }
+        if (requireAjax(action: 'show', controller: 'execution', params: params)) {
+            return
+        }
         def Execution e = Execution.get(params.id)
         if (!e) {
-            log.error("Execution not found for id: " + params.id)
             response.status=HttpServletResponse.SC_NOT_FOUND
             return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
