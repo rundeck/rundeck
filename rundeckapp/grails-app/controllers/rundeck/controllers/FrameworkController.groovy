@@ -835,6 +835,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
+                frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'framework', action: 'editProjectNodeSources', params: [project: proj.name])
             }
         }
@@ -1229,6 +1230,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }
