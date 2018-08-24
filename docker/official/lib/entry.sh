@@ -29,5 +29,6 @@ exec java \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
     -Dloginmodule.name=rundeck \
     -Drundeck.jaaslogin=true \
+    -Drundeck.jetty.connector.forwarded="${RUNDECK_SERVER_FORWARDED:-false}" \
     "${@}" \
     -jar rundeck.war
