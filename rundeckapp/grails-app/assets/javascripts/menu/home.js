@@ -19,6 +19,7 @@
 //= require knockout-onenter
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
+//= require ko/binding-popover
 //= require jquery.waypoints.min
 //= require menu/project-model
 

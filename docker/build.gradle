@@ -1,5 +1,10 @@
 project.evaluationDependsOn(":rundeck")
 
+def dockerTags = []
+
+vTag == 'SNAPSHOT' ? dockerTags << vTag && dockerTags
+    : dockerTags << vNum && dockerTags << resolvedVersion
+
 task ensureWar {
     def rundeckapp = project(":rundeck")
 
@@ -13,19 +18,44 @@ task ensureWar {
 task officialBuild {
     dependsOn ensureWar
 
+    def outputDir = "$buildDir/tags"
+
+    outputs.dir outputDir
+
+    for (tag in dockerTags) {
+        outputs.file "$outputDir/$tag"
+    }
+
     doLast {
+        file(outputDir).mkdir()
+
         def rundeckapp = project(":rundeck")
+
         copy {
             from rundeckapp.war.archivePath
             into "$projectDir/official/.build"
             rename "$rundeckapp.war.archiveName", "rundeck.war"
         }
 
+        def args = [
+            "docker",
+            "build",
+        ]
+
+        for (tag in dockerTags)
+            args << "-t=rundeck/rundeck:$tag"
+        
+        args << "."
+
         exec {
             workingDir "./official"
-
-            commandLine "docker", "build", "-t=rundeck/rundeck:$vTag", "."
+            commandLine args
         }
+
+        for (tag in dockerTags) {
+            file("$outputDir/$tag").createNewFile()
+        }
+        
     }
 
     clean {
@@ -36,9 +66,12 @@ task officialBuild {
 task officialPush {
     dependsOn officialBuild
     doLast {
-        exec {
-            commandLine "docker", "push", "rundeck/rundeck:$vTag"
+        for (tag in dockerTags) {
+            exec {
+                commandLine "docker", "push", "rundeck/rundeck:$tag"
+            }
         }
+        
     }
 }
 
