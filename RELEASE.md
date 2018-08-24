@@ -1,57 +1,60 @@
-Release 3.0.2
+Release 3.0.3
 ===========
 
-Date: 2018-08-17
+Date: 2018-08-24
 
-Name: <span style="color: brown"><span class="glyphicon glyphicon-book"></span> "jalapeño popper brown book"</span>
+Name: <span style="color: burlywood"><span class="glyphicon glyphicon-briefcase"></span> "jalapeño popper burlywood briefcase"</span>
 
 ## Notes
 
-Bug fixes
+This release contains:
+
+* bug fixes
+* some UI updates
+* updated plugin: Ansible 2.5.0
 
 ## Contributors
 
 * Greg Schueler (gschueler)
 * Jaime Tobar (jtobard)
-* Stephen Joyner (sjrd218)
+* Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
+* Greg Zapp (ProTip)
+* Romain LEON (PeekLeon)
 
 ## Bug Reporters
 
 * Ehoudry
 * PeekLeon
-* camAtGitHub
-* comtaler
-* gaetanquentin
+* ProTip
 * gschueler
-* gufertum
-* jtobard
+* imad-almansi
+* jessemarple
 * ltamaster
-* moreiramarti
-* nixmomo
+* marcoc610
+* timhughes
 
 ## Issues
 
-[Milestone 3.0.2](https://github.com/rundeck/rundeck/milestone/82)
+[Milestone 3.0.3](https://github.com/rundeck/rundeck/milestone/83)
 
-* [System prop -Dserver.web.context doesn't work. (nginx is broken after upgrade 3.0.1)](https://github.com/rundeck/rundeck/issues/3851)
-* [Fix #3828 node names with / break GUI output loading](https://github.com/rundeck/rundeck/pull/3850)
-* [Fix #3840 restore jetty forwarded headers support](https://github.com/rundeck/rundeck/pull/3848)
-* [Log Storage GUI and stats improvements](https://github.com/rundeck/rundeck/pull/3847)
-* [Log Storage page confusing labels: "Progress" is not a progress measure](https://github.com/rundeck/rundeck/issues/3845)
-* [setting rundeck.jetty.connector.forwarded=true still forwards https to http](https://github.com/rundeck/rundeck/issues/3840)
-* [Fix: projectHome js, anchor, needed for pro ui plugins](https://github.com/rundeck/rundeck/pull/3837)
-* [Project description on project list api call](https://github.com/rundeck/rundeck/pull/3836)
-* [Log Output is not shown on a workflow with nodes with `/` in the name](https://github.com/rundeck/rundeck/issues/3828)
-* [API 25 list of projects : desciption empty and label missing](https://github.com/rundeck/rundeck/issues/3827)
-* [Plugin Control remove disabled plugins](https://github.com/rundeck/rundeck/pull/3822)
-* [Plugin control disabled plugins](https://github.com/rundeck/rundeck/issues/3820)
-* [Fix NFS log file storage in cluster mode](https://github.com/rundeck/rundeck/pull/3805)
-* [Cluster mode prevents partial log load from shared file system](https://github.com/rundeck/rundeck/issues/3804)
-* [fix api error 500 on scm export](https://github.com/rundeck/rundeck/pull/3802)
-* [Calendar in 'Run Job Later' function](https://github.com/rundeck/rundeck/issues/3799)
-* [Job reference steps appear as "running" even after completed](https://github.com/rundeck/rundeck/issues/3791)
-* [Problem saving api token on postgres](https://github.com/rundeck/rundeck/pull/3789)
-* [Deploying 3.0.1-20180803 on wildfly 13: java.lang.IllegalArgumentException: URI scheme is not \"file\"](https://github.com/rundeck/rundeck/issues/3787)
-* [WARN GenerationTarget encountered exception accepting command](https://github.com/rundeck/rundeck/issues/3785)
-* [Rundeck 3 : api error 500](https://github.com/rundeck/rundeck/issues/3780)
-* [Generating API Token fails with: Couldn't find user auth token: null](https://github.com/rundeck/rundeck/issues/3767)
+* [rd ui : sidebar overlay](https://github.com/rundeck/rundeck/pull/3904)
+* [Update dom4j to 2.1.1, add required jaxen dep](https://github.com/rundeck/rundeck/pull/3897)
+* [Cleanup of Welcome page](https://github.com/rundeck/rundeck/issues/3896)
+* [#3894 cleans up the h1 and stylingof the welcome message on dashboard](https://github.com/rundeck/rundeck/pull/3895)
+* [firstRun h1 displays white text on a white background.](https://github.com/rundeck/rundeck/issues/3894)
+* [Fix #3888 activity links should be relative to app base url](https://github.com/rundeck/rundeck/pull/3892)
+* [Fix #3864 new project should be in projects list](https://github.com/rundeck/rundeck/pull/3890)
+* [project Home page: contextPath ignored for activity link](https://github.com/rundeck/rundeck/issues/3888)
+* [LDAP authentication fixing](https://github.com/rundeck/rundeck/pull/3883)
+* [UI: Job edit page: Editable filter label is not bold like the others.](https://github.com/rundeck/rundeck/issues/3879)
+* [Feature/3771/motd](https://github.com/rundeck/rundeck/pull/3873)
+* [Rundeck 3 : New project not visible](https://github.com/rundeck/rundeck/issues/3864)
+* [Updating Ansible Plugin to version 2.5.0.](https://github.com/rundeck/rundeck/pull/3859)
+* [Rundeck 3 : Text in progress bar](https://github.com/rundeck/rundeck/issues/3856)
+* [ No such property: description for class: com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor ](https://github.com/rundeck/rundeck/issues/3852)
+* [Project search box in home page doesn't search labels](https://github.com/rundeck/rundeck/issues/3849)
+* [Having a job as an execution step failing running jobs at the same time](https://github.com/rundeck/rundeck/issues/3818)
+* [rd ui: Job progress bar half obscured ](https://github.com/rundeck/rundeck/issues/3775)
+* [Message of the Day V2](https://github.com/rundeck/rundeck/issues/3771)
+* [Top bar shows the project name, not the project label. It should show label.](https://github.com/rundeck/rundeck/issues/3752)
