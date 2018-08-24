@@ -57,6 +57,7 @@ dependencies {
                 project(':plugins:job-state-plugin'),
                 project(':plugins:flow-control-plugin'),
                 project(':plugins:jasypt-encryption-plugin'),
+                project(':plugins:object-store-plugin'),
                 project(':plugins:orchestrator-plugin'),
                 project(':plugins:git-plugin'),
                 project(':plugins:source-refresh-plugin'),
