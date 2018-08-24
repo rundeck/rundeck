@@ -71,6 +71,7 @@ dependencies {
     compile project(':rundeck-storage:rundeck-storage-filesys')
     compile project(':rundeck:metricsweb')
     compile project(':grails-persistlocale')
+    compile project(':grails-objectstore')
 
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'

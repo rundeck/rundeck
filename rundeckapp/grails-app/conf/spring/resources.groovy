@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.rundeck.plugins.objectstore.storageplugin.ObjectStorePluginFactory
 import groovy.io.FileType
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
@@ -338,6 +339,8 @@ beans={
     pluginRegistry['db']='dbStoragePluginFactory'
     storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
     pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
+    objectStorePluginFactory(ObjectStorePluginFactory)
+    pluginRegistry['object'] = 'objectStorePluginFactory'
 
     def uploadsDir = new File(varDir, 'upload')
     fsFileUploadPlugin(FSFileUploadPlugin) {

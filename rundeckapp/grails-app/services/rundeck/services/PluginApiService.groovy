@@ -124,7 +124,7 @@ class PluginApiService {
                 (framework.getResourceFormatParserService().name): framework.getResourceFormatParserService().getBundledProviderNames(),
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
-                (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
+                (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db','object'],
                 FileUploadPluginService: ['filesystem-temp'],
         ]
         //list included plugins
