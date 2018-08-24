@@ -1,0 +1,5 @@
+rundeck:
+  storage:
+    provider:
+      '2':
+        type: 'file'

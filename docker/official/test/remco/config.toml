@@ -1,0 +1,11 @@
+retries = 0
+include_dir = "${REMCO_RESOURCE_DIR}"
+
+[default_backends]
+[default_backends.env]
+    onetime = true
+    keys = ["/rundeck"]
+[default_backends.file]
+    onetime = true
+    filepath = "test.yml"
+    keys = ["/rundeck"]
