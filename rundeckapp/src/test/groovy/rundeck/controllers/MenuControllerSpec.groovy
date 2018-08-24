@@ -1239,7 +1239,7 @@ class MenuControllerSpec extends Specification {
         u.save()
 
         when:
-        def model = controller.summary()
+        def model = controller.userSummary()
 
         then:
         model
@@ -1286,7 +1286,7 @@ class MenuControllerSpec extends Specification {
         ).save()
 
         when:
-        def model = controller.summary()
+        def model = controller.userSummary()
 
         then:
         model

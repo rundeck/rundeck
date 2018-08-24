@@ -24,6 +24,12 @@
         context: 'application'
 )}"/>
 
+<g:set var="authAdmin" value="${auth.resourceAllowedTest(
+            kind: 'user',
+            action: [AuthConstants.ACTION_ADMIN],
+            context: 'application'
+    )}"/>
+
 <ul class="dropdown-menu">
   <li class="dropdown-header">System</li>
   <li>
@@ -63,9 +69,9 @@
       <g:message code="gui.menu.PasswordUtility"/>
     </g:link>
   </li>
-   <g:if test="${authRead}">
+   <g:if test="${authAdmin}">
       <li>
-        <g:link controller="menu" action="summary">
+        <g:link controller="menu" action="userSummary">
           <g:message code="gui.menu.Users"/>
         </g:link>
       </li>

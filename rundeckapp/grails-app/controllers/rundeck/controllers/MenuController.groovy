@@ -3076,7 +3076,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(controller:'menu',action:'jobs', params: [project: params.project])
     }
 
-    def summary(){
+    def userSummary(){
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN),
