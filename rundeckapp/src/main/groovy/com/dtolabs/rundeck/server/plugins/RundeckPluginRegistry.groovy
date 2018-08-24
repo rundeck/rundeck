@@ -41,7 +41,8 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -56,7 +57,7 @@ import org.springframework.context.ApplicationContextAware
  * Time: 7:07 PM
  */
 class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, InitializingBean {
-    public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
+    public static Logger log = LoggerFactory.getLogger(RundeckPluginRegistry.class.name)
     /**
      * Registry of spring bean plugin providers, "providername"->"beanname"
      */
