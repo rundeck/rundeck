@@ -63,5 +63,12 @@
       <g:message code="gui.menu.PasswordUtility"/>
     </g:link>
   </li>
+   <g:if test="${authRead}">
+      <li>
+        <g:link controller="menu" action="summary">
+          <g:message code="gui.menu.Users"/>
+        </g:link>
+      </li>
+  </g:if>
   <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
 </ul>

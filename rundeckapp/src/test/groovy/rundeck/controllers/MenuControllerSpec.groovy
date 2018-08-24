@@ -34,10 +34,12 @@ import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import rundeck.AuthToken
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
+import rundeck.User
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
@@ -58,7 +60,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -1221,5 +1223,76 @@ class MenuControllerSpec extends Specification {
         }
         1 * controller.scmService.exportStatusForJobs(_,_)
         1 * controller.scmService.exportPluginActions(_,_)
+    }
+
+    def "user summary"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        User u = new User(login: userToSearch)
+        u.save()
+
+        when:
+        def model = controller.summary()
+
+        then:
+        model
+        model.users
+        model.users.admin
+        model.users.admin.login=='admin'
+
+    }
+
+    def "user summary with last exec"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        User u = new User(login: userToSearch)
+        u.save()
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: userToSearch,
+                project: 'AProject'
+        ).save()
+
+        when:
+        def model = controller.summary()
+
+        then:
+        model
+        model.users
+        model.users.admin
+        model.users.admin.lastJob
+
     }
 }
