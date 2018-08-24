@@ -60,10 +60,12 @@
         <g:if test="${isFirstRun}">
             <div class="col-sm-12">
               <div class="card">
+                <div class="card-header">
+                  <h2 class="card-title">
+                    <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
+                  </h2>                  
+                </div>
                   <div class="card-content">
-                    <h1>
-                      <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
-                    </h1>
                     <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
                     <p class="h6 text-primary" style="margin-top:1em;">
                         <g:message code="you.can.see.this.message.again.by.clicking.the" />
