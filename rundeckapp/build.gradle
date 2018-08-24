@@ -128,6 +128,7 @@ dependencies {
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.0"
+    compile "io.minio:minio:5.0.0"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
