@@ -141,7 +141,7 @@ jobs:
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
     # Upload to sonatype
-    - script_block 'oss.publish' './gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}"'
+    - script_block 'oss.publish' './gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}" --info'
 
   # Stage: tag release publishes artifacts to the appropriate external repsositories
   - stage: tag release
