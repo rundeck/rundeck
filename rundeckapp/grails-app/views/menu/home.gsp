@@ -245,9 +245,11 @@
                             <i class="glyphicon glyphicon-ban-circle"></i>
                         </span>
                     </span>
-                  <!-- <span data-bind="if: $root.projectForName(project)">
-                    <span class="text-primary" data-bind="text: $root.projectForName(project).description"></span>
-                  </span> -->
+
+                  <div data-bind="if: $root.projectForName(project)">
+                    <span class="text-info" data-bind="text: $root.projectForName(project).description"></span>
+                  </div>
+
                 </div>
                   <div class="col-sm-6 col-md-4">
                     <span data-bind="if: $root.projectForName(project)">
