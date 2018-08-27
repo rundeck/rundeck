@@ -32,9 +32,12 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.plugins.metricsweb.MetricService
+import rundeck.NodeFilter
+import rundeck.User
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
@@ -58,6 +61,7 @@ import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDA
  * Created by greg on 7/28/15.
  */
 @TestFor(FrameworkController)
+@Mock([NodeFilter, User])
 class FrameworkControllerSpec extends Specification {
     def "system acls require api_version 14"(){
         setup:
@@ -1099,5 +1103,33 @@ class FrameworkControllerSpec extends Specification {
         request.errors == ['project.name.can.only.contain.these.characters']
         model.projectDescription == description
 
+    }
+
+    def "node summary ajax lists filters"() {
+        given:
+        def project = 'testProj'
+        controller.userService = Mock(UserService)
+        controller.frameworkService = Mock(FrameworkService)
+        def testUser = new User(login: 'auser').save()
+        [
+            new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
+            new NodeFilter(user: testUser, filter: 'tags:xyz', name: 'filter2', project: project),
+            new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
+
+        ]*.save(flush: true)
+        when:
+        controller.nodeSummaryAjax(project)
+        then:
+        1 * controller.frameworkService.authorizeProjectResourceAll(*_) >> true
+        1 * controller.userService.findOrCreateUser(_) >> testUser
+        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+            getNodeSet() >> new NodeSetImpl()
+        }
+        1 * controller.frameworkService.summarizeTags(_) >> [asdf: 1]
+
+        response.json.filters == [
+            [filter: 'tags:xyz', name: 'filter2', project: project],
+            [filter: 'abc', name: 'filter1', project: project],
+        ]
     }
 }
