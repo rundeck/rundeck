@@ -1,8 +1,0 @@
-[template]
-src = "jaas-loginmodule.conf.tmpl"
-dest = "/home/rundeck/server/config/jaas-loginmodule.conf"
-keys = [
-    "/rundeck/jaas/ldap",
-    "/rundeck/jaas/file/flag",
-    "/rundeck/jaas/modules",
-]

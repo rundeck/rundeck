@@ -30,6 +30,7 @@ import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
 import groovy.xml.MarkupBuilder
+import org.grails.plugins.codecs.JSONCodec
 import rundeck.Execution
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
@@ -39,8 +40,10 @@ import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
+import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -57,6 +60,7 @@ class ExecutionControllerSpec extends Specification {
     def setup() {
         mockCodec(AnsiColorCodec)
         mockCodec(HTMLElementCodec)
+        mockCodec(JSONCodec)
     }
     def "api execution query no project"() {
         setup:
@@ -666,5 +670,42 @@ class ExecutionControllerSpec extends Specification {
         json.message == "Pending"
         json.pending == "Waiting for log output to become available..."
 
+    }
+
+    @Unroll
+    def "ajax exec node state with compression"() {
+        given:
+        Execution e1 = new Execution(
+            project: 'test1',
+            user: 'bob',
+            dateStarted: new Date(),
+            status: 'running'
+
+        )
+        e1.save() != null
+        controller.frameworkService = Mock(FrameworkService)
+        controller.workflowService = Mock(WorkflowService)
+
+        when:
+        if (acceptHeader) {
+            request.addHeader('Accept-Encoding', acceptHeader)
+        }
+        request.addHeader('x-rundeck-ajax', 'true')
+        params.id = e1.id.toString()
+        params.node = 'anode'
+        def result = controller.ajaxExecNodeState()
+
+        then:
+        response.header('Content-Encoding') == resultHeader
+        controller.frameworkService.authorizeProjectExecutionAny(_, _, _) >> true
+        controller.workflowService.requestStateSummary(_, _, _) >> new WorkflowStateFileLoader(
+            state: ExecutionLogState.AVAILABLE,
+            workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
+        )
+
+        where:
+        acceptHeader | resultHeader
+        'gzip'       | 'gzip'
+        null         | null
     }
 }

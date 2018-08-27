@@ -3,14 +3,14 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-content">
-          <a class="h4" :href="`/project/${project.name}/activity`">
+          <a class="h4" :href="`${rdBase}project/${project.name}/activity`">
             <span class="summary-count" :class="{ 'text-primary': project.execCount < 1, 'text-info': project.execCount > 0 }">
               {{project.execCount}}
             </span>
             <span>{{project.execCount | pluralize('Execution')}} In the last day</span>
           </a>
           <span :if="project.failedCount > 0">
-            <a class="text-warning" :href="`/project/${project.name}/activity?statFilter=fail`">
+            <a class="text-warning" :href="`${rdBase}project/${project.name}/activity?statFilter=fail`">
               ({{project.failedCount}} Failed)
             </a>
           </span>
@@ -32,7 +32,8 @@
 export default {
   name: 'Activity',
   props: [
-    'project'
+    'project',
+    'rdBase'
   ],
   data () {
     return {}

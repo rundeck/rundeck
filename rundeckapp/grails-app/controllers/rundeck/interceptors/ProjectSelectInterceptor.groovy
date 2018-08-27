@@ -97,6 +97,9 @@ class ProjectSelectInterceptor {
                 AA_TimerInterceptor.afterRequest(request, response, session)
                 return false
             }
+            if(!session.frameworkProjects){
+                frameworkService.refreshSessionProjects(authContext, session)
+            }
         }
         return true
     }

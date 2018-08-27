@@ -52,6 +52,9 @@ jobs:
     - mkdir -p artifacts/packaging
     - mkdir -p artifacts/rundeckapp/build
 
+    # Publish official docker snapshot
+    - script_block 'docker.official' 'bash scripts/travis-build.sh buildDocker'
+
     # Sync artifacts and trigger downstream snapshot builds if appropriate
     - script_block 'sync-artifacts' 'copy_artifacts && sync_to_s3'
     - script_block 'trigger.downstream' trigger_downstream_snapshots
@@ -137,8 +140,6 @@ jobs:
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
-    # Publish official docker snapshot
-    - script_block 'docker.official' 'docker_login && ./gradlew -g gradle-cache officialPush'
     # Upload to sonatype
     - script_block 'oss.publish' './gradlew uploadExisting -PsonatypeUsername="${SONATYPE_USERNAME}" -PsonatypePassword="${SONATYPE_PASSWORD}"'
 
@@ -160,9 +161,7 @@ jobs:
   # Forks do not have access to encrypted envars so we can't pass artifacts between jobs/stages.
   - stage: fork
     script:
-    - script_block 'gradle-build' './gradlew clean && ./gradlew build'
-    - script_block 'groovy-test' 'groovy testbuild.groovy -gradle'
-    - script_block 'make' 'make TAG=SNAPSHOT BUILD_NUM=$RUNDECK_BUILD_NUMBER rpm deb'
+    - script_block 'build' 'bash scripts/travis-build.sh buildFork'
     - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
     - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'

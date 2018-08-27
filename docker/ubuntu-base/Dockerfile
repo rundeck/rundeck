@@ -1,3 +1,14 @@
+# Build remco from specific commit
+##################################
+FROM golang
+
+RUN go get github.com/HeavyHorst/remco/cmd/remco
+RUN cd $GOPATH/src/github.com/HeavyHorst/remco && \
+    git checkout ec5c624a154f175f82f42eeda8e687d8915cfc35
+RUN go install github.com/HeavyHorst/remco/cmd/remco
+
+# Build base container
+######################
 FROM ubuntu:16.04
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -15,19 +26,17 @@ RUN set -euxo pipefail \
         curl \
         ssh-client \
         sudo \
-        openjdk-8-jdk \
+        openjdk-8-jdk-headless \
         uuid-runtime \
         wget \
     && rm -rf /var/lib/apt/lists/* \
-    # Install confd
-    && wget https://github.com/kelseyhightower/confd/releases/download/v0.16.0/confd-0.16.0-linux-amd64 \
-    && mv confd* /usr/local/bin/confd \
-    && chmod ugo+x /usr/local/bin/confd \
     # Setup rundeck user
     && adduser --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
     && echo | sudo -u rundeck ssh-keygen -N ''
+
+COPY --from=0 /go/bin/remco /usr/local/bin/remco
 
 USER rundeck
 

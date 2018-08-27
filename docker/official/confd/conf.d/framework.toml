@@ -1,5 +1,0 @@
-[template]
-src = "framework.properties.tmpl"
-dest = "/home/rundeck/etc/framework.properties"
-keys = [
-]

@@ -85,7 +85,7 @@ class ControllerBase {
     }
     def renderCompressed(HttpServletRequest request,HttpServletResponse response,String contentType, data){
         if(grailsApplication.config.rundeck?.ajax?.compression=='gzip'
-                && request.getHeader("Accept-Encoding").contains("gzip")){
+                && request.getHeader("Accept-Encoding")?.contains("gzip")){
             response.setHeader("Content-Encoding","gzip")
             response.setHeader("Content-Type",contentType)
             def stream = new GZIPOutputStream(response.outputStream)

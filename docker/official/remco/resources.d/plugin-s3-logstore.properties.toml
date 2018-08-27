@@ -1,0 +1,4 @@
+[[template]]
+    src         = "${REMCO_TEMPLATE_DIR}/plugin-s3-logstore.properties"
+    dst         = "${REMCO_TMP_DIR}/framework/plugin-s3-logstore.properties"
+    mode        = "0644"
