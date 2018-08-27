@@ -59,7 +59,7 @@
 
 
 <div class="form-group ${user.errors?.hasFieldErrors('firstName')?'has-error':''}">
-    <label for="email" class="col-sm-2 control-label">
+    <label for="firstName" class="col-sm-2 control-label">
         <g:message code="domain.User.firstName.label"/>
     </label>
 
@@ -74,7 +74,7 @@
 </div>
 
 <div class="form-group ${user.errors?.hasFieldErrors('lastName')?'has-error':''}">
-    <label for="email" class="col-sm-2 control-label">
+    <label for="lastName" class="col-sm-2 control-label">
         <g:message code="domain.User.lastName.label"/>
     </label>
 
