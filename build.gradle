@@ -283,7 +283,7 @@ exportedProjects.each {
             doLast {
                 file("build/existing").eachFile {f ->
                     artifacts {
-                        existing f
+                        existing file: f, name: archiveName
                     }
                 }
             }
