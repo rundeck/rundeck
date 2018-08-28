@@ -1132,4 +1132,32 @@ class FrameworkControllerSpec extends Specification {
             [filter: 'abc', name: 'filter1', project: project],
         ]
     }
+
+    def "save project node sources"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+
+        setupFormTokens(params)
+        def project = 'testProj'
+
+        when:
+        request.method = "POST"
+        params.project = project
+        def result = controller.saveProjectNodeSources()
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(*_)
+        1 * controller.frameworkService.authResourceForProject(project)
+        1 * controller.frameworkService.getRundeckFramework()
+        1 * controller.frameworkService.listResourceModelSourceDescriptions()
+        1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
+        1 * controller.frameworkService.validateProjectConfigurableInput(*_) >> [props: [:], remove: []]
+        1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, _) >> [success: true]
+        0 * controller.frameworkService._(*_)
+        1 * controller.resourcesPasswordFieldsService.reset()
+
+        response.redirectedUrl == "/project/$project/nodes/sources"
+        flash.message == "Project ${project} Node Sources saved"
+        result == null
+    }
 }
