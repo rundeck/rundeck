@@ -32,6 +32,7 @@ class ControllerBaseInterceptor {
             "menu/plugins",
             "menu/welcome",
             "menu/storage",
+            "menu/summary",
             "scheduledExecution/show",
             "scheduledExecution/edit",
             "scheduledExecution/delete",

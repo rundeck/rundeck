@@ -23,6 +23,7 @@ import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
+import rundeck.Execution
 import rundeck.User
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.FrameworkService
@@ -307,8 +308,31 @@ class UserController extends ControllerBase{
             }
             return
         }
+        def users = []
+        if(request.api_version >= ApiVersions.V27){
+            def userList = [:]
+            User.listOrderByLogin().each {
+                def obj = [:]
+                obj.login = it.login
+                obj.firstName = it.firstName
+                obj.lastName = it.lastName
+                obj.email = it.email
+                obj.created = it.dateCreated
+                obj.updated = it.lastUpdated
+                def lastExec = Execution.lastExecutionByUser(it.login).list()
+                if(lastExec?.size()>0){
+                    obj.lastJob = lastExec.get(0).dateStarted
+                }
+                def tokenList = AuthToken.findAllByUser(it)
+                obj.tokens = tokenList?.size()
+                userList.put(it.login,obj)
+            }
+            userList.each{k,v -> users<<v}
+        }else{
+            users = User.findAll()
+        }
 
-        def users = User.findAll()
+
         withFormat {
             def xmlClosure = {
                     users.each { u ->
@@ -317,6 +341,12 @@ class UserController extends ControllerBase{
                             firstName(u.firstName)
                             lastName(u.lastName)
                             email(u.email)
+                            if(request.api_version >= ApiVersions.V27){
+                                created(u.created)
+                                updated(u.updated)
+                                lastJob(u.lastJob)
+                                tokens(u.tokens)
+                            }
                         }
                     }
             }
@@ -326,7 +356,12 @@ class UserController extends ControllerBase{
             json {
                 return apiService.renderSuccessJson(response) {
                     users.each {
-                        def u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
+                        def u
+                        if(request.api_version >= ApiVersions.V27){
+                            u = it
+                        }else{
+                            u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
+                        }
                         element(u)
                     }
                 }
