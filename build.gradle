@@ -152,10 +152,13 @@ exportedProjects.each {
             existing
         }
 
+        def archiveName=project.name.startsWith('rundeck')?project.name: "rundeck-${project.name}"
+
         /* Modify auto-gen POM which gets picked up by Bintray */
         install {
             repositories.mavenInstaller {
                 pom.project {
+                    artifactId archiveName
                     groupId project.group
                     inceptionYear '2014'
                     packaging 'jar'
@@ -203,7 +206,7 @@ exportedProjects.each {
                 // do nothing
             }
         }
-        def archiveName=project.name.startsWith('rundeck')?project.name: "rundeck-${project.name}"
+
         //build a pom we reuse for both maven builds and release to sonatype
         ext.publishPom = pom {
             project {
