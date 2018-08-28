@@ -1,8 +1,8 @@
-> **!! NOTICE !!** This image is experimental, unstable, and unsupported!
-
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
+- `3.0.4`
+- `3.0.3`
 
 # What is Rundeck?
 
