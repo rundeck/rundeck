@@ -1,37 +1,26 @@
-Release 3.0.4
+Release 3.0.5
 ===========
 
-Date: 2018-08-27
+Date: 2018-08-28
 
-Name: <span style="color: chartreuse"><span class="glyphicon glyphicon-bullhorn"></span> "jalapeño popper chartreuse bullhorn"</span>
+Name: <span style="color: coral"><span class="glyphicon glyphicon-camera"></span> "jalapeño popper coral camera"</span>
 
 ## Notes
 
-Bug fixes
+This rescue release addresses shadowed imports due to import optimization.
 
 ## Contributors
 
 * Greg Schueler (gschueler)
-* Jaime Tobar (jtobard)
-* Romain Leon (PeekLeon)
 
 ## Bug Reporters
 
-* Antoine-Auffret
-* Ehoudry
-* PeekLeon
-* gjvc
 * gschueler
-* jtobard
 
 ## Issues
 
-[Milestone 3.0.4](https://github.com/rundeck/rundeck/milestone/84)
+[Milestone 3.0.5](https://github.com/rundeck/rundeck/milestone/85)
 
-* [Fix delete expired tokens button in GUI](https://github.com/rundeck/rundeck/pull/3928)
-* [fix #3921 project description back to project list on menu/home](https://github.com/rundeck/rundeck/pull/3926)
-* [rd ui : sidebar overlay - forgotten z-index](https://github.com/rundeck/rundeck/pull/3923)
-* [Rundeck 3 : Project description not displayed](https://github.com/rundeck/rundeck/issues/3921)
-* [Rundeck 3 bug : Can't delete tokens and expired tokens with UI](https://github.com/rundeck/rundeck/issues/3919)
-* [Fix #3914 NodeFilter class was shadowed by glob import](https://github.com/rundeck/rundeck/pull/3917)
-* [grails exception in 3.0.3-20180824](https://github.com/rundeck/rundeck/issues/3914)
+* [No such property: FrameworkProject for class: rundeck.controllers.FrameworkController](https://github.com/rundeck/rundeck/issues/3938)
+* [Add spec unit test for saveProjectNodeSources](https://github.com/rundeck/rundeck/pull/3933)
+* [Revert "cleanup: optimize imports"](https://github.com/rundeck/rundeck/pull/3931)
