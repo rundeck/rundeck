@@ -34,10 +34,11 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService;
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer;
 import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
-import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.Tree;
 import org.rundeck.storage.conf.TreeBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 import org.springframework.beans.factory.InitializingBean;
@@ -56,7 +57,7 @@ import java.util.Set;
 public class StorageTreeFactory implements FactoryBean<StorageTree>, InitializingBean {
     public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
     public static final String LOGGER_NAME = "loggerName";
-    static Logger logger = Logger.getLogger(StorageTreeFactory.class);
+    static Logger logger = LoggerFactory.getLogger(StorageTreeFactory.class);
     public static final String TYPE = "type";
     public static final String PATH = "path";
     public static final String CONFIG = "config";
@@ -100,6 +101,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         if (null == baseStorageType) {
             throw new FactoryBeanNotInitializedException("'baseStorageType' is required");
         }
+
         return StorageUtil.asStorageTree(buildTree(configuration));
     }
 

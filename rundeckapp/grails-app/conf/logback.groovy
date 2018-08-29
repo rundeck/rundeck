@@ -66,6 +66,7 @@ if (Environment.isDevelopmentMode()) {
     logger 'org.rundeck.web.requests', INFO, ["STDOUT"], false
     logger 'org.rundeck.web.infosec', DEBUG, ["STDOUT"], false
     logger 'org.apache.commons.httpclient', DEBUG, ["STDOUT"], false
+    logger 'com.dtolabs.rundeck.server.storage', DEBUG, ["STDOUT"], false
     logger 'rundeck.interceptors', DEBUG, ['STDOUT'], false
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 

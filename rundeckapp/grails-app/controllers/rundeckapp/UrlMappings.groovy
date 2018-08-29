@@ -301,6 +301,14 @@ class UrlMappings {
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
 
+        "/api/$api_version/verb/repository/list"(controller:"repository",action:"listRepositories")
+        "/api/$api_version/verb/repository/artifacts/list"(controller:"repository",action:"listArtifacts")
+        "/api/$api_version/verb/repository/$repoName/artifacts/list"(controller:"repository",action:"listArtifacts")
+        "/api/$api_version/verb/repository/upload"(controller:"repository",action:"uploadArtifact")
+        "/api/$api_version/verb/repository/$repoName/upload"(controller:"repository",action:"uploadArtifact")
+        "/api/$api_version/verb/repository/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
+        "/api/$api_version/verb/repository/$repoName/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
+
         "404"(view: '/404')
         "500"(view: '/error')
     }
