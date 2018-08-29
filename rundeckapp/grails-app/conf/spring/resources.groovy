@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
@@ -44,6 +45,11 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.rundeck.verb.client.RundeckVerbClient
+import com.rundeck.verb.client.artifact.StorageTreeArtifactInstaller
+import com.rundeck.verb.client.repository.RundeckRepositoryManager
+import com.rundeck.verb.client.repository.VerbRepositoryFactory
+import com.rundeck.verb.client.repository.tree.NamedTreeProvider
 import groovy.io.FileType
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
@@ -70,6 +76,7 @@ import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.RepositoryPluginService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -311,6 +318,36 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
+
+    //Verb storage tree for installed plugins
+    verbPluginStorageTree(StorageTreeFactory) {
+        rundeckFramework=ref('rundeckFramework')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.verb?.plugin?.toFlatConfig()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':rdeckBase+"/verb/installedPlugins"]
+        defaultConverters=['StorageTimestamperConverter']
+        loggerName='org.rundeck.verb.plugins.storage.events'
+    }
+
+    //Verb storage tree for private repository
+    verbRepositoryStorageTree(StorageTreeFactory) {
+        rundeckFramework=ref('rundeckFramework')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.verb?.repository?.toFlatConfig()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':rdeckBase+"/verb/repo"]
+        defaultConverters=['StorageTimestamperConverter']
+        loggerName='org.rundeck.verb.repository.storage.events'
+    }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
@@ -398,6 +435,26 @@ beans={
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
         rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:''
+    }
+
+    //Verb
+    verbArtifactInstaller(StorageTreeArtifactInstaller, ref('verbPluginStorageTree'))
+    repositoryPluginService(RepositoryPluginService) {
+        localFilesystemPluginDir = pluginDir
+        installedPluginTree = ref('verbPluginStorageTree')
+    }
+    verbStorageTreeRepositoryProvider(NamedTreeProvider) {
+        treeRegistry = ["private":ref('verbRepositoryStorageTree')]
+    }
+    repositoryFactory(VerbRepositoryFactory) {
+        treeProvider = ref("verbStorageTreeRepositoryProvider")
+    }
+    repositoryManager(RundeckRepositoryManager, ref('repositoryFactory')) {
+        repositoryDefinitionListDatasourceUrl = "file:${rdeckBase}/verb/repositories.yaml"
+    }
+    verbClient(RundeckVerbClient) {
+        artifactInstaller = ref('verbArtifactInstaller')
+        repositoryManager = ref('repositoryManager')
     }
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {

@@ -71,6 +71,8 @@ dependencies {
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
 
+    compile 'com.rundeck.verb:VerbClient:0.1'
+
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
     compile 'org.grails.plugins:quartz:2.0.13'
