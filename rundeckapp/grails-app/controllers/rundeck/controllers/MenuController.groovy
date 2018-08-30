@@ -62,6 +62,7 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.Project
