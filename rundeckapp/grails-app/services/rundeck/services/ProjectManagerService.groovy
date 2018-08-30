@@ -583,7 +583,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         def res = loadProjectConfigResource(projectName)
-        def oldprops = res.config
+        Properties oldprops = res?.config?:new Properties()
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
         Map newres=storeProjectConfig(projectName, newprops)
         newres

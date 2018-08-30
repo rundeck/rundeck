@@ -34,6 +34,7 @@ import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import rundeck.Project
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
@@ -445,11 +446,62 @@ class ProjectManagerServiceSpec extends Specification {
         1*service.projectCache.invalidate('test1')
         1*service.nodeService.expireProjectNodes('test1')
 
-        res!=null
-        res.config.size()==3
-        'def'==res.config['abc']
-        'ghi'==res.config['def']
-        'test1'==res.config['project.name']
+        res != null
+        res.config.size() == 3
+        'def' == res.config['abc']
+        'ghi' == res.config['def']
+        'test1' == res.config['project.name']
+    }
+
+    @Unroll
+    void "merge project properties without existing resource"() {
+        setup:
+        Properties props1 = new Properties()
+        props1['def'] = 'ghi'
+        new Project(name: 'test1').save()
+        service.storage = Stub(StorageTree) {
+            hasResource("projects/test1/etc/project.properties") >> false
+            updateResource(
+                "projects/test1/etc/project.properties", { ResourceMeta rm ->
+                def tprops = new Properties()
+                tprops.load(rm.inputStream)
+                rm.meta.size() == 1 &&
+                rm.meta[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] ==
+                ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES &&
+                tprops['def'] ==
+                'ghi'
+            }
+            ) >> Stub(Resource) {
+                getContents() >> Stub(ResourceMeta) {
+                    getInputStream() >> new ByteArrayInputStream(
+                        (
+                            '#' + ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES +
+                            '\ndef=ghi'
+                        ).bytes
+                    )
+                }
+            }
+        }
+
+        service.nodeService = Mock(NodeService)
+        service.projectCache = Mock(LoadingCache)
+
+        when:
+        def res = service.mergeProjectProperties('test1', props1, removePrefixes as Set)
+
+        then:
+        1 * service.projectCache.invalidate('test1')
+        1 * service.nodeService.expireProjectNodes('test1')
+
+        res != null
+        res.config.size() == 2
+        'ghi' == res.config['def']
+        'test1' == res.config['project.name']
+
+        where:
+        removePrefixes       | _
+        ['resources.source'] | _
+        []                   | _
     }
     void "set project properties internal"(){
         setup:
