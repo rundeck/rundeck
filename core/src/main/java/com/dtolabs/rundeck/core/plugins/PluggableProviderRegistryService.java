@@ -41,6 +41,9 @@ public abstract class PluggableProviderRegistryService<T> extends BaseProviderRe
         super(framework);
     }
 
+    public PluggableProviderRegistryService(final Framework framework, final boolean cacheInstances) {
+        super(framework, cacheInstances);
+    }
 
     @Override
     public T providerOfType(final String providerName) throws ExecutionServiceException {

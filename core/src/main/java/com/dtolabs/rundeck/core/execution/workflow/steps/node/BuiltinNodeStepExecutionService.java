@@ -40,7 +40,7 @@ class BuiltinNodeStepExecutionService extends BaseProviderRegistryService<NodeSt
     String name;
 
     BuiltinNodeStepExecutionService(final Framework framework, final String name) {
-        super(framework);
+        super(framework,true);
         this.name = name;
         resetDefaultProviders();
     }

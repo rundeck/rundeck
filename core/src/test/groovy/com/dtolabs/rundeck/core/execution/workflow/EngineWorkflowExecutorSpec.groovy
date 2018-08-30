@@ -14,10 +14,13 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.rules.Condition
+import com.dtolabs.rundeck.core.rules.RuleEngine
 import com.dtolabs.rundeck.core.rules.Rules
 import com.dtolabs.rundeck.core.rules.StateObj
 import com.dtolabs.rundeck.core.rules.WorkflowEngineBuilder
@@ -45,14 +48,47 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getFrameworkProjectMgr().removeFrameworkProject(PROJECT_NAME)
     }
 
+    static class TestWorkflowStrategy implements WorkflowStrategy {
+        @Override
+        int getThreadCount() {
+            return 0
+        }
+
+        @Override
+        void setup(final RuleEngine ruleEngine, final StepExecutionContext context, final IWorkflow workflow) {
+
+        }
+
+        @Override
+        Validator.Report validate(final IWorkflow workflow) {
+            return null
+        }
+
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            return null
+        }
+    }
+
+    static class TestSuccessStepExecutor implements StepExecutor {
+        @Override
+        boolean isNodeDispatchStep(final StepExecutionItem item) {
+            return false
+        }
+
+        @Override
+        StepExecutionResult executeWorkflowStep(
+            final StepExecutionContext executionContext,
+            final StepExecutionItem item
+        ) throws StepException {
+            new StepExecutionResultImpl()
+        }
+    }
     def "basic success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Mock(ExecutionListener){
@@ -83,8 +119,12 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     }
 
-    class SkipProfile extends SequentialStrategyProfile {
+    static class SkipProfile extends SequentialStrategyProfile {
         Map<Integer, Set<Condition>> skipConditions = [:]
+
+        SkipProfile(final Map<Integer, Set<Condition>> skipConditions) {
+            this.skipConditions = skipConditions
+        }
 
         @Override
         Set<Condition> getSkipConditionsForStep(
@@ -97,25 +137,19 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
     }
 
+    static class TestSkipProfileWorkflowStrategy extends TestWorkflowStrategy {
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            new SkipProfile([(1): [({ StateObj state -> true } as Condition)] as Set])
+        }
+    }
+
     def "basic skip"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
-            getProfile() >> new SkipProfile(skipConditions: [(1):
-                                                                     [
-                                                                             { StateObj state ->
-                                                                                 true
-                                                                             } as Condition
 
-                                                                     ] as Set
-            ]
-            )
-        }
-        )
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-skip-strategy', TestSkipProfileWorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -130,7 +164,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                             getType() >> 'blah'
                         }
                 ]
-                getStrategy() >> 'test-strategy'
+                getStrategy() >> 'test-skip-strategy'
             }
         }
 
@@ -145,28 +179,28 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     }
 
+    static final class TestSkip3NotFailedWorkflowStrategy extends TestWorkflowStrategy {
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            new SkipProfile(
+                [(3): Rules.conditionSet(
+                    Condition.not(
+                        Rules.equalsCondition('step.1.state', 'failed')
+                    )
+                )]
+            )
+        }
+    }
+
     def "skip after success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            2 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getStepExecutionService().registerInstance('blah2', Mock(StepExecutor) {
-            0 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
-            getProfile() >> new SkipProfile(skipConditions: [
-                    (3): Rules.conditionSet(
-                            Condition.not(
-                                    Rules.equalsCondition('step.1.state', 'failed')
-                            )
-                    )
-            ]
-            )
-        }
-        )
+
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().
+            registerClass('test-skip-3-not-strategy', TestSkipProfileWorkflowStrategy)
+
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -187,7 +221,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                             getType() >> 'blah2'
                         }
                 ]
-                getStrategy() >> 'test-strategy'
+                getStrategy() >> 'test-skip-3-not-strategy'
             }
         }
 
@@ -202,6 +236,21 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     }
 
+    static final class TestSkip3NotBothWorkflowStrategy extends TestWorkflowStrategy {
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            new SkipProfile(
+                (3): Rules.conditionSet(
+                    Condition.not(
+                        Condition.and(
+                            Rules.equalsCondition('step.1.state', 'success'),
+                            Rules.equalsCondition('step.2.state', 'success')
+                        )
+                    )
+                )
+            )
+        }
+    }
     /**
      * skip conditions will be generated as NOT (run conditions),
      * verify that skip condition does not create skip state prior to
@@ -211,28 +260,13 @@ class EngineWorkflowExecutorSpec extends Specification {
     def "run after 2 success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            2 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getStepExecutionService().registerInstance('blah2', Mock(StepExecutor) {
-            1 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
-            getProfile() >> new SkipProfile(skipConditions: [
-                    (3): Rules.conditionSet(
-                            Condition.not(
-                                    Condition.and(
-                                            Rules.equalsCondition('step.1.state', 'success'),
-                                            Rules.equalsCondition('step.2.state', 'success')
-                                    )
-                            )
-                    )
-            ]
-            )
-        }
-        )
+
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().
+            registerClass('test-skip-3-not-both-strategy', TestSkip3NotBothWorkflowStrategy)
+
+
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -253,7 +287,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                             getType() >> 'blah2'
                         }
                 ]
-                getStrategy() >> 'test-strategy'
+                getStrategy() >> 'test-skip-3-not-both-strategy'
             }
         }
 
@@ -268,28 +302,27 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     }
 
+    static final class TestSkip2NotSuccess1WorkflowStrategy extends TestWorkflowStrategy {
+        @Override
+        WorkflowStrategyProfile getProfile() {
+            new SkipProfile(
+                (2): Rules.conditionSet(
+                    Condition.not(
+                        Rules.equalsCondition('step.1.state', 'success')
+                    )
+                )
+            )
+        }
+    }
+
+
     def "don't skip after success"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            1 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getStepExecutionService().registerInstance('blah2', Mock(StepExecutor) {
-            1 * executeWorkflowStep(*_) >> new StepExecutionResultImpl()
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
-            getProfile() >> new SkipProfile(skipConditions: [
-                    (2): Rules.conditionSet(
-                            Condition.not(
-                                    Rules.equalsCondition('step.1.state', 'success')
-                            )
-                    )
-            ]
-            )
-        }
-        )
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getStepExecutionService().registerClass('blah2', TestSuccessStepExecutor)
+        framework.getWorkflowStrategyService().
+            registerClass('test-skip-2-not-success-1-strategy', TestSkip2NotSuccess1WorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -307,7 +340,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                             getType() >> 'blah2'
                         }
                 ]
-                getStrategy() >> 'test-strategy'
+                getStrategy() >> 'test-skip-2-not-success-1-strategy'
                 isKeepgoing() >> true
             }
         }
@@ -336,15 +369,25 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
     }
 
+    static class TestBasicFailStepExecutor implements StepExecutor {
+        @Override
+        boolean isNodeDispatchStep(final StepExecutionItem item) {
+            return false
+        }
+
+        @Override
+        StepExecutionResult executeWorkflowStep(
+            final StepExecutionContext executionContext,
+            final StepExecutionItem item
+        ) throws StepException {
+            new StepExecutionResultImpl(null, new MyReason("test failure"), "a failure")
+        }
+    }
     def "basic failure"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
-        def reason = new MyReason("test failure")
-        framework.getStepExecutionService().registerInstance('blah', Mock(StepExecutor) {
-            executeWorkflowStep(*_) >> new StepExecutionResultImpl(null, reason, "a failure")
-        }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
+        framework.getStepExecutionService().registerClass('blah',TestBasicFailStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
 
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
@@ -370,7 +413,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         null != result
         !result.success
         !result.stepFailures[0].success
-        result.stepFailures[0].failureReason == reason
+        result.stepFailures[0].failureReason.toString() == 'test failure'
         result.stepFailures[0].failureMessage == 'a failure'
     }
 
@@ -486,42 +529,42 @@ class EngineWorkflowExecutorSpec extends Specification {
             return null
         }
     }
+    static CountDownLatch TestCountDownLatch =new CountDownLatch(1)
+    static class TestAbortStepExecutor implements StepExecutor{
+        @Override
+        boolean isNodeDispatchStep(final StepExecutionItem item) {
+            return false
+        }
 
+        @Override
+        StepExecutionResult executeWorkflowStep(
+            final StepExecutionContext executionContext,
+            final StepExecutionItem item
+        ) throws StepException {
+            //will start after step 1
+            println('-> 2 Starting...')
+            //trigger thread interrupt
+            TestCountDownLatch.countDown()
+            try {
+                Thread.sleep(20000)
+                println('-> 2 Finishing...')
+                new StepExecutionResultImpl()
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt()
+                throw new StepException("interrupted", e, new MyReason("test"))
+            }
+        }
+    }
     def "basic abort"() {
         given:
         def engine = new EngineWorkflowExecutor(framework)
         def builder = new MyEngineBuilder()
         engine.setWorkflowSystemBuilder(builder)
-        def latch = new CountDownLatch(1)
+        TestCountDownLatch = new CountDownLatch(1)
 
-        framework.getStepExecutionService().registerInstance(
-                'blah',
-                Mock(StepExecutor) {
-                    executeWorkflowStep(*_) >> { args ->
-                        new StepExecutionResultImpl()
-                    }
-                }
-        )
-        framework.getStepExecutionService().registerInstance(
-                'blah2',
-                Mock(StepExecutor) {
-                    executeWorkflowStep(*_) >> { args ->
-                        //will start after step 1
-                        println('-> 2 Starting...')
-                        //trigger thread interrupt
-                        latch.countDown()
-                        try {
-                            Thread.sleep(20000)
-                            println('-> 2 Finishing...')
-                            new StepExecutionResultImpl()
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt()
-                            throw new StepException("interrupted", e, new MyReason("test"))
-                        }
-                    }
-                }
-        )
-        framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
+        framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)
+        framework.getStepExecutionService().registerClass('blah2', TestAbortStepExecutor)
+        framework.getWorkflowStrategyService().registerClass('test-strategy', TestWorkflowStrategy)
         def logger = new LogListener()
         def context = ExecutionContextImpl.builder().
                 executionListener(logger).
@@ -554,7 +597,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         )
 
         new Thread({
-            latch.await(20, TimeUnit.SECONDS)
+            TestCountDownLatch.await(20, TimeUnit.SECONDS)
             println "causing interrupt..."
             t.interrupt()
         }

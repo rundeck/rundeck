@@ -53,7 +53,7 @@ public class ResourceFormatGeneratorService extends PluggableProviderRegistrySer
     }
 
     public ResourceFormatGeneratorService(final Framework framework) {
-        super(framework);
+        super(framework, true);
 
         registry.put(ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, ResourceXMLFormatGenerator.class);
         registry.put(ResourceYamlFormatGenerator.SERVICE_PROVIDER_TYPE, ResourceYamlFormatGenerator.class);

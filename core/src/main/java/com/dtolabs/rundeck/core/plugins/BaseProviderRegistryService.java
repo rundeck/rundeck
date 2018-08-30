@@ -40,15 +40,22 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class BaseProviderRegistryService<T> implements ProviderService<T> {
-    protected HashMap<String, Class<? extends T>> registry;
-    protected HashMap<String, T> instanceregistry;
-    protected final Framework framework;
+    protected       HashMap<String, Class<? extends T>> registry;
+    protected       HashMap<String, T>                  instanceregistry;
+    protected final Framework                           framework;
+    private         boolean                             cacheInstances = false;
 
     public BaseProviderRegistryService(Framework framework) {
         this.framework = framework;
         instanceregistry = new HashMap<>();
         registry = new HashMap<>();
     }
+
+    public BaseProviderRegistryService(final Framework framework, final boolean cacheInstances) {
+        this(framework);
+        this.cacheInstances = cacheInstances;
+    }
+
     public BaseProviderRegistryService(Framework framework, Map<String, Class<? extends T>> classes) {
         this.framework = framework;
         instanceregistry = new HashMap<>();
@@ -71,12 +78,16 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         if (null == providerName) {
             throw new NullPointerException("provider name was null for Service: " + getName());
         }
-        if (null == instanceregistry.get(providerName)) {
-            T instance = createProviderInstanceOfType(providerName);
-            instanceregistry.put(providerName, instance);
-            return instance;
+        if (isCacheInstances()) {
+            if (null == instanceregistry.get(providerName)) {
+                T instance = createProviderInstanceOfType(providerName);
+                instanceregistry.put(providerName, instance);
+                return instance;
+            }
+            return instanceregistry.get(providerName);
+        } else {
+            return createProviderInstanceOfType(providerName);
         }
-        return instanceregistry.get(providerName);
     }
 
     @Override
@@ -152,5 +163,13 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         } catch (NoSuchMethodException e) {
         }
         return false;
+    }
+
+    public boolean isCacheInstances() {
+        return cacheInstances;
+    }
+
+    public void setCacheInstances(boolean cacheInstances) {
+        this.cacheInstances = cacheInstances;
     }
 }
