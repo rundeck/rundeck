@@ -83,6 +83,19 @@ class ConfigStorageServiceSpec extends Specification {
         service.listDirPaths("my-dir")==['my-dir/file1','my-dir/file2','my-dir/etc/']
         service.listDirPaths("not-my-resource")==[]
     }
+
+    void "list dir paths should check dir exists"() {
+        given: 'storage backend which throws exception on listDirectory for non-existent dir'
+        service.rundeckConfigStorageTree = Stub(StorageTree) {
+            hasDirectory('/my-dir') >> false
+            listDirectory('/my-dir') >> {
+                throw StorageException.listException(PathUtil.asPath('/my-dir'), "dne")
+            }
+        }
+        expect: 'result is empty instead of exception'
+        [] == service.listDirPaths('my-dir')
+    }
+    
     void "storage list paths regex"(){
         given:
         service.rundeckConfigStorageTree=Stub(StorageTree){

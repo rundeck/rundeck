@@ -67,8 +67,8 @@ class ConfigStorageService implements StorageManager {
      * @return
      */
     List<String> listDirPaths(String path, String pattern = null) {
-        def storagePath = (path.startsWith("/") ? path : "/${path}")
-        def resources = getStorage().listDirectory(storagePath)
+        def storagePath = (path.startsWith("/") ? path : "/${path}").toString()
+        Collection<Resource<ResourceMeta>> resources = getStorage().hasDirectory(storagePath)?getStorage().listDirectory(storagePath):[]
         def outprefix = path.endsWith('/') ? path.substring(0, path.length() - 1) : path
         resources.collect { Resource<ResourceMeta> res ->
             def pathName = res.path.name + (res.isDirectory() ? '/' : '')
