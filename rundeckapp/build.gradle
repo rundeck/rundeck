@@ -69,8 +69,6 @@ dependencies {
     // Rundeck project dependencies.
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
-    compile project(':rundeck:metricsweb')
-    compile project(':grails-persistlocale')
 
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
@@ -156,6 +154,12 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
+}
+grails{
+    plugins{
+        compile project(':rundeck:metricsweb')
+        compile project(':grails-persistlocale')
+    }
 }
 
 bootRun {

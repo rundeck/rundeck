@@ -20,6 +20,7 @@ class PersistlocaleGrailsPlugin extends Plugin {
 use Cookie based resolver for Locale.
 '''
     def profiles = ['web']
+    def loadAfter = ['i18n']
 
     // URL to the plugin's documentation
     def documentation = "http://grails.org/plugin/grails-persistlocale"
