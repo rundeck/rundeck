@@ -731,6 +731,18 @@ class ProjectManagerServiceSpec extends Specification {
         service.listProjectDirPaths("test1","my-dir")==['my-dir/file1','my-dir/file2','my-dir/etc/']
         service.listProjectDirPaths("test1","not-my-resource")==[]
     }
+
+    void "list project dir paths when tree throws exception"() {
+        given:
+        service.storage = Stub(StorageTree) {
+            hasDirectory("projects/test1/my-dir") >> false
+            listDirectory("projects/test1/my-dir") >> {
+                throw StorageException.listException(PathUtil.asPath('projects/test1/my-dir'), 'dne')
+            }
+        }
+        expect:
+        service.listProjectDirPaths("test1", "my-dir") == []
+    }
     void "storage list paths regex"(){
         given:
         service.storage=Stub(StorageTree){

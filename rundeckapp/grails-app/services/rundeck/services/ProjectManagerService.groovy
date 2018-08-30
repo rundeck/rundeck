@@ -306,7 +306,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     List<String> listProjectDirPaths(String projectName, String path, String pattern=null) {
         def prefix = 'projects/' + projectName
         def storagePath = prefix + (path.startsWith("/")?path:"/${path}")
-        def resources = getStorage().listDirectory(storagePath)
+        def resources = getStorage().hasDirectory(storagePath)?getStorage().listDirectory(storagePath):[]
         def outprefix=path.endsWith('/')?path.substring(0,path.length()-1):path
         resources.collect{Resource<ResourceMeta> res->
             def pathName=res.path.name + (res.isDirectory()?'/':'')
