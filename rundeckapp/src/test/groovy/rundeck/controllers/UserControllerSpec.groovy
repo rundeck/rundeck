@@ -7,6 +7,7 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.AuthToken
+import rundeck.Execution
 import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.services.ApiService
@@ -19,7 +20,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
 @TestFor(UserController)
-@Mock([User])
+@Mock([Execution, User, AuthToken])
 @TestMixin(GroovyPageUnitTestMixin)
 class UserControllerSpec extends Specification{
 
@@ -351,6 +352,67 @@ class UserControllerSpec extends Specification{
 
         then:
         response.status==HttpServletResponse.SC_FORBIDDEN
+    }
+
+
+    @Unroll
+    def "get user list xml v27 response ok"(){
+        given:
+        def userToSearch = 'admin'
+        User u = new User(login: userToSearch)
+        u.save()
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>userToSearch
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceAny(_,_,_) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,21) >> true
+            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+        }
+        when:
+        request.api_version=27
+        request.method='GET'
+        request.format='xml'
+        def result=controller.apiUserList()
+
+        then:
+        response.status==200
+    }
+
+    @Unroll
+    def "get user list json v27 response ok"(){
+        given:
+        def userToSearch = 'admin'
+        User u = new User(login: userToSearch)
+        u.save()
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>userToSearch
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceAny(_,_,_) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,21) >> true
+            0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+        }
+        when:
+        request.api_version=27
+        request.method='GET'
+        request.format='json'
+        def result=controller.apiUserList()
+
+        then:
+        response.status==200
     }
 
 }

@@ -62,6 +62,7 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.Project
@@ -3074,6 +3075,34 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         return redirect(controller:'menu',action:'jobs', params: [project: params.project])
+    }
+
+    def userSummary(){
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if(unauthorizedResponse(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN),
+                AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
+            return
+        }
+        def userList = [:]
+        User.listOrderByLogin().each {
+            def obj = [:]
+            obj.login = it.login
+            obj.firstName = it.firstName
+            obj.lastName = it.lastName
+            obj.email = it.email
+            obj.created = it.dateCreated
+            obj.updated = it.lastUpdated
+            def lastExec = Execution.lastExecutionByUser(it.login).list()
+            if(lastExec?.size()>0){
+                obj.lastJob = lastExec.get(0).dateStarted
+            }
+            def tokenList = AuthToken.findAllByUser(it)
+            obj.tokens = tokenList?.size()
+            userList.put(it.login,obj)
+        }
+
+        [users:userList]
     }
 }
 

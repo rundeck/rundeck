@@ -156,6 +156,11 @@ class Execution extends ExecutionContext {
         withProject{ project ->
             eq 'project', project
         }
+        lastExecutionByUser{ user ->
+            eq 'user', user
+            maxResults 1
+            order 'dateStarted', 'desc'
+        }
 	}
 
 
