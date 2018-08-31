@@ -53,7 +53,7 @@ public class ResourceFormatParserService
         return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
     }
     public ResourceFormatParserService(final Framework framework) {
-        super(framework);
+        super(framework, true);
 
 
         registry.put(ResourceXMLFormatParser.SERVICE_PROVIDER_TYPE, ResourceXMLFormatParser.class);

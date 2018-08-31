@@ -543,6 +543,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 //        service.registerInstance("url", factory1);
 //        service.registerInstance("directory", factory1);
         service.registerInstance("local", factory1);
+        service.setCacheInstances(true);
 
 
         FrameworkProject project = createProject();
@@ -586,6 +587,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         service.registerInstance("file", factory1);
         service.registerInstance("url", factory2);
         service.registerInstance("directory", factory3);
+        service.setCacheInstances(true);
 
         //backup a copy project.properties
 
@@ -658,6 +660,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         service.registerInstance("file", factory1);
         service.registerInstance("url", factory2);
         service.registerInstance("directory", factory3);
+        service.setCacheInstances(true);
 
         //backup a copy project.properties
 
@@ -735,7 +738,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         service.registerInstance("file", factory1);
         service.registerInstance("url", factory2);
         service.registerInstance("directory", factory3);
-
+        service.setCacheInstances(true);
 
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.type", "file");
         props1.setProperty(FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + ".1.config.file", "/test/file/path");

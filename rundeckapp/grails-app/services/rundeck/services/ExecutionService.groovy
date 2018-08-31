@@ -56,6 +56,7 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -173,6 +174,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     @PreDestroy
     void cleanUp() {
         applicationIsShutdown = true;
+    }
+
+
+    void initialize(){
+        //TODO: use plugin registry instead
+        //ExecutionService handles Job reference steps
+        final cis = frameworkService.rundeckFramework.stepExecutionService
+        cis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
+        //ExecutionService handles Job reference node steps
+        final nis = frameworkService.rundeckFramework.nodeStepExecutorService
+        nis.providerRegistryService.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
     }
     /**
      * Render execution document for api response
@@ -1088,12 +1100,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             )
 
-            //ExecutionService handles Job reference steps
-            final cis = StepExecutionService.getInstanceForFramework(framework);
-            cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
-            //ExecutionService handles Job reference node steps
-            final nis = NodeStepExecutionService.getInstanceForFramework(framework);
-            nis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
 
             logExecutionLog4j(execution, "start", execution.user)
             if (scheduledExecution) {

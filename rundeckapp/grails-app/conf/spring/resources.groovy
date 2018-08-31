@@ -284,7 +284,7 @@ beans={
 
     def storageDir= new File(varDir, 'storage')
     rundeckStorageTree(StorageTreeFactory){
-        rundeckFramework=ref('rundeckFramework')
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')

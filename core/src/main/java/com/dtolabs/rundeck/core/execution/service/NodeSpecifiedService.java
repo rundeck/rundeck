@@ -38,6 +38,10 @@ public abstract class NodeSpecifiedService<T> extends PluggableProviderRegistryS
         super(framework);
     }
 
+    protected NodeSpecifiedService(final Framework framework, final boolean cacheInstances) {
+        super(framework, cacheInstances);
+    }
+
     /**
      * @return a specific service provider that can be used for the node
      * @param node node

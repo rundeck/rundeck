@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
@@ -39,26 +40,47 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class BaseProviderRegistryService<T> implements ProviderService<T> {
-    protected HashMap<String, Class<? extends T>> registry;
-    protected HashMap<String, T> instanceregistry;
-    protected final Framework framework;
+public abstract class BaseProviderRegistryService<T> implements ProviderService<T>, ProviderRegistryService<T> {
+    protected       HashMap<String, Class<? extends T>> registry;
+    protected       HashMap<String, T>                  instanceregistry;
+    protected final Framework                           framework;
+    private         boolean                             cacheInstances = false;
 
     public BaseProviderRegistryService(Framework framework) {
         this.framework = framework;
         instanceregistry = new HashMap<>();
         registry = new HashMap<>();
     }
+
+    public BaseProviderRegistryService(final Framework framework, final boolean cacheInstances) {
+        this(framework);
+        this.cacheInstances = cacheInstances;
+    }
+
     public BaseProviderRegistryService(Framework framework, Map<String, Class<? extends T>> classes) {
         this.framework = framework;
         instanceregistry = new HashMap<>();
         registry = new HashMap<>(classes);
     }
 
+    public BaseProviderRegistryService(
+        final Map<String, Class<? extends T>> registry,
+        final Framework framework,
+        final boolean cacheInstances
+    )
+    {
+        instanceregistry = new HashMap<>();
+        this.registry = new HashMap<>(registry);
+        this.framework = framework;
+        this.cacheInstances = cacheInstances;
+    }
+
+    @Override
     public void registerClass(String name, Class<? extends T> clazz) {
         registry.put(name, clazz);
     }
 
+    @Override
     public void registerInstance(String name, T object) {
         instanceregistry.put(name, object);
     }
@@ -71,12 +93,16 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         if (null == providerName) {
             throw new NullPointerException("provider name was null for Service: " + getName());
         }
-        if (null == instanceregistry.get(providerName)) {
-            T instance = createProviderInstanceOfType(providerName);
-            instanceregistry.put(providerName, instance);
-            return instance;
+        if (isCacheInstances()) {
+            if (null == instanceregistry.get(providerName)) {
+                T instance = createProviderInstanceOfType(providerName);
+                instanceregistry.put(providerName, instance);
+                return instance;
+            }
+            return instanceregistry.get(providerName);
+        } else {
+            return createProviderInstanceOfType(providerName);
         }
-        return instanceregistry.get(providerName);
     }
 
     @Override
@@ -90,7 +116,7 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
 
     public List<ProviderIdent> listProviders() {
 
-        final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
+        final HashSet<ProviderIdent> providers = new HashSet<>();
 
         for (final String s : registry.keySet()) {
             providers.add(new ProviderIdent(getName(), s));
@@ -152,5 +178,15 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         } catch (NoSuchMethodException e) {
         }
         return false;
+    }
+
+    @Override
+    public boolean isCacheInstances() {
+        return cacheInstances;
+    }
+
+    @Override
+    public void setCacheInstances(boolean cacheInstances) {
+        this.cacheInstances = cacheInstances;
     }
 }

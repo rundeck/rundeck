@@ -67,7 +67,7 @@ public class FileCopierService
     }
 
     FileCopierService(Framework framework) {
-        super(framework);
+        super(framework, true);
 
         //TODO: use plugin framework to configure available FileCopier implementations.
         registry.put(JschScpFileCopier.SERVICE_PROVIDER_TYPE, JschScpFileCopier.class);
