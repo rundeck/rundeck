@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
@@ -39,7 +40,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public abstract class BaseProviderRegistryService<T> implements ProviderService<T> {
+public abstract class BaseProviderRegistryService<T> implements ProviderService<T>, ProviderRegistryService<T> {
     protected       HashMap<String, Class<? extends T>> registry;
     protected       HashMap<String, T>                  instanceregistry;
     protected final Framework                           framework;
@@ -62,10 +63,24 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         registry = new HashMap<>(classes);
     }
 
+    public BaseProviderRegistryService(
+        final Map<String, Class<? extends T>> registry,
+        final Framework framework,
+        final boolean cacheInstances
+    )
+    {
+        instanceregistry = new HashMap<>();
+        this.registry = new HashMap<>(registry);
+        this.framework = framework;
+        this.cacheInstances = cacheInstances;
+    }
+
+    @Override
     public void registerClass(String name, Class<? extends T> clazz) {
         registry.put(name, clazz);
     }
 
+    @Override
     public void registerInstance(String name, T object) {
         instanceregistry.put(name, object);
     }
@@ -101,7 +116,7 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
 
     public List<ProviderIdent> listProviders() {
 
-        final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
+        final HashSet<ProviderIdent> providers = new HashSet<>();
 
         for (final String s : registry.keySet()) {
             providers.add(new ProviderIdent(getName(), s));
@@ -165,10 +180,12 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         return false;
     }
 
+    @Override
     public boolean isCacheInstances() {
         return cacheInstances;
     }
 
+    @Override
     public void setCacheInstances(boolean cacheInstances) {
         this.cacheInstances = cacheInstances;
     }
