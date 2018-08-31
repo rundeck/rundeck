@@ -104,7 +104,9 @@ dependencies {
     compile "org.grails:grails-core"
     //compile "org.springframework.boot:spring-boot-starter-actuator"
     //provided "org.springframework.boot:spring-boot-starter-tomcat"
-    provided "org.springframework.boot:spring-boot-starter-jetty"
+    provided("org.springframework.boot:spring-boot-starter-jetty") {
+        exclude(group:"org.eclipse.jetty", module:"jetty-util")
+    }
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
@@ -120,7 +122,8 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compile "com.google.code.gson:gson:2.8.2"
-    compile 'org.eclipse.jetty:jetty-jaas:9.4.11.v20180605'
+    compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
+    compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
     compile 'org.grails.plugins:spring-security-core:3.2.1'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'

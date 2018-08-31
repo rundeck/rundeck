@@ -99,7 +99,7 @@ def manifest=[
         "templates/sbin/rundeckd.template",
         "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-server-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-util-${versions.jetty}.jar",
+        "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-security-${versions.jetty}.jar",
