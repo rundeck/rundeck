@@ -78,20 +78,20 @@ def generateMail={subject, Map execution, Map config->
 
                         if(execution.status=='running'){
                             em("Started")
-                            yield(" by: ${execution.user} at ${execution.dateStarted}")
+                            mkp.yield(" by: ${execution.user} at ${execution.dateStarted}")
                         }else if(execution.status=='succeeded'){
                             em("Finished")
-                            yield(" at: ${execution.dateEnded}")
+                            mkp.yield(" at: ${execution.dateEnded}")
                         }else if(execution.abortedBy){
                             em("KILLED")
-                            yield(" by ${execution.abortedBy} at: ${execution.dateEnded}")
+                            mkp.yield(" by ${execution.abortedBy} at: ${execution.dateEnded}")
                         }else{
                             //failed
                             em("Failed")
-                            yield(" at: ${execution.dateEnded}")
+                            mkp.yield(" at: ${execution.dateEnded}")
                             if(execution.failedNodeList){
                                 div{
-                                    yield("Failed node list:")
+                                    mkp.yield("Failed node list:")
                                     ul{
                                         execution.failedNodeList.each{
                                             li(it)
@@ -107,7 +107,7 @@ def generateMail={subject, Map execution, Map config->
                         a(href:execution.href,"Output for ${execution.id}")
                     }
                     // div{
-                    //     yield("execution data: ${execution}")
+                    //     mkp.yield("execution data: ${execution}")
                     // }
                 }
             }
@@ -127,7 +127,7 @@ def sendMail={Closure callable->
 
     //create a builder and use it as the delegate of the closure
     //which will build the message
-    def mbuilder = new grails.plugin.mail.MailMessageBuilder(sender,new ConfigObject())
+    def mbuilder = new grails.plugins.mail.MailMessageBuilder(sender,new org.grails.config.CompositeConfig())
     callable.delegate = mbuilder
     callable.resolveStrategy = Closure.DELEGATE_FIRST
     callable.call()
@@ -157,7 +157,7 @@ rundeckPlugin(NotificationPlugin){
             it.split(",").every { obj ->
                 //allow embedded property references like ${job.user.email}
                 //otherwise, make sure its a valid email address
-                obj.indexOf('${')>=0 || org.apache.commons.validator.EmailValidator.getInstance().isValid(obj)
+                obj.indexOf('${')>=0 || (new rundeck.services.AnyDomainEmailValidator()).isValid(obj)
             }
         }
 
