@@ -34,6 +34,11 @@ public interface PluginMetadata {
     File getFile();
 
     /**
+     * @return The name in plugin.yaml or the Rundeck-Plugin-Name attribute in the jar manifest
+     */
+    String getPluginArtifactName();
+
+    /**
      * @return author metadata
      */
     String getPluginAuthor();

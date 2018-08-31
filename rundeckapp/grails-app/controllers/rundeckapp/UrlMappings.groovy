@@ -308,6 +308,10 @@ class UrlMappings {
         "/api/$api_version/verb/repository/$repoName/upload"(controller:"repository",action:"uploadArtifact")
         "/api/$api_version/verb/repository/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
         "/api/$api_version/verb/repository/$repoName/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
+        "/api/$api_version/verb/repository/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
+        "/api/$api_version/verb/repository/$repoName/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
+        "/api/$api_version/verb/resyncInstalledPlugins"(controller:"repository",action:"syncInstalledArtifactsToRundeck")
+        "/api/$api_version/verb/listInstalledArtifacts"(controller:"repository",action:"listInstalledArtifacts")
 
         "404"(view: '/404')
         "500"(view: '/error')

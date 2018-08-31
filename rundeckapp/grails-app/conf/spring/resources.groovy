@@ -321,7 +321,7 @@ beans={
 
     //Verb storage tree for installed plugins
     verbPluginStorageTree(StorageTreeFactory) {
-        rundeckFramework=ref('rundeckFramework')
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
@@ -336,7 +336,7 @@ beans={
 
     //Verb storage tree for private repository
     verbRepositoryStorageTree(StorageTreeFactory) {
-        rundeckFramework=ref('rundeckFramework')
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
         storageConverterPluginProviderService=ref('storageConverterPluginProviderService')

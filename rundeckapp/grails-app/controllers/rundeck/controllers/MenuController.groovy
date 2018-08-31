@@ -2019,7 +2019,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def plugins(){
-        pluginApiService.listPlugins()
+        pluginApiService.listPluginsDetailed()
     }
 
     def home() {
