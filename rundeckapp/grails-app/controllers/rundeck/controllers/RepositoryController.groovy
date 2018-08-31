@@ -6,6 +6,7 @@ class RepositoryController {
 
     def verbClient
     def repositoryPluginService
+    def pluginApiService
 
     def index() { }
 
@@ -19,8 +20,32 @@ class RepositoryController {
             specifyRepoError()
             return
         }
-        println "listing for repoName: ${repoName}"
-        render verbClient.listArtifacts(repoName,params.offset?.toInteger(),params.limit?.toInteger()) as JSON
+        def installedPluginIds = pluginApiService.listPlugins()*.providers.collect { it.artifactId }.flatten()
+        def artifacts = verbClient.listArtifacts(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+        artifacts.each {
+            it.results.each {
+                it.installed = installedPluginIds.contains(it.id)
+            }
+        }
+
+        render artifacts as JSON
+    }
+
+    def listInstalledArtifacts() {
+        String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
+        if(!repoName) {
+            specifyRepoError()
+            return
+        }
+        def installedPluginIds = pluginApiService.listPlugins()*.providers.collect { it.artifactId }.flatten()
+        def artifacts = verbClient.listArtifacts()*.results.flatten()
+        def installedArtifacts = []
+        artifacts.each {
+            if(installedPluginIds.contains(it.id)) {
+             installedArtifacts.add([artifactId:it.id, artifactName:it.name, version: it.currentVersion])
+            }
+        }
+        render installedArtifacts as JSON
     }
 
     def uploadArtifact() {
@@ -53,8 +78,9 @@ class RepositoryController {
             return
         }
         def result = verbClient.installArtifact(repoName, params.artifactId, params.artifactVersion)
-        repositoryPluginService.syncInstalledArtifactsToPluginTarget()
         if(result.batchSucceeded()) {
+            repositoryPluginService.removeOldPlugin(verbClient.getArtifact(repoName, params.artifactId, null))
+            repositoryPluginService.syncInstalledArtifactsToPluginTarget()
             def successMsg = [msg:"Artifact Installed"]
             render successMsg as JSON
         } else {
@@ -65,6 +91,31 @@ class RepositoryController {
             response.setStatus(400)
             render errors as JSON
         }
+    }
+
+    def uninstallArtifact() {
+        String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
+        if(!repoName) {
+            specifyRepoError()
+            return
+        }
+        def responseMsg = [:]
+        try {
+            def artifact = verbClient.getArtifact(repoName, params.artifactId,null)
+            repositoryPluginService.uninstallArtifact(artifact)
+            responseMsg.msg = "Artifact Uninstalled"
+        } catch(Exception ex) {
+            log.error("Unable to uninstall artifact.",ex)
+            responseMsg.err = "Failed to uninstall artifact: ${ex.message}"
+            response.setStatus(400)
+        }
+        render responseMsg as JSON
+    }
+
+    def syncInstalledArtifactsToRundeck() {
+        repositoryPluginService.syncInstalledArtifactsToPluginTarget()
+        def successMsg = [msg:"Resync Triggered"]
+        render successMsg as JSON
     }
 
     private def getOnlyRepoInListOrNullIfMultiple() {
