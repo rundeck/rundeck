@@ -140,31 +140,7 @@ class PluginController {
     }
 
     def listPlugins() {
-        String appDate = servletContext.getAttribute('version.date')
-        String appVer = servletContext.getAttribute('version.number')
-        def pluginList = pluginApiService.listPlugins()
-        def tersePluginList = pluginList.descriptions.collect {
-            String service = it.key
-            def providers = it.value.collect { provider ->
-                def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider.name)
-                boolean builtin = meta == null
-                String ver = meta?.pluginFileVersion ?: appVer
-                String dte = meta?.pluginDate ?: appDate
-                [id:provider.name.encodeAsSHA256().substring(0,12),
-                 name:provider.name,
-                 title:provider.title,
-                 description:provider.description,
-                 builtin:builtin,
-                 pluginVersion:ver,
-                 pluginDate:toEpoch(dte),
-                 enabled:true]
-            }
-            [service: it.key,
-             desc: message(code:"framework.service.${service}.description".toString()),
-             providers: providers
-            ]
-        }
-        render(tersePluginList as JSON)
+        render(pluginApiService.listPlugins() as JSON)
     }
 
     def pluginDetail() {
@@ -176,8 +152,12 @@ class PluginController {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }
         }
+        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider.name)
+        String artifactName = meta?.pluginArtifactName ?: desc.name
+        String id = artifactName.encodeAsSHA256().substring(0,12)
         def terseDesc = [:]
-        terseDesc.id = desc.name.encodeAsSHA256().substring(0,12)
+        terseDesc.artifactId = id
+        terseDesc.artifactName = artifactName
         terseDesc.name = desc.name
         terseDesc.title = desc.title
         terseDesc.desc = desc.description
@@ -194,9 +174,4 @@ class PluginController {
         render(terseDesc as JSON)
     }
 
-    private long toEpoch(String dateString) {
-        PLUGIN_DATE_FMT.parse(dateString).time
-    }
-
-    private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
 }

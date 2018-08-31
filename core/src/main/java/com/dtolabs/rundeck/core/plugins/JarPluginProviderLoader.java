@@ -74,6 +74,7 @@ class JarPluginProviderLoader implements ProviderLoader,
     public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(
             JAR_PLUGIN_VERSION_1_2);
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
+    public static final String RUNDECK_PLUGIN_NAME = "Rundeck-Plugin-Name";
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
     public static final String RUNDECK_PLUGIN_AUTHOR = "Rundeck-Plugin-Author";
@@ -882,6 +883,12 @@ class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public File getFile() {
         return pluginJar;
+    }
+
+    @Override
+    public String getPluginArtifactName() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
     }
 
     @Override
