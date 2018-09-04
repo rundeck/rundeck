@@ -462,6 +462,8 @@
                         </h3>
                       </section>
                     </g:if>%{-- end of ifScheduledExecutions --}%
+                    <tmpl:wfstateSummaryLine/>
+
                   </div>
                   <div id="header-card-content" class="card-content" style="display:none;">
                     <!-- -->
@@ -584,9 +586,6 @@
                           Retry #<g:enc>${execution.retryAttempt}</g:enc>  (of <g:enc>${execution.retry}</g:enc>)
                         </div>
                       </g:if>
-                    </div>
-                    <div>
-                      <tmpl:wfstateSummaryLine/>
                     </div>
                     <!-- -->
                     <g:if test="${execution.argString}">
