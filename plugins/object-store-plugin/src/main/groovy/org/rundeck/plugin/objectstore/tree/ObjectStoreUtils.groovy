@@ -24,6 +24,7 @@ import java.util.regex.Pattern
 
 class ObjectStoreUtils {
     static Pattern createSubdirCheckForPath(String path) {
+        if(!path) return ~/(.*?)\/.*/
         return ~/${path}\/(.*?)\/.*/
     }
 

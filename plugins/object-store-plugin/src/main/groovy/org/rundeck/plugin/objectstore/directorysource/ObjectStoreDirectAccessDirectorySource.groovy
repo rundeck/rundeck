@@ -22,6 +22,7 @@ import io.minio.messages.Item
 import org.rundeck.plugin.objectstore.stream.LazyAccessObjectStoreInputStream
 import org.rundeck.plugin.objectstore.tree.ObjectStoreResource
 import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
+import org.rundeck.plugin.objectstore.tree.ObjectStoreUtils
 import org.rundeck.storage.api.Resource
 
 import java.util.regex.Matcher
@@ -30,6 +31,9 @@ import java.util.regex.Pattern
 /**
  * Uses the object client to directly access the object store to get directory information.
  * For stores with lots of objects this could be a very inefficient directory access mechanism.
+ *
+ * This store works best when the object store is going to be accessed by multiple cluster members
+ * or the object store is regularly updated by third party tools
  */
 class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySource {
     private static final String DIR_MARKER = "/"
@@ -75,15 +79,16 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
     Set<Resource<BaseStreamResource>> listSubDirectoriesAt(final String path) {
         def resources = []
         def subdirs = [] as Set
-        Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(path)
+        String lstPath = path == "" ? null : path
+        Pattern directSubDirMatch = ObjectStoreUtils.createSubdirCheckForPath(lstPath)
 
-        mClient.listObjects(bucket, path, true).each { result ->
+        mClient.listObjects(bucket, lstPath, true).each { result ->
             Matcher m = directSubDirMatch.matcher(result.get().objectName())
             if(m.matches()) {
                 subdirs.add(m.group(1))
             }
         }
-        subdirs.sort().each { String dirname -> resources.add(new ObjectStoreResource(dirname, null, true)) }
+        subdirs.sort().each { String dirname -> resources.add(new ObjectStoreResource(path+ "/"+dirname, null, true)) }
         return resources
     }
 
@@ -108,9 +113,12 @@ class ObjectStoreDirectAccessDirectorySource implements ObjectStoreDirectorySour
     @Override
     Set<Resource<BaseStreamResource>> listResourceEntriesAt(final String path) {
         def resources = []
-        mClient.listObjects(bucket, path, true)
+        String lstPath = path == "" ? null : path
+        String rPath = path == "" ?: path+"/"
+
+        mClient.listObjects(bucket, lstPath, true)
                .findAll {
-            !(it.get().objectName().replaceAll(path,"") ==~ ObjectStoreTree.nestedSubDirCheck())
+            !(it.get().objectName().replaceAll(rPath,"").contains("/"))
         }.each { result ->
             resources.add(createResourceListItemWithMetadata(result.get()))
         }
