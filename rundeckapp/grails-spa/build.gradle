@@ -2,6 +2,11 @@ plugins {
   id "com.moowork.node" version "1.2.0"
 }
 
+node {
+    download = true
+    version='9.2.0'
+}
+
 task buildSpa(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
