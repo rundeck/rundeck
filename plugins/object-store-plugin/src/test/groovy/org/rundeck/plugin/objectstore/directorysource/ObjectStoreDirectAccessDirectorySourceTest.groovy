@@ -16,61 +16,37 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import io.minio.MinioClient
+import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
+import spock.lang.Shared
 import spock.lang.Specification
 import testhelpers.MinioTestServer
 import testhelpers.MinioTestUtils
 
-
-class ObjectStoreMemoryDirectorySourceTest extends Specification {
+class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     static MinioTestServer server = new MinioTestServer()
     static MinioClient mClient
-    ObjectStoreMemoryDirectorySource directory
+    @Shared
+    ObjectStoreDirectAccessDirectorySource directory
 
     def setupSpec() {
         server.start()
+        String bucket = "direct-access-dir-bucket"
         mClient = new MinioClient("http://localhost:9000", server.accessKey, server.secretKey)
+        if(!mClient.bucketExists(bucket)) mClient.makeBucket(bucket)
+        directory = new ObjectStoreDirectAccessDirectorySource(mClient, bucket)
+
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"rootfile.test","data", [:])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"etc/framework.properties","data",["description":"rundeck framework property file"])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/config/rundeck-config.properties","data",["description":"main config properties"])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/config/realm.properties","data",["description":"security data"])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/logs/server.log","data",[:])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/data/grailsdb.mv.db","data",[:])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"server/random.file","data",[:])
+        MinioTestUtils.ifNotExistAdd(mClient,bucket,"tobedeleted/delete.me","data",[:])
     }
 
     void cleanupSpec() {
         server.stop()
-    }
-
-    def setup() {
-        directory = new ObjectStoreMemoryDirectorySource(mClient, "memory-dir-bucket")
-        directory.updateEntry("rootfile.test",[:])
-        directory.updateEntry("etc/framework.properties",["description":"rundeck framework property file"])
-        directory.updateEntry("server/config/rundeck-config.properties",["description":"main config properties"])
-        directory.updateEntry("server/config/realm.properties",["description":"security data"])
-        directory.updateEntry("server/logs/server.log",[:])
-        directory.updateEntry("server/data/grailsdb.mv.db",[:])
-        directory.updateEntry("server/random.file",[:])
-        directory.updateEntry("tobedeleted/delete.me",[:])
-    }
-
-    def "Init no bucket"() {
-        when:
-        ObjectStoreMemoryDirectorySource sync = new ObjectStoreMemoryDirectorySource(mClient, "non-existant")
-
-        then:
-        sync.root.isEmpty()
-    }
-
-    def "Init resync"() {
-        when:
-        String bucket = "mem-sync"
-        mClient.makeBucket(bucket)
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "arootfile.file", "root", [:])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/dir.file", "file", [:])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file1.file", "file", [name:"file1"])
-        MinioTestUtils.ifNotExistAdd(mClient, bucket, "dir/subdir/file2.file", "file", [name:"file2"])
-        ObjectStoreMemoryDirectorySource sync = new ObjectStoreMemoryDirectorySource(mClient, bucket)
-
-        then:
-        !sync.root.isEmpty()
-        sync.checkResourceExists("arootfile.file")
-        sync.checkResourceExists("dir/dir.file")
-        sync.root.getSubdir("dir").getSubdir("subdir").getEntry("file1.file").meta.name == "file1"
-        sync.root.getSubdir("dir").getSubdir("subdir").getEntry("file2.file").meta.name == "file2"
     }
 
     def "CheckPathExists"() {
@@ -145,19 +121,4 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
         entries.size() == 1
         entries[0].path.name == "rootfile.test"
     }
-
-    def "UpdateEntry"() {
-        expect:
-        directory.root.listEntryNames().contains("rootfile.test")
-        directory.root.getSubdir("etc").listEntryNames().contains("framework.properties")
-    }
-
-    def "DeleteEntry"() {
-        when:
-        directory.deleteEntry("tobedeleted/delete.me")
-        then:
-        !directory.checkResourceExists("tobedeleted/delete.me")
-        !directory.checkPathExistsAndIsDirectory("tobedeleted")
-    }
-
 }
