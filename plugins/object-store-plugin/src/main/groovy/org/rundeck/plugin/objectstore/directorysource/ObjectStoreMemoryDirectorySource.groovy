@@ -28,6 +28,9 @@ import org.rundeck.storage.api.Resource
 *
 * If the object store is modified by a third part client this directory store will have to be resynced.
 * Currently the way to resync the directory structure is to restart Rundeck.
+*
+* This source works best when using a single instance of Rundeck, where all updates to the object store
+* will be done through the object tree.
  */
 
 class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
