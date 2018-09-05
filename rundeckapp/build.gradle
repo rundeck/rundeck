@@ -7,7 +7,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath "org.grails:grails-gradle-plugin:3.3.5"
+        classpath "org.grails:grails-gradle-plugin:${grailsVersion}"
         classpath "gradle.plugin.com.energizedwork.webdriver-binaries:webdriver-binaries-gradle-plugin:1.1"
         classpath "gradle.plugin.com.energizedwork:idea-gradle-plugins:1.4"
         classpath "org.grails.plugins:hibernate5:${gormVersion-".RELEASE"}"
@@ -71,7 +71,10 @@ dependencies {
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
 
-    compile 'com.github.sjrd218.rundeck-verb-project:verb-client:v0.2.3'
+    compile('com.github.sjrd218.rundeck-verb-project:verb-client:v0.2.3'){
+        exclude(group:"com.squareup.okhttp3", module:"okhttp")
+        exclude(group:"com.fasterxml.jackson.core", module:"jackson-databind")
+    }
 
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
