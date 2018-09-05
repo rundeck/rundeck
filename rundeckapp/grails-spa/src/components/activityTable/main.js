@@ -8,6 +8,8 @@ Vue.config.productionTip = false
 
 Vue.use(VueCookies)
 
+console.log('hello')
+
 /* eslint-disable no-new */
 new Vue({
   el: '#project-activity-table-vue',

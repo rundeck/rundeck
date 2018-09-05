@@ -29,7 +29,7 @@ export default {
         },
         withCredentials: true
       }).then((response) => {
-        console.log('response', response)
+        // console.log('response', response)
         if (response.data.projects[0]) {
           this.project = response.data.projects[0]
         }

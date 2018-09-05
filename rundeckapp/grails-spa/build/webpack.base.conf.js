@@ -23,6 +23,7 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/motd': './src/components/motd/main.js',
+    'components/activityTable': './src/components/activityTable/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js'
   },
   output: {

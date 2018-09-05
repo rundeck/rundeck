@@ -3,16 +3,13 @@
 </template>
 
 <script>
-import _ from 'lodash'
-
+console.log('hello')
 export default {
   name: 'ActivityTable',
   data () {
     return {
+      test: null
     }
-  },
-  methods: {
-
   },
   mounted () {
 

@@ -704,6 +704,9 @@
                 </div>
               </div>
           </div>
+          <div class="row">
+            <g:render template="/reports/activityLinksVue" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>            
+          </div>
       </g:if>
   </div>
   <g:render template="/menu/copyModal"
