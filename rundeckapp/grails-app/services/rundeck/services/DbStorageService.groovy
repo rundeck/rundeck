@@ -30,7 +30,6 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.rundeck.storage.impl.ResourceBase
-import org.springframework.dao.OptimisticLockingFailureException
 import rundeck.Storage
 
 import java.util.regex.Pattern
@@ -305,7 +304,7 @@ class DbStorageService implements NamespacedStorage{
 
                 retry = false
                 return true;
-            } catch (OptimisticLockingFailureException e) {
+            } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 if (!retry) {
                     throw new StorageException("Failed to save content at path ${path}: content was modified", e,
                             StorageException.Event.valueOf(event.toUpperCase()),

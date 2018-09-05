@@ -456,7 +456,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                     retry = false
                 }
-            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
                 retry = true
             } catch (StaleObjectStateException e) {
@@ -921,7 +921,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.delete(flush: true)
                 deleteJob(jobname, groupname)
                 success = true
-            } catch (org.springframework.dao.OptimisticLockingFailureException e) {
+            } catch (org.springframework.dao.ConcurrencyFailureException e) {
                 scheduledExecution.discard()
                 errmsg = 'Cannot delete Job "' + scheduledExecution.jobName + '" [' + scheduledExecution.extid + ']: it may have been modified or executed by another user'
             } catch (StaleObjectStateException e) {
