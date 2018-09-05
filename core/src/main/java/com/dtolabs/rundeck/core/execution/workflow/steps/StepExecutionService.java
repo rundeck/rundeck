@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -35,6 +36,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -52,8 +54,9 @@ public class StepExecutionService
     private final PluggableProviderService<StepExecutor>
         pluginStepExecutionService;
 
-    private List<ProviderService<StepExecutor>> serviceList;
-    private BuiltinStepExecutionService builtinStepExecutionService;
+    private List<ProviderService<StepExecutor>>             serviceList;
+    private PresetBaseProviderRegistryService<StepExecutor> builtinStepExecutionService;
+    private PresetBaseProviderRegistryService<StepExecutor> dynamicRegistryService;
 
     public String getName() {
         return SERVICE_NAME;
@@ -61,11 +64,16 @@ public class StepExecutionService
 
     StepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
-        builtinStepExecutionService = new BuiltinStepExecutionService(SERVICE_NAME, framework);
+        HashMap<String, Class<? extends StepExecutor>> presets = new HashMap<>();
+        presets.put(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, NodeDispatchStepExecutor.class);
+        builtinStepExecutionService = new PresetBaseProviderRegistryService<>(presets, framework, false, SERVICE_NAME);
+        dynamicRegistryService =
+            new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
         pluginStepExecutionService = new PluginStepExecutionService(SERVICE_NAME, framework)
         .adapter(StepPluginAdapter.CONVERTER);
 
         serviceList.add(builtinStepExecutionService);
+        serviceList.add(dynamicRegistryService);
         serviceList.add(pluginStepExecutionService);
     }
 
@@ -123,5 +131,12 @@ public class StepExecutionService
 
     public void registerInstance(String name, StepExecutor object) {
         builtinStepExecutionService.registerInstance(name, object);
+    }
+
+    /**
+     * @return dynamic registry for providers
+     */
+    public ProviderRegistryService<StepExecutor> getProviderRegistryService() {
+        return dynamicRegistryService;
     }
 }

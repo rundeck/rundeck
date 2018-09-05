@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
@@ -52,6 +53,8 @@ public class DescribableServiceUtil {
                 if(null!=desc) {
                     list.add(desc);
                 }
+            } catch (MissingProviderException ignored) {
+
             } catch (ExecutionServiceException e) {
                 e.printStackTrace();
             }

@@ -69,36 +69,39 @@
              <i class="fas fa-trash"></i>
               <g:message code="button.action.Delete" />
           </a>
+
+        <!-- Modal -->
+
+            <g:form controller="user" action="clearApiToken" useToken="true" >
+                <div class="modal fade clearconfirm" id="myModal${enc(attr: ukey)}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                                <h4 class="modal-title"><g:message code="userController.page.profile.heading.delete.token.title" /></h4>
+                            </div>
+
+                            <div class="modal-body">
+                                <p><g:message code="userController.page.profile.delete.token.description" /></p>
+                            </div>
+
+                            <div class="modal-footer">
+                                <g:hiddenField name="login" value="${user.login}"></g:hiddenField>
+                                <g:if test="${token.uuid}">
+                                    <g:hiddenField name="tokenid" value="${token.uuid}"></g:hiddenField>
+                                </g:if>
+                                <g:else>
+                                    <g:hiddenField name="token" value="${token.token}"></g:hiddenField>
+                                </g:else>
+                                <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                                    code="button.action.Cancel"/></button>
+                                <input type="submit" class="btn btn-danger yes" value="Delete" name="${message(code:'button.action.Delete')}">
+
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+            </g:form>
         </td>
     </tr>
-    <!-- Modal -->
-    <div class="modal fade clearconfirm" id="myModal${enc(attr: ukey)}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-sm">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                    <h4 class="modal-title"><g:message code="userController.page.profile.heading.delete.token.title" /></h4>
-                </div>
-
-                <div class="modal-body">
-                    <p><g:message code="userController.page.profile.delete.token.description" /></p>
-                </div>
-
-                <div class="modal-footer">
-                    <g:form controller="user" action="clearApiToken" useToken="true">
-                        <g:hiddenField name="login" value="${user.login}"/>
-                        <g:if test="${token.uuid}">
-                            <g:hiddenField name="tokenid" value="${token.uuid}"/>
-                        </g:if>
-                        <g:else>
-                            <g:hiddenField name="token" value="${token.token}"/>
-                        </g:else>
-                        <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
-                                code="button.action.Cancel"/></button>
-                        <input type="submit" class="btn btn-danger yes" value="Delete" name="${message(code:'button.action.Delete')}"/>
-                    </g:form>
-                </div>
-            </div><!-- /.modal-content -->
-        </div><!-- /.modal-dialog -->
-    </div><!-- /.modal -->

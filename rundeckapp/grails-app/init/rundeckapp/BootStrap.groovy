@@ -239,6 +239,7 @@ class BootStrap {
             }
          }
          frameworkService.initialize()
+         executionService.initialize()
 
          //initialize manually to avoid circular reference problem with spring
          timer("Initialized WorkflowService"){

@@ -63,7 +63,6 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     public static final String SEP = ".";
     public static final String REMOVE_PATH_PREFIX = "removePathPrefix";
     public static final String RESOURCE_SELECTOR = "resourceSelector";
-    Framework rundeckFramework;
     private IPropertyLookup frameworkPropertyLookup;
     private PluginRegistry pluginRegistry;
     private String storageConfigPrefix;
@@ -77,16 +76,11 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     private StoragePluginProviderService storagePluginProviderService;
     private StorageConverterPluginProviderService storageConverterPluginProviderService;
 
-    //injected
-    public void setRundeckFramework(Framework framework) {
-        this.rundeckFramework = framework;
-    }
-
 
     @Override
     public StorageTree getObject() throws Exception {
-        if (null == rundeckFramework && null == frameworkPropertyLookup) {
-            throw new FactoryBeanNotInitializedException("'rundeckFramework' is required");
+        if ( null == frameworkPropertyLookup) {
+            throw new FactoryBeanNotInitializedException("'frameworkPropertyLookup' is required");
         }
         if (null == pluginRegistry) {
             throw new FactoryBeanNotInitializedException("'pluginRegistry' is required");
@@ -357,9 +351,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     }
 
     private IPropertyLookup getPropertyLookup() {
-        return null != frameworkPropertyLookup
-               ? frameworkPropertyLookup
-               : null != rundeckFramework ? rundeckFramework.getPropertyLookup() : null;
+        return frameworkPropertyLookup;
     }
 
     private Map<String, String> expandAllProperties(Map<String, String> source, Map values) {

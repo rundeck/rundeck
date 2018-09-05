@@ -306,7 +306,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     List<String> listProjectDirPaths(String projectName, String path, String pattern=null) {
         def prefix = 'projects/' + projectName
         def storagePath = prefix + (path.startsWith("/")?path:"/${path}")
-        def resources = getStorage().listDirectory(storagePath)
+        def resources = getStorage().hasDirectory(storagePath)?getStorage().listDirectory(storagePath):[]
         def outprefix=path.endsWith('/')?path.substring(0,path.length()-1):path
         resources.collect{Resource<ResourceMeta> res->
             def pathName=res.path.name + (res.isDirectory()?'/':'')
@@ -583,7 +583,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             throw new IllegalArgumentException("project does not exist: " + projectName)
         }
         def res = loadProjectConfigResource(projectName)
-        def oldprops = res.config
+        Properties oldprops = res?.config?:new Properties()
         Properties newprops = mergeProperties(removePrefixes, oldprops, properties)
         Map newres=storeProjectConfig(projectName, newprops)
         newres

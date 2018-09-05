@@ -135,15 +135,15 @@
                         <div class="modal-body">
                             <g:message code="user.profile.modal.delete.expired.tokens.created.by" />
                             <div class="radio">
-                                <label>
-                                    <input type="radio" value="false" name="deleteall" checked/>
+                            <input type="radio" value="false" name="deleteall" checked id="expired_deleteall_false"/>
+                                <label for="expired_deleteall_false">
                                     <g:message code="me" />
                                 </label>
                             </div>
 
                             <div class="radio">
-                                <label>
-                                    <input type="radio" value="true" name="deleteall"/>
+                                <input type="radio" value="true" name="deleteall" id="expired_deleteall"/>
+                                <label for="expired_deleteall">
                                     <g:message code="all.users" />
                                 </label>
                             </div>

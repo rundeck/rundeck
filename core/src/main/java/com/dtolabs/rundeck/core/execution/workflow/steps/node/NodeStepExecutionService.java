@@ -27,6 +27,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecNodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLNodeStepExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
@@ -34,7 +37,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -53,7 +58,8 @@ public class NodeStepExecutionService
 
     private List<ProviderService<NodeStepExecutor>> serviceList;
 
-    private BuiltinNodeStepExecutionService primaryService;
+    private PresetBaseProviderRegistryService<NodeStepExecutor> primaryService;
+    private PresetBaseProviderRegistryService<NodeStepExecutor> dynamicRegistryService;
 
     public NodeStepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
@@ -63,7 +69,15 @@ public class NodeStepExecutionService
          * 2. NodeStepPlugin providers
          * 3. RemoteScriptNodeStepPlugin providers
          */
-        this.primaryService = new BuiltinNodeStepExecutionService(framework, SERVICE_NAME);
+        Map<String, Class<? extends NodeStepExecutor>> presetProviders = new HashMap<>();
+
+        presetProviders.put(ExecNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ExecNodeStepExecutor.class);
+        presetProviders.put(ScriptFileNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptFileNodeStepExecutor.class);
+        presetProviders.put(ScriptURLNodeStepExecutor.SERVICE_IMPLEMENTATION_NAME, ScriptURLNodeStepExecutor.class);
+
+        this.primaryService = new PresetBaseProviderRegistryService<>(presetProviders, framework, false, SERVICE_NAME);
+        this.dynamicRegistryService =
+            new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
 
         NodeStepPluginService
             nodeStepPluginService =
@@ -77,6 +91,7 @@ public class NodeStepExecutionService
             remoteScriptNodeStepPluginService.adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
 
         serviceList.add(primaryService);
+        serviceList.add(dynamicRegistryService);
         serviceList.add(nodeStepPluginAdapterService);
         serviceList.add(remoteScriptNodeStepPluginAdapterService);
     }
@@ -127,9 +142,6 @@ public class NodeStepExecutionService
         primaryService.registerClass(name, clazz);
     }
 
-    public void resetDefaultProviders() {
-        primaryService.resetDefaultProviders();
-    }
 
     public NodeStepExecutor getExecutorForExecutionItem(final NodeStepExecutionItem item) throws
                                                                                           ExecutionServiceException {
@@ -157,5 +169,12 @@ public class NodeStepExecutionService
 
     public String getName() {
         return SERVICE_NAME;
+    }
+
+    /**
+     * @return dynamic registry for providers
+     */
+    public ProviderRegistryService<NodeStepExecutor> getProviderRegistryService() {
+        return dynamicRegistryService;
     }
 }

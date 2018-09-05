@@ -236,6 +236,7 @@ trigger_downstream_snapshots() {
         echo "Triggering downstream snapshot build..."
         seal_artifacts
         trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master
+        trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core master
     else
         echo "Skippping downstream snapshot build for non-master/snapshot build..."
     fi

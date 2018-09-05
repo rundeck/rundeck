@@ -65,7 +65,7 @@ public class NodeExecutorService
         return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
     }
     NodeExecutorService(Framework framework) {
-        super(framework);
+        super(framework,true);
 
         registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
         registry.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);

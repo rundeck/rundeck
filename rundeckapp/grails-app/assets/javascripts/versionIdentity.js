@@ -27,6 +27,7 @@ var VersionIdentity=function(data){
         var span2= jQuery('<span></span>');
         var ispan = jQuery('<span></span>').addClass('version-icon').css({ 'color': color});
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
+        ispan.append(" ");
         span2.append(ispan);
         var span3 = jQuery('<span></span>').addClass('rundeck-version-name').text(text);
         if(data.tag && data.tag!='GA'){

@@ -260,11 +260,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
-            interpreterService.registerInstance("my-type", interpreterMock);
-            interpreterService.registerInstance("exec", failMock);
-            interpreterService.registerInstance("script", failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance("my-type", interpreterMock);
+            interpreterService.getProviderRegistryService().registerInstance("exec", failMock);
+            interpreterService.getProviderRegistryService().registerInstance("script", failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
             interpreterMock.resultList.add(new NodeStepResultImpl(null));
@@ -348,11 +348,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
-            interpreterService.registerInstance("my-type", interpreterMock);
-            interpreterService.registerInstance("exec", failMock);
-            interpreterService.registerInstance("script", failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance("my-type", interpreterMock);
+            interpreterService.getProviderRegistryService().registerInstance("exec", failMock);
+            interpreterService.getProviderRegistryService().registerInstance("script", failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1
             interpreterMock.resultList.add(new NodeStepResultImpl(null));
@@ -549,11 +549,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         testInterpreter interpreterMock = new testInterpreter();
         testInterpreter failMock = new testInterpreter();
         failMock.shouldThrowException = true;
-        interpreterService.registerInstance("my-type", interpreterMock);
-        interpreterService.registerInstance("exec", failMock);
-        interpreterService.registerInstance("script", failMock);
-        interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
-        interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+        interpreterService.getProviderRegistryService().registerInstance("my-type", interpreterMock);
+        interpreterService.getProviderRegistryService().registerInstance("exec", failMock);
+        interpreterService.getProviderRegistryService().registerInstance("script", failMock);
+        interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+        interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
         for (final String s : expected) {
             //set resturn result
@@ -618,11 +618,11 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
             testInterpreter interpreterMock = new testInterpreter();
             testInterpreter failMock = new testInterpreter();
             failMock.shouldThrowException = true;
-            interpreterService.registerInstance("my-type", interpreterMock);
-            interpreterService.registerInstance("exec", failMock);
-            interpreterService.registerInstance("script", failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
-            interpreterService.registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance("my-type", interpreterMock);
+            interpreterService.getProviderRegistryService().registerInstance("exec", failMock);
+            interpreterService.getProviderRegistryService().registerInstance("script", failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_NODE_FIRST, failMock);
+            interpreterService.getProviderRegistryService().registerInstance(WorkflowExecutionItem.COMMAND_TYPE_STEP_FIRST, failMock);
 
             //set resturn result node 1 step 1
             interpreterMock.resultList.add(new NodeStepResultImpl(null));
