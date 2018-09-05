@@ -112,6 +112,17 @@ class RepositoryController {
         render responseMsg as JSON
     }
 
+    def regenerateManifest() {
+        String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
+        if(!repoName) {
+            specifyRepoError()
+            return
+        }
+        verbClient.refreshRepositoryManifest(repoName)
+        def successMsg = [msg:"Refreshed Repository ${repoName}"]
+        render successMsg as JSON
+    }
+
     def syncInstalledArtifactsToRundeck() {
         repositoryPluginService.syncInstalledArtifactsToPluginTarget()
         def successMsg = [msg:"Resync Triggered"]

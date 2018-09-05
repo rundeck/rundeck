@@ -65,6 +65,7 @@ class RundeckInitializer {
     File workdir;
     File toolsdir;
     File toolslibdir;
+    File verbdir;
 
     private static boolean vfsDirectoryDetected = false
 
@@ -124,12 +125,24 @@ class RundeckInitializer {
             DEBUG("--" + CommandLineSetup.FLAG_SKIPINSTALL + ": Not extracting.");
         }
 
+        //verb requirments for default config
+        if(!new File(config.baseDir+"/verb").exists()) {
+            createVerbDirs()
+        }
+        File repoDefnFile = new File(config.configDir+"/verb-repositories.yaml")
+        if(!repoDefnFile.exists()) {
+            writeDefaultVerbRepoDefinition(repoDefnFile)
+        }
+
         if(config.isInstallOnly()) {
             DEBUG("Done. --"+CommandLineSetup.FLAG_INSTALLONLY+": Not starting server.");
             System.exit(0)
         }
     }
 
+    def writeDefaultVerbRepoDefinition(final File defnFile) {
+        defnFile << getClass().getClassLoader().getResourceAsStream("default-verb-repo-defn.yaml")
+    }
 
     File extractAndLoadCoreJar() {
         coreJar = new File(serverdir,"lib/"+coreJarName)
@@ -417,6 +430,12 @@ class RundeckInitializer {
         toolslibdir = createDir(null,toolsdir,"lib")
         createDir(null,basedir,"var")
         createDir(null,basedir,"user-assets")
+    }
+
+    void createVerbDirs() {
+        verbdir = createDir(null,basedir,"verb")
+        createDir(null,verbdir,"installedPlugins")
+        createDir(null,verbdir,"repo")
     }
 
     File createDir(String specifiedPath, File base, String child) {

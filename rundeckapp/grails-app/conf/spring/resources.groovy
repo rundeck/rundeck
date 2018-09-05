@@ -450,7 +450,7 @@ beans={
         treeProvider = ref("verbStorageTreeRepositoryProvider")
     }
     repositoryManager(RundeckRepositoryManager, ref('repositoryFactory')) {
-        repositoryDefinitionListDatasourceUrl = "file:${rdeckBase}/verb/repositories.yaml"
+        repositoryDefinitionListDatasourceUrl = "file:${rdeckBase}/server/config/verb-repositories.yaml"
     }
     verbClient(RundeckVerbClient) {
         artifactInstaller = ref('verbArtifactInstaller')

@@ -33,7 +33,7 @@ class PluginApiService {
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
         IFramework framework = frameworkService.getRundeckFramework()
-        Locale locale = WebUtils.retrieveGrailsWebRequest().getLocale()
+        Locale locale = getLocale()
 
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
@@ -180,6 +180,7 @@ class PluginApiService {
     }
 
     def listPlugins() {
+        Locale locale = getLocale()
         String appDate = servletContext.getAttribute('version.date')
         String appVer = servletContext.getAttribute('version.number')
         def pluginList = listPluginsDetailed()
@@ -205,11 +206,15 @@ class PluginApiService {
                  enabled      : true]
             }
             [service  : it.key,
-             desc     : message("framework.service.${service}.description".toString(),Locale.getDefault()),
+             desc     : message("framework.service.${service}.description".toString(),locale),
              providers: providers
             ]
         }
         tersePluginList
+    }
+
+    Locale getLocale() {
+        WebUtils.retrieveGrailsWebRequest().getLocale()
     }
 
     private def message(String code, Locale locale) {

@@ -152,7 +152,7 @@ class PluginController {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }
         }
-        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider.name)
+        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,pluginName)
         String artifactName = meta?.pluginArtifactName ?: desc.name
         String id = artifactName.encodeAsSHA256().substring(0,12)
         def terseDesc = [:]

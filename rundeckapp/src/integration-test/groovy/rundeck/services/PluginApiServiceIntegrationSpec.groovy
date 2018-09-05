@@ -6,7 +6,7 @@ import org.grails.web.util.WebUtils
 import spock.lang.Specification
 
 @Integration
-class PluginApiServiceSpec extends Specification {
+class PluginApiServiceIntegrationSpec extends Specification {
 
     PluginApiService pluginApiService
 
@@ -22,7 +22,7 @@ class PluginApiServiceSpec extends Specification {
 
     void "list plugins"() {
         when:
-        def pluginList = pluginApiService.listPlugins()
+        def pluginList = pluginApiService.listPluginsDetailed()
 
         then:
         pluginList.descriptions.size() == 19
