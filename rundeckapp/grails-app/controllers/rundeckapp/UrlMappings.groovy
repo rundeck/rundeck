@@ -310,6 +310,8 @@ class UrlMappings {
         "/api/$api_version/verb/repository/$repoName/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
         "/api/$api_version/verb/repository/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
         "/api/$api_version/verb/repository/$repoName/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
+        "/api/$api_version/verb/repository/regenerateManifest"(controller:"repository",action:"regenerateManifest")
+        "/api/$api_version/verb/repository/$repoName/regenerateManifest"(controller:"repository",action:"regenerateManifest")
         "/api/$api_version/verb/resyncInstalledPlugins"(controller:"repository",action:"syncInstalledArtifactsToRundeck")
         "/api/$api_version/verb/listInstalledArtifacts"(controller:"repository",action:"listInstalledArtifacts")
 
