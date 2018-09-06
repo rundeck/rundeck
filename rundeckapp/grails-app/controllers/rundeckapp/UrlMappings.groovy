@@ -234,6 +234,20 @@ class UrlMappings {
             moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
         }
 
+        "/api/$api_version/verb/repository/list"(controller:"repository",action:"listRepositories")
+        "/api/$api_version/verb/repository/artifacts/list"(controller:"repository",action:"listArtifacts")
+        "/api/$api_version/verb/repository/$repoName/artifacts/list"(controller:"repository",action:"listArtifacts")
+        "/api/$api_version/verb/repository/upload"(controller:"repository",action:"uploadArtifact")
+        "/api/$api_version/verb/repository/$repoName/upload"(controller:"repository",action:"uploadArtifact")
+        "/api/$api_version/verb/repository/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
+        "/api/$api_version/verb/repository/$repoName/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
+        "/api/$api_version/verb/repository/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
+        "/api/$api_version/verb/repository/$repoName/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
+        "/api/$api_version/verb/repository/regenerateManifest"(controller:"repository",action:"regenerateManifest")
+        "/api/$api_version/verb/repository/$repoName/regenerateManifest"(controller:"repository",action:"regenerateManifest")
+        "/api/$api_version/verb/resyncInstalledPlugins"(controller:"repository",action:"syncInstalledArtifactsToRundeck")
+        "/api/$api_version/verb/listInstalledArtifacts"(controller:"repository",action:"listInstalledArtifacts")
+
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         //catchall
@@ -300,20 +314,6 @@ class UrlMappings {
         "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
-
-        "/api/$api_version/verb/repository/list"(controller:"repository",action:"listRepositories")
-        "/api/$api_version/verb/repository/artifacts/list"(controller:"repository",action:"listArtifacts")
-        "/api/$api_version/verb/repository/$repoName/artifacts/list"(controller:"repository",action:"listArtifacts")
-        "/api/$api_version/verb/repository/upload"(controller:"repository",action:"uploadArtifact")
-        "/api/$api_version/verb/repository/$repoName/upload"(controller:"repository",action:"uploadArtifact")
-        "/api/$api_version/verb/repository/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
-        "/api/$api_version/verb/repository/$repoName/install/$artifactId/$artifactVersion?"(controller:"repository",action:"installArtifact")
-        "/api/$api_version/verb/repository/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
-        "/api/$api_version/verb/repository/$repoName/uninstall/$artifactId"(controller:"repository",action:"uninstallArtifact")
-        "/api/$api_version/verb/repository/regenerateManifest"(controller:"repository",action:"regenerateManifest")
-        "/api/$api_version/verb/repository/$repoName/regenerateManifest"(controller:"repository",action:"regenerateManifest")
-        "/api/$api_version/verb/resyncInstalledPlugins"(controller:"repository",action:"syncInstalledArtifactsToRundeck")
-        "/api/$api_version/verb/listInstalledArtifacts"(controller:"repository",action:"listInstalledArtifacts")
 
         "404"(view: '/404')
         "500"(view: '/error')
