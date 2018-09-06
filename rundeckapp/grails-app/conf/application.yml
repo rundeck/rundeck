@@ -221,6 +221,7 @@ rundeck:
             enabled: true
             spec: 'refreshInterval=30s'
     verb:
+        repositoryDefinitionUrl:
         plugin:
         repository:
 ---

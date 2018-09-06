@@ -75,6 +75,11 @@ fi
 %dir /var/lib/rundeck/var/tmp
 %dir /var/lib/rundeck/var/tmp/pluginJars
 
+# Verb default directories
+%dir /var/lib/rundeck/verb
+%dir /var/lib/rundeck/verb/installedPlugins
+%dir /var/lib/rundeck/verb/repo
+
 # The Rundeck WebApp.  The Exploded War Goes Here.
 %dir /var/lib/rundeck/exp
 /var/lib/rundeck/exp/webapp

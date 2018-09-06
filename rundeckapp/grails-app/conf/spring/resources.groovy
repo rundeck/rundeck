@@ -79,6 +79,7 @@ import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.RepositoryPluginService
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
+import rundeckapp.init.RundeckInitConfig
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
 import rundeckapp.init.RundeckExtendedMessageBundle
 import javax.security.auth.login.Configuration
@@ -449,8 +450,10 @@ beans={
     repositoryFactory(VerbRepositoryFactory) {
         treeProvider = ref("verbStorageTreeRepositoryProvider")
     }
+    String repoDefnUrl = grailsApplication.config.rundeck.verb.repositoryDefinitionUrl ?: "file:"+System.getProperty(
+            RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR) + "/verb-repositories.yaml"
     repositoryManager(RundeckRepositoryManager, ref('repositoryFactory')) {
-        repositoryDefinitionListDatasourceUrl = "file:${rdeckBase}/server/config/verb-repositories.yaml"
+        repositoryDefinitionListDatasourceUrl = repoDefnUrl
     }
     verbClient(RundeckVerbClient) {
         artifactInstaller = ref('verbArtifactInstaller')
