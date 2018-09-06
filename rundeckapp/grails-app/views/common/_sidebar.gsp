@@ -28,6 +28,15 @@
 
 <g:set var="wfselected" value=""/>
 <ul class="nav">
+  <!-- <li>
+    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+       title="Home">
+       <i class="fas fa-home"></i>
+       <p>
+         Home
+       </p>
+    </a>
+  </li> -->
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
