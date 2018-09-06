@@ -445,7 +445,9 @@ class RundeckInitializer {
         } else {
             dir = new File(base, child)
         }
-        dir.mkdirs()
+        if(!dir.mkdirs()) {
+            throw new Exception("Unable to create directory: ${child} in ${base.absolutePath}")
+        }
         return dir
     }
 

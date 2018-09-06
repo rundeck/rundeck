@@ -45,6 +45,8 @@ rpm:
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/libext/cache
 	@mkdir -p rpmdist/SOURCES/var/log/rundeck
 	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/var/tmp/pluginJars
+	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/verb/installedPlugins
+	@mkdir -p rpmdist/SOURCES/var/lib/rundeck/verb/repo
 	@mkdir -p rpmdist/SOURCES/tmp/rundeck
 	@mkdir -p rpmdist/SOURCES/var/rundeck/projects
 	@mkdir -p rpmdist/SOURCES/var/rundeck/user-assets
@@ -67,6 +69,8 @@ deb:
 	@mkdir -p debdist/var/lib/rundeck/{data,work,logs,cli,libext,bootstrap}
 	@mkdir -p debdist/var/log/rundeck
 	@mkdir -p debdist/var/lib/rundeck/var/tmp/pluginJars
+	@mkdir -p debdist/var/lib/rundeck/verb/installedPlugins
+	@mkdir -p debdist/var/lib/rundeck/verb/repo
 	@mkdir -p debdist/tmp/rundeck
 	@mkdir -p debdist/var/rundeck/projects
 	@mkdir -p debdist/var/rundeck/user-assets
