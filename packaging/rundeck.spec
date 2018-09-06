@@ -160,6 +160,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/jaas-loginmodule.conf
 %config(noreplace) /etc/rundeck/realm.properties
 %config(noreplace) /etc/rundeck/rundeck-config.properties
+%config(noreplace) /etc/rundeck/verb-repositories.yaml
 
 # SSL Configuration
 %dir /etc/rundeck/ssl
