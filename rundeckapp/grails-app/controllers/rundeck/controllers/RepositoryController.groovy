@@ -1,20 +1,31 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 
-class RepositoryController {
+class RepositoryController extends ControllerBase {
 
     def verbClient
     def repositoryPluginService
     def pluginApiService
+    def frameworkService
 
     def index() { }
 
     def listRepositories() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         render verbClient.repositoryManager.listRepositories() as JSON
     }
 
     def listArtifacts() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -32,6 +43,10 @@ class RepositoryController {
     }
 
     def listInstalledArtifacts() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -49,6 +64,10 @@ class RepositoryController {
     }
 
     def uploadArtifact() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -72,6 +91,10 @@ class RepositoryController {
 
 
     def installArtifact() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -94,6 +117,10 @@ class RepositoryController {
     }
 
     def uninstallArtifact() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -113,6 +140,10 @@ class RepositoryController {
     }
 
     def regenerateManifest() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
         if(!repoName) {
             specifyRepoError()
@@ -124,6 +155,10 @@ class RepositoryController {
     }
 
     def syncInstalledArtifactsToRundeck() {
+        if (!authorized()) {
+            specifyUnauthorizedError()
+            return
+        }
         repositoryPluginService.syncInstalledArtifactsToPluginTarget()
         def successMsg = [msg:"Resync Triggered"]
         render successMsg as JSON
@@ -139,5 +174,17 @@ class RepositoryController {
         response.setStatus(400)
         def err = [error:"You must specify a repository"]
         render err as JSON
+    }
+
+    private def specifyUnauthorizedError() {
+        response.setStatus(400)
+        def err = [error:"You are not authorized to perform this action"]
+        render err as JSON
+    }
+
+    private boolean authorized() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        frameworkService.authorizeApplicationResourceType(authContext,"system",
+                                                                               AuthConstants.ACTION_ADMIN)
     }
 }
