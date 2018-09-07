@@ -149,7 +149,7 @@
   </nav>
   <g:javascript>
     jQuery(function(){
-      jQuery('.navbar-minimize button').click(function(){
+      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){
         jQuery('body').toggleClass('sidebar-mini');
         var sidebarOpen = localStorage.getItem('sidebarOpen')
         if(sidebarOpen === 'true'){

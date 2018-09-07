@@ -9,7 +9,7 @@
 .sidebar{
   .logo{
     background-color: #000000;
-    a{
+    a.home{
       font-family: 'Futura';
       text-transform: uppercase;
       color: #ffffff;
@@ -32,39 +32,59 @@
       // }
     }
     .navbar-minimize{
-      // display: none;
-      // display: inline-block;
       position: absolute;
       right: -1em;
-      top: 1.5em;
-      z-index: 4000;
-      background-color: black;
-      border-radius: 100%;
-      .btn:focus{
-        background-color: black;
-        color: #66615B;
+      top: 1.8em;
+      .triangle{
+        cursor: pointer;
+        z-index: 1;
+        color: white;
+        position: absolute;
+        left: -2.15em;
+        padding: .5em;
+        top: -7px;
       }
+      // .btn:focus{
+      //   background-color: black;
+      //   color: #66615B;
+      // }
       // sidebar open
       i.fas.fa-ellipsis-v,
-      i.fas.fa-sign-out-alt{
+      i.fas.fa-sign-out-alt,
+      i.fas.fa-chevron-left{
         display: block;
       }
       i.fas.fa-ellipsis-h,
-      i.fas.fa-sign-in-alt{
+      i.fas.fa-sign-in-alt,
+      i.fas.fa-chevron-right{
         display: none;
       }
       // sidebar closed
       .sidebar-mini &{
         i.fas.fa-ellipsis-v,
-        i.fas.fa-sign-out-alt{
+        i.fas.fa-sign-out-alt,
+        i.fas.fa-chevron-left{
           display: none;
         }
         i.fas.fa-ellipsis-h,
-        i.fas.fa-sign-in-alt{
+        i.fas.fa-sign-in-alt,
+        i.fas.fa-chevron-right{
           display: block;
         }
       }
+      &:after {
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 17px 0 17px 17px;
+        border-color: transparent transparent transparent #000000;
+        content: "";
+        position: absolute;
+        right: -2px;
+        top: -10px;
+      }
     }
+
   }
   .nav{
     margin-bottom: 40px;
@@ -129,7 +149,7 @@ body.modal-open{
 }
 .sidebar{
   .sidebar-mini &{
-    a{
+    a.home{
       background-image: none;
     }
     .appTitle{

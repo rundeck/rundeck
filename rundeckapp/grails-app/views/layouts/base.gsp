@@ -146,18 +146,21 @@
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
       <div class="logo">
-          <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-             title="Home">
+          <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
-          <div class="navbar-minimize">
+          <!-- <div class="navbar-minimize">
             <button class="btn btn-sm btn-icon">
-              <!-- <i class="fas fa-ellipsis-v"></i>
-              <i class="fas fa-ellipsis-h"></i> -->
               <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
               <i class="fas fa-sign-in-alt"></i>
             </button>
+          </div> -->
+          <div class="navbar-minimize">
+            <a class="triangle">
+              <i class="fas fa-chevron-right"></i>
+              <i class="fas fa-chevron-left"></i>
+            </a>
           </div>
       </div>
       <div class="sidebar-wrapper">
