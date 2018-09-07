@@ -151,8 +151,8 @@
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
-          <div class="navbar-minimize" style="margin-top:8px;">
-            <button class="btn btn-default btn-sm btn-icon">
+          <div class="navbar-minimize">
+            <button class="btn btn-sm btn-icon">
               <!-- <i class="fas fa-ellipsis-v"></i>
               <i class="fas fa-ellipsis-h"></i> -->
               <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
@@ -195,7 +195,7 @@ disable for now because profiler plugin is not compatible with grails 3.x
   if(sidebarOpen === 'true'){
     document.body.classList.remove('sidebar-mini')
   }
-</g:javascript> 
+</g:javascript>
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/manifest.js"/>

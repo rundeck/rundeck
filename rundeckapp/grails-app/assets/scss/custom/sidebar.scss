@@ -35,28 +35,34 @@
       // display: none;
       // display: inline-block;
       position: absolute;
-      right: 1em;
-      top: 1em;
+      right: -1em;
+      top: 1.5em;
       z-index: 4000;
-    }
-    // sidebar open
-    i.fas.fa-ellipsis-v,
-    i.fas.fa-sign-out-alt{
-      display: block;
-    }
-    i.fas.fa-ellipsis-h,
-    i.fas.fa-sign-in-alt{
-      display: none;
-    }
-    // sidebar closed
-    .sidebar-mini &{
+      background-color: black;
+      border-radius: 100%;
+      .btn:focus{
+        background-color: black;
+        color: #66615B;
+      }
+      // sidebar open
       i.fas.fa-ellipsis-v,
       i.fas.fa-sign-out-alt{
-        display: none;
+        display: block;
       }
       i.fas.fa-ellipsis-h,
       i.fas.fa-sign-in-alt{
-        display: block;
+        display: none;
+      }
+      // sidebar closed
+      .sidebar-mini &{
+        i.fas.fa-ellipsis-v,
+        i.fas.fa-sign-out-alt{
+          display: none;
+        }
+        i.fas.fa-ellipsis-h,
+        i.fas.fa-sign-in-alt{
+          display: block;
+        }
       }
     }
   }
@@ -135,13 +141,13 @@ body.modal-open{
       display: none;
     }
     .logo{
-      .navbar-minimize{
-        // display: inline-block;
-        position: absolute;
-        right: -2em;
-        top: 1em;
-        // z-index: 4000;
-      }
+      // .navbar-minimize{
+      //   // display: inline-block;
+      //   position: absolute;
+      //   right: -2em;
+      //   top: 1em;
+      //   // z-index: 4000;
+      // }
     }
   }
 }
