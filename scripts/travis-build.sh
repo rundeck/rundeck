@@ -30,10 +30,25 @@ buildFork() {
 }
 
 buildDocker() {
+    docker_login
+
+    local BRANCH_AS_TAG=$(echo $RUNDECK_BRANCH | tr '/' '-')
+
+    local ECR_BUILD_TAG=${ECR_REPO}:build-${RUNDECK_BUILD_NUMBER}
+    local ECR_BRANCH_TAG=${ECR_REPO}:branch-${BRANCH_AS_TAG}
+
+    ./gradlew officialBuild -PdockerTags=$BRANCH_AS_TAG,latest,SNAPSHOT
+
+    docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
+    docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
+
+    docker push $ECR_BUILD_TAG
+    docker push $ECR_BRANCH_TAG
+
     if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
-        docker_login && ./gradlew officialPush
+        ./gradlew officialPush -PdockerTags=SNAPSHOT
     else
-        echo "Skipping docker build for non-master build."
+        ./gradlew officialPush -PdockerTags=$BRANCH_AS_TAG
     fi
 }
 
