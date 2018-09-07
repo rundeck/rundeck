@@ -187,6 +187,7 @@ branches:
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/
+    - docker-branches
 
 notifications:
   irc:
