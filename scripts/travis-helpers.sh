@@ -24,6 +24,8 @@ source scripts/helpers.sh
 # RUNDECK_BUILD_NUMBER="3347"
 # RUNDECK_TAG="v3.0.0-alpha4"
 
+export ECR_REPO=055798170027.dkr.ecr.us-east-2.amazonaws.com/rundeck/rundeck
+
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
 export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
 export RUNDECK_BRANCH="${RUNDECK_BRANCH:-$TRAVIS_BRANCH}"
@@ -197,6 +199,7 @@ EOF
 
 docker_login() {
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    $(aws ecr get-login --no-include-email --region us-east-2)
 }
 
 build_rdtest() {
@@ -220,9 +223,9 @@ build_rdtest() {
     fi
 
     docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    # docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
     docker push rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    # docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
 }
 
 pull_rdtest() {
