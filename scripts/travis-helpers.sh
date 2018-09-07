@@ -25,6 +25,8 @@ source scripts/helpers.sh
 # RUNDECK_TAG="v3.0.0-alpha4"
 
 export ECR_REPO=055798170027.dkr.ecr.us-east-2.amazonaws.com/rundeck/rundeck
+export ECR_REGISTRY=055798170027.dkr.ecr.us-east-2.amazonaws.com
+
 
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
 export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
@@ -218,19 +220,23 @@ build_rdtest() {
 
     # Pusheen
     if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
-        docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
-        docker push rundeckapp/testdeck:rdtest-latest
+        docker tag rdtest:latest $ECR_REGISTRY/rundeck/rdtest:latest
+        docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
 
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+
+    docker tag rdtest:latest $RDTEST_BUILD_TAG
     # docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
-    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
+    docker push $RDTEST_BUILD_TAG
     # docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
 }
 
 pull_rdtest() {
-    docker pull rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+
+    docker pull $RDTEST_BUILD_TAG
+    docker tag $RDTEST_BUILD_TAG rdtest:latest
 }
 
 # If this is a snapshot build we will trigger pro
