@@ -233,6 +233,8 @@ build_rdtest() {
 }
 
 pull_rdtest() {
+    docker_login
+
     local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
 
     docker pull $RDTEST_BUILD_TAG
