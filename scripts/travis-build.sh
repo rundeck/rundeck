@@ -32,23 +32,28 @@ buildFork() {
 buildDocker() {
     docker_login
 
-    local BRANCH_AS_TAG=branch-$(echo $RUNDECK_BRANCH | tr '/' '-')
+    local CLEAN_TAG=$(echo $RUNDECK_BRANCH | tr '/' '-')
+    local BRANCH_AS_TAG=branch${CLEAN_TAG}
 
     local ECR_BUILD_TAG=${ECR_REPO}:build-${RUNDECK_BUILD_NUMBER}
     local ECR_BRANCH_TAG=${ECR_REPO}:${BRANCH_AS_TAG}
 
-    ./gradlew officialBuild -PdockerTags=branch-$BRANCH_AS_TAG,latest,SNAPSHOT
+    local CI_BRANCH_TAG=rundeck/ci:${CLEAN_TAG}
+
+    ./gradlew officialBuild -PdockerTags=latest,SNAPSHOT
 
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
+    docker tag rundeck/rundeck:latest $CI_BRANCH_TAG
 
     docker push $ECR_BUILD_TAG
     docker push $ECR_BRANCH_TAG
+    docker push $CI_BRANCH_TAG
 
     if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
         ./gradlew officialPush -PdockerTags=SNAPSHOT
     else
-        ./gradlew officialPush -PdockerTags=$BRANCH_AS_TAG
+        # Nothing
     fi
 }
 
