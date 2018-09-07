@@ -52,8 +52,6 @@ buildDocker() {
 
     if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
         ./gradlew officialPush -PdockerTags=SNAPSHOT
-    else
-        # Nothing
     fi
 }
 
