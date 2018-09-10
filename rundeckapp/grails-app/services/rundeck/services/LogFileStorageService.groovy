@@ -602,7 +602,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         request
     }
     public Map getStorageStats() {
-        def missing = countMissingLogStorageExecutions()
+        def props=frameworkService.getFrameworkProperties()
+        def countMissing = props.getProperty('framework.storage.missing')
+        def missing = countMissing=='true'?countMissingLogStorageExecutions():0
         def incompleteRequests = countIncompleteLogStorageRequests()
         def queued = storageQueueCounter.count
         def queuedIncomplete = retryIncompleteRequests.size()
