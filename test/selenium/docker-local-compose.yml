@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  selenium:
+    image: rundeck/selenium@sha256:a7579fed4d16004f3e32d1cfd12ce4b4fbc81c58041cb9e324902caedeb36447
+    network_mode: host
+    tty: true
+    volumes:
+    - ./:/app 
+    - node_modules:/app/node_modules:nocopy
+
+volumes:
+  node_modules:

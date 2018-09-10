@@ -22,9 +22,9 @@ var NodeFiltersTest = function () {
         total++;
         if (expect != val) {
             failed++;
-            jQuery(document.body).append(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + msg + ": expected: " + expect + ", was: " + val)));
+            jQuery('#node-filters-tests').append(jQuery('<div></div>').append(jQuery('<span class="text-danger"></span>').text("FAIL: " + msg + ": expected: " + expect + ", was: " + val)));
         } else {
-            jQuery(document.body).append(jQuery('<div></div>').append(jQuery('<span class="text-success"></span>').text("OK: " + msg)));
+            jQuery('#node-filters-tests').append(jQuery('<div></div>').append(jQuery('<span class="text-success"></span>').text("OK: " + msg)));
         }
     };
     function mknf(data){
@@ -115,6 +115,7 @@ var NodeFiltersTest = function () {
     };
 
     self.testAll = function () {
+        jQuery(document.body).append(jQuery('<div id="node-filters-tests" class="test-elem"></div>'))
         assert("Start: nodeFiltersKOTest.js", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {
