@@ -278,16 +278,7 @@
                     </span>
                 </span>
                 <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
-                    <g:render template="/common/progressBar" model="[indefinite: true,
-                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
-                            progressBarClass: 'progress-bar-info',
-                            containerId: 'progressContainer2',
-                            showpercent: false,
-                            progressId: 'progressBar',
-                            innerContent: '',
-                            bind: 'timeNow()',
-                            bindText: '\'Scheduled; starting \' + timeToStart()',
-                    ]"/>
+                    Scheduled; starting <span data-bind="text: timeToStart()"></span>
                 </span>
                 <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
                     <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
