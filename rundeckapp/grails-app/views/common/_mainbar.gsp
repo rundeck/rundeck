@@ -12,7 +12,7 @@
         </button>
       </div> -->
       <div class="navbar-header">
-        <button type="button" class="navbar-toggle">
+        <button type="button" class="navbar-toggle" style="z-index:1;">
           <span class="sr-only">Toggle navigation</span>
           <span class="icon-bar bar1"></span>
           <span class="icon-bar bar2"></span>
@@ -151,6 +151,15 @@
     jQuery(function(){
       jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){
         jQuery('body').toggleClass('sidebar-mini');
+        var sidebarOpen = localStorage.getItem('sidebarOpen')
+        if(sidebarOpen === 'true'){
+          localStorage.setItem('sidebarOpen', 'false')
+        } else {
+          localStorage.setItem('sidebarOpen', 'true')
+        }
+      });
+      jQuery('button.navbar-toggle').click(function(e){
+        jQuery('body').toggleClass('nav-open');
         var sidebarOpen = localStorage.getItem('sidebarOpen')
         if(sidebarOpen === 'true'){
           localStorage.setItem('sidebarOpen', 'false')
