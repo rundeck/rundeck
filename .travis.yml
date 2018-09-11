@@ -11,7 +11,8 @@ stages:
 - name: build
   if: fork = false
 - name: test
-  if: fork = false
+  # Run tests on non-forked PR and master builds
+  if: fork = false AND branch = master
 - name: snapshot release
   if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
@@ -187,6 +188,8 @@ branches:
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/
+    - /^feature\/.*/
+    - /^issue\/.*/
 
 notifications:
   irc:
