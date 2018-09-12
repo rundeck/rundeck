@@ -419,7 +419,7 @@ class UserControllerSpec extends Specification{
     @Unroll
     def "addFilterPref session"() {
         given:
-        def filterPref = 'filter Pref content'
+        def filterPref = 'nodes=local'
 
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
@@ -437,7 +437,7 @@ class UserControllerSpec extends Specification{
         def result = controller.addFilterPref()
 
         then:
-        session.filterPref==filterPref
+        session.filterPref==[nodes:'local']
 
     }
 

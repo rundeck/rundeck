@@ -743,7 +743,7 @@ class UserController extends ControllerBase{
             if(result.error){
                 return renderErrorFragment(result.error)
             }
-            session.filterPref=result.user?.filterPref
+            session.filterPref=userService.parseKeyValuePref(result.user?.filterPref)
             def storedpref=result.storedpref
 
             //include new request tokens as headers in response
