@@ -158,5 +158,8 @@
           localStorage.setItem('sidebarOpen', 'true')
         }
       });
+      jQuery('button.navbar-toggle').click(function(e){
+        jQuery('body').toggleClass('nav-open');
+      });
     })
   </g:javascript>

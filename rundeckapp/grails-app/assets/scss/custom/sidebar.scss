@@ -148,7 +148,7 @@ body.modal-open{
   }
 }
 .sidebar{
-  .sidebar-mini &{
+  .sidebar-mini:not(.nav-open) &{
     a.home{
       background-image: none;
     }
