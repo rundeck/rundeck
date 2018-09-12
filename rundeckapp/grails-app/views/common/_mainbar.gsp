@@ -12,7 +12,7 @@
         </button>
       </div> -->
       <div class="navbar-header">
-        <button type="button" class="navbar-toggle" style="z-index:1;">
+        <button type="button" class="navbar-toggle">
           <span class="sr-only">Toggle navigation</span>
           <span class="icon-bar bar1"></span>
           <span class="icon-bar bar2"></span>
@@ -160,12 +160,6 @@
       });
       jQuery('button.navbar-toggle').click(function(e){
         jQuery('body').toggleClass('nav-open');
-        var sidebarOpen = localStorage.getItem('sidebarOpen')
-        if(sidebarOpen === 'true'){
-          localStorage.setItem('sidebarOpen', 'false')
-        } else {
-          localStorage.setItem('sidebarOpen', 'true')
-        }
       });
     })
   </g:javascript>
