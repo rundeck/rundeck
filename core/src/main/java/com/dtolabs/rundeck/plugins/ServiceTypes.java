@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.plugins;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
@@ -34,6 +36,7 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
+import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
 import java.util.Collections;
@@ -101,5 +104,30 @@ public class ServiceTypes {
 
     public static Class<?> getPluginType(String name) {
         return getPluginTypesMap().get(name);
+    }
+
+    private static ServiceLoader<PluginProviderServices>
+        pluginProviderServiceLoader =
+        ServiceLoader.load(PluginProviderServices.class);
+
+    /**
+     * Get a pluggable service implementation for the given plugin type, if available via {@link ServiceLoader}
+     *
+     * @param serviceType type
+     * @param loader      loader implementation
+     * @param <T>
+     */
+    public static <T> PluggableProviderService<T> getPluginProviderService(
+        Class<T> serviceType,
+        String serviceName,
+        ServiceProviderLoader loader
+    )
+    {
+        for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
+            if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
+                return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+            }
+        }
+        return null;
     }
 }
