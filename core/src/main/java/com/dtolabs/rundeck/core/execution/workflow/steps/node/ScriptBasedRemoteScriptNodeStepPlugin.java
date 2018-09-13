@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
@@ -80,7 +81,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         final ScriptPluginProvider provider = getProvider();
         Description description = getDescription();
 
-        Map<String, String> configData = toStringStringMap(configuration);
+        Map<String, String> configData = MapData.toStringStringMap(configuration);
         try {
             loadContentConversionPropertyValues(
                     configData,

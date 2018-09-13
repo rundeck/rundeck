@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.ScriptExecHelper;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -87,7 +88,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         );
         Map<String, Object> instanceData = new HashMap<>(configuration);
 
-        Map<String, String> data = toStringStringMap(instanceData);
+        Map<String, String> data = MapData.toStringStringMap(instanceData);
         loadContentConversionPropertyValues(
                 data,
                 executionContext.getExecutionContext(),
