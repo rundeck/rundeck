@@ -3,8 +3,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader

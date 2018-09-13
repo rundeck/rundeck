@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager

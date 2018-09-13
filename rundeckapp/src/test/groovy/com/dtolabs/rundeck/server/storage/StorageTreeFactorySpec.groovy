@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.utils.FileUtils
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService

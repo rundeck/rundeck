@@ -25,8 +25,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator

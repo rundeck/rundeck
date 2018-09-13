@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins
+package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
-import com.dtolabs.rundeck.core.plugins.CloseableProvider
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.PluginMetadata
-import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
-import com.dtolabs.rundeck.core.plugins.ProviderIdent
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
+import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
-import static com.dtolabs.rundeck.core.plugins.configuration.Validator.*
+import java.util.Map;
+
 
 /**
  * Interface for getting and configuring plugins
@@ -62,8 +58,6 @@ public interface PluginRegistry {
      * the framework and specified project properties as well as instance configuration.
      * @param name name of bean or provider
      * @param service provider service
-     * @param framework framework
-     * @param project project name or null
      * @param instanceConfiguration configuration or null
      * @return
      */
@@ -73,7 +67,7 @@ public interface PluginRegistry {
             IPropertyLookup frameworkLookup,
             IPropertyLookup projectLookup,
             Map instanceConfiguration
-    )
+    );
 
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                          PropertyResolver resolver, PropertyScope defaultScope);
@@ -89,7 +83,7 @@ public interface PluginRegistry {
     public <T> ConfiguredPlugin<T> retainConfigurePluginByName(
             String name, PluggableProviderService<T> service,
             PropertyResolver resolver, PropertyScope defaultScope
-    )
+    );
     /**
      * Return the mapped configuration properties for the plugin
      * @param name name of bean or provider
@@ -163,7 +157,6 @@ public interface PluginRegistry {
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
-     * @param providerServiceName
      * @param groovyPluginType
      * @return
      */
@@ -171,7 +164,6 @@ public interface PluginRegistry {
     /**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
-     * @param providerServiceName
      * @param groovyPluginType
      * @return
      */
