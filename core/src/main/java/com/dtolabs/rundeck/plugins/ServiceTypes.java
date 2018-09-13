@@ -73,6 +73,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.ScmImport, ScmImportPluginFactory.class);
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
+        map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
 
 
         TYPES = Collections.unmodifiableMap(map);
