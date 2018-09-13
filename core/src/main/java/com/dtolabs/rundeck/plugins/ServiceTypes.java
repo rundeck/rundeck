@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.plugins.logging.*;
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
@@ -33,10 +34,12 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
+import org.rundeck.core.plugins.PluginTypes;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Static list of java interfaces associated with plugin service names, see {@link ServiceNameConstants}
@@ -45,10 +48,10 @@ public class ServiceTypes {
     /**
      * Map of Service name to Class
      */
-    public static final Map<String, Class> TYPES;
+    public static final Map<String, Class<?>> TYPES;
 
     static {
-        HashMap<String, Class> map = new HashMap<>();
+        HashMap<String, Class<?>> map = new HashMap<>();
         map.put(ServiceNameConstants.RemoteScriptNodeStep, RemoteScriptNodeStepPlugin.class);
         map.put(ServiceNameConstants.WorkflowNodeStep, NodeStepPlugin.class);
         map.put(ServiceNameConstants.WorkflowStep, StepPlugin.class);
@@ -75,4 +78,27 @@ public class ServiceTypes {
         TYPES = Collections.unmodifiableMap(map);
     }
 
+    private static ServiceLoader<PluginTypes> pluginTypeServiceLoader = ServiceLoader.load(PluginTypes.class);
+
+    private static Map<String, Class<?>> LOADED_TYPES;
+    private static final Object synch = new Object();
+
+    public static Map<String, Class<?>> getPluginTypesMap() {
+        if (null == LOADED_TYPES) {
+            synchronized (synch) {
+                if (null == LOADED_TYPES) {
+                    HashMap<String, Class<?>> map = new HashMap<>(TYPES);
+                    for (PluginTypes pluginTypes : pluginTypeServiceLoader) {
+                        map.putAll(pluginTypes.getPluginTypes());
+                    }
+                    LOADED_TYPES = Collections.unmodifiableMap(map);
+                }
+            }
+        }
+        return LOADED_TYPES;
+    }
+
+    public static Class<?> getPluginType(String name) {
+        return getPluginTypesMap().get(name);
+    }
 }
