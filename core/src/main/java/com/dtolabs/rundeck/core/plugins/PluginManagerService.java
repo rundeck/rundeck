@@ -28,7 +28,9 @@ import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
+import com.dtolabs.rundeck.plugins.ServiceTypes;
 import org.apache.log4j.Logger;
+import org.rundeck.core.plugins.PluginTypes;
 
 import java.io.File;
 import java.util.HashMap;
@@ -64,6 +66,13 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
      */
     @Override
     public <T> PluggableProviderService<T> createPluginService(Class<T> type, final String serviceName) {
+        //load provider service implementation via java ServiceLoader if available
+        PluggableProviderService<T> pluginProviderService = ServiceTypes.getPluginProviderService(type, serviceName, this);
+        if (null != pluginProviderService) {
+            return pluginProviderService;
+        }
+
+        //otherwise construct default service implementation
         BasePluginProviderService<T> basePluginProviderService = new BasePluginProviderService<T>(
                 serviceName,
                 type
