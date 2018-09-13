@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins
+package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.configuration.Validator;
 
 /**
  * ValidatedPlugin holds a validation report and a validity result
  * @author greg
  * @since 2014-02-19
  */
-class ValidatedPlugin {
-    Validator.Report report
-    boolean valid
+
+public class ValidatedPlugin {
+    Validator.Report report;
+    boolean valid;
 }

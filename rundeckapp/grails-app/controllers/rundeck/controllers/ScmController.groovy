@@ -58,7 +58,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.app.api.ApiVersions
 

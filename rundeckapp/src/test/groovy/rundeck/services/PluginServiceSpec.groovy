@@ -17,7 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 

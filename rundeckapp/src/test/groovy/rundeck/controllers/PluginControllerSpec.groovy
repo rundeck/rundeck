@@ -7,7 +7,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService

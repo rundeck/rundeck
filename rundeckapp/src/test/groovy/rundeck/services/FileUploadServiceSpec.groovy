@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec

@@ -28,10 +28,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
-import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
-import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import grails.test.*
 import spock.lang.Specification
 

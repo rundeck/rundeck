@@ -14,25 +14,31 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins
+package com.dtolabs.rundeck.core.plugins;
+
+import lombok.Getter;
+
+import java.io.Closeable;
+import java.util.Map;
 
 /**
  * ConfiguredPlugin holds a plugin instance and configuration map
  * @author greg
  * @since 2014-02-19
  */
-class ConfiguredPlugin<T> {
-    ConfiguredPlugin(T instance, Map<String, Object> configuration) {
-        this.instance = instance
-        this.configuration = configuration
+public class ConfiguredPlugin<T> {
+    public ConfiguredPlugin(T instance, Map<String, Object> configuration) {
+        this.instance = instance;
+        this.configuration = configuration;
     }
 
-    ConfiguredPlugin(final T instance, final Map<String, Object> configuration, final Closeable closeable) {
-        this.instance = instance
-        this.configuration = configuration
-        this.closeable = closeable
+    public ConfiguredPlugin(final T instance, final Map<String, Object> configuration, final Closeable closeable) {
+        this.instance = instance;
+        this.configuration = configuration;
+        this.closeable = closeable;
     }
-    T instance
-    Map<String,Object> configuration
-    Closeable closeable
+
+    @Getter T instance;
+    @Getter Map<String, Object> configuration;
+    @Getter Closeable closeable;
 }
