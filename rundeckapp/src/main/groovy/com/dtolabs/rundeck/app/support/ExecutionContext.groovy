@@ -16,10 +16,12 @@
 
 package com.dtolabs.rundeck.app.support
 
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import grails.gorm.dirty.checking.DirtyCheck
+
 /**
  * ExecutionContext
  */
+@DirtyCheck
 abstract class ExecutionContext extends BaseNodeFilters{
     String project
     String argString
