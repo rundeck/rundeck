@@ -415,4 +415,30 @@ class UserControllerSpec extends Specification{
         response.status==200
     }
 
+
+    @Unroll
+    def "addFilterPref session"() {
+        given:
+        def filterPref = 'nodes=local'
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        def utilTagLib = mockTagLib(UtilityTagLib)
+
+        controller.userService = Mock(UserService) {
+            1 * storeFilterPref(_,_) >> [user:[filterPref:filterPref]]
+        }
+
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        params.filterpref = filterPref
+
+        def result = controller.addFilterPref()
+
+        then:
+        session.filterPref==[nodes:'local']
+
+    }
+
 }
