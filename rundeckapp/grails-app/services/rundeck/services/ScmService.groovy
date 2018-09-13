@@ -70,7 +70,7 @@ class ScmService {
     public static final String IMPORT = 'import'
     public static final String IMPORT_PREF = 'scm.import'
     public static final String EXPORT_PREF = 'scm.export'
-    public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, import: IMPORT_PREF]
+    public static final Map<String, String> PREFIXES = [export: EXPORT_PREF, 'import': IMPORT_PREF]
     public static final ArrayList<String> INTEGRATIONS = [EXPORT, IMPORT]
 
 
