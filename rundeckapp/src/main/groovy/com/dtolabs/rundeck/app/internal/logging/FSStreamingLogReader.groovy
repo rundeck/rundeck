@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.app.internal.logging
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogEventIterator
 import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
+import com.dtolabs.utils.StreamLineIterator
 
 /*
  * FSStreamingLogReader.java
@@ -49,7 +50,7 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
             detected=true
         }
     }
-    private LogEventIterator detectedIterator(FSFileLineIterator fsiter){
+    private LogEventIterator detectedIterator(StreamLineIterator fsiter){
         if(!detected){
             detectLegacyLogFile()
         }
@@ -100,7 +101,7 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     private LogEventIterator beginFromOffset(long offset) {
         def raf = new FileInputStream(file)
         raf.channel.position(offset)
-        def LogEventIterator iterator = detectedIterator(new FSFileLineIterator(raf, encoding))
+        def LogEventIterator iterator = detectedIterator(new StreamLineIterator(raf, encoding))
         return iterator
     }
 
