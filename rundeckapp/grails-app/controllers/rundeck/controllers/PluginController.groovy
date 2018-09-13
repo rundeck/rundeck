@@ -177,7 +177,7 @@ class PluginController {
         String service = params.service
         String appVer = servletContext.getAttribute('version.number')
 
-        def desc = pluginService.getPluginDescriptor(pluginName,ServiceTypes.TYPES[service])?.description
+        def desc = pluginService.getPluginDescriptor(pluginName,ServiceTypes.getPluginType(service))?.description
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }

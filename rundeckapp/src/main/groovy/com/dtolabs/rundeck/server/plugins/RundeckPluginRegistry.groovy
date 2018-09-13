@@ -89,7 +89,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         return simpleName;
     }
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
-        String found = ServiceTypes.TYPES.find { it.value == type }?.key
+        String found = ServiceTypes.pluginTypesMap.find { it.value == type }?.key
         def name = found ?: createServiceName(type.getSimpleName())
         rundeckServerServiceProviderLoader.createPluginService(type, name)
     }
@@ -507,7 +507,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
         if (pluginRegistryMap[provider]) {
-            Class groovyPluginType = ServiceTypes.TYPES[service]
+            Class groovyPluginType = ServiceTypes.getPluginType(service)
             String beanName=pluginRegistryMap[provider]
             try {
                 def bean = findBean(beanName)
