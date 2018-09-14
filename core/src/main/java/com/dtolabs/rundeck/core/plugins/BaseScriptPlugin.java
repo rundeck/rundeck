@@ -57,6 +57,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
     protected BaseScriptPlugin(final ScriptPluginProvider provider, final Framework framework) {
         super(provider, framework);
     }
+    protected BaseScriptPlugin(final ScriptPluginProvider provider) {
+        super(provider);
+    }
 
     /**
      * Runs the script configured for the script plugin and channels the output to two streams.
@@ -154,6 +157,15 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         localDataContext.merge(ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project));
         localDataContext.group("plugin").putAll(createPluginData());
         localDataContext.putAll(context);
+        return localDataContext;
+    }
+    protected DataContext createScriptDataContext(
+            final Map<String, Map<String, String>> context) {
+        BaseDataContext localDataContext = new BaseDataContext();
+        localDataContext.group("plugin").putAll(createPluginData());
+        if (null != context) {
+            localDataContext.putAll(context);
+        }
         return localDataContext;
     }
 
