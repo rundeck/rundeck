@@ -134,6 +134,17 @@
         </p>
       </g:link>
     </li>
+    <g:ifMenuItems type="PROJECT">
+        <li role="separator" class="divider"></li>
+    </g:ifMenuItems>
+    <g:forMenuItems type="PROJECT" var="item">
+        <li>
+            <a href="${item.getProjectHref(params.project)}"  class=" toptab ">
+                <i class="fas fa-plug"></i>
+                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+            </a>
+        </li>
+    </g:forMenuItems>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
