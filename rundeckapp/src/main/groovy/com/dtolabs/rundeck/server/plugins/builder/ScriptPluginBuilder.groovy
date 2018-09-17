@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -101,12 +102,20 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
      * @param newValue
      */
     def propertyMissing(String property, Object newValue) {
-        if (property in ['title', 'description', 'version', 'url', 'author', 'date'] && newValue instanceof String) {
+        println "set prop: $property to $newValue"
+        if (property in ['title', 'description', 'version', 'url', 'author', 'date','rundeckPluginVersion','rundeckVersion','license','thirdPartyDependencies','sourceLink'] && newValue instanceof String) {
             pluginAttributes[property] = newValue
             if (property == 'title') {
+                pluginAttributes['id'] = PluginUtils.generateShaIdFromName((String) newValue)
                 descriptionBuilder.title((String) newValue)
             } else if (property == 'description') {
                 descriptionBuilder.description((String) newValue)
+            }
+        } else if(property == "pluginTags") {
+            if(newValue instanceof Collection) {
+                pluginAttributes['tags'] = newValue
+            } else {
+                logger.error("Tags property of plugin script: ${filename} must be a list. Tags property ignored.")
             }
         } else {
             super.setProperty(property, newValue)
@@ -135,7 +144,7 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
 
     @Override
     String getPluginVersion() {
-        return null
+        return pluginAttributes['rundeckPluginVersion']
     }
 
     @Override
@@ -172,6 +181,56 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
         clos.delegate = builder
         clos.resolveStrategy = Closure.DELEGATE_ONLY
         clos.call(builder)
+    }
+
+    @Override
+    String getPluginName() {
+        return pluginAttributes['title']
+    }
+
+    @Override
+    String getPluginDescription() {
+        return descriptionBuilder.build().description
+    }
+
+    @Override
+    String getPluginId() {
+        return pluginAttributes['id']
+    }
+
+    @Override
+    String getRundeckCompatibilityVersion() {
+        return pluginAttributes['rundeckVersion']
+    }
+
+    @Override
+    String getTargetHostCompatibility() {
+        return "all"
+    }
+
+    @Override
+    List<String> getTags() {
+        return pluginAttributes['tags']
+    }
+
+    @Override
+    String getPluginLicense() {
+        return pluginAttributes['license']
+    }
+
+    @Override
+    String getPluginThirdPartyDependencies() {
+        return pluginAttributes['thirdPartyDependencies']
+    }
+
+    @Override
+    String getPluginSourceLink() {
+        return pluginAttributes['sourceLink']
+    }
+
+    @Override
+    String getPluginType() {
+        return "groovy"
     }
 
 }

@@ -75,6 +75,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "plugin detail"() {
         given:
         controller.pluginService = Mock(PluginService)
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        controller.frameworkService = fwksvc
 
         when:
         def fakePluginDesc = new FakePluginDescription()
@@ -145,6 +150,56 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             @Override
             Date getDateLoaded() {
                 return new Date()
+            }
+
+            @Override
+            String getPluginName() {
+                return null
+            }
+
+            @Override
+            String getPluginDescription() {
+                return null
+            }
+
+            @Override
+            String getPluginId() {
+                return null
+            }
+
+            @Override
+            String getRundeckCompatibilityVersion() {
+                return null
+            }
+
+            @Override
+            String getTargetHostCompatibility() {
+                return null
+            }
+
+            @Override
+            List<String> getTags() {
+                return null
+            }
+
+            @Override
+            String getPluginLicense() {
+                return null
+            }
+
+            @Override
+            String getPluginThirdPartyDependencies() {
+                return null
+            }
+
+            @Override
+            String getPluginSourceLink() {
+                return null
+            }
+
+            @Override
+            String getPluginType() {
+                return null
             }
         }
     }
