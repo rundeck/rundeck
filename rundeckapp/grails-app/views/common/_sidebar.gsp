@@ -235,7 +235,31 @@
 </div>
 
 <g:javascript>
+
+
   jQuery(function(){
+    // Sets user preference on opening/closing the sidebar
+    jQuery('.navbar-minimize a').click(function(){
+
+      var key = 'sidebarClosed'
+      var sidebarClosed = jQuery('body').hasClass('sidebar-mini')
+
+      sidebarClosed = !sidebarClosed // if the sidebar has that class, we're flipping it for the save
+
+       jQuery.ajax({
+            url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + sidebarClosed}),
+            method: 'POST',
+            beforeSend: _ajaxSendTokens.curry('ui_token'),
+            success: function () {
+                console.log("saved sidebar position" );
+            },
+            error: function () {
+                console.log("saving sidebar position failed" );
+            }
+        })
+        .success(_ajaxReceiveTokens.curry('ui_token'));
+    })
+    // Mobile Sidebar
     jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
       jQuery(this).next().slideToggle();
       jQuery(this).toggleClass('subnav-open');

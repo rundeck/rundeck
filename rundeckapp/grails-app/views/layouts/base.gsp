@@ -95,6 +95,17 @@
         </g:ifServletContextAttribute>
     </g:if>
 
+    <%--
+      _sidebarClass is the variable container for
+      if the sidebar should be open or closed on
+      page render
+    --%>
+    <g:set var="_sidebarClass" value="" scope="page"/>
+
+    <g:if test="${session.filterPref?.sidebarClosed && session.filterPref?.sidebarClosed == 'true'}">
+      <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
+    </g:if>
+
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -133,6 +144,7 @@
         </g:each>
 
     </g:if>
+    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
       window._rundeck = {
@@ -142,7 +154,7 @@
       }
     </script>
 </head>
-<body class="sidebar-mini">
+<body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
       <div class="logo">
@@ -150,12 +162,16 @@
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
-          <!-- <div class="navbar-minimize">
-            <button class="btn btn-sm btn-icon">
-              <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
-              <i class="fas fa-sign-in-alt"></i>
-            </button>
-          </div> -->
+          <%--
+            Saved for review should we switch back to another UI for opening
+            and closing the sidebar
+            <div class="navbar-minimize">
+              <button class="btn btn-sm btn-icon">
+                <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
+                <i class="fas fa-sign-in-alt"></i>
+              </button>
+            </div>
+          --%>
           <div class="navbar-minimize">
             <a class="triangle">
               <i class="fas fa-chevron-right"></i>
@@ -193,12 +209,6 @@ disable for now because profiler plugin is not compatible with grails 3.x
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
-<g:javascript>
-  var sidebarOpen = localStorage.getItem('sidebarOpen')
-  if(sidebarOpen === 'true'){
-    document.body.classList.remove('sidebar-mini')
-  }
-</g:javascript>
 
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/manifest.js"/>
