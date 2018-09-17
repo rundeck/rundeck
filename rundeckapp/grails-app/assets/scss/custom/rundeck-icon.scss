@@ -74,6 +74,10 @@
     &.node.node-runnable {
       background-image: url("icon-small-Node-run.png");
     }
+    &.job {
+      background-image: url("icon-job.png");
+      background-size: 16px 16px;
+    }
   }
 
   &.icon {
