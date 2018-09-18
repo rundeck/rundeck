@@ -101,7 +101,6 @@ class FSStreamingLogReader implements ReverseSeekingStreamingLogReader {
     private LogEventIterator beginFromOffset(long offset) {
         def raf = new FileInputStream(file)
         raf.channel.position(offset)
-        raf.readLines()
         def LogEventIterator iterator = detectedIterator(new StreamLineIterator(raf, encoding))
         return iterator
     }
