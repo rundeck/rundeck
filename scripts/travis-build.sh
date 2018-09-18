@@ -40,7 +40,7 @@ buildDocker() {
 
     local CI_BRANCH_TAG=rundeck/ci:${CLEAN_TAG}
 
-    ./gradlew officialBuild -PdockerTags=latest,SNAPSHOT
+    ./gradlew officialBuild -Penvironment=${ENV} -PdockerTags=latest,SNAPSHOT
 
     docker tag rundeck/rundeck:latest $ECR_BUILD_TAG
     docker tag rundeck/rundeck:latest $ECR_BRANCH_TAG
@@ -50,7 +50,7 @@ buildDocker() {
     docker push $ECR_BRANCH_TAG
     docker push $CI_BRANCH_TAG
 
-    if [[ "${RUNDECK_MASTER_BUILD}" = true ]] ; then
+    if [[ "${RUNDECK_MASTER_BUILD}" = true && -z "${RUNDECK_TAG}" ]] ; then
         ./gradlew officialPush -PdockerTags=SNAPSHOT
     fi
 }
