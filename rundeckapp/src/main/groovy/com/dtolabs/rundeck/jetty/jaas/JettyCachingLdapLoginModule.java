@@ -401,7 +401,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             throw new LoginException("Root context binding failure.");
         }
 
-        LOG.debug("user cred is: " + ldapCredential);
+        LOG.debug("user cred is present: " + (ldapCredential != null));
 
         return ldapCredential;
     }
