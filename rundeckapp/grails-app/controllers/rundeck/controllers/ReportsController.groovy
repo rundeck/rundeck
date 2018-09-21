@@ -65,6 +65,14 @@ class ReportsController extends ControllerBase{
         if (query.hasErrors()) {
             return render(view: '/common/error', model: [beanErrors: query.errors])
         }
+        if(params.fromLink=='y'){
+            def activityDefault =
+                    frameworkService.getProjectProperties(params.project)?.get('project.activityDefault')?:
+                            frameworkService.getProjectProperties(params.project)?.get('rundeck.activityDefault')?:'1d'
+            if(activityDefault!='all'){
+                query.recentFilter = activityDefault
+            }
+        }
         //find previous executions
         def usedFilter
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)

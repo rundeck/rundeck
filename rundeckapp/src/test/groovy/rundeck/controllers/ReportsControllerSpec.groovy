@@ -164,4 +164,53 @@ class ReportsControllerSpec extends Specification {
         false           | null
 
     }
+
+
+    @Unroll
+    def "use max parameter on activity page"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * getProjectProperties(_)>>['project.activityDefault': projectVal, 'rundeck.activityDefault':frameworkVal]
+        }
+        controller.userService = Mock(UserService) {
+            findOrCreateUser(*_) >> new User()
+        }
+        controller.reportService = Mock(ReportService)
+        controller.metricService = Mock(MetricService)
+
+        params.fromLink = fromLink
+
+        when:
+
+        def result = controller.index()
+
+        then:
+        response.status == 200
+        result
+        1 * controller.metricService.withTimer(_,_,_)>> [reports: []]
+        1 * controller.reportService.finishquery(_, _, _) >> { ExecQuery query,def params, Map model ->
+            if(query.recentFilter==expected){
+                return model
+            }else{
+                return null
+            }
+        }
+
+        where:
+        fromLink | frameworkVal    | projectVal | expected
+        'y'      | '1w'            | null       | '1w'
+        'y'      | null            | '1w'       | '1w'
+        'y'      | null            | null       | '1d'
+        'y'      | 'all'           | '1w'       | '1w'
+        null     | 'all'           | null       | null
+        null     | '1w'            | null       | null
+        null     | null            | '1w'       | null
+        null     | null            | null       | null
+        null     | 'all'           | '1w'       | null
+        null     | 'all'           | null       | null
+
+
+    }
 }

@@ -127,7 +127,7 @@
         </li>
     </g:if>
     <li id="nav-activity-link" class="${enc(attr: eventsselected)}">
-      <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: params.project ?: request.project]">
+      <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: params.project ?: request.project, fromLink:'y']">
         <i class="fas fa-history"></i>
         <p>
           <g:message code="gui.menu.Events"/>
