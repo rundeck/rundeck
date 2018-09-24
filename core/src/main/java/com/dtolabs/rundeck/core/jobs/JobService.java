@@ -18,16 +18,16 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
+import org.rundeck.app.spi.AppService;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Service for interacting with Jobs
  */
-public interface JobService {
+public interface JobService extends AppService {
 
     /**
      * @param uuid    job ID
