@@ -49,7 +49,7 @@ import java.util.function.Predicate
 /**
  * Interfaces with the core Framework object
  */
-class FrameworkService implements ApplicationContextAware {
+class FrameworkService implements ApplicationContextAware, AuthContextProvider {
 
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
