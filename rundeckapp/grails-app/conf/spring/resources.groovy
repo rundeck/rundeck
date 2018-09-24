@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import groovy.io.FileType
+import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
@@ -159,6 +160,8 @@ beans={
 
     rundeckFramework(frameworkFactory:'createFramework'){
     }
+
+    rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider)
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
