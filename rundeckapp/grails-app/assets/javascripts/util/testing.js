@@ -150,7 +150,7 @@ var TestHarness = function (name,data) {
         }else{
             jQuery2.collapse('hide');
             jQuery('body > div.wrapper > div.main-panel').append('<div></div>')
-                .append('<span class="btn btn-link text-success" data-toggle="collapse" data-target="#'+ident+'">OK: '+total+' Tests Passed</span>')
+                .append('<span class="btn btn-link text-success test-elem" data-toggle="collapse" data-target="#'+ident+'">OK: '+total+' Tests Passed</span>')
         }
         self.restore();
     };
