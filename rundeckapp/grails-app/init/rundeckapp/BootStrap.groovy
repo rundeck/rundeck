@@ -340,8 +340,10 @@ class BootStrap {
              @Override
              protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {
                  long start=System.currentTimeMillis()
-                 def valid = dataSource.connection.isValid(60)
+                 def metricDataSource=dataSource.connection
+                 def valid = metricDataSource.isValid(60)
                  long dur=System.currentTimeMillis()-start
+                 metricDataSource.close()
                  if(dur<(dbHealthTimeout*1000L)){
                      com.codahale.metrics.health.HealthCheck.Result.healthy("Datasource connection healthy with timeout ${dbHealthTimeout} seconds")
                  }  else{
@@ -353,8 +355,10 @@ class BootStrap {
          int dbPingTimeout = configurationService.getInteger("metrics.datasource.ping.timeout", 60)
          metricRegistry.register(MetricRegistry.name("dataSource.connection","pingTime"),new CallableGauge<Long>({
              long start=System.currentTimeMillis()
-             def valid = dataSource.connection.isValid(dbPingTimeout)
+             def metricDataSource=dataSource.connection
+             def valid = metricDataSource.isValid(dbPingTimeout)
              System.currentTimeMillis()-start
+             metricDataSource.close()
          }))
          //set up some metrics collection for the Quartz scheduler
          metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
