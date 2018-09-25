@@ -89,7 +89,8 @@ class ExecutionController extends ControllerBase{
             apiExecutionModePassive: ['POST'],
             apiExecutionModeActive: ['POST'],
             cancelExecution:'POST',
-            incompleteExecution: 'POST'
+            incompleteExecution: 'POST',
+            apiJobExecutionUpdate  : 'GET'
     ]
 
     def index() {
@@ -2084,6 +2085,63 @@ setTimeout(function(){
         def result=executionService.deleteBulkExecutionIds([ids].flatten(), authContext, session.user)
         executionService.renderBulkExecutionDeleteResult(request,response,result)
     }
+
+
+    /**
+     * GET /api/27/execution/[ID]/update
+     * @param status Expected Status
+     * @param previousStatus Observed Status
+     * @param dateCompleted datetime at which the execution completed/failed
+     * @return
+     */
+    def apiJobExecutionUpdate() {
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V27)) {
+            return
+        }
+        def Execution e = Execution.get(params.id)
+        if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(e.project),
+                        [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
+                ),
+                response,
+                [AuthConstants.ACTION_UPDATE, "Project", e.project] as Object[])) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+
+        if (params.previousStatus.equals(e.getExecutionState())) {
+            e.setStatus(params.status)
+            e.setDateCompleted(params.dateCompleted)
+        }
+
+        def result = executionService.updateExecution(e, authContext, session.user);
+        if (!result.success) {
+            log.error("Failed to update execution: ${result.message}")
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            code  : "api.error.exec.update.failed",
+                            args  : [params.id, result.message],
+                            format: respFormat
+                    ])
+        }
+        withFormat {
+            xml {
+                return executionService.respondExecutionsXml(request, response, [e])
+            }
+            json {
+                return executionService.respondExecutionsJson(request, response, [e], [single: true])
+            }
+        }
+    }
+
 
 
     /**

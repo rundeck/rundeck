@@ -2764,6 +2764,38 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return sb.toString()
 //        }
     }
+
+    /**
+     * Update an execution
+     * @param execution
+     * @return
+     */
+    Map updateExecution(Execution e, AuthContext authContext, String username){
+        if (!frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProject(e.project),
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN])) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Update execution in project ${e.project}"]
+        }
+        log.debug("Execution: ${e}")
+        Map result;
+        try {
+            if (e.save(flush: true)) {
+                log.debug("saved execution status. id: ${e.id}")
+                result = [success: true]
+            } else {
+                e.errors.allErrors.each { log.warn(it.defaultMessage) }
+                result = [error:'failure',message: "Failed to update execution {{Execution ${e.id}}}", success: false]
+                log.error("failed to save execution status")
+            }
+        }
+        catch(Exception ex){
+            log.error("failed to save execution status")
+            result = [error:'failure',message: "Failed to update execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+
+        }
+        return result
+    }
+
     /**
      * Update a scheduledExecution statistics with a successful execution duration
      * @param schedId

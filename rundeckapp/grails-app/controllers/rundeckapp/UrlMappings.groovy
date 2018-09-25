@@ -45,6 +45,11 @@ class UrlMappings {
 
         "/api/$api_version/executions/delete"(controller: 'execution', action: 'apiExecutionDeleteBulk')
 
+        // job execution update URL
+        "/api/$api_version/execution/$id/update"(controller: 'execution'){
+            action = [GET:'apiJobExecutionUpdate']
+        }
+
 
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
