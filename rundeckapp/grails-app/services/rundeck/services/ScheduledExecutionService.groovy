@@ -78,6 +78,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
+    public static final String CONF_PROJECT_ACTIVITY_DEFAULT = 'project.activityDefault'
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -104,12 +105,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 defaultValue null
                 renderingOption('booleanTrueDisplayValueClass', 'text-warning')
             }.build(),
+            PropertyBuilder.builder().with {
+                string 'activityDefault'
+                title 'Activity Default'
+                description 'Default initial time for the activity page.\n\n' +
+                        '* `all`: from any time\n' +
+                        '* `1d`: 1 Day.\n' +
+                        '* `1w`: 1 Week.\n' +
+                        '* `1m`: 1 Mont.'
+                required(false)
+                defaultValue null
+                renderingOption('projectConfigCategory', 'gui')
+            }.build(),
     ]
 
     public static final LinkedHashMap<String, String> ConfigPropertiesMapping = [
             groupExpandLevel: CONF_GROUP_EXPAND_LEVEL,
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
+            activityDefault: CONF_PROJECT_ACTIVITY_DEFAULT
     ]
 
     def FrameworkService frameworkService
@@ -139,7 +153,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     @Override
     Map<String, String> getCategories() {
-        [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
+        [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode', activityDefault: 'gui']
     }
 
     @Override
