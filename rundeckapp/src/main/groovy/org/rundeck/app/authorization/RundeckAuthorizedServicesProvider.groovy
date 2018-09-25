@@ -19,9 +19,9 @@ package org.rundeck.app.authorization
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.jobs.JobService
 import groovy.transform.CompileStatic
-import org.rundeck.app.services.AppService
-import org.rundeck.app.services.AuthorizedServicesProvider
-import org.rundeck.app.services.Services
+import org.rundeck.app.spi.AppService
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.Services
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.JobStateService
 
