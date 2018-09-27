@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
@@ -46,6 +47,8 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
+import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
@@ -161,7 +164,19 @@ beans={
     rundeckFramework(frameworkFactory:'createFramework'){
     }
 
-    rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider)
+    clusterInfoService(ClusterInfo) {
+        clusterInfoServiceDelegate = ref('frameworkService')
+    }
+
+    rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
+        services = [
+            (ClusterInfoService): ref('clusterInfoService')
+        ]
+    }
+
+    rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider) {
+        baseServices = ref('rundeckSpiBaseServicesProvider')
+    }
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 

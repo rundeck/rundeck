@@ -17,37 +17,47 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.jobs.JobService
 import groovy.transform.CompileStatic
 import org.rundeck.app.spi.AppService
 import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
+import org.rundeck.app.spi.ServicesProvider
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.FrameworkService
 import rundeck.services.JobStateService
 
 @CompileStatic
 class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired JobStateService jobStateService
+    ServicesProvider baseServices
+    private static List<Class> SERVICE_TYPES = [(Class) JobService]
 
     @Override
     Services getServicesWith(final AuthContext authContext) {
-        return new AuthedServices(authContext)
+        return new AuthedServices(authContext, baseServices.services)
     }
 
     class AuthedServices implements Services {
         final AuthContext authContext
+        final Services baseServices
 
-        AuthedServices(final AuthContext authContext) {
+        AuthedServices(final AuthContext authContext, final Services baseServices) {
             this.authContext = authContext
+            this.baseServices = baseServices
         }
 
         @Override
         boolean hasService(final Class<? extends AppService> type) {
-            return type == JobService
+            baseServices.hasService(type) || type in SERVICE_TYPES
         }
 
         @Override
         def <T extends AppService> T getService(final Class<T> type) {
+            if (baseServices.hasService(type)) {
+                return baseServices.getService(type)
+            }
             if (type == JobService) {
                 return (T) jobStateService.jobServiceWithAuthContext(authContext)
             }
