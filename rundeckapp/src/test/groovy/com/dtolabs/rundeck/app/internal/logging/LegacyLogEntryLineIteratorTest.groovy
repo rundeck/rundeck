@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.app.internal.logging
 
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.utils.StreamLineIterator
+
 import static org.junit.Assert.*
 
 import grails.test.mixin.TestMixin;
@@ -70,7 +72,7 @@ class LegacyLogEntryLineIteratorTest  {
     }
 
     public void testFromStart() {
-        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new StreamLineIterator(new FileInputStream(testfile1), "UTF-8"))
         assertTrue(iterator.hasNext())
         assertEquals(lengths[0], iterator.offset)
         LogEvent entry = iterator.next()
@@ -95,7 +97,7 @@ class LegacyLogEntryLineIteratorTest  {
     public void testFromMiddle() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[1])
-        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new StreamLineIterator(fis, "UTF-8"))
         assertTrue(iterator.hasNext())
 
         assertEquals(lengths[1], iterator.offset)
@@ -119,7 +121,7 @@ class LegacyLogEntryLineIteratorTest  {
     public void testFromMiddle2() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[2])
-        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new StreamLineIterator(fis, "UTF-8"))
         assertTrue(iterator.hasNext())
 
         assertEquals(lengths[2], iterator.offset)
@@ -140,7 +142,7 @@ class LegacyLogEntryLineIteratorTest  {
     public void testFromEnd() {
         def fis = new FileInputStream(testfile1)
         fis.channel.position(lengths[4])
-        def iterator = new LegacyLogEventLineIterator(new FSFileLineIterator(fis, "UTF-8"))
+        def iterator = new LegacyLogEventLineIterator(new StreamLineIterator(fis, "UTF-8"))
 
         assertEquals(lengths[4], iterator.offset)
 
