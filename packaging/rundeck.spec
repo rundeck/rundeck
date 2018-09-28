@@ -113,7 +113,7 @@ fi
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
-/var/lib/rundeck/cli/snakeyaml-1.14.jar
+/var/lib/rundeck/cli/snakeyaml-1.17.jar
 /var/lib/rundeck/cli/jackson-annotations-2.8.0.jar
 /var/lib/rundeck/cli/jackson-core-2.8.11.jar
 /var/lib/rundeck/cli/jackson-databind-2.8.11.2.jar

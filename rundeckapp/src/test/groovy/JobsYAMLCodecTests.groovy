@@ -66,7 +66,7 @@ public class JobsYAMLCodecTests  {
             assertNotNull ymlstr
             assertTrue ymlstr instanceof String
 
-
+            ymlstr.contains("hour: '2,15'") //ensure that upgrade doesn't break the formatting of this scalar value
             def doc = yaml.load(ymlstr)
             assertNotNull doc
             assertEquals "wrong number of jobs", 1, doc.size()
