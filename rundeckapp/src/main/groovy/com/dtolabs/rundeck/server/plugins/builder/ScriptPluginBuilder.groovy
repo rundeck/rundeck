@@ -133,6 +133,11 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
     }
 
     @Override
+    String getPluginArtifactName() {
+        return pluginAttributes['name']
+    }
+
+    @Override
     String getPluginAuthor() {
         return pluginAttributes['author']
     }

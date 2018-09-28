@@ -80,7 +80,6 @@ dependencies {
     // pr: https://github.com/grails3-plugins/mail/pull/32
     compile 'com.github.grails3-plugins:mail:9435b0ac77'
 
-    compile 'org.yaml:snakeyaml:1.14'
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.atlassian.commonmark:commonmark:0.10.0'
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
@@ -162,6 +161,7 @@ grails{
     plugins{
         compile project(':rundeck:metricsweb')
         compile project(':grails-persistlocale')
+        compile project(':rundeck:verb')
     }
 }
 

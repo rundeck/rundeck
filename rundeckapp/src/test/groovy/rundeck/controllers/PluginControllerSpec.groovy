@@ -123,6 +123,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             }
 
             @Override
+            String getPluginArtifactName() {
+                return "Fake Plugin"
+            }
+
+            @Override
             String getPluginAuthor() {
                 return null
             }

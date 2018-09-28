@@ -59,6 +59,14 @@
       </g:link>
     </li>
   </g:if>
+<g:set var="verbEnabled" value="${grailsApplication.config.rundeck?.features?.verb?.enabled}"/>
+<g:if test="${verbEnabled == 'true'}">
+  <li>
+    <g:link controller="verb" action="index">
+      <g:message code="gui.menu.Verb"/>
+    </g:link>
+  </li>
+</g:if>
   <li>
     <g:link controller="menu" action="plugins">
       <g:message code="gui.menu.ListPlugins"/>

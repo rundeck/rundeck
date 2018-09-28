@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.app.support.BuilderUtil
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.constructor.SafeConstructor
-import com.dtolabs.rundeck.core.utils.snakeyaml.ForceMultilineLiteralOptions
 import rundeck.ScheduledExecution
 import rundeck.controllers.JobXMLException
 
@@ -53,7 +52,7 @@ class JobsYAMLCodec {
 
     static encodeReplaceUuid(List list, Map replaceIds) {
         def writer = new StringWriter()
-        final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
+        final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions)
@@ -76,7 +75,7 @@ class JobsYAMLCodec {
 
     static encodeMaps(List list, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
         def writer = new StringWriter()
-        final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
+        final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions)

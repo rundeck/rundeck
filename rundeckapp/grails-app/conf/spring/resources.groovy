@@ -311,6 +311,35 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
+
+    verbPluginStorageTree(StorageTreeFactory) {
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.verb?.plugin?.toFlatConfig()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':rdeckBase+"/verb/installedPlugins"]
+        defaultConverters=['StorageTimestamperConverter']
+        loggerName='org.rundeck.verb.plugins.storage.events'
+    }
+
+    //Verb storage tree for private repository
+    verbRepositoryStorageTree(StorageTreeFactory) {
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.verb?.repository?.toFlatConfig()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':rdeckBase+"/verb/repo"]
+        defaultConverters=['StorageTimestamperConverter']
+        loggerName='org.rundeck.verb.repository.storage.events'
+    }
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */
