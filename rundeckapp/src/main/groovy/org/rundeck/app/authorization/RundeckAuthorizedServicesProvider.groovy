@@ -17,6 +17,7 @@
 package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.jobs.JobService
 import groovy.transform.CompileStatic
@@ -35,15 +36,15 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     private static List<Class> SERVICE_TYPES = [(Class) JobService]
 
     @Override
-    Services getServicesWith(final AuthContext authContext) {
+    Services getServicesWith(final UserAndRolesAuthContext authContext) {
         return new AuthedServices(authContext, baseServices.services)
     }
 
     class AuthedServices implements Services {
-        final AuthContext authContext
+        final UserAndRolesAuthContext authContext
         final Services baseServices
 
-        AuthedServices(final AuthContext authContext, final Services baseServices) {
+        AuthedServices(final UserAndRolesAuthContext authContext, final Services baseServices) {
             this.authContext = authContext
             this.baseServices = baseServices
         }

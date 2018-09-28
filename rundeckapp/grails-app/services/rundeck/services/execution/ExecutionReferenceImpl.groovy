@@ -1,6 +1,7 @@
 package rundeck.services.execution
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobReference
 import rundeck.services.JobReferenceImpl
 
 
@@ -8,7 +9,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String options
     String filter
     String id
-    JobReferenceImpl job
+    JobReference job
     Date dateStarted
     Date dateCompleted
     String status
