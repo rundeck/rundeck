@@ -148,14 +148,19 @@ class PluginController {
             def providers = it.value.collect { provider ->
                 def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider.name)
                 boolean builtin = meta == null
+                String id = meta?.pluginId ?: provider.name.encodeAsSHA256().substring(0,12)
                 String ver = meta?.pluginFileVersion ?: appVer
+                String tgtHost = meta?.targetHostCompatibility ?: 'all'
+                String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
                 String dte = meta?.pluginDate ?: appDate
-                [id:provider.name.encodeAsSHA256().substring(0,12),
+                [id:id,
                  name:provider.name,
                  title:provider.title,
                  description:provider.description,
                  builtin:builtin,
                  pluginVersion:ver,
+                 rundeckCompatibilityVersion: rdVer,
+                 targetHostCompatibility: tgtHost,
                  pluginDate:toEpoch(dte),
                  enabled:true]
             }
@@ -170,17 +175,25 @@ class PluginController {
     def pluginDetail() {
         String pluginName = params.name
         String service = params.service
+        String appVer = servletContext.getAttribute('version.number')
 
         def desc = pluginService.getPluginDescriptor(pluginName,ServiceTypes.TYPES[service])?.description
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }
         }
+        def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,pluginName)
         def terseDesc = [:]
-        terseDesc.id = desc.name.encodeAsSHA256().substring(0,12)
+        terseDesc.id = meta?.pluginId ?: desc.name.encodeAsSHA256().substring(0,12)
         terseDesc.name = desc.name
         terseDesc.title = desc.title
         terseDesc.desc = desc.description
+        terseDesc.ver = meta?.pluginFileVersion ?: appVer
+        terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
+        terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
+        terseDesc.license = meta?.license ?: 'unspecified'
+        terseDesc.sourceLink = meta?.pluginSourceLink
+        terseDesc.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
         terseDesc.props = desc.properties.collect { prop ->
             [name: prop.name,
              desc: prop.description,

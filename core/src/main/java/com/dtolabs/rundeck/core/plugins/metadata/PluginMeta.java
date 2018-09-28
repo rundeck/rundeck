@@ -42,6 +42,16 @@ public class PluginMeta {
     private List<Map<String, Object>> providers;
     private List<ProviderDef> pluginDefs;
 
+    //2.0
+    private String id; //This is the first 12 characters of the name digested with sha256
+    private String description;
+    private String rundeckCompatibilityVersion;
+    private String license;
+    private List<String> tags;
+    private String thirdPartyDependencies;
+    private String sourceLink;
+    private String targetHostCompatibility;
+
     public List<ProviderDef> getPluginDefs() {
         if (null == pluginDefs && null!=providers) {
             pluginDefs = new ArrayList<ProviderDef>();
@@ -50,6 +60,14 @@ public class PluginMeta {
             }
         }
         return pluginDefs;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -134,5 +152,61 @@ public class PluginMeta {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
+    }
+
+    public String getRundeckCompatibilityVersion() {
+        return rundeckCompatibilityVersion;
+    }
+
+    public void setRundeckCompatibilityVersion(final String rundeckCompatibilityVersion) {
+        this.rundeckCompatibilityVersion = rundeckCompatibilityVersion;
+    }
+
+    public String getLicense() {
+        return license;
+    }
+
+    public void setLicense(final String license) {
+        this.license = license;
+    }
+
+    public List<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(final List<String> tags) {
+        this.tags = tags;
+    }
+
+    public String getThirdPartyDependencies() {
+        return thirdPartyDependencies;
+    }
+
+    public void setThirdPartyDependencies(final String thirdPartyDependencies) {
+        this.thirdPartyDependencies = thirdPartyDependencies;
+    }
+
+    public String getSourceLink() {
+        return sourceLink;
+    }
+
+    public void setSourceLink(final String sourceLink) {
+        this.sourceLink = sourceLink;
+    }
+
+    public String getTargetHostCompatibility() {
+        return targetHostCompatibility;
+    }
+
+    public void setTargetHostCompatibility(final String targetHostCompatibility) {
+        this.targetHostCompatibility = targetHostCompatibility;
     }
 }

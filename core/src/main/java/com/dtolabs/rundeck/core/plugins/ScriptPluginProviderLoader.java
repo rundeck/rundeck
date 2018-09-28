@@ -53,18 +53,20 @@ import static com.dtolabs.rundeck.core.plugins.JarPluginProviderLoader.RESOURCES
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader, PluginMetadata {
+public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader, PluginMetadata {
 
     private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
     public static final String VERSION_1_0 = "1.0";
     public static final String VERSION_1_1 = "1.1";
     public static final String VERSION_1_2 = "1.2";
+    public static final String VERSION_2_0 = "2.0";
     public static final List<String> SUPPORTED_PLUGIN_VERSIONS;
     static {
         SUPPORTED_PLUGIN_VERSIONS = Collections.unmodifiableList(Arrays.asList(
                 VERSION_1_0,
                 VERSION_1_1,
-                VERSION_1_2
+                VERSION_1_2,
+                VERSION_2_0
         ));
     }
     private final File file;
@@ -209,6 +211,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             return metadata;
         }
         metadata = loadMeta(file);
+        metadata.setId(PluginUtils.generateShaIdFromName(metadata.getName()));
         dateLoaded = new Date();
         return metadata;
     }
@@ -411,6 +414,19 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                     .getAbsolutePath());
             valid = false;
         }
+        if(pluginList.getRundeckPluginVersion().equals(VERSION_2_0)) {
+            List<String> validationErrors = new ArrayList<>();
+            PluginMetadataValidator.validateTargetHostCompatibility(validationErrors,
+                                                                    pluginList.getTargetHostCompatibility());
+            PluginMetadataValidator.validateRundeckCompatibility(validationErrors,
+                                                                 pluginList.getRundeckCompatibilityVersion());
+            if (!validationErrors.isEmpty()) {
+                for (String err : validationErrors) {
+                    log.error(err + " in metadata: "+file.getAbsolutePath());
+                }
+                valid = false;
+            }
+        }
         final List<ProviderDef> pluginDefs = pluginList.getPluginDefs();
         for (final ProviderDef pluginDef : pluginDefs) {
             try {
@@ -473,7 +489,10 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      */
     private static String basename(final File file) {
         final String name = file.getName();
-        return name.substring(0, name.lastIndexOf("."));
+        if(name.contains(".")) {
+            return name.substring(0, name.lastIndexOf("."));
+        }
+        return name;
     }
 
     /**
@@ -707,5 +726,100 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     @Override
     public Date getDateLoaded() {
         return dateLoaded;
+    }
+
+    @Override
+    public String getPluginName() {
+        try {
+            return getPluginMeta().getName();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginDescription() {
+        try {
+            return getPluginMeta().getDescription();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginId() {
+        try {
+            return getPluginMeta().getId();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getRundeckCompatibilityVersion() {
+        try {
+            return getPluginMeta().getRundeckCompatibilityVersion();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getTargetHostCompatibility() {
+        try {
+            return getPluginMeta().getTargetHostCompatibility();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public List<String> getTags() {
+        try {
+            return getPluginMeta().getTags();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginLicense() {
+        try {
+            return getPluginMeta().getLicense();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginThirdPartyDependencies() {
+        try {
+            return getPluginMeta().getThirdPartyDependencies();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginSourceLink() {
+        try {
+            return getPluginMeta().getSourceLink();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginType() {
+        return "script";
     }
 }

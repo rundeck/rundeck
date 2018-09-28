@@ -69,6 +69,10 @@ public class ScriptPluginScanner extends DirPluginScanner {
     }
 
     public boolean isValidPluginFile(final File file) {
+        return validatePluginFile(file);
+    }
+
+    public static boolean validatePluginFile(final File file) {
         try {
             final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(file));
             final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(file, zipinput);
