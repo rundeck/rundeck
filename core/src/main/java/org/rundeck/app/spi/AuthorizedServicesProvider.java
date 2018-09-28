@@ -17,6 +17,7 @@
 package org.rundeck.app.spi;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 
 /**
  * Provides Rundeck SPI services given an Auth context
@@ -27,5 +28,5 @@ public interface AuthorizedServicesProvider {
      *
      * @param authContext authorization context
      */
-    Services getServicesWith(AuthContext authContext);
+    Services getServicesWith(UserAndRolesAuthContext authContext);
 }

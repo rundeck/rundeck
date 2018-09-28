@@ -113,7 +113,18 @@ public interface JobService extends AppService {
      * @param asUser user to execute the job(null for the same user)
      * @return Id of the result execution
      */
-    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)throws JobNotFound;
+    ExecutionReference startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError;
+
+    /**
+     * @param jobReference reference to a job
+     * @param options      option values
+     * @param jobFilter    filter for the execution
+     * @param asUser       user to execute the job(null for the same user)
+     * @return Id of the result execution
+     */
+    ExecutionReference startJob(JobReference jobReference, Map options, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError;
 
     /**
      *
