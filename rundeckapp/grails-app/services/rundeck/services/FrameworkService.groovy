@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopier
@@ -49,7 +50,7 @@ import java.util.function.Predicate
 /**
  * Interfaces with the core Framework object
  */
-class FrameworkService implements ApplicationContextAware {
+class FrameworkService implements ApplicationContextAware, AuthContextProvider, ClusterInfoService {
 
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
@@ -103,11 +104,13 @@ class FrameworkService implements ApplicationContextAware {
         serverUUID = applicationContext?.getServletContext()?.getAttribute("SERVER_UUID")
         initialized = true
     }
-    def isClusterModeEnabled(){
-        return clusterModeEnabled
+
+    boolean isClusterModeEnabled() {
+        clusterModeEnabled
     }
-    def getServerUUID(){
-        return serverUUID
+
+    String getServerUUID() {
+        serverUUID
     }
 
     /**
