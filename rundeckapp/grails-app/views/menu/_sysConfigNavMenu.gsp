@@ -76,5 +76,15 @@
         </g:link>
       </li>
   </g:if>
+    <g:ifMenuItems type="SYSTEM_CONFIG">
+        <li role="separator" class="divider"></li>
+    </g:ifMenuItems>
+    <g:forMenuItems type="SYSTEM_CONFIG" var="item">
+        <li>
+            <a href="${item.href}">
+                <g:message code="${item.titleCode}" default="${item.title}"/>
+            </a>
+        </li>
+    </g:forMenuItems>
   <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
 </ul>

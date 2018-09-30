@@ -20,6 +20,18 @@
       Hi ${session.user}!
     </div>
   </li>
+
+    <g:ifMenuItems type="USER_MENU">
+        <li role="separator" class="divider"></li>
+    </g:ifMenuItems>
+    <g:forMenuItems type="USER_MENU" var="item">
+        <li>
+            <a href="${item.href}">
+                <g:message code="${item.titleCode}" default="${item.title}"/>
+            </a>
+        </li>
+    </g:forMenuItems>
+
   <li role="separator" class="divider"></li>
   <li>
     <g:link controller="user" action="profile">

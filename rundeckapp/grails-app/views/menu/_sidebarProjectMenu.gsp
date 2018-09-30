@@ -153,5 +153,16 @@
         <span class="sidebar-mini"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>
       </g:link>
     </li>
+
+      <g:ifMenuItems type="PROJECT_CONFIG">
+          <li role="separator" class="divider"></li>
+      </g:ifMenuItems>
+      <g:forMenuItems type="PROJECT_CONFIG" var="item">
+          <li>
+              <a href="${item.getProjectHref(params.project)}">
+                  <g:message code="${item.titleCode}" default="${item.title}"/>
+              </a>
+          </li>
+      </g:forMenuItems>
   </ul>
 </div>
