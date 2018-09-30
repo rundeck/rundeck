@@ -19,14 +19,17 @@ package com.dtolabs.rundeck.core.plugins;
 import java.util.Map;
 
 /**
- * Abstract configuration of a plugin
- *
- * @author greg
- * @since 5/16/17
+ * Abstract configuration of a plugin without a service identifier
  */
-public interface PluginConfiguration extends PluginProviderConfiguration {
+public interface PluginProviderConfiguration {
+
     /**
-     * @return the service name
+     * @return the provider identity
      */
-    String getService();
+    String getProvider();
+
+    /**
+     * @return the plugin configuration values
+     */
+    Map<String, Object> getConfiguration();
 }

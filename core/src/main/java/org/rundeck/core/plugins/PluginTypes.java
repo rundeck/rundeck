@@ -14,19 +14,17 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.plugins;
+package org.rundeck.core.plugins;
 
 import java.util.Map;
 
 /**
- * Abstract configuration of a plugin
- *
- * @author greg
- * @since 5/16/17
+ * Defines plugin types by name
  */
-public interface PluginConfiguration extends PluginProviderConfiguration {
+public interface PluginTypes {
+
     /**
-     * @return the service name
+     * @return map of service names to plugin types
      */
-    String getService();
+    Map<String, Class<?>> getPluginTypes();
 }
