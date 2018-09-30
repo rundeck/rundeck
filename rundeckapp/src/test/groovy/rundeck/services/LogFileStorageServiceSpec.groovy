@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
-import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.springframework.scheduling.TaskScheduler

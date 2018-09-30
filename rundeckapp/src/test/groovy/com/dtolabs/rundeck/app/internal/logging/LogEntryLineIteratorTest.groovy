@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.internal.logging
 
+import com.dtolabs.utils.StreamLineIterator
+
 import static org.junit.Assert.*
 
 import grails.test.mixin.TestMixin
@@ -116,8 +118,8 @@ class LogEntryLineIteratorTest  {
         ]
         testfile1.withWriter { w -> lines2.each { w << it } }
         LogEventLineIterator test = new LogEventLineIterator(
-                new FSFileLineIterator(new FileInputStream(testfile1), "UTF-8"),
-                new testFormat())
+            new StreamLineIterator(new FileInputStream(testfile1), "UTF-8"),
+            new testFormat())
         assertTrue(test.hasNext())
         def entries = test.collect{it}
         assertEquals(2,entries.size())

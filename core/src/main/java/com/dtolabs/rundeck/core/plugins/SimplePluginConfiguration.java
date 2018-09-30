@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,26 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins
+package com.dtolabs.rundeck.core.plugins;
 
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import lombok.Builder;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
-/**
- * ValidatedPlugin holds a validation report and a validity result
- * @author greg
- * @since 2014-02-19
- */
-class ValidatedPlugin {
-    Validator.Report report
-    boolean valid
+import java.util.Map;
+
+@Data
+@Builder
+@RequiredArgsConstructor
+public class SimplePluginConfiguration
+    implements PluginConfiguration
+{
+    final String service;
+    final String provider;
+    final Map<String, Object> configuration;
+
+    @Override
+    public String toString() {
+        return String.format("Plugin: %s:%s", getService(), getProvider());
+    }
 }

@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -311,21 +312,7 @@ class ExecutionUtilService {
     }
 
     public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
-        new SimplePluginConfiguration(
-                provider: name,
-                service: ServiceNameConstants.LogFilter,
-                configuration: pluginconfig
-        )
+        new SimplePluginConfiguration(ServiceNameConstants.LogFilter, name, pluginconfig)
     }
 
-    static class SimplePluginConfiguration implements PluginConfiguration {
-        String provider;
-        String service;
-        Map<String, Object> configuration;
-
-        @Override
-        String toString() {
-            return "Plugin: $service:$provider"
-        }
-    }
 }
