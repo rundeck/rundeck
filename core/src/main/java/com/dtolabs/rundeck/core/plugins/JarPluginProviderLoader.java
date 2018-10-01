@@ -93,10 +93,10 @@ public class JarPluginProviderLoader implements ProviderLoader,
     public static final String RUNDECK_PLUGIN_TARGET_HOST_COMPAT = "Rundeck-Plugin-Target-Host-Compatibility";
 
     //End Plugin Version 2 attributes
-    private final File pluginJar;
-    private final File pluginJarCacheDirectory;
-    private final File cachedir;
-    private final boolean loadLibsFirst;
+    protected final File pluginJar;
+    protected final File pluginJarCacheDirectory;
+    protected final File cachedir;
+    protected final boolean loadLibsFirst;
     private final DateFormat cachedJarTimestampFormatter = new SimpleDateFormat(CACHED_JAR_TIMESTAMP_FORMAT);
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
@@ -272,7 +272,9 @@ public class JarPluginProviderLoader implements ProviderLoader,
     private Attributes getMainAttributes() {
         if (null == mainAttributes) {
             mainAttributes = getJarMainAttributes(pluginJar);
-            if(mainAttributes.getValue(RUNDECK_PLUGIN_VERSION).equals(JAR_PLUGIN_VERSION_2_0)) {
+            if(mainAttributes!= null &&
+                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION) != null &&
+                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION).equals(JAR_PLUGIN_VERSION_2_0)) {
                 String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
                 if(pluginName == null) pluginName = pluginJar.getName();
                 pluginId = PluginUtils.generateShaIdFromName(pluginName);
@@ -437,8 +439,8 @@ public class JarPluginProviderLoader implements ProviderLoader,
         return cls;
     }
 
-    private CachedJar cachedJar;
-    private Date loadedDate = null;
+    protected CachedJar cachedJar;
+    protected Date loadedDate = null;
 
     private synchronized JarPluginProviderLoader.CachedJar getCachedJar() throws PluginException {
         if (null == cachedJar) {
@@ -486,7 +488,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
      *
      * @return the collection of extracted files
      */
-    private Collection<File> extractDependentLibs(final File cachedir) throws IOException {
+    protected Collection<File> extractDependentLibs(final File cachedir) throws IOException {
         final Attributes attributes = getMainAttributes();
         if (null == attributes) {
             debug("no manifest attributes");
@@ -709,6 +711,9 @@ public class JarPluginProviderLoader implements ProviderLoader,
                     return false;
                 }
                 final Attributes mainAttributes = manifest.getMainAttributes();
+                if(mainAttributes.getValue(RUNDECK_PLUGIN_VERSION)==null){
+                    return false;
+                }
                 validateJarManifest(mainAttributes);
             }
             return true;
@@ -822,7 +827,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
     /**
      * Holds the cached jar file, dir, libs list and class and resource loaders for a jar plugin
      */
-    private class CachedJar implements Closeable {
+    protected class CachedJar implements Closeable {
         private File dir;
         private File cachedJar;
         private Collection<File> depLibs;
