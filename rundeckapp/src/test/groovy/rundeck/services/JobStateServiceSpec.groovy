@@ -51,6 +51,7 @@ class JobStateServiceSpec extends Specification {
             }
             kickJob(!null, !null, null,!null)>>{
                 Map<String, Object> ret = new HashMap<>()
+                ret.success = true
                 ret.executionId = '1'
                 ret
             }
@@ -475,10 +476,12 @@ class JobStateServiceSpec extends Specification {
         setTestExecutions(projectName,jobUuid)
 
         when:
-        def ref = service.startJob(auth,job, null,null,null)
+            def ref = service.startJob(auth, job, (String) null, null, null)
         then:
         ref
-        ref == '1'
+            ref.id == '1'
+            ref.job
+            ref.job.id == jobUuid
     }
 
     void "start job without auth"(){
@@ -494,7 +497,7 @@ class JobStateServiceSpec extends Specification {
         setTestExecutions(projectName,jobUuid)
 
         when:
-        def ref = service.startJob(null,job, null,null,null)
+            def ref = service.startJob(null, job, (String) null, null, null)
         then:
         !ref
         JobNotFound ex = thrown()
