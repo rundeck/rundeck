@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
+import grails.events.bus.EventBus
 import grails.plugin.springsecurity.SecurityFilterPosition
 import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
@@ -58,6 +59,7 @@ class BootStrap {
     def dataSource
     ApiMarshallerRegistrar apiMarshallerRegistrar
     def authenticationManager
+    def EventBus grailsEventBus
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -458,6 +460,7 @@ class BootStrap {
              }
              fileUploadService.onBootstrap()
          }
+         grailsEventBus.notify('rundeck.bootstrap')
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
      }
 
