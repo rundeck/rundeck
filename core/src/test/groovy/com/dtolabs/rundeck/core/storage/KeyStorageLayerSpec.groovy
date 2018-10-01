@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.storage
 
-import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
-import com.dtolabs.rundeck.core.storage.StorageUtil
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
 import spock.lang.Specification

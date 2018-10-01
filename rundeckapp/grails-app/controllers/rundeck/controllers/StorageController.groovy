@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
