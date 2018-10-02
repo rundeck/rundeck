@@ -25,10 +25,12 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import groovy.transform.CompileStatic
 
 /**
  * Created by greg on 2/3/15.
  */
+@CompileStatic
 class ResolvedAuthJobService implements JobService {
     AuthorizingJobService authJobService
     UserAndRolesAuthContext authContext
@@ -70,7 +72,7 @@ class ResolvedAuthJobService implements JobService {
     String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError {
         try {
-            authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+            authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser).id
         } catch (JobExecutionError ignored) {
             return null;
         }
