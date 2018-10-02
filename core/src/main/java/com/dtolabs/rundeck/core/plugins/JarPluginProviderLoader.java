@@ -711,9 +711,6 @@ public class JarPluginProviderLoader implements ProviderLoader,
                     return false;
                 }
                 final Attributes mainAttributes = manifest.getMainAttributes();
-                if(mainAttributes.getValue(RUNDECK_PLUGIN_VERSION)==null){
-                    return false;
-                }
                 validateJarManifest(mainAttributes);
             }
             return true;
