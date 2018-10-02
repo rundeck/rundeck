@@ -184,18 +184,19 @@
           <div class="sidebar-modal-backdrop"></div>
       </div>
     </div>
-    <div class="main-panel">
+    <div class="main-panel" id="main-panel">
       <div>
         <g:render template="/common/mainbar"/>
       </div>
       <div class="content">
         <div class="container-fluid">
-          <div id=project-motd-vue project=blah key=foo></div>
+          <div id=project-motd-vue></div>
         </div>
         <g:layoutBody/>
       </div>
       <g:render template="/common/footer"/>
     </div>
+    <div id="tour-vue"></div>
   </div>
 <!--
 disable for now because profiler plugin is not compatible with grails 3.x
@@ -214,6 +215,7 @@ disable for now because profiler plugin is not compatible with grails 3.x
 <asset:javascript src="static/manifest.js"/>
 <asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/tour.js"/>
 <!-- /VUE JS MODULES -->
 
 </body>

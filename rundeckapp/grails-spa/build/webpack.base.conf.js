@@ -23,14 +23,15 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/motd': './src/components/motd/main.js',
+    'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js'
+
   },
   output: {
     path: `config.build.assetsRoot/[path]`,
     filename: '[name].js',
     publicPath: process.env.NODE_ENV === 'production' ?
-      config.build.assetsPublicPath :
-      config.dev.assetsPublicPath
+      config.build.assetsPublicPath : config.dev.assetsPublicPath
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],
