@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -132,7 +133,7 @@ class JobStateService implements AuthorizingJobService {
      * @param auth
      * @return a JobService which uses the auth context for authorization
      */
-    JobService jobServiceWithAuthContext(AuthContext auth) {
+    JobService jobServiceWithAuthContext(UserAndRolesAuthContext auth) {
         return new ResolvedAuthJobService(authContext: auth, authJobService: this)
     }
 
@@ -263,23 +264,51 @@ class JobStateService implements AuthorizingJobService {
 
 
     @Override
-    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound {
+    ExecutionReference runJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        String jobArgString,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError {
+        def inputOpts = ["argString": jobArgString]
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+    }
+
+    @Override
+    ExecutionReference runJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        Map optionData,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError {
         def inputOpts = [:]
-        inputOpts["argString"] = jobArgString
+        optionData.each { k, v ->
+            inputOpts['option.'+k] = v
+        }
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+    }
+
+    ExecutionReference doRunJob(
+        String jobFilter,
+        Map inputOpts,
+        JobReference jobReference,
+        UserAndRolesAuthContext auth,
+        String asUser
+    ) {
         if (jobFilter) {
-            def filters = [filter:jobFilter]
-            inputOpts['_replaceNodeFilters']='true'
-            inputOpts['doNodedispatch']=true
-            filters.each {k, v ->
-                inputOpts[k] = v
-            }
-            if(null== inputOpts['nodeExcludePrecedence']){
+            inputOpts.filter = jobFilter
+            inputOpts['_replaceNodeFilters'] = 'true'
+            inputOpts['doNodedispatch'] = true
+            if (null == inputOpts['nodeExcludePrecedence']) {
                 inputOpts['nodeExcludePrecedence'] = true
             }
         }
 
         inputOpts['executionType'] = 'user'
-        String resultExecution = "";
 
         def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
         if (!se || !frameworkService.authorizeProjectJobAny(
@@ -290,14 +319,22 @@ class JobStateService implements AuthorizingJobService {
         )) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
-        if(auth instanceof UserAndRolesAuthContext) {
-            def result = frameworkService.kickJob(se,
-                    auth, asUser, inputOpts)
-            if(result && result.executionId){
-                resultExecution += result.executionId
-            }
+        def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
+        if (result && result.success && result.executionId) {
+            return new ExecutionReferenceImpl(
+                id: result.executionId,
+                job: jobReference,
+                filter: jobFilter,
+                options: result.execution?.argString,
+                dateStarted: result.execution?.dateStarted
+            )
+        } else {
+            throw new JobExecutionError(
+                result?.message ?: result?.error ?: "Unknown: ${result}",
+                jobReference.id,
+                jobReference.project
+            )
         }
-        return resultExecution
     }
 
 
@@ -384,6 +421,8 @@ class JobStateService implements AuthorizingJobService {
             if(se){
                 jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
                         project: se.project)
+            } else {
+                jobRef = null
             }
             ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
                     filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, dateCompleted:exec.dateCompleted,

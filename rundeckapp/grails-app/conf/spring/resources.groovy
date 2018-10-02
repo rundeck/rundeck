@@ -44,7 +44,7 @@ import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
@@ -301,7 +301,7 @@ beans={
     }
 
     def storageDir= new File(varDir, 'storage')
-    rundeckStorageTree(StorageTreeFactory){
+    rundeckStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
@@ -314,9 +314,10 @@ beans={
         defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
         loggerName='org.rundeck.storage.events'
     }
+    rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
 
-    rundeckConfigStorageTree(StorageTreeFactory){
+    rundeckConfigStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
@@ -329,6 +330,7 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
+    rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,109 +13,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.dtolabs.rundeck.core.storage;
 
-package com.dtolabs.rundeck.server.storage;
-
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
-import com.dtolabs.rundeck.core.storage.*;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
-import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin;
-import com.dtolabs.rundeck.core.plugins.PluginRegistry;
-import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService;
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService;
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer;
-import com.dtolabs.rundeck.server.plugins.storage.StorageLogger;
 import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.Tree;
 import org.rundeck.storage.conf.TreeBuilder;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.FactoryBeanNotInitializedException;
-import org.springframework.beans.factory.InitializingBean;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * StorageTreeFactory constructs Rundeck's StorageTree based on the configuration in the framework.properties
- *
- * @author greg
- * @since 2/19/14 3:24 PM
- */
-public class StorageTreeFactory implements FactoryBean<StorageTree>, InitializingBean {
-    public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
-    public static final String LOGGER_NAME = "loggerName";
-    static Logger logger = Logger.getLogger(StorageTreeFactory.class);
-    public static final String TYPE = "type";
-    public static final String PATH = "path";
-    public static final String CONFIG = "config";
-    public static final String SEP = ".";
-    public static final String REMOVE_PATH_PREFIX = "removePathPrefix";
-    public static final String RESOURCE_SELECTOR = "resourceSelector";
-    private IPropertyLookup frameworkPropertyLookup;
-    private PluginRegistry pluginRegistry;
-    private String storageConfigPrefix;
-    private String converterConfigPrefix;
-    private String baseStorageType;
-    private String loggerName =ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
-    private Map<String, String> baseStorageConfig = new HashMap<String, String>();
-    private Map<String, String> configuration = new HashMap<String, String>();
-    private Set<String> defaultConverters = new HashSet<String>();
+public class StorageTreeFactory {
+    public static final String              ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
+    public static final String              LOGGER_NAME                            = "loggerName";
+    static              Logger              logger                                 = Logger.getLogger(StorageTreeFactory.class);
+    public static final String              TYPE                                   = "type";
+    public static final String              PATH                                   = "path";
+    public static final String              CONFIG                                 = "config";
+    public static final String              SEP                                    = ".";
+    public static final String              REMOVE_PATH_PREFIX                     = "removePathPrefix";
+    public static final String              RESOURCE_SELECTOR                      = "resourceSelector";
+    private             IPropertyLookup     frameworkPropertyLookup;
+    private             PluginRegistry      pluginRegistry;
+    private             String              storageConfigPrefix;
+    private             String              converterConfigPrefix;
+    private             String              baseStorageType;
+    private             String              loggerName                             =ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME;
+    private             Map<String, String> baseStorageConfig                      = new HashMap<String, String>();
+    private             Map<String, String> configuration                          = new HashMap<String, String>();
+    private             Set<String>         defaultConverters                      = new HashSet<String>();
 
-    private StoragePluginProviderService storagePluginProviderService;
-    private StorageConverterPluginProviderService storageConverterPluginProviderService;
+    private PluggableProviderService<StoragePlugin> storagePluginProviderService;
+    private PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService;
 
 
-    @Override
-    public StorageTree getObject() throws Exception {
+    public StorageTree createTree() throws Exception {
         if ( null == frameworkPropertyLookup) {
-            throw new FactoryBeanNotInitializedException("'frameworkPropertyLookup' is required");
+            throw new StorageTreeInitializationException("'frameworkPropertyLookup' is required");
         }
         if (null == pluginRegistry) {
-            throw new FactoryBeanNotInitializedException("'pluginRegistry' is required");
+            throw new StorageTreeInitializationException("'pluginRegistry' is required");
         }
         if (null == storagePluginProviderService) {
-            throw new FactoryBeanNotInitializedException("'storagePluginProviderService' is required");
+            throw new StorageTreeInitializationException("'storagePluginProviderService' is required");
         }
         if (null == storageConverterPluginProviderService) {
-            throw new FactoryBeanNotInitializedException("'storageConverterPluginProviderService' is required");
+            throw new StorageTreeInitializationException("'storageConverterPluginProviderService' is required");
         }
         if (null == storageConfigPrefix) {
-            throw new FactoryBeanNotInitializedException("'storageConfigPrefix' is required");
+            throw new StorageTreeInitializationException("'storageConfigPrefix' is required");
         }
         if (null == converterConfigPrefix) {
-            throw new FactoryBeanNotInitializedException("'converterConfigPrefix' is required");
+            throw new StorageTreeInitializationException("'converterConfigPrefix' is required");
         }
         if (null == baseStorageType) {
-            throw new FactoryBeanNotInitializedException("'baseStorageType' is required");
+            throw new StorageTreeInitializationException("'baseStorageType' is required");
         }
         return StorageUtil.asStorageTree(buildTree(configuration));
-    }
-
-    @Override
-    public Class<?> getObjectType() {
-        return StorageTree.class;
-    }
-
-    @Override
-    public boolean isSingleton() {
-        return false;
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-
     }
 
     private Tree<ResourceMeta> buildTree(Map<String,String> config) {
@@ -207,7 +171,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         //set base using file storage, could be overridden
         Map<String, String> config1 = expandConfig(getBaseStorageConfig());
         logger.debug("Default base storage provider: " + getBaseStorageType() + ", " +
-                "config: " + config1);
+                     "config: " + config1);
 
         StoragePlugin base = loadPlugin(
                 getBaseStorageType(),
@@ -238,7 +202,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      * @return builder
      */
     private TreeBuilder<ResourceMeta> configureConverterPlugin(TreeBuilder<ResourceMeta> builder, int index,
-            Map<String, String> configProps) {
+                                                               Map<String, String> configProps) {
         String pref1 = getConverterConfigPrefix() + SEP + index;
         String pluginType = configProps.get(pref1 + SEP + TYPE);
         String pathProp = pref1 + SEP + PATH;
@@ -247,16 +211,16 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         String selector = configProps.get(selectorProp);
         if (null == path && null == selector) {
             throw new IllegalArgumentException("Converter plugin [" + index + "] specified by " + (pref1) + " MUST " +
-                    "define one of: " +
-                    pathProp + " OR " + selectorProp);
+                                               "define one of: " +
+                                               pathProp + " OR " + selectorProp);
         }
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
         config = expandConfig(config);
         logger.debug("Add Converter[" + index + "]:"
-                + (null != path ? path : "/")
-                + "[" + (null != selector ? selector : "*") + "]"
-                + " " + pluginType + ", config: " + config);
+                     + (null != path ? path : "/")
+                     + "[" + (null != selector ? selector : "*") + "]"
+                     + " " + pluginType + ", config: " + config);
 
 
         return buildConverterPlugin(builder, pluginType, path, selector, config);
@@ -274,7 +238,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
      * @return builder
      */
     private TreeBuilder<ResourceMeta> buildConverterPlugin(TreeBuilder<ResourceMeta> builder, String pluginType,
-            String path, String selector, Map<String, String> config) {
+                                                           String path, String selector, Map<String, String> config) {
         StorageConverterPlugin converterPlugin = loadPlugin(
                 pluginType,
                 config,
@@ -321,7 +285,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         String pluginType = configProps.get(pref1 + SEP + TYPE);
         String path = configProps.get(pref1 + SEP + PATH);
         boolean removePathPrefix = Boolean.parseBoolean(configProps.get(pref1 + SEP +
-                REMOVE_PATH_PREFIX));
+                                                                        REMOVE_PATH_PREFIX));
 
         Map<String, String> config = subPropertyMap(pref1 + SEP + CONFIG + SEP, configProps);
         config = expandConfig(config);
@@ -363,7 +327,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     }
 
     private <T> T loadPlugin(String pluginType, Map<String, String> config,
-            PluggableProviderService<T> service)
+                             PluggableProviderService<T> service)
     {
         ConfiguredPlugin<T> configured = getPluginRegistry().retainConfigurePluginByName(
                 pluginType,
@@ -409,21 +373,21 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
         this.pluginRegistry = pluginRegistry;
     }
 
-    public StorageConverterPluginProviderService getStorageConverterPluginProviderService() {
+    public PluggableProviderService getStorageConverterPluginProviderService() {
         return storageConverterPluginProviderService;
     }
 
-    public void setStorageConverterPluginProviderService(StorageConverterPluginProviderService
-            storageConverterPluginProviderService) {
+    public void setStorageConverterPluginProviderService(PluggableProviderService
+                                                                 storageConverterPluginProviderService) {
         this.storageConverterPluginProviderService = storageConverterPluginProviderService;
     }
 
-    public StoragePluginProviderService getStoragePluginProviderService() {
+    public PluggableProviderService getStoragePluginProviderService() {
         return storagePluginProviderService;
     }
 
-    public void setStoragePluginProviderService(StoragePluginProviderService
-            storagePluginProviderService) {
+    public void setStoragePluginProviderService(PluggableProviderService
+                                                        storagePluginProviderService) {
         this.storagePluginProviderService = storagePluginProviderService;
     }
 

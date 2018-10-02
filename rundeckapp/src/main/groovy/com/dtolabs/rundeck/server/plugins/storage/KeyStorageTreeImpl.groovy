@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins.storage
 
+import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil

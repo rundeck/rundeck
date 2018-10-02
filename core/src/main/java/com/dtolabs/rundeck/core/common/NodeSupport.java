@@ -79,11 +79,14 @@ public class NodeSupport implements IFrameworkNodes{
         node.setOsVersion(System.getProperty("os.version"));
         //family has to be guessed at
         //TODO: determine cygwin somehow
-        final String s = System.getProperty("file.separator");
-        node.setOsFamily("/".equals(s) ? "unix" : "\\".equals(s) ? "windows" : "");
+        node.setOsFamily(getOsFamily());
         return node;
     }
 
+    public static String getOsFamily() {
+        final String s = System.getProperty("os.name").toLowerCase();
+        return s.contains("windows") ? "windows" : "unix";
+    }
 
 
     /**
