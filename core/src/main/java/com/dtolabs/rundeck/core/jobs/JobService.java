@@ -111,19 +111,38 @@ public interface JobService extends AppService {
      * @param jobArgString argString for the execution
      * @param jobFilter filter for the execution
      * @param asUser user to execute the job(null for the same user)
-     * @return Id of the result execution
+     * @return Id of the result execution, or null if there was an error
+     * @deprecated use {@link #runJob(JobReference, String, String, String)}
+     * @throws JobNotFound if the specified job was not found
      */
-    ExecutionReference startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+    @Deprecated
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+        throws JobNotFound;
+
+    /**
+     * Run a job
+     * @param jobReference reference to a job
+     * @param jobArgString argString for the execution
+     * @param jobFilter filter for the execution
+     * @param asUser user to execute the job(null for the same user)
+     * @return Id of the result execution
+     * @throws JobNotFound if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError;
 
     /**
+     * Run a job
      * @param jobReference reference to a job
      * @param options      option values
      * @param jobFilter    filter for the execution
      * @param asUser       user to execute the job(null for the same user)
      * @return Id of the result execution
+     * @throws JobNotFound if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
      */
-    ExecutionReference startJob(JobReference jobReference, Map options, String jobFilter, String asUser)
+    ExecutionReference runJob(JobReference jobReference, Map options, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError;
 
     /**

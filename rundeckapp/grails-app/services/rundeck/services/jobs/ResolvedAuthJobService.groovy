@@ -16,7 +16,7 @@
 
 package rundeck.services.jobs
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
@@ -25,10 +25,12 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import groovy.transform.CompileStatic
 
 /**
  * Created by greg on 2/3/15.
  */
+@CompileStatic
 class ResolvedAuthJobService implements JobService {
     AuthorizingJobService authJobService
     UserAndRolesAuthContext authContext
@@ -67,14 +69,23 @@ class ResolvedAuthJobService implements JobService {
     }
 
 
-    ExecutionReference startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError {
-        authJobService.startJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+        try {
+            authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser).id
+        } catch (JobExecutionError ignored) {
+            return null;
+        }
     }
 
-    ExecutionReference startJob(JobReference jobReference, Map optionData, String jobFilter, String asUser)
+    ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError {
-        authJobService.startJob(authContext, jobReference, optionData, jobFilter, asUser)
+        authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    }
+
+    ExecutionReference runJob(JobReference jobReference, Map optionData, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, jobReference, optionData, jobFilter, asUser)
     }
 
     Map deleteBulkExecutionIds(Collection ids, String asUser){

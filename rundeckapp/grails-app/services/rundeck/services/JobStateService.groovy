@@ -264,7 +264,7 @@ class JobStateService implements AuthorizingJobService {
 
 
     @Override
-    ExecutionReference startJob(
+    ExecutionReference runJob(
         UserAndRolesAuthContext auth,
         JobReference jobReference,
         String jobArgString,
@@ -277,7 +277,7 @@ class JobStateService implements AuthorizingJobService {
     }
 
     @Override
-    ExecutionReference startJob(
+    ExecutionReference runJob(
         UserAndRolesAuthContext auth,
         JobReference jobReference,
         Map optionData,
