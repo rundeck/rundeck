@@ -22,8 +22,6 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
-import com.dtolabs.rundeck.core.execution.ExecutionNotFound
-import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -476,7 +474,7 @@ class JobStateServiceSpec extends Specification {
         setTestExecutions(projectName,jobUuid)
 
         when:
-            def ref = service.startJob(auth, job, (String) null, null, null)
+            def ref = service.runJob(auth, job, (String) null, null, null)
         then:
         ref
             ref.id == '1'
@@ -497,7 +495,7 @@ class JobStateServiceSpec extends Specification {
         setTestExecutions(projectName,jobUuid)
 
         when:
-            def ref = service.startJob(null, job, (String) null, null, null)
+            def ref = service.runJob(null, job, (String) null, null, null)
         then:
         !ref
         JobNotFound ex = thrown()
