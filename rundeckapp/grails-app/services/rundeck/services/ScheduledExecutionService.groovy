@@ -107,8 +107,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }.build(),
             PropertyBuilder.builder().with {
                 string 'activityDefault'
-                title 'Activity Default'
-                description 'Default initial time for the activity page.\n\n' +
+                title 'Activity Page Default Time Period'
+                description 'Default initial time period for the activity page.\n\n' +
                         '* `all`: from any time\n' +
                         '* `1d`: 1 Day.\n' +
                         '* `1w`: 1 Week.\n' +
