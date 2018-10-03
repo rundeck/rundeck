@@ -8,9 +8,8 @@ class UrlMappings {
                 // apply constraints here
             }
         }
-println getGrailsApplication().config.rundeck.features.verb.enabled
+
         if(getGrailsApplication().config.rundeck.features.verb.enabled == "true") {
-println "configuring verb url mapping."
             "/api/$api_version/verb/repository/list"(controller: "repository", action: "listRepositories")
             "/api/$api_version/verb/repository/artifacts/list"(controller: "repository", action: "listArtifacts")
             "/api/$api_version/verb/repository/artifacts/search"(controller: "repository", action: "searchArtifacts")

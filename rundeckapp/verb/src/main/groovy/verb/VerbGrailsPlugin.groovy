@@ -84,7 +84,6 @@ Brief summary/description of the plugin.
                 }
                 verbRepositoryStorageTree(verbRepositoryStorageTreeFactory:"createTree")
 
-                println "verb is enabled so configure it"
                 def serverLibextDir = application.config.rundeck?.server?.plugins?.dir ?: "${rdeckBase}/libext"
                 File pluginDir = new File(serverLibextDir)
 

@@ -57,7 +57,7 @@ class RepositoryController {
                 return
             }
             String searchTerm
-            println params.searchTerm
+
             if(request.JSON) {
                 searchTerm = request.JSON.searchTerm
             } else {
@@ -70,7 +70,7 @@ class RepositoryController {
             search.max = params.limit?.toInteger() ?: -1
             search.offset = params.offset?.toInteger() ?: 0
             def artifacts = verbClient.searchManifests(search)
-            println artifacts.size()
+
             artifacts.each {
                 it.results.each {
                     it.installed = installedPluginIds.contains(it.id)
