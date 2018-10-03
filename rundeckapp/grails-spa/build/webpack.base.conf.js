@@ -23,7 +23,8 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/motd': './src/components/motd/main.js',
-    'pages/project-dashboard': './src/pages/project-dashboard/main.js'
+    'pages/project-dashboard': './src/pages/project-dashboard/main.js',
+    'pages/verb': './src/pages/verb/main.js',
   },
   output: {
     path: `config.build.assetsRoot/[path]`,

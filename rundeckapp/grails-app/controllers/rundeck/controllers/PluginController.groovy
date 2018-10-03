@@ -191,7 +191,7 @@ class PluginController {
         terseDesc.ver = meta?.pluginFileVersion ?: appVer
         terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
         terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
-        terseDesc.license = meta?.license ?: 'unspecified'
+        terseDesc.license = meta?.pluginLicense ?: 'unspecified'
         terseDesc.sourceLink = meta?.pluginSourceLink
         terseDesc.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
         terseDesc.props = desc.properties.collect { prop ->

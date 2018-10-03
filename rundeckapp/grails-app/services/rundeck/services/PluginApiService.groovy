@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -11,9 +12,13 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import org.grails.web.util.WebUtils
+import org.springframework.context.NoSuchMessageException
+
+import java.text.SimpleDateFormat
 
 class PluginApiService {
 
+    def servletContext
     def grailsApplication
     def frameworkService
     def messageSource
@@ -26,10 +31,10 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
 
-    def listPlugins() {
+    def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
         IFramework framework = frameworkService.getRundeckFramework()
-        Locale locale = WebUtils.retrieveGrailsWebRequest().getLocale()
+        Locale locale = getLocale()
 
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
@@ -175,8 +180,64 @@ class PluginApiService {
         ]
     }
 
-    private def message(String code, Locale locale) {
-        messageSource.getMessage(code,[].toArray(),locale)
+    def listPlugins() {
+        Locale locale = getLocale()
+        String appDate = servletContext.getAttribute('version.date')
+        String appVer = servletContext.getAttribute('version.number')
+        def pluginList = listPluginsDetailed()
+        def tersePluginList = pluginList.descriptions.collect {
+            String service = it.key
+            def providers = it.value.collect { provider ->
+                def meta = frameworkService.getRundeckFramework().
+                        getPluginManager().
+                        getPluginMetadata(service, provider.name)
+                boolean builtin = meta == null
+                String ver = meta?.pluginFileVersion ?: appVer
+                String dte = meta?.pluginDate ?: appDate
+                String artifactName = meta?.pluginArtifactName ?: provider.name
+                String tgtHost = meta?.targetHostCompatibility ?: 'all'
+                String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
+                String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(artifactName)
+                [pluginId   : id,
+                 pluginName : artifactName,
+                 name         : provider.name,
+                 title        : provider.title,
+                 description  : provider.description,
+                 builtin      : builtin,
+                 pluginVersion: ver,
+                 rundeckCompatibilityVersion: rdVer,
+                 targetHostCompatibility: tgtHost,
+                 pluginDate   : toEpoch(dte),
+                 enabled      : true]
+            }
+            [service  : it.key,
+             desc     : message("framework.service.${service}.description".toString(),locale),
+             providers: providers
+            ]
+        }
+        tersePluginList
     }
 
+    def listInstalledPluginIds() {
+        return listPlugins()*.providers.collect { it.pluginId }.flatten()
+    }
+
+    Locale getLocale() {
+        WebUtils.retrieveGrailsWebRequest().getLocale()
+    }
+
+    private def message(String code, Locale locale) {
+        try {
+            messageSource.getMessage(code,[].toArray(),locale)
+        } catch(NoSuchMessageException nsme) {
+            return code
+        }
+
+    }
+
+    private long toEpoch(String dateString) {
+        PLUGIN_DATE_FMT.parse(dateString).time
+    }
+
+    private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
 }

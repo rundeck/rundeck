@@ -34,7 +34,7 @@ class SetUserInterceptor {
             return true
         }
         if (request.pathInfo == "/error") {
-            response.status = 200
+            //response.status = 200
             return true
         }
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){

@@ -37,6 +37,7 @@ include	'rundeck-storage',
     'rundeckapp:metricsweb',
     'rundeckapp:grails-spa',
     'grails-persistlocale',
+    'rundeckapp:verb',
     'docker'
 
 project(":rundeckapp").name = "rundeck"
