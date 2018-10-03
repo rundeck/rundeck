@@ -11,3 +11,6 @@ rundeck:
     provider:
       '2':
         type: 'file'
+  features:
+    verb:
+      enabled: "true"
