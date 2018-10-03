@@ -59,6 +59,7 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
     public static final String VERSION_1_0 = "1.0";
     public static final String VERSION_1_1 = "1.1";
     public static final String VERSION_1_2 = "1.2";
+    public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(VERSION_1_2);
     public static final String VERSION_2_0 = "2.0";
     public static final List<String> SUPPORTED_PLUGIN_VERSIONS;
     static {
@@ -643,10 +644,7 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
      * @return
      */
     public static boolean supportsResources(final PluginMeta pluginMeta) {
-        if (VERSION_1_2.equals(pluginMeta.getRundeckPluginVersion())) {
-            return true;
-        }
-        return false;
+        return VersionCompare.forString(pluginMeta.getRundeckPluginVersion()).atLeast(SUPPORTS_RESOURCES_PLUGIN_VERSION);
     }
 
     public List<String> getPluginResourcesList() throws IOException {
