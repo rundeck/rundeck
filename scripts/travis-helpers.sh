@@ -132,6 +132,7 @@ copy_artifacts() {
         cp -r --parents rundeckapp/**/build/poms artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
         cp -r --parents rundeck-storage/**/build/poms artifacts/
+        tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck metricsweb
     )
 }
 
