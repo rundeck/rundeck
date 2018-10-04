@@ -64,6 +64,7 @@
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/tour.css"/>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -192,11 +193,13 @@
         <div class="container-fluid">
           <div id=project-motd-vue></div>
         </div>
-        <g:layoutBody/>
+        <div id="layoutBody">
+            <g:layoutBody/>
+        </div>
       </div>
       <g:render template="/common/footer"/>
     </div>
-    <div id="tour-vue"></div>
+
   </div>
 <!--
 disable for now because profiler plugin is not compatible with grails 3.x

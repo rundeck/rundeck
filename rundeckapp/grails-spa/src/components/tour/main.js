@@ -3,7 +3,11 @@
 import Vue from 'vue'
 import VueCookies from 'vue-cookies'
 import * as uiv from 'uiv'
-import App from './App'
+import TourPicker from './tourPicker/App'
+import TourDisplay from './tourDisplay/App'
+import {
+  EventBus as EventBus
+} from '../../utilities/vueEventBus.js'
 
 Vue.config.productionTip = false
 
@@ -11,20 +15,49 @@ Vue.use(VueCookies)
 Vue.use(uiv)
 
 // creating the dom element that will contain the tour application
-let anchor = document.createElement('span')
+let pickerAnchor = document.createElement('span')
 // selecting the navbar menu
-let container = document.getElementById('navbar-menu')
+let pickerContainer = document.getElementById('navbar-menu')
 // setting the id attribute that Vue will use as the application element
-anchor.setAttribute('id', 'tour-vue')
+pickerAnchor.setAttribute('id', 'tour-vue-picker')
 // prepending the 'anchor' element (created above) to the menu (container)
-container.prepend(anchor)
+pickerContainer.prepend(pickerAnchor)
 // the app is now bootstraped to an created element
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#tour-vue',
-  components: {
-    App
+let tourPickerApp = new Vue({
+  el: '#tour-vue-picker',
+  data() {
+    return {
+      EventBus: EventBus
+    }
   },
-  template: '<App/>'
+  components: {
+    TourPicker
+  },
+  template: '<tour-picker :event-bus="EventBus"/>'
+})
+
+// creating the dom element that will contain the tour application
+let tourAnchor = document.createElement('span')
+// selecting the navbar menu
+let tourContainer = document.getElementById('layoutBody')
+// setting the id attribute that Vue will use as the application element
+tourAnchor.setAttribute('id', 'tour-vue-display')
+// prepending the 'anchor' element (created above) to the menu (container)
+tourContainer.parentNode.insertBefore(tourAnchor, tourContainer)
+// the app is now bootstraped to an created element
+
+/* eslint-disable no-new */
+let tourDisplayApp = new Vue({
+  el: '#tour-vue-display',
+  data() {
+    return {
+      EventBus: EventBus
+    }
+  },
+  components: {
+    TourDisplay
+  },
+  template: '<tour-display :event-bus="EventBus"/>'
 })
