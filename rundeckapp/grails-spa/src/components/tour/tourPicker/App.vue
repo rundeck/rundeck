@@ -11,6 +11,9 @@
             {{tour.name}}
           </li>
         </ul>
+        <div slot="footer">
+          <btn @click="tourSelectionModal=false">Close</btn>
+        </div>
       </modal>
     </section>
   </li>
@@ -19,11 +22,12 @@
 <script>
 import _ from 'lodash'
 import axios from 'axios'
+
 export default {
   name: 'TourPicker',
   components: {
   },
-  props:['eventBus'],
+  props: ['eventBus'],
   data () {
     return {
       tourSelectionModal: false,
@@ -36,13 +40,14 @@ export default {
       console.log('tour', tour)
       this.eventBus.$emit('tourSelected', tour)
       this.tourSelectionModal = false
-
     },
     openTourSelectorModal: function () {
-      let tourManifestUrl = `${window._rundeck.rdBase}user-assets/tour-manifest.json`
+      if (this.tours.length) {
+        this.tourSelectionModal = true
+      } else {
+        let tourManifestUrl = `${window._rundeck.rdBase}user-assets/tour-manifest.json`
 
-      axios.get(tourManifestUrl)
-        .then((response) => {
+        axios.get(tourManifestUrl).then((response) => {
           if (response && response.data && response.data.length) {
             let tourUrl = `${window._rundeck.rdBase}user-assets/tours/`
             _.each(response.data, (tour) => {
@@ -58,26 +63,26 @@ export default {
             })
             this.tourSelectionModal = true
           }
-        })
-        .catch(function (error) {
+        }).catch(function (error) {
           console.log(error)
         })
+      }
     }
   },
   mounted () {
     console.log('Mounted: Tour Picker')
     console.log('this.eventBus', this.eventBus)
     // console.log('this', this)
-    // let uiTokenElement = document.getElementById('ui_token')
+    let uiTokenElement = document.getElementById('ui_token')
+    let uiToken = false
+    console.log(uiTokenElement)
 
-    // if (uiTokenElement) {
+    if (uiTokenElement) {
+      let jsonText = uiTokenElement.textContent || uiTokenElement.innerText
 
-    //   let jsonText = dataElement.textContent || dataElement.innerText;
-
-    //   return jsonText && jsonText!=''?JSON.parse(jsonText):null;
-
-
-    // }
+      uiToken = jsonText && jsonText !== '' ? JSON.parse(jsonText) : null
+    }
+    console.log('uiToken', uiToken)
     // var data = {};
     // if(elem && elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
     //     data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};

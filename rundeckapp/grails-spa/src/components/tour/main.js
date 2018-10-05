@@ -6,7 +6,7 @@ import * as uiv from 'uiv'
 import TourPicker from './tourPicker/App'
 import TourDisplay from './tourDisplay/App'
 import {
-  EventBus as EventBus
+  EventBus
 } from '../../utilities/vueEventBus.js'
 
 Vue.config.productionTip = false
@@ -24,7 +24,7 @@ pickerAnchor.setAttribute('id', 'tour-vue-picker')
 pickerContainer.prepend(pickerAnchor)
 // the app is now bootstraped to an created element
 
-/* eslint-disable no-new */
+/* eslint-disable no-new no-unused-vars */
 let tourPickerApp = new Vue({
   el: '#tour-vue-picker',
   data() {
@@ -39,16 +39,16 @@ let tourPickerApp = new Vue({
 })
 
 // creating the dom element that will contain the tour application
-let tourAnchor = document.createElement('span')
+let tourDisplayAnchor = document.createElement('span')
 // selecting the navbar menu
-let tourContainer = document.getElementById('layoutBody')
+let layoutBody = document.getElementById('layoutBody')
 // setting the id attribute that Vue will use as the application element
-tourAnchor.setAttribute('id', 'tour-vue-display')
+tourDisplayAnchor.setAttribute('id', 'tour-vue-display')
 // prepending the 'anchor' element (created above) to the menu (container)
-tourContainer.parentNode.insertBefore(tourAnchor, tourContainer)
+layoutBody.parentNode.insertBefore(tourDisplayAnchor, layoutBody.nextSibling)
 // the app is now bootstraped to an created element
 
-/* eslint-disable no-new */
+/* eslint-disable no-new no-unused-vars */
 let tourDisplayApp = new Vue({
   el: '#tour-vue-display',
   data() {
