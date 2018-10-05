@@ -59,7 +59,7 @@ module.exports = {
         options: {
           name: '[name]-[hash:7].[ext]',
           outputPath: './static/img',
-          publicPath: '../img',
+          publicPath: '/assets/static/img',
           useRelativePath: true
         }
       },
@@ -69,7 +69,7 @@ module.exports = {
         options: {
           name: '[name]-[hash:7].[ext]',
           outputPath: './static/media',
-          publicPath: '../media',
+          publicPath: '/static/media',
           useRelativePath: true
         }
       },
@@ -79,7 +79,7 @@ module.exports = {
         options: {
           name: '[name]-[hash:7].[ext]',
           outputPath: './static/fonts',
-          publicPath: '../fonts',
+          publicPath: '/static/fonts',
           useRelativePath: true
         }
       },
