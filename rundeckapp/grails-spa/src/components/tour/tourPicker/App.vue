@@ -2,7 +2,7 @@
   <li>
     <a @click="openTourSelectorModal">
       DUCK
-     <!-- <img src="../duck.png" alt=""> -->
+     <img src="../duck.png" alt="">
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal" id="modal-demo">
