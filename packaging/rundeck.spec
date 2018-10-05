@@ -75,10 +75,10 @@ fi
 %dir /var/lib/rundeck/var/tmp
 %dir /var/lib/rundeck/var/tmp/pluginJars
 
-# Verb default directories
-%dir /var/lib/rundeck/verb
-%dir /var/lib/rundeck/verb/installedPlugins
-%dir /var/lib/rundeck/verb/repo
+# Repository default directories
+%dir /var/lib/rundeck/repository
+%dir /var/lib/rundeck/repository/installedPlugins
+%dir /var/lib/rundeck/repository/artifacts
 
 # The Rundeck WebApp.  The Exploded War Goes Here.
 %dir /var/lib/rundeck/exp
@@ -160,7 +160,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/jaas-loginmodule.conf
 %config(noreplace) /etc/rundeck/realm.properties
 %config(noreplace) /etc/rundeck/rundeck-config.properties
-%config(noreplace) /etc/rundeck/verb-repositories.yaml
+%config(noreplace) /etc/rundeck/artifact-repositories.yaml
 
 # SSL Configuration
 %dir /etc/rundeck/ssl

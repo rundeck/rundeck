@@ -220,9 +220,6 @@ rundeck:
         nodeCache:
             enabled: true
             spec: 'refreshInterval=30s'
-    verb:
-        plugin:
-        repository:
 ---
 
 beans:

@@ -12,5 +12,5 @@ rundeck:
       '2':
         type: 'file'
   features:
-    verb:
+    repository:
       enabled: "true"

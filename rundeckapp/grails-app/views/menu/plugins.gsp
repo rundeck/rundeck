@@ -39,9 +39,9 @@ To change this template use File | Settings | File Templates.
           <div class="card-header">
             <h3 class="card-title">
               <g:message code="page.Plugins.title"/>
-              <g:set var="verbEnabled" value="${grailsApplication.config.rundeck?.features?.verb?.enabled}"/>
-              <g:if test="${verbEnabled == 'true'}">
-                <g:link controller="verb" action="index" class="btn btn-success pull-right">
+              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+              <g:if test="${repoEnabled == 'true'}">
+                <g:link controller="artifact" action="index" class="btn btn-success pull-right">
                   <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                   <i class="glyphicon glyphicon-arrow-right"></i>
                 </g:link>

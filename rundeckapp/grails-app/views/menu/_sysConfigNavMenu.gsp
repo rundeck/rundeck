@@ -59,11 +59,11 @@
       </g:link>
     </li>
   </g:if>
-<g:set var="verbEnabled" value="${grailsApplication.config.rundeck?.features?.verb?.enabled}"/>
-<g:if test="${verbEnabled == 'true'}">
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+<g:if test="${repoEnabled == 'true'}">
   <li>
-    <g:link controller="verb" action="index">
-      <g:message code="gui.menu.Verb"/>
+    <g:link controller="artifact" action="index">
+      <g:message code="gui.menu.FindPlugins"/>
     </g:link>
   </li>
 </g:if>

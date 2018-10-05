@@ -162,7 +162,7 @@ grails{
     plugins{
         compile project(':rundeck:metricsweb')
         compile project(':grails-persistlocale')
-        compile project(':rundeck:verb')
+        compile project(':rundeck:repository')
     }
 }
 
