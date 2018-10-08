@@ -142,6 +142,19 @@ class TreeStackSpecification extends Specification {
         listingx2.first().path.path == 'test1/monkey'
     }
 
+    
+    def "shadow dir in path is ignored"() {
+        given:
+            def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", true)
+            def sub2 = new SubPathTree(new MemoryTree(), "/test1", true)
+            def tree1 = new TreeStack([sub1, sub2], new MemoryTree())
+            sub2.createResource('/test1/monkey/roomba', dataWithText('test data'))
+            def listing = tree1.listDirectory('/test1')
+        expect:
+            listing.size() == 1
+            listing.first().path.name == 'monkey'
+    }
+
     def "shadow resource in stack is ignored"() {
         given:
             def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", true)

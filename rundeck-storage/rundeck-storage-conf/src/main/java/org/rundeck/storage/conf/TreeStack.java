@@ -20,10 +20,8 @@ import org.rundeck.storage.api.*;
 import org.rundeck.storage.impl.DelegateTree;
 import org.rundeck.storage.impl.ResourceBase;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * tree that uses an ordered list of TreeHandlers to determine which underlying storage to use, and falls back to a
@@ -65,15 +63,22 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
         return null;
     }
 
+    private Map<String, Resource<T>> asMap(Set<Resource<T>> matchedList) {
+        HashMap<String, Resource<T>> map = new HashMap<>();
+        for (Resource<T> tResource : matchedList) {
+            map.put(tResource.getPath().getPath(), tResource);
+        }
+        return map;
+    }
     private Set<Resource<T>> merge(Set<Resource<T>> matchedList, Set<Resource<T>> subList) {
-        HashSet<Resource<T>> merge = new HashSet<Resource<T>>();
+        HashMap<String, Resource<T>> merge = new HashMap<>();
         if(null!=matchedList && matchedList.size()>0) {
-            merge.addAll(matchedList);
+            merge.putAll(asMap(matchedList));
         }
         if(null!=subList && subList.size()>0) {
-            merge.addAll(subList);
+            merge.putAll(asMap(subList));
         }
-        return merge;
+        return new HashSet<>(merge.values());
     }
 
     @Override
