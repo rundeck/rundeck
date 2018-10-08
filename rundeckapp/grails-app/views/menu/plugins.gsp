@@ -39,14 +39,23 @@ To change this template use File | Settings | File Templates.
           <div class="card-header">
             <h3 class="card-title">
               <g:message code="page.Plugins.title"/>
-              <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
-              <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
-              <g:set var="pluginLinkUrl"
-              value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-              <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success pull-right">
-                <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-                <i class="glyphicon glyphicon-arrow-right"></i>
-              </a>
+              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+              <g:if test="${repoEnabled == 'true'}">
+                <g:link controller="artifact" action="index" class="btn btn-success pull-right">
+                  <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                  <i class="glyphicon glyphicon-arrow-right"></i>
+                </g:link>
+              </g:if>
+              <g:else>
+                <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
+                <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
+                <g:set var="pluginLinkUrl"
+                value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
+                <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success pull-right">
+                  <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                  <i class="glyphicon glyphicon-arrow-right"></i>
+                </a>
+              </g:else>
             </h3>
           </div>
           <div class="card-content">

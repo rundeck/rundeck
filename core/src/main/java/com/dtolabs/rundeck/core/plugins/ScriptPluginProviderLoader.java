@@ -671,6 +671,16 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
     }
 
     @Override
+    public String getPluginArtifactName() {
+        try {
+            return getPluginMeta().getName();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
     public String getPluginAuthor() {
         try {
             return getPluginMeta().getAuthor();

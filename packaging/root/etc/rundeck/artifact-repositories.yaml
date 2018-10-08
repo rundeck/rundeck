@@ -1,0 +1,8 @@
+repositories:
+-
+    repositoryName: private
+    type: STORAGE_TREE
+    owner: PRIVATE
+    configProperties:
+        treeName: private
+        manifestPath: manifest.json
