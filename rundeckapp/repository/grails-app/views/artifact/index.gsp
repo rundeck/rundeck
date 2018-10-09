@@ -13,7 +13,6 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -25,6 +24,15 @@
 </head>
 
 <body>
+<g:set var="pluginInstall" value="${auth.resourceAllowedTest(
+        type: 'resource',
+        kind: 'plugin',
+        action: ["install"],
+        context: 'application'
+)}"/>
+<script type="text/javascript">
+    window.repocaninstall = ${pluginInstall}
+</script>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
 <g:if test="${repoEnabled == 'true'}">
 <div class="container-fluid">

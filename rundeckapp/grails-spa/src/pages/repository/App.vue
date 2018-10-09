@@ -5,25 +5,28 @@
         <div class="card">
           <div class="card-content">
             <div>
-            <h3 class="card-title">
-              Repository <span style="font-size: smaller">/ Plugins</span>
-            </h3>
+              <div class="repo-header">
+                <h3 class="card-title flex-left">
+                  Repository <span style="font-size: smaller">/ Plugins</span>
+                </h3>
+                <div class="card-title flex-right">
+                    <form v-on:submit.prevent>
+                      <label>Search:</label>
+                      <input type="text" v-model="searchTerm" @keyup.enter="search" class="search-box">
+                      <span @click="search" class="search-btn">&#x25b6</span>
+                    </form>
+                </div>
+              </div>
+              <hr>
               <div v-if="errors" class="warnings">
                 <div v-for="error in errors" :key="error">{{error.msg}}</div>
               </div>
-            </div>
-            <hr>
-            <div>
-                <form v-on:submit.prevent>
-                  <label>Search:</label>
-                  <input type="text" v-model="searchTerm" @keyup.enter="search" class="search-box">
-                  <span @click="search" class="search-btn">&#x25b6</span>
-                </form>
-            </div>
             <div v-if="searchWarnings" class="warnings">
               <div v-for="warn in searchWarnings" :key="warn">{{warn}}</div>
             </div>
-        <div class="artifact-grid" v-for="repo in repositories" :key="repo.repositoryName">
+        <div v-for="repo in repositories" :key="repo.repositoryName">
+          <div class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</div>
+          <div class="artifact-grid">
               <div class="artifact" v-for="result in repo.results" :key="result.id">
                 <div class="em">{{result.name}}</div>
                 <hr>
@@ -35,9 +38,10 @@
                 <div><label>Author:</label>{{result.author}}</div>
                 <div><label>Provides:</label><span class="svc" v-for="svc in result.providesServices" :key="svc">{{svc}}</span></div>
                 <div><label>Tags:</label><span class="tag" v-for="tag in result.tags" :key="tag">{{tag}}</span></div>
-                <div><span class="install" v-if="!result.installed" @click="install(repo.repositoryName,result.id)">Install</span></div>
+                <div><span class="install" v-if="!result.installed && canInstall" @click="install(repo.repositoryName,result.id)">Install</span></div>
                 <div><span class="installed" v-if="result.installed">Installed</span></div>
               </div>
+          </div>
         </div>
           </div>
         </div>
@@ -59,7 +63,8 @@ export default {
       searchTerm: null,
       searchWarnings: null,
       errors: null,
-      rdBase: null
+      rdBase: null,
+      canInstall: window.repocaninstall
     }
   },
   methods: {
@@ -124,7 +129,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
 }
-.em { font-weight: bold; font-size: 1.4em;}
+.em { font-weight: bold; font-size: 1.2em;}
 .artifact label { font-weight: bold; }
 .artifact {
   margin: 7px;
@@ -141,4 +146,8 @@ export default {
   .install { color: #fff; background-color: #dc143c; padding: 2px 4px; cursor: pointer; }
   .installed { color: #fff; background-color: #00008b; padding: 2px 4px; }
   .warnings > div { background-color: #f5f5dc; color: #ff8c00; padding: 5px; border-radius: 3px; }
+.repo-name { font-size: 1.4em; font-weight: bold; border-bottom: 1px solid #ddd; padding: 2px;}
+.repo-header { display: flex; }
+.flex-left { flex: 0 50% }
+.flex-right { flex: 0 50%; text-align: right; }
 </style>
