@@ -1,7 +1,6 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
-import VueCookies from 'vue-cookies'
 import * as uiv from 'uiv'
 import TourPicker from './tourPicker/App'
 import TourDisplay from './tourDisplay/App'
@@ -11,7 +10,6 @@ import {
 
 Vue.config.productionTip = false
 
-Vue.use(VueCookies)
 Vue.use(uiv)
 
 // creating the dom element that will contain the tour application
@@ -24,8 +22,8 @@ pickerAnchor.setAttribute('id', 'tour-vue-picker')
 pickerContainer.prepend(pickerAnchor)
 // the app is now bootstraped to an created element
 
-/* eslint-disable no-new no-unused-vars */
-let tourPickerApp = new Vue({
+/* eslint-disable no-new */
+new Vue({
   el: '#tour-vue-picker',
   data() {
     return {
@@ -48,8 +46,8 @@ tourDisplayAnchor.setAttribute('id', 'tour-vue-display')
 layoutBody.parentNode.insertBefore(tourDisplayAnchor, layoutBody.nextSibling)
 // the app is now bootstraped to an created element
 
-/* eslint-disable no-new no-unused-vars */
-let tourDisplayApp = new Vue({
+/* eslint-disable no-new */
+new Vue({
   el: '#tour-vue-display',
   data() {
     return {

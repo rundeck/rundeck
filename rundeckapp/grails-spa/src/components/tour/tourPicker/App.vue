@@ -1,16 +1,16 @@
 <template>
   <li>
-    <a @click="openTourSelectorModal">
-      DUCK
-     <img src="../duck.png" alt="">
+    <a class="btn btn-simple" @click="openTourSelectorModal">
+     <img src="../duck.png" alt="" height="32px" style="margin-top:12px; margin-right:15px; opacity:.6;">
     </a>
     <section>
-      <modal v-model="tourSelectionModal" title="Available Tours" ref="modal" id="modal-demo">
-        <ul>
-          <li v-for="tour in tours" v-bind:key="tour.$index" @click="startTour(tour)">
+      <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
+        <div class="list-group">
+          <a class="list-group-item" href="#" v-for="tour in tours" v-bind:key="tour.$index" @click="startTour(tour)">
             {{tour.name}}
-          </li>
-        </ul>
+            <span v-if="tour.author">by {{tour.author}}</span>
+          </a>
+        </div>
         <div slot="footer">
           <btn @click="tourSelectionModal=false">Close</btn>
         </div>
@@ -20,107 +20,46 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import axios from 'axios'
+import xhrRequestsHelper from '@/utilities/xhrRequests'
+import TourServices from '@/components/tour/services'
 
 export default {
   name: 'TourPicker',
-  components: {
-  },
   props: ['eventBus'],
   data () {
     return {
+      hasActiveTour: false,
       tourSelectionModal: false,
       tours: []
     }
   },
   methods: {
     startTour: function (tour) {
-      // alert('starting tour')
-      console.log('tour', tour)
       this.eventBus.$emit('tourSelected', tour)
       this.tourSelectionModal = false
+      xhrRequestsHelper.setFilterPref('activeTour', tour.key)
     },
     openTourSelectorModal: function () {
       if (this.tours.length) {
         this.tourSelectionModal = true
       } else {
-        let tourManifestUrl = `${window._rundeck.rdBase}user-assets/tour-manifest.json`
-
-        axios.get(tourManifestUrl).then((response) => {
-          if (response && response.data && response.data.length) {
-            let tourUrl = `${window._rundeck.rdBase}user-assets/tours/`
-            _.each(response.data, (tour) => {
-              axios.get(`${tourUrl}${tour}.json`)
-                .then((response) => {
-                  if (response && response.data) {
-                    this.tours.push(response.data)
-                  }
-                })
-                .catch(function (error) {
-                  console.log(error)
-                })
-            })
-            this.tourSelectionModal = true
-          }
-        }).catch(function (error) {
-          console.log(error)
+        TourServices.getTours().then((tours) => {
+          this.tourSelectionModal = true
+          this.tours = tours
         })
       }
     }
   },
   mounted () {
     console.log('Mounted: Tour Picker')
-    console.log('this.eventBus', this.eventBus)
-    // console.log('this', this)
-    let uiTokenElement = document.getElementById('ui_token')
-    let uiToken = false
-    console.log(uiTokenElement)
-
-    if (uiTokenElement) {
-      let jsonText = uiTokenElement.textContent || uiTokenElement.innerText
-
-      uiToken = jsonText && jsonText !== '' ? JSON.parse(jsonText) : null
-    }
-    console.log('uiToken', uiToken)
-    // var data = {};
-    // if(elem && elem.data('rundeck-token-key') && elem.data('rundeck-token-uri')){
-    //     data={TOKEN: elem.data('rundeck-token-key'), URI: elem.data('rundeck-token-uri')};
-    // }else{
-    //     data=loadJsonData(id);
-    //     clearHtml(document.getElementById(id));
-    // }
-    // if(data && data.TOKEN && data.URI){
-    //     jqxhr.setRequestHeader('X-RUNDECK-TOKEN-KEY',data.TOKEN);
-    //     jqxhr.setRequestHeader('X-RUNDECK-TOKEN-URI',data.URI);
-    // }
-
-    // axios.interceptors.request.use((config) => {
-    //   fileObject.xhr = config;
-    //   return config;
-    // })
-
-    // axios.get(window.appLinks.userAddFilterPref, {
-    //   params: {
-    //     filterpre: 'something'
-    //   }
-    // })
-    // jQuery.ajax({
-    //         url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + sidebarClosed}),
-    //         method: 'POST',
-    //         beforeSend: _ajaxSendTokens.curry('ui_token'),
-    //         success: function () {
-    //             console.log("saved sidebar position" );
-    //         },
-    //         error: function () {
-    //             console.log("saving sidebar position failed" );
-    //         }
-    //     })
-    //     .success(_ajaxReceiveTokens.curry('ui_token'));
-    // })
   }
 }
 </script>
 
-<style>
+<style scoped lang="scss">
+// This is a hack because we're limiting the normal padding/margin for list-group-items in the dropdown menus in mainbar.scss for the theme itself
+a.list-group-item {
+  padding: 10px 15px !important;
+  margin-bottom: -1px !important;
+}
 </style>
