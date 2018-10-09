@@ -196,7 +196,51 @@ class TreeStackSpecification extends Specification {
         listingx2.first().path.path == 'test1/monkey'
     }
 
-    
+
+    def "multiple subpaths listed as subdirs"() {
+        given:
+            def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", true)
+            def sub2 = new SubPathTree(new MemoryTree(), "/test1", true)
+            def sub3 = new SubPathTree(new MemoryTree(), "/test2/extra/zingo/zango", true)
+            def tree1 = new TreeStack([sub1, sub2, sub3], new MemoryTree())
+
+            def listing = tree1.listDirectory("/")
+            def listingx1 = tree1.listDirectorySubdirs("/")
+        expect:
+            listing.size() == 2
+            listing.every { it.directory }
+            listing.collect { it.path.path } contains 'test1'
+            listing.collect { it.path.path } contains 'test2'
+
+            listingx1.size() == 2
+            listingx1.every { it.directory }
+            listingx1.collect { it.path.path } contains 'test1'
+            listingx1.collect { it.path.path } contains 'test2'
+    }
+
+    def "intermediate subpaths listed as subdirs"() {
+        given:
+            def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", true)
+            def sub2 = new SubPathTree(new MemoryTree(), "/test1", true)
+            def sub3 = new SubPathTree(new MemoryTree(), "/test2/extra/zingo/zango", true)
+            def tree1 = new TreeStack([sub1, sub2, sub3], new MemoryTree())
+
+            def listing = tree1.listDirectory(test)
+            def listingx1 = tree1.listDirectorySubdirs(test)
+        expect:
+            listing.size() == 1
+            listing.every { it.directory }
+            listing.collect { it.path.path } contains expected
+
+            listingx1.size() == 1
+            listingx1.every { it.directory }
+            listingx1.collect { it.path.path } contains expected
+
+        where:
+            test           | expected
+            '/test2'       | 'test2/extra'
+            '/test2/extra' | 'test2/extra/zingo'
+    }
     def "shadow dir in path is ignored"() {
         given:
             def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", true)

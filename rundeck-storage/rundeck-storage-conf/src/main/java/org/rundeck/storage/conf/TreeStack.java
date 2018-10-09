@@ -21,7 +21,6 @@ import org.rundeck.storage.impl.DelegateTree;
 import org.rundeck.storage.impl.ResourceBase;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * tree that uses an ordered list of TreeHandlers to determine which underlying storage to use, and falls back to a
@@ -97,13 +96,15 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
         }
         return map;
     }
-    private Set<Resource<T>> merge(Set<Resource<T>> matchedList, Set<Resource<T>> subList) {
+
+    private Set<Resource<T>> merge(Set<Resource<T>>... matchedList) {
         HashMap<String, Resource<T>> merge = new HashMap<>();
-        if(null!=matchedList && matchedList.size()>0) {
-            merge.putAll(asMap(matchedList));
-        }
-        if(null!=subList && subList.size()>0) {
-            merge.putAll(asMap(subList));
+        if (null != matchedList && matchedList.length > 0) {
+            for (Set<Resource<T>> resources : matchedList) {
+                if (resources != null && resources.size() > 0) {
+                    merge.putAll(asMap(resources));
+                }
+            }
         }
         return new HashSet<>(merge.values());
     }
@@ -137,7 +138,12 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
         return path.equals(tree.getSubPath()) || PathUtil.hasRoot(path, tree.getSubPath());
     }
 
-    public static boolean hasParentPath(Path path, SelectiveTree<?> tree) {
+    /**
+     * @param path parent path
+     * @param tree tree with a subpath
+     * @return true if the subpath is directly under the path
+     */
+    public static boolean hasParentPath(Path path, SubPath tree) {
         return path.equals(PathUtil.parentPath(tree.getSubPath()));
     }
 
@@ -151,8 +157,13 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
         HashSet<Resource<T>> merge = new HashSet<Resource<T>>();
         if (treeHandlerList.size() > 0) {
             for (SelectiveTree<T> treeHandler : treeHandlerList) {
-                if (hasParentPath(path, treeHandler)) {
-                    Path subpath = PathUtil.appendPath(path, treeHandler.getSubPath().getName());
+                if (PathUtil.hasRoot(treeHandler.getSubPath(), path) && !PathUtil.equals(
+                    treeHandler.getSubPath(),
+                    path
+                )) {
+                    String relativePath = PathUtil.removePrefix(path.getPath(), treeHandler.getSubPath().getPath());
+                    String[] components = PathUtil.componentsFromPathString(relativePath);
+                    Path subpath = PathUtil.appendPath(path, components[0]);
                     merge.add(new ResourceBase<T>(subpath, null, true));
                 }
             }
