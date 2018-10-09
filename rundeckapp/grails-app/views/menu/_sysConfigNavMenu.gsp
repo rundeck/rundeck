@@ -59,6 +59,14 @@
       </g:link>
     </li>
   </g:if>
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+<g:if test="${repoEnabled == 'true'}">
+  <li>
+    <g:link controller="artifact" action="index">
+      <g:message code="gui.menu.FindPlugins"/>
+    </g:link>
+  </li>
+</g:if>
   <li>
     <g:link controller="menu" action="plugins">
       <g:message code="gui.menu.ListPlugins"/>

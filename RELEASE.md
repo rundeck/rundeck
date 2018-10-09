@@ -1,62 +1,50 @@
-Release 3.0.6
+Release 3.0.7
 ===========
 
-Date: 2018-09-17
+Date: 2018-10-08
 
-Name: <span style="color: deeppink"><span class="glyphicon glyphicon-cutlery"></span> "jalapeño popper deeppink cutlery"</span>
+Name: <span style="color: deepskyblue"><span class="glyphicon glyphicon-flag"></span> "jalapeño popper deepskyblue flag"</span>
 
 ## Notes
 
-This release contains bug fixes, including some UI changes to improve the sidebar behavior, and one enhancement to allow admins to list the User summary information.
+Primarily bug fixes
 
 ## Contributors
 
-* Alex Honor (ahonor)
 * Greg Schueler (gschueler)
-* Greg Zapp (ProTip)
-* Jaime Tobar (jtobard)
-* Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
 * Stephen Joyner (sjrd218)
 
 ## Bug Reporters
 
-* Antoine-Auffret
 * Daryes
-* ahonor
+* cwaltherf
 * damageboy
-* docbyte86
-* gaetanquentin
 * gschueler
-* jessemarple
-* jtobard
-* mazzella-c
+* jplassnibatt
+* ltamaster
+* sebastianbello
 * sjrd218
+* tboh002
 
 ## Issues
 
-[Milestone 3.0.6](https://github.com/rundeck/rundeck/milestone/86)
+[Milestone 3.0.7](https://github.com/rundeck/rundeck/milestone/89)
 
-* [#4029 - sets ui_token, uses token to save sidebar status](https://github.com/rundeck/rundeck/pull/4030)
-* [Save Sidebar Open/Close status.](https://github.com/rundeck/rundeck/issues/4029)
-* [Add @DirtyCheck annotation to ScheduledExecution superclasses](https://github.com/rundeck/rundeck/pull/4008)
-* [user filterPref to session](https://github.com/rundeck/rundeck/pull/4005)
-* [Bug/3992/responsive ui navbar toggle](https://github.com/rundeck/rundeck/pull/4004)
-* [optimization execution count query](https://github.com/rundeck/rundeck/pull/4001)
-* [Bug/3982/ui scheduled job progress bar](https://github.com/rundeck/rundeck/pull/4000)
-* [Rundeck 3 bug : navbar-toggle button isn't working when the window is under 993 px wide](https://github.com/rundeck/rundeck/issues/3992)
-* [Bug/3911/sidebar animation issue](https://github.com/rundeck/rundeck/pull/3988)
-* [UI issue when viewing a scheduled job in the future in activity tab](https://github.com/rundeck/rundeck/issues/3982)
-* [rundeckd.conf contains an error preventing proper startup](https://github.com/rundeck/rundeck/issues/3974)
-* [Fixes class not found issue when LDAP is configured in a non-jetty container](https://github.com/rundeck/rundeck/pull/3966)
-* [Issue while using LDAP authentification](https://github.com/rundeck/rundeck/issues/3965)
-* [Fix locale not persisting via cookie correctly](https://github.com/rundeck/rundeck/pull/3964)
-* [Fix config storage tree errors using file provider](https://github.com/rundeck/rundeck/pull/3962)
-* [Using file storage for config storage tree causes some problems](https://github.com/rundeck/rundeck/issues/3960)
-* [#3913, #3645, fixes missing adhoc execution controls, info button not…](https://github.com/rundeck/rundeck/pull/3958)
-* [Issue/3956 multi storage tree file](https://github.com/rundeck/rundeck/pull/3957)
-* [StorageTreeFactory configuration of file system plugin overwrites previous baseDir](https://github.com/rundeck/rundeck/issues/3956)
-* [RD 3.0.1: Cannot modify node filter ](https://github.com/rundeck/rundeck/issues/3920)
-* [rd3: Adhoc execution view does not have controls or command string](https://github.com/rundeck/rundeck/issues/3913)
-* [Users summary page](https://github.com/rundeck/rundeck/pull/3906)
-* [RD 3 : no cookie for locale persistence](https://github.com/rundeck/rundeck/issues/3860)
-* [rd ui: job "info" button execution show page sometimes doesn't work](https://github.com/rundeck/rundeck/issues/3645)
+* [Fix #4050 by adding the ability to configure the locale expiration time. 90 days is default.](https://github.com/rundeck/rundeck/pull/4090)
+* [Install complete marker now includes version](https://github.com/rundeck/rundeck/pull/4089)
+* [Allows custom libraries to configure Jetty WebAppContext](https://github.com/rundeck/rundeck/pull/4088)
+* [Initial: repository grails plugin](https://github.com/rundeck/rundeck/pull/4084)
+* [Adding execution variable context to notification config options.](https://github.com/rundeck/rundeck/pull/4080)
+* [Some job variables not showing some variables in selection list](https://github.com/rundeck/rundeck/issues/4073)
+* [Updating python winrm plugin](https://github.com/rundeck/rundeck/pull/4061)
+* [RD3: var/.install_complete file won't let to upgrade properly](https://github.com/rundeck/rundeck/issues/4056)
+* [Fixing api metrics which doesn't close database connection.](https://github.com/rundeck/rundeck/pull/4055)
+* [RD 3 : locale persistence cookie set as type:session](https://github.com/rundeck/rundeck/issues/4050)
+* [Update snakeyaml to 1.17. …](https://github.com/rundeck/rundeck/pull/4041)
+* [Upgrade grails to 3.3.8](https://github.com/rundeck/rundeck/pull/4038)
+* [Introduce Rundeck plugin format version 2.0.](https://github.com/rundeck/rundeck/pull/4037)
+* [Fix: LDAP user credentials should not be exposed](https://github.com/rundeck/rundeck/pull/4035)
+* [Multi-value option delimiter variable not available within a Job Reference.](https://github.com/rundeck/rundeck/issues/4015)
+* [API calls don't close database connection](https://github.com/rundeck/rundeck/issues/3994)
+* [Calendar Widget in Rundeck 3 Looks Bad](https://github.com/rundeck/rundeck/issues/3980)

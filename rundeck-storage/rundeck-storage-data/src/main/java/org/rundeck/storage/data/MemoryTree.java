@@ -188,7 +188,7 @@ public class MemoryTree<T extends ContentMeta> extends StringToPathTree<T> imple
     }
 
     public Resource<T> createResource(Path path, T data) {
-        if (hasResource(path)) {
+        if (hasPath(path)) {
             throw new IllegalArgumentException("Resource exists for path: " + path);
         }
         DirRes<T> newRes = createRes(path, data);

@@ -98,7 +98,7 @@ class RundeckInitializer {
         setSystemProperties()
         initSsl()
 
-        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete")
+        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete-"+System.getProperty("build.ident","missing-ver"))
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
             //installation tasks
             createDirectories()

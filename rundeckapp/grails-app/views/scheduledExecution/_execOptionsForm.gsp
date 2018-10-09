@@ -653,9 +653,9 @@
     jQuery(document).ready(init);
 </script>
 <content tag="footScripts">
-    <asset:stylesheet src="bootstrap-datetimepicker.min.css" />
+    <asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
     <asset:javascript src="scheduler.js" />
 </content tag="footScripts">
 
-<asset:stylesheet src="bootstrap-datetimepicker.min.css" />
+<asset:stylesheet src="library/bootstrap-datetimepicker.min.css" />
 <asset:javascript src="scheduler.js" />

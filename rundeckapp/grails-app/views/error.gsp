@@ -37,7 +37,7 @@
           <h2 class="card-title ">An Error Occurred</h2>
         </div>
         <div class="card-content text-danger">
-          <b><g:enc>${exception.message}</g:enc></b>
+          <b><g:enc>${exception?.message}</g:enc></b>
         </div>
       </div>
       <g:set var="hideStacktrace"

@@ -63,7 +63,8 @@ var _VAR_DATA = {
     job: [],
     node: [],
     eh: [],
-    globals: []
+    globals: [],
+    execution: []
 };
 function _jobGlobalVarData() {
     "use strict";
@@ -103,6 +104,28 @@ function _jobVarData() {
         });
     }
     return _VAR_DATA['job'];
+}
+function _executionVarData() {
+    if (_VAR_DATA['execution'].length < 1) {
+        var executiondata = {
+            'id': {title: 'Execution ID'},
+            'href': {title: 'URL to the execution output view'},
+            'status': {title: 'Execution state (‘running’,‘failed’,‘aborted’,‘succeeded’)'},
+            'user': {title: 'User who started the job'},
+            'dateStarted': {title: 'Execution Start time '},
+            'description': {title: 'Summary string for the execution'},
+            'argstring': {title: 'Argument string for any job options'},
+            'project': {title: 'Project name'},
+            'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
+            'failedNodeListString': {title: 'Comma-separated list of any nodes that failed, if present'},
+            'succeededNodeListString': {title: 'Comma-separated list of any nodes that succeeded, if present'},
+            'abortedby': {title: 'User who aborted the execution'}
+        };
+        ['id', 'href', 'status', 'user', 'dateStarted', 'description', 'argstring', 'project', 'loglevel', 'failedNodeListString', 'succeededNodeListString', 'abortedby'].each(function (e) {
+            _VAR_DATA['execution'].push({key: 'execution.' + e, category: 'Execution', title: executiondata[e].title, desc: executiondata[e].desc});
+        });
+    }
+    return _VAR_DATA['execution'];
 }
 function _jobNodeData() {
     "use strict";
@@ -198,7 +221,17 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
     var baseVarData = [].concat(_jobVarData());
     baseVarData = baseVarData.concat(_jobGlobalVarData());
 
+    autocompleteBase(baseVarData,liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode);
 
+}
+function addNotificationAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode){
+    var baseVarData = [].concat(_jobVarData());
+    baseVarData = baseVarData.concat(_jobGlobalVarData());
+    baseVarData = baseVarData.concat(_executionVarData());
+
+    autocompleteBase(baseVarData,liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode);
+}
+function autocompleteBase(baseVarData,liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode){
     var baseNodeData = [];
 
     //special error-handler vars
@@ -1300,6 +1333,6 @@ jQuery(window).load(function () {
     });
 
     jQuery('.notifyFields').each(function (i,elem) {
-        addWfAutocomplete(jQuery(elem));
+        addNotificationAutocomplete(jQuery(elem));
     });
 });

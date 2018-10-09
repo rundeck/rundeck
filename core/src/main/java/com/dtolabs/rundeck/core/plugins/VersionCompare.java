@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class VersionCompare {
+public class VersionCompare {
     public Integer maj;
     public String majString;
     public Integer min;

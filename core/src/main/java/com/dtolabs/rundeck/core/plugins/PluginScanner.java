@@ -34,7 +34,7 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
+public interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
     /**
      * Create a loader for a file
      */
