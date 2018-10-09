@@ -151,13 +151,16 @@
       window._rundeck = {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        projectName: '${enc(js:project?:params.project)}'
+        projectName: '${enc(js:project?:params.project)}',
+        activeTour: '${session.filterPref?.activeTour}',
+        activeTourStep: '${session.filterPref?.activeTourStep}'
       }
     </script>
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
+
       <div class="logo">
           <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
               <i class="rdicon app-logo"></i>
