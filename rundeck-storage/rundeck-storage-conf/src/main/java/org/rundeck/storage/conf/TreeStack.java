@@ -32,8 +32,8 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
 
     public TreeStack(List<? extends SelectiveTree<T>> treeHandlerList, Tree<T> delegate) {
         super(delegate);
-        this.treeHandlerList = treeHandlerList;
         validatePaths(treeHandlerList);
+        this.treeHandlerList = sorted(treeHandlerList);
     }
 
     private void validatePaths(final List<? extends SelectiveTree<T>> treeHandlerList) {
@@ -48,6 +48,18 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
                 ));
             }
         }
+    }
+
+    private List<? extends SelectiveTree<T>> sorted(final List<? extends SelectiveTree<T>> treeHandlerList) {
+        ArrayList<? extends SelectiveTree<T>> list = new ArrayList<>(treeHandlerList);
+        //sort by path length longest to shortest
+        list.sort(new Comparator<SelectiveTree<T>>() {
+            @Override
+            public int compare(final SelectiveTree<T> o1, final SelectiveTree<T> o2) {
+                return o2.getSubPath().getPath().length() - o1.getSubPath().getPath().length();
+            }
+        });
+        return list;
     }
 
     @Override

@@ -94,6 +94,33 @@ class TreeStackSpecification extends Specification {
     public MemoryTree memory() {
         new MemoryTree()
     }
+
+    @Unroll
+    def "longest handler subpath has precedence"() {
+        given:
+
+            def mem1 = memory()
+            def sub1 = new SubPathTree(mem1, orderA, true)
+
+            def mem2 = memory()
+            def sub2 = new SubPathTree(mem2, orderB, true)
+            def mem3 = memory()
+            def tree1 = new TreeStack([sub1, sub2], mem3)
+
+            tree1.createResource(expectA, dataWithText('a data'))
+            tree1.createResource(expectB, dataWithText('b data'))
+        expect:
+            mem1.hasResource(expectA)
+            !mem2.hasResource(expectA)
+            !mem1.hasResource(expectB)
+            mem2.hasResource(expectB)
+
+        where:
+            orderA          | orderB          | expectA                       | expectB
+            '/test1/monkey' | '/test1'        | "/test1/monkey/applesauce"    | '/test1/monkey2/balogna/flea'
+            '/test1'        | '/test1/monkey' | '/test1/monkey2/balogna/flea' | "/test1/monkey/applesauce"
+    }
+
     def "more specific subtree match"(){
         def mem1 = new MemoryTree()
         def sub1 = new SubPathTree(mem1, "/test1", true)
