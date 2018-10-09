@@ -33,6 +33,21 @@ public class TreeStack<T extends ContentMeta> extends DelegateTree<T> {
     public TreeStack(List<? extends SelectiveTree<T>> treeHandlerList, Tree<T> delegate) {
         super(delegate);
         this.treeHandlerList = treeHandlerList;
+        validatePaths(treeHandlerList);
+    }
+
+    private void validatePaths(final List<? extends SelectiveTree<T>> treeHandlerList) {
+        HashSet<String> paths = new HashSet<>();
+        for (SelectiveTree<T> tSelectiveTree : treeHandlerList) {
+            if (!paths.contains(tSelectiveTree.getSubPath().getPath())) {
+                paths.add(tSelectiveTree.getSubPath().getPath());
+            } else {
+                throw new IllegalArgumentException(String.format(
+                    "Cannot create TreeStack: multiple subpaths defined for: %s",
+                    tSelectiveTree.getSubPath()
+                ));
+            }
+        }
     }
 
     @Override

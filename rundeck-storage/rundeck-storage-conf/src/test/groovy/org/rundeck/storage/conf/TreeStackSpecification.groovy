@@ -80,7 +80,21 @@ class TreeStackSpecification extends Specification {
         !mem3.hasResource("/test1/monkey")
         mem3.hasResource("/test2/monkey")
     }
-    def "if multiple treehandlers match, first one is used"(){
+
+    def "cannot define two handlers with the same path"() {
+        def sub1 = new SubPathTree(memory(), "/test1", true)
+        def sub2 = new SubPathTree(memory(), "/test1", true)
+
+        when:
+            def tree1 = new TreeStack([sub1, sub2], memory())
+        then:
+            IllegalArgumentException e = thrown()
+    }
+
+    public MemoryTree memory() {
+        new MemoryTree()
+    }
+    def "more specific subtree match"(){
         def mem1 = new MemoryTree()
         def sub1 = new SubPathTree(mem1, "/test1", true)
         def mem2 = new MemoryTree()
