@@ -135,22 +135,6 @@ class TreeStackSpecification extends Specification {
 
     def "more specific subtree match"(){
         def mem1 = new MemoryTree()
-        def sub1 = new SubPathTree(mem1, "/test1", true)
-        def mem2 = new MemoryTree()
-        def sub2 = new SubPathTree(mem2, "/test1", true)
-        def mem3 = new MemoryTree()
-        def tree1 = new TreeStack([sub1, sub2], mem3)
-
-        tree1.createResource("/test1/monkey", dataWithText('monkey data'))
-        tree1.createResource("/test1/monkey2/balogna/flea", dataWithText('monkey data'))
-        expect:
-        mem1.hasResource("/test1/monkey")
-        !mem2.hasResource("/test1/monkey")
-        mem1.hasResource("/test1/monkey2/balogna/flea")
-        !mem2.hasResource("/test1/monkey2/balogna/flea")
-    }
-    def "more specific subtree match"(){
-        def mem1 = new MemoryTree()
         def sub1 = new SubPathTree(mem1, "/test1/monkey", true)
         def mem2 = new MemoryTree()
         def sub2 = new SubPathTree(mem2, "/test1", true)
@@ -164,6 +148,23 @@ class TreeStackSpecification extends Specification {
         !mem2.hasResource("/test1/monkey")
         !mem1.hasResource("/test1/monkey2/balogna/flea")
         mem2.hasResource("/test1/monkey2/balogna/flea")
+    }
+
+    def "subtree ordering doesn't matter"() {
+        def mem1 = new MemoryTree()
+        def sub1 = new SubPathTree(mem1, "/test1/monkey", true)
+        def mem2 = new MemoryTree()
+        def sub2 = new SubPathTree(mem2, "/test1", true)
+        def mem3 = new MemoryTree()
+        def tree1 = new TreeStack([sub2, sub1], mem3)
+
+        tree1.createResource("/test1/monkey/ringo", dataWithText('monkey data'))
+        tree1.createResource("/test1/monkey2/balogna/flea", dataWithText('monkey data'))
+        expect:
+            mem1.hasResource("/test1/monkey/ringo")
+            !mem2.hasResource("/test1/monkey/ringo")
+            !mem1.hasResource("/test1/monkey2/balogna/flea")
+            mem2.hasResource("/test1/monkey2/balogna/flea")
     }
     def "subtrees are listed as dirs in the parent"(){
         def mem1 = new MemoryTree()
