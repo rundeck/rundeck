@@ -121,6 +121,18 @@ class TreeStackSpecification extends Specification {
             '/test1'        | '/test1/monkey' | '/test1/monkey2/balogna/flea' | "/test1/monkey/applesauce"
     }
 
+
+    def "create file in subtree root fails"() {
+        def sub1 = new SubPathTree(new MemoryTree(), "/test1/monkey", false)
+        def tree1 = new TreeStack([sub1], new MemoryTree())
+
+        when:
+            def result = tree1.createResource("/test1/monkey", dataWithText('monkey data'))
+
+        then:
+            IllegalArgumentException e = thrown()
+    }
+
     def "more specific subtree match"(){
         def mem1 = new MemoryTree()
         def sub1 = new SubPathTree(mem1, "/test1", true)
