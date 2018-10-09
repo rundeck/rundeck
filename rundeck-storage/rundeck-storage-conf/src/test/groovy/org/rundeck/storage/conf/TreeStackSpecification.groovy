@@ -16,14 +16,11 @@
 
 package org.rundeck.storage.conf
 
-import org.rundeck.storage.data.DataUtil
+
 import spock.lang.Specification
 import org.rundeck.storage.data.MemoryTree
+import spock.lang.Unroll
 
-import static org.rundeck.storage.api.PathUtil.asPath
-import static org.rundeck.storage.api.PathUtil.asPath
-import static org.rundeck.storage.api.PathUtil.asPath
-import static org.rundeck.storage.api.PathUtil.asPath
 import static org.rundeck.storage.api.PathUtil.asPath
 import static org.rundeck.storage.data.DataUtil.dataWithText
 
