@@ -144,4 +144,23 @@ class MemoryTreeSpecification extends Specification {
         storage.hasDirectory("/abc")
         !storage.hasPath("/abc/def")
     }
+
+    def "can't create resource at dir path"() {
+        given: "basic storage"
+            def storage = new MemoryTree<ContentMeta>()
+
+        when: "store resource at existing dir path"
+            storage.createResource("/abc/def/ghi", dataWithText('blah'));
+
+            storage.createResource(existingDirPath, dataWithText('blah2'));
+
+        then: "error"
+            IllegalArgumentException e = thrown()
+
+        where:
+            existingDirPath | _
+            '/abc/def'      | _
+            '/'             | _
+
+    }
 }
