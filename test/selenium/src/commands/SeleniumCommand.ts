@@ -68,6 +68,7 @@ class SeleniumCommand {
 
         const client = new Rundeck(new PasswordCredentialProvider(opts.url, 'admin', 'admin'), opts.url)
 
+        console.log(`Waiting for rundeck at ${opts.url}`)
         await waitForRundeckReady(client)
 
         const importer = new ProjectImporter('./lib', 'SeleniumBasic', client)

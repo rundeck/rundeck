@@ -42,29 +42,37 @@ cd rundeckapp && ./gradlew bootRun
 ```
 
 ## Quick Start
-Run selenium:
+**Run selenium:**
 ```
 npm run selenium
 ```
 
-Run in watch mode:
+**Run in watch mode:**
 ```
 npm run selenium:watch
 ```
 
-Run in watch mode with debugging:
+**Run in watch mode with debugging:**
 ```
 npm run selenium:debug:watch
 ```
 
-Run  visual regression tests:
+**Run  visual regression tests:**
 ```
 npm run selenium:viz
 ```
+or
+```
+RUNDECK_URL=http://localhost:4440 npm run selenium:viz
+```
 
-Update image snapshots:
+**Update image snapshots:**
 ```
 npm run selenium:viz:update
+```
+or
+```
+RUNDECK_URL=http://localhost:4440 npm run selenium:viz:update
 ```
 
 ## Usage
