@@ -855,7 +855,8 @@ public class AclTool extends BaseTool {
                     ACLConstants.TYPE_SYSTEM_ACL,
                     ACLConstants.TYPE_USER,
                     ACLConstants.TYPE_JOB,
-                    ACLConstants.TYPE_APITOKEN
+                    ACLConstants.TYPE_APITOKEN,
+                    ACLConstants.TYPE_PLUGIN
             )
     );
 
@@ -924,6 +925,10 @@ public class AclTool extends BaseTool {
     static final Map<String, List<String>> appResActionsByType;
     static final Map<String, List<String>> appResAttrsByType;
 
+    static final List<String> appPluginActions = Arrays.asList(ACLConstants.ACTION_READ,
+                                                            ACLConstants.ACTION_INSTALL,
+                                                            ACLConstants.ACTION_UNINSTALL);
+
     static {
         appResActionsByType = new HashMap<>();
         appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
@@ -952,6 +957,7 @@ public class AclTool extends BaseTool {
         appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_PLUGIN, appPluginActions);
     }
 
 
@@ -1209,7 +1215,7 @@ public class AclTool extends BaseTool {
                     optionDisplayString(GENERIC_OPT) +
                     "\n" +
                     "    Create projects, read system info, manage system ACLs, manage users, change\n" +
-                    "      execution mode.\n" +
+                    "      execution mode, manage plugins.\n" +
                     "    generic kinds" +
                     " in this context: \n" +
                     "    " +
@@ -1972,6 +1978,8 @@ public class AclTool extends BaseTool {
         public static final String ACTION_CONFIGURE = "configure";
         public static final String ACTION_IMPORT = "import";
         public static final String ACTION_EXPORT = "export";
+        public static final String ACTION_INSTALL = "install";
+        public static final String ACTION_UNINSTALL = "uninstall";
         public static final String ACTION_DELETE_EXECUTION = "delete_execution";
         public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
         public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
@@ -1986,6 +1994,7 @@ public class AclTool extends BaseTool {
         public static final String TYPE_ADHOC = "adhoc";
         public static final String TYPE_PROJECT = "project";
         public static final String TYPE_PROJECT_ACL = "project_acl";
+        public static final String TYPE_PLUGIN = "plugin";
         public static final String TYPE_EVENT = "event";
         public static final String TYPE_USER = "user";
         public static final String TYPE_STORAGE = "storage";
