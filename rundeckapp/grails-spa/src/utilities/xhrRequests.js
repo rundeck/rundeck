@@ -65,8 +65,6 @@ export const unsetFilterPref = (key) => {
             'X-RUNDECK-TOKEN-URI': uiToken.URI
           }
         }).then((response) => {
-          // don't do something here because we know we're not getting back anything, it's a 400 response
-        }, () => {
           setNewUIToken(response.headers).then(() => {
             // console.log(`unset ${key}`)
             resolve(true)

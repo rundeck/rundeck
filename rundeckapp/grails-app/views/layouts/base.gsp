@@ -62,6 +62,11 @@
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/manifest.js"/>
+    <asset:javascript src="static/vendor.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
@@ -218,8 +223,6 @@ disable for now because profiler plugin is not compatible with grails 3.x
 </g:if>
 
 <!-- VUE JS MODULES -->
-<asset:javascript src="static/manifest.js"/>
-<asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/tour.js"/>
 <!-- /VUE JS MODULES -->

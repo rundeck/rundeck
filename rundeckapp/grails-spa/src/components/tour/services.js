@@ -1,17 +1,16 @@
 import axios from 'axios'
 import _ from 'lodash'
 import xhrRequestsHelper from '@/utilities/xhrRequests'
+import TourConstants from '@/components/tour/constants'
 
 export const getTours = () => {
-  const tourManifestUrl = `${window._rundeck.rdBase}user-assets/tour-manifest.json`
-  const tourUrl = `${window._rundeck.rdBase}user-assets/tours/`
   let tours = []
 
   return new Promise((resolve) => {
-    axios.get(tourManifestUrl).then((response) => {
+    axios.get(TourConstants.tourManifestUrl).then((response) => {
       if (response && response.data && response.data.length) {
         _.each(response.data, (tour) => {
-          axios.get(`${tourUrl}${tour}.json`)
+          axios.get(`${TourConstants.tourUrl}${tour}.json`)
             .then((tourResponse) => {
               if (tourResponse && tourResponse.data) {
                 tours.push(tourResponse.data)
@@ -29,10 +28,8 @@ export const getTours = () => {
 }
 
 export const getTour = (tourKey) => {
-  const tourUrl = `${window._rundeck.rdBase}user-assets/tours/`
-
   return new Promise((resolve, reject) => {
-    axios.get(`${tourUrl}${tourKey}.json`)
+    axios.get(`${TourConstants.tourUrl}${tourKey}.json`)
       .then((response) => {
         if (response && response.data) {
           resolve(response.data)
@@ -46,6 +43,7 @@ export const getTour = (tourKey) => {
 }
 
 export const unsetTour = () => {
+  console.log('unset tour')
   return new Promise((resolve) => {
     xhrRequestsHelper.unsetFilterPref('activeTour').then(() => {
       xhrRequestsHelper.unsetFilterPref('activeTourStep').then(() => {
