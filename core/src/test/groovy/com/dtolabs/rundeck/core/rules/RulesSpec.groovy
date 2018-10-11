@@ -151,4 +151,32 @@ class RulesSpec extends Specification {
         cond.test(States.state(a: 'b', c: 'd'))
         cond.test(States.state(a: 'b', c: 'd', e: 'f'))
     }
+
+    def "less than condition key value"() {
+        given:
+        def cond = Rules.ltCondition("a", "1")
+
+        expect:
+        cond.test(States.state("a", "0"))
+        cond.test(States.state("a", "0.5"))
+        !cond.test(States.state("a", "1"))
+        !cond.test(States.state("a", "2"))
+        cond.test(States.state("a", "test"))
+        cond.test(States.state("c", "2"))
+
+    }
+
+    def "greater than condition key value"() {
+        given:
+        def cond = Rules.gtCondition("a", "1")
+
+        expect:
+        !cond.test(States.state("a", "0"))
+        cond.test(States.state("a", "1.5"))
+        !cond.test(States.state("a", "1"))
+        cond.test(States.state("a", "2"))
+        !cond.test(States.state("a", "test"))
+        !cond.test(States.state("c", "2"))
+
+    }
 }
