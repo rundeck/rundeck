@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import _ from 'lodash'
+// import _ from 'lodash'
 
 export default {
   name: 'MessageOfTheDay',
@@ -63,7 +63,7 @@ export default {
     let message = this.checkMessage()
 
     if (message) {
-      this.message =  this.project.readme.motdHTML
+      this.message = this.project.readme.motdHTML
     }
   }
 }

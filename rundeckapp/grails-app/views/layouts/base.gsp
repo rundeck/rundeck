@@ -62,8 +62,14 @@
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/manifest.js"/>
+    <asset:javascript src="static/vendor.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/tour.css"/>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -150,13 +156,16 @@
       window._rundeck = {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        projectName: '${enc(js:project?:params.project)}'
+        projectName: '${enc(js:project?:params.project)}',
+        activeTour: '${session.filterPref?.activeTour}',
+        activeTourStep: '${session.filterPref?.activeTourStep}'
       }
     </script>
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
+
       <div class="logo">
           <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
               <i class="rdicon app-logo"></i>
@@ -184,18 +193,21 @@
           <div class="sidebar-modal-backdrop"></div>
       </div>
     </div>
-    <div class="main-panel">
+    <div class="main-panel" id="main-panel">
       <div>
         <g:render template="/common/mainbar"/>
       </div>
       <div class="content">
         <div class="container-fluid">
-          <div id=project-motd-vue project=blah key=foo></div>
+          <div id=project-motd-vue></div>
         </div>
-        <g:layoutBody/>
+        <div id="layoutBody">
+            <g:layoutBody/>
+        </div>
       </div>
       <g:render template="/common/footer"/>
     </div>
+
   </div>
 <!--
 disable for now because profiler plugin is not compatible with grails 3.x
@@ -211,9 +223,8 @@ disable for now because profiler plugin is not compatible with grails 3.x
 </g:if>
 
 <!-- VUE JS MODULES -->
-<asset:javascript src="static/manifest.js"/>
-<asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/tour.js"/>
 <!-- /VUE JS MODULES -->
 
 </body>

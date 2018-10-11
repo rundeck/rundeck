@@ -82,7 +82,7 @@
     </li>
 </g:if>
 <g:if test="${params.project ?: request.project}">
-    <li>
+    <li id="nav-project-dashboard-link">
       <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
       <i class="fas fa-clipboard-list"></i>
         <p>
@@ -168,7 +168,7 @@
            )}"/>
 
     <g:if test="${projConfigAuth||projACLAuth}">
-        <li class="${enc(attr: projconfigselected)}" id="projectAdmin">
+        <li class="${enc(attr: projconfigselected)}" id="nav-project-settings">
           <a href="#" data-toggle="collapse" href="javascript:void(0)">
             <i class="fas fa-cogs"></i>
             <p>
@@ -182,7 +182,7 @@
     </g:if>
 </g:if>
 </g:if>
-  <!-- <li class="snapshot-version">
+  <%-- <li class="snapshot-version">
     <span class="rundeck-version-identity"
           data-version-string="${enc(attr: buildIdent)}"
           data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
@@ -190,7 +190,7 @@
     <g:link controller="menu" action="welcome" class="version link-bare">
         <g:appTitle/> ${buildIdent}
     </g:link>
-  </li> -->
+  </li> --%>
 </ul>
 
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
