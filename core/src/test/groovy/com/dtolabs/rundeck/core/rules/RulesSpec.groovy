@@ -163,6 +163,7 @@ class RulesSpec extends Specification {
         !cond.test(States.state("a", "2"))
         cond.test(States.state("a", "test"))
         cond.test(States.state("c", "2"))
+        !cond.test(States.state("a", "1-test"))
 
     }
 
@@ -175,8 +176,26 @@ class RulesSpec extends Specification {
         cond.test(States.state("a", "1.5"))
         !cond.test(States.state("a", "1"))
         cond.test(States.state("a", "2"))
+        cond.test(States.state("a", "2 test"))
         !cond.test(States.state("a", "test"))
         !cond.test(States.state("c", "2"))
+
+    }
+
+    def "numeric equals condition key value"() {
+        given:
+        def cond = Rules.eqCondition("a", "1")
+
+        expect:
+        !cond.test(States.state("a", "0"))
+        cond.test(States.state("a", "1"))
+        cond.test(States.state("a", "0.9999999"))
+        cond.test(States.state("a", "1-test"))
+        cond.test(States.state("a", "1 test"))
+        !cond.test(States.state("a", "test-1"))
+        !cond.test(States.state("a", "2"))
+        !cond.test(States.state("a", "2-test"))
+
 
     }
 }
