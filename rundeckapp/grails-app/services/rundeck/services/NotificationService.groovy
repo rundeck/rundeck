@@ -392,8 +392,15 @@ public class NotificationService implements ApplicationContextAware{
                     execMap.job=jobMap
                     execMap.context=context
                     Map config= n.configuration
+                    println(config.toString())
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
+                    }
+
+                    config = config.each {
+                        if(!it.value){
+                            it.value=null
+                        }
                     }
 
                     didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
