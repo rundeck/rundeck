@@ -16,8 +16,8 @@ public class NumericLessThanCondition implements Condition {
         if (value == null) {
             return false;
         }
-        Float fValue = extractFloat(value);
-        Float fObject = extractFloat(anObject);
+        Float fValue = NumericCondition.extractFloat(value);
+        Float fObject = NumericCondition.extractFloat(anObject);
         return fObject<fValue;
     }
 
@@ -34,15 +34,4 @@ public class NumericLessThanCondition implements Condition {
         return value;
     }
 
-    private Float extractFloat(final String value){
-        if(value == null){
-            return 0f;
-        }
-        try{
-            Float nValue = Float.parseFloat(value);
-            return nValue;
-        }catch (NumberFormatException ne){
-            return 0f;
-        }
-    }
 }
