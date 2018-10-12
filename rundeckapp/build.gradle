@@ -35,6 +35,7 @@ configurations {
     pluginFiles {
         transitive = false
     }
+    spa //dependency on grails-spa
 }
 
 repositories {
@@ -66,6 +67,8 @@ dependencies {
                 "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
                 "com.github.rundeck-plugins:py-winrm-plugin:1.0.7",
                 "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
+
+    spa project(path: ':rundeck:grails-spa', configuration: 'archives')
 
     // Rundeck project dependencies.
     compile project(':core')
@@ -268,8 +271,9 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
 }
 
 task copySpa(type: Copy) {
-    dependsOn ':rundeck:grails-spa:buildSpa'
-    from project(':rundeck:grails-spa').buildDir
+    from( configurations.spa){
+        include('provided/**')
+    }
     into "$projectDir/grails-app/assets"
     outputs.dir "$projectDir/grails-app/assets/provided"
 }
