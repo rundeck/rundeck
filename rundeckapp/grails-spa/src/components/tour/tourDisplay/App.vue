@@ -16,11 +16,18 @@
         <div class="step-content" v-html="tour.steps[stepIndex].content"></div>
         <progress-bar v-model="progress" label :labelText="progressText"/>
       </div>
+      <section>
+        <modal v-model="modal.show" :title="tour.steps[stepIndex].title" :footer="false">
+          <img :src="modal.image" :alt="modal.alt" class="img-responsive">
+          <p>{{modal.alt}}</p>
+        </modal>
+      </section>
     </div>
   </div>
 </template>
 
 <script>
+import _ from 'lodash'
 import xhrRequestsHelper from '@/utilities/xhrRequests'
 import TourServices from '@/components/tour/services'
 
@@ -29,6 +36,11 @@ export default {
   props: ['eventBus'],
   data () {
     return {
+      modal: {
+        show: false,
+        image: null,
+        alt: null
+      },
       tour: null,
       display: false,
       stepIndex: 0,
@@ -47,7 +59,7 @@ export default {
           indicatorElement.setAttribute('id', 'tour-vue-indicator')
 
           indicatorElement.style.top = `${indicatorTargetViewportOffset.y + ((indicatorTargetViewportOffset.height / 2) - 25)}px `
-          indicatorElement.style.left = `${indicatorTargetViewportOffset.x + 80}px`
+          indicatorElement.style.left = `${indicatorTargetViewportOffset.x + indicatorTargetViewportOffset.width}px`
 
           if (this.tour.steps[this.stepIndex].stepIndicatorPosition) {
             if (this.tour.steps[this.stepIndex].stepIndicatorPosition === 'top') {
@@ -128,7 +140,23 @@ export default {
       } else {
         this.removeIndicator()
       }
+
+      setTimeout(() => {
+        let images = document.getElementById('tour-display').querySelectorAll('img')
+        console.log('images', images)
+        _.map(images, (element) => {
+          console.log('adding')
+          element.addEventListener('click', this.openImageModal)
+        })
+      })
+    },
+    openImageModal (event) {
+      console.log('event')
+      this.modal.image = event.target.src
+      this.modal.alt = event.target.alt
+      this.modal.show = true
     }
+
   },
   mounted () {
     this.eventBus.$on('tourSelected', (tour) => {
@@ -148,6 +176,10 @@ export default {
     }
   }
 }
+
+// function myFunction (event) {
+//   console.log('called', this)
+// }
 </script>
 
 <style lang="scss">
@@ -170,6 +202,7 @@ body.tour-open {
 
 #tour-vue-indicator {
   position: absolute;
+  z-index: 1000;
   width: 0;
   height: 0;
   border-style: solid;
@@ -179,10 +212,12 @@ body.tour-open {
   animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
+  filter: drop-shadow(5px 5px 4px rgba(0, 0, 0, 0.5));
 
   &.top {
     border-width: 0 25px 43.3px 25px;
     border-color: transparent transparent #f0a810 transparent;
+    filter: drop-shadow(0px 5px 4px rgba(0, 0, 0, 0.5));
   }
   &.right {
     border-width: 25px 0 25px 43.3px;
@@ -191,6 +226,7 @@ body.tour-open {
   &.bottom {
     border-width: 43.3px 25px 0 25px;
     border-color: #f0a810 transparent transparent transparent;
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.5));
   }
 }
 
