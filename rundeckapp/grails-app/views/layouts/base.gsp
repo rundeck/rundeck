@@ -41,7 +41,7 @@
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="fontawesome.css"/>
     <asset:stylesheet href="perfect-scrollbar.css"/>
-    <asset:stylesheet href="app.scss.css"/>
+    <asset:stylesheet href="app.css"/>
     <!-- <asset:stylesheet href="custom.less.css"/> -->
     <!-- <asset:stylesheet href="app.less.css"/> -->
     <!-- <asset:stylesheet href="rundeck1.css"/> -->

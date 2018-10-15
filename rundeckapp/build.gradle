@@ -146,7 +146,8 @@ dependencies {
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
-    assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.10'
+    assets 'com.bertramlabs.plugins:less-asset-pipeline:3.0.5'
+    assets 'com.bertramlabs.plugins:sass-asset-pipeline:3.0.5'
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
