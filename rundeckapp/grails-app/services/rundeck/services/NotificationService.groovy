@@ -392,7 +392,6 @@ public class NotificationService implements ApplicationContextAware{
                     execMap.job=jobMap
                     execMap.context=context
                     Map config= n.configuration
-                    println(config.toString())
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
