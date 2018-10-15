@@ -122,6 +122,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/favicon.ico',    filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
 ]
+grails.plugin.springsecurity.useSecurityEventListener=true
 grails.plugin.springsecurity.useHttpSessionEventPublisher=true
 grails.plugin.springsecurity.apf.filterProcessesUrl = "/j_security_check"
 grails.plugin.springsecurity.apf.usernameParameter = "j_username"
