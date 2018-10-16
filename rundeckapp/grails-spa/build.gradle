@@ -2,6 +2,9 @@ plugins {
   id "com.moowork.node" version "1.2.0"
   id 'base'
 }
+configurations{
+  spa
+}
 
 archivesBaseName = "rundeckapp-spa"
 
@@ -19,5 +22,5 @@ task runNpmBuild(type: NpmTask, group: 'build') {
 assemble.dependsOn runNpmBuild
 
 artifacts {
-  archives(file: buildDir, name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
+  spa(file: buildDir, name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
 }

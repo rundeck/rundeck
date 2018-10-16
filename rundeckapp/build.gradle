@@ -68,7 +68,7 @@ dependencies {
                 "com.github.rundeck-plugins:py-winrm-plugin:1.0.7",
                 "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
 
-    spa project(path: ':rundeck:grails-spa', configuration: 'archives')
+    spa project(path: ':rundeck:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
     compile project(':core')
