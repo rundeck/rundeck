@@ -218,7 +218,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         AuthContext getAuthContextForSubject(def subject) {
             return [] as AuthContext
         }
-        boolean authorizeApplicationResourceType(def authCtx, def type, def action) { return authorized }
+        boolean authorizeApplicationResourceAny(def authCtx, def type, def action) { return authorized }
     }
     class FakePluginApiService {
         def installedPluginIds = []

@@ -27,7 +27,8 @@
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
         type: 'resource',
         kind: 'plugin',
-        action: ["install"],
+        action: ["install","admin"],
+        any: true,
         context: 'application'
 )}"/>
 <script type="text/javascript">

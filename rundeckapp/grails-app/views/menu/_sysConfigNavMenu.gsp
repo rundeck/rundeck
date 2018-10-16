@@ -33,7 +33,8 @@
 <g:set var="pluginRead" value="${auth.resourceAllowedTest(
         type: 'resource',
         kind: 'plugin',
-        action: [AuthConstants.ACTION_READ],
+        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
+        any: true,
         context: 'application'
 )}"/>
 

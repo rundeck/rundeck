@@ -927,7 +927,8 @@ public class AclTool extends BaseTool {
 
     static final List<String> appPluginActions = Arrays.asList(ACLConstants.ACTION_READ,
                                                             ACLConstants.ACTION_INSTALL,
-                                                            ACLConstants.ACTION_UNINSTALL);
+                                                            ACLConstants.ACTION_UNINSTALL,
+                                                            ACLConstants.ACTION_ADMIN);
 
     static {
         appResActionsByType = new HashMap<>();

@@ -13,7 +13,7 @@
                     <form v-on:submit.prevent>
                       <label>Search:</label>
                       <input type="text" v-model="searchTerm" @keyup.enter="search" class="search-box">
-                      <span @click="search" class="search-btn">&#x25b6</span>
+                      <span @click="search" class="search-btn">&#x25b6;</span>
                     </form>
                 </div>
               </div>
@@ -76,20 +76,20 @@ export default {
         method: 'post',
         headers: {'x-rundeck-ajax': true},
         url: `${this.rdBase}repository/artifacts/search`,
-        params: {searchTerm:this.searchTerm},
+        params: {searchTerm: this.searchTerm},
         withCredentials: true
       }).then((response) => {
         if (response.data) {
           this.repositories = response.data.artifacts
-          if(response.data.warnings.length > 0) {
+          if (response.data.warnings.length > 0) {
             this.searchWarnings = response.data.warnings
           }
         }
       }).catch((error) => {
-        console.log(JSON.stringify(error));
-      });
+        console.log(JSON.stringify(error))
+      })
     },
-    install(repoName, pluginId) {
+    install (repoName, pluginId) {
       this.errors = null
       this.rdBase = window._rundeck.rdBase
       axios({
@@ -102,8 +102,8 @@ export default {
         let plugin = repo.results.find(r => r.id === pluginId)
         plugin.installed = true
       }).catch((error) => {
-          this.errors = error.response.data
-      });
+        this.errors = error.response.data
+      })
     }
   },
   mounted () {
