@@ -6,8 +6,6 @@ configurations{
   spa
 }
 
-archivesBaseName = "rundeckapp-spa"
-
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
