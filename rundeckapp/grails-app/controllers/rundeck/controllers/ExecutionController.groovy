@@ -1296,7 +1296,7 @@ class ExecutionController extends ControllerBase{
         def completed=false
         def max= 0
         def lastlinesSupported= (ReverseSeekingStreamingLogReader.isInstance(logread))
-        def lastlines = params.lastlines?Long.parseLong(params.lastlines):0
+        def lastlines = params.long('lastlines',0)
         if(lastlines && lastlinesSupported){
             def ReverseSeekingStreamingLogReader reversing= (ReverseSeekingStreamingLogReader) logread
             reversing.openStreamFromReverseOffset(lastlines)
@@ -1304,10 +1304,7 @@ class ExecutionController extends ControllerBase{
             max=lastlines+1
         }else{
             logread.openStream(offset)
-
-            if (null != params.maxlines) {
-                max = Integer.parseInt(params.maxlines)
-            }
+            max = Math.max(0,params.int('maxlines',0))
         }
 
         def String bufsizestr= servletContext.getAttribute("execution.follow.buffersize");
@@ -1464,7 +1461,7 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-Completed', completed.toString())
                 response.addHeader('X-Rundeck-Exec-Completed', jobcomplete.toString())
                 response.addHeader('X-Rundeck-Exec-State', execState.toString())
-                response.addHeader('X-Rundeck-Exec-Status-String', statusString?.toString())
+                response.addHeader('X-Rundeck-Exec-Status-String', statusString?.toString()?:'')
                 response.addHeader('X-Rundeck-Exec-Duration', execDuration.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
