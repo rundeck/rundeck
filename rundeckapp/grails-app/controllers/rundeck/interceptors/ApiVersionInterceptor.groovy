@@ -1,5 +1,11 @@
 package rundeck.interceptors
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.JWTVerifier
+import com.auth0.jwt.algorithms.Algorithm
+import com.auth0.jwt.exceptions.JWTVerificationException
+import com.auth0.jwt.exceptions.TokenExpiredException
+import com.auth0.jwt.interfaces.DecodedJWT
 import com.codahale.metrics.MetricRegistry
 import grails.converters.JSON
 import grails.converters.XML
@@ -60,6 +66,17 @@ class ApiVersionInterceptor {
     }
 
     boolean before() {
+        try {
+            String token = request.getHeader("X-Rundeck-JWT-Token")
+            if(token) session.api_access_allowed = validateJwtToken(token)
+        } catch(TokenExpiredException tkexpEx) {
+            apiService.renderErrorFormat(response,[code: 'api.error.jwt.expired'])
+            return false
+        } catch(JWTVerificationException vex) {
+            apiService.renderErrorFormat(response,[code: 'api.error.jwt.invalid'])
+            return false
+        }
+
         request[REQUEST_TIME]=System.currentTimeMillis()
         request[METRIC_TIMER]= timer()
         if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
@@ -112,5 +129,14 @@ class ApiVersionInterceptor {
 
     private com.codahale.metrics.Timer.Context timer() {
         metricRegistry.timer(MetricRegistry.name('rundeck.api.requests', 'requestTimer')).time()
+    }
+
+    boolean validateJwtToken(String token) {
+        Algorithm algorithm = Algorithm.HMAC256("secret");
+        JWTVerifier verifier = JWT.require(algorithm)
+                                  .withIssuer("rundeck")
+                                  .build(); //Reusable verifier instance
+        DecodedJWT jwt = verifier.verify(token);
+        return jwt.subject == session.user
     }
 }

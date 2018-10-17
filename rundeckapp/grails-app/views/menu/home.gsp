@@ -350,5 +350,34 @@
     </div>
   </div>
 </div>
+<script type="text/javascript">
+    function getJwtToken() {
+        jQuery.ajax({
+            url: "${f.createLink(controller:'jwt',action:'get')}",
+            type: 'get',
+            success : function (data) {
+                console.log("jwt token:" + data.token);
+                window.__jwt = data.token
+            }
+        })
+    }
+    getJwtToken()
+    function jwtRequest() {
+        jQuery.ajax({
+            url: "${f.createLink(uri:'/api/26/project/FileTest')}",
+            headers: {"X-Rundeck-JWT-Token":window.__jwt},
+            type: 'get',
+            success : function (data) {
+                console.log(data);
+            },
+            error: function(err) {
+                console.log(err)
+            }
+        })
+    }
+</script>
+<div>
+    <span onclick="jwtRequest()" style="border: 1px solid black; padding: 4px;">Do API call with JWT</span>
+</div>
 </body>
 </html>

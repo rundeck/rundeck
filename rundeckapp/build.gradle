@@ -88,6 +88,7 @@ dependencies {
     compile 'org.owasp.encoder:encoder:1.2.1'
     compile 'org.grails.plugins:external-config:1.1.2'
     compile 'commons-fileupload:commons-fileupload:1.3.3'
+    compile 'com.auth0:java-jwt:3.4.0'
 
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
