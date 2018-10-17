@@ -162,6 +162,7 @@
 
             <g:each in="${propSelectValues}" var="propval">
                 <div class="optionvaluemulti checkbox">
+<<<<<<< HEAD
                   <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}"/>
                   <label class="grid-row optionvaluemulti">
                     ${propval.label}
@@ -171,6 +172,18 @@
         </div>
         </div>
     </g:elseif>
+=======
+              <g:set var="ischecked" value="${propval.value in defvalset ? 'checked="checked"' : ''}"/>
+            <input type="checkbox" id="${fieldname}" name="${fieldname}" ${ischecked} value="${propval.value}"/>
+            <label class="grid-row optionvaluemulti">
+              ${propval.label}
+            </label>
+          </div>
+      </g:each>
+  </div>
+  </div>
+</g:elseif>
+>>>>>>> 471c9e58e5... Fix issue with Options rendering. Grails adds an extra hidden input with the g:checkbox tag that
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>
