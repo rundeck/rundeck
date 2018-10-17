@@ -118,11 +118,15 @@ export default {
       }
     },
     nextStep () {
+      let step = this.tour.steps[this.stepIndex]
       if (this.stepIndex !== this.tour.steps.length - 1) {
         this.stepIndex++
         xhrRequestsHelper.setFilterPref('activeTourStep', this.stepIndex)
         this.setProgress()
         this.removeIndicator()
+        if (step.nextStepUrl) {
+          window.location.replace(`${window._rundeck.rdBase}${step.nextStepUrl}`)
+        }
       }
     },
     setProgress () {
@@ -151,7 +155,6 @@ export default {
       })
     },
     openImageModal (event) {
-      console.log('event')
       this.modal.image = event.target.src
       this.modal.alt = event.target.alt
       this.modal.show = true
@@ -176,10 +179,6 @@ export default {
     }
   }
 }
-
-// function myFunction (event) {
-//   console.log('called', this)
-// }
 </script>
 
 <style lang="scss">
