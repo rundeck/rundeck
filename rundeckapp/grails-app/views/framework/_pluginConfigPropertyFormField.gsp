@@ -162,15 +162,16 @@
 
             <g:each in="${propSelectValues}" var="propval" status="n">
                 <div class="optionvaluemulti checkbox">
-                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}" id="f_${fieldid}_p_${n}"/>
-                  <label class="grid-row optionvaluemulti" for="f_${fieldid}_p_${n}">
-                    ${propval.label}
-                  </label>
-                </div>
-            </g:each>
-        </div>
-        </div>
-    </g:elseif>
+              <g:set var="ischecked" value="${propval.value in defvalset ? 'checked="checked"' : ''}"/>
+            <input type="checkbox" id="${fieldname}" name="${fieldname}" ${ischecked} value="${propval.value}"/>
+            <label class="grid-row optionvaluemulti">
+              ${propval.label}
+            </label>
+          </div>
+      </g:each>
+  </div>
+  </div>
+</g:elseif>
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>
