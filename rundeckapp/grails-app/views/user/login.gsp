@@ -119,13 +119,13 @@
                     </g:if>
                     <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
 
-                      <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
-                          <div class='form-group'>
-                              <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
-                          </div>
-                      </g:if>
+                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
+                        <div class='form-group'>
+                            <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                        </div>
+                    </g:if>
 
-                      <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
+                    <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
                     <g:if test="${footermessagehtml}">
                       <div>
                         <span>
@@ -138,6 +138,17 @@
             </div>
           </div>
         </div>
+        <g:set var="loginDisclaimer" value="${grailsApplication.config.rundeck?.gui?.login?.disclaimer ?: ''}"/>
+        <g:if test="${loginDisclaimer}">
+          <div class="row" style="margin-top:1em;">
+            <div class="col-xs-12 col-sm-8 col-sm-offset-2 card">
+              <div class="card-content">
+                ${enc(sanitize:loginDisclaimer)}
+              </div>
+            </div>
+          </div>
+        </g:if>
+
       </div>
     </div>
     <g:render template="/common/footer"/>
