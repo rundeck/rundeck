@@ -36,7 +36,7 @@ class RepositoryController {
                 return
             }
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
-            def artifacts = repoClient.listArtifacts(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+            def artifacts = repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
                     it.installed = installedPluginIds.contains(it.id)

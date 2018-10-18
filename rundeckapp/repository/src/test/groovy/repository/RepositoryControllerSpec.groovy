@@ -47,7 +47,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
         when:
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.listArtifacts(_,_,_) >> testArtifactList("private")
+        1 * client.listArtifactsByRepository(_,_,_) >> testArtifactList("private")
         controller.listArtifacts()
 
         then:
