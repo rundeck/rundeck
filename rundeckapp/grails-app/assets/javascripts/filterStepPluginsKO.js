@@ -40,12 +40,13 @@ function StepPluginsFilter(data) {
             var filterByProps = propertyFilterValue && propertyFilterValue.length == 2;
 
             if(!filterByProps) {
-                return descr[self.currentPropertyFilter() || "title"].toLowerCase()
+                return descr[self.currentPropertyFilter() || "title"] &&
+                    descr[self.currentPropertyFilter() || "title"].toLowerCase()
                         .indexOf(self.currentFilter() ? self.currentFilter().toLowerCase() : undefined) >= 0
                     && typedesc == descr.name;
             } else if(filterByProps) {
-                return descr.properties.any(function(t){
-                    return t[propertyFilterValue[1]].toLowerCase()
+                return descr.properties && Array.isArray(descr.properties) && descr.properties.any(function(t){
+                    return t[propertyFilterValue[1]] && t[propertyFilterValue[1]].toLowerCase()
                         .indexOf(self.currentFilter() ? self.currentFilter().toLowerCase() : undefined) >= 0;
                 }) && typedesc == descr.name;
             }

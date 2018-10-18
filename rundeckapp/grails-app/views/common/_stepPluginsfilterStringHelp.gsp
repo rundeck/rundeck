@@ -14,15 +14,16 @@
   limitations under the License.
   --}%
 
-<strong>Select plugins by title:</strong>
+<strong>Select step by title:</strong>
 <p>
     <code>mystep1</code>
 </p>
 <p>
-    This will show plugins that contains "mystep1" on title.
+    This will show step that contains "mystep1" on title.
 </p>
 
-<strong>Filter plugins by attribute value:</strong>
+<strong>For step plugins:</strong>
+<p>Filter step by attribute value:</p>
 <ul>
     <li>description: <code>description=value</code></li>
 
@@ -31,7 +32,7 @@
     <li>title: <code>title=value</code></li>
 </ul>
 
-<strong>Filter plugins by property value:</strong>
+<p>Filter step by property value:</p>
 <ul>
     <li>property description: <code>property:description=value</code></li>
 
