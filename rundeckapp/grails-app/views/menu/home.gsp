@@ -350,22 +350,24 @@
     </div>
   </div>
 </div>
+<g:jsonToken id="web_api_token" url="${request.forwardURI}"/>
 <script type="text/javascript">
-    function getJwtToken() {
-        jQuery.ajax({
-            url: "${f.createLink(controller:'jwt',action:'get')}",
-            type: 'get',
-            success : function (data) {
-                console.log("jwt token:" + data.token);
-                window.__jwt = data.token
-            }
-        })
-    }
-    getJwtToken()
-    function jwtRequest() {
+    %{--function getJwtToken() {--}%
+        %{--jQuery.ajax({--}%
+            %{--url: "${f.createLink(controller:'jwt',action:'get')}",--}%
+            %{--type: 'get',--}%
+            %{--success : function (data) {--}%
+                %{--console.log("jwt token:" + data.token);--}%
+                %{--window.__jwt = data.token--}%
+            %{--}--}%
+        %{--})--}%
+    %{--}--}%
+    %{--getJwtToken()--}%
+
+    function tokenRequest() {
         jQuery.ajax({
             url: "${f.createLink(uri:'/api/26/project/FileTest')}",
-            headers: {"X-Rundeck-JWT-Token":window.__jwt},
+            beforeSend: _ajaxSendTokens.curry('web_api_token'),
             type: 'get',
             success : function (data) {
                 console.log(data);
@@ -373,11 +375,11 @@
             error: function(err) {
                 console.log(err)
             }
-        })
+        }).success(_ajaxReceiveTokens.curry('web_api_token'));
     }
 </script>
 <div>
-    <span onclick="jwtRequest()" style="border: 1px solid black; padding: 4px;">Do API call with JWT</span>
+    <span onclick="tokenRequest()" style="border: 1px solid black; padding: 4px;">Do API call with Sync Token</span>
 </div>
 </body>
 </html>

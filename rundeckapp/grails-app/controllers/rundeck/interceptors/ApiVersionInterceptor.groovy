@@ -11,8 +11,10 @@ import grails.converters.JSON
 import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.web.util.WebUtils
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.controllers.TokenVerifierController
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -31,6 +33,8 @@ class ApiVersionInterceptor {
     MetricRegistry metricRegistry
     def messageSource
     def apiService
+    @Autowired
+    TokenVerifierController tokenVerifierController
 
     ApiVersionInterceptor() {
         match(uri: '/api/**')
@@ -66,16 +70,28 @@ class ApiVersionInterceptor {
     }
 
     boolean before() {
-        try {
-            String token = request.getHeader("X-Rundeck-JWT-Token")
-            if(token) session.api_access_allowed = validateJwtToken(token)
-        } catch(TokenExpiredException tkexpEx) {
-            apiService.renderErrorFormat(response,[code: 'api.error.jwt.expired'])
-            return false
-        } catch(JWTVerificationException vex) {
-            apiService.renderErrorFormat(response,[code: 'api.error.jwt.invalid'])
-            return false
+        println "synchronizer: " + params[SynchronizerTokensHolder.TOKEN_KEY]
+        println "token uri: " + params[SynchronizerTokensHolder.TOKEN_URI]
+        if(params[SynchronizerTokensHolder.TOKEN_KEY]) {
+            tokenVerifierController.withForm {
+                println "valid"
+                tokenVerifierController.refreshTokens()
+                session.api_access_allowed = true
+            }.invalidToken {
+                tokenVerifierController.refreshTokens()
+                println "invalid"
+            }
         }
+//        try {
+//            String token = request.getHeader("X-Rundeck-JWT-Token")
+//            if(token) session.api_access_allowed = validateJwtToken(token)
+//        } catch(TokenExpiredException tkexpEx) {
+//            apiService.renderErrorFormat(response,[code: 'api.error.jwt.expired'])
+//            return false
+//        } catch(JWTVerificationException vex) {
+//            apiService.renderErrorFormat(response,[code: 'api.error.jwt.invalid'])
+//            return false
+//        }
 
         request[REQUEST_TIME]=System.currentTimeMillis()
         request[METRIC_TIMER]= timer()
@@ -131,12 +147,12 @@ class ApiVersionInterceptor {
         metricRegistry.timer(MetricRegistry.name('rundeck.api.requests', 'requestTimer')).time()
     }
 
-    boolean validateJwtToken(String token) {
-        Algorithm algorithm = Algorithm.HMAC256("secret");
-        JWTVerifier verifier = JWT.require(algorithm)
-                                  .withIssuer("rundeck")
-                                  .build(); //Reusable verifier instance
-        DecodedJWT jwt = verifier.verify(token);
-        return jwt.subject == session.user
-    }
+//    boolean validateJwtToken(String token) {
+//        Algorithm algorithm = Algorithm.HMAC256("secret");
+//        JWTVerifier verifier = JWT.require(algorithm)
+//                                  .withIssuer("rundeck")
+//                                  .build(); //Reusable verifier instance
+//        DecodedJWT jwt = verifier.verify(token);
+//        return jwt.subject == session.user
+//    }
 }
