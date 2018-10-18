@@ -1,14 +1,24 @@
 plugins {
   id "com.moowork.node" version "1.2.0"
+  id 'base'
+}
+configurations{
+  spa
 }
 
-task buildSpa(type: NpmTask, group: 'build') {
+task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
     inputs.dir 'build'
     inputs.dir 'config'
     inputs.dir 'src'
 
-    outputs.dir("$buildDir")
+    outputs.dir(buildDir)
     args = ['run', 'build']
+}
+
+assemble.dependsOn runNpmBuild
+
+artifacts {
+  spa(file: buildDir, name: "${project.name}", type: 'directory', builtBy: runNpmBuild)
 }
