@@ -53,20 +53,21 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
             apiService(service)
             messageSource(msgSrc)
         }
-        tkController.refreshTokens = { -> }
+
         ApiMarshallerRegistrar apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerApiMarshallers()
         when:
             params[SynchronizerTokensHolder.TOKEN_KEY] = "token"
             params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
             interceptor.tokenVerifierController = tkController
-            interceptor.before()
+            boolean allowed = interceptor.before()
 
         then:
-            session.api_access_allowed
+            allowed
 
         and:
             1 * tkController.withForm({cls -> cls.call() }) >> new ValidResponseHandler()
+            1 * tkController.refreshTokens()
 
     }
 
@@ -82,16 +83,18 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
             messageSource(msgSrc)
         }
 
-        interceptor.tokenVerifierController.metaClass.refreshTokens = { -> }
         ApiMarshallerRegistrar apiMarshallerRegistrar = new ApiMarshallerRegistrar()
         apiMarshallerRegistrar.registerApiMarshallers()
         when:
-        params[SynchronizerTokensHolder.TOKEN_KEY] = "token"
+        request.remoteUser = "LoggedIn"
+        session.api_access_allowed = false //This is set by ApiAccessInterceptor which fires before this interceptor
+        params[SynchronizerTokensHolder.TOKEN_KEY] = "invalidtoken"
         params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
-        interceptor.before()
+        boolean allowed = interceptor.before()
 
         then:
-        !session.api_access_allowed
+        !allowed
+        session.api_access_allowed == false
 
     }
 }

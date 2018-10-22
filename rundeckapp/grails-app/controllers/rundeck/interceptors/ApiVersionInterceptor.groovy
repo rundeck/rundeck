@@ -64,24 +64,24 @@ class ApiVersionInterceptor {
     }
 
     boolean before() {
-        if(params[SynchronizerTokensHolder.TOKEN_KEY]) {
+        request[REQUEST_TIME] = System.currentTimeMillis()
+        request[METRIC_TIMER] = timer()
+        boolean validToken = false
+        if (params[SynchronizerTokensHolder.TOKEN_KEY]) {
             tokenVerifierController.withForm {
                 tokenVerifierController.refreshTokens()
-                session.api_access_allowed = true
-            }.invalidToken {
-                session.api_access_allowed = false
-                tokenVerifierController.refreshTokens()
+                validToken = true
             }
         }
 
-        request[REQUEST_TIME]=System.currentTimeMillis()
-        request[METRIC_TIMER]= timer()
-        if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
-            log.debug("Api access request disallowed for ${request.forwardURI}")
-            response.sendError(HttpServletResponse.SC_NOT_FOUND)
-            return false
-        }else if(null==session.api_access_allowed){
-            session.api_access_allowed=true
+        if (!validToken) {
+            if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
+                log.debug("Api access request disallowed for ${request.forwardURI}")
+                response.sendError(HttpServletResponse.SC_NOT_FOUND)
+                return false
+            } else if (null == session.api_access_allowed) {
+                session.api_access_allowed = true
+            }
         }
         if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
             request.is_allowed_api_request = true
