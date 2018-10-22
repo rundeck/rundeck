@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.File;
 
@@ -41,9 +42,9 @@ public class DescribedPlugin<T> {
         this.file = file;
     }
 
-    @Getter String name;
+    @Getter @Setter String name;
     @Getter T instance;
-    @Getter Description description;
+    @Getter @Setter Description description;
     @Getter File file;
 
     @Override
