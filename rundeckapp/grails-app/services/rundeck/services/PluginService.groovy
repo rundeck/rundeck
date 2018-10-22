@@ -127,20 +127,6 @@ class PluginService {
      * @param name
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
-    def Map<String, Object> getPluginDynamicProperties(String name, String service) {
-        def plugin = getPlugin(name, (Class) getPluginTypeByService(service))
-        if (!(plugin instanceof DynamicProperties)) {
-            return [:]
-        }
-        DynamicProperties dynamicProperties = (DynamicProperties) plugin
-        //TODO: load project/fwk
-        dynamicProperties.dynamicProperties(null)
-    }
-    /**
-     *
-     * @param name
-     * @return map containing [instance:(plugin instance), description: (map or Description), ]
-     */
     def DescribedPlugin getPluginDescriptor(String name, PluggableProviderService service) {
         def bean = rundeckPluginRegistry?.loadPluginDescriptorByName(name, service)
         if (bean != null) {
