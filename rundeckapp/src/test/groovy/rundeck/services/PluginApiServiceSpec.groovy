@@ -223,11 +223,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
 
     class FakePluginDescription implements Description {
-
-        @Override
-        String getName() {
-            return "fake"
-        }
+        String name = 'fake'
 
         @Override
         String getTitle() {

@@ -94,4 +94,60 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         rp2.name == "password"
         rp2.apiData
     }
+
+    def "plugin service descriptions"() {
+        given:
+            controller.pluginService = Mock(PluginService)
+            controller.uiPluginService = Mock(UiPluginService)
+            def fakePluginDesc1 = new PluginApiServiceSpec.FakePluginDescription()
+            fakePluginDesc1.name = 'XYZfake'
+            def fakePluginDesc2 = new PluginApiServiceSpec.FakePluginDescription()
+            fakePluginDesc2.name = 'ABCfake'
+            request.addHeader('x-rundeck-ajax', 'true')
+            params.service = svcName
+            messageSource.addMessage("framework.service.${svcName}.label", Locale.ENGLISH, "framework.service.${svcName}.label")
+            messageSource.addMessage("framework.service.${svcName}.label.indexed", Locale.ENGLISH, "framework.service.${svcName}.label.indexed")
+            messageSource.addMessage("framework.service.${svcName}.label.plural", Locale.ENGLISH, "framework.service.${svcName}.label.plural")
+            messageSource.addMessage("framework.service.${svcName}.add.title", Locale.ENGLISH, "framework.service.${svcName}.add.title")
+        when:
+            def result = controller.pluginServiceDescriptions(svcName)
+        then:
+            1 * controller.pluginService.getPluginTypeByService(svcName) >> NotificationPlugin
+            1 * controller.pluginService.listPlugins(NotificationPlugin) >> [
+                XYZfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc1, 'XYZfake'),
+                ABCfake: new DescribedPlugin<NotificationPlugin>(null, fakePluginDesc2, 'ABCfake')
+            ]
+            1 * controller.uiPluginService.getPluginMessage(svcName, 'ABCfake', 'plugin.title', _, _) >>
+            'ABC title'
+            1 * controller.uiPluginService.getPluginMessage(svcName, 'ABCfake', 'plugin.description', _, _) >>
+            'ABC desc'
+            1 * controller.uiPluginService.getPluginMessage(svcName, 'XYZfake', 'plugin.title', _, _) >>
+            'XYZ title'
+            1 * controller.uiPluginService.getPluginMessage(svcName, 'XYZfake', 'plugin.description', _, _) >>
+            'XYZ desc'
+            def json = response.json
+            json.service == svcName
+            json.descriptions
+            json.descriptions == [
+                [
+                    name       : 'ABCfake',
+                    title      : 'ABC title',
+                    description: 'ABC desc'
+                ],
+                [
+                    name       : 'XYZfake',
+                    title      : 'XYZ title',
+                    description: 'XYZ desc'
+                ],
+            ]
+            json.labels
+            json.labels.singular == 'framework.service.Notification.label'
+            json.labels.indexed == 'framework.service.Notification.label.indexed'
+            json.labels.plural == 'framework.service.Notification.label.plural'
+            json.labels.addButton == 'framework.service.Notification.add.title'
+
+        where:
+            svcName        | _
+            'Notification' | _
+    }
 }

@@ -256,6 +256,66 @@ class PluginController extends ControllerBase {
             delegate.errors decomp
         }
     }
+
+    /**
+     * List the installed plugin descriptions for a selected Service name
+     * @param project
+     * @param service
+     * @return
+     */
+    def pluginServiceDescriptions(String service) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['service'])) {
+            return
+        }
+        Class serviceType
+        try {
+            serviceType = pluginService.getPluginTypeByService(service)
+        } catch (IllegalArgumentException e) {
+            return render(
+                [message: g.message(code: 'request.error.notfound.title')] as JSON,
+                status: NOT_FOUND,
+                contentType: 'application/json'
+            )
+        }
+        def descriptions = pluginService.listPlugins(serviceType)
+        def data = descriptions.values()?.description?.sort { a, b -> a.name <=> b.name }?.collect {
+            [
+                name       : it.name,
+                title      : uiPluginService.getPluginMessage(
+                    service,
+                    it.name,
+                    'plugin.title',
+                    it.title ?: it.name,
+                    RequestContextUtils.getLocale(request)
+                ),
+                description: uiPluginService.getPluginMessage(
+                    service,
+                    it.name,
+                    'plugin.description',
+                    it.description,
+                    RequestContextUtils.getLocale(request)
+                )
+            ]
+        }
+        def singularMessage = message(code: "framework.service.${service}.label", default: service)?.toString()
+        render(contentType: 'application/json') {
+            delegate.service service
+            delegate.descriptions data
+            labels(
+                singular: singularMessage,
+                indexed: message(
+                    code: "framework.service.${service}.label.indexed",
+                    default: singularMessage + ' {0}'
+                ),
+                plural: message(code: "framework.service.${service}.label.plural", default: singularMessage),
+                addButton: message(code: "framework.service.${service}.add.title", default: 'Add ' + singularMessage),
+                )
+        }
+    }
+
     private long toEpoch(String dateString) {
         PLUGIN_DATE_FMT.parse(dateString).time
     }
