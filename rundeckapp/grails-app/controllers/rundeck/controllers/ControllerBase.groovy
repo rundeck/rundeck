@@ -242,4 +242,29 @@ class ControllerBase {
         }
         invalid
     }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParam(String name) {
+        if (!params[name]) {
+            renderErrorView("parameter $name is required")
+            return true
+        }
+        return false
+    }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParams(List<String> names) {
+        def missing=names.findAll{!params[it]}
+        if (missing) {
+            renderErrorView("parameters required: $missing")
+            return true
+        }
+        return false
+    }
 }

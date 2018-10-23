@@ -77,6 +77,52 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
     }
 
+    def "plugin Property Map"() {
+        given:
+            service.uiPluginService = Mock(UiPluginService)
+            def prop = PropertyBuilder.builder()
+                                      .name("prop1")
+                                      .title("Property 1")
+                                      .description("A fake property for the fake plugin")
+                                      .required(true)
+                                      .defaultValue("alpha")
+                                      .values("alpha", "beta", "gamma")
+                                      .type(Property.Type.Select)
+                                      .build()
+
+            service.metaClass.getLocale = { -> Locale.ENGLISH }
+        when:
+            def result = service.pluginPropertyMap('svc', 'provider', prop)
+        then:
+            result != null
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
+                "property.prop1.title",
+                _,
+                _
+            ) >> 'title.message'
+            1 * service.uiPluginService.getPluginMessage(
+                'svc',
+                'provider',
+                "property.prop1.defaultValue",
+                _,
+                _
+            ) >> 'defaultValue.message'
+            result.name == 'prop1'
+            result.desc == 'A fake property for the fake plugin'
+            result.title == 'title.message'
+            result.defaultValue == 'alpha'
+            result.staticTextDefaultValue == 'defaultValue.message'
+            result.required == true
+            result.type == 'Select'
+            result.allowed == ['alpha', 'beta', 'gamma']
+            result.selectLabels == null
+            result.scope == null
+            result.options == [:]
+
+    }
+
     class FakePluginMetadata implements PluginMetadata {
 
         @Override
@@ -177,11 +223,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
 
     class FakePluginDescription implements Description {
-
-        @Override
-        String getName() {
-            return "fake"
-        }
+        String name = 'fake'
 
         @Override
         String getTitle() {

@@ -14,7 +14,9 @@ import rundeck.services.UiPluginService
 
 import java.text.SimpleDateFormat
 
-class PluginController {
+import static org.springframework.http.HttpStatus.NOT_FOUND
+
+class PluginController extends ControllerBase {
     UiPluginService uiPluginService
     PluginService pluginService
     PluginApiService pluginApiService
@@ -172,39 +174,146 @@ class PluginController {
         render(tersePluginList as JSON)
     }
 
+    /**
+     *  detail about a plugin artifact, provider, and properties
+     * @return
+     */
     def pluginDetail() {
         String pluginName = params.name
         String service = params.service
         String appVer = servletContext.getAttribute('version.number')
 
-        def desc = pluginService.getPluginDescriptor(pluginName,ServiceTypes.getPluginType(service))?.description
+        def desc = pluginService.getPluginDescriptor(pluginName, service)?.description
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }
+        }
+        if (!desc) {
+            response.status = 404
+            renderErrorView('Not found')
+            return
         }
         def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,pluginName)
         def terseDesc = [:]
         terseDesc.id = meta?.pluginId ?: desc.name.encodeAsSHA256().substring(0,12)
         terseDesc.name = desc.name
-        terseDesc.title = desc.title
-        terseDesc.desc = desc.description
+        terseDesc.title = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            "plugin.title",
+            desc.title,
+            RequestContextUtils.getLocale(request)
+        )
+        terseDesc.desc = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            'plugin.description',
+            desc.description,
+            RequestContextUtils.getLocale(request)
+        )
         terseDesc.ver = meta?.pluginFileVersion ?: appVer
         terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
         terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
         terseDesc.license = meta?.pluginLicense ?: 'unspecified'
         terseDesc.sourceLink = meta?.pluginSourceLink
         terseDesc.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
-        terseDesc.props = desc.properties.collect { prop ->
-            [name: prop.name,
-             desc: prop.description,
-             title: prop.title,
-             defaultValue: prop.defaultValue,
-             required: prop.required,
-             allowed: prop.selectValues
-            ]
-        }
+
+        terseDesc.props = pluginApiService.pluginPropertiesAsMap(
+            service,
+            pluginName,
+            desc.properties
+        )
 
         render(terseDesc as JSON)
+    }
+
+
+    /**
+     * Validate plugin config input.  JSON body: '{"config": {}}', response:
+     * '{"valid":true/false,"errors":{..}}'
+     * @param service
+     * @param name
+     * @return
+     */
+    def pluginPropertiesValidateAjax(String service, String name) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['project', 'service', 'name'])) {
+            return
+        }
+        Map config = [:]
+        if (request.method == 'POST' && request.format == 'json') {
+            config = request.JSON.config
+        }
+        config = ParamsUtil.cleanMap(config)
+        def validation = pluginService.validatePluginConfig(service, name, config)
+        def errorsMap = validation.report.errors
+        def decomp = ParamsUtil.decomposeMap(errorsMap)
+//        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")
+        render(contentType: 'application/json') {
+            valid validation.valid
+            delegate.errors decomp
+        }
+    }
+
+    /**
+     * List the installed plugin descriptions for a selected Service name
+     * @param project
+     * @param service
+     * @return
+     */
+    def pluginServiceDescriptions(String service) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['service'])) {
+            return
+        }
+        Class serviceType
+        try {
+            serviceType = pluginService.getPluginTypeByService(service)
+        } catch (IllegalArgumentException e) {
+            return render(
+                [message: g.message(code: 'request.error.notfound.title')] as JSON,
+                status: NOT_FOUND,
+                contentType: 'application/json'
+            )
+        }
+        def descriptions = pluginService.listPlugins(serviceType)
+        def data = descriptions.values()?.description?.sort { a, b -> a.name <=> b.name }?.collect {
+            [
+                name       : it.name,
+                title      : uiPluginService.getPluginMessage(
+                    service,
+                    it.name,
+                    'plugin.title',
+                    it.title ?: it.name,
+                    RequestContextUtils.getLocale(request)
+                ),
+                description: uiPluginService.getPluginMessage(
+                    service,
+                    it.name,
+                    'plugin.description',
+                    it.description,
+                    RequestContextUtils.getLocale(request)
+                )
+            ]
+        }
+        def singularMessage = message(code: "framework.service.${service}.label", default: service)?.toString()
+        render(contentType: 'application/json') {
+            delegate.service service
+            delegate.descriptions data
+            labels(
+                singular: singularMessage,
+                indexed: message(
+                    code: "framework.service.${service}.label.indexed",
+                    default: singularMessage + ' {0}'
+                ),
+                plural: message(code: "framework.service.${service}.label.plural", default: singularMessage),
+                addButton: message(code: "framework.service.${service}.add.title", default: 'Add ' + singularMessage),
+                )
+        }
     }
 
     private long toEpoch(String dateString) {

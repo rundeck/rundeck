@@ -123,4 +123,37 @@ class UiPluginServiceSpec extends Specification {
                 [a: 'b']                                                                       |
                 'i18n/svc.plug.messages_fr.properties'
     }
+
+    void "get plugin message"() {
+        given:
+            service.initCaches()
+            service.pluginService = Mock(PluginService)
+            service.rundeckPluginRegistry = Mock(PluginRegistry)
+
+        when:
+            def result = service.getPluginMessage('svc', 'plug', 'a', 'somemsg', locale)
+        then:
+            2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
+            _ * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
+                listResources() >> reslist
+                if (expectpath) {
+                    openResourceStreamFor(expectpath) >> {
+                        return new ByteArrayInputStream(data.bytes)
+                    }
+                }
+            }
+            result == expected
+
+        where:
+            locale | data                                     | expected
+            null   | 'b=b\n'                                  | 'somemsg'
+            null   | 'a=b\n'                                  | 'b'
+            null   | 'svc.a=c\na=b\n'                         | 'c'
+            null   | 'plug.a=d\nsvc.a=c\na=b\n'               | 'd'
+            null   | 'svc.plug.a=e\nplug.a=d\nsvc.a=c\na=b\n' | 'e'
+
+            reslist = ['i18n/messages.properties']
+            expectpath = 'i18n/messages.properties'
+    }
 }
+
