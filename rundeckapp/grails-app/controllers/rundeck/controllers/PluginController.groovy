@@ -14,7 +14,9 @@ import rundeck.services.UiPluginService
 
 import java.text.SimpleDateFormat
 
-class PluginController {
+import static org.springframework.http.HttpStatus.NOT_FOUND
+
+class PluginController extends ControllerBase {
     UiPluginService uiPluginService
     PluginService pluginService
     PluginApiService pluginApiService
@@ -172,37 +174,55 @@ class PluginController {
         render(tersePluginList as JSON)
     }
 
+    /**
+     *  detail about a plugin artifact, provider, and properties
+     * @return
+     */
     def pluginDetail() {
         String pluginName = params.name
         String service = params.service
         String appVer = servletContext.getAttribute('version.number')
 
-        def desc = pluginService.getPluginDescriptor(pluginName,ServiceTypes.getPluginType(service))?.description
+        def desc = pluginService.getPluginDescriptor(pluginName, service)?.description
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc.listDescriptions().find { it.name == pluginName }
+        }
+        if (!desc) {
+            response.status = 404
+            renderErrorView('Not found')
+            return
         }
         def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,pluginName)
         def terseDesc = [:]
         terseDesc.id = meta?.pluginId ?: desc.name.encodeAsSHA256().substring(0,12)
         terseDesc.name = desc.name
-        terseDesc.title = desc.title
-        terseDesc.desc = desc.description
+        terseDesc.title = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            "plugin.title",
+            desc.title,
+            RequestContextUtils.getLocale(request)
+        )
+        terseDesc.desc = uiPluginService.getPluginMessage(
+            service,
+            pluginName,
+            'plugin.description',
+            desc.description,
+            RequestContextUtils.getLocale(request)
+        )
         terseDesc.ver = meta?.pluginFileVersion ?: appVer
         terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
         terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
         terseDesc.license = meta?.pluginLicense ?: 'unspecified'
         terseDesc.sourceLink = meta?.pluginSourceLink
         terseDesc.thirdPartyDependencies = meta?.pluginThirdPartyDependencies
-        terseDesc.props = desc.properties.collect { prop ->
-            [name: prop.name,
-             desc: prop.description,
-             title: prop.title,
-             defaultValue: prop.defaultValue,
-             required: prop.required,
-             allowed: prop.selectValues
-            ]
-        }
+
+        terseDesc.props = pluginApiService.pluginPropertiesAsMap(
+            service,
+            pluginName,
+            desc.properties
+        )
 
         render(terseDesc as JSON)
     }
