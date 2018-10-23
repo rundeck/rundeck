@@ -28,13 +28,21 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         fwksvc.getRundeckFramework() >> fwk
         fwk.getPluginManager() >> Mock(ServiceProviderLoader)
         controller.frameworkService = fwksvc
+        controller.uiPluginService = Mock(UiPluginService)
+        controller.pluginApiService = Mock(PluginApiService)
 
         when:
         def fakePluginDesc = new PluginApiServiceSpec.FakePluginDescription()
         params.name = "fake"
         params.service = "Notification"
-        1 * controller.pluginService.getPluginDescriptor("fake", NotificationPlugin.class) >> new DescribedPlugin(null,fakePluginDesc,"fake")
+        1 * controller.pluginService.getPluginDescriptor("fake", 'Notification') >> new DescribedPlugin(null,fakePluginDesc,"fake")
         1 * controller.frameworkService.rundeckFramework.pluginManager.getPluginMetadata(_,_) >> new PluginApiServiceSpec.FakePluginMetadata()
+        1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.title','Fake Plugin',_)>>'plugin.title'
+        1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.description','This is the best fake plugin',_)>>'plugin.description'
+        1* controller.pluginApiService.pluginPropertiesAsMap('Notification','fake',_)>>[
+                [name:'prop1',apiData:true],
+                [name:'password',apiData:true]
+        ]
         controller.pluginDetail()
         def rj = response.json
         def rp1 = rj.props.find { it.name == "prop1" }
@@ -43,19 +51,11 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         rj.id == fakePluginId
         rj.name == "fake"
-        rj.title == "Fake Plugin"
-        rj.desc == "This is the best fake plugin"
+        rj.title == 'plugin.title'
+        rj.desc == 'plugin.description'
         rp1.name == "prop1"
-        rp1.title == "Property 1"
-        rp1.desc == "A fake property for the fake plugin"
-        rp1.defaultValue == "alpha"
-        rp1.required == true
-        rp1.allowed == ["alpha","beta","gamma"]
+        rp1.apiData
         rp2.name == "password"
-        rp2.title == "Password"
-        rp2.desc == "The password to the fake plugin"
-        rp2.defaultValue == null
-        rp2.required == false
-        rp2.allowed == null
+        rp2.apiData
     }
 }
