@@ -5,8 +5,10 @@ import grails.converters.JSON
 import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.web.util.WebUtils
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.controllers.TokenVerifierController
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -25,6 +27,8 @@ class ApiVersionInterceptor {
     MetricRegistry metricRegistry
     def messageSource
     def apiService
+    @Autowired
+    TokenVerifierController tokenVerifierController
 
     ApiVersionInterceptor() {
         match(uri: '/api/**')
@@ -60,14 +64,24 @@ class ApiVersionInterceptor {
     }
 
     boolean before() {
-        request[REQUEST_TIME]=System.currentTimeMillis()
-        request[METRIC_TIMER]= timer()
-        if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
-            log.debug("Api access request disallowed for ${request.forwardURI}")
-            response.sendError(HttpServletResponse.SC_NOT_FOUND)
-            return false
-        }else if(null==session.api_access_allowed){
-            session.api_access_allowed=true
+        request[REQUEST_TIME] = System.currentTimeMillis()
+        request[METRIC_TIMER] = timer()
+        boolean validToken = false
+        if (params[SynchronizerTokensHolder.TOKEN_KEY]) {
+            tokenVerifierController.withForm {
+                tokenVerifierController.refreshTokens()
+                validToken = true
+            }
+        }
+
+        if (!validToken) {
+            if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
+                log.debug("Api access request disallowed for ${request.forwardURI}")
+                response.sendError(HttpServletResponse.SC_NOT_FOUND)
+                return false
+            } else if (null == session.api_access_allowed) {
+                session.api_access_allowed = true
+            }
         }
         if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
             request.is_allowed_api_request = true
@@ -113,4 +127,5 @@ class ApiVersionInterceptor {
     private com.codahale.metrics.Timer.Context timer() {
         metricRegistry.timer(MetricRegistry.name('rundeck.api.requests', 'requestTimer')).time()
     }
+
 }
