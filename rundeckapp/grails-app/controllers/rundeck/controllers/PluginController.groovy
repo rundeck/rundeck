@@ -227,6 +227,35 @@ class PluginController extends ControllerBase {
         render(terseDesc as JSON)
     }
 
+
+    /**
+     * Validate plugin config input.  JSON body: '{"config": {}}', response:
+     * '{"valid":true/false,"errors":{..}}'
+     * @param service
+     * @param name
+     * @return
+     */
+    def pluginPropertiesValidateAjax(String service, String name) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['project', 'service', 'name'])) {
+            return
+        }
+        Map config = [:]
+        if (request.method == 'POST' && request.format == 'json') {
+            config = request.JSON.config
+        }
+        config = ParamsUtil.cleanMap(config)
+        def validation = pluginService.validatePluginConfig(service, name, config)
+        def errorsMap = validation.report.errors
+        def decomp = ParamsUtil.decomposeMap(errorsMap)
+//        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")
+        render(contentType: 'application/json') {
+            valid validation.valid
+            delegate.errors decomp
+        }
+    }
     private long toEpoch(String dateString) {
         PLUGIN_DATE_FMT.parse(dateString).time
     }

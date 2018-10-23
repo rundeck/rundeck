@@ -2,12 +2,16 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.testing.web.controllers.ControllerUnitTest
 import rundeck.services.FrameworkService
+import rundeck.services.PluginApiService
 import rundeck.services.PluginApiServiceSpec
 import rundeck.services.PluginService
+import rundeck.services.UiPluginService
 import spock.lang.Specification
 
 class PluginControllerSpec extends Specification implements ControllerUnitTest<PluginController> {
@@ -18,6 +22,38 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     }
 
     def cleanup() {
+    }
+    static final String TEST_JSON1 = '''{"config":{"actions._indexes":"dbd3da9c_1","actions._type":"list",
+"actions.entry[dbd3da9c_1].type":"testaction1","actions.entry[dbd3da9c_1].config.actions._type":"embedded",
+"actions.entry[dbd3da9c_1].config.actions.type":"","actions.entry[dbd3da9c_1].config.actions.config.stringvalue":"asdf",
+"actions.entry[dbd3da9c_1].config.actions":"{stringvalue=asdf}"},"report":{}}'''
+
+    void "validate"() {
+        given:
+            request.content = json.bytes
+            request.contentType = 'application/json'
+            request.method = 'POST'
+            request.addHeader('x-rundeck-ajax', 'true')
+            def project = 'Aproject'
+            def service = 'AService'
+            def name = 'someproperty'
+            params.project = project
+            params.service = service
+            params.name = name
+            controller.pluginService = Mock(PluginService)
+        when:
+            def result = controller.pluginPropertiesValidateAjax( service, name)
+        then:
+            1 * controller.pluginService.validatePluginConfig(service, name, expected/*, project*/) >>
+            new ValidatedPlugin(valid: true, report: Validator.buildReport().build())
+            0 * controller.pluginService._(*_)
+            response.status == 200
+            response.json != null
+            response.json.valid == true
+        where:
+            json            | expected
+            '{"config":{}}' | [:]
+            TEST_JSON1      | [actions: [[type: 'testaction1', config: [actions: [stringvalue: 'asdf']]]]]
     }
 
     void "plugin detail"() {
