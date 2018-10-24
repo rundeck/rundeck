@@ -67,10 +67,21 @@ class ApiVersionInterceptor {
         request[REQUEST_TIME] = System.currentTimeMillis()
         request[METRIC_TIMER] = timer()
         boolean validToken = false
-        if (params[SynchronizerTokensHolder.TOKEN_KEY]) {
-            tokenVerifierController.withForm {
-                tokenVerifierController.refreshTokens()
+        log.debug(params[SynchronizerTokensHolder.TOKEN_KEY])
+
+        def tokenKey = params[SynchronizerTokensHolder.TOKEN_KEY]
+        def tokenUri = params[SynchronizerTokensHolder.TOKEN_URI]
+
+        if (tokenKey && tokenUri) {
+            log.debug('TOken!!')
+            def tokenStore = SynchronizerTokensHolder.store(session)
+            if (tokenStore.isValid(
+                tokenUri,
+                tokenKey
+            )) {
                 validToken = true
+                tokenVerifierController.refreshTokens()
+                tokenStore.resetToken(tokenUri, tokenKey)
             }
         }
 
