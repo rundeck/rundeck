@@ -28,7 +28,7 @@
 
 <script>
 import _ from 'lodash'
-import xhrRequestsHelper from '@/utilities/xhrRequests'
+import Trellis from '@rundeck/ui-trellis'
 import TourServices from '@/components/tour/services'
 
 export default {
@@ -112,21 +112,23 @@ export default {
     previousStep () {
       if (!this.stepIndex <= 0) {
         this.stepIndex--
-        xhrRequestsHelper.setFilterPref('activeTourStep', this.stepIndex)
-        this.setProgress()
-        this.removeIndicator()
+        Trellis.FilterPrefs.setFilterPref('activeTourStep', this.stepIndex).then(() => {
+          this.setProgress()
+          this.removeIndicator()
+        })
       }
     },
     nextStep () {
       let step = this.tour.steps[this.stepIndex]
       if (this.stepIndex !== this.tour.steps.length - 1) {
         this.stepIndex++
-        xhrRequestsHelper.setFilterPref('activeTourStep', this.stepIndex)
-        this.setProgress()
-        this.removeIndicator()
-        if (step.nextStepUrl) {
-          window.location.replace(`${window._rundeck.rdBase}${step.nextStepUrl}`)
-        }
+        Trellis.FilterPrefs.setFilterPref('activeTourStep', this.stepIndex).then(() => {
+          this.setProgress()
+          this.removeIndicator()
+          if (step.nextStepUrl) {
+            window.location.replace(`${window._rundeck.rdBase}${step.nextStepUrl}`)
+          }
+        })
       }
     },
     setProgress () {
@@ -255,6 +257,7 @@ body.tour-open {
 <style scoped lang="scss">
 .step-content {
   margin-bottom: 1em;
+  word-break: break-word;
 }
 .step-title {
   margin-top: 0;

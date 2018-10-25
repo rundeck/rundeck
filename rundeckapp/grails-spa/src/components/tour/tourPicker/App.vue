@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import xhrRequestsHelper from '@/utilities/xhrRequests'
+import Trellis from '@rundeck/ui-trellis'
 import TourServices from '@/components/tour/services'
 
 export default {
@@ -35,9 +35,10 @@ export default {
   },
   methods: {
     startTour: function (tour) {
-      this.eventBus.$emit('tourSelected', tour)
-      this.tourSelectionModal = false
-      xhrRequestsHelper.setFilterPref('activeTour', tour.key)
+      Trellis.FilterPrefs.setFilterPref('activeTour', tour.key).then(() => {
+        this.eventBus.$emit('tourSelected', tour)
+        this.tourSelectionModal = false
+      })
     },
     openTourSelectorModal: function () {
       if (this.tours.length) {
