@@ -149,9 +149,7 @@ export default {
 
       setTimeout(() => {
         let images = document.getElementById('tour-display').querySelectorAll('img')
-        console.log('images', images)
         _.map(images, (element) => {
-          console.log('adding')
           element.addEventListener('click', this.openImageModal)
         })
       })

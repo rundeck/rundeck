@@ -18,11 +18,13 @@ export const getTours = () => {
             })
             .catch(function (error) {
               console.log(error)
-              // reject(error)
             })
         })
         resolve(tours)
       }
+    }).catch(function (error) {
+      reject(new Error(error))
+      console.log('Tour manifest not found')
     })
   })
 }
