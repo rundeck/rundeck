@@ -66,34 +66,31 @@ class ApiVersionInterceptor {
     boolean before() {
         request[REQUEST_TIME] = System.currentTimeMillis()
         request[METRIC_TIMER] = timer()
-        boolean validToken = false
-        log.debug(params[SynchronizerTokensHolder.TOKEN_KEY])
-
-        def tokenKey = params[SynchronizerTokensHolder.TOKEN_KEY]
-        def tokenUri = params[SynchronizerTokensHolder.TOKEN_URI]
-
-        if (tokenKey && tokenUri) {
-            log.debug('TOken!!')
-            def tokenStore = SynchronizerTokensHolder.store(session)
-            if (tokenStore.isValid(
-                tokenUri,
-                tokenKey
-            )) {
-                validToken = true
-                tokenVerifierController.refreshTokens()
-                tokenStore.resetToken(tokenUri, tokenKey)
+        
+        def apiGuiRequest = request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed
+        if (request.method != 'GET') {
+            boolean validToken = false
+            if (params[SynchronizerTokensHolder.TOKEN_KEY]) {
+                tokenVerifierController.withForm {
+                    tokenVerifierController.refreshTokens()
+                    validToken = true
+                }
             }
-        }
 
-        if (!validToken) {
-            if (request.remoteUser && null != session.api_access_allowed && !session.api_access_allowed) {
-                log.debug("Api access request disallowed for ${request.forwardURI}")
-                response.sendError(HttpServletResponse.SC_NOT_FOUND)
-                return false
-            } else if (null == session.api_access_allowed) {
-                session.api_access_allowed = true
+            if (!validToken) {
+                if (apiGuiRequest) {
+                    log.debug("Api access request disallowed for ${request.forwardURI}")
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND)
+                    return false
+                } else if (null == session.api_access_allowed) {
+                    session.api_access_allowed = true
+                }
             }
+        } else if (apiGuiRequest && request.getHeader('x-rundeck-ajax') != 'true') {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND)
+            return false
         }
+        
         if (controllerName == 'api' && allowed_actions.contains(actionName) || request.api_version) {
             request.is_allowed_api_request = true
             return true
