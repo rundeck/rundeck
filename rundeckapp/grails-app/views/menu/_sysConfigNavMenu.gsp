@@ -76,6 +76,13 @@
   </li>
   <li>
     <g:link controller="menu" action="plugins">
+      <g:message code="gui.menu.InstalledPlugins"/>
+    </g:link>
+  </li>
+</g:if>
+<g:if test="${pluginRead && repoEnabled != 'true'}">
+  <li>
+    <g:link controller="menu" action="plugins">
       <g:message code="gui.menu.ListPlugins"/>
     </g:link>
   </li>
