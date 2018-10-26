@@ -83,7 +83,7 @@ var FollowControl = Class.create({
     initialize: function(eid,elem,params){
         this.executionId=eid;
         this.targetElement=elem;
-        Object.extend(this,{
+        jQuery.extend(this,{
             appendtop: {value: false, changed: false},
             collapseCtx: {value: true, changed: false},
             showFinalLine: {value: true, changed: false},
@@ -100,7 +100,7 @@ var FollowControl = Class.create({
             execData: {},
             appLinks: {}
         });
-        Object.extend(this,params);
+        jQuery.extend(this,params);
         this.refresh= this.tailmode;
         this._init();
         if(this.dobind){

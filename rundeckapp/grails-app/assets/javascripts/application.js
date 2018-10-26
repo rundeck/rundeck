@@ -567,7 +567,7 @@ function foreachPage(offset,max,total, options, func){
     if(typeof(options)=='function'){
         func=options;
     }else if (options) {
-        Object.extend(opts, options);
+        jQuery.extend(opts, options);
     }
     var pages = totalPageCount(max,total);
     var curpage = Math.floor(offset / max) + 1;
@@ -680,7 +680,7 @@ function paginate(elem,offset,total,max,options){
         ulCss:'pagination pagination-sm'
     };
     if(options){
-        Object.extend(opts,options);
+        jQuery.extend(opts,options);
     }
     if(!opts.baseUrl){
         return;
@@ -1136,9 +1136,9 @@ function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callb
     if (!project) {
         return;
     }
-    var params = Object.extend({view: 'embed', declarenone: true, fullresults: true}, data);
+    var params = jQuery.extend({view: 'embed', declarenone: true, fullresults: true}, data);
     if (null !== inparams) {
-        Object.extend(params, inparams);
+        jQuery.extend(params, inparams);
     }
     if (localnodeonly) {
         params.localNodeOnly = 'true';

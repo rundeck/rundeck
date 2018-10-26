@@ -46,12 +46,12 @@ var HistoryControl = Class.create({
         this.histLoading = true;
         
         var params = {};//{projFilter:this.project}
-        Object.extend(params, this.defaultParams);
+        jQuery.extend(params, this.defaultParams);
         if (this.hiliteSince) {
             params.hiliteSince = this.hiliteSince;
         }
         if(xparams){
-            Object.extend(params,xparams);
+            jQuery.extend(params,xparams);
         }
         jQuery('#' + this.target).load(
             _genUrl(appLinks.reportsEventsFragment, params),

@@ -34,7 +34,7 @@ function initJobNodeFilters(filterParams){
         appLinks.frameworkAdhoc,
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,
-        Object.extend(filterParams,{
+        jQuery.extend(filterParams,{
             project: pageParams.project,
             paging:false,
             emptyMode: 'localnode',

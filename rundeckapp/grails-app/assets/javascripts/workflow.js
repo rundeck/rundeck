@@ -73,7 +73,7 @@ var RDWorkflow = Class.create({
     workflow:null,
     initialize: function(wf,params){
         this.workflow=wf;
-        Object.extend(this, params);
+        jQuery.extend(this, params);
     },
     contextType: function (ctx) {
         if(typeof(ctx)=='string'){
