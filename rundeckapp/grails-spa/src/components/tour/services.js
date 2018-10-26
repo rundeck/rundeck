@@ -1,6 +1,6 @@
 import axios from 'axios'
 import _ from 'lodash'
-import xhrRequestsHelper from '@/utilities/xhrRequests'
+import Trellis from '@rundeck/ui-trellis'
 import TourConstants from '@/components/tour/constants'
 
 export const getTours = () => {
@@ -18,11 +18,13 @@ export const getTours = () => {
             })
             .catch(function (error) {
               console.log(error)
-              // reject(error)
             })
         })
         resolve(tours)
       }
+    }).catch(function (error) {
+      reject(new Error(error))
+      console.log('Tour manifest not found')
     })
   })
 }
@@ -43,10 +45,9 @@ export const getTour = (tourKey) => {
 }
 
 export const unsetTour = () => {
-  console.log('unset tour')
   return new Promise((resolve) => {
-    xhrRequestsHelper.unsetFilterPref('activeTour').then(() => {
-      xhrRequestsHelper.unsetFilterPref('activeTourStep').then(() => {
+    Trellis.FilterPrefs.unsetFilterPref('activeTour').then(() => {
+      Trellis.FilterPrefs.unsetFilterPref('activeTourStep').then(() => {
         resolve()
       })
     })
