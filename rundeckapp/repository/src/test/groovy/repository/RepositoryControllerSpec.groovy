@@ -41,13 +41,12 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "list artifacts no repo specified and only 1 repo defined"() {
+    void "list artifacts no repo specified"() {
         given:
         controller.pluginApiService.installedPluginIds = [PluginUtils.generateShaIdFromName("InstalledPlugin")]
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.listArtifactsByRepository(_,_,_) >> testArtifactList("private")
+        1 * client.listArtifacts(_,_) >> testArtifactList("private")
         controller.listArtifacts()
 
         then:
@@ -75,10 +74,9 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "search artifacts no repo specified and only 1 repo defined"() {
+    void "search artifacts"() {
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
         1 * client.searchManifests(_) >> testSearch("private")
         params.searchTerm = "artifactType: script-plugin"
         controller.searchArtifacts()
@@ -92,13 +90,12 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "list installed artifacts no repo specified and only 1 repo defined"() {
+    void "list installed artifacts"() {
         given:
         def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
         controller.pluginApiService.installedPluginIds = [installedPluginId]
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
         1 * client.listArtifacts(_,_) >> testArtifactList("private")
         controller.listInstalledArtifacts()
 
