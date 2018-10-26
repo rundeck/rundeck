@@ -16,7 +16,6 @@
 
 //= require noconflict
 //= require_self
-//= require menus
 //= require versionIdentity
 //= require actionHandlers
 
