@@ -224,26 +224,6 @@ var Expander = {
     }
 };
 
-
-if(Prototype.Version=="1.6.0.2"  && Prototype.Browser.IE){
-    //change getStyle function to prevent JS exception in IE
-    Object.extend(Element,{
-        getStyle_Orig:Element.Methods.getStyle
-    });
-    Object.extend(Element,
-    {
-        getStyle : function(element, style) {
-
-            element = $(element);
-            if((element==document || element==document.body)&& style=='position'){
-                return null;
-            }else{
-                return Element.getStyle_Orig(element,style);
-            }
-       }
-   });
-}
-
 function _isIe(version) {
     return Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
 }
@@ -1144,23 +1124,6 @@ var _setLoading = function (element, text) {
         element.appendChild(sp);
     }
     return element;
-};
-
-var _tooltipElemSelector = null;
-var _tooltiptimer = null;
-var _tooltipelem = null;
-
-var tooltipMouseOut = function () {
-    _tooltiptimer = null;
-    _tooltipelem = null;
-    if (_tooltipElemSelector) {
-        $$('.tooltipcontent').each(Element.hide);
-        $$(_tooltipElemSelector).each(function (e) {
-            $(e).removeClassName('glow');
-            $(e).removeClassName('active');
-            $(e).removeAttribute('data-rdtooltip');
-        });
-    }
 };
 
 Element.addMethods({
