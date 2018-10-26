@@ -225,7 +225,7 @@ var Expander = {
 };
 
 function _isIe(version) {
-    return Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
+    return typeof(Prototype) === 'object' && Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
 }
 
 
@@ -852,7 +852,7 @@ function _initAffix(){
 }
 /** fix placeholder text for IE8 */
 function _initIEPlaceholder(){
-    if(!Prototype.Browser.IE){
+    if (typeof(Prototype) !== 'object' || !Prototype.Browser.IE) {
         return;
     }
     jQuery('[placeholder]').focus(function () {
@@ -1126,9 +1126,9 @@ var _setLoading = function (element, text) {
     return element;
 };
 
-Element.addMethods({
-    loading: _setLoading
-});
+if (typeof(Prototype) === 'object') {
+    Element.addMethods({loading: _setLoading});
+}
 /** node filter preview code */
 
 function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callback,errcallback) {
