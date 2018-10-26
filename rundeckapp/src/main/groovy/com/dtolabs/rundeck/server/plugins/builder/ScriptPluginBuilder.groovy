@@ -102,7 +102,6 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
      * @param newValue
      */
     def propertyMissing(String property, Object newValue) {
-        println "set prop: $property to $newValue"
         if (property in ['title', 'description', 'version', 'url', 'author', 'date','rundeckPluginVersion','rundeckVersion','license','thirdPartyDependencies','sourceLink'] && newValue instanceof String) {
             pluginAttributes[property] = newValue
             if (property == 'title') {
