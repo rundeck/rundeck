@@ -75,6 +75,18 @@ class ApiVersionInterceptor {
                     tokenVerifierController.refreshTokens()
                     validToken = true
                 }
+                if (!validToken) {
+                    apiService.renderErrorFormat(response,
+                        [
+                                status: HttpServletResponse.SC_UNAUTHORIZED,
+                                code: 'api.error.item.unauthorized',
+                                args: [request.method, request.forwardURI]
+                        ]
+                    )
+                    AA_TimerInterceptor.afterRequest(request, response, session)
+                    logDetail(request, params.toString(), actionName, controllerName, 'api.error.item.unauthorized')
+                    return false
+                }
             }
 
             if (!validToken) {
