@@ -57,7 +57,14 @@
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
     <asset:javascript src="perfect-scrollbar.js"/>
     <asset:javascript src="bootstrap-all.js"/>
+    <g:set var="includePrototypeJs" value="${true}" scope="page"/>
+
+    <g:ifPageProperty name="meta.skipPrototypeJs">
+        <g:set var="includePrototypeJs" value="${false}" scope="page"/>
+    </g:ifPageProperty>
+    <g:if test="${includePrototypeJs}">
     <asset:javascript src="prototype-bundle.js"/>
+    </g:if>
     <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
