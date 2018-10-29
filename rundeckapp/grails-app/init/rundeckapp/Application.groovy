@@ -36,17 +36,10 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
         }
         rundeckConfig.appVersion = environment.getProperty("info.app.version")
 
-        RundeckInitializer initilizer = new RundeckInitializer(rundeckConfig)
-        initilizer.initialize()
+        initialize()
         loadJdbcDrivers()
-        CoreConfigurationPropertiesLoader rundeckConfigPropertyFileLoader = new DefaultRundeckConfigPropertyLoader()
-        ServiceLoader<CoreConfigurationPropertiesLoader> rundeckPropertyLoaders = ServiceLoader.load(
-                CoreConfigurationPropertiesLoader
-        )
-        rundeckPropertyLoaders.each { loader ->
-            rundeckConfigPropertyFileLoader = loader
-        }
-        Properties rundeckConfigs = rundeckConfigPropertyFileLoader.loadProperties()
+        Properties rundeckConfigs = loadRundeckPropertyFile()
+
         rundeckConfigs.setProperty("rundeck.useJaas", rundeckConfig.useJaas.toString())
         rundeckConfigs.setProperty(
                 "rundeck.security.fileUserDataSource",
@@ -60,6 +53,24 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
                 new PropertiesPropertySource(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, rundeckConfigs)
         )
         loadGroovyRundeckConfigIfExists(environment)
+    }
+
+    void initialize() {
+        new RundeckInitializer(rundeckConfig).initialize()
+    }
+
+    def loadRundeckPropertyFile() {
+        if (!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION).endsWith(".groovy")) {
+            CoreConfigurationPropertiesLoader rundeckConfigPropertyFileLoader = new DefaultRundeckConfigPropertyLoader()
+            ServiceLoader<CoreConfigurationPropertiesLoader> rundeckPropertyLoaders = ServiceLoader.load(
+                    CoreConfigurationPropertiesLoader
+            )
+            rundeckPropertyLoaders.each { loader ->
+                rundeckConfigPropertyFileLoader = loader
+            }
+            return rundeckConfigPropertyFileLoader.loadProperties()
+        }
+        return new Properties()
     }
 
     def loadJdbcDrivers() {
