@@ -806,7 +806,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     protected List createExecutionLogMDCdata(Execution e) {
         def state = getExecutionState(e)
-        def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project']
+        def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project', 'argString']
         def jobProps = ['uuid', 'jobName', 'groupPath']
         Map mdcprops=[:]
         execprops.each { k ->
