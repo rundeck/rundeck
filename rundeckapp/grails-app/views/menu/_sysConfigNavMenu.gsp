@@ -30,6 +30,14 @@
             context: 'application'
     )}"/>
 
+<g:set var="pluginRead" value="${auth.resourceAllowedTest(
+        type: 'resource',
+        kind: 'plugin',
+        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
+        any: true,
+        context: 'application'
+)}"/>
+
 <ul class="dropdown-menu">
   <li class="dropdown-header">System</li>
   <li>
@@ -60,18 +68,25 @@
     </li>
   </g:if>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
-<g:if test="${repoEnabled == 'true'}">
+<g:if test="${pluginRead && repoEnabled == 'true'}">
   <li>
     <g:link controller="artifact" action="index">
       <g:message code="gui.menu.FindPlugins"/>
     </g:link>
   </li>
+  <li>
+    <g:link controller="menu" action="plugins">
+      <g:message code="gui.menu.InstalledPlugins"/>
+    </g:link>
+  </li>
 </g:if>
+<g:if test="${pluginRead && repoEnabled != 'true'}">
   <li>
     <g:link controller="menu" action="plugins">
       <g:message code="gui.menu.ListPlugins"/>
     </g:link>
   </li>
+</g:if>
   <li>
     <g:link controller="passwordUtility" action="index">
       <g:message code="gui.menu.PasswordUtility"/>

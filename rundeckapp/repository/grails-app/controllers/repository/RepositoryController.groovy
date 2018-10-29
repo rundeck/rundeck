@@ -1,6 +1,7 @@
 package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
 import com.rundeck.repository.manifest.search.ManifestSearch
 import grails.converters.JSON
@@ -26,7 +27,7 @@ class RepositoryController {
         }
 
         def listArtifacts() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"read")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -36,7 +37,7 @@ class RepositoryController {
                 return
             }
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
-            def artifacts = repoClient.listArtifacts(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+            def artifacts = repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
                     it.installed = installedPluginIds.contains(it.id)
@@ -47,7 +48,7 @@ class RepositoryController {
         }
 
         def searchArtifacts() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"read")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -84,7 +85,7 @@ class RepositoryController {
         }
 
         def listInstalledArtifacts() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"read")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -105,7 +106,7 @@ class RepositoryController {
         }
 
         def uploadArtifact() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"install")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -135,7 +136,7 @@ class RepositoryController {
 
 
         def installArtifact() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"install")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -164,7 +165,7 @@ class RepositoryController {
         }
 
         def uninstallArtifact() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"uninstall")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -202,7 +203,7 @@ class RepositoryController {
         }
 
         def syncInstalledArtifactsToRundeck() {
-            if (!authorized()) {
+            if (!authorized(PLUGIN_RESOURCE,"install")) {
                 specifyUnauthorizedError()
                 return
             }
@@ -230,9 +231,14 @@ class RepositoryController {
         }
 
         @PackageScope
-        boolean authorized() {
+        boolean authorized(Map resourceType = ADMIN_RESOURCE,String action = "admin") {
+            List authorizedActions = ["admin"]
+            if(action != "admin") authorizedActions.add(action)
             AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-            frameworkService.authorizeApplicationResourceType(authContext,"system",
-                                                              "admin")
+            frameworkService.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)
+
         }
+
+        private static Map PLUGIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("plugin"))
+        private static Map ADMIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("admin"))
 }

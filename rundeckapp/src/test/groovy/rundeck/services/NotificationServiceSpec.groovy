@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.plugins.configuration.RuntimePropertyResolver
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
 import grails.test.mixin.Mock
@@ -182,5 +183,48 @@ class NotificationServiceSpec extends Specification {
         then:
         result
         1 * service.mailService.sendMail(_)
+    }
+
+    def "custom plugin notification"() {
+        given:
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'HttpNotificationPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+
+
+        def config = [method:null, url:null]
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
+
     }
 }

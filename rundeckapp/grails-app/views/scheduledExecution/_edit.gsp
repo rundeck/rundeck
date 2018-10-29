@@ -1029,13 +1029,6 @@ function getCurSEID(){
         function pageinit(){
             _enableWFDragdrop();
 
-            Event.observe(document,'keydown',function(evt){
-                //escape key hides popup bubble
-                if(evt.keyCode===27 ){
-                    tooltipMouseOut();
-                }
-                return true;
-            },false);
             setupUndoRedoControls();
 
             //define NodeFilters mvvm for the job

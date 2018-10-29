@@ -2,6 +2,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.PluginUtils
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -11,16 +13,18 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
 
+import javax.servlet.ServletContext
 import java.text.SimpleDateFormat
 
 class PluginApiService {
 
-    def servletContext
-    def grailsApplication
-    def frameworkService
+    ServletContext servletContext
+    GrailsApplication grailsApplication
+    FrameworkService frameworkService
     def messageSource
     UiPluginService uiPluginService
     NotificationService notificationService
@@ -38,7 +42,7 @@ class PluginApiService {
 
         //framework level plugin descriptions
         //TODO: use pluginService.listPlugins for these services/plugintypes
-        def pluginDescs= [
+        Map<String,List<Description>> pluginDescs= [
                 framework.getNodeExecutorService(),
                 framework.getFileCopierService(),
                 framework.getNodeStepExecutorService(),
@@ -103,13 +107,13 @@ class PluginApiService {
         }.sort { a, b -> a.name <=> b.name }
 
 
-        def uiPluginProfiles = [:]
+        Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
         pluginDescs.each { svc, list ->
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
-                def filename = uiPluginProfiles[provIdent].metadata?.filename
+                def filename = uiPluginProfiles[provIdent].get('metadata')?.filename
                 if(filename){
                     if(!loadedFileNameMap[filename]){
                         loadedFileNameMap[filename]=[]
@@ -216,6 +220,48 @@ class PluginApiService {
             ]
         }
         tersePluginList
+    }
+
+    List<Map> pluginPropertiesAsMap(String service, String pluginName, List<Property> properties) {
+        properties.collect { Property prop ->
+            pluginPropertyMap(service, pluginName, prop)
+        }
+    }
+
+    /**
+     * Return map representation of plugin property definition
+     * @param service service
+     * @param pluginName provider
+     * @param prop property
+     * @param locale locale
+     * @return
+     */
+    Map pluginPropertyMap(String service, String pluginName, Property prop) {
+        [
+            name                  : prop.name,
+            desc                  : prop.description,
+            title                 : uiPluginService.getPluginMessage(
+                service,
+                pluginName,
+                "property.${prop.name}.title",
+                prop.title ?: prop.name,
+                locale
+            ),
+            defaultValue          : prop.defaultValue,
+            staticTextDefaultValue: uiPluginService.getPluginMessage(
+                service,
+                pluginName,
+                "property.${prop.name}.defaultValue",
+                prop.defaultValue ?: '',
+                locale
+            ),
+            required              : prop.required,
+            type                  : prop.type.toString(),
+            allowed               : prop.selectValues,
+            selectLabels          : prop.selectLabels,
+            scope                 : prop.scope?.toString(),
+            options               : prop.renderingOptions
+        ]
     }
 
     def listInstalledPluginIds() {

@@ -35,6 +35,7 @@ configurations {
     pluginFiles {
         transitive = false
     }
+    spa //dependency on grails-spa
 }
 
 repositories {
@@ -58,6 +59,7 @@ dependencies {
                 project(':plugins:job-state-plugin'),
                 project(':plugins:flow-control-plugin'),
                 project(':plugins:jasypt-encryption-plugin'),
+                project(':plugins:object-store-plugin'),
                 project(':plugins:orchestrator-plugin'),
                 project(':plugins:git-plugin'),
                 project(':plugins:source-refresh-plugin'),
@@ -66,6 +68,8 @@ dependencies {
                 "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
                 "com.github.rundeck-plugins:py-winrm-plugin:1.0.7",
                 "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
+
+    spa project(path: ':rundeck:grails-spa', configuration: 'spa')
 
     // Rundeck project dependencies.
     compile project(':core')
@@ -106,6 +110,7 @@ dependencies {
     //provided "org.springframework.boot:spring-boot-starter-tomcat"
     provided("org.springframework.boot:spring-boot-starter-jetty") {
         exclude(group:"org.eclipse.jetty", module:"jetty-util")
+        exclude(group:"org.eclipse.jetty", module:"jetty-security")
     }
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
@@ -124,6 +129,7 @@ dependencies {
     compile "com.google.code.gson:gson:2.8.2"
     compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
+    compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
     compile 'org.grails.plugins:spring-security-core:3.2.1'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
@@ -146,7 +152,8 @@ dependencies {
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
     runtime "org.slf4j:jcl-over-slf4j:1.7.25"
-    assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.10'
+    assets 'com.bertramlabs.plugins:less-asset-pipeline:3.0.5'
+    assets 'com.bertramlabs.plugins:sass-asset-pipeline:3.0.5'
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"
     testCompile "org.grails.plugins:geb"
@@ -268,8 +275,9 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
 }
 
 task copySpa(type: Copy) {
-    dependsOn ':rundeck:grails-spa:buildSpa'
-    from project(':rundeck:grails-spa').buildDir
+    from( configurations.spa){
+        include('provided/**')
+    }
     into "$projectDir/grails-app/assets"
     outputs.dir "$projectDir/grails-app/assets/provided"
 }

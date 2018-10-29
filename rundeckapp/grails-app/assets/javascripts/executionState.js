@@ -37,7 +37,7 @@ var FlowState = Class.create({
     initialize: function (eid, elem, params) {
         this.executionId = eid;
         this.targetElement = elem;
-        Object.extend(this, params);
+        jQuery.extend(this, params);
     },
     withOrWithoutMatch: function (root, selector, func, wofunc) {
         var elem = $(root).down(selector);
@@ -166,7 +166,7 @@ var FlowState = Class.create({
         var state = this;
         var params= {nodename: node};
         if(stepctx){
-            Object.extend(params,{stepctx:stepctx});
+            jQuery.extend(params,{stepctx:stepctx});
         }
         var ctrl = new FollowControl(null,null,{
             parentElement:targetElement,

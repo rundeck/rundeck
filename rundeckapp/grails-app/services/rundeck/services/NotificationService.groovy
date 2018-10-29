@@ -396,6 +396,12 @@ public class NotificationService implements ApplicationContextAware{
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
 
+                    config = config.each {
+                        if(!it.value){
+                            it.value=null
+                        }
+                    }
+
                     didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
                 }else{
                     log.error("Unsupported notification type: " + n.type);

@@ -87,6 +87,12 @@
         <div class="${valueColTypeSplitB}">
             <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
             <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+            <g:if test="${dynamicProperties instanceof java.util.Map}">
+                <g:set var="propSelectLabels" value="${dynamicProperties}"/>
+                <g:set var="selectValues" value="${dynamicProperties.collect {
+                    it.key
+                }}"/>
+            </g:if>
             <g:set var="propSelectValues" value="${selectValues.collect {
                 [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
             }}"/>
@@ -102,6 +108,12 @@
     <g:else>
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
         <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+        <g:if test="${dynamicProperties instanceof java.util.Map}">
+            <g:set var="propSelectLabels" value="${dynamicProperties}"/>
+            <g:set var="selectValues" value="${dynamicProperties.collect {
+                it.key
+            }}"/>
+        </g:if>
         <g:set var="propSelectValues"
                value="${selectValues.collect { [key: it, value: stepplugin.messageText(
                    service: service,

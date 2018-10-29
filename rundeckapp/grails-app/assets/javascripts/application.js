@@ -16,7 +16,6 @@
 
 //= require noconflict
 //= require_self
-//= require menus
 //= require versionIdentity
 //= require actionHandlers
 
@@ -225,28 +224,8 @@ var Expander = {
     }
 };
 
-
-if(Prototype.Version=="1.6.0.2"  && Prototype.Browser.IE){
-    //change getStyle function to prevent JS exception in IE
-    Object.extend(Element,{
-        getStyle_Orig:Element.Methods.getStyle
-    });
-    Object.extend(Element,
-    {
-        getStyle : function(element, style) {
-
-            element = $(element);
-            if((element==document || element==document.body)&& style=='position'){
-                return null;
-            }else{
-                return Element.getStyle_Orig(element,style);
-            }
-       }
-   });
-}
-
 function _isIe(version) {
-    return Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
+    return typeof(Prototype) === 'object' && Prototype.Browser.IE && $$('html')[0].hasClassName('ie' + version);
 }
 
 
@@ -588,7 +567,7 @@ function foreachPage(offset,max,total, options, func){
     if(typeof(options)=='function'){
         func=options;
     }else if (options) {
-        Object.extend(opts, options);
+        jQuery.extend(opts, options);
     }
     var pages = totalPageCount(max,total);
     var curpage = Math.floor(offset / max) + 1;
@@ -701,7 +680,7 @@ function paginate(elem,offset,total,max,options){
         ulCss:'pagination pagination-sm'
     };
     if(options){
-        Object.extend(opts,options);
+        jQuery.extend(opts,options);
     }
     if(!opts.baseUrl){
         return;
@@ -873,7 +852,7 @@ function _initAffix(){
 }
 /** fix placeholder text for IE8 */
 function _initIEPlaceholder(){
-    if(!Prototype.Browser.IE){
+    if (typeof(Prototype) !== 'object' || !Prototype.Browser.IE) {
         return;
     }
     jQuery('[placeholder]').focus(function () {
@@ -1147,26 +1126,9 @@ var _setLoading = function (element, text) {
     return element;
 };
 
-var _tooltipElemSelector = null;
-var _tooltiptimer = null;
-var _tooltipelem = null;
-
-var tooltipMouseOut = function () {
-    _tooltiptimer = null;
-    _tooltipelem = null;
-    if (_tooltipElemSelector) {
-        $$('.tooltipcontent').each(Element.hide);
-        $$(_tooltipElemSelector).each(function (e) {
-            $(e).removeClassName('glow');
-            $(e).removeClassName('active');
-            $(e).removeAttribute('data-rdtooltip');
-        });
-    }
-};
-
-Element.addMethods({
-    loading: _setLoading
-});
+if (typeof(Prototype) === 'object') {
+    Element.addMethods({loading: _setLoading});
+}
 /** node filter preview code */
 
 function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callback,errcallback) {
@@ -1174,9 +1136,9 @@ function _updateMatchedNodes(data, elem, project, localnodeonly, inparams, callb
     if (!project) {
         return;
     }
-    var params = Object.extend({view: 'embed', declarenone: true, fullresults: true}, data);
+    var params = jQuery.extend({view: 'embed', declarenone: true, fullresults: true}, data);
     if (null !== inparams) {
-        Object.extend(params, inparams);
+        jQuery.extend(params, inparams);
     }
     if (localnodeonly) {
         params.localNodeOnly = 'true';

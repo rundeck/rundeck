@@ -402,7 +402,10 @@ class StorageController extends ControllerBase{
         }
         Map<String, String> map = [
                 (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
-                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength.toString() //if the value of content length is not cast to a string here,
+                                                                                        // Groovy allows the value into the map as an int or long
+                                                                                        // which will cause a type cast exception later if the contentLength
+                                                                                        // is accessed later in the storage chain
         ]
         try {
             if(hasResource){

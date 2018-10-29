@@ -47,7 +47,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
         when:
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.listArtifacts(_,_,_) >> testArtifactList("private")
+        1 * client.listArtifactsByRepository(_,_,_) >> testArtifactList("private")
         controller.listArtifacts()
 
         then:
@@ -58,6 +58,20 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
         installed.installed == true
         def available = response.json[0].results.find { it.name == "Available Plugin" }
         available.installed == false
+
+    }
+
+    void "list artifacts without correct permission"() {
+        given:
+        controller.frameworkService = new FakeFrameworkService(false)
+
+        when:
+        0 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
+        0 * client.listArtifacts(_,_,_) >> testArtifactList("private")
+        controller.listArtifacts()
+
+        then:
+        response.json == [error:"You are not authorized to perform this action"]
 
     }
 
@@ -193,10 +207,18 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     }
 
     class FakeFrameworkService {
+
+        boolean authorized = true
+
+        FakeFrameworkService() {}
+        FakeFrameworkService(authorized) {
+            this.authorized = authorized
+        }
+
         AuthContext getAuthContextForSubject(def subject) {
             return [] as AuthContext
         }
-        boolean authorizeApplicationResourceType(def authCtx, def type, def action) { return true }
+        boolean authorizeApplicationResourceAny(def authCtx, def type, def action) { return authorized }
     }
     class FakePluginApiService {
         def installedPluginIds = []

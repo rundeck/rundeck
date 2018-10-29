@@ -815,7 +815,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             basedata.maxShown=self.maxShown();
         }
 
-        var params = Object.extend(basedata, filterdata);
+        var params = jQuery.extend(basedata, filterdata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';
         }else if(self.emptyMode()=='blank' && !self.filter()){
