@@ -92,6 +92,7 @@
         %>
         }
     </script>
+    <g:jsonToken id="web_ui_token" url="${request.forwardURI}"/>
     <g:ifPageProperty name="meta.tabpage">
         <g:set var="_metaTabPage" value="${g.pageProperty(name: 'meta.tabpage')}" scope="page"/>
     </g:ifPageProperty>
