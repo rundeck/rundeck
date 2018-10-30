@@ -58,6 +58,8 @@ class ApiVersionInterceptorSpec extends Specification implements InterceptorUnit
         apiMarshallerRegistrar.registerApiMarshallers()
         when:
             params[SynchronizerTokensHolder.TOKEN_KEY] = "token"
+            params[SynchronizerTokensHolder.TOKEN_URI] = "/"
+            request.method = "POST"
             params.api_version = ApiVersions.API_CURRENT_VERSION.toString()
             interceptor.tokenVerifierController = tkController
             boolean allowed = interceptor.before()
