@@ -6,19 +6,11 @@ import TourConstants from '@/components/tour/constants'
 export const getTours = () => {
   let tours = []
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     axios.get(TourConstants.tourManifestUrl).then((response) => {
       if (response && response.data && response.data.length) {
-        _.each(response.data, (tour) => {
-          axios.get(`${TourConstants.tourUrl}${tour}.json`)
-            .then((tourResponse) => {
-              if (tourResponse && tourResponse.data) {
-                tours.push(tourResponse.data)
-              }
-            })
-            .catch(function (error) {
-              console.log(error)
-            })
+        _.each(response.data, (tourLoader) => {
+          tours.push(tourLoader)
         })
         resolve(tours)
       }
@@ -29,9 +21,9 @@ export const getTours = () => {
   })
 }
 
-export const getTour = (tourKey) => {
+export const getTour = (tourLoader, tourKey) => {
   return new Promise((resolve, reject) => {
-    axios.get(`${TourConstants.tourUrl}${tourKey}.json`)
+    axios.get(`${TourConstants.tourUrl}${tourLoader}/${tourKey}.json`)
       .then((response) => {
         if (response && response.data) {
           resolve(response.data)

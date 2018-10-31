@@ -5,11 +5,14 @@
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
-        <div class="list-group">
-          <a class="list-group-item" href="#" v-for="tour in tours" v-bind:key="tour.$index" @click="startTour(tour)">
-            {{tour.name}}
-            <span v-if="tour.author">by {{tour.author}}</span>
-          </a>
+        <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
+          <div class="loader-header header">{{tourLoader.loader}}</div>
+          <div class="list-group indent">
+            <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tourLoader.loader,tour)">
+              {{tour.name}}
+              <span v-if="tour.author">by {{tour.author}}</span>
+            </a>
+          </div>
         </div>
         <div slot="footer">
           <btn @click="tourSelectionModal=false">Close</btn>
@@ -34,10 +37,12 @@ export default {
     }
   },
   methods: {
-    startTour: function (tour) {
-      Trellis.FilterPrefs.setFilterPref('activeTour', tour.key).then(() => {
-        this.eventBus.$emit('tourSelected', tour)
-        this.tourSelectionModal = false
+    startTour: function (tourLoader, tourEntry) {
+      TourServices.getTour(tourLoader, tourEntry.key).then((tour) => {
+        Trellis.FilterPrefs.setFilterPref('activeTour', tourLoader + ':' + tourEntry.key).then(() => {
+          this.eventBus.$emit('tourSelected', tour)
+          this.tourSelectionModal = false
+        })
       })
     },
     openTourSelectorModal: function () {
@@ -60,4 +65,10 @@ a.list-group-item {
   padding: 10px 15px !important;
   margin-bottom: -1px !important;
 }
+.loader-header {
+  font-weight: bold;
+  text-decoration: underline;
+  margin-bottom: 3px;
+}
+.indent { padding-left: 3px; }
 </style>

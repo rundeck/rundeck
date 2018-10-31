@@ -15,10 +15,7 @@
  */
 package com.dtolabs.rundeck.plugins.tours;
 
-import java.util.List;
-
-public interface Tour {
+public interface TourEntry {
     String getKey();
     String getName();
-    List<? extends TourStep> getSteps();
 }

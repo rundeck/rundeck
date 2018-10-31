@@ -16,7 +16,7 @@
 package com.dtolabs.rundeck.server.plugins.tours
 
 import com.dtolabs.rundeck.plugins.tours.Tour
-import com.dtolabs.rundeck.plugins.tours.TourLoader
+import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.plugins.tours.TourManifest
 import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.OkHttpClient
@@ -24,7 +24,7 @@ import okhttp3.Request
 import okhttp3.Response
 
 
-class HttpTourLoader implements TourLoader {
+class HttpTourLoader implements TourLoaderPlugin {
 
     private ObjectMapper mapper = new ObjectMapper()
     private OkHttpClient client = new OkHttpClient();

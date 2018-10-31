@@ -18,5 +18,5 @@ package com.dtolabs.rundeck.plugins.tours;
 import java.util.List;
 
 public interface TourManifest {
-    List<String> getTours();
+    List<? extends TourEntry> getTours();
 }

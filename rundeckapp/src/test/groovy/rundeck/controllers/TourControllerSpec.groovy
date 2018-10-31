@@ -11,8 +11,5 @@ class TourControllerSpec extends Specification implements ControllerUnitTest<Tou
     def cleanup() {
     }
 
-    void "test something"() {
-        expect:"fix me"
-            true == false
-    }
+
 }

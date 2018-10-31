@@ -396,6 +396,8 @@ class RundeckInitializer {
                                                                                config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
             System.setProperty(PROP_LOGINMODULE_NAME, config.runtimeConfiguration.getProperty(PROP_LOGINMODULE_NAME));
         }
+        //Set runtime environment
+        System.setProperty("rd.rtenv",Environment.current.name.toLowerCase())
     }
 
     void initConfigurations() {

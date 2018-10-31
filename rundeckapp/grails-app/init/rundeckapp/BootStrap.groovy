@@ -88,6 +88,7 @@ class BootStrap {
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
 
          servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
+         System.setProperty("rd.app.ident",grailsApplication.metadata['build.ident'])
          log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
          if(Boolean.getBoolean('rundeck.bootstrap.build.info')){
              def buildInfo=grailsApplication.metadata.findAll{it.key.startsWith('build.core.git.')}
@@ -201,6 +202,7 @@ class BootStrap {
                  servletContext.setAttribute("SERVER_UUID", serverNodeUUID)
                  log.warn("Cluster mode enabled, this server's UUID: ${serverNodeUUID}")
              }
+             System.setProperty("rd.server.uuid",properties.getProperty("rundeck.server.uuid"))
              //auth tokens stored in file
              def tokensfile = properties.getProperty("rundeck.tokens.file")
              if (tokensfile) {

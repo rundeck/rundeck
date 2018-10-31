@@ -15,7 +15,7 @@
  */
 package com.dtolabs.rundeck.plugins.tours;
 
-public interface TourLoader {
+public interface TourLoaderPlugin {
     String getLoaderName();
     TourManifest getTourManifest();
     Tour getTour(String tourId);
