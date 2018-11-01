@@ -396,7 +396,7 @@ public class NotificationService implements ApplicationContextAware{
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
 
-                    config = config.each {
+                    config = config?.each {
                         if(!it.value){
                             it.value=null
                         }
