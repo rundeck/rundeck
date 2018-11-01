@@ -1158,9 +1158,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     boolean canReadStoragePassword(AuthContext authContext, String storagePath, boolean failIfMissing){
+
         def keystore = storageService.storageTreeWithContext(authContext)
         try {
-            return keystore.readPassword(storagePath)!=null
+            return keystore.hasPassword(storagePath)
         } catch (StorageException e) {
             if (failIfMissing) {
                 throw new ExecutionServiceException(
@@ -1170,6 +1171,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             return false;
         }
+
+        return false
     }
 
     /**
@@ -1201,29 +1204,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def keystore = storageService.storageTreeWithContext(authContext)
             found?.each {
                 def defStoragePath = it.defaultStoragePath
+                def exists = false
+                def failReason =""
                 try {
                     //search and replace ${option.
                     if (args && defStoragePath?.contains('${option.')) {
                         defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
                     }
-                    def password = keystore.readPassword(defStoragePath)
-                    if (it.secureExposed) {
-                        secureOptsExposed[it.name] = new String(password)
-                    } else {
-                        secureOpts[it.name] = new String(password)
+                    if(keystore.hasPassword(defStoragePath)){
+                        def password = keystore.readPassword(defStoragePath)
+                        if (it.secureExposed) {
+                            secureOptsExposed[it.name] = new String(password)
+                        } else {
+                            secureOpts[it.name] = new String(password)
+                        }
+                        exists = true
+                    }else{
+                        failReason="path: ${defStoragePath} not found"
                     }
+
                 } catch (StorageException e) {
+                    failReason = e.message
+                }
+
+                if(!exists){
                     if (it.required && failIfMissingRequired) {
                         throw new ExecutionServiceException(
                                 "Required option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${e.message}",
-                                e
+                                        failReason
                         )
                     } else {
                         log.warn(
-                                "Required option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${e.message}",
-                                e
+                                "for the Option '${it.name}', default value could not be loaded from key storage " +
+                                        failReason
                         )
                     }
                 }
@@ -2479,7 +2492,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                         invalidOpt opt, lookupMessage(
                                 "domain.Option.validation.required.storageDefault.reason",
-                                [opt.name, opt.defaultStoragePath, e1.cause.message]
+                                [opt.name, opt.defaultStoragePath, e1.message]
 
                         )
                         return
