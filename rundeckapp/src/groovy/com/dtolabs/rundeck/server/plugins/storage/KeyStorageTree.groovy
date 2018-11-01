@@ -110,4 +110,31 @@ interface KeyStorageTree extends StorageTree {
      */
     byte[] readPrivateKey(String path)
 
+
+    /**
+     *
+     * @param path path
+     * @return boolean
+     *
+     * @throws WrongContentType if not the right content type
+     */
+    boolean hasPassword(String path)
+
+    /**
+     *
+     * @param path path
+     * @return boolean
+     *
+     * @throws WrongContentType if not the right content type
+     */
+    boolean hasPrivateKey(String path)
+
+    /**
+     *
+     * @param path path
+     * @return boolean
+     *
+     * @throws WrongContentType if not the right content type
+     */
+    boolean hasPublicKey(String path)
 }

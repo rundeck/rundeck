@@ -1206,12 +1206,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (args && defStoragePath?.contains('${option.')) {
                         defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
                     }
-                    def password = keystore.readPassword(defStoragePath)
-                    if (it.secureExposed) {
-                        secureOptsExposed[it.name] = new String(password)
-                    } else {
-                        secureOpts[it.name] = new String(password)
+                    if(keystore.hasPassword(defStoragePath)){
+                        def password = keystore.readPassword(defStoragePath)
+                        if (it.secureExposed) {
+                            secureOptsExposed[it.name] = new String(password)
+                        } else {
+                            secureOpts[it.name] = new String(password)
+                        }
+                    }else{
+                        if (it.required && failIfMissingRequired) {
+                            throw new ExecutionServiceException(
+                                    "Required option '${it.name}' default value could not be loaded from key storage " +
+                                            "path: ${defStoragePath}: not found"
+                            )
+                        } else {
+                            log.warn(
+                                    "Required option '${it.name}' default value could not be loaded from key storage " +
+                                            "path: ${defStoragePath}: not found"
+                            )
+                        }
                     }
+
                 } catch (StorageException e) {
                     if (it.required && failIfMissingRequired) {
                         throw new ExecutionServiceException(

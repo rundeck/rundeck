@@ -733,9 +733,11 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.privateDataContext['option'] == ['test1': 'newtest1']
 
         service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            1 * hasPassword('keys/test1') >> true
             1 * readPassword('keys/test1') >> {
                 return 'newtest1'.bytes
             }
+            1 * hasPassword('keys/test2') >> true
             1 * readPassword('keys/test2') >> {
                 return 'newtest2'.bytes
             }
@@ -1268,6 +1270,13 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         1 * service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opt1') >> {
+                if (hasopt1) {
+                    return true
+                }else{
+                    return false
+                }
+            }
             readPassword('keys/opt1') >> {
                 if (hasopt1 && readopt1) {
                     return 'newopt1'.bytes
@@ -1285,6 +1294,13 @@ class ExecutionServiceSpec extends Specification {
                             StorageException.Event.READ,
                             PathUtil.asPath('keys/opt1')
                     )
+                }
+            }
+            hasPassword('keys/opt2') >> {
+                if (hasopt2) {
+                    return true
+                }else{
+                    return false
                 }
             }
             readPassword('keys/opt2') >> {
@@ -2405,14 +2421,26 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opta/pass')>>{
+                return true
+            }
             readPassword('keys/opta/pass') >> {
                     return 'pass1'.bytes
+            }
+            hasPassword('keys/optb/pass')>>{
+                return true
             }
             readPassword('keys/optb/pass') >> {
                     return 'pass2'.bytes
             }
+            hasPassword('keys/optc/pass')>>{
+                return true
+            }
             readPassword('keys/optc/pass') >> {
                     return 'pass3'.bytes
+            }
+            hasPassword(_) >> {
+                return true
             }
             readPassword(_) >> {
                 return ''.bytes
