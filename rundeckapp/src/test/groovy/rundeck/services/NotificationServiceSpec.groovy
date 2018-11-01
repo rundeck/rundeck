@@ -227,4 +227,40 @@ class NotificationServiceSpec extends Specification {
         1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
 
     }
+
+    def "custom plugin notification no configuration"() {
+        given:
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) 
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'SimpleNotificationPlugin'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+
+        when:
+        service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, null)
+
+    }
 }
