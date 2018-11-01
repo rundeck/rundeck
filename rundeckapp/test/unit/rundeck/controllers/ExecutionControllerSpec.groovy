@@ -292,6 +292,74 @@ class ExecutionControllerSpec extends Specification {
                 'class="ansi-mode-normal"></span>'
     }
 
+    def "tail exec output maxlines param"() {
+        given:
+            def assetTaglib = mockTagLib(AssetMethodTagLib)
+            assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+                assetBaseUrl(*_) >> ''
+                getAssetPath(*_) >> ''
+            }
+            Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+            )
+            e1.save() != null
+            controller.loggingService = Mock(LoggingService)
+            controller.configurationService = Mock(ConfigurationService)
+            controller.apiService = Mock(ApiService)
+            controller.frameworkService = Mock(FrameworkService)
+            def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+            reader.reader = new TestReader(
+                logs:
+                    [
+                        new DefaultLogEvent(
+                            eventType: LogUtil.EVENT_TYPE_LOG,
+                            datetime: new Date(),
+                            message: 'message1',
+                            metadata: [:],
+                            loglevel: LogLevel.NORMAL
+                        ),
+                        new DefaultLogEvent(
+                            eventType: LogUtil.EVENT_TYPE_LOG,
+                            datetime: new Date(),
+                            message: 'message2',
+                            metadata: [:],
+                            loglevel: LogLevel.NORMAL
+                        ),
+                        new DefaultLogEvent(
+                            eventType: LogUtil.EVENT_TYPE_LOG,
+                            datetime: new Date(),
+                            message: 'message3',
+                            metadata: [:],
+                            loglevel: LogLevel.NORMAL
+                        ),
+                    ]
+            )
+        when:
+            params.id = e1.id.toString()
+            params.maxlines = maxlines
+            request.addHeader('accept', 'text/plain')
+            controller.tailExecutionOutput()
+        then:
+            rescount == response.text.readLines().size()
+            1 * controller.apiService.requireExists(_, e1, _) >> true
+            1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+            1 * controller.frameworkService.authorizeProjectExecutionAny(*_) >> true
+            1 * controller.loggingService.getLogReader(e1) >> reader
+        where:
+            maxlines | rescount
+            '0'      | 3
+            '1'      | 1
+            '2'      | 2
+            '3'      | 3
+            '-1'     | 3
+            'asdf'   | 3
+    }
+
+
     /**
      * compacted=true, the log entries returned will include only the changed
      * attributes, and if only the "log" is changed, will produce only a string instead of a map.
