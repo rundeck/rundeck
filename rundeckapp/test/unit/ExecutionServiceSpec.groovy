@@ -1419,6 +1419,7 @@ class ExecutionServiceSpec extends Specification {
         )
         service.storageService = Mock(StorageService) {
             storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+                hasPassword('keys/opt1') >> true
                 readPassword('keys/opt1') >> 'asdf'.bytes
             }
         }
@@ -1898,7 +1899,7 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
-            1 * readPassword(path) >> {
+            1 * hasPassword(path) >> {
                 if (throwsexception) {
                     throw new StorageException(StorageException.Event.READ, PathUtil.asPath(path))
                 }
