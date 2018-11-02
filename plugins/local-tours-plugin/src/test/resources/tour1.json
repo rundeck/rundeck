@@ -1,0 +1,9 @@
+{
+  "name": "Tour 1",
+  "key": "tour1",
+  "steps": [{
+    "title": "Tour 1",
+    "content": "This is a great tour"
+  }
+  ]
+}

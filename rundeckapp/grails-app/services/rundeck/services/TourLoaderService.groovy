@@ -20,12 +20,12 @@ class TourLoaderService {
         return tourManifest
     }
 
-    TourManifest listTours(String loaderName) {
+    Map listTours(String loaderName) {
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderPluginProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
         tourLoader.tourManifest
     }
 
-    Tour getTour(String loaderName, String tourKey) {
+    Map getTour(String loaderName, String tourKey) {
         TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderPluginProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
         tourLoader.getTour(tourKey)
     }

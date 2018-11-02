@@ -1,0 +1,39 @@
+//version = '1.0.0'
+defaultTasks 'clean','build'
+apply plugin: 'java'
+apply plugin: 'groovy'
+apply plugin: 'idea'
+sourceCompatibility = 1.8
+ext.rundeckPluginVersion= '2.0'
+ext.rundeckVersion= '3.0.9'
+
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compile "org.slf4j:slf4j-api:1.7.25"
+
+    testCompile 'junit:junit:4.12'
+    testCompile "org.codehaus.groovy:groovy-all:2.4.15"
+    testCompile "org.spockframework:spock-core:1.0-groovy-2.4"
+}
+
+ext.pluginClassNames='com.rundeck.plugin.localtours.LocalTours'
+jar {
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-File-Version': version
+        attributes 'Rundeck-Plugin-Name': 'LocalTours'
+        attributes 'Rundeck-Plugin-Description': 'Loads Tours From Filesystem.'
+        attributes 'Rundeck-Plugin-Rundeck-Compatibility-Version': '3.x'
+        attributes 'Rundeck-Plugin-Tags': 'java,tour loader'
+        attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 'Rundeck-Plugin-Archive': 'true'
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4.1'
+}

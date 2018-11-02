@@ -8,10 +8,6 @@ class TourController {
 
     def index() { }
 
-    def listTourLoaders() {
-        render tourLoaderService.listTourLoaderPlugins() as JSON
-    }
-
     def listAllTourManifests() {
         render tourLoaderService.listAllTourManifests() as JSON
     }

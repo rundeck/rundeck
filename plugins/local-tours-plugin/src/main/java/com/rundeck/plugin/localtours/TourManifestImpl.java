@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.plugins.tours;
+package com.rundeck.plugin.localtours;
 
-import java.util.Map;
+import com.dtolabs.rundeck.plugins.tours.TourManifest;
 
-public interface TourLoaderPlugin {
-    String getLoaderName();
-    Map getTourManifest();
-    Map getTour(String tourId);
+import java.util.List;
+
+public class TourManifestImpl implements TourManifest {
+    private List<TourEntryImpl> tours;
+    @Override
+    public List<TourEntryImpl> getTours() {
+        return tours;
+    }
 }
