@@ -6,12 +6,14 @@
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
-          <div class="loader-header header">{{tourLoader.loader}}</div>
-          <div class="list-group indent">
-            <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)">
-              {{tour.name}}
-              <span v-if="tour.author">by {{tour.author}}</span>
-            </a>
+          <div class="panel panel-default" style="padding-bottom:1px;">
+            <div class="panel-heading"><strong>{{tourLoader.loader}}</strong></div>
+            <div class="list-group">
+              <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)">
+                {{tour.name}}
+                <span v-if="tour.author">by {{tour.author}}</span>
+              </a>
+            </div>
           </div>
         </div>
         <div slot="footer">
@@ -40,8 +42,12 @@ export default {
     startTour: function (tourLoader, tourEntry) {
       TourServices.getTour(tourLoader, tourEntry.key).then((tour) => {
         Trellis.FilterPrefs.setFilterPref('activeTour', tourLoader + ':' + tourEntry.key).then(() => {
-          this.eventBus.$emit('tourSelected', tour)
-          this.tourSelectionModal = false
+          if (tour.project) {
+            window.location.replace(`${window._rundeck.rdBase}project/${tour.project}/home`)
+          } else {
+            this.eventBus.$emit('tourSelected', tour)
+            this.tourSelectionModal = false
+          }
         })
       })
     },
@@ -65,10 +71,4 @@ a.list-group-item {
   padding: 10px 15px !important;
   margin-bottom: -1px !important;
 }
-.loader-header {
-  font-weight: bold;
-  text-decoration: underline;
-  margin-bottom: 3px;
-}
-.indent { padding-left: 3px; }
 </style>

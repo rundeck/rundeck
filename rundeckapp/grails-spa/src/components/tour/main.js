@@ -13,7 +13,8 @@ import {
 Vue.config.productionTip = false
 
 Vue.use(uiv)
-axios.get(TourConstants.tourManifestUrl).then((response) => {
+axios.get(TourConstants.tourManifestUrl)
+  .then((response) => {
     if (response && response.data && response.data.length) {
       // There are tours mentioned in the tour manifest
       // Thus, we're kicking off the apps
