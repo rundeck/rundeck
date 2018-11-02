@@ -301,7 +301,7 @@ class UrlMappings {
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/plugin/providers/$service"(controller: 'plugin', action: 'pluginServiceDescriptions')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
-        "/tour/loaders"(controller:'tour',action:'listTourLoaders')
+
         "/tour/listAll"(controller:'tour',action:'listAllTourManifests')
         "/tour/list/$loaderName"(controller:'tour',action:'list')
         "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')

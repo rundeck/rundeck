@@ -1,11 +1,10 @@
 package rundeck.controllers
 
 import grails.converters.JSON
-import rundeck.services.TourLoaderService
 
 class TourController {
 
-    TourLoaderService tourLoaderService
+    def tourLoaderService
 
     def index() { }
 

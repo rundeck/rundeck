@@ -8,7 +8,7 @@
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
           <div class="loader-header header">{{tourLoader.loader}}</div>
           <div class="list-group indent">
-            <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tourLoader.loader,tour)">
+            <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)">
               {{tour.name}}
               <span v-if="tour.author">by {{tour.author}}</span>
             </a>

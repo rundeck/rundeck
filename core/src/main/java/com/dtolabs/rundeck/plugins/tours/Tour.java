@@ -20,5 +20,6 @@ import java.util.List;
 public interface Tour {
     String getKey();
     String getName();
+    String getAuthor();
     List<? extends TourStep> getSteps();
 }

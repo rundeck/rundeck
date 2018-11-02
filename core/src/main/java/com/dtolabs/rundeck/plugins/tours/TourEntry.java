@@ -16,6 +16,8 @@
 package com.dtolabs.rundeck.plugins.tours;
 
 public interface TourEntry {
+    String getProvider();
     String getKey();
     String getName();
+    String getAuthor();
 }
