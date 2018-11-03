@@ -256,6 +256,12 @@ beans={
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
     }
+    /**
+     * the Tour loader plugin provider service
+     */
+    tourLoaderPluginProviderService(TourLoaderPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
     //alternately use ThreadPoolTaskExecutor ...
 //    nodeTaskExecutor(ThreadPoolTaskExecutor) {
 //        threadNamePrefix="NodeService-SourceLoader"

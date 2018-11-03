@@ -5,11 +5,16 @@
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
-        <div class="list-group">
-          <a class="list-group-item" href="#" v-for="tour in tours" v-bind:key="tour.$index" @click="startTour(tour)">
-            {{tour.name}}
-            <span v-if="tour.author">by {{tour.author}}</span>
-          </a>
+        <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
+          <div class="panel panel-default" style="padding-bottom:1px;">
+            <div class="panel-heading"><strong>{{tourLoader.loader}}</strong></div>
+            <div class="list-group">
+              <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)">
+                {{tour.name}}
+                <span v-if="tour.author">by {{tour.author}}</span>
+              </a>
+            </div>
+          </div>
         </div>
         <div slot="footer">
           <btn @click="tourSelectionModal=false">Close</btn>
@@ -34,10 +39,16 @@ export default {
     }
   },
   methods: {
-    startTour: function (tour) {
-      Trellis.FilterPrefs.setFilterPref('activeTour', tour.key).then(() => {
-        this.eventBus.$emit('tourSelected', tour)
-        this.tourSelectionModal = false
+    startTour: function (tourLoader, tourEntry) {
+      TourServices.getTour(tourLoader, tourEntry.key).then((tour) => {
+        Trellis.FilterPrefs.setFilterPref('activeTour', tourLoader + ':' + tourEntry.key).then(() => {
+          if (tour.project) {
+            window.location.replace(`${window._rundeck.rdBase}project/${tour.project}/home`)
+          } else {
+            this.eventBus.$emit('tourSelected', tour)
+            this.tourSelectionModal = false
+          }
+        })
       })
     },
     openTourSelectorModal: function () {

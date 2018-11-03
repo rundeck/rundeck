@@ -167,7 +167,8 @@ export default {
     })
 
     if (window._rundeck.activeTour && window._rundeck.activeTour !== '') {
-      TourServices.getTour(window._rundeck.activeTour).then((tour) => {
+      let tourParts = window._rundeck.activeTour.split(':')
+      TourServices.getTour(tourParts[0], tourParts[1]).then((tour) => {
         let tourStep = 0
         if (window._rundeck.activeTourStep) {
           if (Number.isInteger(parseInt(window._rundeck.activeTourStep))) {
