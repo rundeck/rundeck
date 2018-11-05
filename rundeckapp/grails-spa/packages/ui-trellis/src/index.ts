@@ -6,6 +6,6 @@ export * from './rundeckService'
 export {RundeckBrowser} from 'ts-rundeck'
 
 export default {
-  Tokens,
-  FilterPrefs
+  FilterPrefs,
+  Tokens
 }

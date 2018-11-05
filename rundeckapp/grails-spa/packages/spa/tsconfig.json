@@ -1,15 +1,20 @@
 {
     "compilerOptions": {
         "outDir": "dist",
-        "rootDir": "src",
+        "rootDir": "./src",
+        "baseUrl": "./src",
         "composite": true,
         "sourceMap": true,
         "strict": true,
+        "noImplicitAny": true,
         "module": "es2015",
         "moduleResolution": "node",
         "target": "es2015",
         "experimentalDecorators": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "paths": {
+            "@/*": ["*"],
+        },
     },
     "include": [
         "./src/**/*"
