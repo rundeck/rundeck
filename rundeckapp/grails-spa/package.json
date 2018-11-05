@@ -2,7 +2,7 @@
   "name": "root",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=production node build/build.js",
+    "dev": "bash scripts/run.sh",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
     "build": "./node_modules/.bin/lerna bootstrap && ./node_modules/.bin/tsc -b packages"
