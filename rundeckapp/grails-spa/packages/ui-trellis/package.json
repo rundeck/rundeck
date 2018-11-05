@@ -2,7 +2,8 @@
   "name": "@rundeck/ui-trellis",
   "version": "0.0.1",
   "description": "A collection of utilities used across various javascript applications and components.",
-  "main": "dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,7 +18,8 @@
   },
   "homepage": "https://github.com/rundeck/ui-trellis#readme",
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "ts-rundeck": "0.0.14"
   },
   "publishConfig": {
     "access": "public"

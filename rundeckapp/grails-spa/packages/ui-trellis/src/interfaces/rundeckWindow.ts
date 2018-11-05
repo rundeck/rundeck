@@ -1,3 +1,5 @@
+import {RundeckBrowser} from 'ts-rundeck'
+
 export interface RundeckContext {
     rdBase: string
     apiVersion: string
@@ -8,6 +10,7 @@ export interface RundeckContext {
     tokens: {
         [key:string]: RundeckToken
     }
+    rundeckClient: RundeckBrowser
 }
 
 export interface RundeckToken {

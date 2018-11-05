@@ -1,40 +1,45 @@
 'use strict'
+require('./check-versions')()
+
+console.log('foo')
+
+const ora = require('ora')
+const rm = require('rimraf')
 const path = require('path')
-const utils = require('./utils')
+const chalk = require('chalk')
+const webpack = require('webpack')
 const config = require('../config')
-// const vueLoaderConfig = require('./vue-loader.conf')
+const utils = require('./utils')
+
+const CopyWebpackPlugin = require('copy-webpack-plugin')
+const ExtractTextPlugin = require('mini-css-extract-plugin')
+const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
-const MiniCssExtractPlugin = require('mini-css-extract-plugin')
+
+const buildType = process.env.BUILD_TYPE || 'dev'
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
 }
 
-const createLintingRule = () => ({
-  test: /\.(js|vue)$/,
-  loader: 'eslint-loader',
-  enforce: 'pre',
-  include: [resolve('src'), resolve('test')],
-  options: {
-    formatter: require('eslint-friendly-formatter'),
-    emitWarning: !config.dev.showEslintErrorsInOverlay
-  }
-})
+const assetsRoot = path.resolve(__dirname, '../../../gradle-build/provided')
 
-module.exports = {
+const webpackConfig = {
+  devtool: '#source-map',
+
   context: path.resolve(__dirname, '../'),
+
   entry: {
     'components/central': './src/components/central/main.ts',
     'components/motd': './src/components/motd/main.js',
     'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
-    'pages/repository': './src/pages/repository/main.js'
+    'pages/repository': './src/pages/repository/main.js',
   },
   output: {
-    path: `config.build.assetsRoot/[path]`,
-    filename: '[name].js',
-    publicPath: process.env.NODE_ENV === 'production' ?
-      config.build.assetsPublicPath : config.dev.assetsPublicPath
+    path: assetsRoot,
+    filename: utils.assetsPath('[name].js'),
+    publicPath: '/'
   },
   resolve: {
     extensions: ['.js', '.vue', '.json', '.ts'],
@@ -45,7 +50,6 @@ module.exports = {
   },
   module: {
     rules: [
-      // ...(config.dev.useEslint ? [createLintingRule()] : []),
       {
         test: /\.vue$/,
         loader: 'vue-loader',
@@ -102,7 +106,7 @@ module.exports = {
       {
         test: /\.scss$/,
         use: [
-          MiniCssExtractPlugin.loader,
+          'vue-style-loader',
           'css-loader',
           'sass-loader'
         ]
@@ -110,11 +114,7 @@ module.exports = {
     ]
   },
   node: {
-    // prevent webpack from injecting useless setImmediate polyfill because Vue
-    // source contains it (although only uses it if it's native).
     setImmediate: false,
-    // prevent webpack from injecting mocks to Node native modules
-    // that does not make sense for the client
     dgram: 'empty',
     fs: 'empty',
     net: 'empty',
@@ -122,15 +122,91 @@ module.exports = {
     child_process: 'empty'
   },
 
+  optimization: {
+    splitChunks: {
+      cacheGroups: {
+        name: 'vendor',
+        chunks: 'all'
+      }
+    }
+  },
+
   plugins: [
     new VueLoaderPlugin(),
-    new MiniCssExtractPlugin({
+    // http://vuejs.github.io/vue-loader/en/workflow/production.html
+    new webpack.DefinePlugin({
+      'process.env': 'prod'
+    }),
+    // new UglifyJsPlugin({
+    //   uglifyOptions: {
+    //     compress: {
+    //       warnings: false
+    //     }
+    //   },
+    //   sourceMap: config.build.productionSourceMap,
+    //   parallel: true
+    // }),
+    // extract css into its own file
+    new ExtractTextPlugin({
       filename: utils.assetsPath('css/[name].css'),
       // Setting the following option to `false` will not extract CSS from codesplit chunks.
       // Their CSS will instead be inserted dynamically with style-loader when the codesplit chunk has been loaded by webpack.
       // It's currently set to `true` because we are seeing that sourcemaps are included in the codesplit bundle as well when it's `false`,
       // increasing file size: https://github.com/vuejs-templates/webpack/issues/1110
       allChunks: true
-    })
+    }),
+    // Compress extracted CSS. We are using this plugin so that possible
+    // duplicated CSS from different components can be deduped.
+    new OptimizeCSSPlugin({
+      cssProcessorOptions: config.build.productionSourceMap ? {
+        safe: true,
+        map: {
+          inline: false
+        }
+      } : {
+        safe: true
+      }
+    }),
+
+    new webpack.HashedModuleIdsPlugin(),
+
+    new webpack.optimize.ModuleConcatenationPlugin(),
+
+    // copy custom static assets
+    new CopyWebpackPlugin([{
+      // from: path.resolve(__dirname, '../static'),
+      from: path.resolve(__dirname),
+      to: 'static',
+      ignore: ['.*']
+    }])
   ]
 }
+
+const spinner = ora(`building for ${buildType}...`)
+spinner.start()
+
+rm(path.join(assetsRoot, 'static'), err => {
+  if (err) throw err
+  webpack(webpackConfig, (err, stats) => {
+    spinner.stop()
+    if (err) throw err
+    process.stdout.write(stats.toString({
+      colors: true,
+      modules: false,
+      children: false, // If you are using ts-loader, setting this to true will make TypeScript errors show up during build.
+      chunks: false,
+      chunkModules: false
+    }) + '\n\n')
+
+    if (stats.hasErrors()) {
+      console.log(chalk.red('  Build failed with errors.\n'))
+      process.exit(1)
+    }
+
+    console.log(chalk.cyan('  Build complete.\n'))
+    console.log(chalk.yellow(
+      '  Tip: built files are meant to be served over an HTTP server.\n' +
+      '  Opening index.html over file:// won\'t work.\n'
+    ))
+  })
+})
