@@ -21,6 +21,7 @@ const webpackConfig = merge(baseWebpackConfig, {
 
   devtool: config.build.productionSourceMap ? config.build.devtool : false,
   output: {
+    library: 'rundeckCore',
     path: config.dev.assetsRoot,
     filename: utils.assetsPath('[name].js'),
     publicPath: '/assets'
