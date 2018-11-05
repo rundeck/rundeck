@@ -1,0 +1,7 @@
+{
+    "files": [],
+    "references": [
+        { "path": "spa" },
+        { "path": "ui-trellis" }
+    ]
+}
