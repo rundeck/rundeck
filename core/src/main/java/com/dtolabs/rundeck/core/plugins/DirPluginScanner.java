@@ -38,7 +38,7 @@ import static com.dtolabs.rundeck.core.utils.cache.FileCache.memoize;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-abstract class DirPluginScanner implements PluginScanner {
+public abstract class DirPluginScanner implements PluginScanner {
     static Logger log = Logger.getLogger(DirPluginScanner.class.getName());
     final File extdir;
 

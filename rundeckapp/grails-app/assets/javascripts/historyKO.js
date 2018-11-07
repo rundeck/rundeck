@@ -361,7 +361,7 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
     };
     handleResult= function (data) {
         history.selected(true);
-        ko.mapping.fromJS(Object.extend(data, { params: params }), binding, history);
+        ko.mapping.fromJS(jQuery.extend(data, { params: params }), binding, history);
         setTimeout(function(){
             if (reload && history.href() == href) {
                 load();

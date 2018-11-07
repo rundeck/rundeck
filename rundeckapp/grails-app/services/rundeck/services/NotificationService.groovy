@@ -25,8 +25,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
@@ -396,6 +396,12 @@ public class NotificationService implements ApplicationContextAware{
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
 
+                    config = config?.each {
+                        if(!it.value){
+                            it.value=null
+                        }
+                    }
+
                     didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
                 }else{
                     log.error("Unsupported notification type: " + n.type);
@@ -478,7 +484,6 @@ public class NotificationService implements ApplicationContextAware{
     }
 
     protected Map exportExecutionData(Execution e) {
-        e = Execution.get(e.id)
         def emap = [
             id: e.id,
             href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,

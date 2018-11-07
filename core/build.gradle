@@ -44,6 +44,10 @@ configurations {
 sourceSets {
     main { compileClasspath += configurations.provided }
 }
+
+tasks.withType(Javadoc) {
+    classpath += configurations.provided
+}
 dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.5.1'
     compile project(":rundeck-storage:rundeck-storage-api")
@@ -76,7 +80,7 @@ dependencies {
         'com.fasterxml.jackson.core:jackson-databind:2.8.11.2',
         'com.fasterxml.jackson.core:jackson-core:2.8.11',
         'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
-        'org.yaml:snakeyaml:1.14',
+        'org.yaml:snakeyaml:1.17',
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
 

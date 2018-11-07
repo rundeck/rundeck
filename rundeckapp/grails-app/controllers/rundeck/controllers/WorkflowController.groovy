@@ -83,7 +83,7 @@ class WorkflowController extends ControllerBase {
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
-            dynamicProperties = getDynamicProperties(params.project, params['newitemtype'], item.nodeStep)
+            dynamicProperties = getDynamicProperties(params.project, origitemtype, item.nodeStep)
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }

@@ -24,19 +24,9 @@ import java.util.Map;
  * @author greg
  * @since 5/16/17
  */
-public interface PluginConfiguration {
-    /**
-     * @return the provider identity
-     */
-    String getProvider();
-
+public interface PluginConfiguration extends PluginProviderConfiguration {
     /**
      * @return the service name
      */
     String getService();
-
-    /**
-     * @return the plugin configuration values
-     */
-    Map<String, Object> getConfiguration();
 }

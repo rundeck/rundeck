@@ -48,6 +48,8 @@ public class AuthConstants {
     public static final String ACTION_IMPORT = "import";
     public static final String ACTION_EXPORT = "export";
     public static final String ACTION_PROMOTE = "promote";
+    public static final String ACTION_INSTALL = "install";
+    public static final String ACTION_UNINSTALL = "uninstall";
     public static final String ACTION_DELETE_EXECUTION = "delete_execution";
     public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
     public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
@@ -67,6 +69,7 @@ public class AuthConstants {
     public static final String TYPE_EVENT = "event";
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";
+    public static final String TYPE_PLUGIN = "plugin";
 
     private static Map<String, String> resType(String type) {
         return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));

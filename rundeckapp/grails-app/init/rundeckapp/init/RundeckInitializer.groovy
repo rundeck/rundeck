@@ -98,7 +98,7 @@ class RundeckInitializer {
         setSystemProperties()
         initSsl()
 
-        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete")
+        File installCompleteMarker = new File(config.baseDir+"/var/.install_complete-"+System.getProperty("build.ident","missing-ver"))
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
             //installation tasks
             createDirectories()
@@ -396,6 +396,8 @@ class RundeckInitializer {
                                                                                config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
             System.setProperty(PROP_LOGINMODULE_NAME, config.runtimeConfiguration.getProperty(PROP_LOGINMODULE_NAME));
         }
+        //Set runtime environment
+        System.setProperty("rd.rtenv",Environment.current.name.toLowerCase())
     }
 
     void initConfigurations() {

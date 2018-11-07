@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Rundeck-Archive-Project-Name: SeleniumBasic
+Rundeck-Archive-Format-Version: 1.0
+Rundeck-Application-Version: 3.0.6-SNAPSHOT
+Rundeck-Archive-Export-Date: 2018-09-20T01:29:26Z
+

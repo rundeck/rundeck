@@ -51,6 +51,7 @@ import com.dtolabs.rundeck.core.utils.StringArrayUtil;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class TestJarPluginProviderLoader extends AbstractBaseTest {
+    public static final String PLUGIN_VERSION_2       = "2.0";
     public static final String CURRENT_PLUGIN_VERSION = "1.1";
     public static final String TOO_LOW_PLUGIN_VERSION = "1.0";
     private File testDir = new File("src/test/resources/com/dtolabs/rundeck/core/plugins");
@@ -187,12 +188,39 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         }
     }
 
+    public void testValidateJarManifestV2NoName() throws Exception {
+        //no plugin classnames attribute
+        try {
+            final Attributes mainAttributes = new Attributes();
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, "something");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, PLUGIN_VERSION_2);
+            JarPluginProviderLoader.validateJarManifest(mainAttributes);
+            fail("should not validate");
+        } catch (JarPluginProviderLoader.InvalidManifestException e) {
+            assertNotNull(e);
+            assertEquals(
+                    "Jar plugin manifest attribute missing: " + JarPluginProviderLoader.RUNDECK_PLUGIN_NAME,
+                    e.getMessage());
+        }
+    }
+
     public void testValidateJarManifestValid() throws Exception {
         {
             //valid
             final Attributes mainAttributes = new Attributes();
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, "something");
+            JarPluginProviderLoader.validateJarManifest(mainAttributes);
+        }
+        {
+            //valid v2.0 plugins must specify a name and a rundeck compatibility version
+            final Attributes mainAttributes = new Attributes();
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, PLUGIN_VERSION_2);
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_NAME, "My Plugin");
+            mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_RUNDECK_COMPAT_VER, "3.x");
             mainAttributes.putValue(JarPluginProviderLoader.RUNDECK_PLUGIN_CLASSNAMES, "something");
             JarPluginProviderLoader.validateJarManifest(mainAttributes);
         }

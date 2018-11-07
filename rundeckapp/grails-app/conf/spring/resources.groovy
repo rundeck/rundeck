@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
+import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
@@ -43,8 +44,11 @@ import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import groovy.io.FileType
+import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
+import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
@@ -160,6 +164,20 @@ beans={
     rundeckFramework(frameworkFactory:'createFramework'){
     }
 
+    clusterInfoService(ClusterInfo) {
+        clusterInfoServiceDelegate = ref('frameworkService')
+    }
+
+    rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
+        services = [
+            (ClusterInfoService): ref('clusterInfoService')
+        ]
+    }
+
+    rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider) {
+        baseServices = ref('rundeckSpiBaseServicesProvider')
+    }
+
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
     rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
@@ -238,6 +256,12 @@ beans={
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
     }
+    /**
+     * the Tour loader plugin provider service
+     */
+    tourLoaderPluginProviderService(TourLoaderPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
     //alternately use ThreadPoolTaskExecutor ...
 //    nodeTaskExecutor(ThreadPoolTaskExecutor) {
 //        threadNamePrefix="NodeService-SourceLoader"
@@ -283,7 +307,7 @@ beans={
     }
 
     def storageDir= new File(varDir, 'storage')
-    rundeckStorageTree(StorageTreeFactory){
+    rundeckStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
@@ -296,9 +320,10 @@ beans={
         defaultConverters=['StorageTimestamperConverter','KeyStorageLayer']
         loggerName='org.rundeck.storage.events'
     }
+    rundeckStorageTree(rundeckStorageTreeFactory:"createTree")
     authRundeckStorageTree(AuthRundeckStorageTree, rundeckStorageTree)
 
-    rundeckConfigStorageTree(StorageTreeFactory){
+    rundeckConfigStorageTreeFactory(StorageTreeFactory){
         frameworkPropertyLookup=ref('frameworkPropertyLookup')
         pluginRegistry=ref("rundeckPluginRegistry")
         storagePluginProviderService=ref('storagePluginProviderService')
@@ -311,6 +336,8 @@ beans={
         defaultConverters=['StorageTimestamperConverter']
         loggerName='org.rundeck.config.storage.events'
     }
+    rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
+
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

@@ -56,7 +56,7 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginProviderLoader implements ProviderLoader,
+public class JarPluginProviderLoader implements ProviderLoader,
         FileCache.Expireable,
         PluginResourceLoader,
         PluginMetadata,
@@ -71,9 +71,11 @@ class JarPluginProviderLoader implements ProviderLoader,
     public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
     public static final String JAR_PLUGIN_VERSION = "1.1";
     public static final String JAR_PLUGIN_VERSION_1_2 = "1.2";
+    public static final String JAR_PLUGIN_VERSION_2_0 = "2.0";
     public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(
             JAR_PLUGIN_VERSION_1_2);
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
+    public static final String RUNDECK_PLUGIN_NAME = "Rundeck-Plugin-Name";
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
     public static final String RUNDECK_PLUGIN_AUTHOR = "Rundeck-Plugin-Author";
@@ -81,10 +83,20 @@ class JarPluginProviderLoader implements ProviderLoader,
     public static final String RUNDECK_PLUGIN_DATE = "Rundeck-Plugin-Date";
     public static final String RUNDECK_PLUGIN_LIBS_LOAD_FIRST = "Rundeck-Plugin-Libs-Load-First";
     public static final String CACHED_JAR_TIMESTAMP_FORMAT = "yyyyMMddHHmmssSSS";
-    private final File pluginJar;
-    private final File pluginJarCacheDirectory;
-    private final File cachedir;
-    private final boolean loadLibsFirst;
+    //Plugin Version 2 attributes
+    public static final String RUNDECK_PLUGIN_RUNDECK_COMPAT_VER = "Rundeck-Plugin-Rundeck-Compatibility-Version";
+    public static final String RUNDECK_PLUGIN_DESCRIPTION = "Rundeck-Plugin-Description";
+    public static final String RUNDECK_PLUGIN_LICENSE = "Rundeck-Plugin-License";
+    public static final String RUNDECK_PLUGIN_TAGS = "Rundeck-Plugin-Tags";
+    public static final String RUNDECK_PLUGIN_THIRD_PARTY_DEPS = "Rundeck-Plugin-Third-Party-Dependencies";
+    public static final String RUNDECK_PLUGIN_SOURCE_LINK = "Rundeck-Plugin-Source-Link";
+    public static final String RUNDECK_PLUGIN_TARGET_HOST_COMPAT = "Rundeck-Plugin-Target-Host-Compatibility";
+
+    //End Plugin Version 2 attributes
+    protected final File pluginJar;
+    protected final File pluginJarCacheDirectory;
+    protected final File cachedir;
+    protected final boolean loadLibsFirst;
     private final DateFormat cachedJarTimestampFormatter = new SimpleDateFormat(CACHED_JAR_TIMESTAMP_FORMAT);
     @SuppressWarnings("rawtypes")
     private Map<ProviderIdent, Class> pluginProviderDefs = new HashMap<ProviderIdent, Class>();
@@ -203,6 +215,7 @@ class JarPluginProviderLoader implements ProviderLoader,
     }
 
     Attributes mainAttributes;
+    String pluginId; //set when main attributes are loaded
 
     /**
      * Get the declared list of provider classnames for the file
@@ -259,6 +272,13 @@ class JarPluginProviderLoader implements ProviderLoader,
     private Attributes getMainAttributes() {
         if (null == mainAttributes) {
             mainAttributes = getJarMainAttributes(pluginJar);
+            if(mainAttributes!= null &&
+                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION) != null &&
+                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION).equals(JAR_PLUGIN_VERSION_2_0)) {
+                String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+                if(pluginName == null) pluginName = pluginJar.getName();
+                pluginId = PluginUtils.generateShaIdFromName(pluginName);
+            }
         }
         return mainAttributes;
     }
@@ -419,8 +439,8 @@ class JarPluginProviderLoader implements ProviderLoader,
         return cls;
     }
 
-    private CachedJar cachedJar;
-    private Date loadedDate = null;
+    protected CachedJar cachedJar;
+    protected Date loadedDate = null;
 
     private synchronized JarPluginProviderLoader.CachedJar getCachedJar() throws PluginException {
         if (null == cachedJar) {
@@ -468,7 +488,7 @@ class JarPluginProviderLoader implements ProviderLoader,
      *
      * @return the collection of extracted files
      */
-    private Collection<File> extractDependentLibs(final File cachedir) throws IOException {
+    protected Collection<File> extractDependentLibs(final File cachedir) throws IOException {
         final Attributes attributes = getMainAttributes();
         if (null == attributes) {
             debug("no manifest attributes");
@@ -533,7 +553,10 @@ class JarPluginProviderLoader implements ProviderLoader,
      */
     private static String basename(final File file) {
         final String name = file.getName();
-        return name.substring(0, name.lastIndexOf("."));
+        if(name.contains(".")) {
+            return name.substring(0, name.lastIndexOf("."));
+        }
+        return name;
     }
 
     /**
@@ -721,6 +744,19 @@ class JarPluginProviderLoader implements ProviderLoader,
         if (null == plugclassnames) {
             throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_CLASSNAMES);
         }
+        if(plugvers.equals(JAR_PLUGIN_VERSION_2_0)) {
+            String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+            if(pluginName == null) throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_NAME);
+            String rundeckCompat = mainAttributes.getValue(RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
+            if(rundeckCompat == null) throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
+            ArrayList<String> errors = new ArrayList<>();
+            PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckCompat);
+            if(!errors.isEmpty()) {
+                StringBuilder b = new StringBuilder();
+                for(String err : errors) { b.append(err);b.append("\n"); }
+                throw new InvalidManifestException(b.toString());
+            }
+        }
     }
 
     static class InvalidManifestException extends Exception {
@@ -788,7 +824,7 @@ class JarPluginProviderLoader implements ProviderLoader,
     /**
      * Holds the cached jar file, dir, libs list and class and resource loaders for a jar plugin
      */
-    private class CachedJar implements Closeable {
+    protected class CachedJar implements Closeable {
         private File dir;
         private File cachedJar;
         private Collection<File> depLibs;
@@ -885,6 +921,12 @@ class JarPluginProviderLoader implements ProviderLoader,
     }
 
     @Override
+    public String getPluginArtifactName() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+    }
+
+    @Override
     public String getPluginAuthor() {
         Attributes mainAttributes = getMainAttributes();
         return mainAttributes.getValue(RUNDECK_PLUGIN_AUTHOR);
@@ -919,5 +961,71 @@ class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public Date getDateLoaded() {
         return loadedDate;
+    }
+
+    @Override
+    public String getPluginName() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+    }
+
+    @Override
+    public String getPluginDescription() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_DESCRIPTION);
+    }
+
+    @Override
+    public String getPluginId() {
+        getMainAttributes();
+        return pluginId;
+    }
+
+    @Override
+    public String getRundeckCompatibilityVersion() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
+    }
+
+    @Override
+    public String getTargetHostCompatibility() {
+        Attributes mainAttributes = getMainAttributes();
+        String hostCompat = mainAttributes.getValue(RUNDECK_PLUGIN_TARGET_HOST_COMPAT);
+        if(hostCompat == null) hostCompat = "all";
+        return hostCompat;
+    }
+
+    @Override
+    public List<String> getTags() {
+        Attributes mainAttributes = getMainAttributes();
+        String tagString = mainAttributes.getValue(RUNDECK_PLUGIN_TAGS);
+        List<String> tags = new ArrayList<>();
+        if(tagString != null) {
+            tags = Arrays.asList(tagString.split(","));
+        }
+        return tags;
+    }
+
+    @Override
+    public String getPluginLicense() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_LICENSE);
+    }
+
+    @Override
+    public String getPluginThirdPartyDependencies() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_THIRD_PARTY_DEPS);
+    }
+
+    @Override
+    public String getPluginSourceLink() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_SOURCE_LINK);
+    }
+
+    @Override
+    public String getPluginType() {
+        return "jar";
     }
 }

@@ -17,8 +17,10 @@
 package rundeck.services.jobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobState
@@ -44,7 +46,23 @@ interface AuthorizingJobService {
 
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
 
-    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound
+    ExecutionReference runJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        String jobArgString,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError
+
+    ExecutionReference runJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        Map optionData,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError
 
     Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
 

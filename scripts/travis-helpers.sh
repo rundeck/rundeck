@@ -21,8 +21,12 @@ shopt -s globstar
 source scripts/helpers.sh
 
 ## Overrides: Should be commented out in master
-# RUNDECK_BUILD_NUMBER="3347"
+# RUNDECK_BUILD_NUMBER="4093"
 # RUNDECK_TAG="v3.0.0-alpha4"
+
+export ECR_REPO=055798170027.dkr.ecr.us-east-2.amazonaws.com/rundeck/rundeck
+export ECR_REGISTRY=055798170027.dkr.ecr.us-east-2.amazonaws.com
+
 
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
 export RUNDECK_COMMIT="${RUNDECK_COMMIT:-$TRAVIS_COMMIT}"
@@ -128,6 +132,7 @@ copy_artifacts() {
         cp -r --parents rundeckapp/**/build/poms artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
         cp -r --parents rundeck-storage/**/build/poms artifacts/
+        tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck metricsweb
     )
 }
 
@@ -197,6 +202,7 @@ EOF
 
 docker_login() {
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+    $(aws ecr get-login --no-include-email --region us-east-2)
 }
 
 build_rdtest() {
@@ -215,19 +221,34 @@ build_rdtest() {
 
     # Pusheen
     if [[ "${TRAVIS_PULL_REQUEST}" != 'false' && "${TRAVIS_BRANCH}" == 'master' ]]; then
-        docker tag rdtest:latest rundeckapp/testdeck:rdtest-latest
-        docker push rundeckapp/testdeck:rdtest-latest
+        docker tag rdtest:latest $ECR_REGISTRY/rundeck/rdtest:latest
+        docker push $ECR_REGISTRY/rundeck/rdtest:latest
     fi
 
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
-    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+
+    docker tag rdtest:latest $RDTEST_BUILD_TAG
+    # docker tag rdtest:latest rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
+    docker push $RDTEST_BUILD_TAG
+    # docker push rundeckapp/testdeck:rdtest-${RUNDECK_BRANCH}
 }
 
 pull_rdtest() {
-    docker pull rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER}
-    docker tag rundeckapp/testdeck:rdtest-${RUNDECK_BUILD_NUMBER} rdtest:latest
+    docker_login
+
+    local RDTEST_BUILD_TAG=$ECR_REGISTRY/rundeck/rdtest:build-${RUNDECK_BUILD_NUMBER}
+
+    docker pull $RDTEST_BUILD_TAG
+    docker tag $RDTEST_BUILD_TAG rdtest:latest
+}
+
+pull_rundeck() {
+    docker_login
+
+    local ECR_BUILD_TAG=${ECR_REPO}:build-${RUNDECK_BUILD_NUMBER}
+
+    docker pull $ECR_BUILD_TAG
+    docker tag $ECR_BUILD_TAG rundeck/rundeck
 }
 
 # If this is a snapshot build we will trigger pro
@@ -255,4 +276,5 @@ export -f trigger_travis_build
 export -f docker_login
 export -f build_rdtest
 export -f pull_rdtest
+export -f pull_rundeck
 export -f trigger_downstream_snapshots

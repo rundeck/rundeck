@@ -28,6 +28,15 @@
 
 <g:set var="wfselected" value=""/>
 <ul class="nav">
+  <!-- <li>
+    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+       title="Home">
+       <i class="fas fa-home"></i>
+       <p>
+         Home
+       </p>
+    </a>
+  </li> -->
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
@@ -73,7 +82,7 @@
     </li>
 </g:if>
 <g:if test="${params.project ?: request.project}">
-    <li>
+    <li id="nav-project-dashboard-link">
       <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
       <i class="fas fa-clipboard-list"></i>
         <p>
@@ -125,6 +134,17 @@
         </p>
       </g:link>
     </li>
+    <g:ifMenuItems type="PROJECT">
+        <li role="separator" class="divider"></li>
+    </g:ifMenuItems>
+    <g:forMenuItems type="PROJECT" var="item">
+        <li>
+            <a href="${item.getProjectHref(params.project)}"  class=" toptab ">
+                <i class="fas fa-plug"></i>
+                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+            </a>
+        </li>
+    </g:forMenuItems>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
@@ -148,7 +168,7 @@
            )}"/>
 
     <g:if test="${projConfigAuth||projACLAuth}">
-        <li class="${enc(attr: projconfigselected)}" id="projectAdmin">
+        <li class="${enc(attr: projconfigselected)}" id="nav-project-settings">
           <a href="#" data-toggle="collapse" href="javascript:void(0)">
             <i class="fas fa-cogs"></i>
             <p>
@@ -162,7 +182,7 @@
     </g:if>
 </g:if>
 </g:if>
-  <!-- <li class="snapshot-version">
+  <%-- <li class="snapshot-version">
     <span class="rundeck-version-identity"
           data-version-string="${enc(attr: buildIdent)}"
           data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
@@ -170,7 +190,7 @@
     <g:link controller="menu" action="welcome" class="version link-bare">
         <g:appTitle/> ${buildIdent}
     </g:link>
-  </li> -->
+  </li> --%>
 </ul>
 
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
@@ -226,7 +246,31 @@
 </div>
 
 <g:javascript>
+
+
   jQuery(function(){
+    // Sets user preference on opening/closing the sidebar
+    jQuery('.navbar-minimize a').click(function(){
+
+      var key = 'sidebarClosed'
+      var sidebarClosed = jQuery('body').hasClass('sidebar-mini')
+
+      sidebarClosed = !sidebarClosed // if the sidebar has that class, we're flipping it for the save
+
+       jQuery.ajax({
+            url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + sidebarClosed}),
+            method: 'POST',
+            beforeSend: _ajaxSendTokens.curry('ui_token'),
+            success: function () {
+                console.log("saved sidebar position" );
+            },
+            error: function () {
+                console.log("saving sidebar position failed" );
+            }
+        })
+        .success(_ajaxReceiveTokens.curry('ui_token'));
+    })
+    // Mobile Sidebar
     jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
       jQuery(this).next().slideToggle();
       jQuery(this).toggleClass('subnav-open');

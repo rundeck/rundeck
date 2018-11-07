@@ -1119,7 +1119,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         targetElement=targetElement[0];
         var params = {nodename: node};
         if (stepctx) {
-            Object.extend(params, {stepctx: stepctx});
+            jQuery.extend(params, {stepctx: stepctx});
         }
         var ctrl = new FollowControl(null, null, {
             parentElement: targetElement,

@@ -3,14 +3,15 @@ package rundeck.services
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.cache.RemovalNotification
 import org.springframework.beans.factory.InitializingBean
+import org.springframework.web.servlet.support.RequestContextUtils
 
 class UiPluginService implements InitializingBean {
     static boolean transactional = false
@@ -74,7 +75,7 @@ class UiPluginService implements InitializingBean {
      * @param lang if lang specified, include i18n for the given lang
      * @return
      */
-    def getProfileFor(String service, String name) {
+    Map getProfileFor(String service, String name) {
         def meta = metadataForPlugin(service, name)
         def key = new PluginKey(service: service, name: name)
         CachedPluginMeta cachedMetadata = metadataCache.get(key)
@@ -126,6 +127,27 @@ class UiPluginService implements InitializingBean {
             messagesCache.invalidate(key)
         }
         messagesCache.get(key).messages
+    }
+
+    /**
+     * Get message code for a plugin, searches the found locale using a sequence of keys in order:
+     *  service.provider.code, provider.code, service.code, code
+     * @param service service
+     * @param name provider
+     * @param code code
+     * @param defaultmsg default
+     * @param locale locale
+     * @return code value found, or defaultmsg
+     */
+    String getPluginMessage(String service, String name, String code, String defaultmsg, Locale locale = null) {
+        def messages = getMessagesFor(service, name, locale)
+        def foundcode = [
+            service + '.' + name + '.' + code,
+            name + '.' + code,
+            service + '.' + code,
+            code,
+        ].find { messages[it] }
+        return (foundcode != null ? messages[foundcode] : defaultmsg)
     }
 
     static class PluginKey {

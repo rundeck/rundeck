@@ -47,8 +47,6 @@
       <div id=project-dashboard-vue></div>
     </div>
   </div>
-  <asset:javascript src="static/manifest.js"/>
-  <asset:javascript src="static/vendor.js"/>
   <asset:javascript src="static/pages/project-dashboard.js"/>
 </body>
 </html>

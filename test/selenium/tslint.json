@@ -1,0 +1,13 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "arrow-parens": [true, "ban-single-arg-parens"],
+        "curly": false,
+        "eofline": false,
+        "member-access": [true, "no-public"],
+        "no-console": false,
+        "quotemark": [true, "single"],
+        "semicolon": [true, "never"],
+        "triple-equals": false
+    }
+}

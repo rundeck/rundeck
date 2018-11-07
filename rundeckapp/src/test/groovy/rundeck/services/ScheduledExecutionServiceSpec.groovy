@@ -30,7 +30,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
@@ -1239,6 +1239,35 @@ class ScheduledExecutionServiceSpec extends Specification {
         //existing option job now scheduled
         [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] | 'options' | [options:[new Option(name: 'test', required:true, enforced: false)]]
     }
+
+    def "do update empty command"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newjob = new ScheduledExecution(createJobParams(inparams))
+
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> new HashSet<String>(['test'])
+        }
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
+
+        when:
+        def results = service._doupdateJob(se.id, newjob, mockAuth())
+
+
+        then:
+        !results.success
+        results.scheduledExecution.errors.hasFieldErrors(fieldName)
+
+        where:
+        inparams | fieldName
+        [workflow: new Workflow(commands: [])] | 'workflow'
+    }
+
     def "do update job invalid"(){
         given:
         setupDoUpdate()

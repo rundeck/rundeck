@@ -41,7 +41,7 @@
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="fontawesome.css"/>
     <asset:stylesheet href="perfect-scrollbar.css"/>
-    <asset:stylesheet href="app.scss.css"/>
+    <asset:stylesheet href="app.css"/>
     <!-- <asset:stylesheet href="custom.less.css"/> -->
     <!-- <asset:stylesheet href="app.less.css"/> -->
     <!-- <asset:stylesheet href="rundeck1.css"/> -->
@@ -57,13 +57,26 @@
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
     <asset:javascript src="perfect-scrollbar.js"/>
     <asset:javascript src="bootstrap-all.js"/>
+    <g:set var="includePrototypeJs" value="${true}" scope="page"/>
+
+    <g:ifPageProperty name="meta.skipPrototypeJs">
+        <g:set var="includePrototypeJs" value="${false}" scope="page"/>
+    </g:ifPageProperty>
+    <g:if test="${includePrototypeJs}">
     <asset:javascript src="prototype-bundle.js"/>
+    </g:if>
     <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/manifest.js"/>
+    <asset:javascript src="static/vendor.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
+    <asset:stylesheet href="static/css/components/tour.css"/>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -79,6 +92,7 @@
         %>
         }
     </script>
+    <g:jsonToken id="web_ui_token" url="${request.forwardURI}"/>
     <g:ifPageProperty name="meta.tabpage">
         <g:set var="_metaTabPage" value="${g.pageProperty(name: 'meta.tabpage')}" scope="page"/>
     </g:ifPageProperty>
@@ -93,6 +107,17 @@
         <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
             <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>
         </g:ifServletContextAttribute>
+    </g:if>
+
+    <%--
+      _sidebarClass is the variable container for
+      if the sidebar should be open or closed on
+      page render
+    --%>
+    <g:set var="_sidebarClass" value="" scope="page"/>
+
+    <g:if test="${session.filterPref?.sidebarClosed && session.filterPref?.sidebarClosed == 'true'}">
+      <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
     </g:if>
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
@@ -133,31 +158,42 @@
         </g:each>
 
     </g:if>
+    <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
       window._rundeck = {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
-        projectName: '${enc(js:project?:params.project)}'
+        projectName: '${enc(js:project?:params.project)}',
+        activeTour: '${session.filterPref?.activeTour}',
+        activeTourStep: '${session.filterPref?.activeTourStep}'
       }
     </script>
 </head>
-<body class="sidebar-mini">
+<body class="${_sidebarClass}">
   <div class="wrapper">
     <div class="sidebar" data-background-color="black" data-active-color="danger">
+
       <div class="logo">
-          <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-             title="Home">
+          <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
               <i class="rdicon app-logo"></i>
               <span class="appTitle"></span>
           </a>
-          <div class="navbar-minimize" style="margin-top:8px;">
-            <button class="btn btn-default btn-sm btn-icon">
-              <!-- <i class="fas fa-ellipsis-v"></i>
-              <i class="fas fa-ellipsis-h"></i> -->
-              <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
-              <i class="fas fa-sign-in-alt"></i>
-            </button>
+          <%--
+            Saved for review should we switch back to another UI for opening
+            and closing the sidebar
+            <div class="navbar-minimize">
+              <button class="btn btn-sm btn-icon">
+                <i class="fas fa-sign-out-alt fa-flip-horizontal"></i>
+                <i class="fas fa-sign-in-alt"></i>
+              </button>
+            </div>
+          --%>
+          <div class="navbar-minimize">
+            <a class="triangle">
+              <i class="fas fa-chevron-right"></i>
+              <i class="fas fa-chevron-left"></i>
+            </a>
           </div>
       </div>
       <div class="sidebar-wrapper">
@@ -165,18 +201,21 @@
           <div class="sidebar-modal-backdrop"></div>
       </div>
     </div>
-    <div class="main-panel">
+    <div class="main-panel" id="main-panel">
       <div>
         <g:render template="/common/mainbar"/>
       </div>
       <div class="content">
         <div class="container-fluid">
-          <div id=project-motd-vue project=blah key=foo></div>
+          <div id=project-motd-vue></div>
         </div>
-        <g:layoutBody/>
+        <div id="layoutBody">
+            <g:layoutBody/>
+        </div>
       </div>
       <g:render template="/common/footer"/>
     </div>
+
   </div>
 <!--
 disable for now because profiler plugin is not compatible with grails 3.x
@@ -190,17 +229,10 @@ disable for now because profiler plugin is not compatible with grails 3.x
         jQuery(function(){window.rundeckPage.onPageLoad();});
     </script>
 </g:if>
-<g:javascript>
-  var sidebarOpen = localStorage.getItem('sidebarOpen')
-  if(sidebarOpen === 'true'){
-    document.body.classList.remove('sidebar-mini')
-  }
-</g:javascript> 
 
 <!-- VUE JS MODULES -->
-<asset:javascript src="static/manifest.js"/>
-<asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/components/motd.js"/>
+<asset:javascript src="static/components/tour.js"/>
 <!-- /VUE JS MODULES -->
 
 </body>

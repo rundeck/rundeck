@@ -55,7 +55,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 //def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator', 'source-refresh','upvar']
+def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar']
 def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution']
 
 //manifest describing expected build results
@@ -98,11 +98,11 @@ def manifest=[
         "templates/config/ssl.properties.template",
         "templates/sbin/rundeckd.template",
         "WEB-INF/lib/jetty-jaas-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-server-${versions.jetty}.jar",
+        "WEB-INF/lib/jetty-server-${versions.jetty}.jar",
         "WEB-INF/lib/jetty-util-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-http-${versions.jetty}.jar",
         "WEB-INF/lib-provided/jetty-io-${versions.jetty}.jar",
-        "WEB-INF/lib-provided/jetty-security-${versions.jetty}.jar",
+        "WEB-INF/lib/jetty-security-${versions.jetty}.jar",
         "WEB-INF/lib/log4j-1.2.17.jar",
         "WEB-INF/lib-provided/javax.servlet-${versions.servlet}.jar",
         "WEB-INF/lib/libpam4j-1.10.jar",
@@ -116,6 +116,8 @@ def manifest=[
     "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
     "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
+    "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
+    "plugins/local-tours-plugin/${target}/rundeck-local-tours-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate

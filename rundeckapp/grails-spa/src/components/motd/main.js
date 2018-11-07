@@ -11,6 +11,8 @@ Vue.use(VueCookies)
 /* eslint-disable no-new */
 new Vue({
   el: '#project-motd-vue',
-  components: { App },
+  components: {
+    App
+  },
   template: '<App/>'
 })

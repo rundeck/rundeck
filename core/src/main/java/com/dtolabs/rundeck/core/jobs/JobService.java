@@ -18,16 +18,16 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
+import org.rundeck.app.spi.AppService;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Service for interacting with Jobs
  */
-public interface JobService {
+public interface JobService extends AppService {
 
     /**
      * @param uuid    job ID
@@ -111,9 +111,39 @@ public interface JobService {
      * @param jobArgString argString for the execution
      * @param jobFilter filter for the execution
      * @param asUser user to execute the job(null for the same user)
-     * @return Id of the result execution
+     * @return Id of the result execution, or null if there was an error
+     * @deprecated use {@link #runJob(JobReference, String, String, String)}
+     * @throws JobNotFound if the specified job was not found
      */
-    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)throws JobNotFound;
+    @Deprecated
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+        throws JobNotFound;
+
+    /**
+     * Run a job
+     * @param jobReference reference to a job
+     * @param jobArgString argString for the execution
+     * @param jobFilter filter for the execution
+     * @param asUser user to execute the job(null for the same user)
+     * @return Id of the result execution
+     * @throws JobNotFound if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError;
+
+    /**
+     * Run a job
+     * @param jobReference reference to a job
+     * @param options      option values
+     * @param jobFilter    filter for the execution
+     * @param asUser       user to execute the job(null for the same user)
+     * @return Id of the result execution
+     * @throws JobNotFound if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(JobReference jobReference, Map options, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError;
 
     /**
      *

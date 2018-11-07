@@ -20,9 +20,9 @@
 <g:set var="reflastrun"
        value="${scheduledExecution.id ? ReferencedExecution.findByScheduledExecution(scheduledExecution, [max: 1]) : null}"/>
 <g:set var="successcount"
-       value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatusInList(scheduledExecution, ['true','succeeded','scheduled']) : 0}"/>
+       value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
 <g:set var="refsuccesscount"
-       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatusInList(scheduledExecution, ['true','succeeded','scheduled']) : 0}"/>
+       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
 <g:set var="execCount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecution(scheduledExecution) : 0}"/>
 <g:set var="refexecCount"

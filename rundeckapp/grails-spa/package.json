@@ -11,7 +11,9 @@
     "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js"
   },
   "dependencies": {
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git",
     "axios": "^0.18.0",
+    "uiv": "^0.27.0",
     "vue": "^2.5.2",
     "vue-cookies": "^1.5.6",
     "vue2-bootstrap-table2": "^1.1.13",

@@ -16,6 +16,7 @@
 
 package rundeck
 
+import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.util.Environment
@@ -1793,6 +1794,32 @@ ansi-bg-default'''))
         }
 
         out << '</table>'
+
+    }
+
+    /**
+     * @attr type REQUIRED menu type PROJECT, PROJECT_CONFIG, SYSTEM_CONFIG or USER_MENU
+     * @attr var REQUIRED var name
+     */
+    def forMenuItems = { attrs, body ->
+        String type = attrs.type
+        String var = attrs.var
+        applicationContext.getBeansOfType(MenuItem).
+            findAll { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }.
+            each { name, MenuItem item ->
+                out << body((var): item)
+            }
+    }
+    /**
+     * Render the contents if menu items of the specified type exist
+     * @attr type REQUIRED menu type PROJECT, PROJECT_CONFIG, SYSTEM_CONFIG or USER_MENU
+     */
+    def ifMenuItems = { attrs, body ->
+        String type = attrs.type
+        if (applicationContext.getBeansOfType(MenuItem).
+            any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
+            out << body()
+        }
 
     }
 }

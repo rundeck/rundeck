@@ -806,7 +806,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     protected List createExecutionLogMDCdata(Execution e) {
         def state = getExecutionState(e)
-        def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project']
+        def execprops = ['user', 'id', 'abortedby', 'dateStarted', 'dateCompleted', 'project', 'argString']
         def jobProps = ['uuid', 'jobName', 'groupPath']
         Map mdcprops=[:]
         execprops.each { k ->
@@ -1358,8 +1358,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //add delimiter to option variables
         if(null !=optsmap){
+            def se=null
             if(execMap  instanceof Execution && null!=execMap.scheduledExecution){
-                execMap.scheduledExecution.options.sort().each{option->
+                se=execMap.scheduledExecution
+            }else if(execMap instanceof ScheduledExecution){
+                se=execMap
+            }
+
+            if( null!=se){
+                se.options?.sort().each{option->
                     if(option.multivalued){
                         optsmap["${option.name}.delimiter"]=option.delimiter
                     }

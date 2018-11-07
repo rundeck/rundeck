@@ -143,6 +143,7 @@ class Execution extends ExecutionContext {
             index 'EXEC_IDX_2', ['dateStarted', 'status']
             index 'EXEC_IDX_3', ['project', 'dateCompleted']
             index 'EXEC_IDX_4', ['dateCompleted', 'scheduledExecution']
+            index 'EXEC_IDX_5', ['scheduledExecution', 'status']
         }
     }
 

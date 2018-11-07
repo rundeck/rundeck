@@ -21,8 +21,12 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -37,7 +41,8 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
@@ -52,7 +57,7 @@ import org.springframework.context.ApplicationContextAware
  * Time: 7:07 PM
  */
 class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, InitializingBean {
-    public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
+    public static Logger log = LoggerFactory.getLogger(RundeckPluginRegistry.class.name)
     /**
      * Registry of spring bean plugin providers, "providername"->"beanname"
      */
@@ -89,7 +94,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         return simpleName;
     }
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
-        String found = ServiceTypes.TYPES.find { it.value == type }?.key
+        String found = ServiceTypes.pluginTypesMap.find { it.value == type }?.key
         def name = found ?: createServiceName(type.getSimpleName())
         rundeckServerServiceProviderLoader.createPluginService(type, name)
     }
@@ -507,7 +512,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
         if (pluginRegistryMap[provider]) {
-            Class groovyPluginType = ServiceTypes.TYPES[service]
+            Class groovyPluginType = ServiceTypes.getPluginType(service)
             String beanName=pluginRegistryMap[provider]
             try {
                 def bean = findBean(beanName)

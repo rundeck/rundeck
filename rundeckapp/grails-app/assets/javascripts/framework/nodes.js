@@ -200,7 +200,7 @@ function init() {
         appLinks.frameworkAdhoc,
         appLinks.scheduledExecutionCreate,
         appLinks.frameworkNodes,
-        Object.extend(filterParams,{
+        jQuery.extend(filterParams,{
             project: pageParams.project,
             paging:true,
             nodesTitleSingular:message('Node'),

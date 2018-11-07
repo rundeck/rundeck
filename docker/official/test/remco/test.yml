@@ -1,5 +1,16 @@
 rundeck:
+  server:
+    name: superserver
+  config:
+    storage:
+      converter:
+        '1':
+          config:
+            password: 'blahblah'
   storage:
     provider:
       '2':
         type: 'file'
+  features:
+    repository:
+      enabled: "true"

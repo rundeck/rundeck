@@ -434,38 +434,38 @@
       }
     }
 
-    .sidebar:hover{
-      width: 260px;
-
-      .logo{
-        a.logo-normal{
-          opacity: 1;
-          @include transform-translate-x(0px);
-        }
-      }
-
-      .sidebar-wrapper{
-        width: 260px;
-
-        > .nav li > a p,
-        > .nav [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
-        .user .info [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
-        .user .info > a > span{
-          @include transform-translate-x(0px);
-          opacity: 1;
-        }
-
-        > .nav{
-          li.active{
-            > a:not([data-toggle="collapse"]){
-              &:before,
-              &:after{
-                opacity: 0;
-              }
-            }
-          }
-        }
-      }
-    }
+    // .sidebar:hover{
+    //   width: 260px;
+    //
+    //   .logo{
+    //     a.logo-normal{
+    //       opacity: 1;
+    //       @include transform-translate-x(0px);
+    //     }
+    //   }
+    //
+    //   .sidebar-wrapper{
+    //     width: 260px;
+    //
+    //     > .nav li > a p,
+    //     > .nav [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
+    //     .user .info [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
+    //     .user .info > a > span{
+    //       @include transform-translate-x(0px);
+    //       opacity: 1;
+    //     }
+    //
+    //     > .nav{
+    //       li.active{
+    //         > a:not([data-toggle="collapse"]){
+    //           &:before,
+    //           &:after{
+    //             opacity: 0;
+    //           }
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
   }
 }

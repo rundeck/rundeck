@@ -20,17 +20,21 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.PluginRegistry
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
-import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import groovy.transform.CompileStatic
 
+@CompileStatic
 class PluginService {
 
     def PluginRegistry rundeckPluginRegistry
@@ -68,6 +72,54 @@ class PluginService {
         }
         log.error("${service.name} plugin not found: ${name}")
         return bean
+    }
+
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def DescribedPlugin getPluginDescriptor(String name, String service) {
+        getPluginDescriptor(name, getPluginTypeByService(service))
+    }
+
+    /**
+     * Return the java class associated with the given service name, or throw exception if not available
+     * @param service
+     * @throws IllegalArgumentException
+     */
+    public Class<?> getPluginTypeByService(String service) throws IllegalArgumentException {
+        if (!ServiceTypes.getPluginType(service)) {
+            throw new IllegalArgumentException("Unknown service: " + service)
+        }
+        ServiceTypes.getPluginType(service)
+    }
+
+    /**
+     * Return the map of Java plugin interface class associated with service name
+     * @param service
+     * @throws IllegalArgumentException
+     */
+    public Map<Class<?>, String> getPluginTypesMap() {
+        Map<Class<?>, String> types = [:]
+        //reverse the map
+        ServiceTypes.pluginTypesMap.each {
+            types[it.value] = it.key
+        }
+        types
+    }
+
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param service service
+     * @param provider provider name
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String service, String provider, Map config) {
+        Class serviceType = getPluginTypeByService(service)
+        PluggableProviderService providerService = rundeckPluginRegistry?.createPluggableService((Class) serviceType)
+        return rundeckPluginRegistry?.validatePluginByName(provider, providerService, config)
     }
 
     /**

@@ -3619,6 +3619,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def service = frameworkService.rundeckFramework.workflowStrategyService
         def workflow = new Workflow(scheduledExecution.workflow)
         workflow.discard()
+        if (!workflow.commands || workflow.commands.size() < 1) {
+            return null
+        }
         def name = workflow.strategy
         PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
                 projectProps,

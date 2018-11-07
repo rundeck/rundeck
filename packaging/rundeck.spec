@@ -75,6 +75,11 @@ fi
 %dir /var/lib/rundeck/var/tmp
 %dir /var/lib/rundeck/var/tmp/pluginJars
 
+# Repository default directories
+%dir /var/lib/rundeck/repository
+%dir /var/lib/rundeck/repository/installedPlugins
+%dir /var/lib/rundeck/repository/artifacts
+
 # The Rundeck WebApp.  The Exploded War Goes Here.
 %dir /var/lib/rundeck/exp
 /var/lib/rundeck/exp/webapp
@@ -113,7 +118,7 @@ fi
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
-/var/lib/rundeck/cli/snakeyaml-1.14.jar
+/var/lib/rundeck/cli/snakeyaml-1.17.jar
 /var/lib/rundeck/cli/jackson-annotations-2.8.0.jar
 /var/lib/rundeck/cli/jackson-core-2.8.11.jar
 /var/lib/rundeck/cli/jackson-databind-2.8.11.2.jar
@@ -155,6 +160,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/jaas-loginmodule.conf
 %config(noreplace) /etc/rundeck/realm.properties
 %config(noreplace) /etc/rundeck/rundeck-config.properties
+%config(noreplace) /etc/rundeck/artifact-repositories.yaml
 
 # SSL Configuration
 %dir /etc/rundeck/ssl

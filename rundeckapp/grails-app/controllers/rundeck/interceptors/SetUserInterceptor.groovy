@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.services.UserService
 
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
@@ -15,6 +16,8 @@ import javax.servlet.http.HttpServletRequest
 class SetUserInterceptor {
     @Autowired
     ApplicationContext applicationContext
+
+    UserService userService
 
     int order = HIGHEST_PRECEDENCE + 30
 
@@ -31,7 +34,7 @@ class SetUserInterceptor {
             return true
         }
         if (request.pathInfo == "/error") {
-            response.status = 200
+            //response.status = 200
             return true
         }
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
@@ -126,6 +129,8 @@ class SetUserInterceptor {
             }
         }
         subject.principals.addAll(roleset.collect{new Group(it)})
+        def user = userService.findOrCreateUser(principal.name)
+        session.filterPref=UserService.parseKeyValuePref(user?.filterPref)
 
         subject
     }

@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
+import rundeck.ScheduledExecution
+
 @Transactional
 class ReportService  {
 
@@ -430,6 +432,10 @@ class ReportService  {
         def specialfilters = [
                 execnode: 'execnode'
         ]
+
+        if(query?.jobIdFilter && query.jobIdFilter.toString().length() == 36) {
+            query.jobIdFilter = ScheduledExecution.findByUuid(query.jobIdFilter).id.toString()
+        }
 
         def filters = [:]
         filters.putAll(txtfilters)

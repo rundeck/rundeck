@@ -1,6 +1,8 @@
 #!/bin/bash
 set -eou pipefail
 
+export HOSTNAME=$(hostname)
+
 export RUNDECK_HOME=/home/rundeck
 
 export REMCO_HOME=/etc/remco

@@ -71,6 +71,10 @@ grails:
         use:
             accept:
                 header: true
+        disable:
+            accept:
+                header:
+                    userAgents: []
 
     urlmapping:
         cache:

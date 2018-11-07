@@ -23,15 +23,15 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/motd': './src/components/motd/main.js',
-    'components/activityTable': './src/components/activityTable/main.js',
-    'pages/project-dashboard': './src/pages/project-dashboard/main.js'
+    'components/tour': './src/components/tour/main.js',
+    'pages/project-dashboard': './src/pages/project-dashboard/main.js',
+    'pages/repository': './src/pages/repository/main.js',
   },
   output: {
     path: `config.build.assetsRoot/[path]`,
     filename: '[name].js',
     publicPath: process.env.NODE_ENV === 'production' ?
-      config.build.assetsPublicPath :
-      config.dev.assetsPublicPath
+      config.build.assetsPublicPath : config.dev.assetsPublicPath
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],
@@ -55,26 +55,32 @@ module.exports = {
       },
       {
         test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
-        loader: 'url-loader',
+        loader: 'file-loader',
         options: {
-          limit: 10000,
-          name: utils.assetsPath('img/[name].[hash:7].[ext]')
+          name: '[name]-[hash:7].[ext]',
+          outputPath: './static/img',
+          publicPath: '/assets/static/img',
+          useRelativePath: true
         }
       },
       {
         test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/,
-        loader: 'url-loader',
+        loader: 'file-loader',
         options: {
-          limit: 10000,
-          name: utils.assetsPath('media/[name].[hash:7].[ext]')
+          name: '[name]-[hash:7].[ext]',
+          outputPath: './static/media',
+          publicPath: '/static/media',
+          useRelativePath: true
         }
       },
       {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
-        loader: 'url-loader',
+        loader: 'file-loader',
         options: {
-          limit: 10000,
-          name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
+          name: '[name]-[hash:7].[ext]',
+          outputPath: './static/fonts',
+          publicPath: '/static/fonts',
+          useRelativePath: true
         }
       },
       {

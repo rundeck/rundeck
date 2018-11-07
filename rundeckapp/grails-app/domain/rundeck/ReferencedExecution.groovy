@@ -1,5 +1,7 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 class ReferencedExecution {
     ScheduledExecution scheduledExecution
     String status
@@ -12,6 +14,13 @@ class ReferencedExecution {
         status(nullable:true)
         execution(nullable: false)
 
+    }
+
+    static mapping = {
+
+        DomainIndexHelper.generate(delegate) {
+            index 'REFEXEC_IDX_1', ['scheduledExecution', 'status']
+        }
     }
 
     static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){

@@ -11,7 +11,8 @@ stages:
 - name: build
   if: fork = false
 - name: test
-  if: fork = false
+  # Run tests on non-forked PR and master builds
+  if: fork = false AND (branch = master OR tag IS present)
 - name: snapshot release
   if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
@@ -122,6 +123,11 @@ jobs:
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-pam-test' 'bash test/run-docker-pam-tests.sh'
 
+  - env: JOB='Docker Selenium tests'
+    script:
+    - script_block 'docker.pull' pull_rundeck
+    - script_block 'selenium' 'bash test/selenium/travis.sh'
+
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
     script:
@@ -173,6 +179,7 @@ jobs:
 
 addons:
   hostname: rdbuild
+  chrome: stable
   apt:
     packages:
     - groovy
@@ -187,6 +194,8 @@ branches:
     - release-2.11
     - prerelease-2.12.0
     - /^v.*/
+    - /^feature\/.*/
+    - /^issue\/.*/
 
 notifications:
   irc:

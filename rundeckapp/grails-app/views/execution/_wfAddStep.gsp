@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -13,6 +13,10 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+<%@ page import="grails.util.Environment; grails.converters.JSON" %>
+<g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
+    <asset:javascript src="filterStepPluginsKOTest.js"/>
+</g:if>
 <div class="panel-heading">
     <span class="h3 ">
         <g:message code="${addMessage}"/>
@@ -27,8 +31,33 @@
         <div class="h4"><g:message code="${chooseMessage}"/></div>
     </div>
 </div>
-<div class="row row-space">
+<g:set var="rkey" value="${g.rkey()}"/>
+<div id="addStep_${rkey}" class="row row-space">
 <div class="col-sm-12">
+    <div class="form-group">
+
+        <label class="col-sm-2 control-label" for="stepFilter${enc(attr: rkey)}">
+            <g:message code="step.plugins.filter.prompt"/>
+        </label>
+
+        <div class="col-sm-10">
+
+            <span class="input-group stepfilters">
+                <g:render template="/framework/stepPluginFilterInputGroup"
+                          model="[filterFieldName: 'stepFilter',
+                                  filterFieldId:'stepFilterField'+rkey,
+                                  queryFieldHelpId:'stepFilterQueryFieldHelp'+rkey,
+                                  queryFieldPlaceholderText: g.message(code:'enter.a.step.filter.override')]"/>
+            </span>
+
+            <div class=" collapse" id="stepFilterQueryFieldHelp${enc(attr: rkey)}">
+                <div class="help-block">
+                    <g:render template="/common/stepPluginsfilterStringHelp"/>
+                </div>
+            </div>
+
+        </div>
+    </div>
     <ul class="nav nav-tabs" >
         <li class="active node_step_section">
             <a href="#addnodestep" data-toggle="tab">
@@ -49,22 +78,26 @@
                         <g:message code="framework.service.WorkflowNodeStep.description" />
                     </span>
                 </div>
-                    <a class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.exec.title')}')"
+                       class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
                         <i class="rdicon icon-small shell"></i>
                         <g:message code="step.type.exec.title"/>
                         <span class="text-info">- <g:message code="step.type.exec.description"/></span>
                     </a>
-                    <a class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.script.title')}')"
+                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
                         <i class="rdicon icon-small script"></i>
                         <g:message code="step.type.script.title"/>
                         <span class="text-info">- <g:message code="step.type.script.description"/></span>
                     </a>
-                    <a class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.scriptfile.title')}')"
+                       class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
                         <i class="rdicon icon-small scriptfile"></i>
                         <g:message code="step.type.scriptfile.title"/>
                         <span class="text-info">- <g:message code="step.type.scriptfile.description"/></span>
                     </a>
-                    <a class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
+                    <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}')"
+                       class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
                         <i class="glyphicon glyphicon-book"></i>
                         <g:message code="step.type.jobreference.title"/>
                         <span class="text-info">- <g:message code="step.type.jobreference.nodestep.description"/></span>
@@ -75,8 +108,9 @@
                     </div>
                     <g:each in="${nodeStepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
 
-                        <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
-                            href="#">
+                        <a data-bind="visible: isVisible('${(typedesc.name)}')"
+                           class="list-group-item textbtn  add_node_step_type"
+                           data-node-step-type="${enc(attr:typedesc.name)}" href="#">
                             <stepplugin:pluginIcon service="WorkflowNodeStep"
                                                    name="${typedesc.name}"
                                                    width="16px"
@@ -111,7 +145,8 @@
                     </span>
                 </div>
 
-                <a class="list-group-item textbtn add_step_type" data-step-type="job" href="#">
+                <a data-bind="visible: isDefaultStepsVisible('${message(code:'step.type.jobreference.title')}')"
+                   class="list-group-item textbtn add_step_type" data-step-type="job" href="#">
                     <i class="glyphicon glyphicon-book"></i>
                     <g:message code="step.type.jobreference.title" /> <span class="text-info">- <g:message code="step.type.jobreference.description" /></span>
                 </a>
@@ -120,7 +155,9 @@
                         <g:plural for="${stepDescriptions}" code="workflow.step.plugin" />
                     </div>
                     <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
-                        <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
+                        <a data-bind="visible: isVisible('${(typedesc.name)}')" class="list-group-item textbtn  add_step_type"
+                            data-step-type="${enc(attr: typedesc.name)}"
+                           href="#">
                             <stepplugin:pluginIcon service="WorkflowStep"
                                                    name="${typedesc.name}"
                                                    width="16px"
@@ -153,6 +190,23 @@
     </div>
 </div>
 </div>
+    <g:javascript>
+                fireWhenReady('addStep_${enc(js: rkey)}',function(){
+
+                    function parseModelToJS(jsonString) {
+                        jsonString = jsonString.replace(/\"/g,'"');
+                        var jsonObject = JSON.parse(jsonString);
+                        return jsonObject
+                    };
+
+                    var nodeStepDescriptionsArray = parseModelToJS("${nodeStepDescriptions as JSON}");
+                    var stepDescriptionsArray = parseModelToJS("${stepDescriptions as JSON}");
+                    var pluginsDescriptions = nodeStepDescriptionsArray.concat(stepDescriptionsArray);
+                    var filter = new StepPluginsFilter({stepDescriptions:pluginsDescriptions});
+
+                    ko.applyBindings(filter,jQuery('#addStep_${enc(js:rkey)}')[0]);
+                });
+    </g:javascript>
 </div>
 
 <div class="panel-footer">

@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.app.support
 
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import grails.gorm.dirty.checking.DirtyCheck
 import grails.validation.Validateable
 
 /*
@@ -31,6 +32,7 @@ import grails.validation.Validateable
 /**
  * Represents a query corresponding to the filters available for a NodeSet
  */
+@DirtyCheck
 public class BaseNodeFilters implements Validateable{
 
     String nodeInclude

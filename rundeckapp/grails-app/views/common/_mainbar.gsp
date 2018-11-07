@@ -3,7 +3,7 @@
   <g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
   </g:if>
-  <nav class="navbar navbar-default mainbar">
+  <nav id="mainbar" class="navbar navbar-default mainbar">
     <div class="container-fluid">
       <!-- <div class="navbar-minimize">
         <button class="btn btn-fill btn-icon">
@@ -91,8 +91,7 @@
               </p>
           </g:ifScheduleMode>
       </g:if>
-        <ul class="nav navbar-nav navbar-right">
-
+        <ul id="navbar-menu" class="nav navbar-nav navbar-right">
           <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
           <g:if test="${userDefinedInstanceName}">
             <li>
@@ -149,7 +148,7 @@
   </nav>
   <g:javascript>
     jQuery(function(){
-      jQuery('.navbar-minimize button').click(function(){
+      jQuery('.navbar-minimize button, .navbar-minimize a.triangle').click(function(){
         jQuery('body').toggleClass('sidebar-mini');
         var sidebarOpen = localStorage.getItem('sidebarOpen')
         if(sidebarOpen === 'true'){
@@ -157,6 +156,9 @@
         } else {
           localStorage.setItem('sidebarOpen', 'true')
         }
+      });
+      jQuery('button.navbar-toggle').click(function(e){
+        jQuery('body').toggleClass('nav-open');
       });
     })
   </g:javascript>

@@ -211,4 +211,35 @@ public class Rules {
     public static Function<? super Rule, Optional<StateObj>> applyRule(final StateObj state) {
         return input -> Optional.ofNullable(input.evaluate(state));
     }
+
+
+    /**
+     * Compare two numeric values. If the value is'nt a valid float number, it will default to zero.
+     * @param key
+     * @param value
+     * @return new Condition
+     */
+    public static Condition ltCondition(String key, String value) {
+        return new NumericLessThanCondition(key, value);
+    }
+
+    /**
+     * Compare two numeric values. If the value is'nt a valid float number, it will default to zero.
+     * @param key
+     * @param value
+     * @return new Condition
+     */
+    public static Condition gtCondition(String key, String value) {
+        return new NumericGreaterThanCondition(key, value);
+    }
+
+    /**
+     * Compare two numeric values. If the value is'nt a valid float number, it will default to zero.
+     * @param key
+     * @param value
+     * @return new Condition
+     */
+    public static Condition eqCondition(String key, String value) {
+        return new NumericEqualsCondition(key, value);
+    }
 }
