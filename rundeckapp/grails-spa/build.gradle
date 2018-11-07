@@ -6,12 +6,21 @@ configurations{
   spa
 }
 
-task runNpmBuild(type: NpmTask, group: 'build') {
-    dependsOn npmInstall
 
-    inputs.dir 'build'
-    inputs.dir 'config'
-    inputs.dir 'src'
+task lernaBootstrap(type: NpmTask, group: 'build') {
+  dependsOn npmInstall
+
+  inputs.dir 'packages'
+
+  args = ['run', 'build']
+}
+
+task runNpmBuild(type: NpmTask, group: 'build') {
+    dependsOn lernaBootstrap
+
+    workingDir = file("${project.projectDir}/packages/spa")
+
+    inputs.dir 'packages'
 
     outputs.dir(buildDir)
     args = ['run', 'build']

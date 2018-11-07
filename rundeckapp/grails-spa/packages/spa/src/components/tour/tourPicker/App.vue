@@ -24,26 +24,29 @@
   </li>
 </template>
 
-<script>
-import Trellis from '@rundeck/ui-trellis'
+<script lang='ts'>
+import Vue from 'vue'
+import Trellis, {getRundeckContext} from '@rundeck/ui-trellis'
 import TourServices from '@/components/tour/services'
 
-export default {
+const context = getRundeckContext()
+
+export default Vue.extend({
   name: 'TourPicker',
   props: ['eventBus'],
   data () {
     return {
       hasActiveTour: false,
       tourSelectionModal: false,
-      tours: []
+      tours: [] as any[]
     }
   },
   methods: {
-    startTour: function (tourLoader, tourEntry) {
-      TourServices.getTour(tourLoader, tourEntry.key).then((tour) => {
+    startTour: function (tourLoader: string, tourEntry: any) {
+      TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
         Trellis.FilterPrefs.setFilterPref('activeTour', tourLoader + ':' + tourEntry.key).then(() => {
           if (tour.project) {
-            window.location.replace(`${window._rundeck.rdBase}project/${tour.project}/home`)
+            window.location.replace(`${context.rdBase}project/${tour.project}/home`)
           } else {
             this.eventBus.$emit('tourSelected', tour)
             this.tourSelectionModal = false
@@ -62,7 +65,7 @@ export default {
       }
     }
   }
-}
+})
 </script>
 
 <style scoped lang="scss">
