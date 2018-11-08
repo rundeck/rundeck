@@ -95,6 +95,31 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         rp2.apiData
     }
 
+    void "plugin detail no plugin or framework service"() {
+        given:
+            controller.pluginService = Mock(PluginService)
+            def fwksvc = Mock(FrameworkService)
+            def fwk = Mock(Framework)
+            fwksvc.getRundeckFramework() >> fwk
+            fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+            controller.frameworkService = fwksvc
+            controller.uiPluginService = Mock(UiPluginService)
+            controller.pluginApiService = Mock(PluginApiService)
+
+        when:
+            def fakePluginDesc = new PluginApiServiceSpec.FakePluginDescription()
+            params.name = "fake"
+            params.service = "Notification"
+
+            controller.pluginDetail()
+
+        then:
+            response.status == 404
+            1 * controller.pluginService.getPluginDescriptor("fake", 'Notification') >> null
+            1 * controller.frameworkService.rundeckFramework.getService('Notification') >> null
+
+    }
+
     def "plugin service descriptions"() {
         given:
             controller.pluginService = Mock(PluginService)
