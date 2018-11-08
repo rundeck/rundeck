@@ -1,9 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.plugins.tours.Tour
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
-import com.dtolabs.rundeck.plugins.tours.TourManifest
 
 class TourLoaderService {
 
@@ -15,7 +13,13 @@ class TourLoaderService {
         def tourManifest = []
         pluginService.listPlugins(TourLoaderPlugin,tourLoaderPluginProviderService).each {
             TourLoaderPlugin tourLoader = pluginService.configurePlugin(it.key, tourLoaderPluginProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
-            tourManifest.add([provider:it.key,loader:tourLoader.loaderName,tours:tourLoader.tourManifest.tours])
+            def tours = tourLoader.tourManifest.tours
+            def groupedTours = tours.findAll { it.group }
+            def ungroupedTours = tours.findAll { !it.group }
+            groupedTours.groupBy{ it.group }.each { group, gtours  ->
+                tourManifest.add([provider:it.key,loader:group,tours:gtours])
+            }
+            tourManifest.add([provider:it.key,loader:tourLoader.loaderName,tours:ungroupedTours])
         }
         return tourManifest
     }
