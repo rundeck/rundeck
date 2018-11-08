@@ -17,15 +17,21 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
+import org.rundeck.app.spi.Services
 import rundeck.services.framework.RundeckProjectConfigurable
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -242,5 +248,49 @@ class FrameworkServiceSpec extends Specification {
         [disableExecution: 'false'] | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
         [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
+    }
+
+    def "getDynamicProperties"() {
+        given:
+            String project = 'aproject'
+            String svcName = 'AService'
+            String type = 'AProvider'
+
+            def services = Mock(Services)
+
+            def manager = Mock(ProjectManager) {
+                getFrameworkProject(project) >> Mock(FrameworkProject) {
+                    getProperties() >> projProps
+                }
+            }
+
+            service.rundeckFramework = Mock(Framework) {
+                getFrameworkProjectMgr() >> manager
+                getPropertyRetriever() >> PropertyResolverFactory.instanceRetriever(fwkProps)
+            }
+            Description desc = DescriptionBuilder.builder()
+                                                 .name(type)
+                                                 .property(PropertyBuilder.builder().string('aprop').build())
+                                                 .property(PropertyBuilder.builder().string('xprop').build())
+                                                 .build()
+            def pluginInstance = Mock(DynamicProperties)
+            service.pluginService = Mock(PluginService) {
+                getPluginDescriptor(type, svcName) >> new DescribedPlugin<Object>(pluginInstance, desc, type)
+            }
+
+
+        when:
+            def result = service.getDynamicProperties(svcName, type, project, services)
+
+        then:
+            1 * pluginInstance.dynamicProperties(dynamicInput, services) >> [aprop: ['a', 'b']]
+            result == [aprop: ['a', 'b']]
+
+        where:
+            fwkProps                                              | projProps | dynamicInput
+            [:]                                                   | [:]       | [:]
+            ['framework.plugin.AService.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
+            ['framework.plugin.AService.AProvider.aprop': 'aval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval']
+            ['framework.plugin.AService.AProvider.xprop': 'xval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
     }
 }

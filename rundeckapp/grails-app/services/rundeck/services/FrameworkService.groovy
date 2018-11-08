@@ -34,10 +34,12 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.storage.StorageTree
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import grails.core.GrailsApplication
+import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -858,55 +860,38 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
     }
 
     /**
-     * Return step plugin of a certain type
+     * load the dynamic select values for properties from the plugin, or null
+     * @param serviceName
      * @param type
+     * @param project
+     * @param services
      * @return
      */
-    def getStepPlugin(String type) throws MissingProviderException{
-        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
-        described.instance
-    }
+    def Map<String, List<String>> getDynamicProperties(
+        String serviceName,
+        String type,
+        String project,
+        Services services
+    ) {
+        final PropertyResolver resolver = PropertyResolverFactory.createPluginRuntimeResolver(
+            project,
+            rundeckFramework,
+            null,
+            serviceName,
+            type
+        );
 
-    /**
-     * Return node step plugin of a certain type
-     * @param type
-     * @return
-     */
-    def getNodeStepPlugin(String type){
-        final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
-        described.instance
-    }
+        def pluginDescriptor = pluginService.getPluginDescriptor(type, serviceName)
+        final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
+            resolver,
+            pluginDescriptor.description,
+            PropertyScope.Project
+        );
 
-
-    /**
-     * Return dynamic properties values from step plugin
-     * @param type, projectAndFrameworkValues
-     * @return
-     */
-    def Map<String, Object> getDynamicPropertiesStepPlugin(
-            String type, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree) throws MissingProviderException{
-
-        def plugin = getStepPlugin(type)
-        getDynamicProperties(plugin, projectAndFrameworkValues, storageTree)
-    }
-
-    /**
-     * Return dynamic properties values from node step plugin
-     * @param type, projectAndFrameworkValues
-     * @return
-     */
-    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(
-            String type, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree) throws MissingProviderException{
-
-        def plugin = getNodeStepPlugin(type)
-        getDynamicProperties(plugin, projectAndFrameworkValues, storageTree)
-    }
-
-    def Map<String, Object> getDynamicProperties(plugin, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree){
+        def plugin = pluginDescriptor.instance
         if(plugin instanceof DynamicProperties){
-            return plugin.dynamicProperties(projectAndFrameworkValues, storageTree)
+            return plugin.dynamicProperties(config, services)
         }
-
         return null
     }
     /**
