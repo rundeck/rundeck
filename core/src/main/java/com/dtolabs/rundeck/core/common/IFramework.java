@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import com.dtolabs.rundeck.core.utils.PropertyLookup;
 
 import java.io.File;
 import java.util.Collection;
@@ -50,6 +51,14 @@ public interface IFramework extends IFrameworkServices, IFrameworkNodes{
      * @return property lookup
      */
     IPropertyLookup getPropertyLookup();
+
+    /**
+     *
+     * @return safe property retriever
+     */
+    default PropertyRetriever getPropertyRetriever(){
+        return PropertyLookup.safePropertyRetriever(getPropertyLookup());
+    }
 
     /**
      * Gets the value of "framework.server.hostname" property
