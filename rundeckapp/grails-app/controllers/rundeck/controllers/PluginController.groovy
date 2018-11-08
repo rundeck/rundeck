@@ -186,7 +186,7 @@ class PluginController extends ControllerBase {
         def desc = pluginService.getPluginDescriptor(pluginName, service)?.description
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
-            desc = psvc.listDescriptions().find { it.name == pluginName }
+            desc = psvc?.listDescriptions()?.find { it.name == pluginName }
         }
         if (!desc) {
             response.status = 404
