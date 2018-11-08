@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -112,14 +113,39 @@ public class PropertyResolverFactory {
                                                                    final String pluginType,
                                                                    final String providerName) {
 
+        return createPluginRuntimeResolver(
+            context.getFrameworkProject(),
+            context.getFramework(),
+            instanceProperties,
+            pluginType,
+            providerName
+        );
+    }
+
+    /**
+     * @param project            project name
+     * @param framework          frameork
+     * @param instanceProperties instance property values
+     * @param pluginType         service type name
+     * @param providerName       provider name
+     * @return Create a PropertyResolver for a plugin for resolving Framework, Project and instance scoped properties.
+     */
+    public static PropertyResolver createPluginRuntimeResolver(
+        String project,
+        IFramework framework,
+        final Map<String, Object> instanceProperties,
+        final String pluginType,
+        final String providerName
+    )
+    {
+
         final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
         final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
 
-        return createResolver(instanceRetriever(instanceProperties),
-                                           projectRetriever(projectPrefix,
-                                                            context.getFramework(),
-                                                            context.getFrameworkProject()),
-                                           frameworkRetriever(frameworkPrefix, context.getFramework())
+        return createResolver(
+            instanceRetriever(instanceProperties),
+            projectRetriever(projectPrefix, framework, project),
+            frameworkRetriever(frameworkPrefix, framework)
         );
     }
 
@@ -224,12 +250,12 @@ public class PropertyResolverFactory {
         return createResolver(instanceRetriever(instanceProperties), null, null);
     }
 
-    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, Framework framework) {
+    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, IFramework framework) {
         return prefixedRetriever(frameworkPrefix, framework.getPropertyRetriever());
     }
 
     private static PropertyRetriever projectRetriever(final String projectPrefix,
-                                                      final Framework framework,
+                                                      final IFramework framework,
                                                       final String project) {
         IRundeckProject frameworkProject = framework
                 .getFrameworkProjectMgr()
