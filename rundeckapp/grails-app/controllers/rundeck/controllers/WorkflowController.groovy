@@ -20,18 +20,21 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import rundeck.services.StorageService
 
 import javax.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
+    StorageService storageService
     static allowedMethods = [
             redo:'POST',
             remove:'POST',
@@ -80,10 +83,14 @@ class WorkflowController extends ControllerBase {
         def origitemtype
         def newitemDescription
         def dynamicProperties
+        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
-            dynamicProperties = getDynamicProperties(params.project, origitemtype, item.nodeStep)
+            dynamicProperties = getDynamicProperties(params.project,
+                                                     origitemtype,
+                                                     item.nodeStep,
+                                                     storageService.storageTreeWithContext(auth))
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
@@ -97,9 +104,9 @@ class WorkflowController extends ControllerBase {
             dynamicProperties = getDynamicProperties(
                     params.project,
                     params['newitemtype'],
-                    params.newitemnodestep == 'true')
+                    params.newitemnodestep == 'true',
+                    storageService.storageTreeWithContext(auth))
         }
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
 
         [
@@ -1206,11 +1213,11 @@ class WorkflowController extends ControllerBase {
      * @param project name of project
      * @param newItemType new item type
      */
-    private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
+    private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep, StorageTree storageTree){
         if (newItemType && !(newItemType in ['command', 'script', 'scriptfile', 'job'])) {
             try {
-                return isNodeStep ? frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project)) :
-                        frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
+                return isNodeStep ? frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project), storageTree) :
+                        frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project), storageTree)
             } catch (MissingProviderException e) {
                 log.warn("step provider not found: ${newItemType}: ${e.message}", e)
             }

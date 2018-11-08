@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
@@ -883,10 +884,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @return
      */
     def Map<String, Object> getDynamicPropertiesStepPlugin(
-            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+            String type, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree) throws MissingProviderException{
 
         def plugin = getStepPlugin(type)
-        getDynamicProperties(plugin, projectAndFrameworkValues)
+        getDynamicProperties(plugin, projectAndFrameworkValues, storageTree)
     }
 
     /**
@@ -895,15 +896,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @return
      */
     def Map<String, Object> getDynamicPropertiesNodeStepPlugin(
-            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+            String type, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree) throws MissingProviderException{
 
         def plugin = getNodeStepPlugin(type)
-        getDynamicProperties(plugin, projectAndFrameworkValues)
+        getDynamicProperties(plugin, projectAndFrameworkValues, storageTree)
     }
 
-    def Map<String, Object> getDynamicProperties(plugin, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicProperties(plugin, Map<String, Object> projectAndFrameworkValues, StorageTree storageTree){
         if(plugin instanceof DynamicProperties){
-            return plugin.dynamicProperties(projectAndFrameworkValues)
+            return plugin.dynamicProperties(projectAndFrameworkValues, storageTree)
         }
 
         return null
