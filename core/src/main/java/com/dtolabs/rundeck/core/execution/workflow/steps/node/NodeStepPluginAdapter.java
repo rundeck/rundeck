@@ -40,9 +40,11 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.log4j.Logger;
+import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 
 
@@ -66,9 +68,9 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     }
 
     @Override
-    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, StorageTree storageTree){
+    public Map<String, List<String>> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
-            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, storageTree);
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
         }
 
         return null;
