@@ -18,6 +18,7 @@ package org.rundeck.plugin.jobstate
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
@@ -32,7 +33,7 @@ import spock.lang.Unroll
  */
 class JobStateWorkflowStepSpec extends Specification {
     @Unroll
-    def "state check #rightstate halt #halt and fail #fail should log at #loglevel"() {
+    def "state check #rightstate halt #halt and fail #fail should log at #loglevel OK case"() {
         given:
         def step = new JobStateWorkflowStep()
         step.halt = halt
@@ -76,11 +77,58 @@ class JobStateWorkflowStepSpec extends Specification {
         where:
         halt  | fail  | rightstate | loglevel
         true  | false | false      | 1
-        true  | true  | false      | 0
-        false | true  | false      | 1
         false | true  | true       | 2
 
 
+    }
+
+    @Unroll
+    def "state check #rightstate halt #halt and fail #fail should log at #loglevel NOK case"() {
+        given:
+        def step = new JobStateWorkflowStep()
+        step.halt = halt
+        step.fail = fail
+        def actualState = 'failed'
+        step.executionState = rightstate ? actualState : 'wrongstate'
+        step.jobUUID = 'auuid'
+
+
+        def context = Mock(PluginStepContext)
+        def config = [:]
+
+        when:
+        step.executeStep(context, config)
+        then:
+        thrown StepException
+        1 * context.getFrameworkProject() >> 'projectName'
+        1 * context.getExecutionContext() >> Mock(ExecutionContext) {
+            getJobService() >> Mock(JobService) {
+                1 * jobForID('auuid', _) >> Mock(JobReference)
+                1 * getJobState(_) >> Mock(JobState) {
+                    getPreviousExecutionState() >> actualState
+                }
+            }
+        }
+        1 * context.getLogger() >> Mock(PluginLogger) {
+            1 * log(loglevel, _)
+        }
+        if (!rightstate) {
+            if (halt) {
+                context.getFlowControl() >> Mock(FlowControl) {
+                    1 * Halt(!fail)
+                }
+            } else {
+                context.getFlowControl() >> Mock(FlowControl) {
+                    1 * Continue()
+                }
+            }
+        }
+
+
+        where:
+        halt  | fail  | rightstate | loglevel
+        true  | true  | false      | 0
+        false | true  | false      | 1
     }
 
     def "state check shouldn't fail with or without jobProject"() {

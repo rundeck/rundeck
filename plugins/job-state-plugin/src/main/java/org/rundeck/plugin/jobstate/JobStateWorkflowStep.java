@@ -175,6 +175,12 @@ public class JobStateWorkflowStep implements StepPlugin {
         if(result!=equality) {
             context.getLogger().log(halt && fail ? 0 : 1, message);
             haltConditionally(context);
+            if(fail){
+                throw new StepException(
+                        "Execution State not match",
+                        JobStateFailureReason.ExecutionStateNotMatch
+                );
+            }
         }else{
             context.getLogger().log(2, message);
         }
