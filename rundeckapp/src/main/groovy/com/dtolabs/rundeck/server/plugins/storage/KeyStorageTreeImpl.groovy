@@ -65,6 +65,22 @@ class KeyStorageTreeImpl extends TypedStorageTreeImpl implements KeyStorageTree 
     }
 
     @Override
+    boolean hasPassword(String path) {
+        println("checking password path ${path}")
+        hasResourceWithType(PathUtil.asPath(path), KeyStorageLayer.PASSWORD_MIME_TYPE)
+    }
+
+    @Override
+    boolean hasPrivateKey(String path) {
+        hasResourceWithType(PathUtil.asPath(path), KeyStorageLayer.PRIVATE_KEY_MIME_TYPE)
+    }
+
+    @Override
+    boolean hasPublicKey(String path) {
+        hasResourceWithType(PathUtil.asPath(path), KeyStorageLayer.PUBLIC_KEY_MIME_TYPE)
+    }
+
+    @Override
     Resource<ResourceMeta> getPublicKey(final Path path) {
         getResourceWithType(path, KeyStorageLayer.PUBLIC_KEY_MIME_TYPE)
     }

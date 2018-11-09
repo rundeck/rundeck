@@ -1169,7 +1169,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     boolean canReadStoragePassword(AuthContext authContext, String storagePath, boolean failIfMissing){
         def keystore = storageService.storageTreeWithContext(authContext)
         try {
-            return keystore.readPassword(storagePath)!=null
+            return keystore.hasPassword(storagePath)
         } catch (StorageException e) {
             if (failIfMissing) {
                 throw new ExecutionServiceException(
@@ -1212,6 +1212,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def keystore = storageService.storageTreeWithContext(authContext)
             found?.each {
                 def defStoragePath = it.defaultStoragePath
+                def failMessage
+                def exists=false
                 try {
                     //search and replace ${option.
                     if (args && defStoragePath?.contains('${option.')) {
@@ -1225,36 +1227,45 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (defStoragePath?.contains('${node.')) {
                         nodeDeferred = secureOptionNodeDeferred != null ? true : false
                         password = defStoragePath //to be resolved later
+                        exists=true
                     }else {
-                        password = keystore.readPassword(defStoragePath)
-                    }
-                    if (it.secureExposed) {
-                        secureOptsExposed[it.name] = new String(password)
-                        if(nodeDeferred) {
-                            secureOptionNodeDeferred[it.name] = password
+                        if(keystore.hasPassword(defStoragePath)){
+                            password = keystore.readPassword(defStoragePath)
+                            exists=true
+                        }else{
+                            failMessage = "path not found"
                         }
-                    } else {
-                        secureOpts[it.name] = new String(password)
-                        if(nodeDeferred) {
-                            secureOptionNodeDeferred[it.name] = password
+                    }
+                    if(exists){
+                        if (it.secureExposed) {
+                            secureOptsExposed[it.name] = new String(password)
+                            if(nodeDeferred) {
+                                secureOptionNodeDeferred[it.name] = password
+                            }
+                        } else {
+                            secureOpts[it.name] = new String(password)
+                            if(nodeDeferred) {
+                                secureOptionNodeDeferred[it.name] = password
+                            }
                         }
                     }
                 } catch (StorageException e) {
+                    failMessage = e.message
+                }
+
+                if(!exists){
                     if (it.required && failIfMissingRequired) {
                         throw new ExecutionServiceException(
                                 "Required option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${e.message}",
-                                e
+                                        "path: ${defStoragePath}: ${failMessage}"
                         )
                     } else {
                         log.warn(
-                                "Required option '${it.name}' default value could not be loaded from key storage " +
-                                        "path: ${defStoragePath}: ${e.message}",
-                                e
+                                "Option '${it.name}' default value could not be loaded from key storage " +
+                                        "path: ${defStoragePath}: ${failMessage}"
                         )
                     }
                 }
-
             }
         }
     }
@@ -2533,7 +2544,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                         invalidOpt opt, lookupMessage(
                                 "domain.Option.validation.required.storageDefault.reason",
-                                [opt.name, opt.defaultStoragePath, e1.cause.message]
+                                [opt.name, opt.defaultStoragePath, e1.message]
 
                         )
                         return
