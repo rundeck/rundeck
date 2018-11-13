@@ -17,6 +17,7 @@ package rundeckapp.init
 
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
+import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 import rundeckapp.Application
@@ -97,6 +98,11 @@ class RundeckInitializer {
         initConfigurations()
         setSystemProperties()
         initSsl()
+
+        if(config.isTestAuth()) {
+            CliAuthTester authTester = new CliAuthTester()
+            System.exit(authTester.testAuth(config) ? 0 : 1)
+        }
 
         File installCompleteMarker = new File(config.baseDir+"/var/.install_complete-"+System.getProperty("build.ident","missing-ver"))
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {

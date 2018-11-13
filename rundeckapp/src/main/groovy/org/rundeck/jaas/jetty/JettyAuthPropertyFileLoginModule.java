@@ -19,6 +19,8 @@ package org.rundeck.jaas.jetty;
 import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
@@ -28,15 +30,13 @@ import java.io.IOException;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Augments Jetty property file login module {@link PropertyFileLoginModule}, to only perform authentication
  * via property file login, handles shared credentials logic, and does not use property file roles.
  */
 public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule {
-    public static final Logger logger = Logger.getLogger(JettyAuthPropertyFileLoginModule.class.getName());
+    public static final Logger logger = LoggerFactory.getLogger(JettyAuthPropertyFileLoginModule.class.getName());
     PropertyFileLoginModule module;
     UserInfo userInfo;
 
@@ -123,6 +123,6 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
      * @param message
      */
     protected void debug(String message) {
-        logger.log(Level.INFO, message);
+        logger.debug(message);
     }
 }
