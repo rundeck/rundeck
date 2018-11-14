@@ -24,11 +24,12 @@ const createLintingRule = () => ({
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
-    'components/central': './src/components/central/main.ts',
     'components/motd': './src/components/motd/main.js',
+    'components/activityTable': './src/components/activityTable/main.js',
+    'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
-    'pages/repository': './src/pages/repository/main.js'
+    'pages/repository': './src/pages/repository/main.js',
   },
   output: {
     path: `config.build.assetsRoot/[path]`,

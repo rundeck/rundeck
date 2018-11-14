@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1>hello world</h1>
+    <h1>Hello From activityTable App.vue</h1>
     <activity-table></activity-table>
     <vue-bootstrap-table
             :columns="columns"
@@ -37,19 +37,19 @@ export default {
     }
   },
   mounted () {
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-      axios({
-        method: 'get',
-        headers: {'x-rundeck-ajax': true},
-        url: `${window._rundeck.rdBase}/project/${window._rundeck.projectName}/events/eventsAjax`,
-        withCredentials: true,
-        params: {
-          // jobFilter: 'f6b8aec9-16b1-4b4d-a9fb-b62ef5d92d00'
-        }
-      }).then((response) => {
-        console.log('eventsAjax', response)
-      })
-    }
+    // if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
+    //   axios({
+    //     method: 'get',
+    //     headers: {'x-rundeck-ajax': true},
+    //     url: `${window._rundeck.rdBase}/project/${window._rundeck.projectName}/events/eventsAjax`,
+    //     withCredentials: true,
+    //     params: {
+    //       // jobFilter: 'f6b8aec9-16b1-4b4d-a9fb-b62ef5d92d00'
+    //     }
+    //   }).then((response) => {
+    //     console.log('eventsAjax', response)
+    //   })
+    // }
   }
 }
 </script>

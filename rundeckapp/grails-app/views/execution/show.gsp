@@ -130,6 +130,7 @@
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
     <div class="container-fluid">
+      <h1>HELLO WOLD</h1>
       <div id="execution_main">
         <div class="executionshow_wrap">
           <div class="executionshow">
@@ -705,7 +706,7 @@
               </div>
           </div>
           <div class="row">
-            <g:render template="/reports/activityLinksVue" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>            
+            <g:render template="/reports/activityLinksVue" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
           </div>
       </g:if>
   </div>

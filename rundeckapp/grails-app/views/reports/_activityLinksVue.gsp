@@ -16,7 +16,6 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
-<h3>Vue To You</h3>
 <div id="project-activity-table-vue"></div>
 <asset:javascript src="static/manifest.js"/>
 <asset:javascript src="static/vendor.js"/>

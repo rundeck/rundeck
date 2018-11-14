@@ -1,5 +1,6 @@
 <template>
   <div class="card">
+    Hello from jobsList App.vue
     <ul>
       <li v-for="group in uberJobs" v-bind:key="group.name">
         <h3>{{group.name}}</h3>
@@ -161,9 +162,9 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.display-as-table{
+.display-as-table {
   display: table;
-  .table-cell{
+  .table-cell {
     display: table-cell;
   }
 }
