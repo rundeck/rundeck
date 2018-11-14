@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "src",
+        "composite": true,
+        "sourceMap": true,
+        "strict": true,
+        "moduleResolution": "node",
+        "target": "es2015",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "declaration": true,
+        "typeRoots": [
+            "src/types"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}

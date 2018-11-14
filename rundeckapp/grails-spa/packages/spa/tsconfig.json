@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "outDir": "dist",
+        "rootDir": "./src",
+        "baseUrl": "./src",
+        "composite": true,
+        "sourceMap": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "module": "es2015",
+        "moduleResolution": "node",
+        "target": "es2015",
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "paths": {
+            "@/*": ["*"],
+        },
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "./build/**/*"
+    ],
+    "references": [
+        { "path": "../ui-trellis"}
+    ]
+}
