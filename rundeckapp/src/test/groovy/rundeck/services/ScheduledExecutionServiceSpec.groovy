@@ -3003,8 +3003,6 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 0
         result.errjobs.size() == 1
-        //result.errjobs[0].scheduledExecution.errors.hasErrors()
-        println(result.errjobs[0].errmsg)
         result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> false
