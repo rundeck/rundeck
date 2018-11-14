@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.server.authorization.AuthConstants
+
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -2220,6 +2222,8 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "load jobs should match updated jobs based on name,group,and project"(){
         given:
         setupDoUpdate()
+        //scm update setup
+        service.frameworkService.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
         def upload = new ScheduledExecution(
@@ -2276,7 +2280,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
-
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
         where:
         origprops | inparams                   | expect
         //basic fields updated
@@ -2936,4 +2940,73 @@ class ScheduledExecutionServiceSpec extends Specification {
         [jobName: 'newName', executionEnabled: false]    | true
     }
 
+    @Unroll
+    def "update job using right update or scm_update permission"() {
+        given:
+        setupDoUpdate()
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+
+        def testmap=[
+                doNodedispatch: true,
+                nodeThreadcount: 4,
+                nodeKeepgoing: true,
+                nodeExcludePrecedence: true,
+                nodeInclude: 'asuka',
+                nodeIncludeName: 'test',
+                nodeExclude: 'testo',
+                nodeExcludeTags: 'dev',
+                nodeExcludeOsFamily: 'windows',
+                nodeIncludeTags: 'something',
+                description: 'blah'
+        ]
+
+        when:
+        def result = service.loadJobs([upload], 'update', null, [:], mockAuth())
+
+        then:
+
+        result.jobs.size() == 1
+        println(result.jobs[0].properties)
+        result.jobs[0].properties.description == 'milk duds'
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+    }
+
+    @Unroll
+    def "update job without update or scm_update permission"() {
+        given:
+        setupDoUpdate()
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+
+        def testmap=[
+                doNodedispatch: true,
+                nodeThreadcount: 4,
+                nodeKeepgoing: true,
+                nodeExcludePrecedence: true,
+                nodeInclude: 'asuka',
+                nodeIncludeName: 'test',
+                nodeExclude: 'testo',
+                nodeExcludeTags: 'dev',
+                nodeExcludeOsFamily: 'windows',
+                nodeIncludeTags: 'something',
+                description: 'blah'
+        ]
+
+        when:
+        def result = service.loadJobs([upload], 'update', null, [:], mockAuth())
+
+        then:
+
+        result.jobs.size() == 0
+        result.errjobs.size() == 1
+        //result.errjobs[0].scheduledExecution.errors.hasErrors()
+        println(result.errjobs[0].errmsg)
+        result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> false
+    }
 }

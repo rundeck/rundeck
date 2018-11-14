@@ -57,6 +57,7 @@ public class AuthConstants {
     public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
     public static final String GENERATE_USER_TOKEN = "generate_user_token";
     public static final String GENERATE_SERVICE_TOKEN="generate_service_token";
+    public static final String SCM_UPDATE="scm_update";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";

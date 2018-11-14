@@ -1628,7 +1628,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def success = false
                 def errmsg
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAll(projectAuthContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAny(projectAuthContext, scheduledExecution,
+                        [AuthConstants.ACTION_UPDATE,AuthConstants.SCM_UPDATE], scheduledExecution.project)) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
