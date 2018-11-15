@@ -28,6 +28,7 @@ module.exports = {
     'components/motd': './src/components/motd/main.js',
     'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
+    'pages/project-jobs': './src/pages/project-jobs/main.js',
     'pages/repository': './src/pages/repository/main.js'
   },
   output: {
