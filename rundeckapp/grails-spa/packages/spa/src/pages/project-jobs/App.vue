@@ -6,6 +6,7 @@
 
 <script>
 import axios from 'axios'
+import {getRundeckContext, getSynchronizerToken, RundeckBrowser} from '@rundeck/ui-trellis'
 
 export default {
   name: 'App',
@@ -17,7 +18,7 @@ export default {
     }
   },
   mounted () {
-
+    console.log('RundeckBrowser', RundeckBrowser.RundeckClient)
   }
 }
 </script>
