@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.storage;
 
-import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageTree
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.Resource
+
+import org.rundeck.storage.api.Path;
+import org.rundeck.storage.api.Resource;
+
+import java.io.IOException;
 
 /**
  * Extends StorageTree to provide content-type requirements for resources
  */
-interface TypedStorageTree extends StorageTree {
+public interface TypedStorageTree
+    extends StorageTree
+{
     /**
      *
      * @param path path
@@ -33,7 +36,7 @@ interface TypedStorageTree extends StorageTree {
      * @throws WrongContentType if the content type requested does not match
      * @throws org.rundeck.storage.api.StorageException if underlying tree throws an exception, e.g. not found
      */
-    Resource<ResourceMeta> getResourceWithType(Path path, String contentType)
+    Resource<ResourceMeta> getResourceWithType(Path path, String contentType);
     /**
      *
      * @param path path
@@ -42,7 +45,7 @@ interface TypedStorageTree extends StorageTree {
      * @throws WrongContentType if the content type requested does not match
      * @throws org.rundeck.storage.api.StorageException if underlying tree throws an exception, e.g. not found
      */
-    boolean hasResourceWithType(Path path, String contentType)
+    boolean hasResourceWithType(Path path, String contentType);
     /**
      *
      * @param path path
@@ -51,5 +54,5 @@ interface TypedStorageTree extends StorageTree {
      * @throws WrongContentType if the content type requested does not match
      * @throws org.rundeck.storage.api.StorageException if underlying tree throws an exception, e.g. not found
      */
-    byte[] readResourceWithType(Path path, String contentType)
+    byte[] readResourceWithType(Path path, String contentType) throws IOException;
 }

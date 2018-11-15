@@ -217,12 +217,6 @@ public class FrameworkBase implements IFramework{
         return lookup.getProperty(name);
     }
 
-    /**
-     * @return a PropertyRetriever interface for framework-scoped properties
-     */
-    public PropertyRetriever getPropertyRetriever() {
-        return PropertyLookup.safePropertyRetriever(lookup);
-    }
 
     /**
      * @return true if the property exists
