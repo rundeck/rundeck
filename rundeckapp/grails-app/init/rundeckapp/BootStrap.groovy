@@ -1,6 +1,9 @@
 package rundeckapp
 
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheck
+import com.codahale.metrics.health.HealthCheckRegistry
+import com.dtolabs.launcher.Setup
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -17,9 +20,6 @@ import com.codahale.metrics.MetricRegistry
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.codahale.metrics.health.HealthCheck
-import com.codahale.metrics.health.HealthCheckRegistry
-import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
@@ -324,6 +324,7 @@ class BootStrap {
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
+         frameworkService.rescheduleAllCleanerExecutionsJob()
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
              protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {

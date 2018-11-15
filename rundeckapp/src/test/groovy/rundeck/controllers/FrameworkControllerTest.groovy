@@ -16,14 +16,8 @@
 
 package rundeck.controllers
 
-import groovy.mock.interceptor.MockFor
-import rundeck.services.PluginService
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -31,20 +25,12 @@ import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.grails.web.json.JSONElement
-import org.grails.web.json.JSONObject
+import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.Project
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.WorkflowStep
-import rundeck.services.FrameworkService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PasswordFieldsServiceTests
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.UserService
+import rundeck.*
+import rundeck.services.*
+
+import static org.junit.Assert.*
 
 /**
  * $INTERFACE is ...
@@ -287,7 +273,7 @@ class FrameworkControllerTest {
         }
         fwk.demand.listWriteableResourceModelSources { project -> [] }
 
-        proj.demand.getProjectProperties(1..3){-> [:]}
+        proj.demand.getProjectProperties(1..6){-> [:]}
 
         fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
 
@@ -407,6 +393,7 @@ class FrameworkControllerTest {
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
+        fwk.demand.scheduleCleanerExecutions{project,c, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
 
@@ -658,6 +645,7 @@ class FrameworkControllerTest {
             assertEquals('Label----',props.getProperty('project.label'))
             ["success":props.size() != 0]
         }
+        fwk.demand.scheduleCleanerExecutions{project,c, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         controller.frameworkService = fwk.proxyInstance()
@@ -715,7 +703,7 @@ class FrameworkControllerTest {
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..3){-> ["project.label":label]}
+        proj.demand.getProjectProperties(1..6){-> ["project.label":label]}
 
         fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
         fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
