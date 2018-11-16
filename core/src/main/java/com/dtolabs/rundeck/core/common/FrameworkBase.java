@@ -150,6 +150,9 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
+    public TourLoaderPluginService getTourLoaderService() { return frameworkServices.getTourLoaderService(); }
+
+    @Override
     public NodeExecutor getNodeExecutorForNodeAndProject(final INodeEntry node, final String project)
             throws ExecutionServiceException
     {

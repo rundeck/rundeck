@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.util.HashMap;
 
@@ -68,6 +67,7 @@ public class ServiceSupport implements IFrameworkServices {
         ResourceModelSourceService.getInstanceForFramework(getFramework());
         ResourceFormatParserService.getInstanceForFramework(getFramework());
         ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        TourLoaderPluginService.getInstanceForFramework(getFramework());
     }
 
     /**
@@ -128,6 +128,11 @@ public class ServiceSupport implements IFrameworkServices {
     @Override
     public FileCopierService getFileCopierService() {
         return FileCopierService.getInstanceForFramework(getFramework());
+    }
+
+    @Override
+    public TourLoaderPluginService getTourLoaderService() {
+        return TourLoaderPluginService.getInstanceForFramework(getFramework());
     }
 
     @Override
