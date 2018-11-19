@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
+import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
@@ -46,8 +47,7 @@ class PluginApiService {
                 framework.getNodeExecutorService(),
                 framework.getFileCopierService(),
                 framework.getNodeStepExecutorService(),
-                framework.getStepExecutionService(),
-                framework.getTourLoaderService()
+                framework.getStepExecutionService()
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
@@ -104,6 +104,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 

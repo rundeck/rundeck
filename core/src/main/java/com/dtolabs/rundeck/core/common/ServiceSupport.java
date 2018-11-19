@@ -67,7 +67,6 @@ public class ServiceSupport implements IFrameworkServices {
         ResourceModelSourceService.getInstanceForFramework(getFramework());
         ResourceFormatParserService.getInstanceForFramework(getFramework());
         ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
-        TourLoaderPluginService.getInstanceForFramework(getFramework());
     }
 
     /**
@@ -128,11 +127,6 @@ public class ServiceSupport implements IFrameworkServices {
     @Override
     public FileCopierService getFileCopierService() {
         return FileCopierService.getInstanceForFramework(getFramework());
-    }
-
-    @Override
-    public TourLoaderPluginService getTourLoaderService() {
-        return TourLoaderPluginService.getInstanceForFramework(getFramework());
     }
 
     @Override

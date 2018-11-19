@@ -61,8 +61,6 @@ public interface IFrameworkServices {
 
     FileCopierService getFileCopierService();
 
-    TourLoaderPluginService getTourLoaderService();
-
     NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
 
     NodeExecutorService getNodeExecutorService() throws ExecutionServiceException;

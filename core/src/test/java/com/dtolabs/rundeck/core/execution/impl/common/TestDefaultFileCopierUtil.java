@@ -374,9 +374,6 @@ public class TestDefaultFileCopierUtil extends TestCase {
         }
 
         @Override
-        public TourLoaderPluginService getTourLoaderService() { return null;  }
-
-        @Override
         public NodeExecutor getNodeExecutorForNodeAndProject(
                 final INodeEntry node, final String project
         ) throws ExecutionServiceException

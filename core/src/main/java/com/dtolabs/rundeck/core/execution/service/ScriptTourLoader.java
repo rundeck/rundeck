@@ -15,9 +15,9 @@
  */
 package com.dtolabs.rundeck.core.execution.service;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.log4j.Logger;
@@ -30,11 +30,11 @@ public class ScriptTourLoader extends BaseScriptPlugin implements TourLoaderPlug
     private static final Logger       LOG    = Logger.getLogger(ScriptTourLoader.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    protected ScriptTourLoader(
-            final ScriptPluginProvider provider,
-            final Framework framework
-    ) {
-        super(provider, framework);
+    private final ServiceProviderLoader pluginManager;
+
+    public ScriptTourLoader(final ScriptPluginProvider provider, final ServiceProviderLoader pluginManager) {
+        super(provider);
+        this.pluginManager = pluginManager;
     }
 
     @Override
