@@ -899,7 +899,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         );
 
         final Map<String, Object> configProject = getProjectProperties(project)
-        configProject.putAll(config)
 
         def plugin = pluginDescriptor.instance
         if(plugin instanceof DynamicProperties){
