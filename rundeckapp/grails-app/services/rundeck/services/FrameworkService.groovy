@@ -903,7 +903,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
 
         def plugin = pluginDescriptor.instance
         if(plugin instanceof DynamicProperties){
-            return plugin.dynamicProperties(configProject, services)
+            return plugin.dynamicProperties(config, services)
         }
         return null
     }
