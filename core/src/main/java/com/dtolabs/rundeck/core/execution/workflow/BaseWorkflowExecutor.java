@@ -740,7 +740,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     addNodeStepFailureContextData(stepResult, wfHandlerContext);
 
                     //add in data context results produced by the step
-                    wfHandlerContext.mergeSharedContext(outputContext.getSharedContext());
+                    wfHandlerContext.mergeSharedContext(combinedResultData);
 
                     //allow flow control
                     final FlowController handlerController = new FlowController();
