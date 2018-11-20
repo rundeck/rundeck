@@ -68,7 +68,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     }
 
     @Override
-    public Map<String, List<String>> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
             return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
         }
