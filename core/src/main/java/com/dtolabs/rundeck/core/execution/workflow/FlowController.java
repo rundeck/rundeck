@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+
 /**
  * record flow control
  */
@@ -71,5 +73,31 @@ public class FlowController implements FlowControl, WorkflowStatusResult {
      */
     public boolean isControlled() {
         return controlled;
+    }
+
+    FailureReason getFailureReason(FailureReason defVal) {
+        if (isSuccess()) {
+            return null;
+        }
+        if (controlBehavior == ControlBehavior.Halt) {
+            return FlowControlFailureReason.FlowControlHalted;
+        }
+        return defVal;
+    }
+
+    static enum FlowControlFailureReason
+        implements FailureReason
+    {
+        FlowControlHalted
+    }
+
+    @Override
+    public String toString() {
+        return "FlowController{" +
+               "controlBehavior=" + controlBehavior +
+               ", statusString='" + statusString + '\'' +
+               ", success=" + success +
+               ", controlled=" + controlled +
+               '}';
     }
 }
