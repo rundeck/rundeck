@@ -14,7 +14,7 @@ public interface DynamicProperties {
      *
      * @param projectAndFrameworkValues config values for this plugin resolved from the framework/project
      */
-    default Map<String, List<String>> dynamicProperties(Map<String, Object> projectAndFrameworkValues) {
+    default Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues) {
         return null;
     }
 
@@ -24,7 +24,7 @@ public interface DynamicProperties {
      * @param projectAndFrameworkValues config values for this plugin resolved from the framework/project
      * @param services                  authorized services access
      */
-    default Map<String, List<String>> dynamicProperties(
+    default Map<String, Object> dynamicProperties(
         Map<String, Object> projectAndFrameworkValues,
         Services services
     )

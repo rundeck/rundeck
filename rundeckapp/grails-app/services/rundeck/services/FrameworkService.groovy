@@ -867,7 +867,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param services
      * @return
      */
-    def Map<String, List<String>> getDynamicProperties(
+    def Map<String, Object> getDynamicProperties(
         String serviceName,
         String type,
         String project,
@@ -881,7 +881,18 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             type
         );
 
-        def pluginDescriptor = pluginService.getPluginDescriptor(type, serviceName)
+        def pluginServiceType
+
+        if(serviceName == ServiceNameConstants.WorkflowNodeStep){
+            pluginServiceType = rundeckFramework.getNodeStepExecutorService()
+        }else if(serviceName == ServiceNameConstants.WorkflowStep){
+            pluginServiceType = rundeckFramework.getStepExecutionService()
+        }else{
+            pluginServiceType = serviceName
+        }
+
+        def pluginDescriptor = pluginService.getPluginDescriptor(type, pluginServiceType)
+
         final Map<String, Object> config = PluginAdapterUtility.mapDescribedProperties(
             resolver,
             pluginDescriptor.description,
