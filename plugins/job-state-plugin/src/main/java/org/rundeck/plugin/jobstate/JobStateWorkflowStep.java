@@ -38,18 +38,25 @@ import java.util.Map;
  */
 @Plugin(name = JobStateWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Job State Conditional",
-                   description = "Assert that another Job is or is not running or the state of its most recent execution.\n" +
-                                 "\n" +
-                                 "Select a value for *Running* and/or *Execution State*, " +
-                                 "and the matched Job will be compared to the chosen values.\n" +
-                                 "\n " +
-                                 "*Condition* indicates how the comparison should be evaluated.\n" +
-                                 "\n" +
-                                 "If the condition does not evaluate to true, then the step will fail.\n" +
-                                 "\n" +
-//                                 "If the assertion is , then the selected \"Outcome\" will be used.\n" +
-                                 "* Either a *Job UUID*, or a *Job Name* is required to identify the job.\n" +
-                                 "* *Execution State* AND/OR *Running* must be entered\n")
+                   description =
+                       "Assert that another Job is or is not running or the state of its most recent execution.\n"
+                       + "\n"
+                       + "Select a value for *Running* and/or *Execution State*, "
+                       + "and the matched Job will be compared to the chosen values.\n"
+                       + "\n "
+                       + "* Either a *Job UUID*, or a *Job Name* is required to identify the job.\n"
+                       + "* *Execution State* AND/OR *Running* must be entered\n"
+                       + "\n"
+                       + "*Condition* indicates how the comparison should be evaluated.\n"
+                       + "\n"
+                       + "If the condition does not evaluate to true, then the step will optionally *Halt*.\n"
+                       + "\n"
+                       + "If *Halt* is enabled, when the condition is not true, the workflow will be halted"
+                       + " with one of these results:\n"
+                       + "\n"
+                       + "* *Fail When Halted* - if true, the workflow will halt with a Failure status.\n"
+                       + "* *Status When Halted* - if set, the workflow will halt with this status.\n"
+                       + "* Otherwise it will halt with Success status.\n")
 
 
 public class JobStateWorkflowStep implements StepPlugin {
@@ -103,12 +110,15 @@ public class JobStateWorkflowStep implements StepPlugin {
 
     //flow control properties:
     @PluginProperty(title = "Halt",
-                    description = "Halt if the condition is not met. If not halted, the workflow execution will continue.")
+                    description =
+                        "Halt if the Condition is not met. (**If Halt is not selected, the workflow execution will "
+                        + "continue.**)")
     boolean halt;
-    @PluginProperty(title = "Fail",
-                    description = "Halt with fail if the condition is not met, otherwise success.")
+    @PluginProperty(title = "Fail when Halted",
+                    description = "Use a failure status when Halted, otherwise use a success status when Halted.")
     boolean fail;
-    @PluginProperty(title = "Status", description = "Halt the Job with a custom status message.")
+    @PluginProperty(title = "Status when Halted",
+                    description = "Use a custom status message when Halted (overrides Fail when Halted).")
     String status;
 
     static enum Failures implements FailureReason {
