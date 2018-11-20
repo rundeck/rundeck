@@ -65,10 +65,10 @@ class CliAuthTester {
             callbacks.each {
                 if(it instanceof NameCallback) {
                     NameCallback callback = (NameCallback)it
-                    callback.name = System.console().readLine(callback.prompt)
+                    callback.name = System.console().readLine(callback.prompt+": ")
                 } else if(it instanceof PasswordCallback) {
                     PasswordCallback callback = (PasswordCallback)it
-                    callback.password = System.console().readPassword(callback.prompt)
+                    callback.password = System.console().readPassword(callback.prompt+" ")
                 }
             }
         }
