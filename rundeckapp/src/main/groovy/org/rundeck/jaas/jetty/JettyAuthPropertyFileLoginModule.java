@@ -49,7 +49,6 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
             logger.debug("using reloadable realm property file reader");
             module = new ReloadablePropertyFileLoginModule();
         } else {
-            logger.error("using static realm property file reader");
             module = new PropertyFileLoginModule();
         }
         module.initialize(subject, callbackHandler, shared, options);
