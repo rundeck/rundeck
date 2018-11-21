@@ -118,29 +118,22 @@ public interface KeyStorageTree
     /**
      *
      * @param path path
-     * @return boolean
+     * @return true if the resource exists and is the right content type
      *
-     * @throws WrongContentType if not the right content type
      */
-    boolean hasPassword(String path)
+    boolean hasPassword(String path);
 
     /**
-     *
      * @param path path
-     * @return boolean
-     *
-     * @throws WrongContentType if not the right content type
+     * @return true if the resource exists and is the right content type
      */
-    boolean hasPrivateKey(String path)
+    boolean hasPrivateKey(String path);
 
     /**
-     *
      * @param path path
-     * @return boolean
-     *
-     * @throws WrongContentType if not the right content type
+     * @return true if the resource exists and is the right content type
      */
-    boolean hasPublicKey(String path)
+    boolean hasPublicKey(String path);
 
 
 }
