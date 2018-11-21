@@ -58,7 +58,7 @@
 <div class="container-fluid" data-bind="if: projectCount()>0 || !loadedProjectNames()">
     <div class="row">
         <g:if test="${isFirstRun}">
-            <div class="col-sm-12">
+            <div id="first-run-message" class="col-sm-12">
               <div class="card">
                 <div class="card-header">
                   <h2 class="card-title">

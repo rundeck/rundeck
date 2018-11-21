@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 
 import java.util.HashMap;
 

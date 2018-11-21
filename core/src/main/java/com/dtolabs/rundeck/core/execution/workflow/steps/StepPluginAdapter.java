@@ -30,14 +30,17 @@ import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
 
 
@@ -62,9 +65,9 @@ class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     }
 
     @Override
-    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues){
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
-            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
         }
 
         return null;

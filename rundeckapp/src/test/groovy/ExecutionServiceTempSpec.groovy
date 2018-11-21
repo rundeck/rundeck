@@ -35,7 +35,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.test.mixin.Mock
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Assert

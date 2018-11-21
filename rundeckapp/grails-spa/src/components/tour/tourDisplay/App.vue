@@ -1,9 +1,12 @@
 <template>
   <div id="tour-display" class="card" v-if="tour">
     <div class="card-header">
+      <div class="tour-card-indicator">
+        TOUR
+      </div>
       <span v-if="tour && tour.name" class="h4 card-title">{{tour.name}}</span>
       <span @click="stopTour" class="btn btn-simple card-close-button">
-        <i class="fas fa-times-circle"></i>
+        <i class="fas fa-times-circle fa-2x"></i>
       </span>
     </div>
     <div class="card-content">
@@ -17,9 +20,9 @@
         <progress-bar v-model="progress" label :labelText="progressText"/>
       </div>
       <section>
-        <modal v-model="modal.show" :title="tour.steps[stepIndex].title" :footer="false">
+        <modal v-model="modal.show" size="lg" :title="tour.steps[stepIndex].title" :footer="false">
           <img :src="modal.image" :alt="modal.alt" class="img-responsive">
-          <p>{{modal.alt}}</p>
+          <p class="modal-image-caption">{{modal.alt}}</p>
         </modal>
       </section>
     </div>
@@ -198,6 +201,9 @@ body.tour-open {
 
 #tour-display {
   display: none;
+  .card-header {
+    padding-top: 10px;
+  }
 }
 
 #tour-vue-indicator {
@@ -254,6 +260,18 @@ body.tour-open {
 }
 </style>
 <style scoped lang="scss">
+.tour-card-indicator {
+  // this is to simply show that the card in the right sidebar is the tour
+  width: 100%;
+  background-color: rgb(178, 178, 178);
+  height: 14px;
+  font-size: 8pt;
+  text-align: center;
+  color: white;
+  margin-bottom: 1em;
+  letter-spacing: 0.4em;
+  border-radius: 3px;
+}
 .step-content {
   margin-bottom: 1em;
   word-break: break-word;
@@ -265,8 +283,8 @@ body.tour-open {
 }
 .card-close-button {
   position: absolute;
-  top: 0;
-  right: -1em;
+  top: -1.5em;
+  right: -2.2em;
 }
 .card-content .btn-group,
 .card-footer .btn-group {
@@ -277,5 +295,9 @@ body.tour-open {
 }
 .progress div {
   padding-top: 3px;
+}
+.modal-image-caption {
+  margin-top: 1em;
+  font-size: 1.4em;
 }
 </style>

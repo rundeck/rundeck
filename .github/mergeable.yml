@@ -5,6 +5,6 @@ mergeable:
     label:
       must_exclude:
         regex: '(needs documentation)'
-        message: 'This PR needs documentation. Please submit a PR to the https://github.com/rundeck/docs project with your documentation.'
+        message: 'This PR needs documentation. Please submit a PR to the https://github.com/rundeck/docs project with your documentation.'        
     description:
       no-empty: true

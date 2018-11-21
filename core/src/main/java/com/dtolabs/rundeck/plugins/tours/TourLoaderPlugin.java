@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.plugins.tours;
 import java.util.Map;
 
 public interface TourLoaderPlugin {
-    String getLoaderName();
     Map getTourManifest();
     Map getTour(String tourId);
 }

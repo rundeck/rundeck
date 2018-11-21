@@ -19,8 +19,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageUtil
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageUtil
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.data.DataUtil
 
