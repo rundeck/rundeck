@@ -3389,7 +3389,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution exec = Execution.get(execid as Long)
             refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
         }
-        if (newContext.getNodes().getNodeNames().size() < 1) {
+
+        if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
             ReferencedExecution.withTransaction { status ->

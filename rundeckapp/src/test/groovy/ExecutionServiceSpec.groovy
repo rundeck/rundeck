@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
@@ -3464,31 +3465,249 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "createJobReferenceContext default values secure option"() {
+
+    def "execut job ref empty node filter successOnEmptyNodeFilter false"(){
         given:
-        def context = ExecutionContextImpl.builder()
-                                          .
-                threadCount(1)
-                                          .
-                keepgoing(false)
-                                          .
-                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
-                                          .
-                privateDataContext(['option': [:],])
-                                          .
-                user('aUser')
-                                          .
-                build()
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
+        def jobname = 'refjobx'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'x job',
+                argString: '-args b -args2 d',
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
+                ),
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                successOnEmptyNodeFilter: false
+
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                new NodeSetImpl()
+            }
+        }
+
+
+        def executionListener = Mock(ExecutionListener)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> new NodeSetImpl()
+            getFramework() >> Mock(Framework)
+            getExecutionListener() >> executionListener
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                null,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                false,
+                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>true
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        thrown StepException
+    }
+
+    def "execut job ref empty node filter successOnEmptyNodeFilter true"(){
+        given:
+        def jobname = 'refjobx'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'x job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                successOnEmptyNodeFilter: true
+
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                new NodeSetImpl()
+            }
+        }
+
+
+        def executionListener = Mock(ExecutionListener)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> new NodeSetImpl()
+            getFramework() >> Mock(Framework)
+            getExecutionListener() >> executionListener
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                null,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                false,
+                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>true
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        0 * executionListener.log(_)
+        ret.success
+    }
+
+    def "createJobReferenceContext default values secure option"() {
+        given:
+            def context = ExecutionContextImpl.builder()
+                                              .
+                threadCount(1)
+                                              .
+                keepgoing(false)
+                                              .
+                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                                              .
+                privateDataContext(['option': [:],])
+                                              .
+                user('aUser')
+                                              .
+                build()
+            ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
                 ),
                 options: [
                         new Option(
