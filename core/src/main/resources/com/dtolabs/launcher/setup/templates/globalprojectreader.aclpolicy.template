@@ -1,0 +1,10 @@
+description: Global read access to job_reader role
+context:
+  project: '.*'
+for:
+  job:
+  - allow: [read]
+    match:
+      name: '.*'
+by:
+  group: job_reader

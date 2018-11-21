@@ -1,0 +1,21 @@
+description: Global write permissions to job_writer role
+context:
+  project: '.*'
+for:
+  resource:
+  - equals:
+      kind: 'node'
+    allow: [read,refresh]
+  - equals:
+      kind: job
+    allow: [create, delete]
+  job:
+  - allow: [create,read,update,delete,run,kill]
+    match:
+      name: '.*'
+  node:
+  - allow: [read, run, refresh]
+    match:
+      nodename: '.*'
+by:
+  group: job_writer

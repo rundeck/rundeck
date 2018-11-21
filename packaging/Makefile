@@ -57,6 +57,11 @@ rpm:
 	@cp ../rundeckapp/build/libs/rundeck-$(VERSION).war rpmdist/SOURCES/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(VERSION).jar rpmdist/SOURCES/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/admin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globaljobrunner.aclpolicy.template rpmdist/SOURCES/etc/rundeck/globaljobrunner.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globaljobwriter.aclpolicy.template rpmdist/SOURCES/etc/rundeck/globaljobwriter.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectadmin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/globalprojectadmin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectlist.aclpolicy.template rpmdist/SOURCES/etc/rundeck/globalprojectlist.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectreader.aclpolicy.template rpmdist/SOURCES/etc/rundeck/globalprojectreader.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template rpmdist/SOURCES/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z rpmdist/SOURCES/usr/bin
 	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot ${PWD}/rpmdist/SOURCES rundeck.spec
@@ -83,6 +88,11 @@ deb:
 	@cp ../rundeckapp/build/libs/rundeck-$(VERSION).war debdist/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(VERSION).jar debdist/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template debdist/etc/rundeck/admin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globaljobrunner.aclpolicy.template debdist/etc/rundeck/globaljobrunner.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globaljobwriter.aclpolicy.template debdist/etc/rundeck/globaljobwriter.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectadmin.aclpolicy.template debdist/etc/rundeck/globalprojectadmin.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectlist.aclpolicy.template debdist/etc/rundeck/globalprojectlist.aclpolicy
+	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/globalprojectreader.aclpolicy.template debdist/etc/rundeck/globalprojectreader.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template debdist/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
 	fakeroot dpkg-deb --build -Zgzip debdist
