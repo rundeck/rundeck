@@ -237,10 +237,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
     }
 
     def scheduleCleanerExecutions(String project, Integer cleanerHistoryPeriod, String cronExression){
-        if(!cleanerHistoryPeriod || cleanerHistoryPeriod < 1){
-            log.info("removing cleaner executions job scheduled for ${project}")
-            scheduledExecutionService.deleteCleanerExecutionsJob(project)
-        } else {
+        log.info("removing cleaner executions job scheduled for ${project}")
+        scheduledExecutionService.deleteCleanerExecutionsJob(project)
+
+        if(cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
             log.info("scheduling cleaner executions job for ${project}")
             scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
                     [maxDaysToKeep: cleanerHistoryPeriod, project: project,
