@@ -20,6 +20,8 @@ import org.jvnet.libpam.PAM;
 import org.jvnet.libpam.PAMException;
 import org.jvnet.libpam.UnixUser;
 import org.rundeck.jaas.AbstractSharedLoginModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.*;
@@ -29,15 +31,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Abstract base login module for using libpam4j to authenticate.
  */
 public abstract class AbstractPamLoginModule extends AbstractSharedLoginModule {
-    public static final Logger logger = Logger.getLogger(AbstractPamLoginModule.class.getName());
-    private String serviceName;
+    public static final Logger logger = LoggerFactory.getLogger(AbstractPamLoginModule.class.getName());
+    private             String serviceName;
 
     private UnixUser unixUser;
     private boolean useUnixGroups;
@@ -102,7 +102,7 @@ public abstract class AbstractPamLoginModule extends AbstractSharedLoginModule {
      * @param message
      */
     protected void debug(String message) {
-        logger.log(Level.INFO, message);
+        logger.debug(message);
     }
 
 

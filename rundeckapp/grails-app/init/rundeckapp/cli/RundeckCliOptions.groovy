@@ -22,6 +22,7 @@ class RundeckCliOptions {
 
     boolean installOnly = false
     boolean skipInstall = false
+    boolean testAuth = false
     boolean debug = false
     boolean rewrite = false
     boolean useJaas = true

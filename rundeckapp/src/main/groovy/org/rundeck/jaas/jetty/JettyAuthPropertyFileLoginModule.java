@@ -32,7 +32,6 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * Augments Jetty property file login module {@link PropertyFileLoginModule}, to only perform authentication
  * via property file login, handles shared credentials logic, and does not use property file roles.
@@ -130,6 +129,6 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
      * @param message
      */
     protected void debug(String message) {
-        logger.info(message);
+        logger.debug(message);
     }
 }
