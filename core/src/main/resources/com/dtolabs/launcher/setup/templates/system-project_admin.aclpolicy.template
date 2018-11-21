@@ -1,3 +1,14 @@
+description: Allow groups to list projects
+context:
+  application: 'rundeck'
+for:
+  project:
+  - allow: read
+    match:
+      name: '.*'
+by:
+  group: project_admin
+
 ---
 description: Global project admin permissions to project_admin role
 context:

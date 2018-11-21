@@ -78,11 +78,11 @@ public class Setup implements CLIToolLogger {
      */
     static String[] templates={
         "admin.aclpolicy",
-        "globaljobrunner.aclpolicy",
-        "globaljobwriter.aclpolicy",
-        "globalprojectadmin.aclpolicy",
-        "globalprojectlist.aclpolicy",
-        "globalprojectreader.aclpolicy",
+        "system-job_reader.aclpolicy",
+        "system-job_runner.aclpolicy",
+        "system-job_writer.aclpolicy",
+        "system-job_viewer.aclpolicy",
+        "system-project_admin.aclpolicy",
         "apitoken.aclpolicy",
         "framework.properties",
         "cli-log4j.properties",

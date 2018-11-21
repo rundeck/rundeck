@@ -1,3 +1,16 @@
+description: Allow groups to list projects
+context:
+  application: 'rundeck'
+for:
+  project:
+  - allow: read
+    match:
+      name: '.*'
+by:
+  group: job_runner
+
+---
+
 description: Global run permissions to job_runner role
 context:
   project: '.*'

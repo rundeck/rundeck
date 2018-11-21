@@ -1,3 +1,16 @@
+description: Allow groups to list projects
+context:
+  application: 'rundeck'
+for:
+  project:
+  - allow: read
+    match:
+      name: '.*'
+by:
+  group: job_writer
+
+---
+
 description: Global write permissions to job_writer role
 context:
   project: '.*'
