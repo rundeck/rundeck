@@ -66,7 +66,6 @@ class KeyStorageTreeImpl extends TypedStorageTreeImpl implements KeyStorageTree 
 
     @Override
     boolean hasPassword(String path) {
-        println("checking password path ${path}")
         hasResourceWithType(PathUtil.asPath(path), KeyStorageLayer.PASSWORD_MIME_TYPE)
     }
 
