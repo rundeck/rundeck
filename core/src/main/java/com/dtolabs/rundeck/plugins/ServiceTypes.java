@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
+import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
 import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
@@ -77,6 +78,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
+        map.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
 
 
         TYPES = Collections.unmodifiableMap(map);
