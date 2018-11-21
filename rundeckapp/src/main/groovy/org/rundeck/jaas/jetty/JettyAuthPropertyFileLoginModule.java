@@ -16,6 +16,7 @@
 
 package org.rundeck.jaas.jetty;
 
+import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
@@ -37,13 +38,18 @@ import java.util.Map;
  */
 public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyAuthPropertyFileLoginModule.class.getName());
-    PropertyFileLoginModule module;
-    UserInfo userInfo;
+    AbstractLoginModule module;
+    UserInfo            userInfo;
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map shared, Map options) {
         super.initialize(subject, callbackHandler, shared, options);
-        module = new PropertyFileLoginModule();
+        if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
+            logger.debug("using reloadable realm property file reader");
+            module = new ReloadablePropertyFileLoginModule();
+        } else {
+            module = new PropertyFileLoginModule();
+        }
         module.initialize(subject, callbackHandler, shared, options);
     }
 

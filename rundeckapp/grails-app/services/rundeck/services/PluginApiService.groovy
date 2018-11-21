@@ -14,7 +14,6 @@ import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.TourLoaderPluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
@@ -36,7 +35,6 @@ class PluginApiService {
     LogFileStorageService logFileStorageService
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
-    TourLoaderPluginProviderService tourLoaderPluginProviderService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -49,7 +47,7 @@ class PluginApiService {
                 framework.getNodeExecutorService(),
                 framework.getFileCopierService(),
                 framework.getNodeStepExecutorService(),
-                framework.getStepExecutionService(),
+                framework.getStepExecutionService()
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
@@ -108,7 +106,7 @@ class PluginApiService {
         pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[tourLoaderPluginProviderService.name]=pluginService.listPlugins(TourLoaderPlugin).collect {
+        pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 

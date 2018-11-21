@@ -164,7 +164,10 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         if (null != result && null != result.getFailureData()) {
             map.putAll(result.getFailureData());
         }
-        map.put("failureReason", null != result ? result.getFailureReason().toString() : "Unknown");
+        map.put(
+            "failureReason",
+            null != result && result.getFailureReason() != null ? result.getFailureReason().toString() : "Unknown"
+        );
         return map;
     }
 

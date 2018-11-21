@@ -177,6 +177,14 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
         }
         final ScriptPluginProvider scriptPluginProvider = pluginProviderDefs.get(ident);
 
+        try {
+            getResourceLoader().listResources();
+        } catch(IOException iex) {
+            throw new ProviderLoaderException(iex,service.getName(),providerName);
+        }
+        catch (PluginException e) {
+            throw new ProviderLoaderException(e, service.getName(), providerName);
+        }
         if (null != scriptPluginProvider) {
             try {
                 return loader.createScriptProviderInstance(scriptPluginProvider);

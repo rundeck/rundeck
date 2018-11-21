@@ -19,19 +19,28 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import org.rundeck.app.spi.AuthorizedServicesProvider
+import org.rundeck.app.spi.Services
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
+import rundeck.services.StorageService
 
 import javax.servlet.http.HttpServletResponse
 
 class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
+    StorageService storageService
+    AuthorizedServicesProvider rundeckAuthorizedServicesProvider
     static allowedMethods = [
             redo:'POST',
             remove:'POST',
@@ -76,30 +85,34 @@ class WorkflowController extends ControllerBase {
                 }
             }
         }
-        def newitemtype = params['newitemtype']
-        def origitemtype
+        String newitemtype = params['newitemtype']
+        String origitemtype
         def newitemDescription
         def dynamicProperties
+        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
-            dynamicProperties = getDynamicProperties(params.project, origitemtype, item.nodeStep)
-        } else{
-            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
-        }
-        if(item){
+            dynamicProperties = getDynamicProperties(params.project,
+                                                     origitemtype,
+                                                     item.nodeStep,
+                                                     rundeckAuthorizedServicesProvider.getServicesWith(auth)
+            )
+        } else if (item) {
             if(item.instanceOf(JobExec)){
                 origitemtype='job'
             }else if(item.instanceOf(CommandExec)){
                 origitemtype=item.adhocLocalString?'script':item.adhocRemoteString?'command':'scriptfile'
             }
-        } else {
+        } else if (newitemtype && !(newitemtype in ['command', 'script', 'scriptfile', 'job'])) {
+            newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', newitemtype)
             dynamicProperties = getDynamicProperties(
-                    params.project,
-                    params['newitemtype'],
-                    params.newitemnodestep == 'true')
+                params.project,
+                newitemtype,
+                params.newitemnodestep == 'true',
+                rundeckAuthorizedServicesProvider.getServicesWith(auth)
+            )
         }
-        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
 
         [
@@ -1206,14 +1219,22 @@ class WorkflowController extends ControllerBase {
      * @param project name of project
      * @param newItemType new item type
      */
-    private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
-        if (newItemType && !(newItemType in ['command', 'script', 'scriptfile', 'job'])) {
-            try {
-                return isNodeStep ? frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project)) :
-                        frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
-            } catch (MissingProviderException e) {
-                log.warn("step provider not found: ${newItemType}: ${e.message}", e)
-            }
+    private Map<String, Object> getDynamicProperties(
+        String project,
+        String newItemType,
+        boolean isNodeStep,
+        Services services
+    ) {
+
+        try {
+            return frameworkService.getDynamicProperties(
+                isNodeStep ? ServiceNameConstants.WorkflowNodeStep : ServiceNameConstants.WorkflowStep,
+                newItemType,
+                project,
+                services
+            )
+        } catch (MissingProviderException e) {
+            log.warn("step provider not found: ${newItemType}: ${e.message}", e)
         }
         return null
     }

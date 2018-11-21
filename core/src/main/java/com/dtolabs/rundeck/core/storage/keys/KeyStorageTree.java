@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,100 +14,105 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.storage.keys;
 
-import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.StorageTree
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.Resource
+import com.dtolabs.rundeck.core.storage.ResourceMeta;
+import com.dtolabs.rundeck.core.storage.StorageTree;
+import org.rundeck.app.spi.AppService;
+import org.rundeck.storage.api.Path;
+import org.rundeck.storage.api.Resource;
+
+import java.io.IOException;
 
 /**
  * Utility enhancements to provide password/key loading
  */
-interface KeyStorageTree extends StorageTree {
+public interface KeyStorageTree
+    extends StorageTree, AppService
+{
 
     /**
      * @param path path
      * @return password resource
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    Resource<ResourceMeta> getPassword(Path path)
+    Resource<ResourceMeta> getPassword(Path path);
 
     /**
      *
      * @param path path
      * @return password data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPassword(Path path)
+    byte[] readPassword(Path path) throws IOException;
 
     /**
      *
      * @param path path
      * @return password data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPassword(String path)
+    byte[] readPassword(String path) throws IOException;
 
     /**
      * @param path path
      * @return public key resource
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    Resource<ResourceMeta> getPublicKey(Path path)
+    Resource<ResourceMeta> getPublicKey(Path path);
 
     /**
      *
      * @param path path
      * @return public key data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPublicKey(Path path)
+    byte[] readPublicKey(Path path) throws IOException;
 
     /**
      *
      * @param path path
      * @return public key data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPublicKey(String path)
+    byte[] readPublicKey(String path) throws IOException;
 
     /**
      * @param path path
      * @return private key resource
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    Resource<ResourceMeta> getPrivateKey(Path path)
+    Resource<ResourceMeta> getPrivateKey(Path path);
 
     /**
      *
      * @param path path
      * @return private key data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPrivateKey(Path path)
+    byte[] readPrivateKey(Path path) throws IOException;
 
     /**
      *
      * @param path path
      * @return private key data
      *
-     * @throws WrongContentType if not the right content type
+     * @throws com.dtolabs.rundeck.core.storage.WrongContentType if not the right content type
      * @throws org.rundeck.storage.api.StorageException if not found
      */
-    byte[] readPrivateKey(String path)
+    byte[] readPrivateKey(String path) throws IOException;
 
 }

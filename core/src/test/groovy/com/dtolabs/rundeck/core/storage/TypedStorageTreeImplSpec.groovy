@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.storage
 
 import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.TypedStorageTreeImpl
+import com.dtolabs.rundeck.core.storage.WrongContentType
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -112,7 +114,7 @@ class TypedStorageTreeImplSpec extends Specification {
                 getContentType() >> 'correct-type'
             }
         }
-        WrongContentType exception = thrown()
+            WrongContentType exception = thrown()
         exception.path == path
         exception.event == StorageException.Event.READ
     }

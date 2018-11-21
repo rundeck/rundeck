@@ -34,11 +34,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
-import groovy.mock.interceptor.MockFor
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
