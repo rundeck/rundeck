@@ -19,5 +19,9 @@ for:
   - allow: [view]
     match:
       name: '.*'
+  resource:
+  - allow: read
+    equals:
+      kind: event
 by:
   group: job_viewer

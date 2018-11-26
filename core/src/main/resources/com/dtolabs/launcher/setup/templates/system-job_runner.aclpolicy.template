@@ -27,5 +27,9 @@ for:
   - allow: [read, run, refresh]
     match:
       nodename: '.*'
+  resource:
+  - allow: read
+    equals:
+      kind: event
 by:
   group: job_runner
