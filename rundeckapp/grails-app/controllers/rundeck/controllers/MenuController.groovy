@@ -2026,7 +2026,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //first-run html info
         def isFirstRun=false
 
-        if(grailsApplication.config.rundeck?.firstRunMessage?.toggle?.off == "true") {
+        if (configurationService.getBoolean('startup.alwaysFirstRun', false)) {
             isFirstRun=true
         }else{
             if(configurationService.getBoolean("startup.detectFirstRun",true) &&
