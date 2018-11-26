@@ -2026,19 +2026,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //first-run html info
         def isFirstRun=false
 
-        if(configurationService.getBoolean("startup.detectFirstRun",true) &&
-                frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
-            def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-            String buildIdent = grailsApplication.metadata.getProperty('build.ident', String)
-            def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
-            def file = new File(vardir, ".first-run-${vers}")
-            if(!file.exists()){
-                isFirstRun=true
-                file.withWriter("UTF-8"){out->
-                    out.write('#'+(new Date().toString()))
+        if(grailsApplication.config.rundeck?.firstRunMessage?.toggle?.off == "true") {
+            isFirstRun=true
+        }else{
+            if(configurationService.getBoolean("startup.detectFirstRun",true) &&
+                    frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
+                def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
+                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String)
+                def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
+                def file = new File(vardir, ".first-run-${vers}")
+                if(!file.exists()){
+                    isFirstRun=true
+                    file.withWriter("UTF-8"){out->
+                        out.write('#'+(new Date().toString()))
+                    }
                 }
             }
         }
+
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
 
