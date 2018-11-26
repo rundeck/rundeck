@@ -3062,8 +3062,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         result
         result.success?.job
-        1 * service.frameworkService.authorizeProjectJobAll(_,_,
-                [AuthConstants.SCM_DELETE],_) >> true
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_DELETE,AuthConstants.SCM_DELETE],_) >> true
     }
 
     @Unroll
@@ -3105,10 +3105,8 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         result.jobs.size()==1
-        1 * service.frameworkService.authorizeProjectResourceAll(_,AuthConstants.RESOURCE_TYPE_JOB,
-                [AuthConstants.ACTION_CREATE],'AProject') >> false
-        1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.SCM_CREATE],_) >> true
+        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],'AProject') >> true
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],_) >> true
 
@@ -3131,7 +3129,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         then:
         result.jobs.size()==1
-        1 * service.frameworkService.authorizeProjectResourceAll(_,AuthConstants.RESOURCE_TYPE_JOB,
+        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE],'AProject') >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.SCM_CREATE],_) >> false

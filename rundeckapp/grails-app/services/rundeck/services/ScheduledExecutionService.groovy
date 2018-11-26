@@ -990,22 +990,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //extend auth context using project-specific authorization
         AuthContext authContext = frameworkService.getAuthContextWithProject(original, scheduledExecution.project)
 
-        if ((!frameworkService.authorizeProjectResource(
+        def authActions = [AuthConstants.ACTION_DELETE]
+        if (callingAction == 'scm-import') {
+            authActions << AuthConstants.SCM_DELETE
+        }
+        if ((
+            !frameworkService.authorizeProjectResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
-                AuthConstants.ACTION_DELETE,
+                authActions,
                 scheduledExecution.project
-        ) || !frameworkService.authorizeProjectJobAll(
+            ) || !frameworkService.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
-                [AuthConstants.ACTION_DELETE],
+                authActions,
                 scheduledExecution.project
-        )) && !((callingAction == 'scm-import') && frameworkService.authorizeProjectJobAll(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.SCM_DELETE],
-                scheduledExecution.project
-        ))) {
+            )
+        )) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid]),
                     errorCode: 'unauthorized',
@@ -1589,6 +1590,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def skipjobs = []
         def jobChangeEvents=[]
         def remappedIds=[:]
+
+        def updateAuthActions = [AuthConstants.ACTION_UPDATE]
+        def createAuthActions = [AuthConstants.ACTION_CREATE]
+        if (changeinfo?.method == 'scm-import') {
+            updateAuthActions += [AuthConstants.SCM_UPDATE]
+            createAuthActions += [AuthConstants.SCM_CREATE]
+        }
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
@@ -1633,12 +1641,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def success = false
                 def errmsg
                 jobchange.change = 'modify'
-                def actions = [AuthConstants.ACTION_UPDATE]
-                if(changeinfo?.method == 'scm-import'){
-                    actions += [AuthConstants.SCM_UPDATE]
-                }
-                if (!frameworkService.authorizeProjectJobAny(projectAuthContext, scheduledExecution,
-                        actions, scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAny(
+                    projectAuthContext,
+                    scheduledExecution,
+                    updateAuthActions,
+                    scheduledExecution.project
+                )) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
@@ -1668,10 +1676,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg
 
-                if (!frameworkService.authorizeProjectResourceAll(projectAuthContext, AuthConstants.RESOURCE_TYPE_JOB,
-                                                                  [AuthConstants.ACTION_CREATE], jobdata.project)
-                && !((changeinfo?.method == 'scm-import') && frameworkService.authorizeProjectJobAny(authContext,
-                        jobdata, [AuthConstants.SCM_CREATE], jobdata.project))) {
+                if (!frameworkService.authorizeProjectResourceAny(
+                    projectAuthContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    createAuthActions,
+                    jobdata.project
+                )) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 } else {
@@ -3088,6 +3098,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
+    /**
+     * Save a new job, will verify authorization
+     * @param params
+     * @param authContext
+     * @param changeinfo
+     * @return
+     */
     public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
