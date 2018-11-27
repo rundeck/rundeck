@@ -125,3 +125,13 @@ Set to anything enables audit logging. This can be very verbose so use with caut
 
 Configuration options for key storage providers and converts. These map to the
 [Storage Facility Docs](http://rundeck.org/docs/administration/configuration/storage-facility.html).
+
+### `RUNDECK_PREAUTH_ENABLED=false`
+### `RUNDECK_PREAUTH_ATTRIBUTE_NAME=REMOTE_USER_GROUPS`
+### `RUNDECK_PREAUTH_DELIMITER=,`
+### `RUNDECK_PREAUTH_USERNAME_HEADER=X-Forwarded-Uuid`
+### `RUNDECK_PREAUTH_ROLES_HEADER=X-Forwarded-Roles`
+### `RUNDECK_PREAUTH_REDIRECT_LOGOUT=false`
+### `RUNDECK_PREAUTH_REDIRECT_URL=/oauth2/sign_in`
+Configuration options for using the
+[preauthenticated mode](http://rundeck.org/docs/administration/security/authenticating-users.html#preauthenticated-mode).
