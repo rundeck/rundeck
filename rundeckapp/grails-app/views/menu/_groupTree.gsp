@@ -23,7 +23,7 @@
 --%>
 <%-- //TODO review timerEnd for removal from this template --%>
 <g:timerStart key="gtx"/>
-<div class="jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
+<div class="job-display-tree jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
 <g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
     <div style="margin-bottom:1em; margin-top:1em;">
         <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
