@@ -61,35 +61,5 @@
   </g:if>
 </style>
 <style type="text/css">
-
-
-
-    /*
-    If I turn this off, will it break things? ~ Jesse
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
-
-          width: ${enc(rawtext:appLogoW)};
-          height: ${enc(rawtext:appLogoH)};
-        vertical-align: baseline;
-    }
-
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-        background-image: url("${logoResource}");
-        background-repeat: no-repeat;
-    }
-
-    @media
-    only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (   min--moz-device-pixel-ratio: 2),
-    only screen and (     -o-min-device-pixel-ratio: 2/1),
-    only screen and (        min-device-pixel-ratio: 2),
-    only screen and (                min-resolution: 192dpi),
-    only screen and (                min-resolution: 2dppx) {
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-        background-image: url("${logoResourceHires}");
-        background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
-    }
-    } */
-
     ${enc(rawtext:customCss)}
 </style>
