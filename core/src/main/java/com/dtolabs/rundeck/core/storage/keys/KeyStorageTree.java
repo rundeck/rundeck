@@ -115,4 +115,25 @@ public interface KeyStorageTree
      */
     byte[] readPrivateKey(String path) throws IOException;
 
+    /**
+     *
+     * @param path path
+     * @return true if the resource exists and is the right content type
+     *
+     */
+    boolean hasPassword(String path);
+
+    /**
+     * @param path path
+     * @return true if the resource exists and is the right content type
+     */
+    boolean hasPrivateKey(String path);
+
+    /**
+     * @param path path
+     * @return true if the resource exists and is the right content type
+     */
+    boolean hasPublicKey(String path);
+
+
 }

@@ -742,9 +742,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.privateDataContext['option'] == ['test1': 'newtest1']
 
         service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            1 * hasPassword('keys/test1') >> true
             1 * readPassword('keys/test1') >> {
                 return 'newtest1'.bytes
             }
+            1 * hasPassword('keys/test2') >> true
             1 * readPassword('keys/test2') >> {
                 return 'newtest2'.bytes
             }
@@ -1279,6 +1281,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         1 * service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opt1') >> {
+                if (hasopt1) {
+                    return true
+                }else{
+                    return false
+                }
+            }
             readPassword('keys/opt1') >> {
                 if (hasopt1 && readopt1) {
                     return 'newopt1'.bytes
@@ -1296,6 +1305,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                             StorageException.Event.READ,
                             PathUtil.asPath('keys/opt1')
                     )
+                }
+            }
+            hasPassword('keys/opt2') >> {
+                if (hasopt2) {
+                    return true
+                }else{
+                    return false
                 }
             }
             readPassword('keys/opt2') >> {
@@ -1318,6 +1334,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 }
             }
         }
+
         opt1result == secureOpts['opt1']
         opt2result == secureOptsExposed['opt2']
 
@@ -1414,6 +1431,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
         service.storageService = Mock(StorageService) {
             storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+                hasPassword('keys/opt1') >> true
                 readPassword('keys/opt1') >> 'asdf'.bytes
             }
         }
@@ -1442,6 +1460,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
         service.storageService = Mock(StorageService) {
             storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+                hasPassword('keys/opt1') >> false
                 readPassword('keys/opt1') >> {
                     throw new StorageException("bogus", StorageException.Event.READ, PathUtil.asPath('keys/opt1'))
                 }
@@ -1894,7 +1913,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
-            1 * readPassword(path) >> {
+            1 * hasPassword(path) >> {
                 if (throwsexception) {
                     throw new StorageException(StorageException.Event.READ, PathUtil.asPath(path))
                 }
@@ -2425,14 +2444,26 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opta/pass')>>{
+                return true
+            }
             readPassword('keys/opta/pass') >> {
                     return 'pass1'.bytes
+            }
+            hasPassword('keys/optb/pass')>>{
+                return true
             }
             readPassword('keys/optb/pass') >> {
                     return 'pass2'.bytes
             }
+            hasPassword('keys/optc/pass')>>{
+                return true
+            }
             readPassword('keys/optc/pass') >> {
                     return 'pass3'.bytes
+            }
+            hasPassword(_) >> {
+                return true
             }
             readPassword(_) >> {
                 return ''.bytes
@@ -3193,14 +3224,20 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass') >> true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }
+            hasPassword('keys/dev/pass') >> true
             readPassword('keys/dev/pass') >> {
                 return 'pass2'.bytes
             }
+            hasPassword('keys/op/pass') >> true
             readPassword('keys/op/pass') >> {
                 return 'pass3'.bytes
+            }
+            hasPassword(_) >> {
+                return true
             }
             readPassword(_) >> {
                 return ''.bytes
@@ -3744,6 +3781,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
 
         2*service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass')>>true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }
