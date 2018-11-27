@@ -131,7 +131,7 @@ class ScmJobImporter implements ContextJobImporter {
         final String jobid
     )
     {
-        def res = scheduledExecutionService.deleteScheduledExecutionById(jobid, 'git-import-deleteJob')
+        def res = scheduledExecutionService.deleteScheduledExecutionById(jobid, 'scm-import')
         def result = new ImporterResult()
         if(res?.success){
             result.successful = true
