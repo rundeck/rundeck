@@ -1,8 +1,10 @@
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
+- `3.0.8`
+- `3.0.7`
+- `3.0.6`
 - `3.0.5`
-- `3.0.4`
 - `3.0.3`
 
 # What is Rundeck?
@@ -76,6 +78,11 @@ the config options listed in the docs uppercase, and all one word.
 
 ## Environment Variables
 
+### `RUNDECK_SERVER_UUID`
+
+Identifies Rundeck instances when multiple are running in the same cluster. While hard-coded
+to a default for getting started, this should be set manually for more advanced configurations.
+
 ### `RUNDECK_GRAILS_URL=http://127.0.0.1:4440`
 
 Controls the base URL the app will use for links, redirects, etc.
@@ -118,14 +125,3 @@ Set to anything enables audit logging. This can be very verbose so use with caut
 
 Configuration options for key storage providers and converts. These map to the
 [Storage Facility Docs](http://rundeck.org/docs/administration/configuration/storage-facility.html).
-
-### `RUNDECK_PREAUTH_ENABLED=false`
-### `RUNDECK_PREAUTH_ATTRIBUTE_NAME=REMOTE_USER_GROUPS`
-### `RUNDECK_PREAUTH_DELIMITER=,`
-### `RUNDECK_PREAUTH_USERNAME_HEADER=X-Forwarded-Uuid`
-### `RUNDECK_PREAUTH_ROLES_HEADER=X-Forwarded-Roles`
-### `RUNDECK_PREAUTH_REDIRECT_LOGOUT=false`
-### `RUNDECK_PREAUTH_REDIRECT_URL=/oauth2/sign_in`
-
-Configuration options for using the 
-[preauthenticated mode](http://rundeck.org/docs/administration/security/authenticating-users.html#preauthenticated-mode).
