@@ -38,6 +38,7 @@ include	'rundeck-storage',
     'rundeckapp:metricsweb',
     'rundeckapp:grails-spa',
     'grails-persistlocale',
+    'grails-securityheaders',
     'rundeckapp:repository',
     'docker'
 

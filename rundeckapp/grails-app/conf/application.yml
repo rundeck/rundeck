@@ -162,6 +162,8 @@ rundeck:
                 userRolesHeader: null
                 delimiter: ','
         useHMacRequestTokens: true
+        httpHeaders:
+            enabled: true
     storage:
     execution:
         finalize:
