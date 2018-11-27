@@ -34,7 +34,7 @@ cat ${REMCO_TMP_DIR}/rundeck-config/* >> server/config/rundeck-config.properties
 
 exec java \
     -XX:+UnlockExperimentalVMOptions \
-    -XX:MaxRAMFraction=1 \
+    -XX:MaxRAMFraction="${JVM_MAX_RAM_FRACTION}" \
     -XX:+UseCGroupMemoryLimitForHeap \
     -Dloginmodule.conf.name=jaas-loginmodule.conf \
     -Dloginmodule.name=rundeck \
