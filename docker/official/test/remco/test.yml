@@ -1,4 +1,7 @@
 rundeck:
+  grails:
+    upload:
+      maxsize: '50000000'
   server:
     name: superserver
   config:

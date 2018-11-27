@@ -35,7 +35,8 @@ Kubernetes documentation [Use-Case: Pod with ssh keys](https://kubernetes.io/doc
 `$ docker run -m 1024m`
 
 The JVM is configured to use cgroup information to set the max heap allocation size.
-The RAM ratio is set to `1`, so the JVM will utilize up to about the container limit.
+The RAM ratio is set to `1` by default, so the JVM will utilize up to about the container limit.
+See `JVM_MAX_RAM_FRACTION` for information on changing this.
 
 ## key store security
 By defualt keystorage is set to use the database, and the encryption converters are
@@ -78,6 +79,12 @@ the config options listed in the docs uppercase, and all one word.
 
 ## Environment Variables
 
+### `JVM_MAX_RAM_FRACTION=1`
+
+The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
+the JVM to utilize up to half the container limit for heap. This is replaced in
+openjdk 10 with a percentage setting that will offer finer control.
+
 ### `RUNDECK_SERVER_UUID`
 
 Identifies Rundeck instances when multiple are running in the same cluster. While hard-coded
@@ -87,6 +94,11 @@ to a default for getting started, this should be set manually for more advanced 
 
 Controls the base URL the app will use for links, redirects, etc.
 This is the URL users will use to access the site.
+
+### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
+
+Controls both the `maxFileSize` and `maxRequest` for the grails controller config.
+The internal default is approximately `25Mib` or `26214400`.
 
 ### `RUNDECK_SERVER_ADDRESS=0.0.0.0`
 
