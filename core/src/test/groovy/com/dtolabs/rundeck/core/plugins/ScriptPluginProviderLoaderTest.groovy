@@ -16,11 +16,12 @@
 package com.dtolabs.rundeck.core.plugins
 
 import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta
-import org.apache.log4j.Logger
 import spock.lang.Specification
+import spock.lang.Unroll
 
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
+import static com.dtolabs.rundeck.core.plugins.PluginValidation.State.INCOMPATIBLE
+import static com.dtolabs.rundeck.core.plugins.PluginValidation.State.INVALID
+import static com.dtolabs.rundeck.core.plugins.PluginValidation.State.VALID
 
 class ScriptPluginProviderLoaderTest extends Specification {
     def "LoadMetadataYaml"() {
@@ -38,57 +39,31 @@ class ScriptPluginProviderLoaderTest extends Specification {
         meta.rundeckPluginVersion == "1.2"
     }
 
+    @Unroll
     def "ValidatePluginMeta"() {
         setup:
         File fakeFile = new File("/tmp/fake-plugin.yaml")
         when:
-        def logger = new FakeLogger()
-        Field logField = ScriptPluginProviderLoader.getDeclaredField("log")
-        logField.accessible = true
-        removeFinalModifier(logField)
-        logField.set(null,logger)
-        boolean isvalid = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile)
+
+        def validation = ScriptPluginProviderLoader.validatePluginMeta(new PluginMeta(pluginMeta),fakeFile)
 
         then:
-        logResult == logger.logs
-        isvalid == expectation
+        logResult == validation.messages
+        validation.state.valid == expectation
+        validation.state == state
 
         where:
-        expectation | pluginMeta | logResult
-        false       | [rundeckPluginVersion: "1.2", pluginDefs: []] | ["name not found in metadata: /tmp/fake-plugin.yaml", "version not found in metadata: /tmp/fake-plugin.yaml"]
-        false       | [name:"Test script",rundeckPluginVersion: "1.2", pluginDefs: []] | ["version not found in metadata: /tmp/fake-plugin.yaml"]
-        true        | [name:"Test script",rundeckPluginVersion: "1.2", version:"1.0", pluginDefs: []] | []
-        false       | [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", pluginDefs: []] | ["No targetHostCompatibility property specified in metadata: /tmp/fake-plugin.yaml","rundeckCompatibilityVersion cannot be null in metadata: /tmp/fake-plugin.yaml"]
-        false       | [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", pluginDefs: []] | ["rundeckCompatibilityVersion cannot be null in metadata: /tmp/fake-plugin.yaml"]
-        false       | [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"1.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck in metadata: /tmp/fake-plugin.yaml"]
-        true        | [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
+        expectation |state                                                                             | pluginMeta | logResult
+        false       |INVALID| [rundeckPluginVersion: "1.2", pluginDefs: []] | ["'name' not found in metadata", "'version' not found in metadata"]
+        false       |INVALID| [name:"Test script",rundeckPluginVersion: "1.2", pluginDefs: []]                | ["'version' not found in metadata"]
+        true        |VALID| [name:"Test script",rundeckPluginVersion: "1.2", version:"1.0", pluginDefs: []] | []
+        false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", pluginDefs: []] | ["No targetHostCompatibility property specified in metadata","rundeckCompatibilityVersion cannot be null in metadata"]
+        false       |INVALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", pluginDefs: []] | ["rundeckCompatibilityVersion cannot be null in metadata"]
+        false       |INCOMPATIBLE| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"1.0", pluginDefs: []] | ["Plugin is not compatible with this version of Rundeck"]
+        true        |VALID| [name:"Test script",rundeckPluginVersion: "2.0", version:"1.0", targetHostCompatibility:"all", rundeckCompatibilityVersion:"3.x", pluginDefs: []] | []
 
     }
 
-    class FakeLogger extends Logger {
-
-        def logs = []
-
-        FakeLogger() {
-            super("fake")
-        }
-
-
-        protected FakeLogger(final String name) {
-            super(name)
-        }
-
-        @Override
-        void error(final Object message) {
-            logs.add(message)
-        }
-    }
-
-    void removeFinalModifier(Field sourceField) {
-        Field modifiersField = Field.class.getDeclaredField("modifiers");
-        modifiersField.setAccessible(true);
-        modifiersField.setInt(sourceField, sourceField.getModifiers() & ~Modifier.FINAL);
-    }
 
     ByteArrayInputStream createPluginYaml(String pluginName, String pluginVersion, Map props = [:]) {
         StringBuilder yaml = new StringBuilder()
