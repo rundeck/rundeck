@@ -405,47 +405,63 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
     /**
      * Return true if loaded metadata about the plugin file is valid.
      */
-    static boolean validatePluginMeta(final PluginMeta pluginList, final File file) {
-        boolean valid = true;
+    static PluginValidation validatePluginMeta(final PluginMeta pluginList, final File file) {
+        PluginValidation.State state = PluginValidation.State.VALID;
+        if (pluginList == null) {
+            return PluginValidation.builder()
+                                   .message("No metadata")
+                                   .state(PluginValidation.State.INVALID)
+                                   .build();
+        }
+        List<String> messages = new ArrayList<>();
         if (null == pluginList.getName()) {
-            log.error("name not found in metadata: " + file.getAbsolutePath());
-            valid = false;
+            messages.add("'name' not found in metadata");
+            state = PluginValidation.State.INVALID;
         }
         if (null == pluginList.getVersion()) {
-            log.error("version not found in metadata: " + file.getAbsolutePath());
-            valid = false;
+            messages.add("'version' not found in metadata");
+            state = PluginValidation.State.INVALID;
         }
         if (null == pluginList.getRundeckPluginVersion()) {
-            log.error("rundeckPluginVersion not found in metadata: " + file.getAbsolutePath());
-            valid = false;
+            messages.add("'rundeckPluginVersion' not found in metadata");
+            state = PluginValidation.State.INVALID;
         } else if (!SUPPORTED_PLUGIN_VERSIONS.contains(pluginList.getRundeckPluginVersion())) {
-            log.error("rundeckPluginVersion: " + pluginList.getRundeckPluginVersion() + " is not supported: " + file
-                    .getAbsolutePath());
-            valid = false;
+            messages.add("'rundeckPluginVersion': \"" + pluginList.getRundeckPluginVersion() + "\" is not supported");
+            state = PluginValidation.State.INVALID;
         }
         if(pluginList.getRundeckPluginVersion().equals(VERSION_2_0)) {
             List<String> validationErrors = new ArrayList<>();
-            PluginMetadataValidator.validateTargetHostCompatibility(validationErrors,
-                                                                    pluginList.getTargetHostCompatibility());
-            PluginMetadataValidator.validateRundeckCompatibility(validationErrors,
-                                                                 pluginList.getRundeckCompatibilityVersion());
-            if (!validationErrors.isEmpty()) {
-                for (String err : validationErrors) {
-                    log.error(err + " in metadata: "+file.getAbsolutePath());
-                }
-                valid = false;
-            }
+
+            PluginValidation.State
+                hostCompatState =
+                PluginMetadataValidator.validateTargetHostCompatibility(
+                    validationErrors,
+                    pluginList.getTargetHostCompatibility()
+                );
+            PluginValidation.State
+                versCompatState = PluginMetadataValidator.validateRundeckCompatibility(
+                validationErrors,
+                pluginList.getRundeckCompatibilityVersion()
+            );
+
+            messages.addAll(validationErrors);
+            state = state.or(hostCompatState)
+                         .or(versCompatState);
+
         }
         final List<ProviderDef> pluginDefs = pluginList.getPluginDefs();
         for (final ProviderDef pluginDef : pluginDefs) {
             try {
                 validateProviderDef(pluginDef);
             } catch (PluginException e) {
-                log.error(String.format("Invalid provider definition in file %s: %s", file, e.getMessage()));
-                valid = false;
+                messages.add(e.getMessage());
+                state = PluginValidation.State.INVALID;
             }
         }
-        return valid;
+        return PluginValidation.builder()
+                               .state(state)
+                               .messages(messages)
+                               .build();
     }
 
     /**
