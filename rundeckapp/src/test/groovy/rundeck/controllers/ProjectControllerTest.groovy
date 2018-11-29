@@ -1333,6 +1333,15 @@ class ProjectControllerTest {
                         authorized
                     }
                 }
+                authResourceForProject{ name ->
+                    assertEquals("test1", name)
+                    [admin: true]
+                }
+                authorizeApplicationResourceAny(1..1){ctx,resource,actions->
+                    aassertTrue(AuthConstants.ACTION_CONFIGURE in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                    authorized
+                }
             }
             getAuthContextForSubjectAndProject{subj,proj->
                 null
@@ -1687,7 +1696,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
                 assertEquals 'test1',project.name
                 assertTrue aclperms
                 stream<<'some data'
@@ -1707,7 +1716,7 @@ class ProjectControllerTest {
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
                 assertEquals 'test1',project.name
                 assertFalse aclperms
                 stream<<'some data'

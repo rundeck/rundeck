@@ -100,6 +100,17 @@
                     <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project" name="${params.project}">
+                <div class="checkbox">
+                  <g:checkBox name="exportScm" value="true"/>
+                  <label for="exportScm">SCM configuration</label>
+                </div>
+                </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" any="true" context='application' type="project" has="false" name="${params.project}">
+                  <div class="checkbox disabled text-primary">
+                    <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
+                  </div>
+                </auth:resourceAllowed>
               </div>
             </div>
           </div>
