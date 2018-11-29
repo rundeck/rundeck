@@ -50,6 +50,7 @@ dependencies {
     compile('com.github.rundeck:repository:0.8.3') {
         exclude(group:"org.rundeck", module:"rundeck-core")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
+        exclude(group:"javax.mail", module:"mailapi")
     }
 
     console "org.grails:grails-console"
