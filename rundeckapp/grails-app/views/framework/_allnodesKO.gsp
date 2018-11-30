@@ -66,7 +66,7 @@
                                         filterval: nodename,
                                         linkicon: 'glyphicon glyphicon-circle-arrow-right',
                                         "></node-filter-link>
-                        <div>
+
                           <span class="nodedesc"></span>
                           <span class="text-primary ">
                               <!-- ko if: attributes['ui:badges'] -->
@@ -76,7 +76,7 @@
                               <!-- /ko -->
                               <span data-bind="text: attributes.description"></span>
                           </span>
-                        </div>
+                        
                     </td>
 
                     <!--ko foreach: $root.filterColumns -->

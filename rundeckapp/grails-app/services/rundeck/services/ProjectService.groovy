@@ -30,6 +30,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
+import grails.events.EventPublisher
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
@@ -60,7 +61,7 @@ import java.util.regex.Pattern
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 
-class ProjectService implements InitializingBean, ExecutionFileProducer{
+class ProjectService implements InitializingBean, ExecutionFileProducer, EventPublisher {
     public static final String EXECUTION_XML_LOG_FILETYPE = 'execution.xml'
     final String executionFileType = EXECUTION_XML_LOG_FILETYPE
 
@@ -1358,6 +1359,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      */
     def deleteProject(IRundeckProject project, Framework framework, AuthContext authContext, String username){
         def result = [success: false]
+        notify('projectWillBeDeleted', project.name)
 
         //disable scm
         scmService.removeAllPluginConfiguration(project.name)
@@ -1399,6 +1401,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         //if success, delete framework dir
         if(result.success){
             framework.getFrameworkProjectMgr().removeFrameworkProject(project.name)
+            notify('projectWasDeleted', project.name)
+        } else {
+            notify('projectDeleteFailed', project.name)
         }
         return result
     }

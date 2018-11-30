@@ -80,4 +80,8 @@ class RundeckInitConfig {
     boolean isInstallOnly() {
         cliOptions.installOnly
     }
+
+    boolean isTestAuth() {
+        cliOptions.testAuth
+    }
 }

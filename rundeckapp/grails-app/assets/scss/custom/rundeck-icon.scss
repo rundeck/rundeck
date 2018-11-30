@@ -182,3 +182,27 @@
     }
   }
 }
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc{
+    width: 16px;
+    height: 16px;
+    vertical-align: baseline;
+}
+
+.nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+    background-image: url("logos/rundeck2-icon-16.png");
+    background-repeat: no-repeat;
+}
+
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (   min--moz-device-pixel-ratio: 2),
+only screen and (     -o-min-device-pixel-ratio: 2/1),
+only screen and (        min-device-pixel-ratio: 2),
+only screen and (                min-resolution: 192dpi),
+only screen and (                min-resolution: 2dppx) {
+    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
+        background-image: url("logos/rundeck2-icon-32.png");
+        background-size: 16px 16px;
+    }
+}

@@ -750,11 +750,11 @@ public class JarPluginProviderLoader implements ProviderLoader,
             String rundeckCompat = mainAttributes.getValue(RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
             if(rundeckCompat == null) throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
             ArrayList<String> errors = new ArrayList<>();
-            PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckCompat);
-            if(!errors.isEmpty()) {
-                StringBuilder b = new StringBuilder();
-                for(String err : errors) { b.append(err);b.append("\n"); }
-                throw new InvalidManifestException(b.toString());
+            PluginValidation.State
+                state =
+                PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckCompat);
+            if (!state.isValid()) {
+                throw new InvalidManifestException(String.join("\n", errors));
             }
         }
     }

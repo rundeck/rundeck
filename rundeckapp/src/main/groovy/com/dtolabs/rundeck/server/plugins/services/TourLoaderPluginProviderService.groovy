@@ -15,28 +15,27 @@
  */
 package com.dtolabs.rundeck.server.plugins.services
 
-import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
+import org.rundeck.core.plugins.PluginProviderServices
 
 
-class TourLoaderPluginProviderService extends BasePluggableProviderService<TourLoaderPlugin> {
-
-    public static final String SERVICE_NAME = ServiceNameConstants.TourLoader;
-    private ServiceProviderLoader rundeckServerServiceProviderLoader;
-
-    TourLoaderPluginProviderService() { super(SERVICE_NAME, TourLoaderPlugin.class) }
-
-    public ServiceProviderLoader getPluginManager() {
-        return getRundeckServerServiceProviderLoader();
+class TourLoaderPluginProviderService implements PluginProviderServices {
+    @Override
+    def <T> boolean hasServiceFor(final Class<T> serviceType, final String serviceName) {
+        return serviceType == TourLoaderPlugin.class && serviceName.equals(ServiceNameConstants.TourLoader)
     }
 
-    public ServiceProviderLoader getRundeckServerServiceProviderLoader() {
-        return rundeckServerServiceProviderLoader;
-    }
-
-    public void setRundeckServerServiceProviderLoader(ServiceProviderLoader rundeckServerServiceProviderLoader) {
-        this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
+    @Override
+    def <T> PluggableProviderService<T> getServiceProviderFor(
+            final Class<T> serviceType,
+            final String serviceName,
+            final ServiceProviderLoader loader
+    ) {
+        if(serviceType == TourLoaderPlugin.class && ServiceNameConstants.TourLoader.equals(serviceName))
+            return (PluggableProviderService<T>)new TourLoaderProviderService(loader)
+        return null;
     }
 }

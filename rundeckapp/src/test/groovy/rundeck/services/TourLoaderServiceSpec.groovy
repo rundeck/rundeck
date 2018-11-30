@@ -1,18 +1,19 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
-import com.dtolabs.rundeck.server.plugins.services.TourLoaderPluginProviderService
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
 
 class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<TourLoaderService>{
 
     def setup() {
+        service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
         service.frameworkService = Mock(FrameworkService)
-        service.tourLoaderPluginProviderService = Stub(TourLoaderPluginProviderService)
         service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
             @Override
             Object resolvePropertyValue(final String name, final PropertyScope scope) {
@@ -28,16 +29,17 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
         setup:
         service.pluginService = Mock(PluginService)
 
+
         when:
         TestTourLoader tourLoader = new TestTourLoader()
         TestTourLoader tourLoader2 = new TestTourLoader()
-        1 * service.pluginService.listPlugins(_,_) >> ["testloader":tourLoader,"tourloader2":tourLoader2]
+        1 * service.pluginService.listPlugins(_) >> ["tourloader":tourLoader,"tourloader2":tourLoader2]
         2 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestTourLoader>(tourLoader,null)
         def allManifests = service.listAllTourManifests()
 
         then:
         allManifests.size() == 2
-        allManifests.find { it.provider == "testloader"}
+        allManifests.find { it.provider == "tourloader"}
         allManifests.find { it.provider == "tourloader2"}
 
     }
@@ -69,11 +71,6 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     }
 
     class TestTourLoader implements TourLoaderPlugin {
-
-        @Override
-        String getLoaderName() {
-            return "Test Loader"
-        }
 
         @Override
         Map getTourManifest() {

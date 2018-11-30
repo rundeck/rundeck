@@ -30,15 +30,15 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
-import groovy.mock.interceptor.MockFor
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
@@ -742,9 +742,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         newCtxt.privateDataContext['option'] == ['test1': 'newtest1']
 
         service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            1 * hasPassword('keys/test1') >> true
             1 * readPassword('keys/test1') >> {
                 return 'newtest1'.bytes
             }
+            1 * hasPassword('keys/test2') >> true
             1 * readPassword('keys/test2') >> {
                 return 'newtest2'.bytes
             }
@@ -1279,6 +1281,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         1 * service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opt1') >> {
+                if (hasopt1) {
+                    return true
+                }else{
+                    return false
+                }
+            }
             readPassword('keys/opt1') >> {
                 if (hasopt1 && readopt1) {
                     return 'newopt1'.bytes
@@ -1296,6 +1305,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                             StorageException.Event.READ,
                             PathUtil.asPath('keys/opt1')
                     )
+                }
+            }
+            hasPassword('keys/opt2') >> {
+                if (hasopt2) {
+                    return true
+                }else{
+                    return false
                 }
             }
             readPassword('keys/opt2') >> {
@@ -1318,6 +1334,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 }
             }
         }
+
         opt1result == secureOpts['opt1']
         opt2result == secureOptsExposed['opt2']
 
@@ -1414,6 +1431,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
         service.storageService = Mock(StorageService) {
             storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+                hasPassword('keys/opt1') >> true
                 readPassword('keys/opt1') >> 'asdf'.bytes
             }
         }
@@ -1442,6 +1460,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         )
         service.storageService = Mock(StorageService) {
             storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+                hasPassword('keys/opt1') >> false
                 readPassword('keys/opt1') >> {
                     throw new StorageException("bogus", StorageException.Event.READ, PathUtil.asPath('keys/opt1'))
                 }
@@ -1894,7 +1913,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(context) >> Mock(KeyStorageTree) {
-            1 * readPassword(path) >> {
+            1 * hasPassword(path) >> {
                 if (throwsexception) {
                     throw new StorageException(StorageException.Event.READ, PathUtil.asPath(path))
                 }
@@ -2425,14 +2444,26 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/opta/pass')>>{
+                return true
+            }
             readPassword('keys/opta/pass') >> {
                     return 'pass1'.bytes
+            }
+            hasPassword('keys/optb/pass')>>{
+                return true
             }
             readPassword('keys/optb/pass') >> {
                     return 'pass2'.bytes
             }
+            hasPassword('keys/optc/pass')>>{
+                return true
+            }
             readPassword('keys/optc/pass') >> {
                     return 'pass3'.bytes
+            }
+            hasPassword(_) >> {
+                return true
             }
             readPassword(_) >> {
                 return ''.bytes
@@ -3193,14 +3224,20 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass') >> true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }
+            hasPassword('keys/dev/pass') >> true
             readPassword('keys/dev/pass') >> {
                 return 'pass2'.bytes
             }
+            hasPassword('keys/op/pass') >> true
             readPassword('keys/op/pass') >> {
                 return 'pass3'.bytes
+            }
+            hasPassword(_) >> {
+                return true
             }
             readPassword(_) >> {
                 return ''.bytes
@@ -3465,31 +3502,249 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "createJobReferenceContext default values secure option"() {
+
+    def "execut job ref empty node filter successOnEmptyNodeFilter false"(){
         given:
-        def context = ExecutionContextImpl.builder()
-                                          .
-                threadCount(1)
-                                          .
-                keepgoing(false)
-                                          .
-                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
-                                          .
-                privateDataContext(['option': [:],])
-                                          .
-                user('aUser')
-                                          .
-                build()
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
+        def jobname = 'refjobx'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'x job',
+                argString: '-args b -args2 d',
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
+                ),
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                successOnEmptyNodeFilter: false
+
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                new NodeSetImpl()
+            }
+        }
+
+
+        def executionListener = Mock(ExecutionListener)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> new NodeSetImpl()
+            getFramework() >> Mock(Framework)
+            getExecutionListener() >> executionListener
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                null,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                false,
+                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>true
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        thrown StepException
+    }
+
+    def "execut job ref empty node filter successOnEmptyNodeFilter true"(){
+        given:
+        def jobname = 'refjobx'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'x job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1',
+                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                successOnEmptyNodeFilter: true
+
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                new NodeSetImpl()
+            }
+        }
+
+
+        def executionListener = Mock(ExecutionListener)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> new NodeSetImpl()
+            getFramework() >> Mock(Framework)
+            getExecutionListener() >> executionListener
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                null,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                null,
+                null,
+                false,
+                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>true
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        0 * executionListener.log(_)
+        ret.success
+    }
+
+    def "createJobReferenceContext default values secure option"() {
+        given:
+            def context = ExecutionContextImpl.builder()
+                                              .
+                threadCount(1)
+                                              .
+                keepgoing(false)
+                                              .
+                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                                              .
+                privateDataContext(['option': [:],])
+                                              .
+                user('aUser')
+                                              .
+                build()
+            ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                    keepgoing: true,
+                    commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                    )]
                 ),
                 options: [
                         new Option(
@@ -3526,6 +3781,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
 
         2*service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass')>>true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }

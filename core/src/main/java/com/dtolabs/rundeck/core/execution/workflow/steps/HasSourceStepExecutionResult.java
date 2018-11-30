@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,8 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.execution.workflow.steps;
 
-import com.dtolabs.rundeck.core.storage.StorageTree
-
-/**
- * Utility
- */
-class KeyStorageUtil {
-    /**
-     * Wrap a StorageTree with KeyStorageTree capability
-     * @param tree
-     * @return
-     */
-    static KeyStorageTree keyStorageWrapper(StorageTree tree) {
-        return new KeyStorageTreeImpl(tree)
-    }
+public interface HasSourceStepExecutionResult {
+    StepExecutionResult getSourceStepExecutionResult();
 }

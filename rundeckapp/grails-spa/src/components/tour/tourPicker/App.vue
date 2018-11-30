@@ -1,15 +1,28 @@
 <template>
-  <li>
+  <li id="appTour">
     <a class="btn btn-simple" @click="openTourSelectorModal">
-     <img src="../duck.png" alt="" height="32px" style="margin-top:12px; margin-right:15px; opacity:.6;">
+      <img
+        src="../duck.png"
+        alt
+        height="32px"
+        style="margin-top:12px; margin-right:15px; opacity:.6;"
+      >
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
         <div v-for="tourLoader in tours" v-bind:key="tourLoader.$index">
           <div class="panel panel-default" style="padding-bottom:1px;">
-            <div class="panel-heading"><strong>{{tourLoader.loader}}</strong></div>
+            <div class="panel-heading">
+              <strong>{{tourLoader.loader}}</strong>
+            </div>
             <div class="list-group">
-              <a class="list-group-item" href="#" v-for="tour in tourLoader.tours" v-bind:key="tour.$index" @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)">
+              <a
+                class="list-group-item"
+                href="#"
+                v-for="tour in tourLoader.tours"
+                v-bind:key="tour.$index"
+                @click="startTour(tour.provider ? tour.provider : tourLoader.provider,tour)"
+              >
                 {{tour.name}}
                 <span v-if="tour.author">by {{tour.author}}</span>
               </a>

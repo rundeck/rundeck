@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 
 /**
@@ -168,10 +169,40 @@ public class NodeDispatchStepExecutor implements StepExecutor {
     }
 
     public static boolean isWrappedDispatcherException(final StepExecutionResult result) {
-        return (result instanceof NodeDispatchStepExecutorExceptionResult);
+        return extractNodeDispatchStepExecutorExceptionResult(result).isPresent();
+    }
+
+    public static Optional<NodeDispatchStepExecutorExceptionResult> extractNodeDispatchStepExecutorExceptionResult(final StepExecutionResult result) {
+        boolean isa = (result instanceof NodeDispatchStepExecutorExceptionResult);
+        if (isa) {
+            return Optional.of((NodeDispatchStepExecutorExceptionResult) result);
+        } else if (result instanceof HasSourceStepExecutionResult) {
+            StepExecutionResult
+                sourceStepExecutionResult =
+                ((HasSourceStepExecutionResult) result).getSourceStepExecutionResult();
+            if (sourceStepExecutionResult != null && sourceStepExecutionResult != result) {
+                return extractNodeDispatchStepExecutorExceptionResult(sourceStepExecutionResult);
+            }
+        }
+        return Optional.empty();
     }
     public static boolean isWrappedDispatcherResult(final StepExecutionResult result) {
-        return (result instanceof NodeDispatchStepExecutorResult);
+        return extractNodeDispatchStepExecutorResult(result).isPresent();
+    }
+
+    public static Optional<NodeDispatchStepExecutorResult> extractNodeDispatchStepExecutorResult(final StepExecutionResult result) {
+        boolean isa = (result instanceof NodeDispatchStepExecutorResult);
+        if (isa) {
+            return Optional.of((NodeDispatchStepExecutorResult) result);
+        } else if (result instanceof HasSourceStepExecutionResult) {
+            StepExecutionResult
+                sourceStepExecutionResult =
+                ((HasSourceStepExecutionResult) result).getSourceStepExecutionResult();
+            if (sourceStepExecutionResult != null && sourceStepExecutionResult != result) {
+                return extractNodeDispatchStepExecutorResult(sourceStepExecutionResult);
+            }
+        }
+        return Optional.empty();
     }
     /**
      * Return the DispatcherResult from a StepExecutionResult created by this class.
@@ -179,11 +210,11 @@ public class NodeDispatchStepExecutor implements StepExecutor {
      * @return dispatcher result
      */
     public static DispatcherResult extractDispatcherResult(final StepExecutionResult result) {
-        if(!isWrappedDispatcherResult(result)) {
+        Optional<NodeDispatchStepExecutorResult> extracted = extractNodeDispatchStepExecutorResult(result);
+        if (!extracted.isPresent()) {
             throw new IllegalArgumentException("Cannot extract result: unexpected type: " + result);
         }
-        NodeDispatchStepExecutorResult nr = (NodeDispatchStepExecutorResult) result;
-        return nr.getDispatcherResult();
+        return extracted.get().getDispatcherResult();
     }
     /**
      * Return the DispatcherResult from a StepExecutionResult created by this class.
@@ -191,10 +222,12 @@ public class NodeDispatchStepExecutor implements StepExecutor {
      * @return dispatcher exception
      */
     public static DispatcherException extractDispatcherException(final StepExecutionResult result) {
-        if(!isWrappedDispatcherException(result)) {
+        Optional<NodeDispatchStepExecutorExceptionResult>
+            extracted =
+            extractNodeDispatchStepExecutorExceptionResult(result);
+        if (!extracted.isPresent()) {
             throw new IllegalArgumentException("Cannot extract result: unexpected type: " + result);
         }
-        NodeDispatchStepExecutorExceptionResult nr = (NodeDispatchStepExecutorExceptionResult) result;
-        return nr.getDispatcherException();
+        return extracted.get().getDispatcherException();
     }
 }

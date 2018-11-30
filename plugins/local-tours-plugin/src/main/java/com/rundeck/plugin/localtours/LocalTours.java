@@ -38,11 +38,6 @@ public class LocalTours implements TourLoaderPlugin {
     String toursSubDir;
 
     @Override
-    public String getLoaderName() {
-        return "Local Tours";
-    }
-
-    @Override
     public Map getTourManifest() {
        File manifest = new File(tourBaseDir,manifestFileName);
        LOG.debug("Loading tour: " + manifest.getAbsolutePath());

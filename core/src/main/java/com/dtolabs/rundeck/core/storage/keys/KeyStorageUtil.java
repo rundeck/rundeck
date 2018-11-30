@@ -13,34 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.rundeck.plugin.localtours;
 
-import com.dtolabs.rundeck.plugins.tours.Tour;
+package com.dtolabs.rundeck.core.storage.keys;
 
-import java.util.List;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 
-public class TourImpl implements Tour {
-    private String key;
-    private String name;
-    private String author;
-    private List<TourStepImpl> steps;
-    @Override
-    public String getKey() {
-        return null;
-    }
-
-    @Override
-    public String getName() {
-        return null;
-    }
-
-    @Override
-    public String getAuthor() {
-        return author;
-    }
-
-    @Override
-    public List<TourStepImpl> getSteps() {
-        return steps;
+/**
+ * Utility
+ */
+public class KeyStorageUtil {
+    /**
+     * Wrap a StorageTree with KeyStorageTree capability
+     * @param tree
+     * @return
+     */
+    public static KeyStorageTree keyStorageWrapper(StorageTree tree) {
+        return new KeyStorageTreeImpl(tree);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.storage
+package com.dtolabs.rundeck.core.storage;
 
-import org.rundeck.storage.api.Path
-import org.rundeck.storage.api.StorageException
+import org.rundeck.storage.api.Path;
+import org.rundeck.storage.api.StorageException;
 
 /**
  * Resource content type was not correct
  */
 class WrongContentType extends StorageException {
     WrongContentType(final StorageException.Event event, final Path path) {
-        super(event, path)
+        super(event, path);
     }
 
     WrongContentType(final String s, final StorageException.Event event, final Path path) {
-        super(s, event, path)
+        super(s, event, path);
     }
 
     WrongContentType(final String s, final Throwable throwable, final StorageException.Event event, final Path path) {
-        super(s, throwable, event, path)
+        super(s, throwable, event, path);
     }
 
     WrongContentType(final Throwable throwable, final StorageException.Event event, final Path path) {
-        super(throwable, event, path)
+        super(throwable, event, path);
     }
 }

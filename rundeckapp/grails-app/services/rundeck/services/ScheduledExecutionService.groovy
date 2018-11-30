@@ -990,16 +990,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //extend auth context using project-specific authorization
         AuthContext authContext = frameworkService.getAuthContextWithProject(original, scheduledExecution.project)
 
-        if (!frameworkService.authorizeProjectResource(
+        def authActions = [AuthConstants.ACTION_DELETE]
+        if (callingAction == 'scm-import') {
+            authActions << AuthConstants.SCM_DELETE
+        }
+        if ((
+            !frameworkService.authorizeProjectResourceAny(
                 authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
-                AuthConstants.ACTION_DELETE,
+                authActions,
                 scheduledExecution.project
-        ) || !frameworkService.authorizeProjectJobAll(
+            ) || !frameworkService.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
-                [AuthConstants.ACTION_DELETE],
+                authActions,
                 scheduledExecution.project
+            )
         )) {
             def err = [
                     message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid]),
@@ -1634,6 +1640,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def skipjobs = []
         def jobChangeEvents=[]
         def remappedIds=[:]
+
+        def updateAuthActions = [AuthConstants.ACTION_UPDATE]
+        def createAuthActions = [AuthConstants.ACTION_CREATE]
+        if (changeinfo?.method == 'scm-import') {
+            updateAuthActions += [AuthConstants.SCM_UPDATE]
+            createAuthActions += [AuthConstants.SCM_CREATE]
+        }
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
@@ -1678,7 +1691,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def success = false
                 def errmsg
                 jobchange.change = 'modify'
-                if (!frameworkService.authorizeProjectJobAll(projectAuthContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
+                if (!frameworkService.authorizeProjectJobAny(
+                    projectAuthContext,
+                    scheduledExecution,
+                    updateAuthActions,
+                    scheduledExecution.project
+                )) {
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
@@ -1708,8 +1726,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } else if (option == "create" || !scheduledExecution) {
                 def errmsg
 
-                if (!frameworkService.authorizeProjectResourceAll(projectAuthContext, AuthConstants.RESOURCE_TYPE_JOB,
-                                                                  [AuthConstants.ACTION_CREATE], jobdata.project)) {
+                if (!frameworkService.authorizeProjectResourceAny(
+                    projectAuthContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    createAuthActions,
+                    jobdata.project
+                )) {
                     errmsg = "Unauthorized: Create Job"
                     errjobs << [scheduledExecution: jobdata, entrynum: i, errmsg: errmsg]
                 } else {
@@ -3126,6 +3148,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     }
 
+    /**
+     * Save a new job, will verify authorization
+     * @param params
+     * @param authContext
+     * @param changeinfo
+     * @return
+     */
     public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
@@ -3157,7 +3186,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.discard()
             return [success: false, scheduledExecution: scheduledExecution]
         }
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_CREATE], scheduledExecution.project)) {
+        def actions = [AuthConstants.ACTION_CREATE]
+        if(changeinfo?.method == 'scm-import'){
+            actions += [AuthConstants.SCM_CREATE]
+        }
+        if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
             scheduledExecution.discard()
             return [success: false, error: "Unauthorized: Create Job ${scheduledExecution.generateFullName()}", unauthorized: true, scheduledExecution: scheduledExecution]
         }

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProjectMgr
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import grails.events.bus.EventBus
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
@@ -297,5 +298,50 @@ class ProjectServiceSpec extends Specification {
         1 * service.fileUploadService.deleteRecordsForProject('myproject')
         result.success
 
+    }
+
+    def "delete project notifies event bus success"() {
+        given:
+            def project = Mock(IRundeckProject) {
+                getName() >> 'myproject'
+            }
+            service.scmService = Mock(ScmService)
+            service.executionService = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService)
+            service.targetEventBus = Mock(EventBus)
+            def fwk = Mock(Framework)
+
+        when:
+            def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+            1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+            1 * service.eventBus.notify('projectWasDeleted', ['myproject'])
+            1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                1 * removeFrameworkProject('myproject')
+            }
+            result.success
+    }
+    def "delete project notifies event bus failure"() {
+        given:
+            def project = Mock(IRundeckProject) {
+                getName() >> 'myproject'
+            }
+            service.scmService = Mock(ScmService)
+            service.executionService = Mock(ExecutionService)
+            service.fileUploadService = Mock(FileUploadService){
+                deleteRecordsForProject(_)>>{throw new Exception("test exception")}
+            }
+            service.targetEventBus = Mock(EventBus)
+            def fwk = Mock(Framework)
+
+        when:
+            def result = service.deleteProject(project, fwk, null, null)
+
+        then:
+            1 * service.eventBus.notify('projectWillBeDeleted', ['myproject'])
+            1 * service.eventBus.notify('projectDeleteFailed', ['myproject'])
+            0 * fwk.getFrameworkProjectMgr()
+            !result.success
     }
 }
