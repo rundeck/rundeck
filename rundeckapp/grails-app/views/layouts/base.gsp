@@ -158,12 +158,14 @@
         </g:each>
 
     </g:if>
+
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
       window._rundeck = {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        language: '${response.locale?.toString() ?: request.locale?.toString()}',
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}'
