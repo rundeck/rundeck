@@ -16,6 +16,7 @@
 
 package org.rundeck.jaas.jetty;
 
+import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
@@ -40,9 +41,9 @@ import java.util.Map;
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyRolePropertyFileLoginModule.class.getName());
-    PropertyFileLoginModule module;
-    UserInfo userInfo;
-    boolean caseInsensitive = true;
+    AbstractLoginModule module;
+    UserInfo            userInfo;
+    boolean             caseInsensitive = true;
 
     @Override
     public void initialize(
@@ -63,7 +64,12 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         if (null != caseInsensitiveStr) {
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
-        module = new PropertyFileLoginModule();
+        if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
+            logger.debug("using reloadable realm property file reader");
+            module = new ReloadablePropertyFileLoginModule();
+        } else {
+            module = new PropertyFileLoginModule();
+        }
         module.initialize(subject, callbackHandler, shared, options);
     }
 
