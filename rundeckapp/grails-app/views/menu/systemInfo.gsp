@@ -45,7 +45,7 @@
               <g:message code="jobs.and.ad.hoc.executions.will.be.queued.until.previous.executions.complete" />
             </p>
             <p>
-              <a href="${g.helpLinkUrl(path:'/administration/tuning-rundeck.html#quartz-job-threadcount')}">
+              <a href="${g.helpLinkUrl(path:'/administration/maintenance/tuning-rundeck.html#quartz-job-threadcount')}">
                 <g:icon name="question-sign"/>
                 <g:message code="more.information" />
               </a>
