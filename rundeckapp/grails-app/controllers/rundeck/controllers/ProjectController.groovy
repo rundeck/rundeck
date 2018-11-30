@@ -90,7 +90,7 @@ class ProjectController extends ControllerBase{
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                                                                          frameworkService.authResourceForProjectAcl(project),
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAny(
+        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -151,7 +151,7 @@ class ProjectController extends ControllerBase{
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                                                                          frameworkService.authResourceForProjectAcl(project),
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAny(
+        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -218,7 +218,7 @@ class ProjectController extends ControllerBase{
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                 frameworkService.authResourceForProjectAcl(project),
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def scmConfigure=frameworkService.authorizeApplicationResourceAny(
+        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
                 authContext,
                 frameworkService.authResourceForProject(project),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1558,7 +1558,7 @@ class ProjectController extends ControllerBase{
                 frameworkService.authResourceForProjectAcl(project.name),
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
         )
-        def scmConfigure=frameworkService.authorizeApplicationResourceAny(
+        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
                 authContext,
                 frameworkService.authResourceForProject(project.name),
                 [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1719,6 +1719,24 @@ class ProjectController extends ControllerBase{
                                                  code  : "api.error.item.unauthorized",
                                                  args  : [AuthConstants.ACTION_CREATE, "ACL for Project", project]
                                          ]
+            )
+            return null
+        }
+        //verify scm access requirement
+        if (archiveParams.importScm &&
+                !frameworkService.authorizeApplicationResourceAll(
+                        appContext,
+                        frameworkService.authResourceForProject(project.name),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                )
+        ) {
+
+            apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : "api.error.item.unauthorized",
+                            args  : [AuthConstants.ACTION_CONFIGURE, "SCM for Project", project]
+                    ]
             )
             return null
         }
