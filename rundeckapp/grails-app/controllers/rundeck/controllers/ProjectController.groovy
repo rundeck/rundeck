@@ -1558,11 +1558,14 @@ class ProjectController extends ControllerBase{
                 frameworkService.authResourceForProjectAcl(project.name),
                 [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
         )
-        def scmConfigure=frameworkService.authorizeApplicationResourceAll(
-                authContext,
-                frameworkService.authResourceForProject(project.name),
-                [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-        )
+        def scmConfigure=false
+        if (request.api_version >= ApiVersions.V28) {
+            scmConfigure = frameworkService.authorizeApplicationResourceAll(
+                    authContext,
+                    frameworkService.authResourceForProject(project.name),
+                    [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+            )
+        }
         ArchiveOptions options
         if (params.executionIds) {
             options = new ArchiveOptions(all: false, executionsOnly: true)
@@ -1722,23 +1725,27 @@ class ProjectController extends ControllerBase{
             )
             return null
         }
-        //verify scm access requirement
-        if (archiveParams.importScm &&
-                !frameworkService.authorizeApplicationResourceAll(
-                        appContext,
-                        frameworkService.authResourceForProject(project.name),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                )
-        ) {
+        if (archiveParams.importScm && request.api_version >= ApiVersions.V28) {
+            //verify scm access requirement
+            if (archiveParams.importScm &&
+                    !frameworkService.authorizeApplicationResourceAll(
+                            appContext,
+                            frameworkService.authResourceForProject(project.name),
+                            [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                    )
+            ) {
 
-            apiService.renderErrorFormat(response,
-                    [
-                            status: HttpServletResponse.SC_FORBIDDEN,
-                            code  : "api.error.item.unauthorized",
-                            args  : [AuthConstants.ACTION_CONFIGURE, "SCM for Project", project]
-                    ]
-            )
-            return null
+                apiService.renderErrorFormat(response,
+                        [
+                                status: HttpServletResponse.SC_FORBIDDEN,
+                                code  : "api.error.item.unauthorized",
+                                args  : [AuthConstants.ACTION_CONFIGURE, "SCM for Project", project]
+                        ]
+                )
+                return null
+            }
+        }else{
+            archiveParams.importScm=false
         }
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 

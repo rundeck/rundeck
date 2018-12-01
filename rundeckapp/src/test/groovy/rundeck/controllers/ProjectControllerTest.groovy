@@ -2140,7 +2140,7 @@ class ProjectControllerTest {
                 [success:true]
             }
         }
-        request.api_version = 11
+        request.api_version = 28
         params.project = 'test1'
         params.importACL='true'
         request.format='application/zip'
@@ -2173,7 +2173,7 @@ class ProjectControllerTest {
                 [success:true]
             }
         }
-        request.api_version = 11
+        request.api_version = 28
         params.project = 'test1'
         params.importScm='true'
         request.format='application/zip'
@@ -2209,7 +2209,7 @@ class ProjectControllerTest {
                 [success:true]
             }
         }
-        request.api_version = 11
+        request.api_version = 28
         params.project = 'test1'
         params.importScm='true'
         request.format='application/zip'
@@ -2230,7 +2230,7 @@ class ProjectControllerTest {
     }
 
     @Test
-    void apiProjectExport_scm_success() {
+    void apiProjectExport_scm_old_api_v() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
         controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
@@ -2238,7 +2238,7 @@ class ProjectControllerTest {
             exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
                 assertEquals 'test1',project.name
                 assertTrue aclperms
-                assertTrue scmperms
+                assertFalse scmperms
                 stream<<'some data'
             }
         }
@@ -2263,7 +2263,28 @@ class ProjectControllerTest {
                 stream<<'some data'
             }
         }
-        request.api_version = 11
+        request.api_version = 28
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
+    }
+    @Test
+    void apiProjectExport_scm_success_v28() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+                assertEquals 'test1',project.name
+                assertTrue aclperms
+                assertTrue scmperms
+                stream<<'some data'
+            }
+        }
+        request.api_version = 28
         params.project = 'test1'
         controller.apiProjectExport()
         assertEquals HttpServletResponse.SC_OK, response.status
