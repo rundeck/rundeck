@@ -1285,7 +1285,9 @@ class ProjectControllerTest {
             }
         }
     }
-    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action,boolean isacl=false,boolean aclauth=false){
+    private def mockFrameworkServiceForProjectExport(boolean exists, boolean authorized, String action,
+                                                     boolean isacl=false,boolean aclauth=false,
+                                                     boolean isscm=false, boolean scmauth=false){
         mockWith(FrameworkService){
             existsFrameworkProject{String name->
                 exists
@@ -1334,12 +1336,25 @@ class ProjectControllerTest {
                     }
                 }
             }
+            if(isscm){
+                authResourceForProject{ name ->
+                    assertEquals("test1", name)
+                    [admin: true]
+                }
+                authorizeApplicationResourceAll(1..1){ctx,resource,actions->
+                    aassertTrue(AuthConstants.ACTION_CONFIGURE in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                    scmauth
+                }
+            }
             getAuthContextForSubjectAndProject{subj,proj->
                 null
             }
         }
     }
-    private def mockFrameworkServiceForProjectImport(boolean exists, boolean authorized, String action,boolean isacl=false,boolean aclauth=false){
+    private def mockFrameworkServiceForProjectImport(boolean exists, boolean authorized, String action,
+                                                     boolean isacl=false,boolean aclauth=false,
+                                                     boolean isscm=false,boolean scmauth=false){
         mockWith(FrameworkService){
             existsFrameworkProject{String name->
                 exists
@@ -1386,6 +1401,17 @@ class ProjectControllerTest {
                         assertTrue(AuthConstants.ACTION_ADMIN in actions)
                         authorized
                     }
+                }
+            }
+            if(isscm){
+                authResourceForProject{ name ->
+                    assertEquals("test1", name)
+                    [admin: true]
+                }
+                authorizeApplicationResourceAll(1..1){ctx,resource,actions->
+                    aassertTrue(AuthConstants.ACTION_CONFIGURE in actions)
+                    assertTrue(AuthConstants.ACTION_ADMIN in actions)
+                    scmauth
                 }
             }
             getAuthContextForSubjectAndProject{subj,proj->
@@ -1685,9 +1711,9 @@ class ProjectControllerTest {
     void apiProjectExport_success() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true)
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true, true, true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
                 assertEquals 'test1',project.name
                 assertTrue aclperms
                 stream<<'some data'
@@ -1705,9 +1731,9 @@ class ProjectControllerTest {
     void apiProjectExport_success_aclpermsfalse() {
         controller.apiService = new ApiService()
         controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
-        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false)
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,false, true,true)
         controller.projectService=mockWith(ProjectService){
-            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts->
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,acmperms->
                 assertEquals 'test1',project.name
                 assertFalse aclperms
                 stream<<'some data'
@@ -2114,7 +2140,7 @@ class ProjectControllerTest {
                 [success:true]
             }
         }
-        request.api_version = 11
+        request.api_version = 28
         params.project = 'test1'
         params.importACL='true'
         request.format='application/zip'
@@ -2132,5 +2158,138 @@ class ProjectControllerTest {
                       response.json
         )
         assertEquals null,response.json.errors
+    }
+
+    @Test
+    void apiProjectImport_importScm_unauthorized() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,false,true,false)
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project,  framework,
+                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+
+
+                [success:true]
+            }
+        }
+        request.api_version = 28
+        params.project = 'test1'
+        params.importScm='true'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        request.method='PUT'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_FORBIDDEN,response.status
+        assertEquals( [
+                message:"api.error.item.unauthorized;[configure, SCM for Project, [name:test1]]",
+                error: true,
+                errorCode : "api.error.item.unauthorized",
+                apiversion: ApiVersions.API_CURRENT_VERSION
+        ],
+                response.json
+        )
+        assertEquals null,response.json.errors
+    }
+
+    @Test
+    void apiProjectImport_importScm_authorized() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, defval, locale -> code+';'+args } }
+        controller.frameworkService = mockFrameworkServiceForProjectImport(true, true, 'import',false,true,true,true)
+        controller.projectService=mockWith(ProjectService){
+            importToProject{  project,  framework,
+                              UserAndRolesAuthContext authContext,  InputStream stream, ProjectArchiveImportRequest options->
+
+
+                assertTrue(options.importScm)
+                [success:true]
+            }
+        }
+        request.api_version = 28
+        params.project = 'test1'
+        params.importScm='true'
+        request.format='application/zip'
+        response.format='json'
+        request.subject = new Subject(false,[new Username('user1'),new Group('groupa'), new Group('groupb')] as Set,
+                [] as Set, [] as Set)
+        session.user='user1'
+        request.method='PUT'
+        controller.apiProjectImport()
+        assertEquals HttpServletResponse.SC_OK,response.status
+        assertEquals( [
+                import_status: 'successful',
+                successful   : true
+        ],
+                response.json
+        )
+        assertEquals null,response.json.errors
+    }
+
+    @Test
+    void apiProjectExport_scm_old_api_v() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+                assertEquals 'test1',project.name
+                assertTrue aclperms
+                assertFalse scmperms
+                stream<<'some data'
+            }
+        }
+        request.api_version = 11
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
+    }
+    @Test
+    void apiProjectExport_scm_unauth() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,false)
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+                assertEquals 'test1',project.name
+                assertTrue aclperms
+                assertFalse scmperms
+                stream<<'some data'
+            }
+        }
+        request.api_version = 28
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
+    }
+    @Test
+    void apiProjectExport_scm_success_v28() {
+        controller.apiService = new ApiService()
+        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args,defval, locale -> code } }
+        controller.frameworkService = mockFrameworkServiceForProjectExport(true, true, 'export',true,true,true,true)
+        controller.projectService=mockWith(ProjectService){
+            exportProjectToOutputStream{project,fwk,stream,l,aclperms,opts,scmperms->
+                assertEquals 'test1',project.name
+                assertTrue aclperms
+                assertTrue scmperms
+                stream<<'some data'
+            }
+        }
+        request.api_version = 28
+        params.project = 'test1'
+        controller.apiProjectExport()
+        assertEquals HttpServletResponse.SC_OK, response.status
+        assertEquals 'application/zip', response.contentType
+        assertEquals 'some data', response.text
+
     }
 }

@@ -181,7 +181,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,_,{ ArchiveOptions opts ->
             opts.executionsOnly==true && opts.executionIds==(expectedset)
-        })
+        },_)
 
         where:
         eidparam       | expectedset
@@ -219,7 +219,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == configs &&
                     opts.readmes == readmes &&
                     opts.acls == acls
-        }
+        },_
         )
 
         where:
@@ -282,7 +282,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == (configs ?: false) &&
                     opts.readmes == (readmes ?: false) &&
                     opts.acls == (acls ?: false)
-        }
+        }, _
         ) >> 'dummytoken'
         response.redirectedUrl ==  '/project/aproject/exportWait/dummytoken'
 
@@ -419,7 +419,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == true && opts.executionIds == (expectedset)
-        }
+        },_
         ) >> 'atoken'
         1 * controller.projectService.promiseReady(_, 'atoken') >> null
         1 * controller.projectService.promiseSummary(_, 'atoken') >> Mock(ProgressSummary)
@@ -1741,7 +1741,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == true &&
                     opts.readmes == true &&
                     opts.acls == true
-        },_,_,_,preserveuuid?:false
+        },_,_,_,preserveuuid?:false,_
         ) >> 'dummytoken'
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 

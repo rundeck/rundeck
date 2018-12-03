@@ -486,7 +486,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             Framework framework,
             String ident,
             boolean aclReadAuth,
-            ArchiveOptions options
+            ArchiveOptions options,
+            boolean scmConfigure = false
     )
     {
         String token = UUID.randomUUID().toString()
@@ -496,7 +497,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth, options)
+                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth, options, scmConfigure)
                     log.debug("Async archive request with token ${token} finished successfully")
                 }
             } catch (Throwable t) {
@@ -518,7 +519,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             String iProject,
             String apiToken,
             String instanceUrl,
-            boolean preserveUUID
+            boolean preserveUUID,
+            boolean scmConfigure
     )
     {
         projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
@@ -533,7 +535,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     request.apitoken = apiToken
                     request.instance = instanceUrl
                     request.result = exportProjectToInstance(project, framework, summary, aclReadAuth, options,
-                                    iProject, apiToken,instanceUrl,preserveUUID)
+                                    iProject, apiToken,instanceUrl,preserveUUID, scmConfigure)
                     request.file = request.result.file
                     projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
                 }
@@ -632,7 +634,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
      * @throws ProjectServiceException
      */
     def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                            boolean aclReadAuth = false, ArchiveOptions options
+                            boolean aclReadAuth = false, ArchiveOptions options, boolean scmConfigure = false
     ) throws ProjectServiceException
     {
         def outfile
@@ -642,16 +644,17 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output, listener, aclReadAuth, options)
+            exportProjectToOutputStream(project, framework, output, listener, aclReadAuth, options, scmConfigure)
         }
         outfile.deleteOnExit()
         outfile
     }
     def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener=null,
                                 boolean aclReadAuth = false, ArchiveOptions options,String iProject,
-                                String apiToken, String instanceUrl,boolean preserveUUID
+                                String apiToken, String instanceUrl,boolean preserveUUID,
+                                boolean scmConfigure = false
     ) throws ProjectServiceException{
-        File file = exportProjectToFile(project,framework,listener,aclReadAuth,options)
+        File file = exportProjectToFile(project,framework,listener,aclReadAuth,options, scmConfigure)
         Client client = new Client(instanceUrl,apiToken)
         ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
                     options.configs,options.acls)
@@ -672,7 +675,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     OutputStream stream,
                                     ProgressListener listener,
                                     boolean aclReadAuth,
-                                    ArchiveOptions options
+                                    ArchiveOptions options,
+                                    boolean scmConfigure
     ) throws ProjectServiceException
     {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
@@ -687,7 +691,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
         def zip = new JarOutputStream(stream,manifest)
         try {
-            exportProjectToStream(project, framework, zip, listener, aclReadAuth, options)
+            exportProjectToStream(project, framework, zip, listener, aclReadAuth, options, scmConfigure)
         } finally {
             zip.close()
         }
@@ -699,7 +703,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             ZipOutputStream output,
             ProgressListener listener,
             boolean aclReadAuth,
-            ArchiveOptions options
+            ArchiveOptions options,
+            boolean scmConfigure
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
@@ -710,6 +715,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportConfigs = !options || options.all || options.configs
         def isExportReadmes = !options || options.all || options.readmes
         def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
+        def isExportScm = scmConfigure && (!options || options.all || options.scm)
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -730,6 +736,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 total += 1
             }
             if (isExportAcls) {
+                total += 1
+            }
+            if (isExportScm){
                 total += 1
             }
             listener?.total('export', total)
@@ -801,7 +810,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             }
 
             //export config
-            if (isExportConfigs || isExportReadmes || isExportAcls) {
+            if (isExportConfigs || isExportReadmes || isExportAcls || isExportScm) {
                 dir('files/') {
                     if (isExportConfigs) {
                         dir('etc/') {
@@ -852,6 +861,32 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         listener?.inc('export', 1)
                     }
 
+                    if (isExportScm) {
+                        ['import', 'export'].each { integration ->
+                            def scmconfig = scmService.loadScmConfig(projectName, integration)
+                            if (scmconfig) {
+                                zip.file('etc/scm-' + integration + '.properties') { Writer writer ->
+                                    def map = scmconfig.getProperties()
+                                    map = replaceRelativePathsForProjectProperties(
+                                            project,
+                                            framework,
+                                            map,
+                                            '%PROJECT_BASEDIR%'
+                                    )
+                                    def scmProps = map as Properties
+                                    def sw = new StringWriter()
+                                    scmProps.store(sw, "Exported configuration")
+                                    def scmPropertiesText = sw.toString().
+                                            split(Pattern.quote(System.getProperty("line.separator"))).
+                                            sort().
+                                            join(System.getProperty("line.separator"))
+                                    writer.write(scmPropertiesText)
+                                }
+
+                            }
+                        }
+                        listener?.inc('export', 1)
+                    }
                 }
             }
         }
@@ -928,7 +963,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importExecutions = options.importExecutions
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
+        boolean importScm = options.importScm
         File configtemp = null
+        File scmimporttemp = null
+        File scmexporttemp = null
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
         zip.read {
@@ -982,6 +1020,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                     }
+                    if(importScm){
+                        'etc/' {
+                            'scm-import.properties' { path, name, inputs ->
+                                scmimporttemp = copyToTemp()
+                            }
+                            'scm-export.properties' { path, name, inputs ->
+                                scmexporttemp = copyToTemp()
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -991,6 +1039,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 reportxml +
                 jfrecords +
                 [configtemp] +
+                [scmimporttemp, scmexporttemp] +
                 mdfilestemp.values() +
                 aclfilestemp.values()).
                 each { it?.deleteOnExit() }
@@ -1098,10 +1147,34 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             aclerrors = importProjectACLPolicies(aclfilestemp, project)
         }
 
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+        def scmerrors = []
+        if (importScm) {
+            if(scmimporttemp){
+                def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'import')
+                if(!hasConfig) {
+                    scmerrors+=importScmConfig(scmimporttemp, project, framework, authContext, 'import')
+                    log.debug("${project.name}: Loaded scm import configuration from archive")
+                }
+                else{
+                    log.error("${project.name}: cannot import SCM import configuration, already configured")
+                }
+            }
+            if(scmexporttemp){
+                def hasConfig = scmService.projectHasConfiguredPlugin(project.name, 'export')
+                if(!hasConfig) {
+                    scmerrors+=importScmConfig(scmexporttemp, project, framework, authContext, 'export')
+                    log.debug("${project.name}: Loaded scm export configuration from archive")
+                }
+                else{
+                    log.error("${project.name}: cannot import SCM export configuration, already configured")
+                }
+            }
+        }
+
+        (jobxml + execxml + execout.values() + reportxml + [configtemp]+ [scmimporttemp,scmexporttemp] + mdfilestemp.values() + aclfilestemp.values()).
                 each { it?.delete() }
         return [success: (loadjoberrors) ? false :
-                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors]
+                true, joberrors: loadjoberrors, execerrors: execerrors, aclerrors: aclerrors, scmerrors: scmerrors]
     }
 
     private List<String> importProjectACLPolicies(Map<String, File> aclfilestemp, project) {
@@ -1146,6 +1219,38 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def newprops = new Properties()
         newprops.putAll(map)
         project.setProjectProperties(newprops)
+    }
+
+    /**
+     * Import a SCM config file to the project, loaded from an archive
+     * @param configtemp temp file containing scm properties
+     * @param project project
+     * @param framework framework
+     * @param auth
+     * @param integration import or export
+     */
+    private List<String> importScmConfig(File configtemp, IRundeckProject project, Framework framework, UserAndRolesAuthContext auth, String integration) {
+        def inputProps = new Properties()
+        configtemp.withReader { Reader reader ->
+            inputProps.load(reader)
+        }
+
+        def map = replacePlaceholderForProjectProperties(project, framework, inputProps, '%PROJECT_BASEDIR%')
+        String type = map.get('scm.'+integration+'.type')
+
+        def newprops = new Properties()
+        map.each{k,v ->
+            def prefix = 'scm.'+integration+'.config.'
+            if(k.startsWith(prefix)){
+                newprops.put((k-prefix),v)
+            }
+        }
+        def result = scmService.savePluginSetup( auth,  integration,  project.name,  type, newprops)
+        if (result.error || !result.valid) {
+            def error = result.error ? result.message :"some input values were not valid"
+            return ["SCM "+integration+": "+error]
+        }
+        []
     }
 
     /**
@@ -1422,6 +1527,7 @@ class ArchiveOptions{
     boolean configs = false
     boolean readmes = false
     boolean acls = false
+    boolean scm = false
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){
             executionIds=new HashSet(execidsparam.split(',') as List)
