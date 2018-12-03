@@ -3215,7 +3215,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext['user.name'] = jobcontext.username
 
         def secureOptionNodeDeferred = [:]
-        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,null,jobcontext, secureOptionNodeDeferred)
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,plainOpts,jobcontext, secureOptionNodeDeferred)
 
         //validate the option values
         if(dovalidate){
