@@ -159,8 +159,12 @@
       </g:ifMenuItems>
       <g:forMenuItems type="PROJECT_CONFIG" var="item">
           <li>
-              <a href="${item.getProjectHref(params.project)}">
+              <a href="${enc(attr:item.getProjectHref(params.project))}"
+                 title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
+                  <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>
+                  <span class="sidebar-normal">
                   <g:message code="${item.titleCode}" default="${item.title}"/>
+                  </span>
               </a>
           </li>
       </g:forMenuItems>

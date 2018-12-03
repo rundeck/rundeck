@@ -59,4 +59,12 @@ public interface MenuItem {
         return null;
     }
 
+    /**
+     * @return css class string for icon in certain menu locations, or null for a default, e.g. 'fas fa-check' for
+     *         font-awesome, or 'glyphicon glyphicon-ok' for glyphicon
+     */
+    default String getIconCSS() {
+        return null;
+    }
+
 }
