@@ -25,12 +25,17 @@ class ExecutionsCleanerJob  implements InterruptableJob {
 
         String project = context.jobDetail.jobDataMap.get('project')
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
+        String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
+
+        log.info("Cleaner parameters: Project name: ${project}, Max days to keep: ${maxDaysToKeep}, Min. executions to keep: ${minimumExecutionToKeep}")
+
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
         LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
-            List execIdsToExclude = searchExecutions(executionService, project, maxDaysToKeep)
+            List execIdsToExclude = searchExecutions(executionService, project, maxDaysToKeep,
+                    minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0)
             log.info("Executions to delete: ${execIdsToExclude.toListString()}")
             deleteByExecutionList(execIdsToExclude,fileUploadService, logFileStorageService)
         }
@@ -124,7 +129,8 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         return result
     }
 
-    private List<Execution> searchExecutions(ExecutionService executionService, String project, String maxDaysToKeep){
+    private List<Execution> searchExecutions(ExecutionService executionService, String project, String maxDaysToKeep,
+                                             Integer minimumExecutionToKeep){
         List collectedExecutions= []
         ExecutionQuery query = new ExecutionQuery(projFilter: project)
         Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
@@ -134,10 +140,23 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         }
         Map jobList = executionService.queryExecutions(query)
         if(null != jobList && null != jobList.get("total")) {
-            Integer total = (Integer) jobList.get("total")
-            log.info(String.format("found %d executions",total))
-            if(total >0) {
+            Integer totalToExclude = (Integer) jobList.get("total")
+            log.info("found ${totalToExclude} executions")
+            if(totalToExclude >0) {
                 List<Execution> result = (List<Execution>)jobList.get("result")
+                if(minimumExecutionToKeep > 0){
+                    int totalExecutions = this.totalAllExecutions(executionService, project)
+                    int sub = totalExecutions - totalToExclude
+                    log.info("minimum executions to keep: ${minimumExecutionToKeep}")
+                    log.info("total exections of project ${project}: ${totalExecutions}")
+                    log.info("total to exclude: ${totalToExclude}")
+                    if(sub < minimumExecutionToKeep) {
+                        int jump = minimumExecutionToKeep - sub
+                        log.info("${jump} executions can not be removed")
+                        result = jump < result.size() ? result[jump..totalToExclude - 1] : []
+                        log.info("${result.size()} executions will be removed")
+                    }
+                }
                 for (Execution exec: result) {
                     if(exec.getStatus() != null) { //exclude running executions
                         collectedExecutions.add(exec)
@@ -151,6 +170,12 @@ class ExecutionsCleanerJob  implements InterruptableJob {
             log.info("No executions to delete")
         }
         return collectedExecutions
+    }
+
+    private int totalAllExecutions(ExecutionService executionService, String project){
+        ExecutionQuery query = new ExecutionQuery(projFilter: project)
+        Map result = executionService.queryExecutions(query)
+        return null != result ? result.total : 0
     }
 
     private int deleteByExecutionList(List<Execution> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {

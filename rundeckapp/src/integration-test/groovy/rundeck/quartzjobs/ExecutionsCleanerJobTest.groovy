@@ -45,6 +45,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
     void testExecuteJobCleanerNoExecutionsToDelete(){
         String projName = 'projectTest'
         int maxDaysToKeep = 10
+        int minimumExecutionsToKeep = 0
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
         ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
@@ -55,7 +56,9 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanerJob job = new ExecutionsCleanerJob()
 
-        List execIdsToExclude = job.searchExecutions(new ExecutionService(), projName, maxDaysToKeep.toString())
+        List execIdsToExclude = job.searchExecutions(
+                new ExecutionService(), projName, maxDaysToKeep.toString(), minimumExecutionsToKeep)
+
         Assert.assertEquals(0, execIdsToExclude.size())
     }
 
@@ -63,6 +66,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
     void testExecuteJobCleanerWithExecutionsToDelete(){
         String projName = 'projectTest'
         int maxDaysToKeep = 4
+        int minimumExecutionsToKeep = 0
         def logFileStorageService = new MockFor(LogFileStorageService)
         logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
                                                                            String filetype,
@@ -80,9 +84,14 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanerJob job = new ExecutionsCleanerJob()
 
-        List execIdsToExclude = job.searchExecutions(new ExecutionService(), projName, maxDaysToKeep.toString())
+        List execIdsToExclude = job.searchExecutions(
+                new ExecutionService(), projName, maxDaysToKeep.toString(), minimumExecutionsToKeep)
+
         Assert.assertEquals(true, execIdsToExclude.size() > 0)
-        int sucessTotal = job.deleteByExecutionList(execIdsToExclude,new FileUploadService(), logFileStorageService.proxyInstance())
+
+        int sucessTotal = job.deleteByExecutionList(
+                execIdsToExclude, new FileUploadService(), logFileStorageService.proxyInstance())
+
         Assert.assertEquals(sucessTotal, execIdsToExclude.size())
     }
 

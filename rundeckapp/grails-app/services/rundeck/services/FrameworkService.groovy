@@ -29,11 +29,11 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import grails.core.GrailsApplication
+import org.apache.commons.lang3.StringUtils
 import org.rundeck.app.spi.Services
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -210,9 +210,11 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             def fwkProject = getFrameworkProject(project)
             def maxDaysToKeep = fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep")
             def cronExpression = fwkProject.getProjectProperties().get("project.clean.executions.schedule")
+            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep")
             if(maxDaysToKeep){
                 projectConfig.put("maxDaysToKeep",maxDaysToKeep)
                 projectConfig.put("cronExpression",cronExpression)
+                projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
                 projectMap.put(project,projectConfig)
             }
         }
@@ -223,6 +225,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         projectsConfigs.each { project, config ->
             scheduleCleanerExecutions(project,
                     config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
+                    StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
                     config.cronExpression)
         }
     }
@@ -239,16 +242,19 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         fprojects
     }
 
-    def scheduleCleanerExecutions(String project, Integer cleanerHistoryPeriod, String cronExression){
+    def scheduleCleanerExecutions(String project, Integer cleanerHistoryPeriod, Integer minimumExecutionToKeep, String cronExression){
         log.info("removing cleaner executions job scheduled for ${project}")
         scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
         if(cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
             log.info("scheduling cleaner executions job for ${project}")
             scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
-                    [maxDaysToKeep: cleanerHistoryPeriod, project: project,
-                     logFileStorageService: logFileStorageService,
-                     fileUploadService: fileUploadService
+                    [
+                            maxDaysToKeep: cleanerHistoryPeriod,
+                            minimumExecutionToKeep: minimumExecutionToKeep,
+                            project: project,
+                            logFileStorageService: logFileStorageService,
+                            fileUploadService: fileUploadService
                     ])
         }
     }
