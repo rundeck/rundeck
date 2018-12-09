@@ -520,15 +520,29 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
             def path = getRelativePathForJob(job)
-            if(storedCommitId != null && commitId == null){
-                //file to delete-pull
-                git.rm().addFilepattern(path).call()
-                toPull = true
-                retSt.deleted.add(path)
-            }else if(storedCommitId != null && commitId?.name != storedCommitId){
-                git.checkout().addPath(path).call()
-                toPull = true
-                retSt.restored.add(job)
+            def gitAttempts = 0
+            while(gitAttempts < 10){
+                gitAttempts++
+                try{
+                    if(storedCommitId != null && commitId == null){
+                        //file to delete-pull
+                        git.rm().addFilepattern(path).call()
+                        toPull = true
+                        retSt.deleted.add(path)
+                    }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                        git.checkout().addPath(path).call()
+                        toPull = true
+                        retSt.restored.add(job)
+                    }
+                    break
+                }catch (org.eclipse.jgit.api.errors.JGitInternalException e){
+                    if(gitAttempts < 10){
+                        log.warn("Failed to checkout due to jgit error, on attempt ${gitAttempts}: ${e.message}")
+                        sleep(200)
+                    }else{
+                        throw e
+                    }
+                }
             }
         }
         Status status = git.status().call()
