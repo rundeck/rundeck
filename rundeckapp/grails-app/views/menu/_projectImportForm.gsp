@@ -124,6 +124,27 @@
                 </span>
               </div>
             </auth:resourceAllowed>
+            <div class="list-group-item">
+                <h4 class="list-group-item-heading">Scm</h4>
+                <div class="radio">
+                  <input type="radio" name="importScm" id="scmtrue" value="true" checked/>
+                  <label title="" for="scmtrue">
+                    <g:message code="archive.import.importScm.true.title"/>
+                  </label>
+                  <span class="help-block">
+                      <g:message code="archive.import.importScm.true.help"/>
+                  </span>
+                </div>
+                <div class="radio">
+                  <input type="radio" name="importScm" id="scmfalse" value="false"/>
+                  <label title="" for="scmfalse">
+                    <g:message code="archive.import.importExecutions.false.title"/>
+                  </label>
+                  <span class="help-block">
+                      <g:message code="archive.import.importScm.false.help"/>
+                  </span>
+                </div>
+            </div>
           </div>
         </div>
         <div class="card-footer">

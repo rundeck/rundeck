@@ -26,7 +26,8 @@
     </g:ifMenuItems>
     <g:forMenuItems type="USER_MENU" var="item">
         <li>
-            <a href="${item.href}">
+            <a href="${enc(attr:item.href)}"
+                 title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
                 <g:message code="${item.titleCode}" default="${item.title}"/>
             </a>
         </li>

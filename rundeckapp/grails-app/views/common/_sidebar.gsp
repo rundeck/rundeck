@@ -139,8 +139,10 @@
     </g:ifMenuItems>
     <g:forMenuItems type="PROJECT" var="item">
         <li>
-            <a href="${item.getProjectHref(params.project)}"  class=" toptab ">
-                <i class="fas fa-plug"></i>
+            <a href="${enc(attr: item.getProjectHref(params.project))}"
+               class=" toptab "
+               title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
+                <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
                 <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
             </a>
         </li>

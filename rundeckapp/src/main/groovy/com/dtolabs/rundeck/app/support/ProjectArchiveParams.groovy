@@ -33,12 +33,14 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean importExecutions=true
     Boolean importConfig=false
     Boolean importACL=false
+    Boolean importScm=false
     Boolean exportAll
     Boolean exportJobs
     Boolean exportExecutions
     Boolean exportConfigs
     Boolean exportReadmes
     Boolean exportAcls
+    Boolean exportScm
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -46,12 +48,14 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         importExecutions(nullable: true)
         importConfig(nullable: true)
         importACL(nullable: true)
+        importScm(nullable: true)
         exportAll(nullable: true)
         exportJobs(nullable: true)
         exportExecutions(nullable: true)
         exportConfigs(nullable: true)
         exportReadmes(nullable: true)
         exportAcls(nullable: true)
+        exportScm(nullable: true)
     }
 
     ArchiveOptions toArchiveOptions() {
@@ -61,7 +65,8 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 executions: exportExecutions ?: false,
                 configs: exportConfigs ?: false,
                 readmes: exportReadmes ?: false,
-                acls: exportAcls ?: false
+                acls: exportAcls ?: false,
+                scm: exportScm ?: false
         )
     }
 

@@ -104,7 +104,8 @@
     </g:ifMenuItems>
     <g:forMenuItems type="SYSTEM_CONFIG" var="item">
         <li>
-            <a href="${item.href}">
+            <a href="${enc(attr:item.href)}"
+               title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
                 <g:message code="${item.titleCode}" default="${item.title}"/>
             </a>
         </li>

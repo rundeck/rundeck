@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
-API_CURRENT_VERSION=27
+API_CURRENT_VERSION=28
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}

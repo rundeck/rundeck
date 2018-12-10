@@ -3789,4 +3789,87 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         newCtxt.dataContext['secureOption'] == ['pass': 'pass1']
     }
+
+    def "createJobReferenceContext secure opts default storage path resolve reference"() {
+        given:
+        def context = ExecutionContextImpl.builder()
+                .
+                threadCount(1)
+                .
+                keepgoing(false)
+                .
+                dataContext(['option': ['optionparent': 'pass'], 'secureOption': [:], 'job': ['execid': '123']])
+                .
+                privateDataContext(['option': [:],])
+                .
+                user('aUser')
+                .
+                build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+        )
+        null != se
+        def opt1 = new Option(
+                name: 'optionchild',
+                enforced: false,
+                required: true,
+                secureInput: false,
+                default: 'passchild'
+        )
+        def opt2 = new Option(
+                name: 'password',
+                enforced: false,
+                required: false,
+                secureInput: true,
+                secureExposed: true,
+                defaultStoragePath: 'keys/${option.optionchild}/myPassword'
+        )
+        assert opt1.validate()
+        assert opt2.validate()
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.storageService = Mock(StorageService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                ['-optionchild', 'pass'] as String[],//null values for the input options
+                null, null, null, null, null, null, false, false, true
+        )
+
+        then:
+        newCtxt.dataContext['secureOption'] == ['password': 'newtest1']
+        newCtxt.dataContext['option'] == ['optionchild': 'pass', 'password':'newtest1']
+
+        service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            1 * hasPassword('keys/pass/myPassword') >> true
+            1 * readPassword('keys/pass/myPassword') >> {
+                return 'newtest1'.bytes
+            }
+        }
+    }
 }
