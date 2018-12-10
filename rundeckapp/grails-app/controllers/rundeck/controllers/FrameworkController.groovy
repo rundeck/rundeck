@@ -727,10 +727,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.cleanerHistory == 'on') {
             projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
             projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
+            projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
             projProps['project.clean.executions.schedule'] = params.crontabString
         }else{
             projProps['project.clean.executions.maxdaystokeep'] = ''
             projProps['project.clean.executions.minimumExecutionToKeep'] = 0
+            projProps['project.clean.executions.maximumDeletionSize'] = 500
             projProps['project.clean.executions.schedule'] = ''
         }
         def errors = []
@@ -820,7 +822,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
-                        params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0, params.crontabString)
+                        params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                        params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
+                        params.crontabString)
                 frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'framework', action: 'editProjectNodeSources', params: [project: proj.name])
             }
@@ -1152,10 +1156,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if(params.cleanerHistory == 'on') {
                 projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
                 projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
+                projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
                 projProps['project.clean.executions.schedule'] = params.crontabString
             }else{
                 projProps['project.clean.executions.maxdaystokeep'] = ''
                 projProps['project.clean.executions.minimumExecutionToKeep'] = 0
+                projProps['project.clean.executions.maximumDeletionSize'] = 500
                 projProps['project.clean.executions.schedule'] = ''
             }
 
@@ -1232,7 +1238,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
                 frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
-                        params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0, params.crontabString)
+                        params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                        params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
+                        params.crontabString)
                 frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
@@ -1778,6 +1786,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
             cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
             minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep") ?: 0,
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize") ?: 500,
             enableCleanHistory:!!fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
             cronExression:fwkProject.getProjectProperties().get("project.clean.executions.schedule") ?: "0 0 0 1/1 * ? *",
             nodeexecconfig:nodeConfig,

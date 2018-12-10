@@ -24,6 +24,7 @@ import org.quartz.JobExecutionContext
 import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
+import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
 import spock.lang.Specification
 
@@ -72,6 +73,12 @@ class ExecutionsCleanerJobSpec extends Specification {
                 [result: [], total: 0]
             }
         }
+
+        def frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> {
+                false
+            }
+        }
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
 
@@ -79,6 +86,7 @@ class ExecutionsCleanerJobSpec extends Specification {
                 project: 'projectTest',
                 maxDaysToKeep: daysToKeep,
                 executionService : executionService,
+                frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
                 logFileStorageService: logFileStorageService
         ])

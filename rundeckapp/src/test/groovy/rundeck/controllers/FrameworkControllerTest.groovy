@@ -273,7 +273,7 @@ class FrameworkControllerTest {
         }
         fwk.demand.listWriteableResourceModelSources { project -> [] }
 
-        proj.demand.getProjectProperties(1..7){-> [:]}
+        proj.demand.getProjectProperties(1..8){-> [:]}
 
         fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
 
@@ -393,7 +393,7 @@ class FrameworkControllerTest {
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
-        fwk.demand.scheduleCleanerExecutions{project, b, c, crontab->null}
+        fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
 
@@ -645,7 +645,7 @@ class FrameworkControllerTest {
             assertEquals('Label----',props.getProperty('project.label'))
             ["success":props.size() != 0]
         }
-        fwk.demand.scheduleCleanerExecutions{project, b, c, crontab->null}
+        fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
         controller.frameworkService = fwk.proxyInstance()
@@ -703,7 +703,7 @@ class FrameworkControllerTest {
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..7){-> ["project.label":label]}
+        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
 
         fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
         fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }

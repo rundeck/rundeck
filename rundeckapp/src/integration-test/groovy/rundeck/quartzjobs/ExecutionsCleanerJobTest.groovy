@@ -28,6 +28,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
+import rundeck.services.FrameworkService
 import rundeck.services.LogFileStorageService
 
 /**
@@ -46,6 +47,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         String projName = 'projectTest'
         int maxDaysToKeep = 10
         int minimumExecutionsToKeep = 0
+        int maximumDeletionSize = 500
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
         ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
@@ -57,7 +59,9 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         ExecutionsCleanerJob job = new ExecutionsCleanerJob()
 
         List execIdsToExclude = job.searchExecutions(
-                new ExecutionService(), projName, maxDaysToKeep.toString(), minimumExecutionsToKeep)
+                new FrameworkService(),
+                new ExecutionService(),
+                projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
 
         Assert.assertEquals(0, execIdsToExclude.size())
     }
@@ -67,6 +71,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         String projName = 'projectTest'
         int maxDaysToKeep = 4
         int minimumExecutionsToKeep = 0
+        int maximumDeletionSize = 500
         def logFileStorageService = new MockFor(LogFileStorageService)
         logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
                                                                            String filetype,
@@ -84,8 +89,8 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanerJob job = new ExecutionsCleanerJob()
 
-        List execIdsToExclude = job.searchExecutions(
-                new ExecutionService(), projName, maxDaysToKeep.toString(), minimumExecutionsToKeep)
+        List execIdsToExclude = job.searchExecutions(new FrameworkService(),
+                new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
         Assert.assertEquals(true, execIdsToExclude.size() > 0)
 

@@ -1171,7 +1171,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
         def Date nextTime
-        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression)
+        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
         JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
 
         if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
@@ -1432,11 +1432,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return jobDetailBuilder.build()
     }
 
-    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression) {
+    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
         def Trigger trigger
         try {
             trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
                     .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withPriority(priority)
                     .build()
 
         } catch (java.text.ParseException ex) {

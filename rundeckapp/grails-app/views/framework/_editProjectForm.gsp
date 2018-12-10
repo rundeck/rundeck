@@ -130,9 +130,18 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.days.to.clean.execution" default="Minimum executions to keep"/>
+                <g:message code="domain.Project.minimum.to.keep.execution" default="Minimum executions to keep"/>
             </label>
             <g:field name="minimumtokeep" type="number" size="50"  value="${minimumExecutionToKeep}" class="form-control"/>
+            <g:if test="${cleanerHistoryConfigError}">
+                <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+            </g:if>
+        </div>
+        <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
+            <label for="cleanperiod">
+                <g:message code="domain.Project.maximum.size.deletion.execution" default="Maximum size of the deletion"/>
+            </label>
+            <g:field name="maximumdeletionsize" type="number" size="50"  value="${maximumDeletionSize}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
                 <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
             </g:if>

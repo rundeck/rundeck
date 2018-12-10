@@ -26,16 +26,23 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         String project = context.jobDetail.jobDataMap.get('project')
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
         String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
+        String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
 
-        log.info("Cleaner parameters: Project name: ${project}, Max days to keep: ${maxDaysToKeep}, Min. executions to keep: ${minimumExecutionToKeep}")
+        log.info("Cleaner parameters: Project name: ${project}")
+        log.info("Max days to keep: ${maxDaysToKeep}")
+        log.info("Minimum executions to keep: ${minimumExecutionToKeep}")
+        log.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
+        FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
         LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
-            List execIdsToExclude = searchExecutions(executionService, project, maxDaysToKeep,
-                    minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0)
+            List execIdsToExclude = searchExecutions(frameworkService, executionService, project,
+                    maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
+                    minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
+                    maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
             log.info("Executions to delete: ${execIdsToExclude.toListString()}")
             deleteByExecutionList(execIdsToExclude,fileUploadService, logFileStorageService)
         }
@@ -121,6 +128,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
                 }
             }
             log.debug("${deletedfiles} files removed")
+            log.info("Execution with ID ${e.id} were deleted")
             result = [success: true]
         } catch (Exception ex) {
             log.error("Failed to delete execution ${e.id}", ex)
@@ -129,21 +137,25 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         return result
     }
 
-    private List<Execution> searchExecutions(ExecutionService executionService, String project, String maxDaysToKeep,
-                                             Integer minimumExecutionToKeep){
+    private List<Execution> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, String project, Integer maxDaysToKeep,
+                                             Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
         List collectedExecutions= []
-        ExecutionQuery query = new ExecutionQuery(projFilter: project)
-        Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
-        if(null!=endDate){
-            query.endbeforeFilter = endDate
-            query.doendbeforeFilter = true
+
+        if(frameworkService.isClusterModeEnabled()){
+            log.info("searching executions of node ID: ${frameworkService.getServerUUID()}")
         }
-        Map jobList = executionService.queryExecutions(query)
+
+        Map jobList = executionService.queryExecutions(createCriteria(
+                project,
+                maxDaysToKeep,
+                maximumDeletionSize,
+                frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null))
+
         if(null != jobList && null != jobList.get("total")) {
             Integer totalToExclude = (Integer) jobList.get("total")
             log.info("found ${totalToExclude} executions")
             if(totalToExclude >0) {
-                List<Execution> result = (List<Execution>)jobList.get("result")
+                List<Execution> result = ((List<Execution>)jobList.get("result")).sort{a,b -> b.dateCompleted <=> a.dateCompleted}
                 if(minimumExecutionToKeep > 0){
                     int totalExecutions = this.totalAllExecutions(executionService, project)
                     int sub = totalExecutions - totalToExclude
@@ -176,6 +188,28 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         ExecutionQuery query = new ExecutionQuery(projFilter: project)
         Map result = executionService.queryExecutions(query)
         return null != result ? result.total : 0
+    }
+
+    private Closure createCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null){
+        Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
+        return {isCount ->
+            if(serverNodeUUID){
+                eq('serverNodeUUID', serverNodeUUID)
+            } else {
+                isNull('serverNodeUUID')
+            }
+
+            eq('project', project)
+            le('dateCompleted', endDate)
+            maxResults(maxDetetionSize)
+            if (!isCount) {
+                and {
+                    order('dateCompleted', 'asc')
+                    order('dateStarted', 'asc')
+
+                }
+            }
+        }
     }
 
     private int deleteByExecutionList(List<Execution> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {
@@ -249,6 +283,18 @@ class ExecutionsCleanerJob  implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid logFileStorageService type: " + lfs.getClass().getName())
         }
         return lfs
+
+    }
+
+    private FrameworkService fetchFrameworkService(def jobDataMap) {
+        def fws = jobDataMap.get("frameworkService")
+        if (fws==null) {
+            throw new RuntimeException("frameworkService could not be retrieved from JobDataMap!")
+        }
+        if (! (fws instanceof FrameworkService)) {
+            throw new RuntimeException("JobDataMap contained invalid frameworkService type: " + fws.getClass().getName())
+        }
+        return fws
 
     }
 }
