@@ -359,8 +359,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 description.getProperties()
         );
 
-
-        return DataContextUtils.addContext("config", data, localDataContext);
+        //new context variable name
+        Map<String, Map<String, String>> newLocalDataContext = DataContextUtils.addContext(serviceName.toLowerCase(), data, localDataContext);
+        //using "config" name to old plugins
+        return DataContextUtils.addContext("config", data, newLocalDataContext);
     }
 
     /**

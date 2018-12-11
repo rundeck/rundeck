@@ -145,6 +145,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                 ExecutionContextImpl
                         .builder(context)
                         .setContext("config", stringconfig)
+                        .setContext("nodestep", stringconfig)
                         .build(),
                 node,
                 script,
