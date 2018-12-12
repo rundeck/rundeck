@@ -679,6 +679,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * using the data.
      */
     def loadRemoteOptionValues(){
+        println "load remote option values"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
@@ -701,6 +702,8 @@ class ScheduledExecutionController  extends ControllerBase{
         //see if option specified, and has url
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
+            println opt.optionType
+            println opt.optionValuesPluginType
             if(opt.optionValuesPluginType) {
                 def err = [:]
                 def values=[]
@@ -2898,6 +2901,11 @@ class ScheduledExecutionController  extends ControllerBase{
                     }
                 }
             }
+            if(opt.optionValuesPluginType) {
+                println "config"
+                println opt.configMap
+                opt.valuesFromPlugin = optionValuesService.getOptions(opt.optionValuesPluginType)
+            }
         }
         model.dependentoptions=depopts
         model.optiondependencies=optdeps
@@ -2922,6 +2930,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def remoteOptionData = [:]
         (model.optionordering).each{optName->
             Option opt = optionSelections[optName]
+            println opt
             def optData = [
                     'optionDependencies': model.optiondependencies[optName],
                     'optionDeps': model.dependentoptions[optName],

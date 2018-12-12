@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 
 class ScriptOptionValuesPlugin implements OptionValuesPlugin, Describable, Configurable {
 
-    private HashMap configuration
+    private HashMap config
     private Description description
     Map<String, Closure> handlers
 
@@ -36,7 +36,7 @@ class ScriptOptionValuesPlugin implements OptionValuesPlugin, Describable, Confi
 
     @Override
     void configure(final Properties configuration) throws ConfigurationException {
-        this.configuration = new HashMap(configuration)
+        this.config = new HashMap(configuration)
     }
 
     @Override
@@ -45,7 +45,10 @@ class ScriptOptionValuesPlugin implements OptionValuesPlugin, Describable, Confi
     }
 
     @Override
-    List<OptionValue> getOptionValues() {
-        return handlers["getOptionValues"].call(this.configuration)
+    List<OptionValue> getOptionValues(Map scriptConfig) {
+        Closure cls = handlers["getOptionValues"]
+        cls.delegate = [configuration: config]
+        cls.resolveStrategy = Closure.DELEGATE_ONLY
+        return cls.call(config)
     }
 }

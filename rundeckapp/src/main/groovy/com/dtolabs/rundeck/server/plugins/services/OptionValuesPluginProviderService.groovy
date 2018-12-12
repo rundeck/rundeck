@@ -17,9 +17,12 @@
 package com.dtolabs.rundeck.server.plugins.services;
 
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
+import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
+import org.rundeck.core.plugins.PluginProviderServices;
 
 /**
  * Provider service for OptionSourcePlugins
@@ -27,29 +30,20 @@ import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
  * Date: 5/29/18
  * Time: 6:05 AM
  */
-public class OptionValuesPluginProviderService extends BasePluggableProviderService<OptionValuesPlugin> {
-    public static final String SERVICE_NAME = ServiceNameConstants.OptionValues;
-    private ServiceProviderLoader rundeckServerServiceProviderLoader;
-
-    public OptionValuesPluginProviderService() {
-        super(SERVICE_NAME, OptionValuesPlugin.class);
-    }
-
-    public ServiceProviderLoader getPluginManager() {
-        return getRundeckServerServiceProviderLoader();
-    }
-
-    public ServiceProviderLoader getRundeckServerServiceProviderLoader() {
-        return rundeckServerServiceProviderLoader;
-    }
-
-    public void setRundeckServerServiceProviderLoader(ServiceProviderLoader rundeckServerServiceProviderLoader) {
-        this.rundeckServerServiceProviderLoader = rundeckServerServiceProviderLoader;
+public class OptionValuesPluginProviderService implements PluginProviderServices {
+    @Override
+    def <T> boolean hasServiceFor(final Class<T> serviceType, final String serviceName) {
+        return serviceType == OptionValuesPlugin.class && serviceName.equals(ServiceNameConstants.OptionValues)
     }
 
     @Override
-    public boolean isScriptPluggable() {
-        //for now
-        return false;
+    def <T> PluggableProviderService<T> getServiceProviderFor(
+            final Class<T> serviceType,
+            final String serviceName,
+            final ServiceProviderLoader loader
+    ) {
+        if(serviceType == OptionValuesPlugin.class && ServiceNameConstants.OptionValues.equals(serviceName))
+            return (PluggableProviderService<T>)new OptionValueProviderService(loader)
+        return null;
     }
 }

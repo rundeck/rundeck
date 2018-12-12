@@ -83,6 +83,7 @@ function Option(data) {
      * static list of values to choose from
      */
     self.values = ko.observableArray(data.values);
+    self.valuesFromPlugin = ko.observableArray(data.valuesFromPlugin);
     self.defaultValue = ko.observable(data.defaultValue);
     /**
      * list of values already selected
@@ -290,12 +291,17 @@ function Option(data) {
         var values = self.values();
         return values != null && values.length > 0;
     });
+    self.hasPluginValues = ko.computed(function () {
+        var pluginvalues = self.valuesFromPlugin();
+        return pluginvalues != null && pluginvalues.length > 0;
+    });
     self.hasExtended = ko.computed(function () {
         return !self.secureInput()
             && (
                 self.hasValues()
                 || self.multivalued()
                 || self.hasRemote() && self.remoteValues().length > 0
+                || self.hasPluginValues()
             );
     });
     self.hasTextfield = ko.computed(function () {
@@ -331,13 +337,22 @@ function Option(data) {
         }
         var remotevalues = self.remoteValues();
         var localvalues = self.values();
+        var pluginvalues = self.valuesFromPlugin();
+
         if (self.hasRemote() && remotevalues != null) {
             ko.utils.arrayForEach(remotevalues, function (val) {
                 arr.push(val);
             });
-        } else if (localvalues != null) {
+        } else if (self.hasValues()) {
             ko.utils.arrayForEach(localvalues, function (val) {
                 arr.push(new OptionVal({label: val, value: val}));
+            });
+        } else if (self.hasPluginValues()) {
+            console.log(pluginvalues)
+            ko.utils.arrayForEach(pluginvalues, function (val) {
+                console.log(val.name)
+                console.log(val.value)
+                arr.push(new OptionVal({label: val.name, value: val.value}));
             });
         }
         return arr;

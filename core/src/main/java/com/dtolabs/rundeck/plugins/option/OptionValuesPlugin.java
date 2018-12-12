@@ -16,10 +16,11 @@
 package com.dtolabs.rundeck.plugins.option;
 
 import java.util.List;
+import java.util.Map;
 
 /*
  *  Plugin to provide options to Rundeck Jobs
  */
 public interface OptionValuesPlugin {
-    List<OptionValue> getOptionValues();
+    List<OptionValue> getOptionValues(Map config);
 }

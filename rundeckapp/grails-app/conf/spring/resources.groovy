@@ -218,12 +218,6 @@ beans={
     }
 
     /**
-     * the OptionValues plugin provider service
-     */
-    optionValuesPluginProviderService(OptionValuesPluginProviderService) {
-        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
-    }
-    /**
      * the Notification plugin provider service
      */
     notificationPluginProviderService(NotificationPluginProviderService){

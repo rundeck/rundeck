@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -69,9 +70,10 @@ public class Option implements Comparable{
     String configData
     Boolean multivalueAllSelected
     String optionValuesPluginType
+    List<OptionValue> valuesFromPlugin
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile']
+    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -256,6 +258,7 @@ public class Option implements Comparable{
         }else{
             opt.secureExposed=false
         }
+        println "optionValuesPluginType: ${data.optionValuesPluginType}"
         if(data.optionValuesPluginType) {
             opt.optionValuesPluginType = data.optionValuesPluginType
         }
