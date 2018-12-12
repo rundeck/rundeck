@@ -372,6 +372,35 @@
 
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label">
+                  <g:message code="scheduledExecution.property.nodesHealthCheckEnabled.label"/>
+              </div>
+
+              <div class="${fieldColSize}">
+                  <div class="radio radio-inline">
+                      <g:radio value="false" name="nodesHealthCheckEnabled"
+                               checked="${!scheduledExecution.nodesHealthCheckEnabled}"
+                               id="editableFalse"/>
+                      <label for="editableFalse">
+                          <g:message code="no"/>
+                      </label>
+                  </div>
+                  <div class="radio radio-inline">
+                      <g:radio name="nodesHealthCheckEnabled" value="true"
+                               checked="${scheduledExecution.nodesHealthCheckEnabled}"
+                               id="editableTrue"/>
+                      <label for="editableTrue">
+                          <g:message code="yes"/>
+                      </label>
+                  </div>
+
+                  <span class="help-block">
+                      <g:message code="scheduledExecution.property.nodesHealthCheckEnabled.description" />
+                  </span>
+              </div>
+          </div>
+
+          <div class="form-group">
+              <div class="${labelColSize} control-label text-form-label">
                   <g:message code="scheduledExecution.property.nodefiltereditable.label"/>
               </div>
 

@@ -224,6 +224,10 @@ rundeck:
         nodeCache:
             enabled: true
             spec: 'refreshInterval=30s'
+
+    nodeStatusService:
+        nodeStatusCache:
+            spec: 'refreshInterval=30s'
 ---
 
 beans:

@@ -46,6 +46,7 @@ import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.services.framework.RundeckProjectConfigurable
+import rundeck.services.nodes.CacheNodeStatus
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -62,6 +63,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
     private String serverUUID
     private boolean clusterModeEnabled
     def authorizationService
+    def nodeStatusService
 
     def ApplicationContext applicationContext
     def ExecutionService executionService
@@ -354,6 +356,18 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             if(0==unfiltered.getNodeNames().size()) {
                 log.warn("Empty node list");
             }
+
+            //merged attributes with health check cache
+            Map<String, CacheNodeStatus> cacheStatus = nodeStatusService.getCurrentStatus(project)
+            for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
+                if(cacheStatus.get(iNodeEntry.nodename)) {
+                    def status =  cacheStatus.get(iNodeEntry.nodename)
+                    iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
+                    iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
+                    iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
+                }
+            }
+
             NodeFilter.filterNodes(selector, unfiltered);
         }
     }

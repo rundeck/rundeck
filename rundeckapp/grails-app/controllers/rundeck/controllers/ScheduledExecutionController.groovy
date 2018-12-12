@@ -2483,6 +2483,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.nodeKeepgoing= runAdhocRequest.nodeKeepgoing!=null?runAdhocRequest.nodeKeepgoing:true
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
+        params.nodesHealthCheckEnabled = false
         if (params.filterName) {
             def User u = userService.findOrCreateUser(authContext.username)
             //load a named filter and create a query from it

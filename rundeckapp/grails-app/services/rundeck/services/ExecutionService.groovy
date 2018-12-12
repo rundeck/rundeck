@@ -71,6 +71,7 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
+import rundeck.services.nodes.CacheNodeStatus
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpServletRequest
@@ -118,6 +119,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    def nodeStatusService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1404,10 +1406,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         NodesSelector nodeselector
         int threadCount=1
         boolean keepgoing=false
+        def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
 
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
@@ -1427,12 +1429,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             nodeselector = null
         }
 
-        def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                origContext?.frameworkProject?:execMap.project,
-                new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project),
-                authContext)
-
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {
             privatecontext.put("option", extraParams)
@@ -1444,6 +1440,42 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             orchestrator = null;
         }
+
+        INodeSet nodeList = frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project)
+
+        if(execMap.nodesHealthCheckEnabled && execMap.doNodedispatch){
+
+            for (final INodeEntry iNodeEntry : nodeList.getNodes()) {
+                //add nodes to status cache
+                nodeStatusService.getNodeStatus(
+                        execMap.project,
+                        iNodeEntry,
+                        execMap.user,
+                        execMap.userRoleList
+                )
+            }
+
+            //add a filter for successful nodes
+            def newFilter = new StringBuffer()
+            newFilter.append(filter)
+            newFilter.append(" ")
+            newFilter.append("checkExecutor: successful")
+
+            NodeSet nodeset = filtersAsNodeSet([
+                    filter:newFilter.toString(),
+                    nodeExcludePrecedence:execMap.nodeExcludePrecedence,
+                    nodeThreadcount: execMap.nodeThreadcount,
+                    nodeKeepgoing: execMap.nodeKeepgoing
+            ])
+            nodeList = frameworkService.filterNodeSet(nodeset, origContext?.frameworkProject?:execMap.project)
+
+        }
+
+        INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+                origContext?.frameworkProject?:execMap.project,
+                new HashSet<String>(Arrays.asList("read", "run")),
+                nodeList,
+                authContext)
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
@@ -1839,7 +1871,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryOriginalId:params.retryOriginalId?:null,
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
-                                      serverNodeUUID: frameworkService.getServerUUID()
+                                      serverNodeUUID: frameworkService.getServerUUID(),
+                                      nodesHealthCheckEnabled: params.nodesHealthCheckEnabled?"true" == params.nodesHealthCheckEnabled.toString():false
             )
 
             execution.userRoles = params.userRoles
@@ -2175,7 +2208,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'timeout',
                 'orchestrator',
                 'retry',
-                'retryDelay'
+                'retryDelay',
+                'nodesHealthCheckEnabled'
         ]
         propset.each{k->
             props.put(k,se[k])

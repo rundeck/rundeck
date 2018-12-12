@@ -169,6 +169,8 @@ class ScheduledExecution extends ExecutionContext {
         notifyAvgDurationThreshold(nullable: true)
         defaultTab(maxSize: 256, blank: true, nullable: true)
         maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
+        nodesHealthCheckEnabled(nullable: true)
+
     }
 
     static mapping = {
@@ -254,6 +256,7 @@ class ScheduledExecution extends ExecutionContext {
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
         map.nodeFilterEditable = hasNodeFilterEditable()
+        map.nodesHealthCheckEnabled = hasNodesHealthCheckEnabled()
 
         if(groupPath){
             map.group=groupPath
@@ -380,7 +383,8 @@ class ScheduledExecution extends ExecutionContext {
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
-        
+        se.nodesHealthCheckEnabled = data['nodesHealthCheckEnabled'] == null || data['nodesHealthCheckEnabled']
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -642,6 +646,10 @@ class ScheduledExecution extends ExecutionContext {
 
     def boolean hasNodeFilterEditable() {
         return (null == nodeFilterEditable || nodeFilterEditable)
+    }
+
+    def boolean hasNodesHealthCheckEnabled() {
+        return (null == nodesHealthCheckEnabled || nodesHealthCheckEnabled)
     }
 
     def String generateJobScheduledName(){
