@@ -48,5 +48,6 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String nodeRankAttribute
     Boolean nodeRankOrderAscending=true
     Boolean nodeFilterEditable = false
+    Boolean nodesHealthCheckEnabled = false
 }
 
