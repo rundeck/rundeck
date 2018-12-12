@@ -519,6 +519,7 @@ public class NotificationService implements ApplicationContextAware{
                         params: [project: scheduledExecution.project]),
                 name: scheduledExecution.jobName,
                 group: scheduledExecution.groupPath ?: '',
+                schedule : scheduledExecution.scheduled? scheduledExecution.generateCrontabExression():'',
                 project: scheduledExecution.project,
                 description: scheduledExecution.description
         ]

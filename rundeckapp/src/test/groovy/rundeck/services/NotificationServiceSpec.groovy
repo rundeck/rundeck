@@ -20,7 +20,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.RuntimePropertyResolver
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
 import grails.test.mixin.Mock
@@ -261,6 +263,66 @@ class NotificationServiceSpec extends Specification {
 
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(_, null)
+
+    }
+
+    def "custom plugin notification job context map"() {
+        given:
+        def (job, execution) = createTestJob()
+        job.scheduled=true
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onstart',
+                        type: 'TestPlugin',
+                        content: '{"method":"","url":""}',
+                        configuration: '{"method":"","url":""}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _* getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+        service.pluginService = Mock(PluginService)
+
+        def mockPlugin = Mock(NotificationPlugin){
+        }
+
+
+        def config = [method:null, url:null]
+
+        when:
+        def ret = service.triggerJobNotification('start', job, content)
+
+        then:
+        1 * service.frameworkService.getFrameworkPropertyResolver(_, config)
+        1 * service.pluginService.configurePlugin(_,_,_,_)>>new ConfiguredPlugin(
+                mockPlugin,
+                [:]
+        )
+        1 * mockPlugin.postNotification(_, _, _)>>{ trigger, data, allConfig ->
+            println(data)
+            System.err.println(data.job.schedule)
+            if(data?.job?.schedule=='0 0 0 ? * * *'){
+                return true
+            }
+            return false
+        }
+        ret
 
     }
 }
