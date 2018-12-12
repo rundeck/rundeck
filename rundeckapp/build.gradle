@@ -142,7 +142,7 @@ dependencies {
     runtime "com.h2database:h2:1.4.197"
 
     // Database drivers
-    runtime 'mysql:mysql-connector-java:5.1.42'
+    runtime 'mysql:mysql-connector-java:5.1.47'
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
     runtime 'org.postgresql:postgresql:42.2.2'
