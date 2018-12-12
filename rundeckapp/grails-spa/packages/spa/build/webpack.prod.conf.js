@@ -16,6 +16,7 @@ const env = require('../config/prod.env')
 const webpackConfig = smp.wrap(merge(baseWebpackConfig, {
   devtool: config.build.productionSourceMap ? config.build.devtool : false,
   output: {
+    library: 'rundeckCore',
     path: config.build.assetsRoot,
     filename: utils.assetsPath('[name].js'),
     publicPath: '/assets'

@@ -11,7 +11,6 @@
     "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js"
   },
   "dependencies": {
-    "@rundeck/ui-trellis": "*",
     "axios": "^0.18.0",
     "uiv": "^0.27.0",
     "vue": "^2.5.2",
@@ -19,6 +18,7 @@
     "vue2-filters": "^0.3.0"
   },
   "devDependencies": {
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#typescript",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
