@@ -731,8 +731,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps['project.clean.executions.schedule'] = params.crontabString
         }else{
             projProps['project.clean.executions.maxdaystokeep'] = ''
-            projProps['project.clean.executions.minimumExecutionToKeep'] = 0
-            projProps['project.clean.executions.maximumDeletionSize'] = 500
+            projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
+            projProps['project.clean.executions.maximumDeletionSize'] = ''
             projProps['project.clean.executions.schedule'] = ''
         }
         def errors = []
@@ -1160,8 +1160,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.clean.executions.schedule'] = params.crontabString
             }else{
                 projProps['project.clean.executions.maxdaystokeep'] = ''
-                projProps['project.clean.executions.minimumExecutionToKeep'] = 0
-                projProps['project.clean.executions.maximumDeletionSize'] = 500
+                projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
+                projProps['project.clean.executions.maximumDeletionSize'] = ''
                 projProps['project.clean.executions.schedule'] = ''
             }
 
