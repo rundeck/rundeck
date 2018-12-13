@@ -286,7 +286,12 @@ class PluginApiService {
     }
 
     private long toEpoch(String dateString) {
-        PLUGIN_DATE_FMT.parse(dateString).time
+        try {
+            return PLUGIN_DATE_FMT.parse(dateString).time
+        } catch(Exception ex) {
+            log.error("unable to parse date: ${dateString}")
+        }
+        return System.currentTimeMillis()
     }
 
     private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
