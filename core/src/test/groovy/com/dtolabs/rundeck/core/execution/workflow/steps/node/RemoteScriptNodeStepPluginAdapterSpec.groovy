@@ -203,7 +203,9 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
             getArgs() >> ['someargs'].toArray()
             getScriptFile() >> tempFile
         }
-        def adapter = new RemoteScriptNodeStepPluginAdapter(null)
+
+        def plugin = Mock(RemoteScriptNodeStepPlugin)
+        def adapter = new RemoteScriptNodeStepPluginAdapter(plugin)
         adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
 
         when:
