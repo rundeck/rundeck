@@ -81,7 +81,7 @@
             <g:message code="node.metadata.tags"/>
               <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
           </td>
-          <td class="" colspan="3">
+          <td class="">
               <span data-bind="if: tags">
                   <span class="nodetags">
                       <span data-bind="foreach: tags">
@@ -97,6 +97,26 @@
                   </span>
               </span>
           </td>
+          <td class="key">
+              <!-- ko if: attributes['checkExecutor'] -->
+              Health Check
+              <!-- /ko -->
+          </td>
+          <td class="">
+              <!-- ko if: attributes['checkExecutor'] -->
+
+              <!-- ko if: attributes['checkExecutor:icon'] -->
+              <!-- ko with: attributes['checkExecutor:icon']() -->
+              <i data-bind="css: $root.nodeSet().glyphiconCssColor($data)"></i>
+              <!-- /ko -->
+              <!-- /ko -->
+
+              <span class="label label-default" data-bind="text: attributes.checkExecutor"></span>
+
+              <span data-bind="text: attributes.checkStatusDescription"></span>
+              <!-- /ko -->
+          </td>
+
       </tr>
       </tbody>
       %{-- node attributes with no namespaces--}%

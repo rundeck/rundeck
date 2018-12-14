@@ -55,9 +55,11 @@ import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
+import rundeck.services.NodeStatusService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.nodes.CacheNodeStatus
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -92,6 +94,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
     UserService userService
+    NodeStatusService nodeStatusService
 
     PasswordFieldsService resourcesPasswordFieldsService
     PasswordFieldsService execPasswordFieldsService
@@ -340,6 +343,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         long mark=System.currentTimeMillis()
         INodeSet nodes1 = project.getNodeSet()
+
+        //merged attributes with health check cache
+        Map<String, CacheNodeStatus> cacheStatus = nodeStatusService.getCurrentStatus(query.project)
+        for (final INodeEntry iNodeEntry : nodes1.getNodes()) {
+            if(cacheStatus.get(iNodeEntry.nodename)) {
+                def status =  cacheStatus.get(iNodeEntry.nodename)
+                iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
+                iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
+                iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
+                if(status.executorReachable=="successful"){
+                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-ok text-success")
+                }else{
+                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-remove text-danger")
+                }
+            }
+        }
 
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){

@@ -75,8 +75,19 @@
                               <!-- /ko -->
                               <!-- /ko -->
                               <span data-bind="text: attributes.description"></span>
+
                           </span>
-                        
+
+                        <span data-bind="if: attributes.checkExecutor">
+                            <!-- ko if: attributes['checkExecutor:icon'] -->
+                            <!-- ko with: attributes['checkExecutor:icon']() -->
+                            <i data-bind="css: $root.nodeSet().glyphiconCssColor($data)"></i>
+                            <!-- /ko -->
+                            <!-- /ko -->
+                        </span>
+
+
+
                     </td>
 
                     <!--ko foreach: $root.filterColumns -->
