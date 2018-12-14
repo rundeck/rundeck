@@ -383,7 +383,7 @@ class ScheduledExecution extends ExecutionContext {
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
-        se.nodesHealthCheckEnabled = data['nodesHealthCheckEnabled'] == null || data['nodesHealthCheckEnabled']
+        se.nodesHealthCheckEnabled = data.nodesHealthCheckEnabled?data.nodesHealthCheckEnabled:false
 
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
@@ -649,7 +649,7 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     def boolean hasNodesHealthCheckEnabled() {
-        return (null == nodesHealthCheckEnabled || nodesHealthCheckEnabled)
+        return nodesHealthCheckEnabled? nodesHealthCheckEnabled:false
     }
 
     def String generateJobScheduledName(){
