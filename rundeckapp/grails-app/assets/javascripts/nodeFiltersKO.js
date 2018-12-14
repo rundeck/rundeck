@@ -174,6 +174,9 @@ function NodeSet(data) {
         }
         return '';
     };
+    self.glyphiconCssColor=function(name){
+        return 'glyphicon '+name;
+    };
     self.glyphiconBadges=function(attributes){
         var badges=[];
         if(attributes['ui:badges']){
