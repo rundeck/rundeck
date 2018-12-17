@@ -146,8 +146,8 @@
                 </div>
                 </g:if>
                 <div class="form-group">
-                  <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" name="filterAll" controller='menu' action='jobs' class="btn btn-primary btn-sm"/>
-                  <g:actionSubmit value="${message(code:'job.filter.clear.button.title')}" name="clearFilter" controller='menu' action='clearJobsFilter' class="btn btn-default btn-sm"/>
+                  <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary btn-sm"/>
+                  <g:actionSubmit value="${message(code:'job.filter.clear.button.title')}" controller='menu' action='clearJobsFilter' class="btn btn-default btn-sm"/>
                 </div>
               </div>
           </g:form>
