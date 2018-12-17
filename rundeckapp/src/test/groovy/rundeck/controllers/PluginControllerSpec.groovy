@@ -198,6 +198,9 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     }
 
     void "upload plugin no file specified"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService)
+
         when:
         controller.uploadPlugin()
 
@@ -209,6 +212,9 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     }
 
     void "install plugin no plugin url specified"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService)
+
         when:
         controller.installPlugin()
 
@@ -277,6 +283,9 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     }
 
     void "unauthorized install plugin fails"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService)
+        
         when:
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
         params.pluginUrl = pluginUrl.toString()
