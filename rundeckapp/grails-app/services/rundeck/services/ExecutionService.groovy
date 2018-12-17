@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.internal.logging.LogFlusher
 import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.app.support.*
@@ -32,7 +33,10 @@ import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.*
 import com.dtolabs.rundeck.core.execution.workflow.steps.*
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.*
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -46,7 +50,6 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
-import grails.events.annotation.gorm.Listener
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
@@ -56,7 +59,6 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -64,7 +66,6 @@ import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
-import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.logging.ExecutionLogWriter
@@ -3760,7 +3761,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     //end related ScheduledExecution query
                 }
             }
-            eq('project', query.projFilter)
+            if(query.projFilter) {
+                eq('project', query.projFilter)
+            }
             if (query.userFilter) {
                 eq('user', query.userFilter)
             }
