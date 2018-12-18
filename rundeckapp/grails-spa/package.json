@@ -1,11 +1,14 @@
 {
-  "name": "root",
+  "name": "project-motd",
+  "version": "1.0.0",
+  "description": "Rundeck Project Message of the Day",
+  "author": "jesse@rundeck.com",
   "private": true,
   "scripts": {
-    "dev": "bash scripts/run.sh",
+    "dev": "NODE_ENV=production node build/build.js",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
-    "build": "./node_modules/.bin/lerna bootstrap && ./node_modules/.bin/tsc -b packages"
+    "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -15,6 +18,8 @@
     "vue2-filters": "^0.3.0"
   },
   "devDependencies": {
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#typescript",
+    "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-eslint": "^8.2.1",
@@ -31,17 +36,17 @@
     "eslint": "^4.15.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-friendly-formatter": "^3.0.0",
-    "eslint-loader": "^1.7.1",
+    "eslint-loader": "^2.1.1",
     "eslint-plugin-import": "^2.7.0",
     "eslint-plugin-node": "^5.2.0",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
     "eslint-plugin-vue": "^4.0.0",
-    "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.4",
     "friendly-errors-webpack-plugin": "^1.6.1",
-    "html-webpack-plugin": "^2.30.1",
+    "html-webpack-plugin": "^3.2.0",
     "lerna": "^3.4.3",
+    "mini-css-extract-plugin": "^0.4.4",
     "node-notifier": "^5.1.2",
     "node-sass": "^4.9.3",
     "optimize-css-assets-webpack-plugin": "^3.2.0",
@@ -60,10 +65,10 @@
     "typescript": "^3.1.6",
     "uglifyjs-webpack-plugin": "^1.1.1",
     "url-loader": "^0.5.8",
-    "vue-loader": "^13.3.0",
-    "vue-style-loader": "^3.0.1",
+    "vue-loader": "^15.4.2",
+    "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.5.2",
-    "webpack": "^3.6.0",
+    "webpack": "^4.24.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-dev-server": "^2.9.1",
     "webpack-merge": "^4.1.0"

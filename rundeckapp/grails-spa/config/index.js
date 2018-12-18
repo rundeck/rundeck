@@ -8,7 +8,7 @@ module.exports = {
   dev: {
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../../../../grails-app/assets/provided'),
+    assetsRoot: path.resolve(__dirname, '../../grails-app/assets/provided'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
 
@@ -33,7 +33,7 @@ module.exports = {
     // index: path.resolve(__dirname, '../dist/index.html'),
 
     // Paths
-    assetsRoot: path.resolve(__dirname, '../../../gradle-build/provided'),
+    assetsRoot: path.resolve(__dirname, '../gradle-build/provided'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
 
