@@ -27,7 +27,7 @@ class PluginResourceReq implements Validateable {
     String path
     static constraints = {
         service(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\_]+$/)
-        name(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\._:]+$/)
+        name(nullable: false, blank: false)
         path(nullable: true, blank: true, matches: /^[-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*(\/([-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*))*$/)
     }
 }
