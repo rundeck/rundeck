@@ -2298,18 +2298,15 @@ setTimeout(function(){
                 ])
         }
 
-        if (!params.project) {
-            return apiService.renderErrorFormat(response,
-                [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : "api.error.parameter.required",
-                    args  : ['project']
-                ])
+        AuthContext authContext;
+
+        if(params.project) {
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+            query.projFilter = params.project
         }
-
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
-
-        query.projFilter = params.project
+        else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
+        }
 
         if (null != query) {
             query.configureFilter()
@@ -2365,11 +2362,6 @@ setTimeout(function(){
 
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ? params.int('max') : -1
-
-//          grailsApplication.config.rundeck?.pagination?.default?.max ?
-//              grailsApplication.config.rundeck.pagination.default.max.toInteger() :
-//              20
-
 
         def results = executionService.queryExecutions(query, resOffset, resMax)
         def result = results.result
