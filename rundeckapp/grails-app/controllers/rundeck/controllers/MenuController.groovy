@@ -1187,6 +1187,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
+        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+            flash.error=message(code: "development.mode.warning")
+        }
         [rundeckFramework: frameworkService.rundeckFramework]
     }
 
@@ -1857,6 +1860,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
+        }
+        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+            flash.error=message(code: "development.mode.warning")
         }
 
         Date nowDate = new Date();
