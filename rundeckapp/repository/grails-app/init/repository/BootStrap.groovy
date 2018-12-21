@@ -9,7 +9,7 @@ class BootStrap {
         boolean sync = grailsApplication.config.rundeck.features.repository.syncOnBootstrap in [true,'true']
         log.debug("Repository enabled: " + enabled)
         if(enabled && sync) {
-            log.debug("Syncing installed plugins to this server")
+            log.info("Syncing installed plugins to this server")
             repositoryPluginService.syncInstalledArtifactsToPluginTarget()
         }
     }
