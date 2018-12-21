@@ -63,6 +63,7 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
+        <nodesHealthCheckEnabled>false</nodesHealthCheckEnabled>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>

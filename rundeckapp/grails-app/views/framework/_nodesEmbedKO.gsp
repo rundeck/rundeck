@@ -48,6 +48,13 @@
                 <!-- /ko -->
             </span>
             <span data-bind="text: nodename"></span>
+            <span data-bind="if: attributes.checkExecutor">
+                <!-- ko if: attributes['checkExecutor:icon'] -->
+                <!-- ko with: attributes['checkExecutor:icon']() -->
+                <i data-bind="css: $root.nodeSet().glyphiconCssColor($data)"></i>
+                <!-- /ko -->
+                <!-- /ko -->
+            </span>
         </a>
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"

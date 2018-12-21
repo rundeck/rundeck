@@ -1,34 +1,53 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.logging.LogFlusher
+import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.PluginControlServiceImpl
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionLogger
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.ContextManager
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowEventLoggerListener
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListenerImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
+import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
+import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalCause
+import com.google.common.cache.RemovalListener
+import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.core.task.AsyncListenableTaskExecutor
+import org.springframework.core.task.TaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import rundeck.CommandExec
 import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CacheNodeStatus
+
+import java.nio.charset.Charset
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 class NodeStatusService implements RundeckProjectConfigurable, InitializingBean {
 
-    public static final String DEFAULT_CACHE_SPEC = "refreshInterval=30s"
-    public static final String PROJECT_STATUSNODECACHE_DELAY = 'project.nodeStatusCache.delay'
+    public static final String DEFAULT_CACHE_SPEC = "refreshAfterWrite=30s,expireAfterWrite=30m"
+    public static final String PROJECT_NODECACHE_REFRESH= 'project.nodeStatusCache.refresh'
 
     FrameworkService frameworkService
     ExecutionUtilService executionUtilService
@@ -36,16 +55,20 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
     StorageService storageService
     NodeService nodeService
     def configurationService
-    def AsyncListenableTaskExecutor nodeTaskExecutor
+    ThreadPoolTaskExecutor nodeStatusTaskExecutor
+    def ThreadBoundOutputStream sysThreadBoundOut = ThreadBoundOutputStream.bindSystemOut()
+    def ThreadBoundOutputStream sysThreadBoundErr = ThreadBoundOutputStream.bindSystemErr()
+    def LoggingService loggingService
 
     //basic creation, created via spec string in afterPropertiesSet()
     private LoadingCache<StatusNodeCacheKey, CacheNodeStatus> nodeStatusCache =
             CacheBuilder.newBuilder()
                         .refreshAfterWrite(30, TimeUnit.SECONDS)
+                        .expireAfterWrite(30, TimeUnit.MINUTES)
                         .build(
                     new CacheLoader<String, CacheNodeStatus>() {
-                        public CacheNodeStatus load(String key) {
-                            return loadNodeStatus(key);
+                        CacheNodeStatus load(String key) {
+                            return loadNodeStatus(key)
                         }
                     }
             );
@@ -54,16 +77,16 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
 
     @Override
     Map<String, String> getCategories() {
-        [delay: 'resourceModelSource']
+        [refresh: 'resourceModelSource']
     }
 
     @Override
     List<Property> getProjectConfigProperties() {
         [
                 PropertyBuilder.builder().with {
-                    integer 'delay'
-                    title 'Node Status Cache Delay'
-                    description 'Delay in seconds, at least 300.\n\nRefresh node status cache results after this many seconds have passed.'
+                    integer 'refresh'
+                    title 'Node Status Cache Duration'
+                    description 'It will maintain the node status in the cache for X seconds, default 300s.\n\nIt will refresh node status cache results after this many seconds have passed.'
                     required(false)
                     defaultValue '300'
                 }.build()
@@ -72,7 +95,7 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
 
     @Override
     Map<String, String> getPropertiesMapping() {
-        ['delay': PROJECT_STATUSNODECACHE_DELAY]
+        ['refresh': PROJECT_NODECACHE_REFRESH]
     }
 
     void afterPropertiesSet() {
@@ -81,13 +104,19 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
 
     void initCaches() {
         def spec = configurationService?.getCacheSpecFor('nodeStatusService', 'nodeStatusCache', DEFAULT_CACHE_SPEC)?:DEFAULT_CACHE_SPEC
+        log.debug("nodeCache: creating from spec: ${spec}")
 
         nodeStatusCache = CacheBuilder.from(spec)
                                       .recordStats()
                                       .build(
                 new CacheLoader<StatusNodeCacheKey, CacheNodeStatus>() {
                     CacheNodeStatus load(StatusNodeCacheKey key) {
-                        return loadNodeStatus(key);
+
+                        Future<CacheNodeStatus> future = nodeStatusTaskExecutor.submit({
+                           return loadNodeStatus(key)
+                        } as Callable<CacheNodeStatus>)
+
+                        return future.get()
                     }
 
 
@@ -98,7 +127,7 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
                     ) throws Exception {
                         if (needsReload(key, oldValue)) {
                             ListenableFutureTask<CacheNodeStatus> task = ListenableFutureTask.create{ loadNodeStatus(key) }
-                            nodeTaskExecutor.execute(task);
+                            nodeStatusTaskExecutor.execute(task);
                             return task;
                         }else {
                             return Futures.immediateFuture(oldValue)
@@ -118,19 +147,42 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
         result
     }
 
-    CacheNodeStatus getNodeStatus(String project, INodeEntry node, String user, String userRolelist){
+    void mergeNodeAttributes(String project, INodeSet nodeSet){
+        //merged attributes with health check cache
+        Map<String, CacheNodeStatus> cacheStatus = getCurrentStatus(project)
+        for (final INodeEntry iNodeEntry : nodeSet.getNodes()) {
+            if(cacheStatus.get(iNodeEntry.nodename)) {
+                def status =  cacheStatus.get(iNodeEntry.nodename)
+                iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
+                iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
+                iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
+                iNodeEntry.attributes?.put("lastChecktime", status.lastChecktime.format("dd/MM HH:mm:ss z"))
+                iNodeEntry.attributes?.put("checkDurationTime", (status.checkDurationTime/1000).toString())
+                if(status.executorReachable=="successful"){
+                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-ok text-success")
+                }else{
+                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-remove text-danger")
+                }
+            }
+        }
+    }
+
+    void registerStatus(String project, INodeEntry node, String user, String userRolelist){
         StatusNodeCacheKey key = new StatusNodeCacheKey( project: project, node: node, user: user, userRolelist: userRolelist )
         nodeStatusCache.get(key)
     }
 
+
     CacheNodeStatus loadNodeStatus(StatusNodeCacheKey nodeCacheKey){
+
+        log.debug("getting status of node: ${nodeCacheKey}")
         Framework framework = frameworkService.getRundeckFramework()
         String project = nodeCacheKey.project
         INodeEntry node = nodeCacheKey.node
         String user = nodeCacheKey.user
         String userRolelist = nodeCacheKey.userRolelist
 
-        List roleList = userRolelist.split(",").collect{it as String}
+        List roleList = userRolelist.split(",").collect { it as String }
 
         def authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
                 user,
@@ -138,8 +190,12 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
                 project
         )
 
+        ContextManager contextmanager = new ContextManager()
+        def logOutFlusher = new LogFlusher()
+        def logErrFlusher = new LogFlusher()
+
         //create listener without output
-        WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
+        WorkflowExecutionListenerImpl executionListenerWf = new WorkflowExecutionListenerImpl(
                 new NodeRecorder(),
                 new HiddenLogger()
         )
@@ -151,28 +207,45 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
             frameworkProject(project)
             storageTree(storageService.storageTreeWithContext(authContext))
             nodeService(nodeService)
+            executionListener(executionListenerWf)
         }
         builder.framework(framework)
         builder.authContext(authContext)
         builder.threadCount(1)
-        builder.executionListener(executionListener)
 
         def checkCommand
 
         //TODO: we can use a node attribute to get the healtcheck command
         if ("windows".equalsIgnoreCase(node.osFamily)) {
-            checkCommand="dir"
-        }else{
-            checkCommand="uname"
+            checkCommand = "dir"
+        } else {
+            checkCommand = "uname"
         }
+
+        sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(
+                new NoLogWriter(),
+                LogLevel.DEBUG,
+                contextmanager,
+                logOutFlusher,
+                null
+        ))
+        sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(
+                new NoLogWriter(),
+                LogLevel.ERROR,
+                contextmanager,
+                logErrFlusher,
+                null
+        ))
 
         def executorReachable
         def executorTimeout
         def statusDescription
 
         try {
-            CommandExec step = new CommandExec(adhocRemoteString: checkCommand,
-                                               adhocExecution: true)
+            CommandExec step = new CommandExec(
+                    adhocRemoteString: checkCommand,
+                    adhocExecution: true
+            )
             StepExecutionItem item = executionUtilService.itemForWFCmdItem(step, null, null)
 
             def context = builder.build()
@@ -180,49 +253,52 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
             NodeStepExecutor interpreter = framework.getNodeStepExecutorForItem(item);
             def result = interpreter.executeNodeStep(context, item, node);
 
-            if(result.isSuccess()){
+            if (result.isSuccess()) {
                 executorReachable = "successful"
-                executorTimeout="false"
+                executorTimeout = "false"
                 statusDescription = "Health Check successful"
-            }else{
-                executorReachable="failure"
-                executorTimeout="true"
+            } else {
+                executorReachable = "failure"
+                executorTimeout = "true"
                 statusDescription = result.failureReason
             }
 
-        }catch(Exception e){
-            executorReachable="fail"
-            executorTimeout="false"
+        } catch (Exception e) {
+            executorReachable = "fail"
+            executorTimeout = "false"
             statusDescription = e.message
         }
 
+        def refresh = nodeStatusCacheConfig(framework.projectManager.loadProjectConfig(project))
+
         def cachedNodes = new CacheNodeStatus(
                 nodeName: node.nodename,
-                cacheTime: new Date(),
+                lastChecktime: new Date(),
+                checkDurationTime: refresh,
                 executorReachable: executorReachable,
                 executorTimeout: executorTimeout,
                 statusDescription: statusDescription
         )
 
-        cachedNodes
-
+        return cachedNodes
     }
 
     boolean needsReload(StatusNodeCacheKey nodeCacheKey, CacheNodeStatus oldNodes) {
         def project = nodeCacheKey.project
         def framework = frameworkService.getRundeckFramework()
         def now = new Date()
-        def delay = nodeStatusCacheConfig(framework.projectManager.loadProjectConfig(project))
-        if(now.time - oldNodes.cacheTime.time < delay){
+        def refresh = nodeStatusCacheConfig(framework.projectManager.loadProjectConfig(project))
+        if(now.time - oldNodes.lastChecktime.time < refresh){
+            log.debug("node cache need to be reload: ${nodeCacheKey}")
             return false
         }
         return true
     }
 
     long nodeStatusCacheConfig(final IRundeckProjectConfig projectConfig) {
-        if(projectConfig.hasProperty(PROJECT_STATUSNODECACHE_DELAY)){
-            def delay = Long.parseLong(projectConfig.getProperty(PROJECT_STATUSNODECACHE_DELAY))
-            return delay*1000
+        if(projectConfig.hasProperty(PROJECT_NODECACHE_REFRESH)){
+            def refresh = Long.parseLong(projectConfig.getProperty(PROJECT_NODECACHE_REFRESH))
+            return refresh*1000
         }else{
             (30*1000)
         }
@@ -296,6 +372,25 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
                    ", user=" + user +
                    ", userRolelist=" + userRolelist +
                    "} " + super.toString();
+        }
+    }
+
+
+
+    static class NoLogWriter implements StreamingLogWriter{
+        @Override
+        void openStream() throws IOException {
+
+        }
+
+        @Override
+        void addEvent(final LogEvent event) {
+
+        }
+
+        @Override
+        void close() {
+
         }
     }
 

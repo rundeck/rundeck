@@ -358,15 +358,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             }
 
             //merged attributes with health check cache
-            Map<String, CacheNodeStatus> cacheStatus = nodeStatusService.getCurrentStatus(project)
-            for (final INodeEntry iNodeEntry : unfiltered.getNodes()) {
-                if(cacheStatus.get(iNodeEntry.nodename)) {
-                    def status =  cacheStatus.get(iNodeEntry.nodename)
-                    iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
-                    iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
-                    iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
-                }
-            }
+            nodeStatusService.mergeNodeAttributes(project, unfiltered)
 
             NodeFilter.filterNodes(selector, unfiltered);
         }

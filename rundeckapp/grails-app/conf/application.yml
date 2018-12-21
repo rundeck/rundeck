@@ -227,7 +227,7 @@ rundeck:
 
     nodeStatusService:
         nodeStatusCache:
-            spec: 'refreshInterval=30s'
+            spec: 'refreshAfterWrite=30s,expireAfterWrite=30m'
 ---
 
 beans:

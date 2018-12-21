@@ -345,20 +345,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         INodeSet nodes1 = project.getNodeSet()
 
         //merged attributes with health check cache
-        Map<String, CacheNodeStatus> cacheStatus = nodeStatusService.getCurrentStatus(query.project)
-        for (final INodeEntry iNodeEntry : nodes1.getNodes()) {
-            if(cacheStatus.get(iNodeEntry.nodename)) {
-                def status =  cacheStatus.get(iNodeEntry.nodename)
-                iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
-                iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
-                iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
-                if(status.executorReachable=="successful"){
-                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-ok text-success")
-                }else{
-                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-remove text-danger")
-                }
-            }
-        }
+        nodeStatusService.mergeNodeAttributes(query.project, nodes1)
 
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
