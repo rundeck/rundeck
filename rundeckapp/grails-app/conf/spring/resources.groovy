@@ -60,6 +60,7 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
@@ -255,6 +256,13 @@ beans={
     }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
+    }
+    nodeStatusTaskExecutor(ThreadPoolTaskExecutor) {
+        queueCapacity = (application.config.rundeck?.nodeStatusService?.queueCapacity ?: 500)
+        maxPoolSize  = (application.config.rundeck?.nodeStatusService?.maxPoolSize ?: 25)
+        corePoolSize = 1
+        keepAliveSeconds = 60
+
     }
     //alternately use ThreadPoolTaskExecutor ...
 //    nodeTaskExecutor(ThreadPoolTaskExecutor) {

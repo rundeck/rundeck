@@ -81,7 +81,7 @@
             <g:message code="node.metadata.tags"/>
               <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
           </td>
-          <td class="">
+          <td class="" colspan="3">
               <span data-bind="if: tags">
                   <span class="nodetags">
                       <span data-bind="foreach: tags">
@@ -97,12 +97,14 @@
                   </span>
               </span>
           </td>
+      </tr>
+      <tr>
           <td class="key">
               <!-- ko if: attributes['checkExecutor'] -->
               Health Check
               <!-- /ko -->
           </td>
-          <td class="">
+          <td class="" colspan="3">
               <!-- ko if: attributes['checkExecutor'] -->
 
               <!-- ko if: attributes['checkExecutor:icon'] -->
@@ -114,9 +116,11 @@
               <span class="label label-default" data-bind="text: attributes.checkExecutor"></span>
 
               <span data-bind="text: attributes.checkStatusDescription"></span>
-              <!-- /ko -->
+              <br><i class="glyphicon glyphicon-time"></i> Loaded at:
+              <span data-bind="text: attributes.lastChecktime"></span>
+              (cache duration time: <span data-bind="text: attributes.checkDurationTime"></span> sec)
+          <!-- /ko -->
           </td>
-
       </tr>
       </tbody>
       %{-- node attributes with no namespaces--}%

@@ -107,6 +107,8 @@ class Execution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
+        nodesHealthCheckEnabled(nullable: true)
+
     }
 
     static mapping = {
@@ -200,6 +202,10 @@ class Execution extends ExecutionContext {
         return !scheduledExecution || scheduledExecution.hasExecutionEnabled();
     }
 
+    def boolean hasNodesHealthCheckEnabled() {
+        return nodesHealthCheckEnabled? nodesHealthCheckEnabled:false
+    }
+
     public String getCustomStatusString(){
         executionState==ExecutionService.EXECUTION_STATE_OTHER?status:null
     }
@@ -285,7 +291,7 @@ class Execution extends ExecutionContext {
             map.willRetry=true
         }
         if(doNodedispatch){
-            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence,nodesHealthCheckEnabled: hasNodesHealthCheckEnabled()]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
@@ -357,6 +363,7 @@ class Execution extends ExecutionContext {
             if (data.nodefilters.dispatch?.containsKey('rankOrder')) {
                 exec.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder == 'ascending'
             }
+            exec.nodesHealthCheckEnabled = data.nodefilters.nodesHealthCheckEnabled ? data.nodefilters.nodesHealthCheckEnabled : false
             if (data.nodefilters.filter) {
                 exec.doNodedispatch = true
                 exec.filter = data.nodefilters.filter

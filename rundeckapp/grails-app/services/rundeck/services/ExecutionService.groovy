@@ -1445,7 +1445,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             for (final INodeEntry iNodeEntry : nodeList.getNodes()) {
                 //add nodes to status cache
-                nodeStatusService.getNodeStatus(
+                nodeStatusService.registerStatus(
                         execMap.project,
                         iNodeEntry,
                         execMap.user,

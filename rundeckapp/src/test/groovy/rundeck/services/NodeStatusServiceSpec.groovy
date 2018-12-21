@@ -11,7 +11,7 @@ class NodeStatusServiceSpec extends Specification {
         given:
         def properties = [:]
         if (null != confval) {
-            properties['project.nodeStatusCache.delay'] = confval
+            properties['project.nodeStatusCache.refresh'] = confval
         }
         def config = new PropsConfig(name: 'test1', properties: properties, projectProperties: properties)
 
