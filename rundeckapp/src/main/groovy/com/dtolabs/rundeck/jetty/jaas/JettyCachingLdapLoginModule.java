@@ -919,17 +919,6 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     }
 
     private void setDemographicAttributes(final Attributes attributes) {
-        try {
-            NamingEnumeration ne = attributes.getAll();
-            while (ne.hasMore()) {
-                Object o = ne.next();
-                System.out.println(o.getClass().getCanonicalName());
-                System.out.println(o);
-            }
-        }catch(Exception ex) {
-            ex.printStackTrace();
-        }
-
         _userFirstName = safeGetAttributeAsString(attributes.get(_userFirstNameAttribute));
         _userLastName = safeGetAttributeAsString(attributes.get(_userLastNameAttribute));
         _userEmail = safeGetAttributeAsString(attributes.get(_userEmailAttribute));
@@ -1144,39 +1133,4 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
     }
 
-    public class LdapFirstNamePrincipal implements Principal {
-        private final String _firstName;
-        LdapFirstNamePrincipal(String firstName) {
-            this._firstName = firstName;
-        }
-
-        @Override
-        public String getName() {
-            return _firstName;
-        }
-    }
-    public class LdapLastNamePrincipal implements Principal {
-
-        private final String _lastName;
-        LdapLastNamePrincipal(String lastName) {
-            this._lastName = lastName;
-        }
-
-        @Override
-        public String getName() {
-            return _lastName;
-        }
-    }
-    public class LdapEmailPrincipal implements Principal {
-
-        private final String _email;
-        LdapEmailPrincipal(String email) {
-            this._email = email;
-        }
-
-        @Override
-        public String getName() {
-            return _email;
-        }
-    }
 }

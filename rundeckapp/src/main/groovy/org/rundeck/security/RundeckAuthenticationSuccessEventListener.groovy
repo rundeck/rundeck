@@ -15,43 +15,53 @@
  */
 package org.rundeck.security
 
+import com.dtolabs.rundeck.jetty.jaas.LdapEmailPrincipal
+import com.dtolabs.rundeck.jetty.jaas.LdapFirstNamePrincipal
+import com.dtolabs.rundeck.jetty.jaas.LdapLastNamePrincipal
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationListener
 import org.springframework.security.authentication.jaas.JaasAuthenticationToken
 import org.springframework.security.authentication.jaas.event.JaasAuthenticationSuccessEvent
 import rundeck.services.UserService
-import com.dtolabs.rundeck.jetty.jaas.JettyCachingLdapLoginModule
 
 import javax.security.auth.Subject
 
 
 class RundeckAuthenticationSuccessEventListener implements ApplicationListener<JaasAuthenticationSuccessEvent> {
-
+    private static final Logger LOG = LoggerFactory.getLogger(RundeckAuthenticationSuccessEventListener)
     UserService userService
     def grailsApplication
 
     @Override
     void onApplicationEvent(final JaasAuthenticationSuccessEvent event) {
-        if(grailsApplication.config.rundeck.security.syncLdapUser?.toBoolean() == true) {
-            println "in sync"
-            Subject subject = ((JaasAuthenticationToken) event.authentication).loginContext.subject
-            subject.principals.each {
-                println it.name
+        try {
+            if (grailsApplication.config.rundeck.security.syncLdapUser?.toBoolean() == true) {
+                Subject subject = ((JaasAuthenticationToken) event.authentication).loginContext.subject
+
+                String username = event.authentication.principal.toString()
+                def lastNamePrincipal = subject.principals.find {
+                    it instanceof LdapLastNamePrincipal
+                }
+                def firstNamePrincipal = subject.principals.find {
+                    it instanceof LdapFirstNamePrincipal
+                }
+                def emailPrincipal = subject.principals.find {
+                    it instanceof LdapEmailPrincipal
+                }
+                LOG.debug("Updating user profile from ldap attributes for user: ${username}")
+                LOG.debug("First Name: " + firstNamePrincipal?.name)
+                LOG.debug("Last Name: " + lastNamePrincipal?.name)
+                LOG.debug("Email: " + emailPrincipal?.name)
+                userService.updateUserProfile(
+                        username,
+                        lastNamePrincipal?.name,
+                        firstNamePrincipal?.name,
+                        emailPrincipal?.name
+                )
             }
-            def lastNamePrincipal = subject.principals.find {
-                it instanceof JettyCachingLdapLoginModule.LdapLastNamePrincipal
-            }
-            def firstNamePrincipal = subject.principals.find {
-                it instanceof JettyCachingLdapLoginModule.LdapFirstNamePrincipal
-            }
-            def emailPrincipal = subject.principals.find {
-                it instanceof JettyCachingLdapLoginModule.LdapEmailPrincipal
-            }
-            userService.syncUserDemographicsFromLdap(
-                    event.authentication.principal,
-                    lastNamePrincipal?.name,
-                    firstNamePrincipal?.name,
-                    emailPrincipal?.name
-            )
+        } catch(Exception ex) {
+            LOG.error("Unable to update user profile from LDAP.",ex)
         }
     }
 }

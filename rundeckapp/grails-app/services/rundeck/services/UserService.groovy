@@ -97,7 +97,7 @@ class UserService {
         return [user:u,storedpref:storedpref]
     }
 
-    void syncUserDemographicsFromLdap(String username, String lastName, String firstName, String email) {
+    void updateUserProfile(String username, String lastName, String firstName, String email) {
         User u = findOrCreateUser(username)
         u.firstName = firstName
         u.lastName = lastName
