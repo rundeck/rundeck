@@ -459,6 +459,10 @@ class BootStrap {
                  log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
              fileUploadService.onBootstrap()
+
+             if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
+             }
          }
          grailsEventBus.notify('rundeck.bootstrap')
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")

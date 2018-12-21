@@ -47,4 +47,9 @@ export class NavigationPage extends Page {
         return this.clickBy(By.xpath(Elems.lnkActivity))
     }
 
+    async visitSystemConfiguration() {
+        const url = this.ctx.urlFor(`/menu/systemConfig`)
+        await this.ctx.driver.get(url)
+    }
+
 }
