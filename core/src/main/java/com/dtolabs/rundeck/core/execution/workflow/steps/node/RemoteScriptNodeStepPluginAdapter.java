@@ -33,6 +33,9 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils;
+import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.ScriptPluginProviderLoader;
+import com.dtolabs.rundeck.core.plugins.VersionCompare;
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
@@ -141,11 +144,23 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             stringconfig.put(objectEntry.getKey(), objectEntry.getValue().toString());
         }
 
+        ExecutionContextImpl newContext = ExecutionContextImpl
+                .builder(context)
+                .setContext("config", stringconfig)
+                .build();
+
+        if(plugin.hasAdditionalConfigVarGroupName()){
+            //new context variable name
+            newContext = ExecutionContextImpl
+                    .builder(context)
+                    .setContext("config", stringconfig)
+                    .setContext("nodestep", stringconfig)
+                    .build();
+        }
+
+
         return executeRemoteScript(
-                ExecutionContextImpl
-                        .builder(context)
-                        .setContext("config", stringconfig)
-                        .build(),
+                newContext,
                 node,
                 script,
                 context.getDataContextObject().resolve("job", "execid"),
