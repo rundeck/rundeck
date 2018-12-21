@@ -461,7 +461,7 @@ class BootStrap {
              fileUploadService.onBootstrap()
 
              if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
-                 log.warn("[Development Mode] H2 recommended only for development and testing")
+                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
              }
          }
          grailsEventBus.notify('rundeck.bootstrap')
