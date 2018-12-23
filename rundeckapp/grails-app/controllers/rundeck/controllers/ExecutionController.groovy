@@ -53,6 +53,8 @@ import rundeck.services.workflow.StateMapping
 import javax.servlet.http.HttpServletResponse
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /**
 * ExecutionController
@@ -2379,6 +2381,8 @@ setTimeout(function(){
             // count state
             metricsBuilder.count(exec.getExecutionState())
 
+            Executors.
+
             // duration stats.
             def dur = exec.durationAsLong()
             if (dur) {
@@ -2423,7 +2427,9 @@ setTimeout(function(){
      */
     static void metricsOutputFormatTimeNumberAsString(Map<String, Object> map, List<String> keys) {
         keys.each { k ->
-            map[k] = formatTimeNumberAsString(map[k])
+            if(map.containsKey(k)) {
+                map[k] = formatTimeNumberAsString(map[k])
+            }
         }
     }
 
