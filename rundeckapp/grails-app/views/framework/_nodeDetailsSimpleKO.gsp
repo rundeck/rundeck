@@ -100,25 +100,25 @@
       </tr>
       <tr>
           <td class="key">
-              <!-- ko if: attributes['checkExecutor'] -->
+              <!-- ko if: attributes['healthCheckStatus'] -->
               Health Check
               <!-- /ko -->
           </td>
           <td class="" colspan="3">
-              <!-- ko if: attributes['checkExecutor'] -->
+              <!-- ko if: attributes['healthCheckStatus'] -->
 
-              <!-- ko if: attributes['checkExecutor:icon'] -->
-              <!-- ko with: attributes['checkExecutor:icon']() -->
+              <!-- ko if: attributes['healthCheckStatus:icon'] -->
+              <!-- ko with: attributes['healthCheckStatus:icon']() -->
               <i data-bind="css: $root.nodeSet().glyphiconCssColor($data)"></i>
               <!-- /ko -->
               <!-- /ko -->
 
-              <span class="label label-default" data-bind="text: attributes.checkExecutor"></span>
+              <span class="label label-default" data-bind="text: attributes.healthCheckStatus"></span>
 
-              <span data-bind="text: attributes.checkStatusDescription"></span>
+              <span data-bind="text: attributes.healthCheckStatusDescription"></span>
               <br><i class="glyphicon glyphicon-time"></i> Loaded at:
-              <span data-bind="text: attributes.lastChecktime"></span>
-              (cache duration time: <span data-bind="text: attributes.checkDurationTime"></span> sec)
+              <span data-bind="text: attributes.healthCheckLastChecktime"></span>
+              (cache duration time: <span data-bind="text: attributes.healthCheckDurationTime"></span> sec)
           <!-- /ko -->
           </td>
       </tr>

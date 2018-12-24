@@ -78,9 +78,9 @@
 
                           </span>
 
-                        <span data-bind="if: attributes.checkExecutor">
-                            <!-- ko if: attributes['checkExecutor:icon'] -->
-                            <!-- ko with: attributes['checkExecutor:icon']() -->
+                        <span data-bind="if: attributes.healthCheckStatus">
+                            <!-- ko if: attributes['healthCheckStatus:icon'] -->
+                            <!-- ko with: attributes['healthCheckStatus:icon']() -->
                             <i data-bind="css: $root.nodeSet().glyphiconCssColor($data)"></i>
                             <!-- /ko -->
                             <!-- /ko -->

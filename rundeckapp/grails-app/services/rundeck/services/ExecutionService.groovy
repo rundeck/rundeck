@@ -1457,7 +1457,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def newFilter = new StringBuffer()
             newFilter.append(filter)
             newFilter.append(" ")
-            newFilter.append("checkExecutor: successful")
+            newFilter.append("healthCheckStatus: successful")
 
             NodeSet nodeset = filtersAsNodeSet([
                     filter:newFilter.toString(),
