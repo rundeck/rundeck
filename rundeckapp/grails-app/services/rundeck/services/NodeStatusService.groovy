@@ -153,15 +153,15 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
         for (final INodeEntry iNodeEntry : nodeSet.getNodes()) {
             if(cacheStatus.get(iNodeEntry.nodename)) {
                 def status =  cacheStatus.get(iNodeEntry.nodename)
-                iNodeEntry.attributes?.put("checkExecutor", status.executorReachable)
-                iNodeEntry.attributes?.put("executorTimeout", status.executorTimeout)
-                iNodeEntry.attributes?.put("checkStatusDescription", status.statusDescription)
-                iNodeEntry.attributes?.put("lastChecktime", status.lastChecktime.format("dd/MM HH:mm:ss z"))
-                iNodeEntry.attributes?.put("checkDurationTime", (status.checkDurationTime/1000).toString())
+                iNodeEntry.attributes?.put("healthCheckStatus", status.executorReachable)
+                iNodeEntry.attributes?.put("healthCheckExecutorTimeout", status.executorTimeout)
+                iNodeEntry.attributes?.put("healthCheckStatusDescription", status.statusDescription)
+                iNodeEntry.attributes?.put("healthCheckLastChecktime", status.lastChecktime.format("dd/MM HH:mm:ss z"))
+                iNodeEntry.attributes?.put("healthCheckDurationTime", (status.checkDurationTime/1000).toString())
                 if(status.executorReachable=="successful"){
-                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-ok text-success")
+                    iNodeEntry.attributes?.put("healthCheckStatus:icon", "glyphicon-ok text-success")
                 }else{
-                    iNodeEntry.attributes?.put("checkExecutor:icon", "glyphicon-remove text-danger")
+                    iNodeEntry.attributes?.put("healthCheckStatus:icon", "glyphicon-remove text-danger")
                 }
             }
         }
@@ -222,26 +222,28 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
             checkCommand = "uname"
         }
 
-        sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(
-                new NoLogWriter(),
-                LogLevel.DEBUG,
-                contextmanager,
-                logOutFlusher,
-                null
-        ))
-        sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(
-                new NoLogWriter(),
-                LogLevel.ERROR,
-                contextmanager,
-                logErrFlusher,
-                null
-        ))
 
         def executorReachable
         def executorTimeout
         def statusDescription
 
         try {
+
+            sysThreadBoundOut.installThreadStream(loggingService.createLogOutputStream(
+                    new NoLogWriter(),
+                    LogLevel.DEBUG,
+                    contextmanager,
+                    logOutFlusher,
+                    null
+            ))
+            sysThreadBoundErr.installThreadStream(loggingService.createLogOutputStream(
+                    new NoLogWriter(),
+                    LogLevel.ERROR,
+                    contextmanager,
+                    logErrFlusher,
+                    null
+            ))
+
             CommandExec step = new CommandExec(
                     adhocRemoteString: checkCommand,
                     adhocExecution: true
@@ -267,6 +269,12 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
             executorReachable = "fail"
             executorTimeout = "false"
             statusDescription = e.message
+        } finally{
+            sysThreadBoundOut.close()
+            sysThreadBoundOut.removeThreadStream()
+            sysThreadBoundErr.close()
+            sysThreadBoundErr.removeThreadStream()
+
         }
 
         def refresh = nodeStatusCacheConfig(framework.projectManager.loadProjectConfig(project))
