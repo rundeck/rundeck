@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
@@ -3871,5 +3872,50 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 return 'newtest1'.bytes
             }
         }
+    }
+
+    def "check call to node healthcheck on create execution context"() {
+        given:
+
+        def framework = Mock(Framework)
+        def authContext = Mock(UserAndRolesAuthContext)
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        service.nodeStatusService = Mock(NodeStatusService)
+
+        def makeNodeSet = { list ->
+            def nodeset = new NodeSetImpl()
+            list.each {
+                nodeset.putNode(new NodeEntryImpl(it))
+            }
+            nodeset
+        }
+
+        Execution execution = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                userRoleList: 'a,b',
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                nodesHealthCheckEnabled: true
+        )
+
+        def nodes = ['nodeA', 'nodeB', 'nodeC']
+        when:
+        def val = service.createContext(execution, null, framework, authContext, execution.user, null, null, null)
+        then:
+        2* service.frameworkService.filterNodeSet(_, _) >> makeNodeSet(nodes)
+        nodes.size()* service.nodeStatusService.registerStatus(execution.project, _ , execution.user, execution.userRoleList)
     }
 }
