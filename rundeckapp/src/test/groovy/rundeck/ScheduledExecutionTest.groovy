@@ -952,4 +952,44 @@ class ScheduledExecutionTest  {
             assertEquals "dayOfWeek.MON was not true", "true", map['dayOfWeek.SAT']
         }
     }
+
+    void testFromMapNodeHealthCheckNullEditable() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc'
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.nodesHealthCheckEnabled)
+        assertEquals(false, se.nodesHealthCheckEnabled)
+    }
+
+    void testFromMapNodeHealthCheckEditable() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodesHealthCheckEnabled: true
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.nodesHealthCheckEnabled)
+        assertEquals(true, se.nodesHealthCheckEnabled)
+    }
+
+    void testToMapNodeHealthCheckDefault_false() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.doNodedispatch=true
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertEquals(false,jobMap.nodesHealthCheckEnabled)
+    }
+
+    void testToMapNodeHealthCheck_true() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.doNodedispatch=true
+        se.nodesHealthCheckEnabled=true
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertEquals(true,jobMap.nodesHealthCheckEnabled)
+    }
 }

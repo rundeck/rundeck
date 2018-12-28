@@ -1,7 +1,6 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.LogFlusher
-import com.dtolabs.rundeck.app.internal.workflow.MultiWorkflowExecutionListener
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -12,13 +11,10 @@ import com.dtolabs.rundeck.core.execution.ExecutionLogger
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ContextManager
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowEventLoggerListener
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListenerImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
-import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -26,20 +22,15 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.cache.RemovalCause
-import com.google.common.cache.RemovalListener
-import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import org.springframework.beans.factory.InitializingBean
-import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import rundeck.CommandExec
 import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CacheNodeStatus
 
-import java.nio.charset.Charset
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -71,7 +62,7 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
                             return loadNodeStatus(key)
                         }
                     }
-            );
+            )
 
     String category='resourceModelSource'
 
