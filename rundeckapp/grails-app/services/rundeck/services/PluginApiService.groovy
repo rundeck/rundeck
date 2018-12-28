@@ -18,6 +18,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
 import java.text.SimpleDateFormat
@@ -36,6 +37,7 @@ class PluginApiService {
     LogFileStorageService logFileStorageService
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
+    FeatureService featureService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -70,6 +72,11 @@ class PluginApiService {
         ].each {
 
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
+        }
+        if(featureService.featurePresent("option-values-plugin")) {
+            pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
         }
 
         //web-app level plugin descriptions
@@ -110,10 +117,6 @@ class PluginApiService {
         pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        pluginDescs['OptionValues']=pluginService.listPlugins(OptionValuesPlugin).collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
-
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]

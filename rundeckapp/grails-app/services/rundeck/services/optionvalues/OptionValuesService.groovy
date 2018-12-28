@@ -1,4 +1,4 @@
-package rundeck.services.optionsource
+package rundeck.services.optionvalues
 
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -13,16 +13,15 @@ class OptionValuesService {
     def frameworkService
 
     def getOptions(String provider) {
-        println "using plugin: ${provider}"
         return doPlugin(provider,frameworkService.getFrameworkPropertyResolver())
     }
 
-    private List<OptionValue> doPlugin(String type, PropertyResolver resolver){
-        println "doing plugin: ${type}"
+    private List<OptionValue> doPlugin(String provider, PropertyResolver resolver){
         //load plugin and configure with config values
-        def result = pluginService.configurePlugin(type, getOptionValuesPluginService(), resolver, PropertyScope.Instance)
+        def result = pluginService.configurePlugin(provider, getOptionValuesPluginService(), resolver, PropertyScope.Instance)
         if (!result?.instance) {
-            return false
+            log.error("Plugin '${provider}' not found")
+            return []
         }
         def plugin=result.instance
         plugin.getOptionValues(result.configuration)

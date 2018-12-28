@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
+import rundeck.services.optionvalues.OptionValuesService
 
 import static org.junit.Assert.*
 
@@ -2199,6 +2200,100 @@ class ScheduledExecutionControllerTests  {
         assertEquals(null,model.optionordering)
         assertEquals(null,model.nodesSelectedByDefault)
         assertEquals([:],model.remoteOptionData)
+    }
+    public void testShowWithOptionValuesPlugin() {
+        def sec = controller
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                ),
+                options: [
+                        new Option(name: 'optvals', optionValuesPluginType: 'test', required: true, enforced: false)
+                ]
+        )
+
+        se.save()
+
+
+        assertNotNull se.id
+
+        //try to do update of the ScheduledExecution
+        sec.frameworkService = mockWith(FrameworkService){
+
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            authorizeProjectJobAny { AuthContext authContext, ScheduledExecution job, Collection actions, String project ->
+                return true
+            }
+            isClusterModeEnabled{-> false }
+            authResourceForProject{p->null}
+            authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
+            projects { return [] }
+            authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+            authorizeProjectJobAny { framework, resource, actions, project -> return true }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getRundeckFramework {-> return [getFrameworkNodeName:{->'fwnode'}] }
+            getNodeStepPluginDescriptions { [] }
+            getStepPluginDescriptions { [] }
+        }
+        sec.optionValuesService = mockWith(OptionValuesService) {
+            getOptions { plugin -> return [[name:"opt1",value:"o1"]] }
+        }
+
+        sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getByIDorUUID { id -> return se }
+            nextExecutionTime { job -> null }
+            getWorkflowStrategyPluginDescriptions{->[]}
+            userAuthorizedForJob { user, schedexec, framework -> return true }
+        }
+
+        sec.notificationService = mockWith(NotificationService){
+            listNotificationPlugins() {->
+                []
+            }
+        }
+        sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
+            getOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
+        def params = [id: se.id.toString(),project:'project1']
+        sec.params.putAll(params)
+        def model = sec.show()
+        assertNull sec.response.redirectedUrl
+        assertNotNull model
+        assertNotNull(model.scheduledExecution)
+        assertNull(model.selectedNodes)
+        assertEquals('fwnode',model.localNodeName)
+        assertEquals(null,model.nodefilter)
+        assertEquals(null,model.nodesetvariables)
+        assertEquals(null,model.failedNodes)
+        assertEquals(null,model.nodesetempty)
+        assertEquals(null,model.nodes)
+        assertEquals(null,model.selectedNodes)
+        assertEquals(null,model.grouptags)
+        assertEquals(null,model.selectedoptsmap)
+        assertEquals([:],model.dependentoptions)
+        assertEquals([:],model.optiondependencies)
+        assertEquals(['optvals'],model.optionordering)
+        assertEquals(null,model.nodesSelectedByDefault)
+        assertEquals([optvals:[optionDependencies:null,optionDeps:null,localOption:true]],model.remoteOptionData)
+        assertEquals(1,se.options[0].valuesFromPlugin.size())
+        assertEquals('opt1',se.options[0].valuesFromPlugin[0].name)
+        assertEquals('o1',se.options[0].valuesFromPlugin[0].value)
     }
     /**
      * model contains node dispatch target nodes information

@@ -63,7 +63,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
-import rundeck.services.optionsource.OptionValuesService
+import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -679,7 +679,6 @@ class ScheduledExecutionController  extends ControllerBase{
      * using the data.
      */
     def loadRemoteOptionValues(){
-        println "load remote option values"
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
             return
@@ -702,44 +701,6 @@ class ScheduledExecutionController  extends ControllerBase{
         //see if option specified, and has url
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
-            println opt.optionType
-            println opt.optionValuesPluginType
-            if(opt.optionValuesPluginType) {
-                def err = [:]
-                def values=[]
-                try {
-                    values.addAll(optionValuesService.getOptions(opt.optionValuesPluginType))
-                } catch(Exception ex) {
-                    err.message = "Failed loading remote option values"
-                    err.exception = ex
-                }
-
-                println values
-                //TODO: copied from below extract and cleanup later
-                def model= [optionSelect: opt,
-                            values: values,
-                            err: err,
-                            fieldPrefix: params.fieldPrefix,
-                            selectedvalue: params.selectedvalue]
-                if(params.extra?.option?.get(opt.name)){
-                    model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
-                }
-                withFormat{
-                    html{
-                        return render(template: "/framework/optionValuesSelect", model: model);
-                    }
-                    json{
-                        model.remove('optionSelect')
-                        model.name=opt.name
-                        if(model.err?.exception){
-                            model.err.exception=model.err.exception.toString()
-                        }
-                        render(contentType: 'application/json', text: model as JSON)
-                    }
-                }
-                return
-            }
-
             if (opt.realValuesUrl) {
                 //load expand variables in URL source
 
@@ -2902,8 +2863,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             if(opt.optionValuesPluginType) {
-                println "config"
-                println opt.configMap
                 opt.valuesFromPlugin = optionValuesService.getOptions(opt.optionValuesPluginType)
             }
         }
@@ -2930,7 +2889,6 @@ class ScheduledExecutionController  extends ControllerBase{
         def remoteOptionData = [:]
         (model.optionordering).each{optName->
             Option opt = optionSelections[optName]
-            println opt
             def optData = [
                     'optionDependencies': model.optiondependencies[optName],
                     'optionDeps': model.dependentoptions[optName],

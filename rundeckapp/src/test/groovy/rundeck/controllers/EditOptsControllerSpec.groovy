@@ -288,6 +288,25 @@ class EditOptsControllerSpec extends Specification {
         result.undo.name == 'optname'
     }
 
+    def "apply option action insert option value plugin type"() {
+        given:
+        //test insert, should have remove undo action
+        def optsmap = [:]
+        controller.fileUploadService = Mock(FileUploadService)
+        when:
+        def result = controller._applyOptionAction(
+                optsmap,
+                [action: 'insert', name: 'optname', params: [name: 'optname',valuesType:'optValPlugin']]
+        )
+        then:
+        result.error == null
+        optsmap.size() == 1
+        optsmap['optname'] != null
+        final Object item = optsmap['optname']
+        item instanceof Option
+        item.optionValuesPluginType == 'optValPlugin'
+    }
+
     def "apply option action remove"() {
         given:
         //test remove, should have insert undo action

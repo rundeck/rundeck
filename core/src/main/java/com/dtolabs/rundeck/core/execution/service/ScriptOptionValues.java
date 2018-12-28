@@ -54,18 +54,8 @@ public class ScriptOptionValues extends BaseScriptPlugin implements OptionValues
 
     @Override
     public List<OptionValue> getOptionValues(Map config) {
-        Description pluginDesc = getDescription();
-        final ScriptPluginProvider plugin = getProvider();
-        final String pluginname = plugin.getName();
-
         DataContext ctx = createScriptDataContext(DataContextUtils.context("config",MapData.toStringStringMap(config)).getData());
-        String[] exec = createScriptArgs(ctx);
         final ExecArgList scriptArgsList = createScriptArgsList(ctx);
-        System.out.println(Arrays.toString(exec));
-        System.out.println(ctx);
-        //LOG.debug("Getting option values using script: " + plugin.getScriptFile().getAbsolutePath());
-        //System.out.println(plugin.getScriptFile().getAbsolutePath());
-        //String[] command = {plugin.getScriptFile().getAbsolutePath()};
         ByteArrayOutputStream outStream = new ByteArrayOutputStream();
         ByteArrayOutputStream errStream = new ByteArrayOutputStream();
         List<OptionValue> options = new ArrayList<>();
@@ -79,7 +69,6 @@ public class ScriptOptionValues extends BaseScriptPlugin implements OptionValues
                     errStream
             );
             if(result == 0) {
-                System.out.println(new String(outStream.toByteArray()));
                 try(BufferedReader
                         reader =
                         new BufferedReader(new InputStreamReader(new ByteArrayInputStream(outStream.toByteArray())))) {
@@ -116,10 +105,9 @@ public class ScriptOptionValues extends BaseScriptPlugin implements OptionValues
         String name;
         String val;
 
-        StringOptionValue() {}
-        StringOptionValue(String[] keyval) {
-            name = keyval[0];
-            val = keyval[1];
+        StringOptionValue(String[] nameval) {
+            name = nameval[0];
+            val = nameval[1];
         }
 
         @Override
