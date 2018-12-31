@@ -235,7 +235,7 @@ public class JettyCachingLdapLoginModuleTest2 {
     }
 
 
-    private CallbackHandler createCallbacks(final String user1, final String password) {
+    private CallbackHandler createCallbacks(final String user1, final Object password) {
         return new CallbackHandler() {
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -271,6 +271,15 @@ public class JettyCachingLdapLoginModuleTest2 {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
         module._debug = true;
         module.setCallbackHandler(createCallbacks("user1", null));
+        expectLoginException(module);
+    }
+
+    @Test
+    public void testDisallowEmptyCharArrayPasword() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug = true;
+        char[] empty = {};
+        module.setCallbackHandler(createCallbacks("user1", empty));
         expectLoginException(module);
     }
 

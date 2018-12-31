@@ -698,8 +698,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
      */
     protected boolean authenticate(final String webUserName, final Object webCredential) throws LoginException {
         try {
-
-            if (isEmptyOrNull(webUserName) || isEmptyOrNull(webCredential)) {
+            if (isEmptyOrNull(webUserName) || isEmptyOrNull(webCredential) || (webCredential instanceof char[] && ((char[]) webCredential).length == 0)) {
+                LOG.info("empty username or password not allowed");
                 setAuthenticated(false);
                 return isAuthenticated();
             }
