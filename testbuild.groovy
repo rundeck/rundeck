@@ -116,7 +116,7 @@ def manifest=[
     "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
     "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
-    "plugins/upvar-plugin/${target}/rundeck-load-keystorage-value-plugin-${version}.jar":[:],
+    "plugins/load-keystorage-value-plugin/${target}/rundeck-load-keystorage-value-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
