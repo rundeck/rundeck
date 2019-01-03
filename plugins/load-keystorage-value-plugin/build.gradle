@@ -1,0 +1,121 @@
+/*
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+ext.pluginClassNames=
+        'com.rundeck.plugins.LoadKeyStorageWorkflowStep'
+ext.pluginName = 'Load key storage value'
+ext.pluginDescription = 'Load the key storage value into a new variable'
+
+apply plugin: "groovy"
+configurations{
+    pluginLibs
+
+    //declare compile to extend from pluginLibs so it inherits the dependencies
+    compile {
+        extendsFrom pluginLibs
+    }
+}
+repositories {
+    mavenLocal()
+    maven{ //snapshot dependency
+        url='https://oss.sonatype.org/content/repositories/snapshots/'
+    }
+    mavenCentral()
+}
+
+dependencies {
+    compile project(":core")
+    compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    compile 'log4j:log4j:1.2.17'
+
+    testCompile 'junit:junit:4.8.1',
+            'org.mockito:mockito-all:1.8.5'
+
+    testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
+    testCompile "cglib:cglib-nodep:2.2.2"
+    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+}
+
+
+// task to copy plugin libs to output/lib dir
+task copyToLib(type: Copy) {
+    into "$buildDir/output/lib"
+    from configurations.pluginLibs
+}
+
+jar {
+    from "$buildDir/output"
+    manifest {
+        attributes 'Rundeck-Plugin-Classnames': pluginClassNames
+        attributes 'Rundeck-Plugin-Name': pluginName
+        attributes 'Rundeck-Plugin-Description': pluginDescription
+        def libList = configurations.pluginLibs.collect { 'lib/' + it.name }.join(' ')
+        attributes 'Rundeck-Plugin-Libs': "${libList}"
+    }
+}
+
+//set jar task to depend on copyToLib
+jar.dependsOn(copyToLib)
+
+
+apply plugin: 'maven'
+task('createPom').doLast {
+    pom {
+        project {
+            artifactId project.name
+            groupId "org.rundeck.plugins"
+            inceptionYear '2015'
+            packaging 'jar'
+            version version
+            name( 'Rundeck '+pluginName)
+            url 'http://rundeck.org'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            parent{
+                groupId 'com.dtolabs.rundeck'
+                artifactId "rundeck-bundled-plugins"
+                version(version)
+            }
+            build{
+                plugins{
+                    plugin{
+                        groupId 'org.apache.maven.plugins'
+                        artifactId 'maven-jar-plugin'
+                        version '2.3.2'
+                        configuration{
+                            archive{
+                                manifestEntries{
+                                    'Rundeck-Plugin-Classnames'(pluginClassNames)
+                                    'Rundeck-Plugin-File-Version' version
+                                    'Rundeck-Plugin-Version' rundeckPluginVersion
+                                    'Rundeck-Plugin-Archive' 'true'
+                                    'Rundeck-Plugin-Name' pluginName
+                                    'Rundeck-Plugin-Description' pluginDescription
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }.writeTo("pom.xml")
+}
