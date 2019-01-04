@@ -145,7 +145,6 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
             if(cacheStatus.get(iNodeEntry.nodename)) {
                 def status =  cacheStatus.get(iNodeEntry.nodename)
                 iNodeEntry.attributes?.put("healthCheckStatus", status.executorReachable)
-                iNodeEntry.attributes?.put("healthCheckExecutorTimeout", status.executorTimeout)
                 iNodeEntry.attributes?.put("healthCheckStatusDescription", status.statusDescription)
                 iNodeEntry.attributes?.put("healthCheckLastChecktime", status.lastChecktime.format("dd/MM HH:mm:ss z"))
                 iNodeEntry.attributes?.put("healthCheckDurationTime", (status.checkDurationTime/1000).toString())
@@ -215,7 +214,6 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
 
 
         def executorReachable
-        def executorTimeout
         def statusDescription
 
         try {
@@ -248,24 +246,20 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
 
             if (result.isSuccess()) {
                 executorReachable = "successful"
-                executorTimeout = "false"
                 statusDescription = "Health Check successful"
             } else {
                 executorReachable = "failure"
-                executorTimeout = "true"
                 statusDescription = result.failureReason
             }
 
         } catch (Exception e) {
-            executorReachable = "fail"
-            executorTimeout = "false"
+            executorReachable = "failure"
             statusDescription = e.message
         } finally{
             sysThreadBoundOut.close()
             sysThreadBoundOut.removeThreadStream()
             sysThreadBoundErr.close()
             sysThreadBoundErr.removeThreadStream()
-
         }
 
         def refresh = nodeStatusCacheConfig(framework.projectManager.loadProjectConfig(project))
@@ -275,7 +269,6 @@ class NodeStatusService implements RundeckProjectConfigurable, InitializingBean 
                 lastChecktime: new Date(),
                 checkDurationTime: refresh,
                 executorReachable: executorReachable,
-                executorTimeout: executorTimeout,
                 statusDescription: statusDescription
         )
 

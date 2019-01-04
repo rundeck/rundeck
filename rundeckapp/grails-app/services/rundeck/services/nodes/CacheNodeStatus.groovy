@@ -4,7 +4,6 @@ class CacheNodeStatus{
 
     String nodeName
     String executorReachable
-    String executorTimeout
     Date lastChecktime
     Long checkDurationTime
     String statusDescription
@@ -15,7 +14,6 @@ class CacheNodeStatus{
         return "CacheNodeStatus{" +
                "nodeName='" + nodeName + '\'' +
                ", executorReachable='" + executorReachable + '\'' +
-               ", executorTimeout='" + executorTimeout + '\'' +
                ", lastChecktime=" + lastChecktime +
                ", checkDurationTime=" + checkDurationTime +
                ", statusDescription='" + statusDescription + '\'' +
