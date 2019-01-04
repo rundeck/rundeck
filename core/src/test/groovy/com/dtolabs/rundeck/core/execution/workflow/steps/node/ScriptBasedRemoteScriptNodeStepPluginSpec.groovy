@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -281,5 +282,47 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         'false'   | null
         false     | null
         null      | 'ribbit'
+    }
+
+
+    @Unroll
+    def "has Additional Config Var GroupName"() {
+        given:
+        File tempFile = File.createTempFile("test", ".ribbit");
+        tempFile.deleteOnExit()
+        File basedir = File.createTempFile("test", "dir");
+        basedir.deleteOnExit()
+
+        def metadata = []
+        def pluginMeta = Mock(PluginMeta){
+            getRundeckPluginVersion() >> version
+        }
+        def provider = Mock(ScriptPluginProvider) {
+            getName() >> 'test1'
+            getDefaultMergeEnvVars() >> false
+            getMetadata() >> metadata
+            getArchiveFile() >> tempFile
+            getScriptFile() >> tempFile
+            getContentsBasedir() >> basedir
+            getScriptArgs() >> 'test -blah x'
+            getPluginMeta() >> pluginMeta
+        }
+        def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
+
+
+        when:
+        def result = plugin.hasAdditionalConfigVarGroupName()
+
+        then:
+        result != null
+        result == expected
+
+        where:
+        version   | expected
+        '1.0'     | false
+        '1.2'     | false
+        '2.0'     | true
+        false     | false
+        null      | false
     }
 }

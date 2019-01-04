@@ -32,6 +32,11 @@
 
 <body>
   <div class="container-fluid">
+  <div class="row">
+        <div class="col-sm-12">
+            <g:render template="/common/messages"/>
+        </div>
+    </div>
     <div class="row">
       <div class="col-xs-12">
         <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">

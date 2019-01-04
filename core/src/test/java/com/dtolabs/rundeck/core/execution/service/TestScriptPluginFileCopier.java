@@ -79,6 +79,7 @@ public class TestScriptPluginFileCopier {
         private File scriptFile;
         private boolean interpreterArgsQuoted;
         private Map<String, Object> metadata;
+        private PluginMeta pluginMeta;
 
         @Override public String getName() {
             return name;
@@ -159,7 +160,11 @@ public class TestScriptPluginFileCopier {
 
         @Override
         public PluginMeta getPluginMeta() {
-            return null;
+            return pluginMeta;
+        }
+
+        public void setPluginMeta(PluginMeta pluginMeta) {
+            this.pluginMeta = pluginMeta;
         }
 
         @Override
@@ -358,6 +363,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         ScriptPluginFileCopier scriptPluginFileCopier = new ScriptPluginFileCopier(testProvider, framework);
         scriptPluginFileCopier.setScriptExecHelper(
@@ -434,6 +442,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         ScriptPluginFileCopier scriptPluginFileCopier = new ScriptPluginFileCopier(testProvider, framework);
         scriptPluginFileCopier.setScriptExecHelper(
@@ -511,6 +522,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         final String testOutputFilepath = "/another/test/path";
 
