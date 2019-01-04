@@ -2381,8 +2381,6 @@ setTimeout(function(){
             // count state
             metricsBuilder.count(exec.getExecutionState())
 
-            Executors.
-
             // duration stats.
             def dur = exec.durationAsLong()
             if (dur) {
