@@ -42,13 +42,20 @@ implied. - See the License for the specific language governing permissions and -
           <div id="notifholder${tkey}" style="${wdgt.styleVisible(if: isEmail)}">
             <g:if test="${triggerEmailAttachName}">
               <div class="${hasErrors(bean: scheduledExecution, field: triggerEmailAttachName, 'has-error')} ">
-                <g:set var="attachTrue" value="${params[triggerEmailAttachName] == 'true' || defEmail?.mailConfiguration()?.attachLog in ['true', true]}"/>
-                <div class="checkbox">
-                  <g:checkBox name="${triggerEmailAttachName}" value="true" checked="${attachTrue}"/>
-                  <label class="${attachTrue ? 'active' : ''}">
-                    <g:message code="attach.output.log"/>
-                  </label>
-                </div>
+                <g:set var="attachTrue" value="${params[triggerEmailAttachName] == 'true' || params[triggerEmailAttachName] == 'file' || defEmail?.mailConfiguration()?.attachLog in ['true', true]}"/>
+                <g:set var="attachInlineTrue" value="${params[triggerEmailAttachName] == 'inline' || defEmail?.mailConfiguration()?.attachLogInline in ['true', true]}"/>
+                <label class="${attachTrue ? 'active' : ''}">
+                  <g:message code="attach.output.log"/>
+                </label>
+                <br>
+                <label class="radio-inline">
+                  <g:radio name="${triggerEmailAttachName}" id="${triggerEmailAttachName}File" value="file" checked="${attachTrue==true}"/>
+                  <g:message code="attach.output.log.asFile" />
+                </label>
+                <label class="radio-inline">
+                  <g:radio name="${triggerEmailAttachName}" id="${triggerEmailAttachName}Inline" value="inline" checked="${attachInlineTrue==true}"/>
+                  <g:message code="attach.output.log.inline" />
+                </label>
               </div>
             </g:if>
             <div class="row" style="margin-top:12px;">

@@ -106,6 +106,9 @@ public class Notification {
             if(data.email && data.email.attachLog){
                 map['attachLog']= data.email.attachLog in ['true',true]
             }
+            if(data.email && data.email.attachLogInline){
+                map['attachLogInline']= data.email.attachLogInline in ['true',true]
+            }
             n.configuration=map
         }else if(data.urls){
             n.type='url'

@@ -359,6 +359,13 @@ div.progressContainer div.progressContent{
         </g:if>
     </div>
 </div>
+
+<div class="content">
+    <g:if test="${logOutput}">
+        <h3>Log OUTPUT</h3>
+        ${enc(sanitize:logOutput)}
+    </g:if>
+</div>
 <div class="foot">
     <g:appTitle/> :
     <g:enc>${execution.project}</g:enc>

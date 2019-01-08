@@ -3403,6 +3403,39 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect email content onstart", "h@example.com,j@example.com", onstart.mailConfiguration()
                     .recipients
             assertEquals "incorrect email content onstart", "start1", onstart.mailConfiguration().subject
+
+
+        //onsuccess notification wit attached inline
+        def xml4 = """<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description></description>
+    <loglevel>INFO</loglevel>
+    <context>
+        <project>test1</project>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <notification>
+        <onsuccess>
+            <email recipients="a@example.com,b@example.com" attachLogInline="true"/>
+        </onsuccess>
+    </notification>
+  </job>
+</joblist>
+"""
+
+        jobs = JobsXMLCodec.decode(xml4)
+        assertNotNull jobs
+        onsuccess = jobs[0].notifications.find{'onsuccess'==it.eventTrigger}
+        assertNotNull "missing notifications onsuccess", onsuccess
+        assertNotNull "missing notifications onsuccess email", onsuccess.content
+        assertEquals "incorrect email content", "a@example.com,b@example.com", onsuccess.mailConfiguration().recipients
+        assertEquals "incorrect email attach settings", true, onsuccess.mailConfiguration().attachLogInline
     }
 
     void testDecodeNotificationPlugin() {

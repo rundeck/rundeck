@@ -141,7 +141,7 @@ public class NotificationService implements ApplicationContextAware{
      * @param isFormatted
      * @return
      */
-    def File copyExecOutputToTempFile(Execution e, boolean isFormatted){
+    def File copyExecOutputToTempFile(Execution e, boolean isFormatted, String attachedExtension){
         def reader = loggingService.getLogReader(e)
         if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
                 ExecutionLogState.AVAILABLE) {
@@ -152,7 +152,7 @@ public class NotificationService implements ApplicationContextAware{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep = System.getProperty("line.separator")
-        File temp = File.createTempFile("output-${e.id}",".txt")
+        File temp = File.createTempFile("output-${e.id}",".${attachedExtension}")
         temp.deleteOnExit()
         temp.withWriter {Writer w->
             iterator.findAll { it.eventType == LogUtil.EVENT_TYPE_LOG }.each { LogEvent msgbuf ->
@@ -166,6 +166,37 @@ public class NotificationService implements ApplicationContextAware{
         }
         iterator.close()
         return temp
+    }
+    /**
+     * write log output to a StringBuffer
+     * @param e
+     * @param isFormatted
+     * @return
+     */
+    def StringBuffer copyExecOutputToStringBuffer(Execution e, boolean isFormatted){
+
+        StringBuffer output = new StringBuffer()
+        def reader = loggingService.getLogReader(e)
+        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
+                ExecutionLogState.AVAILABLE) {
+            return null
+        }
+        SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
+        logFormater.timeZone = TimeZone.getTimeZone("GMT")
+        def lineSep = System.getProperty("line.separator")
+        def iterator = reader.reader
+        iterator.openStream(0)
+        iterator.findAll { it.eventType == LogUtil.EVENT_TYPE_LOG }.each { LogEvent msgbuf ->
+            def message = msgbuf.message
+            if(message.contains("\033")){
+                message=message.decodeAnsiColorStrip()
+            }
+
+            output << (isFormatted ? "${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx ?: '_'}][${msgbuf.loglevel}] ${message}" : message)
+            output << lineSep
+        }
+        iterator.close()
+        return output
     }
     private static Map<String,String> toStringStringMap(Map input){
         def map = new HashMap<String, String>()
@@ -191,6 +222,7 @@ public class NotificationService implements ApplicationContextAware{
 
                     def configSubject=mailConfig.subject
                     def configAttachLog=mailConfig.attachLog
+                    def configAttachLogInline=mailConfig.attachLogInline
                     final state = exec.executionState
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
@@ -230,6 +262,30 @@ public class NotificationService implements ApplicationContextAware{
                             }
                         }
                         destarr = destrecipients.split(', *') as List
+                    }
+
+                    def isFormatted =false
+                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.formatted in [true,'true']){
+                        isFormatted=true
+                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
+                        isFormatted=true
+                    }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
+                        isFormatted = true
+                    }
+                    StringBuffer outputBuffer = null
+                    def attachlogbody = false
+                    if (trigger != 'start' && configAttachLogInline in ['true',true]) {
+                        attachlogbody = true
+                    }
+                    if(attachlogbody){
+                        outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
+
+                        if(outputBuffer!=null){
+                            //add to context in order to display output using a custom template ( using ${logoutput.data} )
+                            def contextOutput=[:]
+                            contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
+                            context = DataContextUtils.merge(context, contextOutput)
+                        }
                     }
 
                     //set up templates
@@ -286,19 +342,29 @@ public class NotificationService implements ApplicationContextAware{
                     if (trigger != 'start' && configAttachLog in ['true',true]) {
                         attachlog = true
                     }
-                    def isFormatted =false
-					if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.formatted in [true,'true']){
-						isFormatted=true
-					}else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.formatted in [true,'true']){
-                        isFormatted=true
-                    }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
-                        isFormatted = true
+
+                    def attachedExtension = "log"
+                    def attachedContentType = "text/plain"
+                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.extension ){
+                        attachedExtension=grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.extension
+                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.extension){
+                        attachedExtension=grailsApplication.config.rundeck.mail."${trigger}".template.log.extension
+                    }else if( grailsApplication.config.rundeck.mail.template.log.extension){
+                        attachedExtension = grailsApplication.config.rundeck.mail.template.log.extension
+                    }
+                    if( grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.contentType ){
+                        attachedContentType=grailsApplication.config.rundeck.mail."${source.project}"."${source.jobName}".template.log.contentType
+                    }else if( grailsApplication.config.rundeck.mail."${trigger}".template.log.contentType){
+                        attachedContentType=grailsApplication.config.rundeck.mail."${trigger}".template.log.contentType
+                    }else if( grailsApplication.config.rundeck.mail.template.log.contentType){
+                        attachedContentType = grailsApplication.config.rundeck.mail.template.log.contentType
                     }
                     File outputfile
                     if(attachlog){
                         //copy data to temp file
-                        outputfile=copyExecOutputToTempFile(exec,isFormatted)
+                        outputfile=copyExecOutputToTempFile(exec,isFormatted,attachedExtension)
                     }
+
                     destarr.each{String recipient->
                         //try to expand property references
                         String sendTo=recipient
@@ -327,12 +393,13 @@ public class NotificationService implements ApplicationContextAware{
                                                     msgtitle          : subjectmsg,
                                                     execstate         : state,
                                                     nodestatus        : content.nodestatus,
-                                                    jobref            : content.jobref
+                                                    jobref            : content.jobref,
+                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null
                                             ]
                                     )
                                 }
                                 if(attachlog && outputfile != null){
-                                    attachBytes "${source.jobName}-${exec.id}.txt", "text/plain", outputfile.getText("UTF-8").bytes
+                                    attachBytes "${source.jobName}-${exec.id}.${attachedExtension}", attachedContentType, outputfile.getText("UTF-8").bytes
                                 }
                             }
                             didsend = true

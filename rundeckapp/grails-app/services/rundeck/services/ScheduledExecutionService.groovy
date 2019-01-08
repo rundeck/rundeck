@@ -1787,7 +1787,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject= params[ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT]
             }
             if (params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['true',true]
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['true',true,'file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -1807,7 +1808,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject = params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]
             }
             if (params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true', true]
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true',true,'file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -1863,7 +1865,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]
             }
             if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true', true]
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true',true,'file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
                      type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
