@@ -84,6 +84,13 @@
                                class="form-control context_var_autocomplete"/>
                     </div>
                 </div>
+                <div class="form-group" style="margin-top:1em;">
+                    <div class="col-sm-12 ">
+                        <div class="text-info">
+                            <g:message code="Workflow.Step.jobreference.uuid.help" />
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group" >
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.argString.label" /></label>
                     <div class="col-sm-10">
