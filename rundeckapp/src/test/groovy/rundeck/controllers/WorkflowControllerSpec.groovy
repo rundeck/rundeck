@@ -480,6 +480,7 @@ class WorkflowControllerSpec extends Specification {
         null        |'as'       | 'ble/ble'| null       | null
         'blah'      |null       | null     | null       | null
         'blah'      |null       | 'ble/ble'| 'proj'     | null
+        'blah'      |'as'       | null     | null       | 'jobName'
 
     }
 
