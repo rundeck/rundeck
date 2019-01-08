@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.jetty.jaas;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -189,6 +190,20 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     protected String _userBaseDn;
 
     /**
+     * attribute of user first name
+     */
+    protected String _userFirstNameAttribute = "givenName";
+
+    /**
+      * attribute of user last name
+      */
+    protected String _userLastNameAttribute = "sn";
+    /**
+      * attribute of user email
+      */
+    protected String _userEmailAttribute = "mail";
+
+    /**
      * base DN where role membership is to be searched from
      */
     protected String _roleBaseDn;
@@ -255,6 +270,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     protected static final ConcurrentHashMap<String, CachedUserInfo> USERINFOCACHE =
         new ConcurrentHashMap<String, CachedUserInfo>();
 
+    private String _userLastName;
+    private String _userFirstName;
+    private String _userEmail;
     /**
      * The number of cache hits for UserInfo objects.
      */
@@ -387,6 +405,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
             Attributes attributes = result.getAttributes();
 
+            setDemographicAttributes(attributes);
             Attribute attribute = attributes.get(_userPasswordAttribute);
             if (attribute != null) {
                 try {
@@ -815,6 +834,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         LOG.info("Attempting authentication: " + userDn);
         DirContext dirContext = createBindUserDirContext(userDn, password);
+        setDemographicAttributes(searchResult.getAttributes());
 
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
@@ -898,6 +918,22 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
     }
 
+    private void setDemographicAttributes(final Attributes attributes) {
+        _userFirstName = safeGetAttributeAsString(attributes.get(_userFirstNameAttribute));
+        _userLastName = safeGetAttributeAsString(attributes.get(_userLastNameAttribute));
+        _userEmail = safeGetAttributeAsString(attributes.get(_userEmailAttribute));
+    }
+
+    private String safeGetAttributeAsString(final Attribute attribute) {
+        try {
+            if (attribute == null || attribute.get() == null) return null;
+            return attribute.get().toString();
+        } catch(NamingException nex) {
+            LOG.warn("Unable to retrieve rundeck sync attributes. User will not be synced.", nex);
+        }
+        return null;
+    }
+
     public void initializeOptions(final Map options) {
         _hostname = (String) options.get("hostname");
         if(options.containsKey("port")) {
@@ -939,6 +975,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         _userRdnAttribute = getOption(options, "userRdnAttribute", _userRdnAttribute);
         _userIdAttribute = getOption(options, "userIdAttribute", _userIdAttribute);
         _userPasswordAttribute = getOption(options, "userPasswordAttribute", _userPasswordAttribute);
+        _userLastNameAttribute = getOption(options, "userLastNameAttribute", _userLastNameAttribute);
+        _userFirstNameAttribute = getOption(options, "userFirstNameAttribute", _userFirstNameAttribute);
+        _userEmailAttribute = getOption(options, "userEmailAttribute", _userEmailAttribute);
         _roleObjectClass = getOption(options, "roleObjectClass", _roleObjectClass);
         _roleMemberAttribute = getOption(options, "roleMemberAttribute", _roleMemberAttribute);
         _roleUsernameMemberAttribute = getOption(options, "roleUsernameMemberAttribute", _roleUsernameMemberAttribute);
@@ -982,6 +1021,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         } catch (NamingException e) {
             throw new LoginException("error closing root context: " + e.getMessage());
         }
+        if(_userFirstName != null) getSubject().getPrincipals().add(new LdapFirstNamePrincipal(_userFirstName));
+        if(_userLastName != null) getSubject().getPrincipals().add(new LdapLastNamePrincipal(_userLastName));
+        if(_userEmail != null) getSubject().getPrincipals().add(new LdapEmailPrincipal(_userEmail));
 
         return super.commit();
     }
@@ -1090,4 +1132,5 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             this.expires = expires;
         }
     }
+
 }

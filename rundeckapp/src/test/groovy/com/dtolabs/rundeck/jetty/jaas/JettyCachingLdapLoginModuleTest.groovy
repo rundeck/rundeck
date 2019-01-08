@@ -22,6 +22,7 @@ import javax.naming.NamingEnumeration
 import javax.naming.NamingException
 import javax.naming.directory.Attribute
 import javax.naming.directory.Attributes
+import javax.naming.directory.BasicAttributes
 import javax.naming.directory.DirContext
 import javax.naming.directory.SearchResult
 import javax.security.auth.Subject
@@ -151,6 +152,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         }
         def found = [Mock(SearchResult) {
             getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
         }]
         def dirContext = Mock(DirContext) {
             1 * search(
@@ -247,6 +249,7 @@ class JettyCachingLdapLoginModuleTest extends Specification {
         }
         def found = [Mock(SearchResult) {
             getNameInNamespace() >> "cn=$username,dc=test,dc=com"
+            getAttributes() >> new BasicAttributes()
         }]
         def dirContext = Mock(DirContext) {
             1 * search(
