@@ -222,6 +222,7 @@ public class NotificationService implements ApplicationContextAware{
 
                     def configSubject=mailConfig.subject
                     def configAttachLog=mailConfig.attachLog
+                    def configAttachLogInFile=mailConfig.attachLogInFile
                     def configAttachLogInline=mailConfig.attachLogInline
                     final state = exec.executionState
                     def statMsg=[
@@ -274,9 +275,16 @@ public class NotificationService implements ApplicationContextAware{
                     }
                     StringBuffer outputBuffer = null
                     def attachlogbody = false
-                    if (trigger != 'start' && configAttachLogInline in ['true',true]) {
-                        attachlogbody = true
+                    def attachlog=false
+                    if (trigger != 'start' && configAttachLog in ['true',true]) {
+                        if (configAttachLogInline in ['true',true]) {
+                            attachlogbody = true
+                        }
+                        if (configAttachLogInFile in ['true',true]) {
+                            attachlog = true
+                        }
                     }
+
                     if(attachlogbody){
                         outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
 
@@ -337,10 +345,6 @@ public class NotificationService implements ApplicationContextAware{
                     if(templatePaths && !htmlemail ){
                         log.warn("Notification templates searched but not found: " + templatePaths+ ", " +
                                 "using default");
-                    }
-                    def attachlog=false
-                    if (trigger != 'start' && configAttachLog in ['true',true]) {
-                        attachlog = true
                     }
 
                     def attachedExtension = "log"

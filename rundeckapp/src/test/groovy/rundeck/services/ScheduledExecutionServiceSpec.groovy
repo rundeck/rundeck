@@ -3137,4 +3137,38 @@ class ScheduledExecutionServiceSpec extends Specification {
                 [AuthConstants.ACTION_CREATE],_) >> true
 
     }
+
+    def "blank email notification attached options"() {
+        given:
+        setupDoValidate()
+
+        when:
+        def params = baseJobParams()+[
+                workflow      : new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'a remote string')]
+                ),
+                notifications : [
+                        [
+                                eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                                type        : ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                                configuration     : [recipients : 'a@example.com,z@example.com', attachLog: true]
+                        ]
+                ]
+        ]
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+        def ScheduledExecution scheduledExecution = results.scheduledExecution
+
+        then:
+
+        results.failed
+        scheduledExecution != null
+        scheduledExecution instanceof ScheduledExecution
+
+        scheduledExecution.errors != null
+        scheduledExecution.errors.hasErrors()
+        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH)
+
+    }
 }

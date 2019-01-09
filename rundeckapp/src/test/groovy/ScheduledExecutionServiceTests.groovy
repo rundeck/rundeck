@@ -310,10 +310,11 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                   type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: true, attachLogInline: false]]],
+                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: true, attachLogInFile: true, attachLogInline: false]]],
                 [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
                  (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
-                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'file'
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE):'file'
                 ]
         )
     }
@@ -321,10 +322,11 @@ public class ScheduledExecutionServiceTests {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                   type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
-                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: false, attachLogInline: true]]],
+                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: true, attachLogInFile: false, attachLogInline: true]]],
                 [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
                  (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
-                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'inline'
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE):'inline'
                 ]
         )
     }
