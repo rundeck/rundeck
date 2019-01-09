@@ -3394,19 +3394,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != result) {
             return result
         }
+        def props=frameworkService.getFrameworkProperties()
+        def enableRefStats=(props?.getProperty('rundeck.enable.ref.stats')=='true')
         ReferencedExecution refExec
-        ScheduledExecution.withTransaction { status ->
-            ScheduledExecution se = ScheduledExecution.get(id)
-            Execution exec = Execution.get(execid as Long)
-            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
+        if(enableRefStats) {
+            ScheduledExecution.withTransaction { status ->
+                ScheduledExecution se = ScheduledExecution.get(id)
+                Execution exec = Execution.get(execid as Long)
+                refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
+            }
         }
 
         if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
-            ReferencedExecution.withTransaction { status ->
-                refExec.status=EXECUTION_FAILED
-                refExec.save()
+            if(enableRefStats) {
+                ReferencedExecution.withTransaction { status ->
+                    refExec.status = EXECUTION_FAILED
+                    refExec.save()
+                }
             }
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
@@ -3483,7 +3489,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = createSuccess()
         }
 
-        if(wresult.result) {
+
+        if(enableRefStats && wresult.result) {
             def savedJobState = false
             savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
             if (!savedJobState) {
