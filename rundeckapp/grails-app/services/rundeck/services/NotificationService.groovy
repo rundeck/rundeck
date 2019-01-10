@@ -285,17 +285,6 @@ public class NotificationService implements ApplicationContextAware{
                         }
                     }
 
-                    if(attachlogbody){
-                        outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
-
-                        if(outputBuffer!=null){
-                            //add to context in order to display output using a custom template ( using ${logoutput.data} )
-                            def contextOutput=[:]
-                            contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
-                            context = DataContextUtils.merge(context, contextOutput)
-                        }
-                    }
-
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
                             '.argstring}'
@@ -334,6 +323,18 @@ public class NotificationService implements ApplicationContextAware{
                         }
                         def template = new File(templatePath)
                         if (template.isFile()) {
+
+                            if(attachlogbody){
+                                if(template.text.indexOf('${logoutput.data}')>0){
+                                    outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
+
+                                    //add to context in order to display output using a custom template ( using ${logoutput.data} )
+                                    def contextOutput=[:]
+                                    contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
+                                    context = DataContextUtils.merge(context, contextOutput)
+                                }
+                            }
+
                             if (template.name.endsWith('.md') || template.name.endsWith('.markdown')) {
                                 htmlemail = renderTemplate(template.text, context).decodeMarkdown()
                             } else {
@@ -389,6 +390,10 @@ public class NotificationService implements ApplicationContextAware{
                                 if(htmlemail){
                                     html(htmlemail)
                                 }else{
+                                    if(attachlogbody){
+                                        outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
+                                    }
+
                                     body(
                                             view: "/execution/mailNotification/status",
                                             model: loadExecutionViewPlugins() + [
