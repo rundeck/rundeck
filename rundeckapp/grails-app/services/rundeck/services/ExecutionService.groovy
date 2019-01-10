@@ -2791,7 +2791,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
         def success = false
         try {
-            ScheduledExecution.withSession {
+            ScheduledExecution.withTransaction {
                 def scheduledExecution = ScheduledExecution.get(schedId)
 
                 if (scheduledExecution.scheduled) {
@@ -3397,23 +3397,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def props=frameworkService.getFrameworkProperties()
         def enableRefStats=(props?.getProperty('rundeck.enable.ref.stats')=='true')
         ReferencedExecution refExec
-        if(enableRefStats) {
-            ScheduledExecution.withTransaction { status ->
-                ScheduledExecution se = ScheduledExecution.get(id)
-                Execution exec = Execution.get(execid as Long)
-                refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
-            }
+
+        ScheduledExecution.withTransaction { status ->
+            ScheduledExecution se = ScheduledExecution.get(id)
+            Execution exec = Execution.get(execid as Long)
+            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
         }
+
 
         if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
-            if(enableRefStats) {
-                ReferencedExecution.withTransaction { status ->
-                    refExec.status = EXECUTION_FAILED
-                    refExec.save()
-                }
+            ReferencedExecution.withTransaction { status ->
+                refExec.status = EXECUTION_FAILED
+                refExec.save()
             }
+
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
@@ -3490,11 +3489,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
 
-        if(enableRefStats && wresult.result) {
+        if(wresult.result) {
             def savedJobState = false
-            savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
-            if (!savedJobState) {
-                log.info("ExecutionJob: Failed to update job statistics for jobref")
+            if(enableRefStats) {
+                savedJobState = updateScheduledExecStatistics(id, 'jobref', duration, true)
+                if (!savedJobState) {
+                    log.info("ExecutionJob: Failed to update job statistics for jobref")
+                }
             }
             ReferencedExecution.withTransaction { status ->
                 refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
