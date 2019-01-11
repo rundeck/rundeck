@@ -2826,9 +2826,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 success = true
             }
         } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.error("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
+            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
         } catch (StaleObjectStateException e) {
-            log.error("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
+            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
         }
         return success
     }
