@@ -39,7 +39,7 @@ import java.io.InputStreamReader
 import java.util.*
 
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = LoadKeyStorageWorkflowStep.PROVIDER_NAME)
-@PluginDescription(title = "Load key storage value", description = "Load the key storage value into a new variable")
+@PluginDescription(title = "Load key storage value", description = "Load the key storage value into a new variable (this variable will be exposed as clear not as secret).")
 class LoadKeyStorageWorkflowStep implements StepPlugin {
     public static final String PROVIDER_NAME = 'load-keystorage'
 
