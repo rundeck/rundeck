@@ -172,6 +172,10 @@
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
                                                    id="${enc(attr:nkey)}_key">
                                                    <g:enc>${node.nodename}</g:enc>
+
+                                                   <g:if test="${node.attributes["healthCheckStatus:icon"]}">
+                                                       <i class="glyphicon ${node.attributes["healthCheckStatus:icon"]}"></i>
+                                                   </g:if>
                                                  </label>
 
                                         </div>
