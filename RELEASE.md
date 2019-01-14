@@ -1,29 +1,37 @@
-Release 3.0.11
+Release 3.0.12
 ===========
 
-Date: 2018-12-21
+Date: 2019-01-14
 
-Name: <span style="color: greenyellow"><span class="glyphicon glyphicon-globe"></span> "jalapeño popper greenyellow globe"</span>
+Name: <span style="color: indianred"><span class="glyphicon glyphicon-grain"></span> "jalapeño popper indianred grain"</span>
 
 ## Notes
 
-Bug fix release.
+This release addresses unhandled concurrency exceptions(lock timeouts and deadlocks) that may occur
+when running multiple instances of referenced jobs.
+
+Using `rundeck.disable.ref.stats=true` in framework.properties to disable referenced job statistics updates
+can further reduce waits and retry `WARN` log entries.
+
+Increasing the connection pool size may still be required if many referenced jobs are being run conccurently
+and/or across many nodes:
+```
+dataSource.properties.maxActive=200
+```
 
 ## Contributors
 
 * Greg Schueler (gschueler)
 * Jaime Tobar (jtobard)
-* Luis Toledo (ltamaster)
 
 ## Bug Reporters
 
-* jtobard
-* ltamaster
+* gschueler
+* mlamutt
 
 ## Issues
 
-[Milestone 3.0.11](https://github.com/rundeck/rundeck/milestone/94)
+[Milestone 3.0.12](https://github.com/rundeck/rundeck/milestone/96)
 
-* [H2 warnings UI and startup](https://github.com/rundeck/rundeck/pull/4333)
-* [job.schedule info on notification plugin context](https://github.com/rundeck/rundeck/pull/4311)
-* [Changing context variable names for step script ](https://github.com/rundeck/rundeck/pull/4303)
+* [Fix #4302 deadlock and allow disabling jobref stats ](https://github.com/rundeck/rundeck/pull/4388)
+* [Could not roll back Hibernate transaction / Unable to rollback against JDBC Connection](https://github.com/rundeck/rundeck/issues/4302)
