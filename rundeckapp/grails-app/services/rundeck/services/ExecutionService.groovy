@@ -60,6 +60,7 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -2791,7 +2792,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
         def success = false
         try {
-            ScheduledExecution.withSession {
+            ScheduledExecution.withTransaction {
                 def scheduledExecution = ScheduledExecution.get(schedId)
 
                 if (scheduledExecution.scheduled) {
@@ -2826,9 +2827,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 success = true
             }
         } catch (org.springframework.dao.ConcurrencyFailureException e) {
-            log.error("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
+            log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
         } catch (StaleObjectStateException e) {
-            log.error("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
+            log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
         }
         return success
     }
@@ -3394,20 +3395,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != result) {
             return result
         }
+        def props=frameworkService.getFrameworkProperties()
+        def disableRefStats=(props?.getProperty('rundeck.disable.ref.stats')=='true')
         ReferencedExecution refExec
+
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
             Execution exec = Execution.get(execid as Long)
             refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
         }
 
+
         if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
             ReferencedExecution.withTransaction { status ->
-                refExec.status=EXECUTION_FAILED
+                refExec.status = EXECUTION_FAILED
                 refExec.save()
             }
+
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
@@ -3483,11 +3489,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = createSuccess()
         }
 
+
         if(wresult.result) {
             def savedJobState = false
-            savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
-            if (!savedJobState) {
-                log.info("ExecutionJob: Failed to update job statistics for jobref")
+            if(!disableRefStats) {
+                savedJobState = updateScheduledExecStatistics(id, 'jobref', duration, true)
+                if (!savedJobState) {
+                    log.info("ExecutionJob: Failed to update job statistics for jobref")
+                }
             }
             ReferencedExecution.withTransaction { status ->
                 refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
