@@ -16,29 +16,24 @@
 
 package rundeck.controllers
 
-import groovy.mock.interceptor.MockFor
-
-import static org.junit.Assert.*
-
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.json.JsonSlurper
+import groovy.mock.interceptor.MockFor
 import org.quartz.JobExecutionContext
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.ApiService
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.LoggingService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.WorkflowService
+import rundeck.services.*
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.WorkflowStateFileLoader
+
+import static org.junit.Assert.assertEquals
+import static org.junit.Assert.assertNotNull
 
 @TestFor(ExecutionController)
 @Mock([Workflow,ScheduledExecution,Execution,CommandExec])
@@ -335,12 +330,15 @@ class ExecutionControllerTests  {
         )
         assert null != se3.save()
 
+        // we'll use a fixed start date to easily calc execution durations.
+        def startDate = new Date()
+
         Execution e1 = new Execution(
                 scheduledExecution: se1,
                 project: "Test",
                 status: "true",
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
+                dateStarted: startDate,
+                dateCompleted: new Date(startDate.getTime() + (1000 * 60 * 4)), // 4 min duration
                 user: 'adam',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
 
@@ -351,8 +349,8 @@ class ExecutionControllerTests  {
                 scheduledExecution: se2,
                 project: "Test",
                 status: "true",
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
+                dateStarted: startDate,
+                dateCompleted: new Date(startDate.getTime() + (1000 * 60 * 9)), // 9 min duration
                 user: 'bob',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test2 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
 
@@ -362,8 +360,8 @@ class ExecutionControllerTests  {
                 scheduledExecution: se3,
                 project: "Test",
                 status: "true",
-                dateStarted: new Date(),
-                dateCompleted: new Date(),
+                dateStarted: startDate,
+                dateCompleted: new Date(startDate.getTime() + (1000 * 60 * 2)), // 2 min duration
                 user: 'chuck',
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test3 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
 
@@ -652,4 +650,57 @@ class ExecutionControllerTests  {
         controller.ajaxExecState()
         assertEquals(200,response.status)
     }
+
+    /**
+     * Test metrics calculations.
+     */
+    public void testApiExecutionsMetrics() {
+        def controller = new ExecutionController()
+
+        def execs = createTestExecs()
+
+        def fwkControl = new MockFor(FrameworkService, false)
+        fwkControl.demand.getAuthContextForSubjectAndProject { subj, proj -> return null }
+        fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
+            return results
+        }
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.request.api_version = 28
+        controller.request.contentType = "application/json"
+        controller.params.project = "Test"
+
+        def execControl = new MockFor(ExecutionService, false)
+        execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
+            assert null != query
+            assert "Test" == query.projFilter
+            return [result: execs, total: execs.size()]
+        }
+        execControl.demand.respondExecutionsXml { request, response, List<Execution> execsx, paging ->
+            return true
+        }
+        controller.executionService = execControl.proxyInstance()
+
+        def svcMock = new MockFor(ApiService, false)
+        svcMock.demand.requireVersion { request, response, int min ->
+            assertEquals(28, min)
+            return true
+        }
+        svcMock.demand.renderSuccessXml { request, response ->
+            return true
+        }
+        controller.apiService = svcMock.proxyInstance()
+        controller.apiExecutionMetrics(new ExecutionQuery())
+
+        def resp = new JsonSlurper().parseText(response.text)
+
+        assert 200 == controller.response.status
+        assert resp.total == 3
+        assert resp.succeeded == 3
+        assert resp.'duration-avg' == "5m"
+        assert resp.'duration-min' == "2m"
+        assert resp.'duration-max' == "9m"
+
+    }
+
+
 }
