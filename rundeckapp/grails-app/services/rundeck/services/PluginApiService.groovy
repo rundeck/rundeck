@@ -9,11 +9,13 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
@@ -28,6 +30,7 @@ class PluginApiService {
     FrameworkService frameworkService
     def messageSource
     UiPluginService uiPluginService
+    UIPluginProviderService uiPluginProviderService
     NotificationService notificationService
     LoggingService loggingService
     PluginService pluginService
@@ -269,7 +272,17 @@ class PluginApiService {
     }
 
     def listInstalledPluginIds() {
-        return listPlugins()*.providers.collect { it.pluginId }.flatten()
+        def idList = []
+        def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
+        plugins.each{ entry ->
+            def meta = frameworkService.getRundeckFramework().
+                    getPluginManager().
+                    getPluginMetadata("UI", entry.key)
+            String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(entry.key)
+            idList.add(id)
+        }
+        idList.addAll(listPlugins()*.providers.collect { it.pluginId }.flatten())
+        return idList
     }
 
     Locale getLocale() {
