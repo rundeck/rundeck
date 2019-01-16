@@ -130,7 +130,7 @@ dependencies {
     compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
-    compile 'org.grails.plugins:spring-security-core:3.2.1'
+    compile 'org.grails.plugins:spring-security-core:3.2.3'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
