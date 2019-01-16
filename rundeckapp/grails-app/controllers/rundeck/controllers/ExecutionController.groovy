@@ -2287,7 +2287,7 @@ setTimeout(function(){
      * API: /api/28/executions/metrics
      */
     def apiExecutionMetrics(ExecutionQuery query) {
-        if (!apiService.requireVersion(request, response, ApiVersions.V28)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V29)) {
             return
         }
 

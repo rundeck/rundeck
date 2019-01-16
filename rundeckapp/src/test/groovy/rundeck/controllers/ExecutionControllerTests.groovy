@@ -665,7 +665,7 @@ class ExecutionControllerTests  {
             return results
         }
         controller.frameworkService = fwkControl.proxyInstance()
-        controller.request.api_version = 28
+        controller.request.api_version = 29
         controller.request.contentType = "application/json"
         controller.params.project = "Test"
 
@@ -682,7 +682,7 @@ class ExecutionControllerTests  {
 
         def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
-            assertEquals(28, min)
+            assertEquals(29, min)
             return true
         }
         svcMock.demand.renderSuccessXml { request, response ->
