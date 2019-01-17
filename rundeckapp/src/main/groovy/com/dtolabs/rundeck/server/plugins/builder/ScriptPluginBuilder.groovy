@@ -116,6 +116,8 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
             } else {
                 logger.error("Tags property of plugin script: ${filename} must be a list. Tags property ignored.")
             }
+        } else if (property == 'metadata' && newValue instanceof Map) {
+            descriptionBuilder.metadata(newValue)
         } else {
             super.setProperty(property, newValue)
         }
