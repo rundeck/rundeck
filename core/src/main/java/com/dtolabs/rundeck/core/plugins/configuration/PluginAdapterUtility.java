@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
@@ -91,12 +92,26 @@ public class PluginAdapterUtility {
                 builder.description(descAnnotation.description());
             }
         }
+        builder.metadata(loadPluginMetadata(object.getClass()));
 
         if (includeAnnotatedFieldProperties) {
             buildFieldProperties(object, builder);
         }
         builder.collaborate(object);
         return builder.build();
+    }
+
+    public static Map<String, String> loadPluginMetadata(final Class<?> clazz) {
+        HashMap<String, String> meta = new HashMap<>();
+        final PluginMetadata[] metadata = clazz.getAnnotationsByType(PluginMetadata.class);
+        if (null != metadata) {
+            if (metadata.length > 0) {
+                for (PluginMetadata metadatum : metadata) {
+                    meta.put(metadatum.key(), metadatum.value());
+                }
+            }
+        }
+        return meta;
     }
 
     /**
