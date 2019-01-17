@@ -255,7 +255,9 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             .name(provider.getName())
             .title(MapData.metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
             .description(MapData.metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
-
+        if (provider.getProviderMeta() != null) {
+            builder.metadata(MapData.toStringStringMap(provider.getProviderMeta()));
+        }
         if(allowCustomProperties) {
             createProperties(provider, useConventionalPropertiesMapping, builder);
         }
