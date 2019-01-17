@@ -2312,6 +2312,18 @@ setTimeout(function(){
 
         if (null != query) {
             query.configureFilter()
+
+            if (params.recentFilter && !query.recentFilter) {
+                //invald recentFilter input
+                return apiService.renderErrorFormat(
+                    response,
+                    [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.history.date-relative-format',
+                        args  : ['recentFilter', params.recentFilter]
+                    ]
+                )
+            }
         }
 
         //attempt to parse/bind "end" and "begin" parameters
@@ -2362,8 +2374,8 @@ setTimeout(function(){
             }
         }
 
-        def resOffset = params.offset ? params.int('offset') : 0
-        def resMax = params.max ? params.int('max') : -1
+        def resOffset = params.int('offset', 0)
+        def resMax = params.int('max', -1)
 
         def results = executionService.queryExecutions(query, resOffset, resMax)
         def result = results.result
@@ -2373,34 +2385,39 @@ setTimeout(function(){
 
         // Calculate stats
         def metricsBuilder = new MetricsStatsBuilder()
+        def metricsBuilderStatus = new MetricsStatsBuilder()
+        def metricsBuilderDuration = new MetricsStatsBuilder()
         filtered.each { Execution exec ->
 
             // count total
             metricsBuilder.count(ExecutionQueryMetrics.TOTAL_COUNT)
 
             // count state
-            metricsBuilder.count(exec.getExecutionState())
+            metricsBuilderStatus.count(exec.getExecutionState())
 
             // duration stats.
             def dur = exec.durationAsLong()
             if (dur) {
                 // register duration avg
-                metricsBuilder.average(ExecutionQueryMetrics.DURATION_AVERAGE, dur)
+                metricsBuilderDuration.average(ExecutionQueryMetrics.DURATION_AVERAGE, dur)
                 // register duration max
-                metricsBuilder.max(ExecutionQueryMetrics.DURATION_MAX, dur)
+                metricsBuilderDuration.max(ExecutionQueryMetrics.DURATION_MAX, dur)
                 // register duration min
-                metricsBuilder.min(ExecutionQueryMetrics.DURATION_MIN, dur)
+                metricsBuilderDuration.min(ExecutionQueryMetrics.DURATION_MIN, dur)
             }
         }
 
         // Build and format response
-        def metrics = metricsBuilder.buildStatsMap()
-
-        metricsOutputFormatTimeNumberAsString(metrics, [
-            ExecutionQueryMetrics.DURATION_AVERAGE,
-            ExecutionQueryMetrics.DURATION_MIN,
-            ExecutionQueryMetrics.DURATION_MAX
+        def metrics = new HashMap(metricsBuilder.buildStatsMap())
+        def metricsDur = new HashMap(metricsBuilderDuration.buildStatsMap())
+        metricsOutputFormatTimeNumberAsString(metricsDur, [
+                ExecutionQueryMetrics.DURATION_AVERAGE,
+                ExecutionQueryMetrics.DURATION_MIN,
+                ExecutionQueryMetrics.DURATION_MAX
         ])
+        metrics['status']=metricsBuilderStatus.buildStatsMap()
+        metrics['duration']=metricsDur
+
 
 
         withFormat {
@@ -2411,7 +2428,17 @@ setTimeout(function(){
                 render(contentType: "application/xml") {
                     delegate.'result' {
                         metrics.each {key, value ->
-                            delegate."${key}" (value)
+                            if(value instanceof Map){
+                                Map sub=value
+                                delegate."${key}"{
+                                    sub.each{k1,v1->
+                                        delegate."${k1}"(v1)
+                                    }
+                                }
+                            }
+                            else {
+                                delegate."${key}"(value)
+                            }
                         }
                     }
                 }

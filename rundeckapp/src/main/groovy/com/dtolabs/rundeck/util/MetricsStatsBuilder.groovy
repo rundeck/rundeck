@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.util
 
+import groovy.transform.CompileStatic
+
 /**
  * Utility for metric statistics calculation.
  *
@@ -25,7 +27,7 @@ class MetricsStatsBuilder {
    * @return The counter value or 0 if there is no counter.
    */
   long getCount(String name) {
-    return counters.getOrDefault(name, 0)
+    return counters.getOrDefault(name, 0L)
   }
 
   double getAverage(String name) {
@@ -42,7 +44,7 @@ class MetricsStatsBuilder {
 
 
   void count(String name) {
-    counters.put(name, counters.getOrDefault(name, 0) + 1)
+    counters.put(name, counters.getOrDefault(name, 0L) + 1L)
   }
 
   void average(String name, long value) {
@@ -92,22 +94,24 @@ class MetricsStatsBuilder {
 
   }
 
+}
 
-  class AvgEntry {
-    int count = 0
-    long sum = 0
+@CompileStatic
+class AvgEntry {
+  long count = 0
+  long sum = 0
 
-    AvgEntry add(long value) {
-      this.sum += value
-      this.count++
-      return this
+  AvgEntry add(long value) {
+    this.sum += value
+    this.count++
+    return this
+  }
+
+  double value() {
+    if (count < 1) {
+      return 0
     }
-
-    double value() {
-      if (count == 0) return 0
-      return (sum / count)
-    }
-
+    return (sum / count)
   }
 
 }

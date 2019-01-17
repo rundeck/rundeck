@@ -695,10 +695,10 @@ class ExecutionControllerTests  {
 
         assert 200 == controller.response.status
         assert resp.total == 3
-        assert resp.succeeded == 3
-        assert resp.'duration-avg' == "5m"
-        assert resp.'duration-min' == "2m"
-        assert resp.'duration-max' == "9m"
+        assert resp.status.succeeded == 3
+        assert resp.duration.average == "5m"
+        assert resp.duration.min == "2m"
+        assert resp.duration.max == "9m"
 
     }
 
