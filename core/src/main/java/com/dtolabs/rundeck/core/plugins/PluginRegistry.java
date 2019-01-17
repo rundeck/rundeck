@@ -179,7 +179,7 @@ public interface PluginRegistry {
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
 
     /**
-     * Return plugin metadata
+     * Return plugin file metadata
      * @param service
      * @param provider
      * @return

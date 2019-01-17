@@ -178,6 +178,17 @@ class PluginController extends ControllerBase {
             desc.description,
             RequestContextUtils.getLocale(request)
         )
+        def profile = uiPluginService.getProfileFor(service, pluginName)
+        if (profile.icon) {
+            terseDesc.iconUrl = createLink(
+                controller: 'plugin',
+                action: 'pluginIcon',
+                params: [service: service, name: pluginName]
+            )
+        }
+        if (profile.providerMetadata) {
+            terseDesc.providerMetadata = profile.providerMetadata
+        }
         terseDesc.ver = meta?.pluginFileVersion ?: appVer
         terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'
         terseDesc.targetHostCompatibility = meta?.targetHostCompatibility ?: 'all'
@@ -248,24 +259,36 @@ class PluginController extends ControllerBase {
             )
         }
         def descriptions = pluginService.listPlugins(serviceType)
-        def data = descriptions.values()?.description?.sort { a, b -> a.name <=> b.name }?.collect {
-            [
-                name       : it.name,
+        def data = descriptions.values()?.description?.sort { a, b -> a.name <=> b.name }?.collect {desc->
+            def descMap = [
+                name       : desc.name,
                 title      : uiPluginService.getPluginMessage(
                     service,
-                    it.name,
+                    desc.name,
                     'plugin.title',
-                    it.title ?: it.name,
+                    desc.title ?: desc.name,
                     RequestContextUtils.getLocale(request)
                 ),
                 description: uiPluginService.getPluginMessage(
                     service,
-                    it.name,
+                    desc.name,
                     'plugin.description',
-                    it.description,
+                    desc.description,
                     RequestContextUtils.getLocale(request)
                 )
             ]
+            def profile = uiPluginService.getProfileFor(service, desc.name)
+            if (profile.icon) {
+                descMap.iconUrl = createLink(
+                    controller: 'plugin',
+                    action: 'pluginIcon',
+                    params: [service: service, name: desc.name]
+                )
+            }
+            if (profile.providerMetadata) {
+                descMap.providerMetadata = profile.providerMetadata
+            }
+            descMap
         }
         def singularMessage = message(code: "framework.service.${service}.label", default: service)?.toString()
         render(contentType: 'application/json') {

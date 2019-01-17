@@ -120,7 +120,7 @@ class PluginApiService {
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
-                def filename = uiPluginProfiles[provIdent].get('metadata')?.filename
+                def filename = uiPluginProfiles[provIdent].get('fileMetadata')?.filename
                 if(filename){
                     if(!loadedFileNameMap[filename]){
                         loadedFileNameMap[filename]=[]
