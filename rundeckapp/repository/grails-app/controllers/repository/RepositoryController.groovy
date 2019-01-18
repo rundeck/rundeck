@@ -31,13 +31,11 @@ class RepositoryController {
                 specifyUnauthorizedError()
                 return
             }
-            String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
-            if(!repoName) {
-                specifyRepoError()
-                return
-            }
+            String repoName = params.repoName
+
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
-            def artifacts = repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+            def artifacts = repoName ? repoClient.listArtifactsByRepository(repoName,params.offset?.toInteger(),params.limit?.toInteger())
+                                     : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
                     it.installed = installedPluginIds.contains(it.id)
@@ -50,11 +48,6 @@ class RepositoryController {
         def searchArtifacts() {
             if (!authorized(PLUGIN_RESOURCE,"read")) {
                 specifyUnauthorizedError()
-                return
-            }
-            String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
-            if(!repoName) {
-                specifyRepoError()
                 return
             }
             String searchTerm
@@ -89,11 +82,7 @@ class RepositoryController {
                 specifyUnauthorizedError()
                 return
             }
-            String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
-            if(!repoName) {
-                specifyRepoError()
-                return
-            }
+
             def installedPluginIds = pluginApiService.listInstalledPluginIds()
             def artifacts = repoClient.listArtifacts(0,-1)*.results.flatten()
             def installedArtifacts = []

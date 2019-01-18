@@ -16,10 +16,13 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification
@@ -77,6 +80,50 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
     }
 
+    def "list installed plugin ids"() {
+        given:
+        messageSource.addMessage("framework.service.Notification.description",Locale.ENGLISH,"Triggered when a Job starts, succeeds, or fails.")
+        def fwksvc = Mock(FrameworkService)
+        def fwk = Mock(Framework)
+        fwksvc.getRundeckFramework() >> fwk
+        fwk.getPluginManager() >> Mock(ServiceProviderLoader)
+        service.frameworkService = fwksvc
+        service.pluginService = Mock(PluginService)
+
+        def pluginDescs = [
+                "Notification": [new FakePluginDescription()]
+        ]
+        def pluginData = [
+                descriptions        : pluginDescs,
+                serviceDefaultScopes: [],
+                bundledPlugins      : [],
+                embeddedFilenames   : [],
+                specialConfiguration: [],
+                specialScoping      : [],
+                uiPluginProfiles    : []
+        ]
+        def fakeMeta = new FakePluginMetadata()
+
+        service.metaClass.listPluginsDetailed = { -> pluginData }
+        service.metaClass.getLocale = { -> Locale.ENGLISH }
+
+        when:
+        String uipluginid = PluginUtils.generateShaIdFromName("oneuiplugin")
+        def uiplugin = Stub(UIPlugin)
+        def uiplugindesc = Stub(Description)
+        def uiMeta = Stub(PluginMetadata) {
+            getPluginId() >> uipluginid
+        }
+        1 * service.pluginService.listPlugins(_,_) >> ["oneuiplugin":new FakeUIDescribedPlugin(uiplugin,uiplugindesc,"oneuiplugin")]
+        1 * service.frameworkService.rundeckFramework.pluginManager.getPluginMetadata('Notification',_) >> fakeMeta
+        1 * service.frameworkService.rundeckFramework.pluginManager.getPluginMetadata('UI',_) >> uiMeta
+        def idList = service.listInstalledPluginIds()
+
+        then:
+        idList.size() == 2
+        idList.contains(uipluginid)
+    }
+
     def "plugin Property Map"() {
         given:
             service.uiPluginService = Mock(UiPluginService)
@@ -121,6 +168,17 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.scope == null
             result.options == [:]
 
+    }
+
+    class FakeUIDescribedPlugin extends DescribedPlugin<UIPlugin> {
+
+        FakeUIDescribedPlugin(
+                final UIPlugin instance,
+                final Description description,
+                final String name
+        ) {
+            super(instance, description, name)
+        }
     }
 
     class FakePluginMetadata implements PluginMetadata {

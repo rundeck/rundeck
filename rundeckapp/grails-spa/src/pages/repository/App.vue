@@ -95,7 +95,7 @@ export default {
       axios({
         method: 'post',
         headers: {'x-rundeck-ajax': true},
-        url: `${this.rdBase}repository/install/${pluginId}`,
+        url: `${this.rdBase}repository/${repoName}/install/${pluginId}`,
         withCredentials: true
       }).then((response) => {
         let repo = this.repositories.find(r => r.repositoryName === repoName)

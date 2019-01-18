@@ -50,6 +50,7 @@ import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
+import org.rundeck.security.RundeckAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -491,6 +492,13 @@ beans={
 
         initParams = configParams?.toProperties()?.collectEntries {
             [it.key.toString(), it.value.toString()]
+        }
+    }
+
+    if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
+        rundeckAuthenticationSuccessEventListener(RundeckAuthenticationSuccessEventListener) {
+            userService = ref("userService")
+            grailsApplication = grailsApplication
         }
     }
 }

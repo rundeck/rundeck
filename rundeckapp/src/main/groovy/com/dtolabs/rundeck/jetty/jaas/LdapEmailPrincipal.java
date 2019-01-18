@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.dtolabs.rundeck.jetty.jaas;
 
-import grails.test.*
-import spock.lang.Specification
+import java.security.Principal;
 
-class UserServiceTests extends Specification {
-    void setup() {
-//        super.setup()
+public class LdapEmailPrincipal implements Principal {
+
+    private final String _email;
+    public LdapEmailPrincipal(String email) {
+        this._email = email;
     }
 
-    void tearDown() {
-//        super.tearDown()
-    }
-
-    void testSomething() {
-
+    @Override
+    public String getName() {
+        return _email;
     }
 }
