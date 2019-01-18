@@ -214,9 +214,21 @@ class Execution extends ExecutionContext {
     }
 
     // various utility methods helpful to the presentation layer
+
+    /**
+     * Returns the duration of the execution in amount of milliseconds.
+     * @return
+     */
+    def Long durationAsLong() {
+        if (!dateStarted || !dateCompleted) return null
+        return (dateCompleted.getTime() - dateStarted.getTime())
+    }
+
     def String durationAsString() {
-        if (!dateStarted || !dateCompleted) return ""
-        def dms = dateCompleted.getTime() - dateStarted.getTime()
+
+        def dms = durationAsLong()
+        if(!dms) return ""
+
         def duration
         if (dms < 1000) {
             duration = "0s"

@@ -101,7 +101,9 @@ class UrlMappings {
         }
         "/api/$api_version/jobs/file/$id"(controller: 'scheduledExecution',action: 'apiJobFileInfo')
 
-
+        // execution metrics
+        "/api/$api_version/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
+        "/api/$api_version/project/$project/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
