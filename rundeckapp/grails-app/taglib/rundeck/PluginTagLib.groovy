@@ -46,6 +46,8 @@ class PluginTagLib {
     }
 
     def pluginIcon = { attrs, body ->
+        def service = attrs.get('service')
+        def name = attrs.get('name')
         def iconSrc = pluginIconSrc(attrs, body)
         if (iconSrc) {
             attrs.src = iconSrc
@@ -57,7 +59,16 @@ class PluginTagLib {
             }
             out << "/>"
         } else {
-            out << body()
+            def profile = uiPluginService.getProfileFor(service, name)
+            if (profile.providerMetadata?.glyphicon) {
+                out << g.icon(name: profile.providerMetadata?.glyphicon)
+            }else if (profile.providerMetadata?.faicon) {
+                out << '<i class="'
+                out << enc(attr:'fas fa-'+profile.providerMetadata?.faicon)
+                out << '"></i>'
+            }else {
+                out << body()
+            }
         }
     }
     def pluginIconSrc = { attrs, body ->
