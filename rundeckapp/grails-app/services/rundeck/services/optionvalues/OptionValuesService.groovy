@@ -12,8 +12,8 @@ class OptionValuesService {
     def rundeckPluginRegistry
     def frameworkService
 
-    def getOptions(String provider) {
-        return doPlugin(provider,frameworkService.getFrameworkPropertyResolver())
+    def getOptions(String project, String provider) {
+        return doPlugin(provider,frameworkService.getFrameworkPropertyResolver(project,null))
     }
 
     private List<OptionValue> doPlugin(String provider, PropertyResolver resolver){

@@ -2249,7 +2249,7 @@ class ScheduledExecutionControllerTests  {
             getStepPluginDescriptions { [] }
         }
         sec.optionValuesService = mockWith(OptionValuesService) {
-            getOptions { plugin -> return [[name:"opt1",value:"o1"]] }
+            getOptions { project, plugin -> return [[name:"opt1",value:"o1"]] }
         }
 
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){

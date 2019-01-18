@@ -34,7 +34,7 @@ class OptionValuesServiceSpec extends Specification implements ServiceUnitTest<O
         when:
         TestOptionValuesPlugin plugin = new TestOptionValuesPlugin()
         1 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<OptionValuesPlugin>(plugin,null)
-        def results = service.getOptions("optValProvider")
+        def results = service.getOptions("AProject","optValProvider")
 
         then:
         results.size() == 1

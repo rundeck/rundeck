@@ -382,8 +382,6 @@ class EditOptsController {
      * undo: corresponding undo action map
      */
     protected Map _applyOptionAction (Map editopts, Map input){
-        println input
-        println editopts
         def result = [:]
         if ('remove' == input.action) {
             def name = input.name
@@ -562,8 +560,6 @@ class EditOptsController {
      * @param params input map of parameters
      */
     protected Option _setOptionFromParams (Option opt, Map params ){
-        println "_set option from params"
-        println params.valuesType
         def valuesUrl
         if (params.valuesType == 'list') {
             params.remove('valuesUrl')

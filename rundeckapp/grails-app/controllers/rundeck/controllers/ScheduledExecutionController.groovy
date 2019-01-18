@@ -2863,7 +2863,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
             if(opt.optionValuesPluginType) {
-                opt.valuesFromPlugin = optionValuesService.getOptions(opt.optionValuesPluginType)
+                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType)
             }
         }
         model.dependentoptions=depopts
