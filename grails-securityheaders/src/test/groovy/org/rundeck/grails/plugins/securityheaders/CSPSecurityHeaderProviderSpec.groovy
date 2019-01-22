@@ -123,12 +123,24 @@ class CSPSecurityHeaderProviderSpec extends Specification {
             list[2].value == result
 
         where:
-            directive         | confVal                     | result
-            'frame-ancestors' | 'none'                      | "frame-ancestors 'none' ;"
-            'frame-ancestors' | "'none'"                    | "frame-ancestors 'none' ;"
-            'frame-ancestors' | 'self'                      | "frame-ancestors 'self' ;"
-            'frame-ancestors' | "'self'"                    | "frame-ancestors 'self' ;"
-            'frame-ancestors' | '*.somesite.com'            | "frame-ancestors *.somesite.com ;"
-            'frame-ancestors' | 'https://myfriend.site.com' | "frame-ancestors https://myfriend.site.com ;"
+            directive         | confVal                      | result
+            'frame-ancestors' | 'none'                       | "frame-ancestors 'none' ;"
+            'frame-ancestors' | "'none'"                     | "frame-ancestors 'none' ;"
+            'frame-ancestors' | 'self'                       | "frame-ancestors 'self' ;"
+            'frame-ancestors' | "'self'"                     | "frame-ancestors 'self' ;"
+            'frame-ancestors' | "unsafe-inline"              | "frame-ancestors 'unsafe-inline' ;"
+            'frame-ancestors' | "'unsafe-inline'"            | "frame-ancestors 'unsafe-inline' ;"
+            'frame-ancestors' | "unsafe-eval"                | "frame-ancestors 'unsafe-eval' ;"
+            'frame-ancestors' | "'unsafe-eval'"              | "frame-ancestors 'unsafe-eval' ;"
+            'frame-ancestors' | "nonce-asdfasdf"             | "frame-ancestors 'nonce-asdfasdf' ;"
+            'frame-ancestors' | "'nonce-asdfasdf'"           | "frame-ancestors 'nonce-asdfasdf' ;"
+            'frame-ancestors' | "sha256-asdfasdf"            | "frame-ancestors 'sha256-asdfasdf' ;"
+            'frame-ancestors' | "'sha256-asdfasdf'"          | "frame-ancestors 'sha256-asdfasdf' ;"
+            'frame-ancestors' | '*'                          | "frame-ancestors * ;"
+            'frame-ancestors' | '*.somesite.com'             | "frame-ancestors *.somesite.com ;"
+            'frame-ancestors' | 'https://myfriend.site.com'  | "frame-ancestors https://myfriend.site.com ;"
+            'frame-ancestors' | 'https:'                     | "frame-ancestors https: ;"
+            'frame-ancestors' | 'data:'                      | "frame-ancestors data: ;"
+            'frame-ancestors' | 'self data: unsafe-inline *' | "frame-ancestors 'self' data: 'unsafe-inline' * ;"
     }
 }
