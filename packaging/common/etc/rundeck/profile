@@ -91,8 +91,7 @@ RDECK_JVM="$RDECK_JVM $RDECK_JVM_SETTINGS"
 # SSL Configuration - Uncomment the following to enable.  Check SSL.properties for details.
 #
 if [ -n "$RUNDECK_WITH_SSL" ] ; then
-  RDECK_SSL_OPTS="${RDECK_SSL_OPTS:- -Djavax.net.ssl.trustStore=$RDECK_TRUSTSTORE_FILE -Djavax.net.ssl.trustStoreType=$RDECK_TRUSTSTORE_TYPE -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol}"
-  RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$RDECK_SERVER_CONFIG/ssl/ssl.properties -Dserver.https.port=${RDECK_HTTPS_PORT} ${RDECK_SSL_OPTS}"
+  RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$RDECK_SERVER_CONFIG/ssl/ssl.properties -Dserver.https.port=${RDECK_HTTPS_PORT}"
 fi
 
 unset JRE_HOME
