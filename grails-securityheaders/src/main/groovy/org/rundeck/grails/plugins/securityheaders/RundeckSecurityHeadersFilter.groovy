@@ -51,7 +51,7 @@ class RundeckSecurityHeadersFilter extends OncePerRequestFilter implements Appli
                 if (confEnabled == null) {
                     confEnabled = provider.defaultEnabled
                 } else {
-                    confEnabled = confEnabled == 'true'
+                    confEnabled = confEnabled in ['true', true]
                 }
                 if (confEnabled) {
                     Map provConf = provSettings?.get('config') ?: [:]
