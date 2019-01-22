@@ -94,10 +94,10 @@ class CSPSecurityHeaderProvider implements SecurityHeaderProvider {
                     List<SecurityHeader> built = []
 
                     built << new SecurityHeaderImpl(name: CSP_HEADER_NAME, value: headerValue)
-                    if (getBoolean(config, CONFIG_INCLUDE_X_CSP_HEADER, true)) {
+                    if (getBoolean(config, CONFIG_INCLUDE_X_CSP_HEADER, false)) {
                         built << new SecurityHeaderImpl(name: XCSP_HEADER_NAME, value: headerValue)
                     }
-                    if (getBoolean(config, CONFIG_INCLUDE_X_WEBKIT_CSP_HEADER, true)) {
+                    if (getBoolean(config, CONFIG_INCLUDE_X_WEBKIT_CSP_HEADER, false)) {
                         built << new SecurityHeaderImpl(name: X_WEBKIT_CSP_HEADER_NAME, value: headerValue)
                     }
 

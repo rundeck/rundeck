@@ -55,13 +55,10 @@ class CSPSecurityHeaderProviderSpec extends Specification {
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then: "The interceptor does match"
             list != null
-            list.size() == 3
+            list.size() == 1
             list[0].name == 'Content-Security-Policy'
             list[0].value == policy
-            list[1].name == 'X-Content-Security-Policy'
-            list[1].value == policy
-            list[2].name == 'X-WebKit-CSP'
-            list[2].value == policy
+
 
         where:
             policy << ["default-src 'none' ;",
@@ -92,14 +89,12 @@ class CSPSecurityHeaderProviderSpec extends Specification {
 
 
         where:
-            config                             | expectCount | includeXcsp | includeXwkcsp
-            [:]                                | 3           | true        | true
-            ['include-xcsp-header': 'false']   | 2           | false       | true
-            ['include-xwkcsp-header': 'false'] | 2           | true        | false
-            ['include-xwkcsp-header': 'false',
-             'include-xcsp-header'  : 'false'] | 1           | false       | false
+            config                            | expectCount | includeXcsp | includeXwkcsp
+            [:]                               | 1           | false       | false
+            ['include-xcsp-header': 'true']   | 2           | true        | false
+            ['include-xwkcsp-header': 'true'] | 2           | false       | true
             ['include-xwkcsp-header': 'true',
-             'include-xcsp-header'  : 'true']  | 3           | true        | true
+             'include-xcsp-header'  : 'true'] | 3           | true        | true
     }
 
     @Unroll
@@ -114,13 +109,9 @@ class CSPSecurityHeaderProviderSpec extends Specification {
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then: "The interceptor does match"
             list != null
-            list.size() == 3
+            list.size() == 1
             list[0].name == 'Content-Security-Policy'
             list[0].value == result
-            list[1].name == 'X-Content-Security-Policy'
-            list[1].value == result
-            list[2].name == 'X-WebKit-CSP'
-            list[2].value == result
 
         where:
             directive         | confVal                      | result
