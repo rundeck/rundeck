@@ -1788,6 +1788,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             if (params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH]!=null) {
                 config.attachLog = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH] in ['true',true]
+                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -1807,7 +1809,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject = params[ScheduledExecutionController.NOTIFY_FAILURE_SUBJECT]
             }
             if (params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true', true]
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH] in ['true',true]
+                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH_TYPE] in ['file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_FAILURE_ATTACH_TYPE] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -1863,7 +1867,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.subject = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]
             }
             if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH]!=null) {
-                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true', true]
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true',true]
+                config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH_TYPE] in ['file']
+                config.attachLogInline = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH_TYPE] in ['inline']
             }
             nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
                      type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
@@ -2592,6 +2598,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
                         ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
         ]
+        def fieldAttachedNames = [
+                (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH,
+                (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_FAILURE_ATTACH,
+                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH,
+        ]
         def conf = notif.configuration
         def arr = (conf?.recipients?: notif.content)?.split(",")
         def validator = new AnyDomainEmailValidator()
@@ -2619,6 +2633,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     'scheduledExecution.notifications.email.blank.message',
                     'Cannot be blank'
             )
+        }
+        if(conf?.attachLog){
+            if(!conf.containsKey("attachLogInFile") &&  !conf.containsKey("attachLogInline")){
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldAttachedNames[trigger],
+                        'scheduledExecution.notifications.email.attached.blank.message',
+                        'You need select one of the options'
+                )
+            }
+
+            if(conf.attachLogInFile == false && conf.attachLogInline == false){
+                failed = true
+                scheduledExecution.errors.rejectValue(
+                        fieldAttachedNames[trigger],
+                        'scheduledExecution.notifications.email.attached.blank.message',
+                        'You need select one of the options'
+                )
+            }
         }
         if (failed) {
             return [failed:true]
