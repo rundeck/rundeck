@@ -2,10 +2,13 @@ package rundeck.interceptors
 
 import org.rundeck.util.Toposort
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.ConfigurationService
 import rundeck.services.UiPluginService
 
 
 class ControllerBaseInterceptor {
+    @Autowired
+    ConfigurationService configurationService
 
     public static final ArrayList<String> UIPLUGIN_PAGES = [
             'menu/jobs',
@@ -58,7 +61,15 @@ class ControllerBaseInterceptor {
 
     protected def loadUiPlugins(path) {
         def uiplugins = [:]
-        if ((path in UIPLUGIN_PAGES)) {
+
+        def addPath=false
+        if(configurationService.getBoolean('ui.plugin.enableAllPages', false)){
+            addPath=true
+        }else if((path in UIPLUGIN_PAGES)){
+            addPath=true
+        }
+
+        if (addPath) {
             def page = uiPluginService.pluginsForPage(path)
             page.each { name, inst ->
                 def requires = inst.requires(path)
