@@ -17,3 +17,15 @@ rundeck:
   features:
     repository:
       enabled: "true"
+  security:
+    httpheaders:
+      enabled: "false"
+      provider:
+        xcto: {enabled: "false"}
+        xxssp: {enabled: "false"}
+        xfo: {enabled: "false"}
+        csp:
+          enabled: "false"
+          config:
+            includexcspheader: "false"
+            includexwkcspheader: "false"
