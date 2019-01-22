@@ -2,6 +2,7 @@ package grails.securityheaders
 
 import grails.plugins.*
 import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
+import org.rundeck.grails.plugins.securityheaders.CustomSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.RundeckSecurityHeadersFilter
 import org.rundeck.grails.plugins.securityheaders.XCTOSecurityHeaderProvider
 import org.rundeck.grails.plugins.securityheaders.XFOSecurityHeaderProvider
@@ -33,7 +34,11 @@ Brief summary/description of the plugin.
 
     Closure doWithSpring() {
         { ->
-            //define security header providers
+            //can define custom headers
+            customSecurityHeaderProvider(CustomSecurityHeaderProvider) {
+                name = 'custom'
+                defaultEnabled = false
+            }
             cspSecurityHeaderProvider(CSPSecurityHeaderProvider) {
                 name = 'csp'
                 defaultEnabled = false
