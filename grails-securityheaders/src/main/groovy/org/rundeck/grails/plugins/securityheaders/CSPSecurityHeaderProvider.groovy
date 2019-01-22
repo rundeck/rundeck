@@ -21,14 +21,35 @@ import groovy.transform.CompileStatic
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
+/**
+ * reference:
+ *
+ *  https://www.owasp.org/index.php/OWASP_Secure_Headers_Project#csp
+ *  https://content-security-policy.com/
+ *
+ *  configuration:
+ *
+ *  `policy`: explicit policy string, if set individual directives will be ignored
+ *  `<directive>`: individual directive values, see {@link CSPSecurityHeaderProvider#DIRECTIVES}
+ *  `include-xcsp-header`: add policy in X-Content-Security-Policy header as well (default:true)
+ *  `include-xwkcsp-header`: set policy in X-WebKit-CSP header as well (default:true)
+ *
+ */
 @CompileStatic
 class CSPSecurityHeaderProvider implements SecurityHeaderProvider {
 
     public static final String CSP_HEADER_NAME = 'Content-Security-Policy'
+    public static final String XCSP_HEADER_NAME = 'X-Content-Security-Policy'
+    public static final String X_WEBKIT_CSP_HEADER_NAME = 'X-WebKit-CSP'
+    public static final String CONFIG_INCLUDE_X_CSP_HEADER = 'include-xcsp-header'
+    public static final String CONFIG_INCLUDE_X_WEBKIT_CSP_HEADER = 'include-xwkcsp-header'
+    public static final String CONFIG_POLICY = 'policy'
 
     String name = 'csp'
     Boolean defaultEnabled = false
     Map<String, String> directives
+
+    List<SecurityHeader> builtHeaders
 
     @Override
     List<SecurityHeader> getSecurityHeaders(
@@ -36,37 +57,94 @@ class CSPSecurityHeaderProvider implements SecurityHeaderProvider {
             final HttpServletResponse response,
             Map config
     ) {
-        List<SecurityHeader> headers = []
-        List<String> valueParts = []
+        buildHeaders(config)
+    }
 
-        DIRECTIVES.each { String directive ->
-            String uri = request.requestURI
-            List<String> parts = uri.split(/\//).toList().findAll { it }
+    private List<SecurityHeader> buildHeaders(Map config) {
+        if (null == builtHeaders) {
+            synchronized (this) {
+                if (builtHeaders == null) {
+                    String headerValue
+                    if (config.get(CONFIG_POLICY)) {
+                        //explicit policy definition
+                        headerValue = config.get(CONFIG_POLICY)
+                    } else {
+                        //define by directive name
 
-            String defCsp = config.get(directive + '.default')
-            String uriCsp = config.get(directive + '.uri.' + parts.join('.'))
+                        List<String> valueParts = []
+                        DIRECTIVES.each { String directive ->
+                            String val = config.get(directive)
+                            if (val) {
+                                List<String> values = val.split(/\s+/).toList()
+                                String cspString = generateCspHeader(directive, values)
+                                if (cspString) {
+                                    valueParts << cspString
+                                }
+                            }
+                        }
 
+                        if (valueParts) {
+                            headerValue = valueParts.join(' ; ') + ' ;'
+                        } else {
+                            throw new IllegalStateException(
+                                    "$CONFIG_POLICY or directive configuration is required, directives: $DIRECTIVES"
+                            )
+                        }
+                    }
+                    List<SecurityHeader> built = []
 
-            List<String> allowed = uriCsp.split(/\s+/).toList()
-            String cspString = generateCspHeader(directive, allowed)
-            valueParts << cspString
+                    built << new SecurityHeaderImpl(name: CSP_HEADER_NAME, value: headerValue)
+                    if (getBoolean(config, CONFIG_INCLUDE_X_CSP_HEADER, true)) {
+                        built << new SecurityHeaderImpl(name: XCSP_HEADER_NAME, value: headerValue)
+                    }
+                    if (getBoolean(config, CONFIG_INCLUDE_X_WEBKIT_CSP_HEADER, true)) {
+                        built << new SecurityHeaderImpl(name: X_WEBKIT_CSP_HEADER_NAME, value: headerValue)
+                    }
 
+                    builtHeaders = built
+
+                }
+            }
         }
+        builtHeaders
+    }
 
-        if (valueParts) {
-            headers << new SecurityHeaderImpl(name: CSP_HEADER_NAME, value: valueParts.join(';'))
+    static boolean getBoolean(final Map map, final String key, final boolean defVal) {
+        if (null == map.get(key)) {
+            return defVal
         }
-
-        headers
+        map.get(key) in [true, 'true']
     }
 
     static String generateCspHeader(String directive, List<String> allowed) {
-        allowed = allowed?.findAll { it }
+        allowed = allowed?.findAll { it?.trim() }
         if (!allowed) {
-            allowed = ['none']
+            return null
         }
-        directive + ' ' + allowed.collect { "'${it}'" }.join(" ")
+        directive + ' ' + allowed.collect {
+            if (it in SRC_KEYWORDS || SRC_PREFIXES.any { pref -> it.startsWith(pref) }) {
+                "'${it}'"
+            } else {
+                it
+            }
+        }.join(" ")
     }
+
+    static final List<String> SRC_KEYWORDS = Collections.unmodifiableList(
+            [
+                    'none',
+                    'self',
+                    'unsafe-inline',
+                    'unsafe-eval'
+            ]
+    )
+
+    static final List<String> SRC_PREFIXES = Collections.unmodifiableList(
+            [
+                    'nonce-',
+                    'sha256-',
+            ]
+    )
 
     static final List<String> DIRECTIVES = Collections.unmodifiableList(
             [

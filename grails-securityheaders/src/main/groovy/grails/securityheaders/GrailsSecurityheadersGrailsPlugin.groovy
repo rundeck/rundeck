@@ -39,6 +39,9 @@ Brief summary/description of the plugin.
                 name = 'custom'
                 defaultEnabled = false
             }
+            /**
+             * defines Content-Security-Policy
+             */
             cspSecurityHeaderProvider(CSPSecurityHeaderProvider) {
                 name = 'csp'
                 defaultEnabled = false

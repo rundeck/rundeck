@@ -16,64 +16,119 @@
 
 package org.rundeck.security
 
-import org.grails.spring.beans.factory.InstanceFactoryBean
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.mock.http.client.MockClientHttpRequest
-import org.springframework.mock.http.client.MockClientHttpResponse
+
+import org.rundeck.grails.plugins.securityheaders.CSPSecurityHeaderProvider
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
-import rundeck.services.ConfigurationService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class CSPSecurityHeaderProviderSpec extends Specification {
 
-    def "test csp response default"() {
+    def " missing config"() {
         given:
             def request = new MockHttpServletRequest('GET', "/test/uri")
             def response = new MockHttpServletResponse()
             def secHeaderProvider = new CSPSecurityHeaderProvider()
 
-            def config = ['frame-ancestors': defCsp]
+
         when: "A request without specific uri setting"
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then: "The interceptor does match"
-            list != null
-            list.size() == 1
-            list[0].name == 'Content-Security-Policy'
-            list[0].value == result
-
+            IllegalStateException e = thrown()
+            e.message.contains 'policy or directive configuration is required'
         where:
-            defCsp                                     | result
-            null                                       | "frame-ancestors 'none'"
-            'none'                                     | "frame-ancestors 'none'"
-            'self'                                     | "frame-ancestors 'self'"
-            '*.somesite.com https://myfriend.site.com' | "frame-ancestors '*.somesite.com' 'https://myfriend.site.com'"
+            config                          | _
+            [:]                             | _
+            ['wrong-directive': 'blahblah'] | _
+
     }
 
-    def "test csp response uri config"() {
+    def "explicit policy"() {
         given:
-            def request = new MockHttpServletRequest('GET', reqUri)
+            def request = new MockHttpServletRequest('GET', "/test/uri")
             def response = new MockHttpServletResponse()
             def secHeaderProvider = new CSPSecurityHeaderProvider()
 
-            def config = ['frame-ancestors': defCsp, 'uri.test2.uri': confCsp]
+            def config = ['policy': policy]
         when: "A request without specific uri setting"
             def list = secHeaderProvider.getSecurityHeaders(request, response, config)
         then: "The interceptor does match"
             list != null
-            list.size() == 1
+            list.size() == 3
             list[0].name == 'Content-Security-Policy'
-            list[0].value == result
+            list[0].value == policy
+            list[1].name == 'X-Content-Security-Policy'
+            list[1].value == policy
+            list[2].name == 'X-WebKit-CSP'
+            list[2].value == policy
 
         where:
-            reqUri       | defCsp | confCsp | result
-            '/test/uri'  | null   | 'self'  | "frame-ancestors 'none'"
-            '/test/uri'  | 'none' | 'self'  | "frame-ancestors 'none'"
-            '/test/uri'  | 'self' | 'none'  | "frame-ancestors 'self'"
-            '/test2/uri' | 'none' | 'self'  | "frame-ancestors 'self'"
-            '/test2/uri' | 'self' | 'none'  | "frame-ancestors 'none'"
-            '/test2/uri' | null   | 'self'  | "frame-ancestors 'self'"
+            policy << ["default-src 'none' ;",
+                       "default-src 'none' ; img-src 'self' ; ",
+                       "default-src 'none' ; frame-ancestors *.somesite.com https://myfriend.site.com"]
     }
 
+
+    def "disable x-headers"() {
+        given:
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def secHeaderProvider = new CSPSecurityHeaderProvider()
+
+        when: "A request without specific uri setting"
+            def list = secHeaderProvider.getSecurityHeaders(
+                    request,
+                    response,
+                    config + [policy: 'default-src \'none\' ;']
+            )
+        then: "The interceptor does match"
+            list != null
+            list.size() == expectCount
+            def names = list*.name
+            names.contains 'Content-Security-Policy'
+            names.contains('X-Content-Security-Policy') == includeXcsp
+            names.contains('X-WebKit-CSP') == includeXwkcsp
+
+
+        where:
+            config                             | expectCount | includeXcsp | includeXwkcsp
+            [:]                                | 3           | true        | true
+            ['include-xcsp-header': 'false']   | 2           | false       | true
+            ['include-xwkcsp-header': 'false'] | 2           | true        | false
+            ['include-xwkcsp-header': 'false',
+             'include-xcsp-header'  : 'false'] | 1           | false       | false
+            ['include-xwkcsp-header': 'true',
+             'include-xcsp-header'  : 'true']  | 3           | true        | true
+    }
+
+    @Unroll
+    def "csp response with directive #directive should quote keywords"() {
+        given:
+            def request = new MockHttpServletRequest('GET', "/test/uri")
+            def response = new MockHttpServletResponse()
+            def secHeaderProvider = new CSPSecurityHeaderProvider()
+
+            def config = ['frame-ancestors': confVal]
+        when: "A request without specific uri setting"
+            def list = secHeaderProvider.getSecurityHeaders(request, response, config)
+        then: "The interceptor does match"
+            list != null
+            list.size() == 3
+            list[0].name == 'Content-Security-Policy'
+            list[0].value == result
+            list[1].name == 'X-Content-Security-Policy'
+            list[1].value == result
+            list[2].name == 'X-WebKit-CSP'
+            list[2].value == result
+
+        where:
+            directive         | confVal                     | result
+            'frame-ancestors' | 'none'                      | "frame-ancestors 'none' ;"
+            'frame-ancestors' | "'none'"                    | "frame-ancestors 'none' ;"
+            'frame-ancestors' | 'self'                      | "frame-ancestors 'self' ;"
+            'frame-ancestors' | "'self'"                    | "frame-ancestors 'self' ;"
+            'frame-ancestors' | '*.somesite.com'            | "frame-ancestors *.somesite.com ;"
+            'frame-ancestors' | 'https://myfriend.site.com' | "frame-ancestors https://myfriend.site.com ;"
+    }
 }
