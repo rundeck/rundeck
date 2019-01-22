@@ -126,4 +126,30 @@ class RundeckInitializerTest extends Specification {
         'server.web.context'                | 'server.contextPath'       | '/rundeck'
         'rundeck.jetty.connector.forwarded' | 'server.useForwardHeaders' | 'true'
     }
+
+    def "process property partial files in war files"() {
+        given:
+        File sourceTemplates = new File(getClass().getClassLoader().getResource("template-partial-test").toURI())
+        File destination = new File(File.createTempFile("test-et","zzz").parentFile,"expandTest-"+UUID.randomUUID().toString().substring(0,8))
+
+        Properties testTemplateProperties = new Properties()
+
+        RundeckInitConfig cfg = new RundeckInitConfig()
+        cfg.runtimeConfiguration = testTemplateProperties
+        RundeckInitializer initializer = new RundeckInitializer(cfg)
+
+        int sourceFileCount = 0
+        sourceTemplates.traverse(type: groovy.io.FileType.FILES) { sourceFileCount++ }
+
+        when:
+        initializer.expandTemplatesNonJarMode(sourceTemplates,testTemplateProperties,destination,false)
+
+        then:
+        sourceFileCount == 3
+        assert destination.exists()
+        int filecount
+        destination.traverse(type: groovy.io.FileType.FILES) { filecount++ }
+        assert filecount == 1
+        new File(destination,"rundeck-config.properties").readLines().size() == 4
+    }
 }

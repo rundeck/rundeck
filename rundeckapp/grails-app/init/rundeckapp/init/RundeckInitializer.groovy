@@ -345,11 +345,24 @@ class RundeckInitializer {
         if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
-
+        if(destinationFile.name.contains("._")) return //skip partials here
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
+
+        //add partial templates to destination
+        File sourceDir = sourceTemplate.parentFile
+        int i = 1;
+        File partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
+        while (partial.exists()) {
+            DEBUG("Adding partial template: " + partial.name)
+            ByteArrayOutputStream out = new ByteArrayOutputStream()
+            expandTemplate(partial.newInputStream(),out,props)
+            destinationFile << out.toString()
+            i++;
+            partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
+        }
 
         if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             List<String> rundeckConfig = destinationFile.readLines()
