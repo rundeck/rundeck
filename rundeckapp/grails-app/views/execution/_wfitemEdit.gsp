@@ -564,7 +564,7 @@
                             <div class="col-sm-2 control-label"><g:message code="Workflow.step.script.execution.preview.label" /></div>
 
                             <div id='interpreterArgsQuotedHelp${rkey}_preview' class="col-sm-10 form-control-static">
-                                <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
+                                <code>$ <span data-bind="text: invocationPreviewHtml"></span></code>
                             </div>
 
                             <g:embedJSON id="scriptStepData_${rkey}" data="${[invocationString: item?.scriptInterpreter?:'',fileExtension: item?.fileExtension?:'',args: item?.argString?:'',argsQuoted: item?.interpreterArgsQuoted?true:false]}"/>
