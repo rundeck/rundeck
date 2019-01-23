@@ -137,41 +137,8 @@ class PluginController extends ControllerBase {
         }
     }
 
-    def listTest() {
-
-    }
-
     def listPlugins() {
-        String appDate = servletContext.getAttribute('version.date')
-        String appVer = servletContext.getAttribute('version.number')
-        def pluginList = pluginApiService.listPlugins()
-        def tersePluginList = pluginList.descriptions.collect {
-            String service = it.key
-            def providers = it.value.collect { provider ->
-                def meta = frameworkService.getRundeckFramework().getPluginManager().getPluginMetadata(service,provider.name)
-                boolean builtin = meta == null
-                String id = meta?.pluginId ?: provider.name.encodeAsSHA256().substring(0,12)
-                String ver = meta?.pluginFileVersion ?: appVer
-                String tgtHost = meta?.targetHostCompatibility ?: 'all'
-                String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
-                String dte = meta?.pluginDate ?: appDate
-                [id:id,
-                 name:provider.name,
-                 title:provider.title,
-                 description:provider.description,
-                 builtin:builtin,
-                 pluginVersion:ver,
-                 rundeckCompatibilityVersion: rdVer,
-                 targetHostCompatibility: tgtHost,
-                 pluginDate:toEpoch(dte),
-                 enabled:true]
-            }
-            [service: it.key,
-             desc: message(code:"framework.service.${service}.description".toString()),
-             providers: providers
-            ]
-        }
-        render(tersePluginList as JSON)
+        render(pluginApiService.listPlugins() as JSON)
     }
 
     /**
