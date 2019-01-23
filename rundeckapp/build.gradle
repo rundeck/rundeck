@@ -169,6 +169,7 @@ grails{
     plugins{
         compile project(':rundeck:metricsweb')
         compile project(':grails-persistlocale')
+        compile project(':grails-securityheaders')
         compile project(':rundeck:repository')
     }
 }
