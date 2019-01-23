@@ -126,7 +126,13 @@ jQuery(function(){
                               <!-- ko if: iconSrc -->
                               <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                               <!-- /ko -->
-                              <!-- ko if: !iconSrc() -->
+                              <!-- ko if: glyphicon -->
+                              <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                              <!-- /ko -->
+                              <!-- ko if: faicon -->
+                              <i data-bind="css: 'fas fa-'+faicon()"></i>
+                              <!-- /ko -->
+                              <!-- ko if: !iconSrc() && !glyphicon() && !faicon() -->
                               <i class="rdicon icon-small plugin"></i>
                               <!-- /ko -->
                               <!-- /ko -->

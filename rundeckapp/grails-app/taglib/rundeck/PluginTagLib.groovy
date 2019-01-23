@@ -25,7 +25,7 @@ class PluginTagLib {
     def static namespace = "stepplugin"
     def FrameworkService frameworkService
     def UiPluginService uiPluginService
-    static returnObjectForTags = ['messageText','pluginIconSrc']
+    static returnObjectForTags = ['messageText','pluginIconSrc','pluginProviderMeta']
 
     def display={attrs,body->
         def step=attrs.step
@@ -48,6 +48,9 @@ class PluginTagLib {
     def pluginIcon = { attrs, body ->
         def service = attrs.get('service')
         def name = attrs.get('name')
+        if(!service || !name){
+            throw new Exception("service and name attributes required")
+        }
         def iconSrc = pluginIconSrc(attrs, body)
         if (iconSrc) {
             attrs.src = iconSrc
@@ -85,6 +88,19 @@ class PluginTagLib {
                     action: 'pluginIcon',
                     params: [service: service, name: name]
             )
+        }
+        return null
+    }
+    def pluginProviderMeta = { attrs, body ->
+        def service = attrs.remove('service')
+        def name = attrs.remove('name')
+
+        if (!service || !name) {
+            return null
+        }
+        def profile = uiPluginService.getProfileFor(service, name)
+        if (profile.providerMetadata) {
+            return profile.providerMetadata
         }
         return null
     }
