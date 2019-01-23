@@ -16,6 +16,8 @@
 
 package rundeck
 
+import grails.test.mixin.Mock
+
 import static org.junit.Assert.*
 
 //import grails.test.GrailsUnitTestCase
@@ -29,6 +31,7 @@ import rundeck.services.ExecutionService
  * Time: 11:25 AM
  */
 @TestFor(Execution)
+@Mock([ ScheduledExecution])
 class ExecutionTest {
     void testValidateBasic() {
         Execution se = createBasicExecution()
@@ -578,5 +581,42 @@ class ExecutionTest {
         assertEquals(12, map.retryAttempt)
         assertEquals(exec1.id, map.retryExecutionId)
         assertEquals(true, map.willRetry)
+    }
+
+    void testToMapFullJob(){
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                )
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'userB',
+                project: 'AProject',
+                workflow: new Workflow(
+                        commands: [new CommandExec(
+                                adhocRemoteString: 'test buddy'
+                        )]
+                )
+        )
+        assertNotNull(exec.save())
+
+        def map = exec.toMap()
+        assertNotNull(map)
+        assertNotNull(map.fullJob)
+        map.fullJob == job.toMap()
+
+
     }
 }

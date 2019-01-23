@@ -189,6 +189,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
             map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
+        if(map.fullJob){
+            JobsXMLCodec.convertWorkflowMapForBuilder(map.fullJob.sequence)
+        }
         def xml = new MarkupBuilder(writer)
         builder.objToDom("executions", [execution: map], xml)
     }
