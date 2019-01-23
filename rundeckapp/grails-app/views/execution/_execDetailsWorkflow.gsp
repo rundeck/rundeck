@@ -248,6 +248,7 @@ jQuery(function(){
                          data="${workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy)}"/>
             <g:render template="/framework/renderPluginConfig"
                       model="[showPluginIcon: true,
+                              serviceName   : 'WorkflowStrategy',
                               type          : workflow?.strategy,
                               values        : workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy),
                               description   : strategyPlugins.find { it.name == workflow?.strategy }
@@ -269,6 +270,7 @@ jQuery(function(){
 
                         <g:render template="/framework/renderPluginConfig"
                                   model="[showPluginIcon: true,
+                                          serviceName   : 'LogFilter',
                                           type          : config.type,
                                           values        : config.config,
                                           description   : logFilterPlugins?.values()?.
