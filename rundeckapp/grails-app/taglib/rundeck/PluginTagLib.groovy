@@ -58,7 +58,7 @@ class PluginTagLib {
                 }
             }
             out << "/>"
-        } else {
+        } else if(service && name){
             def profile = uiPluginService.getProfileFor(service, name)
             if (profile.providerMetadata?.glyphicon) {
                 out << g.icon(name: profile.providerMetadata?.glyphicon)
