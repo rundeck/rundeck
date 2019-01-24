@@ -29,3 +29,4 @@ rundeck:
           config:
             includexcspheader: "false"
             includexwkcspheader: "false"
+            imgsrc: self blah
