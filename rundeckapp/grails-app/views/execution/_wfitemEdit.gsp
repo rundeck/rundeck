@@ -586,11 +586,16 @@
             <g:set var="serviceName" value="${isNodeStep ? 'WorkflowNodeStep' : 'WorkflowStep'}"/>
             <div>
                 <div>
-                    <span class="h4"><stepplugin:message
+                    <span class="h4"><stepplugin:pluginIcon
                             service="${serviceName}"
                             name="${newitemDescription.name}"
-                            code="plugin.title"
-                            default="${newitemDescription.title}"/></span>
+                            width="16px"
+                            height="16px"/>
+                        <stepplugin:message
+                                service="${serviceName}"
+                                name="${newitemDescription.name}"
+                                code="plugin.title"
+                                default="${newitemDescription.title}"/></span>
                     <span class="help-block">
                         <g:render template="/scheduledExecution/description"
                                   model="[description: stepplugin.messageText(
