@@ -51,9 +51,13 @@ class PluginTagLib {
         if(!service || !name){
             throw new Exception("service and name attributes required")
         }
-        def iconSrc = pluginIconSrc(attrs, body)
-        if (iconSrc) {
-            attrs.src = iconSrc
+        def profile = uiPluginService.getProfileFor(service, name)
+        if (profile.icon) {
+            attrs.src = createLink(
+                    controller: 'plugin',
+                    action: 'pluginIcon',
+                    params: [service: service, name: name]
+            )
             out << '<img '
             attrs.each { k, v ->
                 if (v) {
@@ -61,17 +65,14 @@ class PluginTagLib {
                 }
             }
             out << "/>"
-        } else if(service && name){
-            def profile = uiPluginService.getProfileFor(service, name)
-            if (profile.providerMetadata?.glyphicon) {
-                out << g.icon(name: profile.providerMetadata?.glyphicon)
-            }else if (profile.providerMetadata?.faicon) {
-                out << '<i class="'
-                out << enc(attr:'fas fa-'+profile.providerMetadata?.faicon)
-                out << '"></i>'
-            }else {
-                out << body()
-            }
+        } else if (profile.providerMetadata?.glyphicon) {
+            out << g.icon(name: profile.providerMetadata?.glyphicon)
+        } else if (profile.providerMetadata?.faicon) {
+            out << '<i class="'
+            out << enc(attr: 'fas fa-' + profile.providerMetadata?.faicon)
+            out << '"></i>'
+        } else {
+            out << body()
         }
     }
     def pluginIconSrc = { attrs, body ->
