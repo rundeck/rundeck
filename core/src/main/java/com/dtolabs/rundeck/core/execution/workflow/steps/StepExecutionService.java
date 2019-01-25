@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -51,8 +50,8 @@ public class StepExecutionService
                PluggableProviderService<StepExecutor>
 {
     public static final String SERVICE_NAME = ServiceNameConstants.WorkflowStep;
-    private final PluggableProviderService<StepExecutor>
-        pluginStepExecutionService;
+    private final PluggableProviderService<StepExecutor> stepPluginAdaptedStepExecutorService;
+    private final PluginStepExecutionService pluginStepExecutionService;
 
     private List<ProviderService<StepExecutor>>             serviceList;
     private PresetBaseProviderRegistryService<StepExecutor> builtinStepExecutionService;
@@ -69,24 +68,24 @@ public class StepExecutionService
         builtinStepExecutionService = new PresetBaseProviderRegistryService<>(presets, framework, false, SERVICE_NAME);
         dynamicRegistryService =
             new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
-        pluginStepExecutionService = new PluginStepExecutionService(SERVICE_NAME, framework)
-        .adapter(StepPluginAdapter.CONVERTER);
+        pluginStepExecutionService = new PluginStepExecutionService(SERVICE_NAME, framework);
+        stepPluginAdaptedStepExecutorService = getPluginStepExecutionService().adapter(StepPluginAdapter.CONVERTER);
 
         serviceList.add(builtinStepExecutionService);
         serviceList.add(dynamicRegistryService);
-        serviceList.add(pluginStepExecutionService);
+        serviceList.add(stepPluginAdaptedStepExecutorService);
     }
 
     @Override
     public boolean canLoadWithLoader(final ProviderLoader loader) {
-        return pluginStepExecutionService.canLoadWithLoader(loader);
+        return stepPluginAdaptedStepExecutorService.canLoadWithLoader(loader);
     }
 
     @Override
     public StepExecutor loadWithLoader(final String providerName, final ProviderLoader loader)
         throws ProviderLoaderException
     {
-        return pluginStepExecutionService.loadWithLoader(providerName,loader);
+        return stepPluginAdaptedStepExecutorService.loadWithLoader(providerName, loader);
     }
 
     @Override
@@ -94,7 +93,7 @@ public class StepExecutionService
         final String providerName, final ProviderLoader loader
     ) throws ProviderLoaderException
     {
-        return pluginStepExecutionService.loadCloseableWithLoader(providerName,loader);
+        return stepPluginAdaptedStepExecutorService.loadCloseableWithLoader(providerName, loader);
     }
 
     @Override
@@ -138,5 +137,9 @@ public class StepExecutionService
      */
     public ProviderRegistryService<StepExecutor> getProviderRegistryService() {
         return dynamicRegistryService;
+    }
+
+    public PluginStepExecutionService getPluginStepExecutionService() {
+        return pluginStepExecutionService;
     }
 }

@@ -134,11 +134,11 @@ public class ServiceSupport implements IFrameworkServices {
         return getNodeExecutorService().getProviderForNodeAndProject(node, project);
     }
     @Override
-    public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
+    public NodeExecutorService getNodeExecutorService() {
         return NodeExecutorService.getInstanceForFramework(getFramework());
     }
     @Override
-    public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+    public NodeStepExecutionService getNodeStepExecutorService() {
         return NodeStepExecutionService.getInstanceForFramework(getFramework());
     }
     @Override
