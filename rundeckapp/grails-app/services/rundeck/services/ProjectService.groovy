@@ -190,7 +190,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
         if(map.fullJob){
-            JobsXMLCodec.convertWorkflowMapForBuilder(map.fullJob.sequence)
+            map.fullJob = JobsXMLCodec.convertJobMap(map.fullJob)
         }
         def xml = new MarkupBuilder(writer)
         builder.objToDom("executions", [execution: map], xml)
