@@ -348,10 +348,7 @@ function Option(data) {
                 arr.push(new OptionVal({label: val, value: val}));
             });
         } else if (self.hasPluginValues()) {
-            console.log(pluginvalues)
             ko.utils.arrayForEach(pluginvalues, function (val) {
-                console.log(val.name)
-                console.log(val.value)
                 arr.push(new OptionVal({label: val.name, value: val.value}));
             });
         }

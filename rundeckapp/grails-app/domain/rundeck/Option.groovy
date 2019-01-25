@@ -258,7 +258,6 @@ public class Option implements Comparable{
         }else{
             opt.secureExposed=false
         }
-        println "optionValuesPluginType: ${data.optionValuesPluginType}"
         if(data.optionValuesPluginType) {
             opt.optionValuesPluginType = data.optionValuesPluginType
         }
