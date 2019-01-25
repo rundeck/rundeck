@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 
 /**
@@ -250,6 +251,15 @@ public class PropertyResolverFactory {
         return createResolver(instanceRetriever(instanceProperties), null, null);
     }
 
+    /**
+     * @param instanceProperties properties
+     * @return Create a PropertyResolver for a plugin for resolving only instance scoped properties.
+     */
+    public static PropertyResolver createInstanceResolver(final Properties instanceProperties) {
+
+        return createResolver(instanceRetriever(instanceProperties), null, null);
+    }
+
     private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, IFramework framework) {
         return prefixedRetriever(frameworkPrefix, framework.getPropertyRetriever());
     }
@@ -274,6 +284,22 @@ public class PropertyResolverFactory {
     /**
      * @return Create a basic retriever
      * @param configuration from a Map of values
+     */
+    public static PropertyRetriever instanceRetriever(final Properties configuration) {
+        return new MapPropertyRetriever(toMap(configuration));
+    }
+
+    private static Map<String, ?> toMap(final Properties configuration) {
+        Map<String, String> propsMap = new HashMap<>();
+        for (String key : configuration.stringPropertyNames()) {
+            propsMap.put(key, configuration.getProperty(key));
+        }
+        return propsMap;
+    }
+
+    /**
+     * @param configuration from a Map of values
+     * @return Create a basic retriever
      */
     public static PropertyRetriever instanceRetriever(final Map<String, ?> configuration) {
         return new MapPropertyRetriever(configuration);

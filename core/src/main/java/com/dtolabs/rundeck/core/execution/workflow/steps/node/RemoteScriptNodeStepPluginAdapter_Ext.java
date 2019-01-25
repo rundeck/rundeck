@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,19 @@
  * limitations under the License.
  */
 
-/*
-* RemoteScriptNodeStepPluginAdapter.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 11/19/12 6:09 PM
-* 
-*/
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
-import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.utils.Converter;
-import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.step.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
@@ -45,18 +34,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-
 /**
- * RemoteScriptNodeStepPluginAdapter is a NodeStepExecutor that makes use of a RemoteScriptNodeStepPlugin to provide the
- * remote script to execute.
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @deprecated use {@link RemoteScriptNodeStepPluginAdapter_Ext}
+ * Adapts a RemoteScriptNodeStepPlugin into a NodeStepPlugin
  */
-@Deprecated()
-class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable {
+public class RemoteScriptNodeStepPluginAdapter_Ext
+        implements NodeStepPlugin, Configurable, Describable
+{
 
     private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
+
     @Override
     public Description getDescription() {
         if (plugin instanceof Describable) {
@@ -69,7 +55,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
     private RemoteScriptNodeStepPlugin plugin;
 
-    public RemoteScriptNodeStepPluginAdapter(final RemoteScriptNodeStepPlugin plugin) {
+    public RemoteScriptNodeStepPluginAdapter_Ext(final RemoteScriptNodeStepPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -81,90 +67,90 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         this.scriptUtils = scriptUtils;
     }
 
-    static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
+    static class NodeStepPluginConverter
+            implements Converter<RemoteScriptNodeStepPlugin, NodeStepPlugin>
+    {
         @Override
-        public NodeStepExecutor convert(final RemoteScriptNodeStepPlugin plugin) {
-            return new RemoteScriptNodeStepPluginAdapter(plugin);
+        public NodeStepPlugin convert(final RemoteScriptNodeStepPlugin plugin) {
+            return new RemoteScriptNodeStepPluginAdapter_Ext(plugin);
         }
     }
 
-    public static final Convert CONVERTER = new Convert();
-
-
+    //    public static final Convert CONVERTER = new Convert();
+    public static final RemoteScriptNodeStepPluginAdapter_Ext.NodeStepPluginConverter
+            CONVERT_TO_NODE_STEP_PLUGIN = new RemoteScriptNodeStepPluginAdapter_Ext.NodeStepPluginConverter();
 
     @Override
-    public NodeStepResult executeNodeStep(final StepExecutionContext context,
-                                          final NodeStepExecutionItem item,
-                                          final INodeEntry node)
-        throws NodeStepException {
+    public void configure(final Properties configuration) throws ConfigurationException {
 
-        Map<String, Object> instanceConfiguration = getStepConfiguration(item);
-        if (null != instanceConfiguration) {
-            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
-                    instanceConfiguration,
-                    ContextView.node(node.getNodename()),
-                    ContextView::nodeStep,
-                    null,
-                    context.getSharedDataContext(),
-                    false,
-                    false
-            );
-        }
-        final String providerName = item.getNodeStepType();
-        final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
-                                                                                                  instanceConfiguration,
-                                                                                                  ServiceNameConstants.RemoteScriptNodeStep,
-                                                                                                  providerName
-        );
-        final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
-        Description description = getDescription();
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
+        final Map<String, Object>
+                config =
+                PluginAdapterUtility.configureProperties(
+                        PropertyResolverFactory.createInstanceResolver(configuration),
+                        getDescription(),
+                        plugin,
+                        PropertyScope.InstanceOnly
+                );
+    }
+
+    @Override
+    public void executeNodeStep(
+            final PluginStepContext pluginContext, final Map<String, Object> config, final INodeEntry node
+    ) throws NodeStepException
+    {
         final GeneratedScript script;
         try {
             script = plugin.generateScript(pluginContext, config, node);
         } catch (RuntimeException e) {
-            return new NodeStepResultImpl(e, StepFailureReason.PluginFailed, e.getMessage(), node);
+            throw new NodeStepException(e.getMessage(), StepFailureReason.PluginFailed, node.getNodename());
         }
 
         //get all plugin config properties, and add to the data context used when executing the remote script
-        final Map<String, Object> allconfig = PluginAdapterUtility.mapDescribedProperties(resolver, description);
         final Map<String, String> stringconfig = new HashMap<>();
-        for (final Map.Entry<String, Object> objectEntry : allconfig.entrySet()) {
+        for (final Map.Entry<String, Object> objectEntry : config.entrySet()) {
             stringconfig.put(objectEntry.getKey(), objectEntry.getValue().toString());
         }
 
-        ExecutionContextImpl newContext = ExecutionContextImpl
-                .builder(context)
-                .setContext("config", stringconfig)
-                .build();
-
-        if(plugin.hasAdditionalConfigVarGroupName()){
+        ExecutionContextImpl.Builder builder = ExecutionContextImpl
+                .builder(pluginContext.getExecutionContext())
+                .setContext("config", stringconfig);
+        if (plugin.hasAdditionalConfigVarGroupName()) {
             //new context variable name
-            newContext = ExecutionContextImpl
-                    .builder(context)
-                    .setContext("config", stringconfig)
-                    .setContext("nodestep", stringconfig)
-                    .build();
+            builder.setContext("nodestep", stringconfig);
         }
+        ExecutionContextImpl newContext = builder.build();
 
 
-        return executeRemoteScript(
+        NodeStepResult nodeStepResult = executeRemoteScript(
                 newContext,
                 node,
                 script,
-                context.getDataContextObject().resolve("job", "execid"),
-                providerName
+                pluginContext.getExecutionContext().getDataContextObject().resolve("job", "execid"),
+                getDescription().getName(), scriptUtils
         );
+        if (!nodeStepResult.isSuccess()) {
+            throw new NodeStepException(
+                    nodeStepResult.getFailureMessage() != null
+                    ? nodeStepResult.getFailureMessage()
+                    : "Remote script execution failed",
+                    nodeStepResult.getFailureReason(),
+                    nodeStepResult.getFailureData(),
+                    node.getNodename()
+            );
+        }
+
     }
 
-    public NodeStepResult executeRemoteScript(
+    public static NodeStepResult executeRemoteScript(
             final StepExecutionContext context,
             final INodeEntry node,
             final GeneratedScript script,
             String ident,
-            String providerName
+            String providerName,
+            final ScriptFileNodeStepUtils scriptUtils
     )
-        throws NodeStepException {
+            throws NodeStepException
+    {
         final ExecutionService executionService = context.getFramework().getExecutionService();
         boolean expandTokens = true;
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
@@ -188,7 +174,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     node,
                     context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
                     context.getFramework(),
-                    providerName+"-script",
+                    providerName + "-script",
                     getFileExtension(script),
                     ident
             );
@@ -226,15 +212,17 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     expandTokens
             );
         } else {
-            return new NodeStepResultImpl(null,
-                                          StepFailureReason.ConfigurationFailure,
-                                          "Generated script must have a command or script defined",
-                                          node);
+            return new NodeStepResultImpl(
+                    null,
+                    StepFailureReason.ConfigurationFailure,
+                    "Generated script must have a command or script defined",
+                    node
+            );
         }
     }
 
     private static String getFileExtension(final GeneratedScript script) {
-        if(script instanceof FileExtensionGeneratedScript){
+        if (script instanceof FileExtensionGeneratedScript) {
             return ((FileExtensionGeneratedScript) script).getFileExtension();
         }
         return null;
@@ -247,5 +235,4 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             return null;
         }
     }
-
 }
