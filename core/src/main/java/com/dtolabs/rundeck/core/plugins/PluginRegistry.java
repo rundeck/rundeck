@@ -30,7 +30,30 @@ import java.util.Map;
  */
 public interface PluginRegistry {
 
+    /**
+     * Create PluggableProviderService for plugin type that doesn't require Framework
+     * @param type
+     * @param <T>
+     * @return
+     */
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type);
+
+    /**
+     * Test if a type requires framework argument for plugin provider service
+     * @param type type
+     * @param <T> type
+     * @return true if the plugin type is a core framework plugin type
+     */
+    public <T> boolean isFrameworkDependentPluginType(Class<T> type);
+
+    /**
+     * get a PluggablePRoviderService for a core plugin type that requires Framework
+     * @param type
+     * @param framework
+     * @param <T>
+     * @return
+     */
+    public <T> PluggableProviderService<T> getFrameworkDependentPluggableService(Class<T> type, Framework framework);
 
     /**
      * Create and configure a plugin instance with the given bean or provider name

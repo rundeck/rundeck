@@ -144,6 +144,12 @@ class PluginService {
     }
 
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
+        if (rundeckPluginRegistry.isFrameworkDependentPluginType(type)) {
+            return rundeckPluginRegistry.getFrameworkDependentPluggableService(
+                    type,
+                    (Framework) frameworkService.rundeckFramework
+            )
+        }
         rundeckPluginRegistry?.createPluggableService(type)
     }
 
