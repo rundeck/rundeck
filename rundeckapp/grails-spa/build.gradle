@@ -9,9 +9,9 @@ configurations{
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
-    inputs.dir 'build'
-    inputs.dir 'config'
-    inputs.dir 'src'
+    workingDir = file("${project.projectDir}")
+
+    inputs.dir 'packages'
 
     outputs.dir(buildDir)
     args = ['run', 'build']
