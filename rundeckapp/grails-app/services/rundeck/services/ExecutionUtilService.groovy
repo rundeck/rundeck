@@ -69,9 +69,11 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-        //creating xml file
-        String parentFolder = loghandler.filepath.getParent()
-        getExecutionXmlFileForExecution(execMap.execution, parentFolder)
+        if(execMap instanceof Execution){
+            //creating xml file
+            String parentFolder = loghandler.filepath.getParent()
+            getExecutionXmlFileForExecution(execMap.execution, parentFolder)
+        }
         try {
             WorkflowExecutionResult object = thread.resultObject
             if (!thread.isSuccessful()) {
