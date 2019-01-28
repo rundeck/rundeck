@@ -49,7 +49,6 @@
 
 </head>
 <body>
-
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>
@@ -63,7 +62,7 @@
                 <div class="card-header">
                   <h2 class="card-title">
                     <g:message code="app.firstRun.title" args="${[g.appTitle(),grailsApplication.metadata['build.ident']]}"/>
-                  </h2>                  
+                  </h2>
                 </div>
                   <div class="card-content">
                     <g:markdown><g:autoLink>${message(code: "app.firstRun.md")}</g:autoLink></g:markdown>
@@ -350,5 +349,8 @@
     </div>
   </div>
 </div>
+<!-- VUE JS MODULES -->
+<asset:javascript src="static/components/version-notification.js"/>
+<!-- /VUE JS MODULES -->
 </body>
 </html>
