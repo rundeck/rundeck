@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+Jobs should fail due to missing project
+-->
+<joblist>
+  <job>
+    <name>Invalid Job</name>
+    <description>Loading this job should not succeed</description>
+    <additional/>
+    <loglevel>INFO</loglevel>
+    <group>test</group>
+    
+    <sequence threadcount="1" keepgoing="false" strategy="node-first">
+      <command>
+        <exec>uptime</exec>
+      </command>
+    </sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+  </job>
+</joblist>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<joblist> 
+  <job> 
+    <uuid>1</uuid>
+    <name>simple exec test</name>  
+    <description>Exec the uptime command</description>  
+    <additional/>  
+    <loglevel>INFO</loglevel>  
+    <group>test</group>  
+    <context> 
+      <project>test</project> 
+    </context>  
+    <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
+      <command> 
+        <exec>uptime</exec> 
+      </command> 
+    </sequence>  
+    <dispatch> 
+      <threadcount>1</threadcount>  
+      <keepgoing>false</keepgoing> 
+    </dispatch> 
+  </job>  
+  <job> 
+    <id>3</id>  
+    <name>simple file test</name>  
+    <description>Run script file from path to exec uptime command</description>  
+    <additional/>  
+    <loglevel>INFO</loglevel>  
+    <group>test</group>  
+    <context> 
+      <project>test</project> 
+    </context>  
+    <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
+      <command> 
+        <scriptfile>@DIRNAME@/uptime.sh</scriptfile> 
+      </command> 
+    </sequence>  
+    <dispatch> 
+      <threadcount>1</threadcount>  
+      <keepgoing>false</keepgoing> 
+    </dispatch> 
+  </job>  
+  <job> 
+    <id>4</id>  
+    <name>simple job test</name>  
+    <description>run the simple exec test job</description>  
+    <additional/>  
+    <loglevel>INFO</loglevel>  
+    <group>test</group>  
+    <context> 
+      <project>test</project> 
+    </context>  
+    <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
+      <command> 
+        <jobref name="simple exec test" group="test"/> 
+      </command> 
+    </sequence>  
+    <dispatch> 
+      <threadcount>1</threadcount>  
+      <keepgoing>false</keepgoing> 
+    </dispatch> 
+  </job>  
+  <job> 
+    <id>2</id>  
+    <name>simple script test</name>  
+    <description>Bash script uptime</description>  
+    <additional/>  
+    <loglevel>INFO</loglevel>  
+    <group>test</group>  
+    <context> 
+      <project>test</project> 
+    </context>  
+    <sequence threadcount="1" keepgoing="false" strategy="node-first"> 
+      <command> 
+        <script><![CDATA[#!/bin/bash
+
+uptime]]></script> 
+      </command> 
+    </sequence>  
+    <dispatch> 
+      <threadcount>1</threadcount>  
+      <keepgoing>false</keepgoing> 
+    </dispatch> 
+  </job> 
+</joblist>

@@ -1,0 +1,45 @@
+- project: test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - exec: uptime
+  description: Exec the uptime command
+  name: simple exec test yaml
+  group: test
+- project: test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - scriptfile: '@DIRNAME@/uptime.sh'
+  description: Run script file from path to exec uptime command
+  name: simple file test yaml
+  group: test
+- project: test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - jobref:
+        group: test
+        name: simple exec test yaml
+  description: run the simple exec test job
+  name: simple job test yaml
+  group: test
+- project: test
+  loglevel: INFO
+  sequence:
+    keepgoing: false
+    strategy: node-first
+    commands:
+    - script: '#!/bin/bash
+
+
+        uptime'
+  description: Bash script uptime
+  name: simple script test yaml
+  group: test
