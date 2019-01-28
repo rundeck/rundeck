@@ -24,8 +24,9 @@ module.exports = {
   entry: {
     'components/motd': './src/components/motd/main.js',
     'components/tour': './src/components/tour/main.js',
+    'components/version-notification': './src/components/version-notification/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
-    'pages/repository': './src/pages/repository/main.js',
+    'pages/repository': './src/pages/repository/main.js'
   },
   output: {
     path: `config.build.assetsRoot/[path]`,
