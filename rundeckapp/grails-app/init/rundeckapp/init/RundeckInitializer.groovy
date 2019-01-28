@@ -54,6 +54,8 @@ class RundeckInitializer {
     public static final String SPRING_BOOT_ENABLE_SSL_PROP = "server.ssl.enabled"
     private static final String LINESEP = System.getProperty("line.separator");
 
+    private static final String WAR_BASE = "WEB-INF/classes"
+
     private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
 
     private File basedir;
@@ -296,12 +298,22 @@ class RundeckInitializer {
             //This is probably a jboss based server
             def vfsFile = location.getContent()
             vfsDirectoryDetected = true
-            if(location.toString().endsWith("WEB-INF/classes")) {
+            if(location.toString().endsWith(WAR_BASE)) {
                 return vfsFile.getPhysicalFile()
             }
         }
 
         try {
+            if(Environment.isWarDeployed()) {
+                String sloc = location.toString()
+                if(sloc.endsWith(".class") && sloc.contains(WAR_BASE)) {
+                    //An unusual case where the location returned by the protection domain code source did not give us a usable location.
+                    //Seen in Tomcat 7 on Centos 7
+                    String webinfclassesdir = sloc.substring(5,sloc.indexOf(WAR_BASE)+WAR_BASE.length())
+                    return new File(webinfclassesdir)
+                }
+            }
+
             return new File(location.toURI());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
