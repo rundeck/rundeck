@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -30,12 +31,17 @@ import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import groovy.transform.ToString
+import groovy.xml.MarkupBuilder
 import rundeck.CommandExec
+import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ExecutionLogWriter
+
+import java.text.SimpleDateFormat
 
 import static org.apache.tools.ant.util.StringUtils.getStackTrace
 
@@ -63,7 +69,9 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-
+        //creating xml file
+        String parentFolder = loghandler.filepath.getParent()
+        getExecutionXmlFileForExecution(execMap.execution, parentFolder)
         try {
             WorkflowExecutionResult object = thread.resultObject
             if (!thread.isSuccessful()) {
@@ -313,6 +321,40 @@ class ExecutionUtilService {
 
     public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
         new SimplePluginConfiguration(ServiceNameConstants.LogFilter, name, pluginconfig)
+    }
+
+
+    def getExecutionXmlFileForExecution(Execution execution, String path) {
+        File executionXmlfile = new File(path, "execution-${execution.id}.xml")
+        executionXmlfile.withWriter("UTF-8") { Writer writer ->
+            exportExecutionXml(
+                    execution,
+                    writer,
+                    "output-${execution.id}.rdlog"
+            )
+        }
+    }
+
+    def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        def dateConvert = {
+            sdf.format(it)
+        }
+        BuilderUtil builder = new BuilderUtil()
+        builder.converters = [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
+        def map = exec.toMap()
+        BuilderUtil.makeAttribute(map, 'id')
+        if (logfilepath) {
+            //change entry to point to local file
+            map.outputfilepath = logfilepath
+        }
+        JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
+        if(map.fullJob){
+            map.fullJob = JobsXMLCodec.convertJobMap(map.fullJob)
+        }
+        def xml = new MarkupBuilder(writer)
+        builder.objToDom("executions", [execution: map], xml)
     }
 
 }

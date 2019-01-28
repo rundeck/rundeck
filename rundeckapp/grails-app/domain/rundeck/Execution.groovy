@@ -256,6 +256,7 @@ class Execution extends ExecutionContext {
         def map=[:]
         if(scheduledExecution){
             map.jobId=scheduledExecution.extid
+            map.fullJob=scheduledExecution.toMap()
         }
         map.dateStarted=dateStarted
         map.dateCompleted=dateCompleted
