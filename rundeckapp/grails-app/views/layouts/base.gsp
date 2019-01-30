@@ -168,7 +168,8 @@
         language: '${response.locale?.toString() ?: request.locale?.toString()}',
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
-        activeTourStep: '${session.filterPref?.activeTourStep}'
+        activeTourStep: '${session.filterPref?.activeTourStep}',
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
       }
     </script>
     <asset:javascript src="static/components/central.js"/>
