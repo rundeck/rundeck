@@ -1,7 +1,7 @@
-RDECK_BASE=/tmp/waka
+RDECK_BASE=/home/rundeck
 export RDECK_BASE
 
-JAVA_HOME=/home/greg/.sdkman/candidates/java/8.0.172-zulu/jre
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
 export JAVA_HOME
 
 PATH=$JAVA_HOME/bin:$RDECK_BASE/tools/bin:$PATH
