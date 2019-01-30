@@ -441,4 +441,29 @@ class UserControllerSpec extends Specification{
 
     }
 
+    def "get user roles json 30 response ok"(){
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getRoles()>>["admin","user"]
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireVersion(_,_,30) >> true
+            0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+        }
+        when:
+        request.api_version=30
+        request.method='GET'
+        request.format='json'
+        controller.apiListRoles()
+
+        then:
+        response.status==200
+    }
+
 }
