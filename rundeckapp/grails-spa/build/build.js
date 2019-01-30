@@ -1,6 +1,8 @@
 'use strict'
 require('./check-versions')()
 
+console.log('foo')
+
 const ora = require('ora')
 const rm = require('rimraf')
 const path = require('path')
