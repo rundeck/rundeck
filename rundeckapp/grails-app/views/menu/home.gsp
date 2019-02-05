@@ -58,10 +58,6 @@
 
 </head>
 <body>
-    <div id="version-notification-vue">
-      HELLO
-    </div>
-
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>

@@ -1,53 +1,46 @@
 <template>
-  <div class="container-fluid" v-show="showVersionNotification">
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="alert alert-danger">
-          <div class="row">
-            <div class="col-xs-12 col-sm-1">
-              <span>
-                <i class="fas fa-exclamation-circle fa-5x"></i>
-              </span>
-            </div>
-            <div class="col-xs-12 col-sm-10 notification-text">
-              <h3>There is a newer version of Rundeck available.</h3>
-              <p>Your version of Rundeck ({{installedVersion.stringVersion}}) is older than the current version ({{currentReleaseVersion.stringVersion}}).</p>
-
-              <a
-                href="https://docs.rundeck.com/downloads.html"
-                class="btn btn-default btn-white"
-              >Please update here</a>
-            </div>
-            <div class="col-xs-12 col-sm-1">
-              <button @click="dismissModal" type="button" class="close">
-                <i class="fas fa-times-circle"></i>
-              </button>
-            </div>
-          </div>
-          <!-- <button type="button" class="close">
-            <i class="fas fa-times-circle"></i>
-          </button>-->
-          <!-- <span class="icon" data-notify="icon">
-            <i class="fas fa-exclamation-circle fa-2x"></i>
-          </span>-->
-          <!-- <span class="message">
-            <h3>There is a newer version of Rundeck available.</h3>
-            Your version of Rundeck ({{installedVersion.stringVersion}}) is older than the current version ({{currentReleaseVersion.stringVersion}}).
-            <a
-              href="https://www.rundeck.com/"
-              class="btn btn-default btn-block"
-            >Please update here</a>.
-          </span>-->
-        </div>
-      </div>
-      <modal v-model="showVersionNotificationDismissModal" title="Dismiss Notification" ref="modal">
-        <div>Dismiss the update availablity notification until the next release?</div>
-        <div slot="footer">
-          <btn @click="hideNotificationForThisVersion">Dismiss</btn>
-          <btn class="pull-right" @click="showVersionNotificationDismissModal=false">Close</btn>
-        </div>
-      </modal>
+  <div
+    @click="showNotificationModal=true"
+    class="version-notification-container"
+    v-show="showVersionNotification"
+  >
+    <div>
+      <i class="fas fa-exclamation-circle"></i>
+      <span style="margin-left:5px">{{ $t("message.sidebarNotificationText")}}</span>
     </div>
+    <modal
+      v-model="showNotificationModal"
+      :title="$t('message.updateAvailable')"
+      append-to-body
+      ref="modal"
+    >
+      <div>
+        <p>{{$t("message.updateHasBeenReleased")}}</p>
+        <p>
+          {{$t("message.installedVersion")}}
+          <strong>{{installedVersion.stringVersion}}</strong>.
+        </p>
+        <p>
+          {{$t("message.currentVersion")}}
+          <strong>{{currentReleaseVersion.stringVersion}}</strong>.
+        </p>
+        <p>This version was released {{currentReleaseVersion.releaseDate | moment("M/D/YYYY")}}.</p>
+        <a
+          href="https://docs.rundeck.com/downloads.html"
+          style="margin-bottom:1em;"
+          class="btn btn-default btn-block btn-success btn-fill"
+        >{{$t("message.getUpdate")}}</a>
+        <p>
+          <a
+            style="cursor:pointer;"
+            @click="hideNotificationForThisVersion"
+          >{{$t("message.dismissMessage")}}</a>
+        </p>
+      </div>
+      <div slot="footer">
+        <btn @click="showNotificationModal=false">{{$t("message.close")}}</btn>
+      </div>
+    </modal>
   </div>
 </template>
 
@@ -58,9 +51,6 @@ import Trellis, {
   getSynchronizerToken,
   RundeckBrowser
 } from "@rundeck/ui-trellis";
-import { setTimeout } from "timers";
-
-console.log("Trellis", Trellis);
 
 // import motd from '@/components/motd/motd'
 
@@ -72,32 +62,29 @@ export default {
   data() {
     return {
       RundeckContext: null,
-      showVersionNotificationDismissModal: false,
+      showNotificationModal: false,
       installedVersion: {
         stringVersion: "",
         major: null,
         minor: null,
-        build: null
+        patch: null
       },
       currentReleaseVersion: {
         stringVersion: "",
         major: null,
         minor: null,
-        build: null
+        patch: null
       },
       showVersionNotification: false
     };
   },
   methods: {
-    dismissModal() {
-      this.showVersionNotificationDismissModal = true;
-    },
     hideNotificationForThisVersion() {
       Trellis.FilterPrefs.setFilterPref(
         "hideVersionUpdateNotification",
         this.currentReleaseVersion.stringVersion
       ).then(() => {
-        this.showVersionNotificationDismissModal = false;
+        this.showNotificationModal = false;
         this.showVersionNotification = false;
       });
     }
@@ -105,77 +92,69 @@ export default {
   mounted() {
     this.RundeckContext = getRundeckContext();
 
-    this.RundeckContext.rundeckClient.userProfileGet().then(response => {
-      console.log("this is the user", response);
-    });
-
-    this.RundeckContext.rundeckClient.systemInfoGet().then(response => {
-      console.log("response", response);
-      this.installedVersion = returnVersionInformation(
-        response.system.rundeckProperty.version
-      );
-
-      // TODO
-      // Make this real
-      // Fake a get to API.Rundeck.com
-      this.currentReleaseVersion = {
-        stringVersion: "3.0.18-SNAPSHOT",
-        major: 3,
-        minor: 0,
-        build: 18
-      };
-      // Big If/Else checks are terrible
-      // Exlaining this one
-      // IF filterPrefs('hideVersionUpdateNotication') has been set, check that against the version that's most recent coming from the API
-      // IF it matches, do nothing, move on. Done.
-      if (
-        window._rundeck.hideVersionUpdateNotification &&
-        window._rundeck.hideVersionUpdateNotification ===
-          this.currentReleaseVersion.stringVersion
-      ) {
-        return;
-      } else {
-        // ELSE let's check to see if we have a match between local and current
-        // IF that matches, do nothing
+    axios({
+      method: "get",
+      url: `https://api.rundeck.com/spark/v1/release`
+    }).then(
+      response => {
+        if (response.data && response.data[0])
+          this.currentReleaseVersion = {
+            stringVersion: response.data[0].name,
+            major: response.data[0].version.major,
+            minor: response.data[0].version.minor,
+            patch: response.data[0].version.patch,
+            releaseDate: response.data[0].version.date
+          };
         if (
-          this.currentReleaseVersion.stringVersion ===
-          this.installedVersion.stringVersion
+          window._rundeck.hideVersionUpdateNotification &&
+          window._rundeck.hideVersionUpdateNotification ===
+            this.currentReleaseVersion.stringVersion
         ) {
           return;
         } else {
-          // CHECK against the major release int, is current bigger than installed?
-          if (this.currentReleaseVersion.major > this.installedVersion.major) {
-            this.showVersionNotification = true;
-          } else {
-            // CHECK against the minor release int, is current bigger than installed?
+          this.RundeckContext.rundeckClient.systemInfoGet().then(response => {
+            this.installedVersion = returnVersionInformation(
+              response.system.rundeckProperty.version
+            );
+            // Big If/Else checks are terrible
+            // Exlaining this one
+            // Let's check to see if we have a match between local and current
+            // IF that matches, do nothing
             if (
-              this.currentReleaseVersion.minor > this.installedVersion.minor
+              this.currentReleaseVersion.stringVersion ===
+              this.installedVersion.stringVersion
             ) {
-              this.showVersionNotification = true;
+              return;
             } else {
-              // CHECK against the build release int, is current bigger than installed?
+              // CHECK against the major release int, is current bigger than installed?
               if (
-                this.currentReleaseVersion.build > this.installedVersion.build
+                this.currentReleaseVersion.major > this.installedVersion.major
               ) {
                 this.showVersionNotification = true;
+              } else {
+                // CHECK against the minor release int, is current bigger than installed?
+                if (
+                  this.currentReleaseVersion.minor > this.installedVersion.minor
+                ) {
+                  this.showVersionNotification = true;
+                } else {
+                  // CHECK against the patch release int, is current bigger than installed?
+                  if (
+                    this.currentReleaseVersion.patch >
+                    this.installedVersion.patch
+                  ) {
+                    this.showVersionNotification = true;
+                  }
+                }
               }
             }
-          }
+          });
         }
+      },
+      error => {
+        console.log("axios error", error);
       }
-    });
-
-    // axios({
-    //   method: "get",
-    //   url: `https://api-stage.rundeck.com/spark/v1/release`
-    // }).then(
-    //   response => {
-    //     console.log(" axios response", response);
-    //   },
-    //   error => {
-    //     console.log("axios error", error);
-    //   }
-    // );
+    );
   }
 };
 
@@ -187,28 +166,24 @@ function returnVersionInformation(versionString) {
   returnObj.stringVersion = seperatedVersionNumber[0];
   returnObj.major = parseInt(splitVersionSchema[0]);
   returnObj.minor = parseInt(splitVersionSchema[1]);
-  returnObj.build = parseInt(splitVersionSchema[2]);
+  returnObj.patch = parseInt(splitVersionSchema[2]);
 
   return returnObj;
 }
 </script>
 
 <style lang="scss" scoped>
-.alert.alert-danger {
+.version-notification-container {
   color: white !important;
-  .notification-text {
-    h3 {
-      margin: 0;
-    }
-    .btn-white {
-      color: white;
-      border-color: white;
-      &:hover,
-      &:active {
-        background-color: white;
-        color: #ff8f5e;
-      }
-    }
-  }
+  background-color: #3c3c3c;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  padding: 10px 0 10px 20px;
+  text-align: left;
+  cursor: pointer;
+}
+.modal-footer .btn {
+  padding-bottom: 5px;
 }
 </style>
+
