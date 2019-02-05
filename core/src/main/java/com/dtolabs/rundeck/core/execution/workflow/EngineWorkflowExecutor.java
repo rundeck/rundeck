@@ -18,7 +18,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 
 /**
@@ -94,11 +95,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_CONTROL_SKIP_KEY = "step.#.skip";
     public static final String STEP_CONTROL_START = "start";
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
-    private WorkflowSystemBuilder workflowSystemBuilder;
+    private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
 
     public EngineWorkflowExecutor(final Framework framework) {
         super(framework);
-        this.workflowSystemBuilder = Workflows.builder();
+        this.setWorkflowSystemBuilderSupplier(Workflows::builder);
     }
 
     public static String stepKey(final String key, final Object stepNum) {
@@ -125,12 +126,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
     }
 
-    public WorkflowSystemBuilder getWorkflowSystemBuilder() {
-        return workflowSystemBuilder;
+
+    public Supplier<WorkflowSystemBuilder> getWorkflowSystemBuilderSupplier() {
+        return workflowSystemBuilderSupplier;
     }
 
-    public void setWorkflowSystemBuilder(WorkflowSystemBuilder workflowSystemBuilder) {
-        this.workflowSystemBuilder = workflowSystemBuilder;
+    public void setWorkflowSystemBuilderSupplier(Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier) {
+        this.workflowSystemBuilderSupplier = workflowSystemBuilderSupplier;
     }
 
 
@@ -183,7 +185,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         final WFSharedContext sharedContext = WFSharedContext.withBase(executionContext.getSharedDataContext());
         WorkflowStrategy strategyForWorkflow;
         try {
-            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy);
+            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy, getFramework());
         } catch (ExecutionServiceException e) {
             executionContext.getExecutionListener().log(
                     Constants.ERR_LEVEL,
@@ -214,7 +216,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
 
         Set<StepOperation> operations
-                = buildOperations(executionContext, item, workflow, wlistener, ruleEngine, state, profile);
+                = buildOperations(this, executionContext, item, workflow, wlistener, ruleEngine, state, profile);
 
         executionContext.getExecutionListener().log(
                 Constants.DEBUG_LEVEL,
@@ -229,7 +231,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 executionContext,
                 state,
                 ruleEngine,
-                strategyForWorkflow.getThreadCount()
+                strategyForWorkflow.getThreadCount(),
+                getWorkflowSystemBuilderSupplier()
         );
 
 
@@ -298,14 +301,15 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
-    public WorkflowSystem buildWorkflowSystem(
+    private static WorkflowSystem buildWorkflowSystem(
             final StepExecutionContext executionContext,
             final MutableStateObj state,
             final RuleEngine ruleEngine,
-            final int wfThreadcount
+            final int wfThreadcount,
+            final Supplier<WorkflowSystemBuilder> workflowSystemBuilder
     )
     {
-        return getWorkflowSystemBuilder()
+        return workflowSystemBuilder.get()
                 .ruleEngine(ruleEngine)
                 .executor(() -> wfThreadcount > 0
                                 ? Executors.newFixedThreadPool(wfThreadcount)
@@ -320,7 +324,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 .build();
     }
 
-    private void addUnknownStepFailure(
+    private static void addUnknownStepFailure(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> stepFailures,
             final StepOperation operation,
@@ -354,7 +358,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         ));
     }
 
-    private void logSkippedOperations(
+    private static void logSkippedOperations(
             final StepExecutionContext executionContext,
             final Set<StepOperation> operations
     )
@@ -385,7 +389,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
      *
      * @return new RuleEngine
      */
-    private RuleEngine setupRulesEngine(
+    private static RuleEngine setupRulesEngine(
             final StepExecutionContext executionContext,
             final IWorkflow workflow,
             final WorkflowStrategy strategyForWorkflow
@@ -401,11 +405,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return ruleEngine;
     }
 
-    public WorkflowStrategy setupWorkflowStrategy(
+    public static WorkflowStrategy setupWorkflowStrategy(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
-            final String strategy
+            final String strategy,
+            final IFramework framework
     ) throws ExecutionServiceException
     {
         final WorkflowStrategy strategyForWorkflow;
@@ -421,7 +426,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             }
         }
-        strategyForWorkflow = getFramework().getWorkflowStrategyService().getStrategyForWorkflow(
+        strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
                 item,
                 pluginConfig,
                 executionContext.getFrameworkProject()
@@ -429,7 +434,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return strategyForWorkflow;
     }
 
-    private Set<StepOperation> buildOperations(
+    private static Set<StepOperation> buildOperations(
+            final EngineWorkflowExecutor engineWorkflowExecutor,
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
@@ -485,7 +491,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                             stepNum,
                             cmd.getLabel(),
                             new StepCallable(
-                                    this,
+                                    engineWorkflowExecutor,
                                     executionContext,
                                     workflow.isKeepgoing(),
                                     wlistener,
@@ -503,15 +509,14 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     }
 
 
-
-    private StateObj createTriggerControlStateForStep(final int stepNum) {
+    private static StateObj createTriggerControlStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_KEY, stepNum),
                 VALUE_TRUE
         );
     }
 
-    private StateObj createSkipTriggerStateForStep(final int stepNum) {
+    private static StateObj createSkipTriggerStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_SKIP_KEY, stepNum),
                 VALUE_TRUE
