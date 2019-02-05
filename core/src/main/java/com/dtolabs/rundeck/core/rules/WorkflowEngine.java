@@ -98,7 +98,9 @@ public class WorkflowEngine implements WorkflowSystem {
         Set<OperationResult<DAT, RES, OP>> results = processor.getResults();
         interrupted = processor.isInterrupted();
 
-        event(WorkflowSystemEventType.WillShutdown, "Workflow engine shutting down");
+        event(WorkflowSystemEventType.WillShutdown,
+              String.format("Workflow engine shutting down (interrupted? %s)", interrupted)
+        );
 
         executorService.shutdown();
         try {
