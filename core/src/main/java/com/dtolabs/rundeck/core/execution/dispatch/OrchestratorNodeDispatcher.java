@@ -161,7 +161,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         
         try {
             success = processor.execute();
-        } catch (ExecutionException e) {
+        } catch (OrchestratorNodeProcessor.NodeProcessorException e) {
             context.getExecutionListener().log(0, e.getMessage());
             if (!keepgoing) {
                 throw new DispatcherException(e);
