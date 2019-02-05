@@ -74,6 +74,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     def workflowService
     def authorizationService
     def scmService
+    def executionUtilService
     static transactional = false
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
@@ -145,56 +146,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
-        File localfile = getExecutionXmlFileForExecution(e)
+        File localfile = executionUtilService.getExecutionXmlFileForExecution(e)
 
         new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS)
     }
 
-    /**
-     * Write execution.xml file to a temp file and return
-     * @param exec execution
-     * @return file containing execution.xml
-     */
-    File getExecutionXmlFileForExecution(Execution execution){
-        File executionXmlTempfile = File.createTempFile("execution-${execution.id}", ".xml")
-        executionXmlTempfile.withWriter("UTF-8") { Writer writer ->
-            exportExecutionXml(
-                    execution,
-                    writer,
-                    "output-${execution.id}.rdlog"
-            )
-        }
-        executionXmlTempfile.deleteOnExit()
-        executionXmlTempfile
-    }
-    /**
-     * Write execution.xml file to the writer
-     * @param exec execution
-     * @param writer writer
-     * @param logfilepath optional new outputfilepath to set for the xml
-     * @return
-     */
-    def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
-        def dateConvert = {
-            sdf.format(it)
-        }
-        BuilderUtil builder = new BuilderUtil()
-        builder.converters = [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
-        def map = exec.toMap()
-        BuilderUtil.makeAttribute(map, 'id')
-        if (logfilepath) {
-            //change entry to point to local file
-            map.outputfilepath = logfilepath
-        }
-        JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
-        if(map.fullJob){
-            map.fullJob = JobsXMLCodec.convertJobMap(map.fullJob)
-        }
-        def xml = new MarkupBuilder(writer)
-        builder.objToDom("executions", [execution: map], xml)
-    }
     def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
 
         def File logfile = loggingService.getLogFileForExecution(exec)
@@ -204,7 +160,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         }
         //convert map to xml
         zip.file("$name") { Writer writer ->
-            exportExecutionXml(exec, writer, logfilepath)
+            executionUtilService.exportExecutionXml(exec, writer, logfilepath)
         }
         if (logfile && logfile.isFile()) {
             zip.file logfilepath, logfile

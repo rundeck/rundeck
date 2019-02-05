@@ -51,6 +51,7 @@ import static org.apache.tools.ant.util.StringUtils.getStackTrace
 class ExecutionUtilService {
     static transactional = false
     def metricService
+    def grailsApplication
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
 
@@ -69,7 +70,8 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-        if(execMap instanceof Execution){
+        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        if(exportJobDef){
             //creating xml file
             String parentFolder = loghandler.filepath.getParent()
             getExecutionXmlFileForExecution(execMap.execution, parentFolder)
@@ -325,9 +327,19 @@ class ExecutionUtilService {
         new SimplePluginConfiguration(ServiceNameConstants.LogFilter, name, pluginconfig)
     }
 
-
-    def getExecutionXmlFileForExecution(Execution execution, String path) {
-        File executionXmlfile = new File(path, "execution-${execution.id}.xml")
+    /**
+     * Write execution.xml file to a temp file and return
+     * @param exec execution
+     * @param path path to store the file on filesystem. If null a temporary file will be created and deleted.
+     * @return file containing execution.xml
+     */
+    File getExecutionXmlFileForExecution(Execution execution, String path = null) {
+        File executionXmlfile
+        if(path){
+            executionXmlfile  = new File(path, "execution-${execution.id}.xml")
+        }else{
+            executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
+        }
         executionXmlfile.withWriter("UTF-8") { Writer writer ->
             exportExecutionXml(
                     execution,
@@ -335,8 +347,20 @@ class ExecutionUtilService {
                     "output-${execution.id}.rdlog"
             )
         }
+        if(!path){
+            executionXmlfile.deleteOnExit()
+        }
+        executionXmlfile
     }
 
+
+    /**
+     * Write execution.xml file to the writer
+     * @param exec execution
+     * @param writer writer
+     * @param logfilepath optional new outputfilepath to set for the xml
+     * @return
+     */
     def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
@@ -352,8 +376,9 @@ class ExecutionUtilService {
             map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
-        if(map.fullJob){
-            map.fullJob = JobsXMLCodec.convertJobMap(map.fullJob)
+        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        if(exportJobDef && exec.scheduledExecution){
+            map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
         }
         def xml = new MarkupBuilder(writer)
         builder.objToDom("executions", [execution: map], xml)
