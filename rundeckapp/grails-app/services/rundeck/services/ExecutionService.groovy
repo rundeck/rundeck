@@ -3448,7 +3448,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 try {
                     thread.join(1000)
                 } catch (InterruptedException e) {
-                    //do nada
+                    //interrupt
+                    interrupt = true
+                }
+                if (thread.interrupted) {
+                    interrupt = true
                 }
                 def duration = System.currentTimeMillis() - startTime
                 if (shouldCheckTimeout
