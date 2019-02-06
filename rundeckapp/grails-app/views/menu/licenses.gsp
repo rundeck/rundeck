@@ -36,7 +36,7 @@
 
 **[Rundeck](http://rundeck.com)**
 
-    Copyright 2018 Rundeck, Inc.
+    Copyright 2019 Rundeck, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
