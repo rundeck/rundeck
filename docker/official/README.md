@@ -1,6 +1,9 @@
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
+- `3.0.12`
+- `3.0.11`
+- `3.0.9`
 - `3.0.8`
 - `3.0.7`
 - `3.0.6`
@@ -147,3 +150,16 @@ Configuration options for key storage providers and converts. These map to the
 ### `RUNDECK_PREAUTH_REDIRECT_URL=/oauth2/sign_in`
 Configuration options for using the
 [preauthenticated mode](http://rundeck.org/docs/administration/security/authenticating-users.html#preauthenticated-mode).
+
+### `RUNDECK_TOKENS_FILE`
+Specify location of a static tokens file. See [configuration file reference](https://docs.rundeck.com/docs/administration/configuration/configuration-file-reference.html) for details.
+
+### `RUNDECK_SECURITY_HTTPHEADERS_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XCTO_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XXSSP_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_XFO_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_ENABLED=true`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXCSPHEADER=false`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXWKCSPHEADER=false`
+### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_POLICY`
+Controls for CSP headers.

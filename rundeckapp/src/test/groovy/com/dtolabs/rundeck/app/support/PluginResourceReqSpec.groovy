@@ -54,13 +54,15 @@ class PluginResourceReqSpec extends Specification {
         when:
         resrequest.validate()
         then:
-        resrequest.hasErrors()
-        resrequest.errors.hasFieldErrors('name')
+        resrequest.hasErrors() == expectedError
 
         where:
-        path              | plugin
-        'test/valid-path' | 'invalid/plugin'
-        'test/valid-path' | 'invalid plugin'
+        path              | plugin              | expectedError
+        'test/valid-path' | 'valid/plugin'    | false
+        'test/valid-path' | 'valid plugin'    | false
+        'test/valid-path' | ''                | true
+        'test/valid-path' | null              | true
+
     }
 
     @Unroll

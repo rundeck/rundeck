@@ -41,8 +41,6 @@
         <div id=repository-vue></div>
     </div>
 </div>
-<asset:javascript src="static/manifest.js"/>
-<asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/pages/repository.js"/>
 </g:if>
 <g:else>

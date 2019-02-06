@@ -51,13 +51,13 @@ class EditOptsController {
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         if (params.name && !editopts[params.name]) {
             log.error("no option with name ${params.name} found")
             flash.error = "no option with name ${params.name} found"
-            return error.call()
+            return error()
         }
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
@@ -83,17 +83,17 @@ class EditOptsController {
      */
     def renderOpt() {
         if (!params.name) {
-            log.error("name parameter is required")
-            flash.error = "name parameter is required"
-            return error.call()
+            log.error("name parameter required")
+            flash.error = "name parameter required"
+            return error()
         }
         def name = params.name
 
         def Map editopts = _getSessionOptions()
         if (!editopts[name]) {
-            log.error("name parameter is invalid: ${name}")
-            flash.error = "name parameter is invalid: ${name}"
-            return error.call()
+            log.error("no option with name ${params.name} found")
+            flash.error = "no option with name ${params.name} found"
+            return error()
         }
         def optIndex=editopts.values()*.name.indexOf(name)
 
@@ -142,7 +142,7 @@ class EditOptsController {
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -184,7 +184,8 @@ class EditOptsController {
         )
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -196,7 +197,7 @@ class EditOptsController {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -216,7 +217,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
     /**
@@ -233,12 +235,12 @@ class EditOptsController {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         if (!params.relativePosition && !params.last && !params.before) {
             log.error("relativePosition, last, or before parameter is required")
             flash.error = "relativePosition, last, or before parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -258,7 +260,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -293,7 +296,8 @@ class EditOptsController {
             if (result.error) {
                 log.error(result.error)
                 flash.error = result.error
-                return error.call()
+                response.status = 400
+                return error()
             }
             if (null != action.name) {
                 name = action.name
@@ -305,7 +309,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -325,7 +330,8 @@ class EditOptsController {
             if (result.error) {
                 log.error(result.error)
                 flash.error = result.error
-                return error.call()
+                response.status = 400
+                return error()
             }
             if (null != action.name) {
                 name = action.name
@@ -338,7 +344,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -354,7 +361,8 @@ class EditOptsController {
         return renderAll.call()
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 

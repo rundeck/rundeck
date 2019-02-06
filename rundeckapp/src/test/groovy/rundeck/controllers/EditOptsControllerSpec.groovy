@@ -18,16 +18,140 @@ package rundeck.controllers
 
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.GroovyPageUnitTestMixin
+import org.grails.plugins.codecs.URLCodec
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import rundeck.CommandExec
 import rundeck.Option
+import rundeck.ScheduledExecution
+import rundeck.UtilityTagLib
+import rundeck.Workflow
+import rundeck.codecs.URIComponentCodec
 import rundeck.services.FileUploadService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 2/11/16.
  */
 @TestFor(EditOptsController)
-@Mock(Option)
+@Mock([Option, ScheduledExecution, Workflow])
+@TestMixin(GroovyPageUnitTestMixin)
 class EditOptsControllerSpec extends Specification {
+    def setup() {
+        mockCodec(URIComponentCodec)
+//        mockCodec(URLCodec)
+    }
+
+    @Unroll
+    def "action #action requires form token"() {
+        when:
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            request.method = 'POST'
+            controller."$action"()
+        then:
+            response.status == 400
+            request.error == 'request.error.invalidtoken.message'
+        where:
+            action    | _
+            'save'    | _
+            'remove'  | _
+            'reorder' | _
+            'undo'    | _
+            'redo'    | _
+            'revert'  | _
+    }
+
+    @Unroll
+    def "action #action requires name param"() {
+        when:
+            controller."$action"()
+        then:
+            flash.error == 'name parameter required'
+        where:
+            action << ['edit', 'renderOpt']
+    }
+
+    @Unroll
+    def "actino #action name param must be available"() {
+        when:
+            params.name = 'dne'
+            controller."$action"()
+        then:
+            flash.error == 'no option with name dne found'
+        where:
+            action << ['edit', 'renderOpt']
+    }
+
+    protected setupFormTokens(session) {
+        def token = SynchronizerTokensHolder.store(session)
+        params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+
+    @Unroll
+    def "action #action requires name or newoption param"() {
+        when:
+            request.method = 'POST'
+            setupFormTokens(session)
+            controller."$action"()
+        then:
+            flash.error == 'name parameter is required'
+        where:
+            action << ['save', 'remove', 'reorder']
+    }
+
+    @Unroll
+    def "action reorder requires certain opts"() {
+        when:
+            request.method = 'POST'
+            params.name = 'test'
+            setupFormTokens(session)
+            controller.reorder()
+        then:
+            flash.error == 'relativePosition, last, or before parameter is required'
+    }
+
+    protected ScheduledExecution createJob(Map overrides = [:]) {
+        def map = [
+                      jobName       : 'blue',
+                      project       : 'AProject',
+                      groupPath     : 'some/where',
+                      description   : 'a job',
+                      argString     : '-a b -c d',
+                      workflow      : new Workflow(
+                          keepgoing: true,
+                          commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                      ),
+                      serverNodeUUID: null,
+                      scheduled     : true
+                  ] + overrides
+        new ScheduledExecution(map).save(flush: true)
+    }
+
+    @Unroll
+    def "error response for invalid #action"() {
+        when:
+            ScheduledExecution job = createJob()
+            session[sessionDataVar] = [
+                (job.id.toString()): [
+                    [action: 'remove', name: 'test']
+                ]
+            ]
+            params.scheduledExecutionId = job.id.toString()
+            setupFormTokens(session)
+            request.method = 'POST'
+            controller."$action"()
+        then:
+            flash.error == 'No option named test exists'
+            response.status == 400
+        where:
+            action | sessionDataVar
+            'redo' | 'redoOPTS'
+            'undo' | 'undoOPTS'
+
+    }
     def "validate opt required scheduled job with default storage path"() {
         given:
         Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)

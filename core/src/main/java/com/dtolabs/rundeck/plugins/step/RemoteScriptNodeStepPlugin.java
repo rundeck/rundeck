@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.plugins.step;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
+import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 
 import java.util.Map;
 
@@ -48,4 +49,13 @@ public interface RemoteScriptNodeStepPlugin {
     public GeneratedScript generateScript(final PluginStepContext context,
                                           final Map<String, Object> configuration,
                                           final INodeEntry entry) throws NodeStepException;
+
+
+    /**
+     * Additional Group name for config variables, other than 'config'
+     * @return true to include additional config var group 'nodestep'
+     */
+    default boolean hasAdditionalConfigVarGroupName(){
+        return false;
+    }
 }

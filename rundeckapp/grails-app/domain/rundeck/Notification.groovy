@@ -106,6 +106,16 @@ public class Notification {
             if(data.email && data.email.attachLog){
                 map['attachLog']= data.email.attachLog in ['true',true]
             }
+            if(data.email && data.email.attachLogInFile){
+                map['attachLogInFile']= data.email.attachLogInFile in ['true',true]
+            }
+            if(data.email && data.email.attachLogInline){
+                map['attachLogInline']= data.email.attachLogInline in ['true',true]
+            }
+            //default value for attachLog
+            if(map['attachLog'] == true && !map.containsKey("attachLogInFile") && !map.containsKey("attachLogInline")){
+                map['attachLogInFile']= true
+            }
             n.configuration=map
         }else if(data.urls){
             n.type='url'

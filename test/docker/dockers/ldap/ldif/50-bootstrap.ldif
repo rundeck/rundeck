@@ -53,6 +53,17 @@ objectClass: inetOrgPerson
 sn: Has no role access
 cn: test
 
+dn: cn=syncer, ou=users,{{ LDAP_BASE_DN }}
+uid: syncer
+userPassword: syncer
+objectClass: person
+objectClass: top
+objectClass: inetOrgPerson
+sn: Swim
+givenName: Syncer
+mail: syncer@swim.com
+cn: syncer
+
 # Define an entry to contain roles:
 dn: ou=roles, {{ LDAP_BASE_DN }}
 objectClass: organizationalUnit

@@ -559,7 +559,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         given:
         def engine = new EngineWorkflowExecutor(framework)
         def builder = new MyEngineBuilder()
-        engine.setWorkflowSystemBuilder(builder)
+        engine.setWorkflowSystemBuilderSupplier({->builder})
         TestCountDownLatch = new CountDownLatch(1)
 
         framework.getStepExecutionService().registerClass('blah', TestSuccessStepExecutor)

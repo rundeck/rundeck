@@ -388,7 +388,7 @@ function ScriptStep(data) {
     self.argStringAsQuotedWithScriptfile = ko.computed(function () {
         var isq = self.argsQuoted() ? '"' : '';
         return isq
-            + '<em>' + self.scriptfileText() +'</em> '
+            + self.scriptfileText() + ' '
             + self.args()
             + isq;
     });
@@ -410,7 +410,7 @@ function ScriptStep(data) {
     self.invocationPreviewHtml = ko.computed(function () {
         var text = '';
         if (self.invocationString() && self.invocationString().indexOf('${scriptfile}') >= 0) {
-            text += self.invocationString().split('\$\{scriptfile\}').join('<em>' + self.scriptfileText() +'</em>') + ' ' + self.argStringAsQuoted();
+            text += self.invocationString().split('\$\{scriptfile\}').join(  self.scriptfileText() ) + ' ' + self.argStringAsQuoted();
         } else if (self.invocationString()) {
             text += self.invocationString() + ' ' + self.argStringAsQuotedWithScriptfile();
         } else {

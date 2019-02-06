@@ -131,7 +131,6 @@ class CommandLineSetup {
         RundeckCliOptions cliOptions = new RundeckCliOptions()
         cliOptions.debug = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_DEBUG);
         cliOptions.rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE);
-
         final CommandLineParser parser = new GnuParser();
 
         final CommandLine cl;
@@ -157,7 +156,7 @@ class CommandLineSetup {
             System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
             System.exit(1);
         }
-        cliOptions.debug = cl.hasOption('d');
+        if(!cliOptions.debug) cliOptions.debug = cl.hasOption('d');
 
         cliOptions.baseDir = cl.getOptionValue('b', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, getLaunchLocationParentDir()))
         cliOptions.serverBaseDir = cl.getOptionValue("serverdir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.baseDir+ "/server"))

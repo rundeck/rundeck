@@ -36,7 +36,7 @@
                 <div><label>Rundeck Compatibility:</label>{{result.rundeckCompatibility}}</div>
                 <div><label>Support:</label>{{result.support}}</div>
                 <div><label>Author:</label>{{result.author}}</div>
-                <div><label>Provides:</label><span class="svc" v-for="svc in result.providesServices" :key="svc">{{svc}}</span></div>
+                <div class="provides"><label>Provides:</label><span v-for="svc in result.providesServices">{{svc}}</span></div>
                 <div><label>Tags:</label><span class="tag" v-for="tag in result.tags" :key="tag">{{tag}}</span></div>
                 <div><span class="install" v-if="!result.installed && canInstall" @click="install(repo.repositoryName,result.id)">Install</span></div>
                 <div><span class="installed" v-if="result.installed">Installed</span></div>
@@ -95,7 +95,7 @@ export default {
       axios({
         method: 'post',
         headers: {'x-rundeck-ajax': true},
-        url: `${this.rdBase}repository/install/${pluginId}`,
+        url: `${this.rdBase}repository/${repoName}/install/${pluginId}`,
         withCredentials: true
       }).then((response) => {
         let repo = this.repositories.find(r => r.repositoryName === repoName)
@@ -150,4 +150,6 @@ export default {
 .repo-header { display: flex; }
 .flex-left { flex: 0 50% }
 .flex-right { flex: 0 50%; text-align: right; }
+.provides { width: 250px; display: flex; flex-wrap: wrap; }
+.provides > span { flex: 0 0 auto; background-color: #deeffd; padding: 0 2px; margin: 2px; }
 </style>

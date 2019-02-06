@@ -31,8 +31,8 @@ class RundeckPreauthenticationRequestHeaderFilter extends AbstractPreAuthenticat
 
     boolean enabled;
     String rolesAttribute = "REMOTE_USER_GROUPS";
-    String userNameHeader = "X-Forwarded-Uuid";
-    String rolesHeader = "X-Forwarded-Roles";
+    String userNameHeader = null
+    String rolesHeader = null
 
     @Override
     void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
@@ -47,7 +47,7 @@ class RundeckPreauthenticationRequestHeaderFilter extends AbstractPreAuthenticat
 
     @Override
     protected Object getPreAuthenticatedPrincipal(final HttpServletRequest request) {
-        String forwardedUser = null
+        String forwardedUser = request.remoteUser  //in AJP this will be set by apache
         if(userNameHeader != null) {
             forwardedUser = request.getHeader(userNameHeader)
             LOG.info("User header " + userNameHeader);
@@ -62,7 +62,7 @@ class RundeckPreauthenticationRequestHeaderFilter extends AbstractPreAuthenticat
     }
 
     private Object addForwardedRolesToRequestAttribute(final HttpServletRequest request) {
-        String forwardedRoles = null
+        String forwardedRoles = request.getAttribute(rolesAttribute)
         if (rolesAttribute != null && rolesHeader != null) {
             // Get the roles sent by the proxy and add them onto the request as an attribute for
             // PreauthenticatedAttributeRoleSource

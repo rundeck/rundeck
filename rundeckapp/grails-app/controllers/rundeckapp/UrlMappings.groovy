@@ -101,7 +101,9 @@ class UrlMappings {
         }
         "/api/$api_version/jobs/file/$id"(controller: 'scheduledExecution',action: 'apiJobFileInfo')
 
-
+        // execution metrics
+        "/api/$api_version/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
+        "/api/$api_version/project/$project/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
@@ -301,6 +303,7 @@ class UrlMappings {
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
         "/plugin/providers/$service"(controller: 'plugin', action: 'pluginServiceDescriptions')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
+        "/plugin/validate/$service/$name"(controller: 'plugin', action: 'pluginPropertiesValidateAjax')
 
         "/tour/listAll"(controller:'tour',action:'listAllTourManifests')
         "/tour/list/$loaderName"(controller:'tour',action:'list')
