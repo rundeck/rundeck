@@ -41,7 +41,7 @@
 <footer class="footer">
   <div class="container-fluid">
     <div class="copyright pull-left">
-        &copy; Copyright 2018 <a href="http://rundeck.com">Rundeck, Inc.</a>
+        &copy; Copyright 2019 <a href="http://rundeck.com">Rundeck, Inc.</a>
 
         All rights reserved.
     </div>
