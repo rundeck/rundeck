@@ -194,7 +194,6 @@
     </g:link>
   </li> --%>
 </ul>
-
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabtitle'>
         <ul class="nav">
@@ -237,6 +236,7 @@
 </g:if>
 --}%
 <div id="snapshot-version" class="snapshot-version">
+  <div id="version-notification-vue"></div>
   <span class="rundeck-version-identity"
         data-version-string="${enc(attr: buildIdent)}"
         data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
