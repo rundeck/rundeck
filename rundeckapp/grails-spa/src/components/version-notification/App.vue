@@ -27,6 +27,7 @@
         <p>This version was released {{currentReleaseVersion.releaseDate | moment("M/D/YYYY")}}.</p>
         <a
           href="https://docs.rundeck.com/downloads.html"
+          target="_blank"
           style="margin-bottom:1em;"
           class="btn btn-default btn-block btn-success btn-fill"
         >{{$t("message.getUpdate")}}</a>
