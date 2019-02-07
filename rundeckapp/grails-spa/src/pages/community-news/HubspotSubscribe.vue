@@ -51,14 +51,9 @@ export default {
     handleSubmit() {
       axios
         .post(
-          "https://api.hsforms.com/submissions/v3/integration/submit/2768099/da27deaa-41d8-4a10-8eed-72c2e77d54e9",
+          "community-news/register",
           {
-            fields: [
-              {
-                name: "email",
-                value: this.email
-              }
-            ]
+            email: this.email
           }
         )
         .then(response => {
