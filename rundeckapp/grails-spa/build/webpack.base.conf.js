@@ -29,7 +29,8 @@ module.exports = {
     'components/version-notification': './src/components/version-notification/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/project-jobs': './src/pages/project-jobs/main.js',
-    'pages/repository': './src/pages/repository/main.js'
+    'pages/repository': './src/pages/repository/main.js',
+    'pages/community-news': './src/pages/community-news/main.js'
   },
   output: {
     path: `config.build.assetsRoot/[path]`,

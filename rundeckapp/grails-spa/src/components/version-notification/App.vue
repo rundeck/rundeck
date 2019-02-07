@@ -150,6 +150,7 @@ export default {
               }
             }
           });
+          this.showVersionNotification = true;
         }
       },
       error => {

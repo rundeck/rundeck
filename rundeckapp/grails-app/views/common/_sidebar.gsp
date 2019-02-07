@@ -184,15 +184,6 @@
     </g:if>
 </g:if>
 </g:if>
-  <%-- <li class="snapshot-version">
-    <span class="rundeck-version-identity"
-          data-version-string="${enc(attr: buildIdent)}"
-          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-          data-app-id="${enc(attr: appId)}"></span>
-    <g:link controller="menu" action="welcome" class="version link-bare">
-        <g:appTitle/> ${buildIdent}
-    </g:link>
-  </li> --%>
 </ul>
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabtitle'>
@@ -235,16 +226,26 @@
     </g:ifExecutionMode>
 </g:if>
 --}%
-<div id="snapshot-version" class="snapshot-version">
+<div id="sidebar-bottom">
+  <div id="community-news-notification">
+    <g:link controller="communityNews" action="index">
+        <i class="fas fa-bell"></i>
+        <p>
+        Community News
+        </p>
+    </g:link>
+  </div>
   <div id="version-notification-vue"></div>
-  <span class="rundeck-version-identity"
-        data-version-string="${enc(attr: buildIdent)}"
-        data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-        data-app-id="${enc(attr: appId)}"
-        style="display:block;"></span>
-  <g:link controller="menu" action="welcome" class="version link-bare">
-      <g:appTitle/> ${buildIdent}
-  </g:link>
+  <div id="snapshot-version" class="snapshot-version">
+    <span class="rundeck-version-identity"
+          data-version-string="${enc(attr: buildIdent)}"
+          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
+          data-app-id="${enc(attr: appId)}"
+          style="display:block;"></span>
+    <g:link controller="menu" action="welcome" class="version link-bare">
+        <g:appTitle/> ${buildIdent}
+    </g:link>
+  </div>
 </div>
 
 <g:javascript>

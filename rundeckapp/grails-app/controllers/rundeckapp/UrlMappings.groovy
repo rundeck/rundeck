@@ -309,6 +309,8 @@ class UrlMappings {
         "/tour/list/$loaderName"(controller:'tour',action:'list')
         "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')
 
+        "/community-news"(controller:'communityNews',action:'index')
+
         "404"(view: '/404')
         "500"(view: '/error')
     }
