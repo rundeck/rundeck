@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -19,6 +20,7 @@ import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
 import java.text.SimpleDateFormat
@@ -38,6 +40,7 @@ class PluginApiService {
     LogFileStorageService logFileStorageService
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
+    FeatureService featureService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -72,6 +75,11 @@ class PluginApiService {
         ].each {
 
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
+        }
+        if(featureService.featurePresent("option-values-plugin")) {
+            pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
         }
 
         //web-app level plugin descriptions
@@ -112,7 +120,6 @@ class PluginApiService {
         pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]

@@ -281,6 +281,33 @@ class UserController extends ControllerBase{
         }
     }
 
+    def apiListRoles() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V30)) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        withFormat {
+            def xmlClosure = {
+                delegate.'roles' {
+                    authContext.getRoles().each { role ->
+                        delegate.'role'(role)
+                    }
+                }
+            }
+            xml {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+            json {
+                return apiService.renderSuccessJson(response) {
+                    delegate.roles=authContext.getRoles()
+                }
+            }
+            '*' {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+        }
+    }
+
     def apiUserList(){
         if (!apiService.requireVersion(request, response, ApiVersions.V21)) {
             return

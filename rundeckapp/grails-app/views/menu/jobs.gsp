@@ -813,6 +813,5 @@
 </div>
 
 <g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
-
 </body>
 </html>

@@ -15,10 +15,7 @@
  */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -80,12 +77,16 @@ public class OrchestratorNodeProcessor {
         this.cancelOnInterrupt = cancelOnInterrupt;
     }
 
-    public boolean execute() throws ExecutionException{
+    private Map<String, String> exceptionMessages;
+    private Throwable lastThrown;
+
+    public boolean execute() throws NodeProcessorException {
         ArrayList<Future<Boolean>> futures = new ArrayList<>();
         for (int i=0;i<threadCount;i++) {
             futures.add(threadPool.submit(new OrchestratorRunnable()));
         }
         boolean success=true;
+        exceptionMessages = new HashMap<>();
         try {
             int completedNodes=0;
             while (completedNodes < executions.size() && !runnableStopped && !shouldStop) {
@@ -102,6 +103,14 @@ public class OrchestratorNodeProcessor {
                         }
                         if(result.node!=null) {
                             this.orchestrator.returnNode(result.node, result.success, result.result);
+                        }
+                        if (result.error != null) {
+                            if (result.node != null) {
+                                exceptionMessages.put(result.node.getNodename(), result.error.getMessage());
+                            } else {
+                                exceptionMessages.put("?", result.error.getMessage());
+                            }
+                            lastThrown = result.error;
                         }
                         completedNodes++;
                     }else if(!orchestrator.isComplete()) {
@@ -143,9 +152,52 @@ public class OrchestratorNodeProcessor {
             threadPool.shutdownNow();
         }
 
+        if (exceptionMessages.size() == 1 && null != lastThrown) {
+            throw new NodeProcessorException(
+                    String.format(
+                            "1 Node had errors: %s",
+                            lastThrown.getMessage()
+                    ),
+                    lastThrown
+            );
+        } else if (exceptionMessages.size() > 0) {
+            throw new NodeProcessorException(String.format(
+                    "%d Nodes had errors: %s",
+                    exceptionMessages.size(),
+                    generateMessages()
+            ));
+        }
 
         //stop indicates a node failed, but success might not
         return !runnableStopped && !interrupted && success;
+    }
+
+    static class NodeProcessorException
+            extends Exception
+    {
+        public NodeProcessorException(final String message) {
+            super(message);
+        }
+
+        public NodeProcessorException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+
+        public NodeProcessorException(final Throwable cause) {
+            super(cause);
+        }
+    }
+
+    private String generateMessages() {
+        StringBuffer buffer = new StringBuffer();
+        for (String node : exceptionMessages.keySet()) {
+            if (buffer.length() > 0) {
+                buffer.append(System.getProperty("line.separator"));
+            }
+            buffer.append(node).append(": ");
+            buffer.append(exceptionMessages.get(node));
+        }
+        return buffer.toString();
     }
 
     public boolean isInterrupted() {
@@ -161,6 +213,7 @@ public class OrchestratorNodeProcessor {
                 Entry task = null;
                 NodeStepResult result=null;
                 Thread.currentThread().setName("OrchestratorNodeProcessor[take]");
+                Throwable error = null;
                 try {
                     //make sure the get callable happens within the try catch so the finally will always be called
                     task = taskqueue.take();
@@ -178,13 +231,14 @@ public class OrchestratorNodeProcessor {
                         runnableFailed();
                         break;
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
+                    error = e;
                     if (!keepgoing) {
                         runnableFailed();
                         throw e;
                     }
                 } finally {
-                    resultqueue.put(new Result(task != null ? task.node : null, success, result));
+                    resultqueue.put(new Result(task != null ? task.node : null, success, result, error));
                     Thread.currentThread().setName(originalname);
                 }
             }
@@ -217,11 +271,13 @@ public class OrchestratorNodeProcessor {
         private final INodeEntry node;
         private final boolean success;
         private final NodeStepResult result;
+        private final Throwable error;
 
-        public Result(final INodeEntry node, final boolean success, NodeStepResult result) {
+        public Result(final INodeEntry node, final boolean success, NodeStepResult result, final Throwable error) {
             this.node = node;
             this.success = success;
             this.result=result;
+            this.error = error;
         }
 
     }

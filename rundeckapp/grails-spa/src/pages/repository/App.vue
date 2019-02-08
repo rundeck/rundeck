@@ -124,7 +124,7 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
 .artifact-grid {
   display: flex;
   flex-wrap: wrap;

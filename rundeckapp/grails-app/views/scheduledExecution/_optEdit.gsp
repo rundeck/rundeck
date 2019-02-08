@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description; com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
 
 <%--
    _optEdit.gsp
@@ -364,32 +364,51 @@
         </div>
         <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
-            <div class="col-sm-10">
-                <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
+            <div class="col-sm-2">
+                <g:set var="valueTypeListChecked" value="${!option || (!option.realValuesUrl && !option.optionValuesPluginType) ? true : false}"/>
                 <div>
-                    <div class="radio radio-inline">
-                      <g:radio name="valuesType"
-                               value="list"
-                               checked="${valueTypeListChecked}"
-                               id="vtrlist_${rkey}"/>
-                        <label for="vtrlist_${rkey}" class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
-                            <g:message code="form.label.valuesType.list.label" />
-                        </label>
-                    </div>
+                        <div class="radio">
+                          <g:radio name="valuesType"
+                                   value="list"
+                                   checked="${valueTypeListChecked}"
+                                   id="vtrlist_${rkey}"/>
+                            <label for="vtrlist_${rkey}" class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
+                                <g:message code="form.label.valuesType.list.label" />
+                            </label>
+                        </div>
 
-                    <div class="radio radio-inline">
-                      <g:radio name="valuesType" value="url"
-                               checked="${option?.realValuesUrl || params.valuesType == 'url' ? true : false}"
-                               id="vtrurl_${rkey}"/>
-                        <label for="vtrurl_${rkey}" class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
-                            <g:message code="form.option.valuesType.url.label" />
-                        </label>
-                    </div>
+                        <div class="radio">
+                          <g:radio name="valuesType" value="url"
+                                   checked="${option?.realValuesUrl ? true : false}"
+                                   id="vtrurl_${rkey}"/>
+                            <label for="vtrurl_${rkey}" class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
+                                <g:message code="form.option.valuesType.url.label" />
+                            </label>
+                        </div>
+                <feature:enabled name="option-values-plugin">
+                    <!--List OptionValuesPlugins here -->
+                    <g:each in="${optionValuesPlugins}" var="optionValPlugin">
+                        <div class="radio">
+                            <g:radio name="valuesType" value="${optionValPlugin.key}"
+                                     checked="${option?.optionValuesPluginType == optionValPlugin.key}"
+                                     id="optvalplugin_${optionValPlugin.key}"/>
+                            <label for="optvalplugin_${optionValPlugin.key}" class="${hasErrors(bean: option, field: 'valuesFromPlugin', 'fieldError')}">
+                            ${optionValPlugin.value.description?.title}
+                            </label>
+                        </div>
 
-                    <g:set var="listvalue" value="${option?.valuesList}"/>
-                    <g:set var="listjoin" value="${option?.values }"/>
-
+                        <wdgt:eventHandler for="optvalplugin_${optionValPlugin.key}" state="unempty"  inline="true">
+                            <wdgt:action target="vlist_${rkey}_section" visible="false"/>
+                            <wdgt:action target="vurl_${rkey}_section" visible="false"/>
+                        </wdgt:eventHandler>
+                    </g:each>
+                </feature:enabled>
                 </div>
+
+            </div>
+            <div class="col-sm-8">
+                <g:set var="listvalue" value="${option?.valuesList}"/>
+                <g:set var="listjoin" value="${option?.values }"/>
                 <div id="vlist_${rkey}_section" style="${wdgt.styleVisible(if: valueTypeListChecked)}">
 
                     <g:textField name="valuesList"
@@ -403,25 +422,27 @@
                 </div>
 
                 <div id="vurl_${enc(attr: rkey)}_section"
-                     style="${wdgt.styleVisible(if: option?.realValuesUrl)}">
+                     style="padding-top: 27px; ${wdgt.styleVisible(if: option?.realValuesUrl && !option?.optionValuesPluginType)}">
                     <g:textField type="url"
-                           class=" form-control"
-                           name="valuesUrl"
-                           value="${option?.realValuesUrl?.toString()}"
-                           size="60"
-                           placeholder="Remote URL"
-                           id="vurl_${rkey}"
+                                 class=" form-control"
+                                 name="valuesUrl"
+                                 value="${option?.realValuesUrl?.toString()}"
+                                 size="60"
+                                 placeholder="Remote URL"
+                                 id="vurl_${rkey}"
                     />
 
                     <div class="help-block">
                         <g:message code="form.option.valuesUrl.description" />
                         <a href="${g.helpLinkUrl(path: '/manual/defining-job-options.html#option-model-provider')}"
-                            target="_blank">
+                           target="_blank">
                             <i class="glyphicon glyphicon-question-sign"></i>
                             <g:message code="rundeck.user.guide.option.model.provider" />
                         </a>
                     </div>
                 </div>
+
+
 
                 %{--automatically check appropriate radio button when text is entered in the list or url field--}%
                 <wdgt:eventHandler for="vlist_${rkey}" state="unempty" target="vtrlist_${rkey}"
@@ -437,7 +458,7 @@
                     <wdgt:action target="vlist_${rkey}" focus="true"/>
                     <wdgt:action target="vlist_${rkey}_section" visible="true"/>
                     <wdgt:action target="vurl_${rkey}_section" visible="false"/>
-               </wdgt:eventHandler>
+                </wdgt:eventHandler>
                 <wdgt:eventHandler for="vtrurl_${rkey}" state="unempty"  inline="true">
                     <wdgt:action target="vurl_${rkey}" focus="true"/>
                     <wdgt:action target="vlist_${rkey}_section" visible="false"/>

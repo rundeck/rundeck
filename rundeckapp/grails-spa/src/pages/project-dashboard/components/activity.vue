@@ -41,7 +41,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
   ul.users {
     display: inline;
     margin: 0;
