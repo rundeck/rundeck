@@ -73,6 +73,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.services.DirectNodeExecutionService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -174,6 +175,8 @@ beans={
             (ClusterInfoService): ref('clusterInfoService')
         ]
     }
+
+    directNodeExecutionService(DirectNodeExecutionService)
 
     rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider) {
         baseServices = ref('rundeckSpiBaseServicesProvider')
