@@ -83,8 +83,7 @@ used by _editOptions.gsp template
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?
                                                               selectedoptsmap[optName] :
                                                               (optionSelect.defaultValue ?: ''),
-                                              valuesFromPlugin   : optionSelect.valuesFromPlugin
-                                                              (optionSelect.defaultValue ?: ''),
+                                              valuesFromPlugin   : optionSelect.valuesFromPlugin,
                                               shouldBeHidden     : !!optionSelect.shouldBeHidden
                                       ]
                                   }
