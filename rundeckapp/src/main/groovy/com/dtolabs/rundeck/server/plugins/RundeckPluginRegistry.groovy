@@ -131,7 +131,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
-                project, instanceConfiguration, name, service.getName());
+                project, instanceConfiguration, service.getName(), name);
         return configurePluginByName(name, service, resolver, PropertyScope.Instance)
     }
 
@@ -221,7 +221,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         return config
     }
-/**
+    /**
      *
      * Validate a provider for a service using the framework, project name and instance configuration map
      * @param name name of bean or provider
@@ -238,7 +238,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     )
     {
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
-                project, instanceConfiguration, name, service.getName());
+                project, instanceConfiguration, service.getName(), name);
         return validatePluginByName(name, service, resolver, PropertyScope.Instance)
     }
 
