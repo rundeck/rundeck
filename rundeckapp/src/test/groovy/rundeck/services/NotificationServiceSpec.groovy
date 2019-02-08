@@ -32,6 +32,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import spock.lang.Specification
@@ -40,7 +41,7 @@ import spock.lang.Specification
  * Created by greg on 7/12/16.
  */
 @TestFor(NotificationService)
-@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User])
+@Mock([Execution, ScheduledExecution, Notification, Workflow, CommandExec, User, ScheduledExecutionStats])
 class NotificationServiceSpec extends Specification {
 
     private List createTestJob() {

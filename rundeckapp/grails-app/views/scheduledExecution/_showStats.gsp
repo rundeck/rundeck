@@ -49,7 +49,7 @@
       </div>
     </div>
   </g:if>
-  <g:if test="${scheduledExecution.execCount > 0}">
+  <g:if test="${scheduledExecution.getAverageDuration() > 0}">
     <div class="col-xs-4">
       <div class="card">
         <div class="card-header">
@@ -57,7 +57,7 @@
             <g:message code="average.duration" />
           </h4>
           <div class="card-content">
-              <g:set var="avgduration" value="${scheduledExecution.execCount>0?  scheduledExecution.totalTime /scheduledExecution.execCount  : 0}"/>
+              <g:set var="avgduration" value="${scheduledExecution.getAverageDuration()}"/>
             <span class="h3 " data-avgduration="${avgduration}">
                 <g:timeDuration time="${avgduration}"/>
             </span>

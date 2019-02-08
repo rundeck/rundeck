@@ -448,8 +448,8 @@ class ScheduledExecutionController  extends ControllerBase{
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
-        if(scheduledExecution.refExecCount) {
-            reftotal = scheduledExecution.refExecCount
+        if(scheduledExecution.getStats()?.refExecCount) {
+            reftotal = scheduledExecution.getStats()?.refExecCount
         }
 
         def remoteClusterNodeUUID=null

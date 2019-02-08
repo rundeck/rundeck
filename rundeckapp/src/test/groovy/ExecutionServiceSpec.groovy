@@ -57,7 +57,7 @@ import java.time.ZoneId
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution]
+        [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -3219,12 +3219,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
         def refexec = ReferencedExecution.findByScheduledExecution(job)
-        println(refexec)
-        println(expectedRef)
+        def seStats = ScheduledExecutionStats.findByScheduledExecutionId(job.id)
         if(expectedRef){
-            refexec
+            seStats.refExecCount==0
         }else{
-            !refexec
+            seStats.refExecCount==1
         }
         0 * executionListener.log(_)
         ret.success

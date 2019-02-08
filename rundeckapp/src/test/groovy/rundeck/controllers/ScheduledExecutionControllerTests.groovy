@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 import rundeck.services.optionvalues.OptionValuesService
+import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
 
@@ -67,7 +68,7 @@ import javax.servlet.http.HttpServletResponse
 * $Id$
 */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution])
+@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats])
 class ScheduledExecutionControllerTests  {
     /**
      * utility method to mock a class

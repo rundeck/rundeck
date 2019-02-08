@@ -1052,8 +1052,9 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     long getAverageDuration() {
-        if (totalTime && execCount) {
-            return Math.floor(totalTime / execCount)
+        def stats = getStats()
+        if (stats?.totalTime && stats?.execCount) {
+            return Math.floor(stats.totalTime / stats.execCount)
         }
         return 0;
     }
@@ -1102,6 +1103,18 @@ class ScheduledExecution extends ExecutionContext {
                 return nodeThreadcountDynamic
             }
         }
+    }
+
+    ScheduledExecutionStats getStats() {
+        def stats = ScheduledExecutionStats.findByScheduledExecutionId(id)
+        if (!stats) {
+            stats = new ScheduledExecutionStats(scheduledExecutionId: this.id,
+                    execCount: this.execCount,
+                    totalTime: this.totalTime,
+                    refExecCount: this.refExecCount
+            ).save()
+        }
+        stats
     }
 
 }

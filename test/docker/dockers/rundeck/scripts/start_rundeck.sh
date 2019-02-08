@@ -79,6 +79,8 @@ rundeck.tokens.file=$HOME/etc/tokens.properties
 
 # force UTF-8
 #framework.remote.charset.default=UTF-8
+
+rundeck.enable.ref.stats=true
 END
 
 cat > $HOME/etc/profile <<END

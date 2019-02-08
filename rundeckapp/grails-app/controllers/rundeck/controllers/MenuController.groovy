@@ -222,8 +222,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         id: it.scheduledExecution.extid,
                         params:[project:it.scheduledExecution.project]
                 )
-                if (it.scheduledExecution && it.scheduledExecution.totalTime >= 0 && it.scheduledExecution.execCount > 0) {
-                    data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
+                if (it.scheduledExecution){
+                    def seStats = it.scheduledExecution.getStats()
+                    if(seStats?.totalTime >= 0 && seStats?.execCount > 0) {
+                        data['jobAverageDuration'] = Math.floor(seStats.totalTime / seStats.execCount)
+                    }
                 }
                 if (it.argString) {
                     data.jobArguments = FrameworkService.parseOptsFromString(it.argString)
@@ -412,9 +415,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             }
                         }
                     }
-                    if (se.totalTime >= 0 && se.execCount > 0) {
-                        def long avg = Math.floor(se.totalTime / se.execCount)
-                        data.averageDuration = avg
+                    if (se.getAverageDuration() > 0) {
+                        data.averageDuration = se.getAverageDuration()
                     }
                     JobInfo.from(
                             se,
@@ -2690,9 +2692,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             extra.serverNodeUUID = scheduledExecution.serverNodeUUID
             extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
         }
-        if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
-            def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
-            extra.averageDuration = avg
+        if (scheduledExecution.getAverageDuration()>0) {
+            extra.averageDuration = scheduledExecution.getAverageDuration()
         }
         if(scheduledExecution.shouldScheduleExecution()){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
