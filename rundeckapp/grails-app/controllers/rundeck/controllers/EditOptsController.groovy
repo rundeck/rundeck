@@ -16,10 +16,11 @@
 
 package rundeck.controllers
 
-import java.util.regex.Pattern
-import java.util.regex.PatternSyntaxException
 import rundeck.Option
 import rundeck.ScheduledExecution
+
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * Controller for manipulating the session-stored set of Options during job edit
@@ -496,6 +497,11 @@ class EditOptsController {
         def result = [:]
         if (jobWasScheduled && opt.required && opt.typeFile) {
             opt.errors.rejectValue('required', 'option.file.required.message')
+            return result
+        }
+
+        if (opt.shouldBeHidden && !opt.defaultValue && !opt.defaultStoragePath) {
+            opt.errors.rejectValue('shouldBeHidden', 'option.shouldbehidden.notallowed.message')
             return result
         }
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
