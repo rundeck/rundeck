@@ -536,6 +536,26 @@
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label"><g:message code="Option.hidden.label" /></label>
+            <div class="col-sm-10">
+                <div class="radio radio-inline">
+                    <g:radio id="option-hidden-no" name="shouldBeHidden" value="false" checked="${!option || !option.shouldBeHidden}"/>
+                    <label for="option-hidden-no">
+                        <g:message code="no" />
+                    </label>    
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio id="option-hidden-yes" name="shouldBeHidden" value="true" checked="${option?.shouldBeHidden}"/>
+                    <label for="option-hidden-yes">
+                        <g:message code="yes" />
+                    </label>
+                </div>
+                <div class="help-block">
+                    <g:message code="Option.hidden.description"/>
+                </div>
+            </div>
+        </div>
         <!-- ko if: !isFileType() -->
         <div class="form-group">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">

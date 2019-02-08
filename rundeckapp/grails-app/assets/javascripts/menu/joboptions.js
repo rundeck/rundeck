@@ -58,6 +58,7 @@ function Option(data) {
     self.descriptionHtml = ko.observable(data.descriptionHtml);
     self.loading = ko.observable(false);
     self.required = ko.observable(data.required ? true : false);
+    self.shouldBeHidden = ko.observable(data.shouldBeHidden ? true : false);
     self.enforced = ko.observable(data.enforced ? true : false);
     self.isDate = ko.observable(data.isDate ? true : false);
     self.dateFormat = ko.observable(data.dateFormat);

@@ -84,6 +84,8 @@ used by _editOptions.gsp template
                                                               selectedoptsmap[optName] :
                                                               (optionSelect.defaultValue ?: ''),
                                               valuesFromPlugin   : optionSelect.valuesFromPlugin
+                                                              (optionSelect.defaultValue ?: ''),
+                                              shouldBeHidden     : !!optionSelect.shouldBeHidden
                                       ]
                                   }
     ]}" id="jobOptionData"/>
@@ -102,48 +104,50 @@ data for configuring remote option cascading/dependencies
     </g:if>
 
     <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
-        <div class="form-group " data-bind="
+        <div data-bind="visible: !shouldBeHidden()">
+            <div class="form-group " data-bind="
     css: { 'has-warning': hasError, 'remote': hasRemote }
     ">
-            <label class="remoteoptionfield col-sm-2 control-label"
-                   data-bind="attr: { for: fieldId }, click: reloadRemoteValues">
-                <span data-bind="if: hasRemote()">
-                    <span data-bind="if: loading() ">
-                        <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
+                <label class="remoteoptionfield col-sm-2 control-label"
+                       data-bind="attr: { for: fieldId }, click: reloadRemoteValues">
+                    <span data-bind="if: hasRemote()">
+                        <span data-bind="if: loading() ">
+                            <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
+                        </span>
+                        <span class="remotestatus"
+                              data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
+                        </span>
+                        <span data-bind="text: name"></span>
                     </span>
-                    <span class="remotestatus"
-                          data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
+                    <span data-bind="if: !hasRemote()">
+                        <span data-bind="text: label"></span>
                     </span>
-                    <span data-bind="text: name"></span>
-                </span>
-                <span data-bind="if: !hasRemote()">
-                    <span data-bind="text: label"></span>
-                </span>
-            </label>
+                </label>
 
-            <div class=" col-sm-9">
+                <div class=" col-sm-9">
 
-                <g:render template="/framework/optionValuesSelectKO"/>
+                    <g:render template="/framework/optionValuesSelectKO"/>
 
-            </div>
+                </div>
 
-            <div class="col-sm-1">
-                <span data-bind="if: required">
-                    <span class="reqwarning has_tooltip"
-                          data-bind="attr: {title: hasError()||message('option.value.required') }, visible: !hasValue(), bootstrapTooltip: true"
-                          data-toggle="tooltip">
-                        <i class="glyphicon glyphicon-warning-sign"></i>
+                <div class="col-sm-1">
+                    <span data-bind="if: required">
+                        <span class="reqwarning has_tooltip"
+                              data-bind="attr: {title: hasError()||message('option.value.required') }, visible: !hasValue(), bootstrapTooltip: true"
+                              data-toggle="tooltip">
+                            <i class="glyphicon glyphicon-warning-sign"></i>
+                        </span>
                     </span>
-                </span>
-            </div>
+                </div>
 
-            <div class="col-sm-10 col-sm-offset-2">
-                %{--<span class="help-block" data-bind="text: description"></span>--}%
-                <span class="help-block" data-bind="html: descriptionHtml"></span>
-            </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    %{--<span class="help-block" data-bind="text: description"></span>--}%
+                    <span class="help-block" data-bind="html: descriptionHtml"></span>
+                </div>
 
-            <div class="col-sm-10 col-sm-offset-2" data-bind="if: hasError">
-                <p class="text-warning" data-bind="text: hasError"></p>
+                <div class="col-sm-10 col-sm-offset-2" data-bind="if: hasError">
+                    <p class="text-warning" data-bind="text: hasError"></p>
+                </div>
             </div>
         </div>
     </div>
