@@ -18,8 +18,9 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.engine.OperationCompleted;
@@ -37,6 +38,8 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 
 /**
@@ -94,11 +97,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_CONTROL_SKIP_KEY = "step.#.skip";
     public static final String STEP_CONTROL_START = "start";
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
-    private WorkflowSystemBuilder workflowSystemBuilder;
+    private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
 
     public EngineWorkflowExecutor(final Framework framework) {
         super(framework);
-        this.workflowSystemBuilder = Workflows.builder();
+        this.setWorkflowSystemBuilderSupplier(Workflows::builder);
     }
 
     public static String stepKey(final String key, final Object stepNum) {
@@ -125,12 +128,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
     }
 
-    public WorkflowSystemBuilder getWorkflowSystemBuilder() {
-        return workflowSystemBuilder;
+
+    public Supplier<WorkflowSystemBuilder> getWorkflowSystemBuilderSupplier() {
+        return workflowSystemBuilderSupplier;
     }
 
-    public void setWorkflowSystemBuilder(WorkflowSystemBuilder workflowSystemBuilder) {
-        this.workflowSystemBuilder = workflowSystemBuilder;
+    public void setWorkflowSystemBuilderSupplier(Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier) {
+        this.workflowSystemBuilderSupplier = workflowSystemBuilderSupplier;
     }
 
 
@@ -164,14 +168,25 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
     }
 
-
+    private static interface LogOut {
+        void log(String message);
+    }
     @Override
     public WorkflowExecutionResult executeWorkflowImpl(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item
     )
     {
-        executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Start EngineWorkflowExecutor");
+        StateObj newWorkflowState = Workflows.getNewWorkflowState();
+        final String workflowId = newWorkflowState.getState().get(Workflows.WORKFLOW_STATE_ID_KEY);
+        MutableStateObj
+                mutable =
+                States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+        ExecutionListener executionListener = executionContext.getExecutionListener();
+        LogOut logDebug = createDebugLog(workflowId, executionListener);
+        LogOut logWarn = createWarnLog(workflowId, executionListener);
+        LogOut logErr = createErrLog(workflowId, executionListener);
+        logDebug.log("Start EngineWorkflowExecutor");
         final IWorkflow workflow = item.getWorkflow();
 
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
@@ -183,12 +198,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         final WFSharedContext sharedContext = WFSharedContext.withBase(executionContext.getSharedDataContext());
         WorkflowStrategy strategyForWorkflow;
         try {
-            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy);
+            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy, getFramework());
         } catch (ExecutionServiceException e) {
-            executionContext.getExecutionListener().log(
-                    Constants.ERR_LEVEL,
-                    "Exception: " + e.getClass() + ": " + e.getMessage()
-            );
+            logErr.log("Exception: " + e.getClass() + ": " + e.getMessage());
             return new BaseWorkflowExecutionResult(
                     stepResults,
                     new HashMap<>(),
@@ -199,12 +211,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             );
         }
 
-        MutableStateObj mutable = States.mutable(DataContextUtils.flattenDataContext(
-                executionContext.getDataContext()));
+
+        mutable.updateState(newWorkflowState);
 
         mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(workflow.isKeepgoing()));
 
-        MutableStateObj state = new StateLogger(mutable, executionContext.getExecutionListener());
+        MutableStateObj state = new StateLogger(mutable, logDebug::log);
 
         RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
 
@@ -213,23 +225,29 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             profile = new SequentialStrategyProfile();
         }
 
-        Set<StepOperation> operations
-                = buildOperations(executionContext, item, workflow, wlistener, ruleEngine, state, profile);
+        Set<StepOperation> operations = buildOperations(
+                this,
+                executionContext,
+                item,
+                workflow,
+                wlistener,
+                ruleEngine,
+                state,
+                profile,
+                logDebug
+        );
 
-        executionContext.getExecutionListener().log(
-                Constants.DEBUG_LEVEL,
-                "Create rule engine with rules: " + ruleEngine
-        );
-        executionContext.getExecutionListener().log(
-                Constants.DEBUG_LEVEL,
-                "Create workflow engine with state: " + state
-        );
+        logDebug.log("Create rule engine with rules: " + ruleEngine);
+        logDebug.log("Create workflow engine with state: " + state);
 
         WorkflowSystem workflowEngine = buildWorkflowSystem(
-                executionContext,
                 state,
                 ruleEngine,
-                strategyForWorkflow.getThreadCount()
+                strategyForWorkflow.getThreadCount(),
+                getWorkflowSystemBuilderSupplier(),
+                event -> {
+                    logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
+                }
         );
 
 
@@ -272,13 +290,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     controlBehavior = result.getControlBehavior();
                     statusString = result.getStatusString();
                 }
-//                System.out.println("Step result data: "+result.getResultData());//XXX
             } else {
                 workflowSuccess = false;
-                addUnknownStepFailure(executionContext, stepFailures, operation, failure);
+                addUnknownStepFailure(executionContext, stepFailures, operation, failure, logDebug, logErr);
             }
         }
-        logSkippedOperations(executionContext, operations);
+        logSkippedOperations(executionContext, operations, logWarn);
 
         WorkflowStatusResult workflowResult = workflowResult(
                 workflowSuccess,
@@ -298,33 +315,68 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
-    public WorkflowSystem buildWorkflowSystem(
-            final StepExecutionContext executionContext,
-            final MutableStateObj state,
-            final RuleEngine ruleEngine,
-            final int wfThreadcount
+    private static LogOut createDebugLog(
+            final String workflowId,
+            final ExecutionListener executionListener
     )
     {
-        return getWorkflowSystemBuilder()
-                .ruleEngine(ruleEngine)
-                .executor(() -> wfThreadcount > 0
-                                ? Executors.newFixedThreadPool(wfThreadcount)
-                                : Executors.newCachedThreadPool()
-                )
-                .state(state)
-                .listener(event -> executionContext.getExecutionListener()
-                                                   .log(
-                                                           Constants.DEBUG_LEVEL,
-                                                           event.getEventType() + ": " + event.getMessage()
-                                                   ))
-                .build();
+        return (String message) -> {
+            String logMessage = String.format("[wf:%s] %s", workflowId, message);
+            logger.debug(logMessage);
+            executionListener.log(Constants.DEBUG_LEVEL, logMessage);
+        };
     }
 
-    private void addUnknownStepFailure(
+    private static LogOut createWarnLog(
+            final String workflowId,
+            final ExecutionListener executionListener
+    )
+    {
+        return (String message) -> {
+            String logMessage = String.format("[wf:%s] %s", workflowId, message);
+            logger.warn(logMessage);
+            executionListener.log(Constants.WARN_LEVEL, logMessage);
+        };
+    }
+
+    private static LogOut createErrLog(
+            final String workflowId,
+            final ExecutionListener executionListener
+    )
+    {
+        return (String message) -> {
+            String logMessage = String.format("[wf:%s] %s", workflowId, message);
+            logger.error(logMessage);
+            executionListener.log(Constants.ERR_LEVEL, logMessage);
+        };
+    }
+
+    private static WorkflowSystem buildWorkflowSystem(
+            final MutableStateObj state,
+            final RuleEngine ruleEngine,
+            final int wfThreadcount,
+            final Supplier<WorkflowSystemBuilder> workflowSystemBuilder,
+            final WorkflowSystemEventListener workflowSystemEventListener
+    )
+    {
+        return workflowSystemBuilder.get()
+                                    .ruleEngine(ruleEngine)
+                                    .executor(() -> wfThreadcount > 0
+                                                    ? Executors.newFixedThreadPool(wfThreadcount)
+                                                    : Executors.newCachedThreadPool()
+                                    )
+                                    .state(state)
+                                    .listener(workflowSystemEventListener)
+                                    .build();
+    }
+
+    private static void addUnknownStepFailure(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> stepFailures,
             final StepOperation operation,
-            final Throwable failure
+            final Throwable failure,
+            final LogOut logDebug,
+            final LogOut logErr
     )
     {
         StepFailureReason reason = StepFailureReason.Unknown;
@@ -343,27 +395,25 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 operation.getStepNum()
             );
         } else {
-            executionContext
-                .getExecutionListener()
-                .log(Constants.DEBUG_LEVEL, Throwables.getStackTraceAsString(failure));
+            logDebug.log(message + ": " + Throwables.getStackTraceAsString(failure));
         }
-        executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
+        logErr.log(message);
         stepFailures.put(operation.getStepNum(), StepExecutionResultImpl.wrapStepException(
                 failure instanceof StepException ? (StepException) failure :
                 new StepException(message, failure, reason)
         ));
     }
 
-    private void logSkippedOperations(
+    private static void logSkippedOperations(
             final StepExecutionContext executionContext,
-            final Set<StepOperation> operations
+            final Set<StepOperation> operations,
+            LogOut logOut
     )
     {
         operations.stream()
                   .filter(op -> !op.isDidRun())
                   .forEach(op ->
-                                   executionContext.getExecutionListener().log(
-                                           Constants.WARN_LEVEL,
+                                   logOut.log(
                                            String.format(
                                                    "Step [%d] did not run. " +
                                                    "start conditions: %s, skip " +
@@ -373,7 +423,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                                                    op.getSkipTriggerConditions()
                                            )
                                    )
-                );
+                  );
     }
 
     /**
@@ -385,14 +435,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
      *
      * @return new RuleEngine
      */
-    private RuleEngine setupRulesEngine(
+    private static RuleEngine setupRulesEngine(
             final StepExecutionContext executionContext,
             final IWorkflow workflow,
             final WorkflowStrategy strategyForWorkflow
     )
     {
 
-        executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Building initial state and rules...");
 
         RuleEngine ruleEngine = Rules.createEngine(INITIAL_RULES);
 
@@ -401,11 +450,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return ruleEngine;
     }
 
-    public WorkflowStrategy setupWorkflowStrategy(
+    public static WorkflowStrategy setupWorkflowStrategy(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
-            final String strategy
+            final String strategy,
+            final IFramework framework
     ) throws ExecutionServiceException
     {
         final WorkflowStrategy strategyForWorkflow;
@@ -421,7 +471,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             }
         }
-        strategyForWorkflow = getFramework().getWorkflowStrategyService().getStrategyForWorkflow(
+        strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
                 item,
                 pluginConfig,
                 executionContext.getFrameworkProject()
@@ -429,14 +479,16 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return strategyForWorkflow;
     }
 
-    private Set<StepOperation> buildOperations(
+    private static Set<StepOperation> buildOperations(
+            final EngineWorkflowExecutor engineWorkflowExecutor,
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
             final WorkflowExecutionListener wlistener,
             final RuleEngine ruleEngine,
             final MutableStateObj state,
-            final WorkflowStrategyProfile profile
+            final WorkflowStrategyProfile profile,
+            LogOut log
     )
     {
         final Set<StepOperation> operations = new HashSet<>();
@@ -451,8 +503,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             // Conditions that indicate step should start
             Set<Condition> stepStartTriggerConditions = profile.getStartConditionsForStep(item, stepNum, i == 0);
 
-            executionContext.getExecutionListener().log(
-                    Constants.DEBUG_LEVEL,
+            log.log(
                     String.format("start conditions for step [%d]: %s", stepNum, stepStartTriggerConditions)
             );
             // State that will trigger the step
@@ -474,8 +525,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                         ),
                         stepSkipTriggerState
                 ));
-                executionContext.getExecutionListener().log(
-                        Constants.DEBUG_LEVEL,
+                log.log(
                         String.format("skip conditions for step [%d]: %s", stepNum, stepSkipTriggerConditions)
                 );
             }
@@ -485,7 +535,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                             stepNum,
                             cmd.getLabel(),
                             new StepCallable(
-                                    this,
+                                    engineWorkflowExecutor,
                                     executionContext,
                                     workflow.isKeepgoing(),
                                     wlistener,
@@ -503,15 +553,14 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     }
 
 
-
-    private StateObj createTriggerControlStateForStep(final int stepNum) {
+    private static StateObj createTriggerControlStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_KEY, stepNum),
                 VALUE_TRUE
         );
     }
 
-    private StateObj createSkipTriggerStateForStep(final int stepNum) {
+    private static StateObj createSkipTriggerStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_SKIP_KEY, stepNum),
                 VALUE_TRUE

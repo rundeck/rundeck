@@ -1,1 +1,2 @@
 com.dtolabs.rundeck.server.plugins.services.TourLoaderPluginProviderService
+com.dtolabs.rundeck.server.plugins.services.OptionValuesPluginProviderService

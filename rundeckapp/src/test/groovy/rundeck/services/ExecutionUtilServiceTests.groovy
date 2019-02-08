@@ -95,7 +95,7 @@ class ExecutionUtilServiceTests {
         }
         def loghandler=logcontrol.proxyInstance()
 
-
+        executionUtilService.grailsApplication = [:]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 
@@ -165,6 +165,7 @@ class ExecutionUtilServiceTests {
         logcontrol.demand.close(1..1){->
         }
         def loghandler=logcontrol.proxyInstance()
+        executionUtilService.grailsApplication = [:]
 
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
@@ -192,6 +193,7 @@ class ExecutionUtilServiceTests {
         logcontrol.demand.close(1..1){->
         }
         def loghandler=logcontrol.proxyInstance()
+        executionUtilService.grailsApplication = [:]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 
@@ -218,7 +220,7 @@ class ExecutionUtilServiceTests {
         }
         logcontrol.demand.close(1..1){-> }
         def loghandler=logcontrol.proxyInstance()
-
+        executionUtilService.grailsApplication = [:]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 

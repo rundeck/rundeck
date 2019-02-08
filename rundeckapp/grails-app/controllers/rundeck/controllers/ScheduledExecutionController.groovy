@@ -63,6 +63,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
+import rundeck.services.optionvalues.OptionValuesService
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -135,6 +136,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ScmService scmService
     def PluginService pluginService
     def FileUploadService fileUploadService
+    OptionValuesService optionValuesService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -701,8 +703,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         //see if option specified, and has url
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
-            def Option opt = scheduledExecution.options.find {it.name == params.option}
-            def values=[]
+            Option opt = scheduledExecution.options.find {it.name == params.option}
             if (opt.realValuesUrl) {
                 //load expand variables in URL source
 
@@ -2863,6 +2864,9 @@ class ScheduledExecutionController  extends ControllerBase{
                         optdeps[opt.name] << oname
                     }
                 }
+            }
+            if(opt.optionValuesPluginType) {
+                opt.valuesFromPlugin = optionValuesService.getOptions(scheduledExecution.project,opt.optionValuesPluginType)
             }
         }
         model.dependentoptions=depopts

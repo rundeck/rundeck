@@ -1,7 +1,7 @@
 
-set RDECK_BASE=/tmp/waka
+set RDECK_BASE=/home/rundeck
 
-set JAVA_HOME=/home/greg/.sdkman/candidates/java/8.0.172-zulu/jre
+set JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/jre
 
 :: Unsetting JRE_HOME to ensure there is no conflict with JAVA_HOME
 (set JRE_HOME=)

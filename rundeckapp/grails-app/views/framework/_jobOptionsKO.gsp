@@ -78,11 +78,12 @@ used by _editOptions.gsp template
                                                       optiondependencies[optName].every { selectedoptsmap[it] },
                                               secureInput        : optionSelect.secureInput,
                                               hasExtended        : !optionSelect.secureInput && (values || optionSelect.values ||
-                                                      optionSelect.multivalued),
+                                                      optionSelect.multivalued || optionSelect.valuesFromPlugin),
                                               value              : selectedvalue ? selectedvalue :
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?
                                                               selectedoptsmap[optName] :
-                                                              (optionSelect.defaultValue ?: '')
+                                                              (optionSelect.defaultValue ?: ''),
+                                              valuesFromPlugin   : optionSelect.valuesFromPlugin
                                       ]
                                   }
     ]}" id="jobOptionData"/>

@@ -4,17 +4,18 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Created by greg on 5/5/16.
  */
 public class StateLogger implements MutableStateObj {
     MutableStateObj state;
-    PluginLogger listener;
+    private Consumer<String> listener;
 
     public StateLogger(
             final MutableStateObj state,
-            final PluginLogger listener
+            final Consumer<String> listener
     )
     {
         this.state = state;
@@ -29,21 +30,21 @@ public class StateLogger implements MutableStateObj {
     @Override
     public boolean updateState(final StateObj values) {
         boolean result = state.updateState(values);
-        listener.log(Constants.DEBUG_LEVEL, "Update conditional state: " + values.getState());
+        listener.accept("Update conditional state: " + values.getState());
         return result;
     }
 
     @Override
     public boolean updateState(final Map<String, String> values) {
         boolean result = state.updateState(values);
-        listener.log(Constants.DEBUG_LEVEL, "Update conditional state: " + values);
+        listener.accept("Update conditional state: " + values);
         return result;
     }
 
     @Override
     public boolean updateState(final String key, final String value) {
         boolean result = state.updateState(key, value);
-        listener.log(Constants.DEBUG_LEVEL, "Update conditional state: " + key + "=" + value);
+        listener.accept("Update conditional state: " + key + "=" + value);
         return result;
     }
 

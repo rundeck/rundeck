@@ -145,16 +145,6 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                     stepFailures.putAll(workflowExecutionResult.getStepFailures());
                     sectionSuccess = workflowExecutionResult;
                     sectionData = workflowExecutionResult;
-                    //
-//                    sectionSuccess = executeWFSection(executionContext,
-//                                                      results,
-//                                                      failures,
-//                                                      stepFailures,
-//                                                      stepCount,
-//                                                      flowsection.getCommands(),
-//                                                      flowsection.isKeepgoing(),
-//                                                      wfCurrentContext
-//                    );
 
                 }
                 //combine output results for the section
@@ -235,11 +225,13 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
         logger.debug("Node dispatch for " + flowsection.getCommands().size() + " steps");
         final DispatcherResult dispatch;
         final WorkflowExecutionItem innerLoopItem = createInnerLoopItem(flowsection);
-        final WorkflowExecutor executor = getFramework().getWorkflowExecutionService().getExecutorForItem(innerLoopItem);
-        final Dispatchable dispatchedWorkflow = new DispatchedWorkflow(executor,
-                                                                       innerLoopItem,
-                                                                       stepCount,
-                                                                       executionContext.getStepContext());
+
+        final Dispatchable dispatchedWorkflow = new DispatchedWorkflow(
+                getFramework().getWorkflowExecutionService(),
+                innerLoopItem,
+                stepCount,
+                executionContext.getStepContext()
+        );
 
         WFSharedContext dispatchSharedContext = new WFSharedContext(sharedContext);
         //dispatch the sequence of dispatched items to each node
@@ -362,52 +354,8 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
         }
         return wfSharedContext;
     }
-//
-//    /**
-//     * Execute non-dispatch steps of a workflow
-//     *
-//     * @return success if all steps were successful
-//     */
-//    private WorkflowStatusResult executeWFSection(
-//            final StepExecutionContext executionContext,
-//            final List<StepExecutionResult> results,
-//            final Map<String, Collection<StepExecutionResult>> failures,
-//            final Map<Integer, StepExecutionResult> stepFailures,
-//            final int stepCount,
-//            final List<StepExecutionItem> commands,
-//            final boolean keepgoing,
-//            WFSharedContext sharedContext
-//    )
-//    {
-//
-//        WorkflowStatusResult workflowsuccess = executeWorkflowItemsForNodeSet(
-//                executionContext,
-//                stepFailures,
-//                results,
-//                commands,
-//                keepgoing,
-//                stepCount,
-//                sharedContext
-//        );
-//
-//        logger.debug("Aggregate results: " + workflowsuccess + " " + results + ", " + stepFailures);
-//        Map<String, Collection<StepExecutionResult>> localFailure = convertFailures(stepFailures);
-//
-//        mergeFailure(failures, localFailure);
-//        return workflowsuccess;
-//    }
 
     private void mergeFailure(Map<String, Collection<StepExecutionResult>> destination, Map<String, Collection<StepExecutionResult>> source) {
-        for (final String s : source.keySet()) {
-            if (null == destination.get(s)) {
-                destination.put(s, new ArrayList<>());
-            }
-            destination.get(s).addAll(source.get(s));
-        }
-    }
-
-    private void mergeResult(HashMap<String, List<StatusResult>> destination,
-                             HashMap<String, List<StatusResult>> source) {
         for (final String s : source.keySet()) {
             if (null == destination.get(s)) {
                 destination.put(s, new ArrayList<>());
@@ -423,23 +371,29 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
     }
 
     static enum Reason implements FailureReason {
-        WorkflowSequenceFailures
+        WorkflowSequenceFailures,
+        ExecutionServiceError
     }
 
     /**
      * Workflow execution logic to dispatch an entire workflow sequence to a single node.
      */
     static class DispatchedWorkflow implements Dispatchable {
-        WorkflowExecutor executor;
+
         WorkflowExecutionItem workflowItem;
         int beginStep;
         List<Integer> stack;
+        WorkflowExecutionService workflowExecutionService;
 
-        DispatchedWorkflow(WorkflowExecutor executor,
-                           WorkflowExecutionItem workflowItem,
-                           int beginStep,
-                           List<Integer> stack) {
-            this.executor = executor;
+        DispatchedWorkflow(
+                WorkflowExecutionService workflowExecutionService,
+                WorkflowExecutionItem workflowItem,
+                int beginStep,
+                List<Integer> stack
+        )
+        {
+
+            this.workflowExecutionService = workflowExecutionService;
             this.workflowItem = workflowItem;
             this.beginStep = beginStep;
             this.stack = stack;
@@ -451,6 +405,18 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 .stepNumber(beginStep)
                 .stepContext(stack)
                 .build();
+
+            final WorkflowExecutor executor;
+            try {
+                executor = workflowExecutionService.getExecutorForItem(workflowItem);
+            } catch (ExecutionServiceException e) {
+                return new NodeStepResultImpl(
+                        e,
+                        Reason.ExecutionServiceError,
+                        "Exception: " + e.getClass() + ": " + e.getMessage(),
+                        node
+                );
+            }
             WorkflowExecutionResult result = executor.executeWorkflow(newcontext, workflowItem);
             NodeStepResultImpl result1;
             if (result.isSuccess()) {
