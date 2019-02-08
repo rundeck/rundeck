@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
@@ -124,7 +125,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     public <T> ConfiguredPlugin<T> configurePluginByName(
             String name,
             PluggableProviderService<T> service,
-            Framework framework,
+            IFramework framework,
             String project, Map instanceConfiguration
     )
     {
@@ -232,7 +233,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      */
     public ValidatedPlugin validatePluginByName(
             String name, PluggableProviderService service,
-            Framework framework,
+            IFramework framework,
             String project, Map instanceConfiguration
     )
     {

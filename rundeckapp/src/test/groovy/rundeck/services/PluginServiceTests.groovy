@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -118,7 +119,7 @@ class PluginServiceTests extends Specification {
 
         @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-        Framework framework, String project, Map instanceConfiguration) {
+                                                      IFramework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
         }
@@ -170,7 +171,7 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
-        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework, String project, Map instanceConfiguration) {
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, IFramework framework, String project, Map instanceConfiguration) {
             validateWithFrameworkCalled=true
             return pluginValidation
         }
