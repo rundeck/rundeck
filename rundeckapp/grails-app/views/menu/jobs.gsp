@@ -813,11 +813,14 @@
 </div>
 
 <g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
+<<<<<<< HEAD
 <%--
 <div id="project-jobs-vue"></div>
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/pages/project-jobs.js"/>
 <!-- /VUE JS MODULES -->
 --%>
+=======
+>>>>>>> master
 </body>
 </html>

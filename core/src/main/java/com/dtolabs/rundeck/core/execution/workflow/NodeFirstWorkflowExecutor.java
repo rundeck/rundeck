@@ -145,16 +145,6 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                     stepFailures.putAll(workflowExecutionResult.getStepFailures());
                     sectionSuccess = workflowExecutionResult;
                     sectionData = workflowExecutionResult;
-                    //
-//                    sectionSuccess = executeWFSection(executionContext,
-//                                                      results,
-//                                                      failures,
-//                                                      stepFailures,
-//                                                      stepCount,
-//                                                      flowsection.getCommands(),
-//                                                      flowsection.isKeepgoing(),
-//                                                      wfCurrentContext
-//                    );
 
                 }
                 //combine output results for the section
@@ -364,52 +354,8 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
         }
         return wfSharedContext;
     }
-//
-//    /**
-//     * Execute non-dispatch steps of a workflow
-//     *
-//     * @return success if all steps were successful
-//     */
-//    private WorkflowStatusResult executeWFSection(
-//            final StepExecutionContext executionContext,
-//            final List<StepExecutionResult> results,
-//            final Map<String, Collection<StepExecutionResult>> failures,
-//            final Map<Integer, StepExecutionResult> stepFailures,
-//            final int stepCount,
-//            final List<StepExecutionItem> commands,
-//            final boolean keepgoing,
-//            WFSharedContext sharedContext
-//    )
-//    {
-//
-//        WorkflowStatusResult workflowsuccess = executeWorkflowItemsForNodeSet(
-//                executionContext,
-//                stepFailures,
-//                results,
-//                commands,
-//                keepgoing,
-//                stepCount,
-//                sharedContext
-//        );
-//
-//        logger.debug("Aggregate results: " + workflowsuccess + " " + results + ", " + stepFailures);
-//        Map<String, Collection<StepExecutionResult>> localFailure = convertFailures(stepFailures);
-//
-//        mergeFailure(failures, localFailure);
-//        return workflowsuccess;
-//    }
 
     private void mergeFailure(Map<String, Collection<StepExecutionResult>> destination, Map<String, Collection<StepExecutionResult>> source) {
-        for (final String s : source.keySet()) {
-            if (null == destination.get(s)) {
-                destination.put(s, new ArrayList<>());
-            }
-            destination.get(s).addAll(source.get(s));
-        }
-    }
-
-    private void mergeResult(HashMap<String, List<StatusResult>> destination,
-                             HashMap<String, List<StatusResult>> source) {
         for (final String s : source.keySet()) {
             if (null == destination.get(s)) {
                 destination.put(s, new ArrayList<>());

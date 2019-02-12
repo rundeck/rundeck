@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -68,9 +69,11 @@ public class Option implements Comparable{
     String optionType
     String configData
     Boolean multivalueAllSelected
+    String optionValuesPluginType
+    List<OptionValue> valuesFromPlugin
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile']
+    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -95,6 +98,7 @@ public class Option implements Comparable{
         configData(nullable: true)
         multivalueAllSelected(nullable: true)
         label(nullable: true)
+        optionValuesPluginType(nullable: true)
     }
 
 
@@ -191,6 +195,9 @@ public class Option implements Comparable{
         if(secureExposed && secureInput){
             map.valueExposed= secureExposed
         }
+        if(optionValuesPluginType) {
+            map.optionValuesPluginType = optionValuesPluginType
+        }
         return map
     }
 
@@ -250,6 +257,9 @@ public class Option implements Comparable{
             opt.secureExposed=Boolean.valueOf(data.valueExposed)
         }else{
             opt.secureExposed=false
+        }
+        if(data.optionValuesPluginType) {
+            opt.optionValuesPluginType = data.optionValuesPluginType
         }
         return opt
     }
@@ -338,7 +348,7 @@ public class Option implements Comparable{
         ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
          'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
          'multivalueAllSelected', 'label',
-         'delimiter',
+         'delimiter', 'optionValuesPluginType',
          'secureInput', 'secureExposed', 'optionType', 'configData'].
                 each { k ->
             opt[k]=this[k]
@@ -368,8 +378,10 @@ public class Option implements Comparable{
         ", secureInput='" + secureInput + '\'' +
         ", secureExposed='" + secureExposed + '\'' +
         ", delimiter='" + delimiter + '\'' +
+               ', optionValuesPluginType=' + optionValuesPluginType + '\'' +
                 ", optionType='" + optionType + '\'' +
                 ", configData='" + configData + '\'' +
+
         '}' ;
     }
 

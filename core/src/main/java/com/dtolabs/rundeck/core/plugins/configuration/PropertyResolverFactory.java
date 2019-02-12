@@ -157,7 +157,7 @@ public class PropertyResolverFactory {
      * @param providerName provider name
      * @param instanceProperties instance properties, or null
      */
-    public static PropertyResolver createFrameworkProjectRuntimeResolver(final Framework framework,
+    public static PropertyResolver createFrameworkProjectRuntimeResolver(final IFramework framework,
             final String projectName,
             final Map<String, Object> instanceProperties,
             final String pluginType,
