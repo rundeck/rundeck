@@ -19,7 +19,8 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.CloseableProvider;
 import com.dtolabs.rundeck.core.plugins.Closeables;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
@@ -585,6 +586,47 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 map.put("type", providerType);
                 map.put("props", configProps);
                 list.add(map);
+            } else {
+                done = true;
+            }
+            i++;
+        }
+        return list;
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName
+     * @param props       properties
+     * @param prefix
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public static List<PluginConfiguration> listPluginConfigurations(
+            final Map<String,String> props,
+            final String keyprefix,
+            final String serviceName
+    )
+    {
+        final ArrayList<PluginConfiguration> list = new ArrayList<>();
+        int i = 1;
+        boolean done = false;
+        while (!done) {
+            final String prefix = keyprefix + "." + i;
+            if (props.containsKey(prefix + ".type")) {
+                final String providerType = props.get(prefix + ".type");
+                final Map<String, Object> configProps = new HashMap<>();
+                final int len = (prefix + ".config.").length();
+                for (final Object o : props.keySet()) {
+                    final String key = (String) o;
+                    if (key.startsWith(prefix + ".config.")) {
+                        configProps.put(key.substring(len), props.get(key));
+                    }
+                }
+                final HashMap<String, Object> map = new HashMap<>();
+                map.put("type", providerType);
+                map.put("props", configProps);
+                list.add(new SimplePluginConfiguration(serviceName, providerType, configProps));
             } else {
                 done = true;
             }

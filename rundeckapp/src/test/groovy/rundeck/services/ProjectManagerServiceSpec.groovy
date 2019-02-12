@@ -289,7 +289,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
         0*service.nodeService.getNodes('test1')
 
         result.name=='test1'
@@ -353,7 +353,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
         0*service.nodeService.getNodes('test1')
 
         0*service.nodeService._(*_)
@@ -395,7 +395,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
         null==Project.findByName('test1')
 
     }
@@ -444,7 +444,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
 
         res != null
         res.config.size() == 3
@@ -491,7 +491,7 @@ class ProjectManagerServiceSpec extends Specification {
 
         then:
         1 * service.projectCache.invalidate('test1')
-        1 * service.nodeService.expireProjectNodes('test1')
+        1 * service.nodeService.refreshProjectNodes('test1')
 
         res != null
         res.config.size() == 2
@@ -535,7 +535,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
 
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
         res!=null
         res.config.size()==2
         null==res.config['abc']
@@ -576,7 +576,7 @@ class ProjectManagerServiceSpec extends Specification {
         then:
 
         1*service.projectCache.invalidate('test1')
-        1*service.nodeService.expireProjectNodes('test1')
+        1*service.nodeService.refreshProjectNodes('test1')
         res!=null
         res.config.size()==2
         null==res.config['abc']
@@ -1239,7 +1239,7 @@ class ProjectManagerServiceSpec extends Specification {
         service.importProjectsFromProjectManager(pm1)
 
         then:
-        1*service.nodeService.expireProjectNodes('abc')
+        1*service.nodeService.refreshProjectNodes('abc')
         0*service.nodeService.getNodes('abc')
         1*service.projectCache.invalidate('abc')
         Project.findByName('abc')!=null
