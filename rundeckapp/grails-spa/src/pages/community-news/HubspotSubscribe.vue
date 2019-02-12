@@ -1,6 +1,9 @@
 <template>
   <section>
-    <button @click="isSubscribeModalActive = true" class="btn red-button">Subscribe</button>
+    <button
+      @click="isSubscribeModalActive = true"
+      class="btn red-button"
+    >{{$t("message.subscribe")}}</button>
     <modal v-model="isSubscribeModalActive" ref="modal" :header="false" :footer="false">
       <div class="modal-body">
         <div v-if="!showConfirmation">
@@ -50,12 +53,9 @@ export default {
   methods: {
     handleSubmit() {
       axios
-        .post(
-          "community-news/register",
-          {
-            email: this.email
-          }
-        )
+        .post("community-news/register", {
+          email: this.email
+        })
         .then(response => {
           if (response.status === 200) {
             if (response.data.inlineMessage) {
@@ -74,7 +74,10 @@ export default {
         })
         .catch(error => {
           // eslint-disable-next-line
-          console.log("error", error);
+          console.log(
+            "Error connecting to Rundeck Hubspot Subscribe API",
+            error
+          );
         });
     }
   },

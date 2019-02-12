@@ -4,7 +4,8 @@
       <div class="col-xs-12">
         <div class="card">
           <div class="card-header">
-            <h2 class="card-title">Community News
+            <h2 class="card-title">
+              {{$t("message.communityNews")}}
               <div class="pull-right">
                 <hubspot-subscribe/>
               </div>

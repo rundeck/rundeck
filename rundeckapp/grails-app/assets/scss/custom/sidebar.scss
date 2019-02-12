@@ -120,8 +120,15 @@
     max-width: 258px;
     background: #000;
 
+    .sidebar-footer-line-item {
+      text-align: left;
+      padding-left: 28px;
+      display: block;
+    }
+
+
     .snapshot-version {
-      margin-top: 20px;
+      padding-top: .5em;
 
       a {
         // background: rgba(255, 255, 255, 0.14);
@@ -180,34 +187,8 @@ body.modal-open {
     .snapshot-version {
       display: none;
     }
-
-    .logo {
-      // .navbar-minimize{
-      //   // display: inline-block;
-      //   position: absolute;
-      //   right: -2em;
-      //   top: 1em;
-      //   // z-index: 4000;
-      // }
-    }
   }
 }
-
-// .sidebar:not(:hover){
-//   .sidebar-mini &{
-//     a{
-//       background-image: none;
-//     }
-//     .appTitle{
-//       opacity: 0;
-//       display: none;
-//       // position: absolute;
-//     }
-//     .snapshot-version{
-//       display: none;
-//     }
-//   }
-// }
 
 .sidebar {
   .subnav-open {
@@ -217,14 +198,3 @@ body.modal-open {
     }
   }
 }
-
-// .sidebar:hover{
-//   .logo{
-//     .navbar-minimize{
-//       display: inline-block;
-//       position: absolute;
-//       right: 1em;
-//       top: 1em;
-//     }
-//   }
-// }

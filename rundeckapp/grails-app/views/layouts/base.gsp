@@ -77,6 +77,7 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
+    <asset:stylesheet href="static/css/components/community-news-notification.css"/>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -237,6 +238,7 @@ disable for now because profiler plugin is not compatible with grails 3.x
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/tour.js"/>
+<asset:javascript src="static/components/community-news-notification.js"/>
 <!-- /VUE JS MODULES -->
 
 </body>

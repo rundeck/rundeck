@@ -1,5 +1,15 @@
 <template>
   <div>
+    <div v-show="error">
+      <h4>{{ $t("message.connectionError")}}</h4>
+      <p>
+        {{ $t("message.refresh") }}
+        <a
+          href="https://www.rundeck.com/community-updates"
+          target="_blank"
+        >Rundeck Community News</a>.
+      </p>
+    </div>
     <div v-show="!showLoading">
       <article
         v-for="(blog, index) in blogs"
@@ -9,7 +19,7 @@
       >
         <div class="row">
           <div class="col-xs-12">
-            <h6 class="pub-date">{{blog.publish_date | moment("MMMM do YYYY")}}</h6>
+            <h6 class="pub-date">{{blog.publish_date | moment("MMMM do YYYY hh:mm")}}</h6>
           </div>
           <div class="col-xs-12 col-sm-3">
             <img :src="blog.featured_image" alt class="img-responsive">
@@ -23,11 +33,14 @@
       </article>
       <div>
         <div class="articles-footer">
-          <a href="https://www.rundeck.com/community-updates">read more</a>
+          <a
+            href="https://www.rundeck.com/community-updates"
+            target="_blank"
+          >{{ $t("message.readMore")}}</a>
         </div>
       </div>
     </div>
-    <div v-show="showLoading">
+    <div v-show="showLoading && !error" style="text-align: center;margin: 10vh 0;">
       <i class="fas fa-spinner fa-5x fa-pulse" style="color:#f7403a;"></i>
     </div>
   </div>
@@ -41,7 +54,8 @@ export default {
   data() {
     return {
       showLoading: true,
-      blogs: []
+      blogs: [],
+      error: false
     };
   },
   methods: {
@@ -57,10 +71,22 @@ export default {
           groupid: 7039074342
         }
       })
-      .then(response => {
-        this.blogs = response.data.objects;
-        this.showLoading = false;
-      });
+      .then(
+        response => {
+          this.blogs = response.data.objects;
+          this.showLoading = false;
+          this.$cookies.set(
+            "communityNewsMostRecentPost",
+            this.blogs[0].publish_date,
+            60 * 60 * 24 * 7
+          );
+          this.$cookies.set("communityNews", "false", 60 * 60 * 24);
+        },
+        error => {
+          this.error = true;
+          console.log("Error connecting to Rundeck Community News API", error);
+        }
+      );
   }
 };
 </script>

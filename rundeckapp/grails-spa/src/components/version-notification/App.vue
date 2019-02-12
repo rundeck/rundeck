@@ -4,7 +4,7 @@
     class="version-notification-container"
     v-show="showVersionNotification"
   >
-    <div>
+    <div class="sidebar-footer-line-item">
       <i class="fas fa-exclamation-circle"></i>
       <span style="margin-left:5px">{{ $t("message.sidebarNotificationText")}}</span>
     </div>
@@ -150,11 +150,11 @@ export default {
               }
             }
           });
-          this.showVersionNotification = true;
         }
       },
       error => {
-        console.log("axios error", error);
+        // eslint-disable-next-line
+        console.log("Error connecting to Rundeck Release API", error);
       }
     );
   }
@@ -177,10 +177,9 @@ function returnVersionInformation(versionString) {
 <style lang="scss" scoped>
 .version-notification-container {
   color: white !important;
-  background-color: #3c3c3c;
-  margin-top: -10px;
-  margin-bottom: 10px;
-  padding: 10px 0 10px 20px;
+  background-color: #000000;
+  border-bottom: 1px solid #3c3c3c;
+  padding: 0.5em 0;
   text-align: left;
   cursor: pointer;
 }

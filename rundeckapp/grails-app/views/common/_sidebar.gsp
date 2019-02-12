@@ -27,7 +27,7 @@
 <g:set var="selectedclass" value="active"/>
 
 <g:set var="wfselected" value=""/>
-<ul class="nav">
+<ul id="sidebar-nav" class="nav">
   <!-- <li>
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
        title="Home">
@@ -226,14 +226,14 @@
     </g:ifExecutionMode>
 </g:if>
 --}%
-<div id="sidebar-bottom">
+<div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
   <div id="community-news-notification">
-    <g:link controller="communityNews" action="index">
-        <i class="fas fa-bell"></i>
-        <p>
-        Community News
-        </p>
-    </g:link>
+    <div class="sidebar-footer-line-item">
+      <g:link controller="communityNews" action="index">
+        <span id="community-news-notification-vue"></span>
+      </g:link>
+    </div>
+
   </div>
   <div id="version-notification-vue"></div>
   <div id="snapshot-version" class="snapshot-version">
@@ -283,4 +283,10 @@
   const ps = new PerfectScrollbar('.sidebar-wrapper', {
     suppressScrollX: true
   });
+
+  setTimeout(function(){
+    var announcementHeight = document.getElementById("sidebar-bottom").offsetHeight;
+    document.getElementById("sidebar-nav").style['marginBottom'] = announcementHeight.toString() + "px";
+  }, 500)
+
 </g:javascript>

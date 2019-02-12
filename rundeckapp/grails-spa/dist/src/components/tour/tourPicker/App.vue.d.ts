@@ -1,5 +1,5 @@
 import Vue from 'vue';
-declare const _default: import("vue").VueConstructor<{
+declare const _default: import("vue/types/vue").VueConstructor<{
     hasActiveTour: boolean;
     tourSelectionModal: boolean;
     tours: any[];
