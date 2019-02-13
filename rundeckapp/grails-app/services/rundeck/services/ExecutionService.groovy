@@ -62,7 +62,7 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.transaction.TransactionDefinition
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -2149,6 +2149,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param input , map of input overrides, allowed keys: loglevel: String, option.*:String, argString: String, node(Include|Exclude).*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
      * @return execution
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     Execution int_createExecution(
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
