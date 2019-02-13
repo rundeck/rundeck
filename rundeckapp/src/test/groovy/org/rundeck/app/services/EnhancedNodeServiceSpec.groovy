@@ -122,7 +122,7 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             testNodeA.attributes['test1'] == 'blah'
             testNodeA.attributes['monkey'] == 'disaster'
             1 * sut.pluginService.validatePluginConfig('NodeEnhancer', 'asdf', [:]) >> new ValidatedPlugin(valid: true)
-            1 * sut.pluginService.configurePlugin('NodeEnhancer', 'asdf', [:]) >>
+            1 * sut.pluginService.configurePlugin('asdf', 'NodeEnhancer', [:]) >>
             new ConfiguredPlugin<NodeEnhancerPlugin>(new AddAddtributesPlugin(attributes: [monkey: 'disaster']), [:])
 
 
