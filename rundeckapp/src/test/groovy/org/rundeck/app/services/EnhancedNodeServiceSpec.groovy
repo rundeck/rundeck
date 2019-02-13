@@ -54,6 +54,7 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             nodeA.getAttributes().putAll(['test1': 'blah'])
             nodeset.putNode(nodeA)
             def sut = new EnhancedNodeService()
+            sut.enabled = true
             sut.nodeService = Mock(NodeService)
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)
@@ -95,6 +96,7 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
             nodeA.getAttributes().putAll(['test1': 'blah'])
             nodeset.putNode(nodeA)
             def sut = new EnhancedNodeService()
+            sut.enabled = true
             sut.nodeService = Mock(NodeService)
             sut.frameworkService = Mock(FrameworkService)
             sut.pluginService = Mock(PluginService)

@@ -34,6 +34,7 @@ import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.NodeService
 import rundeck.services.PluginService
+import rundeck.services.feature.FeatureService
 
 /**
  *
@@ -45,16 +46,14 @@ class EnhancedNodeService
     @Autowired NodeService nodeService
     @Autowired FrameworkService frameworkService
     @Autowired PluginService pluginService
-    @Autowired ConfigurationService configurationService
+    @Autowired FeatureService featureService
     private Map<String, ProjectNodesEnhancer> loadedPlugins = [:]
 
     private boolean enabled
 
     @Override
     void afterPropertiesSet() throws Exception {
-        if (configurationService) {
-            enabled = configurationService.getBoolean('nodes.enhancer.enabled', true)
-        }
+        enabled = featureService.featurePresent('enhanced-nodes', false)
     }
 
     @Override
