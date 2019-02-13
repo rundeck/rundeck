@@ -450,7 +450,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //                }else if (query.dostartafterFilter && query.startafterFilter ){
 //                    ge('dateStarted',query.startafterFilter)
 //                }
-                
+
 //                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
 //                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
 //                }
@@ -668,7 +668,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
     * Return a dataset: [nowrunning: (list of Execution), jobs: [map of id->ScheduledExecution for scheduled jobs],
-     *  total: total number of running executions, max: input max] 
+     *  total: total number of running executions, max: input max]
      */
     def listNowRunning(Framework framework, int max=10){
         //find currently running executions
@@ -1446,7 +1446,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != extraParams) {
             privatecontext.put("option", extraParams)
         }
-        
+
         def OrchestratorConfig orchestrator
         if(execMap.orchestrator){
             orchestrator = new OrchestratorConfig(execMap.orchestrator.type, execMap.orchestrator.configuration);
@@ -1865,12 +1865,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             execution.userRoles = params.userRoles
 
-            
+
             //parse options
             if(!execution.loglevel){
                 execution.loglevel=defaultLogLevel
             }
-                
+
         } else {
             throw new IllegalArgumentException("insufficient params to create a new Execution instance: " + params)
         }
@@ -3698,268 +3698,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return result map [total: int, result: List<Execution>]
      */
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
-        def state = query.statusFilter
-        def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
-        def eqfilters = ScheduledExecutionQuery.EQ_FILTERS
-        def boolfilters = ScheduledExecutionQuery.BOOL_FILTERS
-        def filters = ScheduledExecutionQuery.ALL_FILTERS
-        def excludeTxtFilters = ['excludeJob': 'jobName']
-        def excludeEqFilters = ['excludeJobExact': 'jobName']
 
-        def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
-
-        def convertids = { String s ->
-            try {
-                return Long.valueOf(s)
-            } catch (NumberFormatException e) {
-                return s
-            }
-        }
-        def idlist = query.jobIdListFilter?.collect(convertids)
-        def xidlist = query.excludeJobIdListFilter?.collect(convertids)
-
-        def hasJobFilters = jobqueryfilters.any { query[it] }
-        if (hasJobFilters && query.adhoc) {
-            flash.errorCode = "api.error.parameter.error"
-            flash.errorArgs = [message(code: 'api.executions.jobfilter.adhoc.conflict')]
-            return chain(controller: 'api', action: 'renderError')
-        }
+        def queryCriteria = query.createCriteria()
         def criteriaClos = { isCount ->
-            if (query.adhoc) {
-                isNull('scheduledExecution')
-            } else if (null != query.adhoc || hasJobFilters) {
-                isNotNull('scheduledExecution')
-            }
-            if (!query.adhoc && hasJobFilters) {
-                delegate.'scheduledExecution' {
-                    //begin related ScheduledExecution query
-                    if (idlist) {
-                        def idq = {
-                            idlist.each { theid ->
-                                if (theid instanceof Long) {
-                                    eq("id", theid)
-                                } else {
-                                    eq("uuid", theid)
-                                }
-                            }
-                        }
-                        if (idlist.size() > 1) {
 
-                            or {
-                                idq.delegate = delegate
-                                idq()
-                            }
-                        } else {
-                            idq.delegate = delegate
-                            idq()
-                        }
-                    }
-                    if (xidlist) {
-                        not {
-                            xidlist.each { theid ->
-                                if (theid instanceof Long) {
-                                    eq("id", theid)
-                                } else {
-                                    eq("uuid", theid)
-                                }
-                            }
-                        }
-                    }
-                    if (query.jobListFilter || query.excludeJobListFilter) {
-                        if (query.jobListFilter) {
-                            or {
-                                query.jobListFilter.each {
-                                    def z = it.split("/") as List
-                                    if (z.size() > 1) {
-                                        and {
-                                            eq('jobName', z.pop())
-                                            eq('groupPath', z.join("/"))
-                                        }
-                                    } else {
-                                        and {
-                                            eq('jobName', z.pop())
-                                            or {
-                                                eq('groupPath', "")
-                                                isNull('groupPath')
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (query.excludeJobListFilter) {
-                            not {
-                                or {
-                                    query.excludeJobListFilter.each {
-                                        def z = it.split("/") as List
-                                        if (z.size() > 1) {
-                                            and {
-                                                eq('jobName', z.pop())
-                                                eq('groupPath', z.join("/"))
-                                            }
-                                        } else {
-                                            and {
-                                                eq('jobName', z.pop())
-                                                or {
-                                                    eq('groupPath', "")
-                                                    isNull('groupPath')
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-
-                    txtfilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            ilike(val, '%' + query["${key}Filter"] + '%')
-                        }
-                    }
-
-                    eqfilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            eq(val, query["${key}Filter"])
-                        }
-                    }
-                    boolfilters.each { key, val ->
-                        if (null != query["${key}Filter"]) {
-                            eq(val, query["${key}Filter"])
-                        }
-                    }
-                    excludeTxtFilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            not {
-                                ilike(val, '%' + query["${key}Filter"] + '%')
-                            }
-                        }
-                    }
-                    excludeEqFilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            not {
-                                eq(val, query["${key}Filter"])
-                            }
-                        }
-                    }
-
-
-                    if ('-' == query['groupPath']) {
-                        or {
-                            eq("groupPath", "")
-                            isNull("groupPath")
-                        }
-                    } else if (query["groupPath"] && '*' != query["groupPath"]) {
-                        or {
-                            like("groupPath", query["groupPath"] + "/%")
-                            eq("groupPath", query['groupPath'])
-                        }
-                    }
-                    if ('-' == query['excludeGroupPath']) {
-                        not {
-                            or {
-                                eq("groupPath", "")
-                                isNull("groupPath")
-                            }
-                        }
-                    } else if (query["excludeGroupPath"]) {
-                        not {
-                            or {
-                                like("groupPath", query["excludeGroupPath"] + "/%")
-                                eq("groupPath", query['excludeGroupPath'])
-                            }
-                        }
-                    }
-                    if (query["groupPathExact"]) {
-                        if ("-" == query["groupPathExact"]) {
-                            or {
-                                eq("groupPath", "")
-                                isNull("groupPath")
-                            }
-                        } else {
-                            eq("groupPath", query['groupPathExact'])
-                        }
-                    }
-                    if (query["excludeGroupPathExact"]) {
-                        if ("-" == query["excludeGroupPathExact"]) {
-                            not {
-                                or {
-                                    eq("groupPath", "")
-                                    isNull("groupPath")
-                                }
-                            }
-                        } else {
-                            or {
-                                ne("groupPath", query['excludeGroupPathExact'])
-                                isNull("groupPath")
-                            }
-                        }
-                    }
-
-                    //end related ScheduledExecution query
-                }
-            }
-            if(query.projFilter) {
-                eq('project', query.projFilter)
-            }
-            if (query.userFilter) {
-                eq('user', query.userFilter)
-            }
-            if (state == EXECUTION_RUNNING) {
-                isNull('dateCompleted')
-            } else if (state == EXECUTION_SCHEDULED) {
-                eq('status', EXECUTION_SCHEDULED)
-            } else if (state == EXECUTION_ABORTED) {
-                isNotNull('dateCompleted')
-                eq('cancelled', true)
-            } else if (state == EXECUTION_TIMEDOUT) {
-                isNotNull('dateCompleted')
-                eq('timedOut', true)
-            }else if (state == EXECUTION_FAILED_WITH_RETRY) {
-                isNotNull('dateCompleted')
-                eq('willRetry', true)
-            } else if(state == EXECUTION_FAILED){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                or{
-                    eq('status',  'failed')
-                    eq('status',  'false')
-                }
-            }else if(state == EXECUTION_SUCCEEDED){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                or{
-                    eq('status',  'true')
-                    eq('status',  'succeeded')
-                }
-            }else if(state){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                eq('status',  state)
-            }
-            if (query.executionTypeFilter) {
-                eq('executionType', query.executionTypeFilter)
-            }
-            if (query.abortedbyFilter) {
-                eq('abortedby', query.abortedbyFilter)
-            }
-            if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
-                between('dateStarted', query.startafterFilter, query.startbeforeFilter)
-            } else if (query.dostartbeforeFilter && query.startbeforeFilter) {
-                le('dateStarted', query.startbeforeFilter)
-            } else if (query.dostartafterFilter && query.startafterFilter) {
-                ge('dateStarted', query.startafterFilter)
-            }
-
-            if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
-                between('dateCompleted', query.endafterFilter, query.endbeforeFilter)
-            } else if (query.doendbeforeFilter && query.endbeforeFilter) {
-                le('dateCompleted', query.endbeforeFilter)
-            }
-            if (query.doendafterFilter && query.endafterFilter) {
-                ge('dateCompleted', query.endafterFilter)
-            }
+            queryCriteria.delegate = delegate
+            queryCriteria()
 
             if (!isCount) {
                 if (offset) {
