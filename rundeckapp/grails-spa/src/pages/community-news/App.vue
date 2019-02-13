@@ -7,7 +7,7 @@
             <h2 class="card-title">
               {{$t("message.communityNews")}}
               <div class="pull-right">
-                <hubspot-subscribe/>
+                <newsletter-subscribe/>
               </div>
             </h2>
           </div>
@@ -29,13 +29,13 @@ import Trellis, {
   RundeckBrowser
 } from "@rundeck/ui-trellis";
 import CommunityNewsFeed from "./CommunityNewsFeed";
-import HubspotSubscribe from "./HubspotSubscribe";
+import NewsletterSubscribe from "./NewsletterSubscribe";
 
 export default {
   name: "CommunityNews",
   components: {
     CommunityNewsFeed,
-    HubspotSubscribe
+    NewsletterSubscribe
   },
   data() {
     return {

@@ -40,7 +40,7 @@
 import axios from "axios";
 
 export default {
-  name: "HubspotSubscribeButton",
+  name: "NewsletterSubscribeButton",
   data() {
     return {
       email: "",
@@ -53,7 +53,7 @@ export default {
   methods: {
     handleSubmit() {
       axios
-        .post("community-news/register", {
+        .post("https://api-stage.rundeck.com/spark/v1/subscribe", {
           email: this.email
         })
         .then(response => {
@@ -75,7 +75,7 @@ export default {
         .catch(error => {
           // eslint-disable-next-line
           console.log(
-            "Error connecting to Rundeck Hubspot Subscribe API",
+            "Error connecting to Rundeck Newsletter Subscribe API",
             error
           );
         });
