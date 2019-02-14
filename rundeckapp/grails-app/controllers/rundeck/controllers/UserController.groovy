@@ -273,7 +273,6 @@ class UserController extends ControllerBase{
                     delegate.firstName=u.firstName
                     delegate.lastName=u.lastName
                     delegate.email=u.email
-                    delegate.roles=auth.getRoles()
                 }
             }
             '*' {
