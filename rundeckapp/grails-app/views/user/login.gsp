@@ -116,10 +116,10 @@
                       </div>
                     </g:if>
                     <!--SSO Login Feature-->
-                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.toBoolean()}">
+                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled in [true,'true']}">
                           <div class="sso-login">
                               <div class='form-group'>
-                                  <g:if test="${grailsApplication.config.rundeck.sso.loginButton.image.enabled?.toBoolean()}"><img src="${resource(dir: 'images', file: 'rundeck2-icon-16.png')}" alt="Rundeck" class="sso-login-img" /></g:if>
+                                  <g:if test="${grailsApplication.config.rundeck.sso.loginButton.image.enabled in [true,'true']}"><img src="${resource(dir: 'images', file: 'rundeck2-icon-16.png')}" alt="Rundeck" class="sso-login-img" /></g:if>
                                   <a class='sso-login-link' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
                               </div>
                           </div>
