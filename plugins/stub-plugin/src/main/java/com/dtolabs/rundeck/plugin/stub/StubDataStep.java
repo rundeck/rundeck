@@ -45,6 +45,7 @@ import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingCons
 
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = StubDataStep.PROVIDER_NAME)
 @PluginDescription(title = "Data Step", description = "Produce data values")
+@PluginMetadata(key = "faicon", value = "database")
 public class StubDataStep implements StepPlugin {
     public static final String PROVIDER_NAME = "stub-data-step";
 

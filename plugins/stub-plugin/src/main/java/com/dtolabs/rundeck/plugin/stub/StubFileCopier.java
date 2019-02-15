@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata;
 
 import java.io.File;
 import java.io.InputStream;
@@ -46,7 +48,13 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "stub",service = "FileCopier")
-public class StubFileCopier implements FileCopier, Describable {
+@PluginDescription(title = "Stub",
+                   description = "Prints information about file copy request instead of copying it. (Useful for "
+                                 + "mocking processes.)")
+@PluginMetadata(key = "faicon", value = "circle")
+public class StubFileCopier
+        implements FileCopier
+{
     public static final String SERVICE_PROVIDER_NAME = "stub";
 
     @Override
@@ -94,24 +102,5 @@ public class StubFileCopier implements FileCopier, Describable {
                 "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + destination
         );
         return destination;
-    }
-
-
-    final static Description DESC = new AbstractBaseDescription(){
-        public String getName() {
-            return SERVICE_PROVIDER_NAME;
-        }
-
-        public String getTitle() {
-            return "Stub";
-        }
-
-        public String getDescription() {
-            return "Prints information about file copy request instead of copying it. (Useful for mocking processes.)";
-        }
-    };
-
-    public Description getDescription() {
-        return DESC;
     }
 }

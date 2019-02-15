@@ -146,6 +146,19 @@ class PluginServiceTests extends Specification {
         }
 
         @Override
+        def <T> boolean isFrameworkDependentPluginType(final Class<T> type) {
+            throw new IllegalArgumentException(" not implemented")
+        }
+
+        @Override
+        def <T> PluggableProviderService<T> getFrameworkDependentPluggableService(
+                final Class<T> type,
+                final Framework framework
+        ) {
+            throw new IllegalArgumentException(" not implemented")
+        }
+
+        @Override
         def <T> ConfiguredPlugin<T> configurePluginByName(
                 final String name,
                 final PluggableProviderService<T> service,

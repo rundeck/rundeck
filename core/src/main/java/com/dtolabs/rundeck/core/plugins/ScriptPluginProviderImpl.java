@@ -97,6 +97,11 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
     }
 
     @Override
+    public Map<String, String> getProviderMeta() {
+        return plugindef.getProviderMeta();
+    }
+
+    @Override
     public boolean getDefaultMergeEnvVars() {
         return ScriptPluginProviderLoader.getDefaultMergeEnvVars(pluginMeta);
     }

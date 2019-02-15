@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -36,6 +37,7 @@ import java.util.regex.Pattern
 @Plugin(name = MaskPasswordsFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Mask Passwords',
         description = 'Masks secure input option values from being emitted in the logs.')
+@PluginMetadata(key = 'faicon', value = 'shield-alt')
 class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'mask-passwords'
 

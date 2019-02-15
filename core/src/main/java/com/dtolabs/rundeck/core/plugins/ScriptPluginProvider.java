@@ -77,9 +77,15 @@ public interface ScriptPluginProvider {
      */
     public boolean getInterpreterArgsQuoted();
     /**
-     * @return any interpreter specification to run the script
+     * @return  metadata defining the script provider
      */
     public Map<String,Object> getMetadata();
+
+    /**
+     * Provider implementation metadata
+     * @return
+     */
+    public Map<String,String> getProviderMeta();
 
     /**
      * Metadata about plugin file

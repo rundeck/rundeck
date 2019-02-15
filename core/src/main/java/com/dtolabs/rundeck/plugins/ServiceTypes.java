@@ -19,11 +19,13 @@ package com.dtolabs.rundeck.plugins;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
@@ -81,6 +83,8 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
         map.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
+        map.put(ServiceNameConstants.FileUpload, FileUploadPlugin.class);
+        map.put(ServiceNameConstants.WorkflowStrategy, WorkflowStrategy.class);
         map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
 

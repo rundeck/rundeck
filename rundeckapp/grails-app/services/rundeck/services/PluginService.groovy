@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -38,7 +37,7 @@ import groovy.transform.CompileStatic
 class PluginService {
 
     def PluginRegistry rundeckPluginRegistry
-    def frameworkService
+    def FrameworkService frameworkService
     static transactional = false
 
     /**
@@ -48,7 +47,7 @@ class PluginService {
      * @return
      */
     def <T> T getPlugin(String name, Class<T> type) {
-        getPlugin(name, rundeckPluginRegistry?.createPluggableService(type))
+        getPlugin(name, createPluggableService(type))
     }
     def <T> T getPlugin(String name, PluggableProviderService<T> service) {
         def bean = rundeckPluginRegistry?.loadPluginByName(name, service)
@@ -118,7 +117,7 @@ class PluginService {
      */
     def ValidatedPlugin validatePluginConfig(String service, String provider, Map config) {
         Class serviceType = getPluginTypeByService(service)
-        PluggableProviderService providerService = rundeckPluginRegistry?.createPluggableService((Class) serviceType)
+        PluggableProviderService providerService = createPluggableService((Class) serviceType)
         return rundeckPluginRegistry?.validatePluginByName(provider, providerService, config)
     }
 
@@ -141,7 +140,17 @@ class PluginService {
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
     def DescribedPlugin getPluginDescriptor(String name, Class type) {
-        getPluginDescriptor(name, rundeckPluginRegistry?.createPluggableService(type))
+        getPluginDescriptor(name, createPluggableService(type))
+    }
+
+    public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
+        if (rundeckPluginRegistry.isFrameworkDependentPluginType(type)) {
+            return rundeckPluginRegistry.getFrameworkDependentPluggableService(
+                    type,
+                    (Framework) frameworkService.rundeckFramework
+            )
+        }
+        rundeckPluginRegistry?.createPluggableService(type)
     }
 
     /**
@@ -172,7 +181,7 @@ class PluginService {
      * @return plugin , or null if configuration or plugin loading failed
      */
     def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, Class<T> type) {
-        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService(type))
+        configurePlugin(name, configuration, createPluggableService(type))
     }
     /**
      * Configure a plugin given only instance configuration
@@ -241,7 +250,7 @@ class PluginService {
                 configuration,
                 projectName,
                 framework,
-                rundeckPluginRegistry?.createPluggableService(type)
+                createPluggableService(type)
         )
     }
 
@@ -286,7 +295,7 @@ class PluginService {
             PropertyScope defaultScope
     )
     {
-        configurePlugin(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
+        configurePlugin(name, createPluggableService(type), resolver, defaultScope)
     }
     /**
      * Return the configured values for a plugin
@@ -310,7 +319,7 @@ class PluginService {
             PropertyScope defaultScope
     )
     {
-        getPluginConfiguration(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
+        getPluginConfiguration(name, createPluggableService(type), resolver, defaultScope)
     }
 
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
@@ -368,11 +377,11 @@ class PluginService {
      * @return validation
      */
     def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config) {
-        return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
+        return rundeckPluginRegistry?.validatePluginByName(name, createPluggableService(clazz), config)
     }
 
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
-        listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
+        listPlugins(clazz, createPluggableService(clazz))
     }
     /**
      * List all plugins with a valid Description

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,22 @@
 
 package com.dtolabs.rundeck.plugins.descriptions;
 
-
 import java.lang.annotation.*;
 
 /**
- * Declares a Plugin class' field as a configurable property
+ * Single metadata entry for a provider Plugin
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Repeatable(value = RenderingOptions.class)
-/**
- * Define rendering options for a field
- */
-public @interface RenderingOption {
+@Target(ElementType.TYPE)
+@Repeatable(value = PluginMeta.class)
+public @interface PluginMetadata {
     /**
-     * @return The option key
+     * @return The metadata key
      */
-    String key() default "";
+    String key();
 
     /**
-     * @return The option value
+     * @return The metadata value
      */
-    String value() default "";
+    String value();
 }
