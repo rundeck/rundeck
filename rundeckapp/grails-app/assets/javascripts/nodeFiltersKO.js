@@ -171,6 +171,8 @@ function NodeSet(data) {
     self.glyphiconCss=function(name){
         if(name.match(/^glyphicon-[a-z-]+$/)){
             return 'glyphicon '+name;
+        }else if(name.match(/^fa-[a-z-]+$/)){
+            return 'fas '+name;
         }
         return '';
     };
@@ -180,6 +182,8 @@ function NodeSet(data) {
             var found=attributes['ui:badges']().split(/,\s*/g);
             for(var i=0;i<found.length;i++){
                 if(found[i].match(/^glyphicon-[a-z-]+$/)){
+                    badges.push(found[i]);
+                }else if(found[i].match(/^fa-[a-z-]+$/)){
                     badges.push(found[i]);
                 }
             }

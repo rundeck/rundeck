@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
@@ -74,7 +75,7 @@ public interface PluginRegistry {
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-                                                     Framework framework,
+                                                     IFramework framework,
                                         String project, Map instanceConfiguration) ;
     /**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
@@ -149,7 +150,7 @@ public interface PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework,
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, IFramework framework,
                                     String project, Map instanceConfiguration);
 
     /**

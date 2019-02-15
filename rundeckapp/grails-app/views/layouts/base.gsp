@@ -171,6 +171,7 @@
         activeTourStep: '${session.filterPref?.activeTourStep}'
       }
     </script>
+    <asset:javascript src="static/components/central.js"/>
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
