@@ -65,4 +65,5 @@ public class ServiceNameConstants {
     public static final String ContentConverter        = "ContentConverter";
     public static final String TourLoader              = "TourLoader";
     public static final String OptionValues            = "OptionValues";
+    public static final String NodeEnhancer            = "NodeEnhancer";
 }

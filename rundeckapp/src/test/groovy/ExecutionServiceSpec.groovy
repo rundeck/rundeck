@@ -2382,7 +2382,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.jobStateService = Mock(JobStateService) {
             1 * jobServiceWithAuthContext(_)
         }
-        service.nodeService = Mock(NodeService){}
+        service.rundeckNodeService = Mock(NodeService){}
 
         Execution se = new Execution(
                 argString: "-test args",
@@ -2534,7 +2534,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.jobStateService = Mock(JobStateService) {
             1 * jobServiceWithAuthContext(_)
         }
-        service.nodeService = Mock(NodeService){}
+        service.rundeckNodeService = Mock(NodeService){}
 
         Execution se = new Execution(
                 argString: "-test args",

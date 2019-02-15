@@ -207,7 +207,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
      */
     CachedProjectNodes loadNodes(final String project, final CachedProjectNodes oldValue) {
         def framework = frameworkService.getRundeckFramework()
-        def rdprojectconfig = framework.getProjectManager().loadProjectConfig(project)
+        def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def enabled = isCacheEnabled(rdprojectconfig)
         log.debug("loadNodes for ${project}... (cacheEnabled: ${enabled})")
 
@@ -307,10 +307,6 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     @Override
     void refreshProjectNodes(final String name) {
-        expireProjectNodes(name)
-    }
-
-    def expireProjectNodes(String name){
         nodeCache.invalidate(name)
     }
 
@@ -320,7 +316,7 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     IProjectNodes getNodes(final String name) {
         def framework = frameworkService.getRundeckFramework()
-        if (!framework.projectManager.existsFrameworkProject(name)) {
+        if (!framework.frameworkProjectMgr.existsFrameworkProject(name)) {
             throw new IllegalArgumentException("Project does not exist: " + name)
         }
         def result = nodeCache.get(name)

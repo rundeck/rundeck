@@ -29,8 +29,18 @@ class FeatureService {
      * @return
      */
     def boolean featurePresent(def name) {
+        featurePresent(name, false)
+    }
+
+    /**
+     * Return true if grails configuration allows given feature, or '*' features
+     * @param name
+     * @param defaultEnabled default enabled value for the feature, if unset
+     * @return true if enabled
+     */
+    def boolean featurePresent(def name, boolean defaultEnabled) {
         def splat = configurationService.getBoolean('feature.*.enabled', false)
-        return splat || configurationService.getBoolean("feature.${name}.enabled", false)
+        return splat || configurationService.getBoolean("feature.${name}.enabled", defaultEnabled)
     }
     /**
      * Set an incubator feature toggle on or off

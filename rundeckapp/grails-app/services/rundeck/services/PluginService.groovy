@@ -174,6 +174,17 @@ class PluginService {
     def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, Class<T> type) {
         configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService(type))
     }
+    /**
+     * Configure a plugin given only instance configuration
+     * @param name name
+     * @param configuration instance configuration
+     * @param service service
+     * @return plugin , or null if configuration or plugin loading failed
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, String service, Map configuration) {
+        Class serviceType = getPluginTypeByService(service)
+        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService((Class) serviceType))
+    }
 
     def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(
             String projectName,
