@@ -54,7 +54,7 @@
         }
         .sso-login-img {
             border: 2px solid #167df0;
-            border-radius: 2px;
+            border-radius: 2px 0 0 2px;
             padding: 5px 6px;
             margin: -5px;
             height: 16px;
