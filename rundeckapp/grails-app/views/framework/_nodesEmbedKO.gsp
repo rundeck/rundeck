@@ -47,7 +47,13 @@
                 <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
                 <!-- /ko -->
             </span>
-            <span data-bind="text: nodename"></span>
+            <!-- ko if: unselected -->
+            <s><span data-bind="text: nodename, style: $root.nodeSet().nodeUnselectedStyle(attributes)"></span></s>
+            <!-- /ko -->
+
+            <!-- ko ifnot: unselected -->
+            <span data-bind="text: nodename, css: "></span>
+            <!-- /ko -->
         </a>
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"

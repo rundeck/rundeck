@@ -45,7 +45,7 @@
 <asset:javascript src="prototype/dragdrop"/>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
-             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence]}"/>
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
 <div id="page_job_edit">
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
@@ -262,11 +262,13 @@
           <g:javascript>
               <wdgt:eventHandlerJS for="doNodedispatchTrue" state="unempty" oneway="true">
                   <wdgt:action visible="true" targetSelector=".nodeFilterFields"/>
+                  <wdgt:action visible="true" targetSelector=".nodeFilterExcludeFields"/>
                   <wdgt:action visible="true" target="nodeDispatchFields"/>
               </wdgt:eventHandlerJS>
               <wdgt:eventHandlerJS for="doNodedispatchFalse" state="unempty" oneway="true">
                   <wdgt:action visible="false" target="nodeDispatchFields"/>
                   <wdgt:action visible="false" targetSelector=".nodeFilterFields"/>
+                  <wdgt:action visible="false" targetSelector=".nodeFilterExcludeFields"/>
               </wdgt:eventHandlerJS>
           </g:javascript>
       </div>
@@ -310,6 +312,65 @@
 
   </div>
   </div>
+
+  <div class="form-group  ${hasErrors(bean: scheduledExecution, field: 'filterExclude', 'has-error')}">
+    <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
+        <label class="${labelColSize} control-label">
+            <g:message code="node.filter.exclude" />
+        </label>
+
+        <div class="${fieldColSize}">
+            <g:set var="excludeFilterValue" value="${scheduledExecution.asExcludeFilter()}"/>
+
+            <span class="input-group  multiple-control-input-group">
+                <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                </g:if>
+                <g:render template="/framework/nodeFilterInputExcludeGroup"
+                          model="[filterset: filterset, filtvalue: excludeFilterValue, filterName: filterName]"/>
+            </span>
+
+            <div class=" collapse" id="queryFilterHelp">
+                <div class="help-block">
+                    <g:render template="/common/nodefilterStringHelp"/>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+  </div>
+  <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.excludeFilterUncheck.label"/>
+        </div>
+
+        <div class="${fieldColSize}">
+            <div class="radio radio-inline">
+                <g:radio value="false" name="excludeFilterUncheck"
+                         checked="${!scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableFalse"/>
+                <label for="editableFalse">
+                    <g:message code="no"/>
+                </label>
+            </div>
+            <div class="radio radio-inline">
+                <g:radio name="excludeFilterUncheck" value="true"
+                         checked="${scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableTrue"/>
+                <label for="editableTrue">
+                    <g:message code="yes"/>
+                </label>
+            </div>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.excludeFilterUncheck.description" />
+            </span>
+        </div>
+    </div>
+
 
   <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
   <g:if test="${grailsApplication.config.rundeck?.nodefilters?.showPrecedenceOption || scheduledExecution?.nodeExcludePrecedence!=null && !scheduledExecution?.nodeExcludePrecedence }">
@@ -1004,6 +1065,19 @@ function getCurSEID(){
                 nodeFilter.selectNodeFilterLink(link);
             }
         }
+        function handleNodeExcludeFilterLink(link){
+            var holder = jQuery(link).parents('.node_filter_link_holder');
+            var nflinkid=holder.data('node-filter-link-id');
+            var nflinkid2=holder.attr('id');
+            if(nflinkid && nodeFilterMap[nflinkid]){
+                nodeFilterMap[nflinkid].selectNodeFilterExcludeLink(link);
+            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+                nodeFilterMap['#'+nflinkid2].selectNodeFilterExcludeLink(link);
+            }else{
+                nodeFilter.selectNodeFilterExcludeLink(link);
+            }
+
+        }
         function setupJobExecNodeFilterBinding(root,target,dataId){
             var filterParams = loadJsonData(dataId);
             var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
@@ -1055,6 +1129,10 @@ function getCurSEID(){
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
+            })
+            jQuery('body').on('click', '.nodeexcludefilterlink', function (evt) {
+                evt.preventDefault();
+                handleNodeExcludeFilterLink(this);
             })
             .on('change','.node_dispatch_radio',function(evt){
                 nodeFilter.updateMatchedNodes();

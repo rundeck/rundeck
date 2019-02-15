@@ -257,6 +257,7 @@ class ScheduledExecution extends ExecutionContext {
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
         map.nodeFilterEditable = hasNodeFilterEditable()
+        map.excludeFilterUncheck = hasNodesHealthCheckEnabled()
 
         if(groupPath){
             map.group=groupPath
@@ -337,6 +338,10 @@ class ScheduledExecution extends ExecutionContext {
             }else{
                 map.nodefilters.filter = asFilter()
             }
+
+            if(this.filterExclude){
+                map.nodefilters.filterExclude = this.filterExclude
+            }
         }
         if(notifications){
             map.notification=[:]
@@ -383,6 +388,7 @@ class ScheduledExecution extends ExecutionContext {
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
+        se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
         
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
@@ -518,6 +524,10 @@ class ScheduledExecution extends ExecutionContext {
                 }
                 se.filter = asFilter(map)
             }
+
+            if(data.nodefilters.filterExclude){
+                se.filterExclude= data.nodefilters.filterExclude
+            }
         }
         if(data.notification){
             def nots=[]
@@ -645,6 +655,10 @@ class ScheduledExecution extends ExecutionContext {
 
     def boolean hasNodeFilterEditable() {
         return (null == nodeFilterEditable || nodeFilterEditable)
+    }
+
+    def boolean hasNodesHealthCheckEnabled() {
+        return excludeFilterUncheck? excludeFilterUncheck:false
     }
 
     def String generateJobScheduledName(){

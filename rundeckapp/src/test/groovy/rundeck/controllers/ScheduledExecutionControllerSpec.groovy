@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.plugins.codecs.URLCodec
@@ -1820,6 +1821,71 @@ class ScheduledExecutionControllerSpec extends Specification {
         jobuuid     | expected
         '000000'    | false
         '111111'    | false
+
+    }
+
+    def "unselect nodes from exclude filter"(){
+        given:
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea',
+                excludeFilterUncheck: true,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+        NodeSetImpl expected = new NodeSetImpl()
+        expected.putNode(new NodeEntryImpl("nodeb"))
+        expected.putNode(new NodeEntryImpl("nodec xyz"))
+
+        NodeSet nset = ExecutionService.filtersAsNodeSet(se)
+        NodeSet unselectedNset = ExecutionService.filtersExcludeAsNodeSet(se)
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAny(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet(nset,_)>>testNodeSet
+            filterNodeSet(unselectedNset,_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1']
+
+        def model = controller.show()
+
+        then:
+        model != null
+        model.scheduledExecution != null
+        null != model.selectedNodes
+        expected.nodes*.nodename.join(',') == model.selectedNodes
 
     }
 }
