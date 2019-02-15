@@ -203,9 +203,8 @@ function NodeSet(data) {
     self.isStyleBg=function(str){
         return str!=null && typeof(str)=='string' && str.match(/^#[0-9a-fA-F]{3,6}$/)|| CSSColors.indexOf(str)>=0;
     };
-    self.iconFgCss=function(attrs){
-
-        var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
+    self.iconFgCss=function(attrs,attrName){
+        var uiIconColor = attrs[attrName]?attrs[attrName]():null;
         var uiColor = attrs['ui:color']?attrs['ui:color']():null;
         if(self.isAnsiFg(uiIconColor)){
             return uiIconColor;
@@ -214,7 +213,7 @@ function NodeSet(data) {
         }
         return null;
     };
-    self.iconBgCss=function(attrs){
+    self.iconBgCss=function(attrs,attrName){
         var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
         var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
         if(self.isAnsiBg(uiIconBgcolor)){
@@ -224,13 +223,25 @@ function NodeSet(data) {
         }
         return null;
     };
-    self.iconCss=function(attrs){
+    self.statusIconCss=function(attrs){
         var classnames=[];
-        var fgColor= self.iconFgCss(attrs);
+        var fgColor= self.iconFgCss(attrs,'ui:status:color');
         if(fgColor){
             classnames.push(fgColor);
         }
-        var bgColor = self.iconBgCss(attrs);
+        var bgColor = self.iconBgCss(attrs,'ui:status:bgcolor');
+        if(bgColor){
+            classnames.push(bgColor);
+        }
+        return classnames.join(' ');
+    };
+    self.iconCss=function(attrs){
+        var classnames=[];
+        var fgColor= self.iconFgCss(attrs,'ui:icon:color');
+        if(fgColor){
+            classnames.push(fgColor);
+        }
+        var bgColor = self.iconBgCss(attrs,'ui:icon:bgcolor');
         if(bgColor){
             classnames.push(bgColor);
         }
@@ -263,9 +274,8 @@ function NodeSet(data) {
         return classnames.join(' ');
     };
     self.iconStyle=function(attrs){
-
         var styles={};
-        if(!self.iconFgCss(attrs)) {
+        if(!self.iconFgCss(attrs,'ui:icon:color')) {
             var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
             var uiColor = attrs['ui:color']?attrs['ui:color']():null;
             if (self.isStyleFg(uiIconColor)){
@@ -274,8 +284,30 @@ function NodeSet(data) {
                 styles['color']=uiColor;
             }
         }
-        if(!self.iconBgCss(attrs)) {
+        if(!self.iconBgCss(attrs,'ui:icon:bgcolor')) {
             var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
+            var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+            if (self.isStyleBg(uiIconBgcolor)){
+                styles['background-color']=uiIconBgcolor;
+            }else if(self.isStyleBg(uiBgcolor)){
+                styles['background-color']=uiBgcolor;
+            }
+        }
+        return styles;
+    };
+    self.statusIconStyle=function(attrs){
+        var styles={};
+        if(!self.iconFgCss(attrs,'ui:status:color')) {
+            var uiIconColor = attrs['ui:status:color']?attrs['ui:status:color']():null;
+            var uiColor = attrs['ui:color']?attrs['ui:color']():null;
+            if (self.isStyleFg(uiIconColor)){
+                styles['color']=uiIconColor;
+            }else if(self.isStyleFg(uiColor)){
+                styles['color']=uiColor;
+            }
+        }
+        if(!self.iconBgCss(attrs,'ui:status:bgcolor')) {
+            var uiIconBgcolor = attrs['ui:status:bgcolor']?attrs['ui:status:bgcolor']():null;
             var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
             if (self.isStyleBg(uiIconBgcolor)){
                 styles['background-color']=uiIconBgcolor;

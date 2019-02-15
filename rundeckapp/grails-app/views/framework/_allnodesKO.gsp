@@ -76,6 +76,17 @@
                               <!-- /ko -->
                               <span data-bind="text: attributes.description"></span>
                           </span>
+                          <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes)">
+                              <!-- ko if: attributes['ui:status:icon'] -->
+                              <!-- ko with: attributes['ui:status:icon']() -->
+                              <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                              <!-- /ko -->
+                              <!-- /ko -->
+
+                              <!-- ko if: attributes['ui:status:text'] -->
+                              <span  data-bind="text: attributes['ui:status:text']"></span>
+                              <!-- /ko -->
+                          </span>
                         
                     </td>
 
