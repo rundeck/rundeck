@@ -47,7 +47,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
 import rundeck.services.authorization.PoliciesValidation
-import rundeck.services.framework.RundeckProjectConfigurable
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -980,7 +980,7 @@ class FrameworkControllerSpec extends Specification {
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
 
-    static class TestConfigurableBean implements RundeckProjectConfigurable {
+    static class TestConfigurableBean implements ProjectConfigurable {
 
         Map<String, String> categories = [:]
 
