@@ -17,16 +17,12 @@
 package rundeck.services
 
 import groovy.mock.interceptor.MockFor
-import org.codehaus.groovy.runtime.FlushingStreamWriter
 
 import static org.junit.Assert.*
 
 import grails.test.mixin.*
 import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
-import org.grails.plugins.testing.GrailsMockHttpServletResponse
-import org.junit.*
-import rundeck.interceptors.ApiVersionInterceptor
 import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletResponse
