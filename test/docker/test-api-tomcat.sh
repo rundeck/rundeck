@@ -18,6 +18,7 @@ if [ -f rd.deb ] ; then
 fi
 
 # setup test dirs
+cp -r ../src dockers/tomcat/api_test/
 cp -r ../api dockers/tomcat/api_test/
 
 # tickle installer for it to rebuild
@@ -58,6 +59,6 @@ docker-compose -f $DOCKER_COMPOSE_SPEC logs
 # Stop and clean all
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 
-rm -rf dockers/tomcat/api_test/api
+rm -rf dockers/tomcat/api_test/src dockers/tomcat/api_test/api
 
 exit $EC
