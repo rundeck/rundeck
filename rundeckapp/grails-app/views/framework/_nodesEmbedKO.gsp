@@ -48,6 +48,17 @@
                 <!-- /ko -->
             </span>
             <span data-bind="text: nodename"></span>
+
+            <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes)">
+                <!-- ko if: attributes['ui:status:icon'] -->
+                <!-- ko with: attributes['ui:status:icon']() -->
+                <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                <!-- /ko -->
+                <!-- /ko -->
+                <!-- ko if: attributes['ui:status:text'] -->
+                <span  data-bind="text: attributes['ui:status:text']"></span>
+                <!-- /ko -->
+            </span>
         </a>
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
