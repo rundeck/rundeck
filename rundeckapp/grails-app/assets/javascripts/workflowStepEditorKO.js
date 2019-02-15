@@ -442,6 +442,9 @@ function StepFilterPlugin(data) {
     self.faicon = ko.computed(function () {
         return self.providerMeta() && self.providerMeta().faicon
     })
+    self.fabicon = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().fabicon
+    })
     self.descriptionFirstLine = ko.computed(function () {
         var desc = self.description();
         if (desc) {

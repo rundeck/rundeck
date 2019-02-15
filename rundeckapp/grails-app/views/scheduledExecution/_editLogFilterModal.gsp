@@ -82,7 +82,10 @@
                         <!-- ko if: faicon -->
                         <i data-bind="css: 'fas fa-'+faicon()"></i>
                         <!-- /ko -->
-                        <!-- ko if: !iconSrc() && !glyphicon() && !faicon() -->
+                        <!-- ko if: fabicon -->
+                        <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                        <!-- /ko -->
+                        <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                         <i class="rdicon icon-small plugin"></i>
                         <!-- /ko -->
                         <span data-bind="text: title"></span>

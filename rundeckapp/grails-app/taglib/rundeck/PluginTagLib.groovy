@@ -71,6 +71,10 @@ class PluginTagLib {
             out << '<i class="'
             out << enc(attr: 'fas fa-' + profile.providerMetadata?.faicon)
             out << '"></i>'
+        } else if (profile.providerMetadata?.fabicon) {
+            out << '<i class="'
+            out << enc(attr: 'fab fa-' + profile.providerMetadata?.fabicon)
+            out << '"></i>'
         } else {
             out << body()
         }
