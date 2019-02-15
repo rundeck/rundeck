@@ -36,6 +36,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.User
 import rundeck.services.ApiService
