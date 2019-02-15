@@ -173,6 +173,8 @@ function NodeSet(data) {
             return 'glyphicon '+name;
         }else if(name.match(/^fa-[a-z-]+$/)){
             return 'fas '+name;
+        }else if(name.match(/^fab-[a-z-]+$/)){
+            return 'fab fa-'+name.substring(4);
         }
         return '';
     };
@@ -184,6 +186,8 @@ function NodeSet(data) {
                 if(found[i].match(/^glyphicon-[a-z-]+$/)){
                     badges.push(found[i]);
                 }else if(found[i].match(/^fa-[a-z-]+$/)){
+                    badges.push(found[i]);
+                }else if(found[i].match(/^fab-[a-z-]+$/)){
                     badges.push(found[i]);
                 }
             }
