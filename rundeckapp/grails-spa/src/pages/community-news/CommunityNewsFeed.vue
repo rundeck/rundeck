@@ -66,7 +66,7 @@ export default {
   },
   mounted() {
     axios
-      .get("https://api-stage.rundeck.com/spark/blog/list", {
+      .get("https://api.rundeck.com/news/v1/blog/list", {
         params: {
           groupid: 7039074342
         }

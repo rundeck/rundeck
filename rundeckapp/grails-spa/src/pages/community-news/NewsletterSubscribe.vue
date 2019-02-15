@@ -53,7 +53,7 @@ export default {
   methods: {
     handleSubmit() {
       axios
-        .post("https://api-stage.rundeck.com/spark/v1/subscribe", {
+        .post("https://api.rundeck.com/user/v1/newsletter/subscribe", {
           email: this.email
         })
         .then(response => {

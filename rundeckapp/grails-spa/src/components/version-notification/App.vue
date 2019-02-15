@@ -95,7 +95,7 @@ export default {
 
     axios({
       method: "get",
-      url: `https://api.rundeck.com/spark/v1/release`
+      url: `https://api.rundeck.com/news/v1/release`
     }).then(
       response => {
         if (response.data && response.data[0])
