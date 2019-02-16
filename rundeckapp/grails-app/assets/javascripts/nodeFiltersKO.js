@@ -787,7 +787,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     };
     self.selectNodeFilterExcludeLink=function(link,isappend){
 
-        var oldfilter = self.filter();
+        var oldfilter = self.filterExclude();
         var filterName = jQuery(link).data('node-filter-name');
         var filterString = jQuery(link).data('node-filter');
         var filterTag = jQuery(link).data('node-tag');
