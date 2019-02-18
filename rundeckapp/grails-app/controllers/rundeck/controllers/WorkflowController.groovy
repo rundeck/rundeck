@@ -1141,7 +1141,10 @@ class WorkflowController extends ControllerBase {
             }
             if(exec.uuid && exec.jobName){
                 def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
-                if(refSe?.generateFullName()!=ScheduledExecution.generateFullName(exec.jobGroup, exec.jobName)){
+                if(!refSe){
+                    //"Job doesnt exists, using only the uuid to reference the job
+                    exec.uuid = null
+                }else if(refSe?.generateFullName()!=ScheduledExecution.generateFullName(exec.jobGroup, exec.jobName)){
                     exec.jobName = refSe?.jobName
                     exec.jobGroup = refSe?.groupPath
                     exec.errors.rejectValue('jobName', 'commandExec.jobName.wrong.name.message')
