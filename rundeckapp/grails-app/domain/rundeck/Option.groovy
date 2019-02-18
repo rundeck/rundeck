@@ -71,7 +71,7 @@ public class Option implements Comparable{
     Boolean multivalueAllSelected
     String optionValuesPluginType
     List<OptionValue> valuesFromPlugin
-    Boolean shouldBeHidden
+    Boolean hidden
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
     static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
@@ -100,7 +100,7 @@ public class Option implements Comparable{
         multivalueAllSelected(nullable: true)
         label(nullable: true)
         optionValuesPluginType(nullable: true)
-        shouldBeHidden(nullable: true)
+        hidden(nullable: true)
     }
 
 
@@ -200,8 +200,8 @@ public class Option implements Comparable{
         if(optionValuesPluginType) {
             map.optionValuesPluginType = optionValuesPluginType
         }
-        if(shouldBeHidden){
-            map.shouldBeHidden = shouldBeHidden
+        if(hidden){
+            map.hidden = hidden
         }
         return map
     }
@@ -266,8 +266,8 @@ public class Option implements Comparable{
         if(data.optionValuesPluginType) {
             opt.optionValuesPluginType = data.optionValuesPluginType
         }
-        if(data.shouldBeHidden){
-            opt.shouldBeHidden = data.shouldBeHidden
+        if(data.hidden){
+            opt.hidden = data.hidden
         }
         return opt
     }
@@ -357,7 +357,7 @@ public class Option implements Comparable{
          'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
          'multivalueAllSelected', 'label',
          'delimiter', 'optionValuesPluginType',
-         'secureInput', 'secureExposed', 'optionType', 'configData', 'shouldBeHidden'].
+         'secureInput', 'secureExposed', 'optionType', 'configData', 'hidden'].
                 each { k ->
             opt[k]=this[k]
         }
@@ -389,7 +389,7 @@ public class Option implements Comparable{
                ', optionValuesPluginType=' + optionValuesPluginType + '\'' +
                 ", optionType='" + optionType + '\'' +
                 ", configData='" + configData + '\'' +
-        ", shouldBeHidden='" + '\'' +
+        ", hidden='" + '\'' +
         '}' ;
     }
 

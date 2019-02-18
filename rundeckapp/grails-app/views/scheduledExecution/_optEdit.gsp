@@ -540,13 +540,13 @@
             <label class="col-sm-2 control-label"><g:message code="Option.hidden.label" /></label>
             <div class="col-sm-10">
                 <div class="radio radio-inline">
-                    <g:radio id="option-hidden-no" name="shouldBeHidden" value="false" checked="${!option || !option.shouldBeHidden}"/>
+                    <g:radio id="option-hidden-no" name="hidden" value="false" checked="${!option || !option.hidden}"/>
                     <label for="option-hidden-no">
                         <g:message code="no" />
                     </label>    
                 </div>
                 <div class="radio radio-inline">
-                    <g:radio id="option-hidden-yes" name="shouldBeHidden" value="true" checked="${option?.shouldBeHidden}"/>
+                    <g:radio id="option-hidden-yes" name="hidden" value="true" checked="${option?.hidden}"/>
                     <label for="option-hidden-yes">
                         <g:message code="yes" />
                     </label>

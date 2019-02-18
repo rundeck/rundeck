@@ -84,7 +84,7 @@ used by _editOptions.gsp template
                                                               selectedoptsmap[optName] :
                                                               (optionSelect.defaultValue ?: ''),
                                               valuesFromPlugin   : optionSelect.valuesFromPlugin,
-                                              shouldBeHidden     : !!optionSelect.shouldBeHidden
+                                              hidden     : !!optionSelect.hidden
                                       ]
                                   }
     ]}" id="jobOptionData"/>
@@ -103,7 +103,7 @@ data for configuring remote option cascading/dependencies
     </g:if>
 
     <div id="_commandOptions" data-bind="foreach: {data: options(), as: 'option' }">
-        <div data-bind="visible: !shouldBeHidden()">
+        <div data-bind="visible: !hidden()">
             <div class="form-group " data-bind="
     css: { 'has-warning': hasError, 'remote': hasRemote }
     ">

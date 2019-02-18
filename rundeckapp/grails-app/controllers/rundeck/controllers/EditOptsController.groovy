@@ -500,8 +500,8 @@ class EditOptsController {
             return result
         }
 
-        if (opt.shouldBeHidden && !opt.defaultValue && !opt.defaultStoragePath) {
-            opt.errors.rejectValue('shouldBeHidden', 'option.shouldbehidden.notallowed.message')
+        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath) {
+            opt.errors.rejectValue('hidden', 'option.hidden.notallowed.message')
             return result
         }
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
