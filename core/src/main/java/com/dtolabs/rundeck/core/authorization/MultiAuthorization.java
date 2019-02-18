@@ -16,7 +16,10 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
+import org.apache.log4j.Logger;
+
 import javax.security.auth.Subject;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -26,12 +29,19 @@ import java.util.Set;
  * Combines two Authorization implementations, and processes requests with both of them.
  */
 public class MultiAuthorization implements Authorization {
+    private final static Logger logger = Logger.getLogger(MultiAuthorization.class);
     private Authorization auth1;
     private Authorization auth2;
 
     public MultiAuthorization(final Authorization auth1, final Authorization auth2) {
         this.auth1 = auth1;
         this.auth2 = auth2;
+        if(auth1 != null) {
+            this.auth1.setMulti();
+        }
+        if(auth2 != null) {
+            this.auth2.setMulti();
+        }
     }
 
     @Override
@@ -68,6 +78,7 @@ public class MultiAuthorization implements Authorization {
     {
         Set<Decision> evaluate = auth1.evaluate(resources, subject, actions, environment);
         HashMap<Map<String, String>, Map<String, Decision>> result1 = new HashMap<>();
+        boolean anyAuthorized = false;
         for (Decision decision : evaluate) {
             if (null == result1.get(decision.getResource())) {
                 result1.put(decision.getResource(), new HashMap<String, Decision>());
@@ -89,10 +100,21 @@ public class MultiAuthorization implements Authorization {
                 continue;
             }
             if (decision1.isAuthorized()) {
+                anyAuthorized = true;
                 result.add(decision1);
                 continue;
             }
+            if(decision2.isAuthorized()){
+                anyAuthorized = true;
+            }
             result.add(decision2);
+        }
+        for (Decision decision : result) {
+            if (!anyAuthorized) {
+                logger.warn(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
+            } else {
+                logger.info(MessageFormat.format("Evaluating {0} ({1}ms)", decision, decision.evaluationDuration()));
+            }
         }
         return result;
     }
