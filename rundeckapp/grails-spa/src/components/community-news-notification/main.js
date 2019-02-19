@@ -5,6 +5,7 @@
 import Vue from 'vue'
 import * as uiv from 'uiv'
 import international from './i18n'
+import VueCookies from 'vue-cookies'
 import VueMoment from 'vue-moment'
 // Component Files
 import VueI18n from 'vue-i18n'
@@ -14,7 +15,8 @@ Vue.config.productionTip = false
 
 Vue.use(uiv)
 Vue.use(VueI18n)
-Vue.use(VueMoment);
+Vue.use(VueMoment)
+Vue.use(VueCookies)
 
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'
@@ -33,7 +35,7 @@ const i18n = new VueI18n({
 
 /* eslint-disable no-new */
 new Vue({
-  el: '#version-notification-vue',
+  el: '#community-news-notification-vue',
   components: {
     App
   },

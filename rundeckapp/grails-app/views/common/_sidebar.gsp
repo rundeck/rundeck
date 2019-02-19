@@ -27,7 +27,7 @@
 <g:set var="selectedclass" value="active"/>
 
 <g:set var="wfselected" value=""/>
-<ul class="nav">
+<ul id="sidebar-nav" class="nav">
   <!-- <li>
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
        title="Home">
@@ -184,15 +184,6 @@
     </g:if>
 </g:if>
 </g:if>
-  <%-- <li class="snapshot-version">
-    <span class="rundeck-version-identity"
-          data-version-string="${enc(attr: buildIdent)}"
-          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-          data-app-id="${enc(attr: appId)}"></span>
-    <g:link controller="menu" action="welcome" class="version link-bare">
-        <g:appTitle/> ${buildIdent}
-    </g:link>
-  </li> --%>
 </ul>
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabtitle'>
@@ -235,16 +226,26 @@
     </g:ifExecutionMode>
 </g:if>
 --}%
-<div id="snapshot-version" class="snapshot-version">
+<div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
+  <div id="community-news-notification">
+    <div class="sidebar-footer-line-item">
+      <g:link controller="communityNews" action="index">
+        <span id="community-news-notification-vue"></span>
+      </g:link>
+    </div>
+
+  </div>
   <div id="version-notification-vue"></div>
-  <span class="rundeck-version-identity"
-        data-version-string="${enc(attr: buildIdent)}"
-        data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-        data-app-id="${enc(attr: appId)}"
-        style="display:block;"></span>
-  <g:link controller="menu" action="welcome" class="version link-bare">
-      <g:appTitle/> ${buildIdent}
-  </g:link>
+  <div id="snapshot-version" class="snapshot-version">
+    <span class="rundeck-version-identity"
+          data-version-string="${enc(attr: buildIdent)}"
+          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
+          data-app-id="${enc(attr: appId)}"
+          style="display:block;"></span>
+    <g:link controller="menu" action="welcome" class="version link-bare">
+        <g:appTitle/> ${buildIdent}
+    </g:link>
+  </div>
 </div>
 
 <g:javascript>
@@ -282,4 +283,10 @@
   const ps = new PerfectScrollbar('.sidebar-wrapper', {
     suppressScrollX: true
   });
+
+  setTimeout(function(){
+    var announcementHeight = document.getElementById("sidebar-bottom").offsetHeight;
+    document.getElementById("sidebar-nav").style['marginBottom'] = announcementHeight.toString() + "px";
+  }, 500)
+
 </g:javascript>
