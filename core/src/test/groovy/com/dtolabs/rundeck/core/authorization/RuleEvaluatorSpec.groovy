@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.authorization
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import org.apache.log4j.Logger
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -600,6 +601,94 @@ class RuleEvaluatorSpec extends Specification {
         'zob'     | ['bloo_regex']         | 'testproj1' | ['g']
 
 
+    }
+
+
+
+    def "warn level log in unauth"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRules())
+        eval.logger = Mock(Logger)
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'boj',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob", "admin", "user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        1 * eval.logger.warn(_)
+        result!=null
+        !result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "test level log info in allow"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRules())
+        eval.logger = Mock(Logger)
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        1 * eval.logger.info(_)
+        result!=null
+        result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "multi warn level log in unauth"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRules())
+        eval.logger = Mock(Logger)
+        Set<Map<String,String>> resSet = [[
+                                                  type   : 'job',
+                                                  jobName: 'ape'
+                                          ], [
+                type   : 'job',
+                jobName: 'monkey'
+        ]] as Set
+        when:
+        def result = eval.evaluate(
+                resSet,
+                basicSubject("bob", "admin", "user"),
+                ['EXECUTE'] as Set,
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        2 * eval.logger.warn(_)
+        result!=null
+    }
+
+    def "do not log on multi in unauth"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRules())
+        eval.logger = Mock(Logger)
+        eval.setMulti()
+        Set<Map<String,String>> resSet = [[
+                                                  type   : 'boj',
+                                                  jobName: 'bob'
+                                          ], [b: 'b']] as Set
+        when:
+        def result = eval.evaluate(
+                resSet,
+                basicSubject("bob", "admin", "user"),
+                ['EXECUTE'] as Set,
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        0 * eval.logger.warn(_)
+        result!=null
     }
 
     Subject basicSubject(final String user, final String... groups) {
