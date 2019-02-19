@@ -138,7 +138,7 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
         Map<String, String> attributes = [:]
 
         @Override
-        INodeEntry updateNode(final String project, final IModifiableNodeEntry node, final String provider) {
+        void updateNode(final String project, final IModifiableNodeEntry node) {
             node.attributes.putAll(attributes)
             node
         }
