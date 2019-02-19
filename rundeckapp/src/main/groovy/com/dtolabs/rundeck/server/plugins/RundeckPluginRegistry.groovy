@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
@@ -94,6 +95,19 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         return simpleName;
     }
+
+    public <T> boolean isFrameworkDependentPluginType(Class<T> type) {
+        return CorePluginProviderServices.isFrameworkDependentPluginType(type)
+    }
+
+    @Override
+    def <T> PluggableProviderService<T> getFrameworkDependentPluggableService(
+            final Class<T> type,
+            final Framework framework
+    ) {
+        return CorePluginProviderServices.getPluggableProviderServiceForType(type,framework)
+    }
+
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
         String found = ServiceTypes.pluginTypesMap.find { it.value == type }?.key
         def name = found ?: createServiceName(type.getSimpleName())

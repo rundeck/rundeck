@@ -157,12 +157,12 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
+    public NodeExecutorService getNodeExecutorService()  {
         return frameworkServices.getNodeExecutorService();
     }
 
     @Override
-    public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+    public NodeStepExecutionService getNodeStepExecutorService()  {
         return frameworkServices.getNodeStepExecutorService();
     }
 

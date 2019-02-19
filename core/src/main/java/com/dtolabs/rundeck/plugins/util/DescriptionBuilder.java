@@ -43,17 +43,23 @@ public class DescriptionBuilder {
     private String name;
     private String title;
     private String description;
+    private Map<String, String> metadata;
 
     private DescriptionBuilder() {
         properties = new ArrayList<Property>();
         mapping = new HashMap<String, String>();
         fwkmapping = new HashMap<String, String>();
+        metadata = new HashMap<>();
     }
 
     private DescriptionBuilder(final Description original) {
         properties = new ArrayList<Property>(original.getProperties());
         mapping = new HashMap<String, String>(original.getPropertiesMapping());
         fwkmapping = new HashMap<String, String>(original.getFwkPropertiesMapping());
+        metadata = new HashMap<>();
+        if (original.getMetadata() != null) {
+            metadata.putAll(original.getMetadata());
+        }
         this.name = original.getName();
         this.title = original.getTitle();
         this.description = original.getDescription();
@@ -337,6 +343,29 @@ public class DescriptionBuilder {
     }
 
     /**
+     * Set a metadata value
+     *
+     * @param key   metadata key
+     * @param value metadata value
+     * @return this builder
+     */
+    public DescriptionBuilder metadata(final String key, final String value) {
+        metadata.put(key, value);
+        return this;
+    }
+
+    /**
+     * Add all metadata values
+     *
+     * @param values metadata entries
+     * @return this builder
+     */
+    public DescriptionBuilder metadata(final Map<String, String> values) {
+        metadata.putAll(values);
+        return this;
+    }
+
+    /**
      * @return the built description
      *
      */
@@ -348,6 +377,7 @@ public class DescriptionBuilder {
         final List<Property> properties1 = buildProperties();
         final Map<String, String> mapping1 = Collections.unmodifiableMap(mapping);
         final Map<String, String> mapping2 = Collections.unmodifiableMap(fwkmapping);
+        final Map<String, String> metadata2 = Collections.unmodifiableMap(metadata);
         return new Description() {
             @Override
             public String getName() {
@@ -380,6 +410,11 @@ public class DescriptionBuilder {
             }
 
             @Override
+            public Map<String, String> getMetadata() {
+                return metadata2;
+            }
+
+            @Override
             public String toString() {
                 return "PropertyDescription{" +
                         "name = " + getName() + ", " +
@@ -388,6 +423,7 @@ public class DescriptionBuilder {
                         "properties = " + getProperties() + ", " +
                         "mapping = " + getPropertiesMapping() +
                         "frameworkMapping = " + getFwkPropertiesMapping() +
+                        "metadata = " + metadata2 +
                         "}";
             }
         };

@@ -23,9 +23,6 @@ import static org.junit.Assert.*
 import grails.test.mixin.*
 import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
-import org.grails.plugins.testing.GrailsMockHttpServletResponse
-import org.junit.*
-import rundeck.interceptors.ApiVersionInterceptor
 import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletResponse
@@ -40,43 +37,6 @@ class ApiServiceTests {
         def apiService = new ApiService()
         assertTrue(apiService.requireVersion([api_version:1],mock.proxyInstance(),1))
     }
-    void testRequireVersionInvalid() {
-        def mock = new MockFor(GrailsMockHttpServletResponse)
-        mock.demand.getFormat {->
-            'xml'
-        }
-        mock.demand.setStatus { int status ->
-            assertEquals(400, status)
-        }
-        mock.demand.setContentType{String contentype->
-            assertEquals("text/xml",contentype)
-        }
-        mock.demand.setCharacterEncoding{String encoding->
-            assertEquals("UTF-8", encoding)
-        }
-        mock.demand.setHeader{String name, String value->
-            assertEquals("X-Rundeck-API-Version", name)
-            assertEquals(ApiVersions.API_CURRENT_VERSION.toString(), value)
-        }
-        def mockOut = new MockFor(OutputStream)
-        def output = []
-        mockOut.demand.leftShift { String s ->
-            output << s
-        }
-        mockOut.demand.flush {->
-        }
-        def outs = mockOut.proxyInstance()
-        mock.demand.getOutputStream {->
-            outs
-        }
-        def apiService = new ApiService()
-        apiService.messageSource=messageSource
-        messageSource.addMessage('api.error.api-version.unsupported',Locale.default,'api.error.api-version.unsupported:{0}:{1}:{2}')
-        assertFalse(apiService.requireVersion([api_version:1,forwardURI: '/test/uri'],mock.proxyInstance(),2))
-        assertTrue(output.size()==1)
-        def gpath = assertXmlErrorText(output[0])
-        assertEquals('api.error.api-version.unsupported:1:/test/uri:Minimum supported version: 2',gpath.error.message.text())
-    }
 
     void testRenderErrorXmlBuilderList() {
         def apiService = new ApiService()
@@ -87,84 +47,7 @@ class ApiServiceTests {
         assertEquals('test.code', gpath.error['@code'].text())
         assertEquals(['message1', 'message2'], gpath.error.messages[0].message*.text())
     }
-    void testRenderSuccessXmlCode(){
-        def mock = new MockFor(GrailsMockHttpServletResponse)
-        mock.demand.setHeader { String name, String value ->
-            assertEquals("X-Rundeck-API-XML-Response-Wrapper", name)
-            assertEquals("true", value)
-        }
-        mock.demand.setContentType { String contentype ->
-            assertEquals("text/xml", contentype)
-        }
-        mock.demand.setCharacterEncoding { String encoding ->
-            assertEquals("UTF-8", encoding)
-        }
-        mock.demand.setHeader { String name, String value ->
-            assertTrue([(name):value] in [
-                    ["X-Rundeck-API-Version": ApiVersions.API_CURRENT_VERSION.toString()],
-                    ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
-            ])
-        }
-        def mockOut = new MockFor(OutputStream)
-        def output = []
-        mockOut.demand.leftShift{String s->
-            output<<s
-        }
-        mockOut.demand.flush{->
-        }
-        def outs=mockOut.proxyInstance()
-        mock.demand.getOutputStream {  ->
-            outs
-        }
-        def apiService = new ApiService()
 
-        messageSource.addMessage('test.code',Locale.default,'test.code.{0}.{1}')
-        apiService.messageSource=messageSource
-
-        def result = apiService.renderSuccessXml(mock.proxyInstance(),'test.code',['arg1','arg2'])
-        assertNull(result)
-        assertEquals(1,output.size())
-        GPathResult gpath = assertXmlSuccessText(output[0])
-        assertEquals('test.code.arg1.arg2',gpath.success.message.text())
-    }
-
-    void testRenderSuccessXmlResponse() {
-        def mock = new MockFor(GrailsMockHttpServletResponse)
-        mock.demand.setHeader { String name, String value ->
-        }
-        mock.demand.setContentType { String contentype ->
-            assertEquals("text/xml", contentype)
-        }
-        mock.demand.setCharacterEncoding { String encoding ->
-            assertEquals("UTF-8", encoding)
-        }
-        mock.demand.setHeader { String name, String value ->
-            assertTrue([(name): value] in [
-                    ["X-Rundeck-API-Version": ApiVersions.API_CURRENT_VERSION.toString()],
-                    ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
-            ])
-        }
-        def mockOut = new MockFor(OutputStream)
-        def output = []
-        mockOut.demand.leftShift { String s ->
-            output << s
-        }
-        mockOut.demand.flush {->
-        }
-        def outs = mockOut.proxyInstance()
-        mock.demand.getOutputStream {->
-            outs
-        }
-        def apiService = new ApiService()
-        def closureCalled=false
-        def result=apiService.renderSuccessXml(mock.proxyInstance()){
-            closureCalled=true
-        }
-        assertTrue(closureCalled)
-        assertNull(result)
-        assertEquals(1,output.size())
-        GPathResult gpath = assertXmlSuccessText(output[0])
-    }
     void testRenderSuccessXmlClosure(){
         def apiService = new ApiService()
         def result=apiService.renderSuccessXml {

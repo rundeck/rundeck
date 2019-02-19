@@ -47,7 +47,7 @@ class NodeServiceSpec extends Specification {
 
         then:
         1 * service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            1 * getProjectManager() >> Mock(ProjectManager) {
+            1 * getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 1 * existsFrameworkProject('test1') >> false
             }
         }
@@ -88,7 +88,7 @@ class NodeServiceSpec extends Specification {
 
         then:
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 loadProjectConfig('test1') >> projConfig
             }
@@ -150,7 +150,7 @@ class NodeServiceSpec extends Specification {
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 1 * loadProjectConfig('test1') >> projConfig
             }
@@ -223,7 +223,7 @@ class NodeServiceSpec extends Specification {
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 1 * loadProjectConfig('test1') >> projConfig
             }
@@ -301,7 +301,7 @@ class NodeServiceSpec extends Specification {
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 1 * loadProjectConfig('test1') >> projConfig
             }
@@ -386,7 +386,7 @@ class NodeServiceSpec extends Specification {
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 1 * loadProjectConfig('test1') >> projConfig
             }
@@ -458,7 +458,7 @@ class NodeServiceSpec extends Specification {
         def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
-            getProjectManager() >> Mock(ProjectManager) {
+            getFrameworkProjectMgr() >> Mock(ProjectManager) {
                 existsFrameworkProject('test1') >> true
                 1 * loadProjectConfig('test1') >> projConfig
             }

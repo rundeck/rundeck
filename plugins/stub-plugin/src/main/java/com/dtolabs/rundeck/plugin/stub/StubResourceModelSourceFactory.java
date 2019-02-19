@@ -76,6 +76,7 @@ public class StubResourceModelSourceFactory implements ResourceModelSourceFactor
         builder.mapping("tags", "plugin.ResourceModelSource.stub.tags");
         builder.mapping("attrs", "plugin.ResourceModelSource.stub.attrs");
         builder.mapping("delay", "plugin.ResourceModelSource.stub.delay");
+        builder.metadata("faicon", "vial");
 
         DESC = builder.build();
     }

@@ -61,7 +61,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.events.ExecutionPrepareEvent
-import rundeck.services.framework.RundeckProjectConfigurable
+import org.rundeck.core.projects.ProjectConfigurable
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
 @Transactional
-class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable, EventPublisher {
+class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, ProjectConfigurable, EventPublisher {
     static transactional = true
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
