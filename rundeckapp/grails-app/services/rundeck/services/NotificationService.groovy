@@ -326,7 +326,7 @@ public class NotificationService implements ApplicationContextAware{
 
                             //check if the custom template is calling ${logoutput.data}
                             def templateLogOutput=false
-                            if(template.text.indexOf('${logoutput.data}')>0){
+                            if(template.text.indexOf('${logoutput.data}')>=0){
                                 templateLogOutput=true
                             }
                             def contextOutput=[:]
