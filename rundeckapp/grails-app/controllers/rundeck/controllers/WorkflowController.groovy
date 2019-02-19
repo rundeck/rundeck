@@ -1145,9 +1145,9 @@ class WorkflowController extends ControllerBase {
                     //"Job doesnt exists, using only the uuid to reference the job
                     exec.uuid = null
                 }else if(refSe?.generateFullName()!=ScheduledExecution.generateFullName(exec.jobGroup, exec.jobName)){
-                    exec.jobName = refSe?.jobName
-                    exec.jobGroup = refSe?.groupPath
-                    exec.errors.rejectValue('jobName', 'commandExec.jobName.wrong.name.message')
+                    exec.jobName = null
+                    exec.jobGroup = null
+                    //using only the uuid
                 }
             }
             if(exec.uuid && !exec.jobName){
