@@ -19,14 +19,37 @@ package com.dtolabs.rundeck.plugins.nodes;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 
 /**
- * Plugin interface to modify node entries from sources
+ * Modifiable node entry
  */
-public interface NodeEnhancerPlugin {
+public interface IModifiableNodeEntry
+        extends INodeEntry
+{
     /**
-     * Update a node
+     * add or replace an attribute value
      *
-     * @param project project name
-     * @param node     node
+     * @param name
+     * @param value
      */
-    void updateNode(String project, IModifiableNodeEntry node);
+    void addAttribute(String name, String value);
+
+    /**
+     * Remove an attribute
+     *
+     * @param name
+     */
+    void removeAttribute(String name);
+
+    /**
+     * Add a tag
+     *
+     * @param tag
+     */
+    void addTag(String tag);
+
+    /**
+     * Remove a tag
+     *
+     * @param tag
+     */
+    void removeTag(String tag);
 }

@@ -33,18 +33,21 @@ class ProjectNodesEnhancer implements IProjectNodes {
         def newNodes = new NodeSetImpl()
         nodeset.nodeNames.each { String node ->
             INodeEntry origNode = nodeset.getNode(node)
-            Map<String, String> attrs = new HashMap<>()
-            attrs.putAll origNode.attributes
+            Map<String, String> attrs = new HashMap<>(origNode.attributes)
+            Set<String> tags = new HashSet<>(origNode.tags)
             plugins.each { plugin ->
-                INodeEntry newNode = new NodeEntryImpl(node)
+                ModifiableNode newNode = new ModifiableNode(node)
                 newNode.attributes.putAll attrs
-                def node1 = plugin.updateNode(project, newNode, plugin.type)
-                if (node1 != null) {
-                    attrs.putAll(node1.attributes)
+                newNode.tags.addAll tags
+                plugin.updateNode(project, newNode)
+                if (newNode.attributes != attrs || newNode.tags != tags) {
+                    attrs = new HashMap<>(newNode.attributes)
+                    tags = new HashSet<>(newNode.tags)
                 }
             }
             INodeEntry newNode = new NodeEntryImpl(node)
             newNode.attributes.putAll attrs
+            newNode.tags.addAll tags
             newNodes.putNode(newNode)
         }
         return newNodes

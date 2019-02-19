@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.plugins.nodes.IModifiableNodeEntry
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import grails.test.mixin.TestFor
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -137,7 +138,7 @@ class EnhancedNodeServiceSpec extends Specification implements GrailsUnitTest {
         Map<String, String> attributes = [:]
 
         @Override
-        INodeEntry updateNode(final String project, final INodeEntry node, final String provider) {
+        INodeEntry updateNode(final String project, final IModifiableNodeEntry node, final String provider) {
             node.attributes.putAll(attributes)
             node
         }
