@@ -3,10 +3,10 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import rundeck.services.framework.RundeckProjectConfigurable
+import org.rundeck.core.projects.ProjectConfigurable
 
 
-class MenuService implements RundeckProjectConfigurable {
+class MenuService implements ProjectConfigurable {
     static transactional = false
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {

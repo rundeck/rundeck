@@ -32,7 +32,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import org.rundeck.app.spi.Services
-import rundeck.services.framework.RundeckProjectConfigurable
+import org.rundeck.core.projects.ProjectConfigurable
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -166,7 +166,7 @@ class FrameworkServiceSpec extends Specification {
         prefix = ''
     }
 
-    static class TestConfigurableBean implements RundeckProjectConfigurable {
+    static class TestConfigurableBean implements ProjectConfigurable {
 
         Map<String, String> categories = [:]
 

@@ -36,9 +36,9 @@ import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
+import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncListenableTaskExecutor
-import rundeck.services.framework.RundeckProjectConfigurable
 import rundeck.services.nodes.CachedProjectNodes
 
 import java.util.concurrent.TimeUnit
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Provides asynchronous loading and caching of nodesets for projects
  */
-class NodeService implements InitializingBean, RundeckProjectConfigurable,IProjectNodesFactory, ProjectNodeService {
+class NodeService implements InitializingBean, ProjectConfigurable, IProjectNodesFactory, ProjectNodeService {
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     public static final String PROJECT_NODECACHE_FIRSTLOAD_SYNCH = 'project.nodeCache.firstLoadSynch'
