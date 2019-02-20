@@ -14,4 +14,10 @@
   }
 }
 
+th.table-header {
+  text-transform: uppercase;
+  color: $medium-gray;
+  padding: .5em;
+}
+
 @import "table-events";

@@ -26,15 +26,15 @@
         <div class="col-sm-12 ">
             <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="nodesTable" >
                 <tr>
-                    <th>
+                    <th class="table-header">
                       <g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
-                    <th data-bind="text: $data" class="text-capitalize"></th>
+                    <th data-bind="text: $data" class="text-capitalize table-header"></th>
                     <!--/ko -->
 
                     <!-- ko if: useDefaultColumns -->
-                    <th><g:message code="resource.metadata.entity.tags"/></th>
-                    <th colspan="3"><g:message code="user.at.host" /></th>
+                    <th class="table-header"><g:message code="resource.metadata.entity.tags"/></th>
+                    <th colspan="3" class="table-header"><g:message code="user.at.host" /></th>
                     <!-- /ko -->
                     <th></th>
                 </tr>
