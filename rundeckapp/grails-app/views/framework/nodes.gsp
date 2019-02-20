@@ -213,10 +213,6 @@
                         </g:elseif>
 
                     </div>
-                    <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
-                        <g:hiddenField name="project" value="${params.project ?: request.project}"/>
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    </g:form>
 
                 </div>
                 <div class=" clear matchednodes " id="nodelist" >
