@@ -146,7 +146,7 @@
                         </div>
                         <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
-                                <div class="group_select_control" style="display:none">
+                                <div class="group_select_control" style="${selectedNodes!=null?'':'display:none'}">
                                     <g:message code="select.prompt" />
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectall" ><g:message code="all" /></span>
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectnone" ><g:message code="none" /></span>
