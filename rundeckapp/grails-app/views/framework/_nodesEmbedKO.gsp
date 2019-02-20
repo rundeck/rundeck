@@ -46,7 +46,13 @@
                 <i class="fas fa-hdd"></i>
                 <!-- /ko -->
             </span>
-            <span data-bind="text: nodename"></span>
+            <!-- ko if: unselected -->
+            <s><span data-bind="text: nodename, style: $root.nodeSet().nodeUnselectedStyle(attributes)"></span></s>
+            <!-- /ko -->
+
+            <!-- ko ifnot: unselected -->
+            <span data-bind="text: nodename, css: "></span>
+            <!-- /ko -->
 
             <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes), attr: {title: attributes['ui:status:text']}">
                 <!-- ko if: attributes['ui:status:icon'] -->

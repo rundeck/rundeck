@@ -36,10 +36,12 @@ public class ExtNodeFilters
 
     String project
     String filterName
+    String filterExcludeName
 
     static constraints = {
         project(nullable: true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         filterName(nullable: true, matches: /^[^<>&'"\/]+$/)
+        filterExcludeName(nullable: true, matches: /^[^<>&'"\/]+$/)
     }
 
     public boolean nodeFilterIsEmpty() {

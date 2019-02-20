@@ -334,6 +334,11 @@ function NodeSet(data) {
         }
         return styles;
     };
+    self.nodeUnselectedStyle=function(attrs){
+        var styles={};
+        styles['color']="red";
+        return styles;
+    };
     self.startsWith = function (a, b) {
         return ( a.length >= (b.length)) && a.substring(0, b.length) == b;
     };
@@ -442,7 +447,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseSaveJobUrl = baseSaveJobUrl;
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
+    self.filterExcludeName = ko.observable(data.filterExcludeName);
     self.filter = ko.observable(data.filter);
+    self.filterExclude = ko.observable(data.filterExclude);
     self.filterAll = ko.observable(data.filterAll);
     self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.nodefilterLinkId=data.nodefilterLinkId;
@@ -463,6 +470,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
     self.loaded=ko.observable(false);
+    self.excludeFilterUncheck = ko.observable(data.excludeFilterUncheck?'true':'false');
+
     /**
      *
      * can be subscribed to for browser history updating, will be changed to 'true'
@@ -511,8 +520,14 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.isFilterNameAll=ko.pureComputed(function(){
         return self.filterName()==NODE_FILTER_ALL;
     });
+    self.isFilterExcludeNameAll=ko.pureComputed(function(){
+        return self.filterExcludeName()==NODE_FILTER_ALL;
+    });
     self.filterNameDisplay=ko.pureComputed(function(){
        return self.isFilterNameAll()?'All Nodes':self.filterName();
+    });
+    self.filterExcludeNameDisplay=ko.pureComputed(function(){
+        return self.isFilterExcludeNameAll()?'All Nodes':self.filterExcludeName();
     });
     self.canSaveFilter=ko.pureComputed(function(){
        return !self.filterName() && self.filterWithoutAll();
@@ -584,6 +599,18 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         },
         owner: this
     });
+    self.filterExcludeWithoutAll = ko.computed({
+        read: function () {
+            if (self.filterExclude() == NODE_FILTER_ALL && self.hideAll()) {
+                return '';
+            }
+            return self.filterExclude();
+        },
+        write: function (value) {
+            self.filterExclude(value);
+        },
+        owner: this
+    });
     self.filterIsSet=ko.pureComputed(function(){
         return !!self.filterWithoutAll() || !!self.filterName();
     });
@@ -606,7 +633,29 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.filterName(null);
         }
     });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue == '' && self.hideAll()) {
+            self.filterAll(true);
+        }else if(newValue==NODE_FILTER_ALL){
+            self.filterAll(true);
+        }
+    });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue == '' && self.emptyMode() == 'blank') {
+            self.clear();
+        }
+    });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue === NODE_FILTER_ALL) {
+            self.filterExcludeName(NODE_FILTER_ALL);
+        }else if (newValue != '' && self.filterExcludeName()) {
+            self.filterExcludeName(null);
+        }
+    });
     self.nodeExcludePrecedence.subscribe(function(newValue){
+        self.updateMatchedNodes();
+    });
+    self.excludeFilterUncheck.subscribe(function(newValue){
         self.updateMatchedNodes();
     });
     self.loading.subscribe(function(newValue){
@@ -776,6 +825,43 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.clear();
         self.updateMatchedNodes();
     };
+    self.selectNodeFilterExcludeLink=function(link,isappend){
+
+        var oldfilter = self.filterExclude();
+        var filterName = jQuery(link).data('node-filter-name');
+        var filterString = jQuery(link).data('node-filter');
+        var filterTag = jQuery(link).data('node-tag');
+        if(filterString && filterString.indexOf("&")>=0){
+            filterString = html_unescape(filterString);
+        }
+        var filterAll = jQuery(link).data('node-filter-all');
+        var v=oldfilter?oldfilter.indexOf('tags: '):-1;
+        if(isappend && filterTag && v>=0){
+            var first=oldfilter.substring(0, v);
+            var rest=oldfilter.substring(v + 6);
+            var last='';
+            while(rest.indexOf(" ")==0){
+                rest = rest.substring(1);
+            }
+            v = rest.indexOf(" ");
+            if(v>0){
+                last = rest.substring(v);
+                rest = rest.substring(0,v);
+            }
+            filterString = first + 'tags: ' + rest + '+' + filterTag + last ;
+        }else if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
+            filterString = oldfilter + ' ' + filterString;
+        } else if (filterAll) {
+            filterString = NODE_FILTER_ALL;
+        }
+
+        self.filterAll(filterAll);
+        self.filterExclude(filterString);
+        self.filterExcludeName(filterName);
+        self.clear();
+        self.updateMatchedNodes();
+
+    };
     self.updateNodesNextPage=function(){
         if(!self.page()){
             self.page(0);
@@ -840,9 +926,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             return;
         }
         var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
+        var filterExcludedata = self.filterExcludeName() ? {filterExcludeName: self.filterExcludeName()} : self.filterExclude()?{filterExclude: self.filterExclude()}:{};
+        var excludeFilterUncheck =  self.excludeFilterUncheck()
         var page = self.page();
         var view = self.view() ? self.view() : 'table';
-        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId};
+        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId, excludeFilterUncheck: self.excludeFilterUncheck()};
         if(self.paging()){
             basedata.page = page;
             basedata.max = self.pagingMax();
@@ -854,8 +942,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         if(self.maxShown()){
             basedata.maxShown=self.maxShown();
         }
-
-        var params = jQuery.extend(basedata, filterdata);
+        var params = jQuery.extend(basedata, filterdata, filterExcludedata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';
         }else if(self.emptyMode()=='blank' && !self.filter()){
@@ -870,7 +957,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             params.nodeExcludePrecedence = "true";
         }
         self.loading(true);
-
         var requrl=_genUrl(appLinks.frameworkNodesQueryAjax, params);
         jQuery.ajax({
             type:'GET',

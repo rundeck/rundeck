@@ -106,13 +106,24 @@
                   <span class="nodetags">
                       <span data-bind="foreach: tags">
 
-                          <node-filter-link class="label label-default" params="
-                                                      filterkey: 'tags',
-                                                      filterval: $data,
-                                                      tag: $data
-                                                      "></node-filter-link>
+                          <span class="label label-default">
+                              <span data-bind="text: $data"></span>
 
+                              <node-filter-link params="
+                                              filterkey: 'tags',
+                                              filterval: $data,
+                                              classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
+                                              linkicon: 'glyphicon glyphicon-plus text-success'
+                                              "></node-filter-link>
 
+                              <node-exclude-filter-link class="text-danger" params="
+                                              filterkey: 'tags',
+                                              filterval: $data,
+                                              classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
+                                              linkicon: 'glyphicon glyphicon-minus text-danger'
+
+                                              "></node-exclude-filter-link>
+                          </span>
                       </span>
                   </span>
               </span>
@@ -138,9 +149,18 @@
                                           filterkey: key,
                                           filterval: value(),
                                           classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
-                                          linkicon: 'glyphicon glyphicon-search'
+                                          linkicon: 'glyphicon glyphicon-zoom-in'
                                           "></node-filter-link>
+
+                  <node-exclude-filter-link class="text-danger" params="
+                                          filterkey: key,
+                                          filterval: value(),
+                                          classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
+                                          linkicon: 'glyphicon glyphicon-zoom-out text-danger'
+
+                                          "></node-exclude-filter-link>
               </div>
+
           </td>
       </tr>
       </tbody>

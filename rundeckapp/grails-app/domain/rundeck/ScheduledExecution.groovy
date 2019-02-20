@@ -337,6 +337,14 @@ class ScheduledExecution extends ExecutionContext {
             }else{
                 map.nodefilters.filter = asFilter()
             }
+
+            if(this.filterExclude){
+                map.nodefilters.filterExclude = this.filterExclude
+
+                if(this.excludeFilterUncheck){
+                    map.excludeFilterUncheck = true
+                }
+            }
         }
         if(notifications){
             map.notification=[:]
@@ -383,6 +391,7 @@ class ScheduledExecution extends ExecutionContext {
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
+        se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
         
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
@@ -517,6 +526,10 @@ class ScheduledExecution extends ExecutionContext {
                     }
                 }
                 se.filter = asFilter(map)
+            }
+
+            if(data.nodefilters.filterExclude){
+                se.filterExclude= data.nodefilters.filterExclude
             }
         }
         if(data.notification){

@@ -107,6 +107,7 @@ class Execution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
+        excludeFilterUncheck(nullable: true)
     }
 
     static mapping = {
@@ -301,6 +302,9 @@ class Execution extends ExecutionContext {
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
+            if(this.filterExclude && this.excludeFilterUncheck){
+                map.nodefilters.dispatch.excludeFilterUncheck = this.excludeFilterUncheck
+            }
             map.nodefilters.dispatch.rankOrder = (null == nodeRankOrderAscending || nodeRankOrderAscending) ? 'ascending' : 'descending'
             if (filter) {
                 map.nodefilters.filter = filter
@@ -369,6 +373,7 @@ class Execution extends ExecutionContext {
             if (data.nodefilters.dispatch?.containsKey('rankOrder')) {
                 exec.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder == 'ascending'
             }
+            exec.excludeFilterUncheck = data.nodefilters.excludeFilterUncheck ? data.nodefilters.excludeFilterUncheck : false
             if (data.nodefilters.filter) {
                 exec.doNodedispatch = true
                 exec.filter = data.nodefilters.filter

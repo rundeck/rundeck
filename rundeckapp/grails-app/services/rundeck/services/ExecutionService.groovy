@@ -1774,6 +1774,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
         return nodeset
     }
+
+    /**
+     * Return a NodeSet using the filters in the execution context
+     */
+    public static NodeSet filtersExcludeAsNodeSet(BaseNodeFilters econtext) {
+        final NodeSet nodeset = new NodeSet();
+        nodeset.createExclude(BaseNodeFilters.asExcludeUnselectedMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
+        nodeset.createInclude(BaseNodeFilters.asIncludeUnselectedMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
+        return nodeset
+    }
     /**
      * Return a NodeSet using the filters in the execution context and expanding variables by using the supplied
      * datacontext
@@ -1839,7 +1849,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retryOriginalId:params.retryOriginalId?:null,
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
-                                      serverNodeUUID: frameworkService.getServerUUID()
+                                      serverNodeUUID: frameworkService.getServerUUID(),
+                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false
             )
 
             execution.userRoles = params.userRoles
@@ -2175,7 +2186,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'timeout',
                 'orchestrator',
                 'retry',
-                'retryDelay'
+                'retryDelay',
+                'excludeFilterUncheck'
         ]
         propset.each{k->
             props.put(k,se[k])
