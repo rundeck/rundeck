@@ -345,21 +345,22 @@
 
         <div class="${fieldColSize}">
             <div class="radio radio-inline">
-                <g:radio value="false" name="excludeFilterUncheck"
-                         checked="${!scheduledExecution.excludeFilterUncheck}"
-                         data-bind="checked: excludeFilterUncheck"
-                         id="editableFalse"/>
-                <label for="editableFalse">
-                    <g:message code="no"/>
-                </label>
-            </div>
-            <div class="radio radio-inline">
                 <g:radio name="excludeFilterUncheck" value="true"
                          checked="${scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
                          id="editableTrue"/>
                 <label for="editableTrue">
                     <g:message code="yes"/>
+                </label>
+            </div>
+
+            <div class="radio radio-inline">
+                <g:radio value="false" name="excludeFilterUncheck"
+                         checked="${!scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableFalse"/>
+                <label for="editableFalse">
+                    <g:message code="no"/>
                 </label>
             </div>
 
