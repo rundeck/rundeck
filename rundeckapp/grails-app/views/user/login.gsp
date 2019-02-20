@@ -46,6 +46,30 @@
         }
         //-->
     </script>
+    <style type="text/css">
+        .sso-login {
+            margin: 10px auto;
+            border-bottom: 1px solid #0f0f0f;
+            text-align: center;
+        }
+        .sso-login-img {
+            border: 2px solid #167df0;
+            border-radius: 2px 0 0 2px;
+            padding: 5px 6px;
+            margin: -5px;
+            height: 16px;
+            width: auto;
+        }
+        .sso-login-link {
+            padding: 4px 10px;
+            border-radius: 2px;
+            border: 1px solid #167df0;
+            background-color: #167df0;
+            color: #fff;
+            vertical-align: middle;
+            font-size: 1.2em;
+        }
+    </style>
 </head>
 <body id="loginpage">
   <div class="wrapper wrapper-full-page">
@@ -91,6 +115,16 @@
                         </span>
                       </div>
                     </g:if>
+                    <!--SSO Login Feature-->
+                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled in [true,'true']}">
+                          <div class="sso-login">
+                              <div class='form-group'>
+                                  <g:if test="${grailsApplication.config.rundeck.sso.loginButton.image.enabled in [true,'true']}"><img src="${resource(dir: 'images', file: 'rundeck2-icon-16.png')}" alt="Rundeck" class="sso-login-img" /></g:if>
+                                  <a class='sso-login-link' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                              </div>
+                          </div>
+                    </g:if>
+                    <!--/SSO Login Feature-->
                     <g:set var="loginmsg" value="${grailsApplication.config.rundeck?.gui?.login?.welcome ?: g.message(code: 'gui.login.welcome', default: '')}"/>
                     <g:if test="${loginmsg}">
                       <div style="margin-bottom:2em;">
@@ -118,12 +152,6 @@
                       </div>
                     </g:if>
                     <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>
-
-                    <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
-                        <div class='form-group'>
-                            <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
-                        </div>
-                    </g:if>
 
                     <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
                     <g:if test="${footermessagehtml}">

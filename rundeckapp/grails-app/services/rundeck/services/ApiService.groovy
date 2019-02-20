@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.web.JSONBuilder
+import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.grails.web.converters.exceptions.ConverterException
@@ -282,6 +283,7 @@ class ApiService {
         string ? Sizes.parseTimeDuration(string) : 0
     }
 
+    @CompileStatic
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
@@ -289,6 +291,7 @@ class ApiService {
         def out = response.outputStream
         out << output
         out.flush()
+
         null
     }
     def respondXml(HttpServletResponse response, Closure recall) {

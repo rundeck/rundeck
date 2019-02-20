@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.plugins.descriptions.PluginMeta
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
@@ -258,5 +260,56 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,z'   | _
         'a,z,c' | _
         'qasdf'   | _
+    }
+
+
+    /**
+     * test metadata annotation
+     */
+    @PluginMetadata(key = "asdf", value = "xyz")
+    @Plugin(name = "typeTest2", service = "x")
+    static class TestPluginMetadataAnnotation1 {
+
+    }
+
+    /**
+     * container metadata annotation
+     */
+    @PluginMeta(
+            [
+                    @PluginMetadata(key = "asdf", value = "xyz"),
+                    @PluginMetadata(key = "1234", value = "908")
+            ]
+    )
+    @Plugin(name = "typeTest3", service = "x")
+    static class TestPluginMetadataAnnotation2 {
+
+    }
+
+    def "describe provider metadata single"() {
+        given:
+            TestPluginMetadataAnnotation1 test = new TestPluginMetadataAnnotation1();
+        when:
+
+            Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder())
+
+        then:
+            desc.metadata
+            desc.metadata.size() == 1
+            desc.metadata['asdf'] == 'xyz'
+    }
+
+    def "describe provider metadata repeated"() {
+        given:
+            def test = new TestPluginMetadataAnnotation2()
+        when:
+
+            Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder())
+
+        then:
+            desc.metadata
+            desc.metadata.size() == 2
+            desc.metadata['asdf'] == 'xyz'
+            desc.metadata['1234'] == '908'
     }
 }

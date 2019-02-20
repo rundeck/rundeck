@@ -434,7 +434,17 @@ function StepFilterPlugin(data) {
     self.title = ko.observable(data.title);
     self.description = ko.observable(data.description);
     self.iconSrc = ko.observable(data.iconSrc);
+    self.providerMeta = ko.observable(data.providerMeta)
     self.selected = ko.observable(false);
+    self.glyphicon  = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().glyphicon
+    })
+    self.faicon = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().faicon
+    })
+    self.fabicon = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().fabicon
+    })
     self.descriptionFirstLine = ko.computed(function () {
         var desc = self.description();
         if (desc) {

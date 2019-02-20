@@ -40,12 +40,12 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import grails.core.GrailsApplication
 import org.rundeck.app.spi.Services
+import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
-import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -1299,8 +1299,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @return Map of [(beanName): Map [ name: String, configurable: Bean, values: demapped value Map, prefix: bean prefix] ]
      */
     Map<String, Map> loadProjectConfigurableInput(String prefix, Map projectInputProps, String category = null) {
-        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
-                RundeckProjectConfigurable
+        Map<String, ProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                ProjectConfigurable
         )
 
         Map<String, Map> extraConfig = [:]
@@ -1342,15 +1342,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @return map [errors:List, config: Map, props: Map, remove: List]
      */
     Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, Predicate<String> categoryPredicate = null) {
-        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
-                RundeckProjectConfigurable
+        Map<String, ProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                ProjectConfigurable
         )
         def errors = []
         def extraConfig = [:]
         def projProps = [:]
         def removePrefixes = []
 
-        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+        projectConfigurableBeans.each { k, ProjectConfigurable v ->
             if (k.endsWith('Profiled')) {
                 //skip profiled versions of beans
                 return

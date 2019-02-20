@@ -25,6 +25,7 @@ import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.web.JSONBuilder
+import groovy.util.slurpersupport.GPathResult
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
 import org.springframework.context.MessageSource
@@ -627,5 +628,75 @@ class ApiServiceSpec extends Specification {
         'acode' | ['a', 'b']                           | null                | '''<message>a</message>\n      <message>b</message>'''
 
 
+    }
+
+    def "render success xml code"() {
+        given:
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _,_, _) >> { it[0] +"."+ (it[1].join(".") ?: '') }
+        }
+        when:
+        def result = service.renderSuccessXml(response,'test.code',['arg1','arg2'])
+        def rs = assertXmlSuccessText(response.text)
+
+        then:
+        response.contentType == "text/xml"
+        response.characterEncoding == "UTF-8"
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        response.getHeader("X-Rundeck-API-XML-Response-Wrapper") == "true"
+        rs.success.message.text() == "test.code.arg1.arg2"
+    }
+
+    def "render success xml response"() {
+
+        when:
+        def closureCalled = false
+        def result = service.renderSuccessXml(response) {
+            closureCalled = true
+        }
+
+        then:
+        closureCalled
+        response.contentType == "text/xml"
+        response.characterEncoding == "UTF-8"
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        response.getHeader("X-Rundeck-API-XML-Response-Wrapper") == "true"
+        assertXmlSuccessText(response.text)
+    }
+
+    def "requre version invalid"() {
+        given:
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _,_, _) >> { it[0] +":"+ (it[1].join(":") ?: '') }
+        }
+        when:
+        def check = service.requireVersion([api_version:1,forwardURI: '/test/uri'],response,2)
+        def result = assertXmlErrorText(response.text)
+
+        then:
+        !check
+        response.contentType == "text/xml"
+        response.characterEncoding == "UTF-8"
+        response.status == 400
+        response.getHeader("X-Rundeck-API-Version") == ApiVersions.API_CURRENT_VERSION.toString()
+        result.error.message.text() == 'api.error.api-version.unsupported:1:/test/uri:Minimum supported version: 2'
+    }
+
+    private GPathResult assertXmlSuccessText(String result) {
+        def slurper = new XmlSlurper()
+        def gpath = slurper.parseText(result)
+        'result' == gpath.name()
+        'true' == gpath['@success'].text()
+        ApiVersions.API_CURRENT_VERSION.toString() == gpath['@apiversion'].text()
+        gpath
+    }
+
+    private GPathResult assertXmlErrorText(String result) {
+        def slurper = new XmlSlurper()
+        def gpath = slurper.parseText(result)
+        'result' == gpath.name()
+        'true' == gpath['@error'].text()
+        ApiVersions.API_CURRENT_VERSION.toString() == gpath['@apiversion'].text()
+        gpath
     }
 }

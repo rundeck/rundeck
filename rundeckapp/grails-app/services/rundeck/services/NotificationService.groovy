@@ -393,6 +393,7 @@ public class NotificationService implements ApplicationContextAware{
                                     if(attachlogbody){
                                         outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
                                     }
+                                    def renderJobStats = false
 
                                     body(
                                             view: "/execution/mailNotification/status",
@@ -403,7 +404,8 @@ public class NotificationService implements ApplicationContextAware{
                                                     execstate         : state,
                                                     nodestatus        : content.nodestatus,
                                                     jobref            : content.jobref,
-                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null
+                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null,
+                                                    renderJobStats    : renderJobStats
                                             ]
                                     )
                                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,30 @@
  * limitations under the License.
  */
 
-package rundeck.services.framework
+package org.rundeck.core.projects;
 
-import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Property;
+
+import java.util.List;
+import java.util.Map;
 
 /**
- * defines a set of project-level configuration properties for a grails service/spring bean
+ * Defines project level configuration properties for a component
  */
-interface RundeckProjectConfigurable {
+public interface ProjectConfigurable {
     /**
      * Return configuration categories for the properties, keyed by property name
-     * @return
      */
-    Map<String, String> getCategories()
+    Map<String, String> getCategories();
 
     /**
      * List of properties
-     * @return
      */
-    List<Property> getProjectConfigProperties()
+    List<Property> getProjectConfigProperties();
 
     /**
      * @return a map of config prop names to project config property names
      */
     public Map<String, String> getPropertiesMapping();
+
 }

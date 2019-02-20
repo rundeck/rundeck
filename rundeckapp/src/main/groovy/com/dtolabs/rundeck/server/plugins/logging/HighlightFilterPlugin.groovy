@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -36,6 +37,7 @@ import java.util.regex.Pattern
 @Plugin(name = HighlightFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Highlight Output',
         description = '''Highlights all output which matches the given reqular expression.''')
+@PluginMetadata(key = 'faicon', value = 'highlighter')
 class HighlightFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'highlight-output'
     @PluginProperty(
