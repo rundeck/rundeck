@@ -2752,7 +2752,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 model.grouptags=[:]
                 model.nodesSelectedByDefault=scheduledExecution.hasNodesSelectedByDefault()
                 if (!model.nodesSelectedByDefault) {
-                    model.selectedNodes = ""
+                    model.selectedNodes = []
                 }
                 //summarize node groups
                 def namegroups=[other: new TreeList()]
@@ -2845,7 +2845,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             ),
                             authContext).nodes;
 
-                    model.selectedNodes = retryNodes*.nodename.join(',')
+                    model.selectedNodes = retryNodes*.nodename
                 }
             }
         }else if(params.argString){
@@ -2853,7 +2853,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if(model.unselectedNodes && !params.retryExecId){
             def selectedNodes = model.nodes.findAll{ ! model.unselectedNodes.contains(it)  }
-            model.selectedNodes = selectedNodes*.nodename.join(',')
+            model.selectedNodes = selectedNodes*.nodename
         }
         model.localNodeName=framework.getFrameworkNodeName()
 

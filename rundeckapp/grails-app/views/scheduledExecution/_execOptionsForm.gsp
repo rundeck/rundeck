@@ -81,7 +81,7 @@
 
 
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes!=null? selectedNodes.split(',').findAll{it}:null}"/>
+                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes instanceof String? selectedNodes.split(',').findAll{it}:selectedNodes instanceof Collection? selectedNodes:null}"/>
 
             <div class="row">
                 <div class="col-sm-12 checkbox">
