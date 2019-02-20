@@ -43,7 +43,7 @@
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
                         <a href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
-                            <i class="auto-caret"></i>
+                            <i class="auto-caret text-muted"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                                     <!-- ko if: attributes['ui:icon:name'] -->
