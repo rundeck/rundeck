@@ -2483,7 +2483,7 @@ class ScheduledExecutionControllerTests  {
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
-        assertEquals("", model.selectedNodes)
+        assertEquals([], model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
         assertEquals('name: nodea,nodeb',model.nodefilter)
         assertEquals(null,model.nodesetvariables)
@@ -2820,7 +2820,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals(null,model.failedNodes)
         assertEquals(null,model.nodesetempty)
         assertEquals(testNodeSet.nodes,model.nodes)
-        assertEquals('nodea',model.selectedNodes)
+        assertEquals(['nodea'],model.selectedNodes)
         assertEquals([:],model.grouptags)
         assertEquals(null,model.selectedoptsmap)
         assertEquals(true,model.nodesSelectedByDefault)

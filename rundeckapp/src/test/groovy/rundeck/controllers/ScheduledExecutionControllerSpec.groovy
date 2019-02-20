@@ -1885,7 +1885,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         model != null
         model.scheduledExecution != null
         null != model.selectedNodes
-        expected.nodes*.nodename.join(',') == model.selectedNodes
+        expected.nodes*.nodename == model.selectedNodes
 
     }
 }
