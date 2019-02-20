@@ -28,6 +28,26 @@
   <g:message code="node.access.not-runnable.message" />
           </td>
       </tr>
+      <tr data-bind="if: attributes['ui:status:icon'] || attributes['ui:status:text']">
+
+          <td class="key">
+              <g:message code="node.metadata.status"/>
+          </td>
+          <td class="value">
+
+              <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes), attr: {title: attributes['ui:status:text']}">
+                  <!-- ko if: attributes['ui:status:icon'] -->
+                  <!-- ko with: attributes['ui:status:icon']() -->
+                  <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                  <!-- /ko -->
+                  <!-- /ko -->
+
+                  <!-- ko if: attributes['ui:status:text'] -->
+                  <span  data-bind="text: attributes['ui:status:text']"></span>
+                  <!-- /ko -->
+              </span>
+          </td>
+      </tr>
       <tr>
           %{--OS details--}%
           <td class="key">
