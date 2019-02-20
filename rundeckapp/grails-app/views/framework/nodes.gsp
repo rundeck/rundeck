@@ -81,7 +81,7 @@
           <div class="card-content vue-tabs">
 <!-- NAV TABS -->
         <div class="nav-tabs-navigation">
-          <div class="nav-tabs-wrapper" style="width:100%;">
+          <div class="nav-tabs-wrapper" >
             <ul class="nav nav-tabs">
                 <li class="active" id="tab_link_summary">
                     <a href="#summary" data-toggle="tab">
@@ -102,8 +102,11 @@
                         <g:message code="enter.a.filter" />
                     </a>
                 </li>
-                <li data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
-                    <span class="tabs-sibling tabs-sibling-compact">
+
+            </ul>
+          </div>
+              <span data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
+                  <span class="tabs-sibling tabs-sibling-compact">
                       <div class="btn-group pull-right ">
                           <button class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                               <g:message code="actions" /> <span class="caret"></span>
@@ -185,10 +188,8 @@
                               </li>
                           </ul>
                       </div>
-                    </span>
-                </li>
-            </ul>
-          </div>
+                  </span>
+              </span>
         </div>
 
 
