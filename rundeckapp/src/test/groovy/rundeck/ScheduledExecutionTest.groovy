@@ -981,12 +981,13 @@ class ScheduledExecutionTest  {
         se.doNodedispatch=true
         def jobMap = se.toMap()
         assertNotNull(jobMap)
-        assertEquals(false,jobMap.excludeFilterUncheck)
+        assertEquals(null,jobMap.excludeFilterUncheck)
     }
 
     void testToMapNodeHealthCheck_true() {
         ScheduledExecution se = createBasicScheduledExecution()
         se.doNodedispatch=true
+        se.filterExclude="tags: unhealthy"
         se.excludeFilterUncheck=true
         def jobMap = se.toMap()
         assertNotNull(jobMap)

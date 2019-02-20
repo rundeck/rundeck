@@ -201,10 +201,6 @@ class Execution extends ExecutionContext {
         return !scheduledExecution || scheduledExecution.hasExecutionEnabled();
     }
 
-    def boolean hasNodesHealthCheckEnabled() {
-        return excludeFilterUncheck? excludeFilterUncheck:false
-    }
-
     public String getCustomStatusString(){
         executionState==ExecutionService.EXECUTION_STATE_OTHER?status:null
     }
@@ -302,9 +298,12 @@ class Execution extends ExecutionContext {
             map.willRetry=true
         }
         if(doNodedispatch){
-            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence,excludeFilterUncheck: hasNodesHealthCheckEnabled()]]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
+            }
+            if(this.filterExclude && this.excludeFilterUncheck){
+                map.nodefilters.dispatch.excludeFilterUncheck = this.excludeFilterUncheck
             }
             map.nodefilters.dispatch.rankOrder = (null == nodeRankOrderAscending || nodeRankOrderAscending) ? 'ascending' : 'descending'
             if (filter) {

@@ -64,7 +64,6 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
-        <excludeFilterUncheck>false</excludeFilterUncheck>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -113,7 +112,6 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
-        <excludeFilterUncheck>false</excludeFilterUncheck>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -146,7 +144,6 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
-        <excludeFilterUncheck>false</excludeFilterUncheck>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -190,7 +187,6 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
-        <excludeFilterUncheck>false</excludeFilterUncheck>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -224,7 +220,6 @@ class ProjectServiceTests  {
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
         <excludePrecedence>true</excludePrecedence>
-        <excludeFilterUncheck>false</excludeFilterUncheck>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -244,7 +239,6 @@ class ProjectServiceTests  {
           <exec>exec command</exec>
         </command>
       </sequence>
-      <excludeFilterUncheck>false</excludeFilterUncheck>
       <loglevel>WARN</loglevel>
       <name>blue</name>
       <nodeFilterEditable>false</nodeFilterEditable>
