@@ -2808,18 +2808,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         log.warn("failed saving scheduled Execution nextExecution")
                     }
                 }
-
-                if (null == seStats.execCount || 0 == seStats.execCount || null == seStats.totalTime || 0 == seStats.totalTime) {
-                    seStats.execCount = 1
-                    seStats.totalTime = time
-                } else if (seStats.execCount > 0 && seStats.execCount < 10) {
-                    seStats.execCount++
-                    seStats.totalTime += time
-                } else if (seStats.execCount >= 10) {
-                    def popTime = seStats.totalTime.intdiv(seStats.execCount)
-                    seStats.totalTime -= popTime
-                    seStats.totalTime += time
+                def statsMap = seStats.getContentMap()
+                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                    statsMap.execCount = 1
+                    statsMap.totalTime = time
+                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                    statsMap.execCount++
+                    statsMap.totalTime += time
+                } else if (statsMap.execCount >= 10) {
+                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                    statsMap.totalTime -= popTime
+                    statsMap.totalTime += time
                 }
+                seStats.setContentMap(statsMap)
 
                 if (seStats.validate()) {
                     if (seStats.save(flush: true)) {
@@ -2852,26 +2853,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def updateJobRefScheduledExecStatistics(Long schedId, long time) {
         def success = false
         try {
-            def seStats = ScheduledExecutionStats.findByScheduledExecutionId(schedId)
+            def scheduledExecution = ScheduledExecution.get(schedId)
+            def seStats = scheduledExecution.getStats()
+            def statsMap = seStats.getContentMap()
 
-            if (null == seStats.execCount || 0 == seStats.execCount || null == seStats.totalTime || 0 == seStats.totalTime) {
-                seStats.execCount = 1
-                seStats.totalTime = time
-            } else if (seStats.execCount > 0 && seStats.execCount < 10) {
-                seStats.execCount++
-                seStats.totalTime += time
-            } else if (seStats.execCount >= 10) {
-                def popTime = seStats.totalTime.intdiv(seStats.execCount)
-                seStats.totalTime -= popTime
-                seStats.totalTime += time
+            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                statsMap.execCount = 1
+                statsMap.totalTime = time
+            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                statsMap.execCount++
+                statsMap.totalTime += time
+            } else if (statsMap.execCount >= 10) {
+                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                statsMap.totalTime -= popTime
+                statsMap.totalTime += time
             }
 
-            if (!seStats.refExecCount) {
-                seStats.refExecCount = 1
+
+            if (!statsMap.refExecCount) {
+                statsMap.refExecCount = 1
             } else {
-                seStats.refExecCount++
+                statsMap.refExecCount++
             }
-
+            seStats.setContentMap(statsMap)
 
             if (seStats.validate()) {
                 if (seStats.save(flush: true)) {

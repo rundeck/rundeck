@@ -3219,11 +3219,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
         def refexec = ReferencedExecution.findByScheduledExecution(job)
-        def seStats = ScheduledExecutionStats.findByScheduledExecutionId(job.id)
+        def seStats = ScheduledExecutionStats.findBySe(job)
         if(expectedRef){
-            seStats.refExecCount==0
+            seStats.getContentMap().refExecCount==0
         }else{
-            seStats.refExecCount==1
+            seStats.getContentMap().refExecCount==1
         }
         0 * executionListener.log(_)
         ret.success

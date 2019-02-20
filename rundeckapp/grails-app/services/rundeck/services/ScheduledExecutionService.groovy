@@ -926,7 +926,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return [success:false,error:errmsg]
             }
-            def stats= ScheduledExecutionStats.findAllByScheduledExecutionId(scheduledExecution.id)
+            def stats= ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if(stats){
                 stats.each { st ->
                     st.delete()
@@ -3195,10 +3195,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         if (!failed && scheduledExecution.save(flush:true)) {
-            def stats = ScheduledExecutionStats.findByScheduledExecutionId(scheduledExecution.id)
+            def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
-                stats = new ScheduledExecutionStats(scheduledExecutionId: scheduledExecution.id)
-                        .save()
+                stats = new ScheduledExecutionStats(se: scheduledExecution)
+                        .save(flush:true)
             }
             rescheduleJob(scheduledExecution)
             def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)

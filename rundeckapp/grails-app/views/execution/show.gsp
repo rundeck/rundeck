@@ -888,8 +888,8 @@
       <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
           killjobhtml: "",
       </g:if>
-        totalDuration : '${enc(js:scheduledExecution?.getStats()?.totalTime ?: -1)}',
-        totalCount: '${enc(js:scheduledExecution?.getStats()?.execCount ?: -1)}'
+        totalDuration : '${enc(js:scheduledExecution?.getTotalTimeStats()?: -1)}',
+        totalCount: '${enc(js:scheduledExecution?.getExecCountStats()?: -1)}'
       });
       nodeflowvm=new NodeFlowViewModel(
         workflow,

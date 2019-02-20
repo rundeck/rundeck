@@ -1053,8 +1053,9 @@ class ScheduledExecution extends ExecutionContext {
 
     long getAverageDuration() {
         def stats = getStats()
-        if (stats?.totalTime && stats?.execCount) {
-            return Math.floor(stats.totalTime / stats.execCount)
+        def statsContent= stats?.getContentMap()
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
         }
         return 0;
     }
@@ -1106,16 +1107,45 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     ScheduledExecutionStats getStats() {
-        def stats = ScheduledExecutionStats.findByScheduledExecutionId(id)
-        if (!stats) {
-            stats = new ScheduledExecutionStats(scheduledExecutionId: this.id,
-                    execCount: this.execCount,
-                    totalTime: this.totalTime,
-                    refExecCount: this.refExecCount
-            ).save()
+        def stats
+        if(this.id) {
+            stats = ScheduledExecutionStats.findBySe(this)
+            if (!stats) {
+                def content = [execCount   : this.execCount,
+                               totalTime   : this.totalTime,
+                               refExecCount: this.refExecCount]
+
+                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
+            }
         }
         stats
     }
 
+    Long getRefExecCountStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.refExecCount) {
+            return statsContent.refExecCount
+        }
+        return 0;
+    }
+
+    Long getTotalTimeStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.totalTime) {
+            return statsContent.totalTime
+        }
+        return 0;
+    }
+
+    Long getExecCountStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.execCount) {
+            return statsContent.execCount
+        }
+        return 0;
+    }
 }
 

@@ -127,7 +127,7 @@
             </h4>
           </div>
           <div class="card-content">
-            <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true, includeJobRef:(scheduledExecution.getStats().refExecCount?true:false)]"/>
+            <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true, includeJobRef:(scheduledExecution.getRefExecCountStats()?true:false)]"/>
           </div>
         </div>
       </div>

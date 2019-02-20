@@ -224,8 +224,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 )
                 if (it.scheduledExecution){
                     def seStats = it.scheduledExecution.getStats()
-                    if(seStats?.totalTime >= 0 && seStats?.execCount > 0) {
-                        data['jobAverageDuration'] = Math.floor(seStats.totalTime / seStats.execCount)
+                    if(scheduledExecution.getAverageDuration() > 0) {
+                        data['jobAverageDuration'] = scheduledExecution.getAverageDuration()
                     }
                 }
                 if (it.argString) {
