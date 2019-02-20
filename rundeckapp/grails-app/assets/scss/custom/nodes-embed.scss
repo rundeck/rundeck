@@ -1,5 +1,17 @@
 .nodes-embed{
 
+  .embedded_node {
+    display: inline-block;
+    cursor: pointer;
+  }
+}
+
+.node-details-simple {
+  .subattrs {
+    td {
+      background: #f8f8f8;
+    }
+  }
 }
 
 //node detail
