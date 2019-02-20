@@ -204,18 +204,9 @@
                                 <i class="glyphicon glyphicon-warning-sign"></i>
                                 <span data-bind="text: error()"></span>
                             </span>
-                            <g:if test="${tagsummary}">
-                                <g:render template="tagsummary"
-                                          model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
-                            </g:if>
-                            <g:elseif test="${tagsummary?.size() == 0}">
-                            %{--<span class="text-primary">no tags</span>--}%
-                        </g:elseif>
 
                     </div>
 
-                </div>
-                <div class=" clear matchednodes " id="nodelist" >
                 </div>
                 <div class="clear matchednodes" id="nodeview">
                     <g:render template="allnodesKO" />
