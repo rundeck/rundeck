@@ -412,23 +412,31 @@
               <div class="well well-sm embed matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
-                      <span class="text-primary" data-bind="if: loaded">
-                          <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
-                                  code="count.nodes.matched"/></span>
-                      </span>
-                  </div>
-                  <div class="col-sm-6">
-                      <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                              data-loading-text="${g.message(code: 'loading')}"
-                              data-bind="click: $data.updateMatchedNodes"
-                              title="${g.message(code: 'click.to.refresh')}">
-                          <g:message code="refresh"/>
-                          <i class="glyphicon glyphicon-refresh"></i>
-                      </button>
-                  </div>
+                          <span class="text-primary" data-bind="if: loaded">
+                              <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
+                                      code="count.nodes.matched"/></span>
+                          </span>
+                          <span data-bind="visible: loading() " class="text-info">
+                              <i class="glyphicon glyphicon-time"></i>
+                              <g:message code="loading.matched.nodes"/>
+                          </span>
+                      </div>
+
+                      <div class="col-sm-6">
+
+                          <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                                  data-loading-text="${g.message(code: 'loading')}"
+                                  data-bind="click: $data.updateMatchedNodes, attr: {disabled: loading}"
+                                  title="${g.message(code: 'click.to.refresh')}">
+                              <g:message code="refresh"/>
+                              <i class="glyphicon glyphicon-refresh"></i>
+                          </button>
+
+                      </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showExcludeFilterLinks:true]"/>
+                      <g:render template="/framework/nodesEmbedKO"
+                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
                   </div>
               </div>
           </div>
