@@ -429,7 +429,7 @@
                   </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
+                      <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true,showExcludeFilterLinks:true]"/>
                   </div>
               </div>
           </div>
