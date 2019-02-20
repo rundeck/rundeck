@@ -1,5 +1,5 @@
 <div style="margin-top:10px">
-  <table class="table table-condensed table-embed">
+  <table class="table table-condensed table-embed node-details-simple">
       <tbody>
       <tr data-bind="if: attributes.description">
           <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
@@ -26,6 +26,26 @@
     --}%
 
   <g:message code="node.access.not-runnable.message" />
+          </td>
+      </tr>
+      <tr data-bind="if: attributes['ui:status:icon'] || attributes['ui:status:text']">
+
+          <td class="key">
+              <g:message code="node.metadata.status"/>
+          </td>
+          <td class="value">
+
+              <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes), attr: {title: attributes['ui:status:text']}">
+                  <!-- ko if: attributes['ui:status:icon'] -->
+                  <!-- ko with: attributes['ui:status:icon']() -->
+                  <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                  <!-- /ko -->
+                  <!-- /ko -->
+
+                  <!-- ko if: attributes['ui:status:text'] -->
+                  <span  data-bind="text: attributes['ui:status:text']"></span>
+                  <!-- /ko -->
+              </span>
           </td>
       </tr>
       <tr>
@@ -136,19 +156,17 @@
                   data-toggle="collapse"
                     class="textbtn textbtn-muted textbtn-saturated ">
                   <span data-bind="text: namespace.ns"></span>
-                  (<span data-bind="text: namespace.values.size()"></span>)
                   <i class="auto-caret "></i>
               </a>
           </td>
-          <td colspan="3"></td>
+          <td colspan="3" class="text-muted">
+              <span data-bind="text: namespace.values.size()"></span>
+          </td>
       </tr>
           <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_'+$index()+'_'+$parentContext.$index()}" >
-      <tr >
-          <td colspan="4">
-              <table class="table table-condensed table-embed">
-                  <tbody data-bind="foreach: { data: $data.values , as: 'nsattr' }" >
+          <!-- ko foreach: { data: $data.values , as: 'nsattr' } -->
+                <tr  class="hover-action-holder">
 
-                  <tr class="hover-action-holder ">
                       <td class="key setting">
 
                           <node-filter-link params="
@@ -169,12 +187,9 @@
                                                               "></node-filter-link>
                           </div>
                       </td>
-                  </tr>
 
-                  </tbody>
-              </table>
-          </td>
-      </tr>
+                </tr>
+          <!-- /ko -->
           </tbody>
       <!-- /ko -->
 

@@ -51,9 +51,7 @@
                               id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
                             <g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon
                                     node="${node}"
-                            ><i class="rdicon node ${runnable?'node-runnable':''} icon-small">
-
-                                </i></g:nodeStatusIcon></g:nodeStatusColor>
+                            >   <i class="fas fa-hdd"></i></g:nodeStatusIcon></g:nodeStatusColor>
 
                             ${resName}
                         </span>
@@ -61,7 +59,7 @@
                     </g:if>
                     <g:else>
                         <span class="node_ident" id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
-                            <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
+                            <i class="fas fa-hdd"></i>
                             <g:enc>${resName}</g:enc>
                         </span>
                     </g:else>

@@ -53,7 +53,7 @@
 
                 <g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon
                         node="${node}"
-                ><i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i></g:nodeStatusIcon></g:nodeStatusColor>&nbsp;${node.nodename}
+                >   <i class="fas fa-hdd"></i></g:nodeStatusIcon></g:nodeStatusColor>&nbsp;${node.nodename}
             </a>
 
             <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable, nodefilterLinkId: nodefilterLinkId?:'']"/>

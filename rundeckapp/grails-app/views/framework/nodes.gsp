@@ -81,7 +81,7 @@
           <div class="card-content vue-tabs">
 <!-- NAV TABS -->
         <div class="nav-tabs-navigation">
-          <div class="nav-tabs-wrapper" style="width:100%;">
+          <div class="nav-tabs-wrapper" >
             <ul class="nav nav-tabs">
                 <li class="active" id="tab_link_summary">
                     <a href="#summary" data-toggle="tab">
@@ -102,8 +102,11 @@
                         <g:message code="enter.a.filter" />
                     </a>
                 </li>
-                <li data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
-                    <span class="tabs-sibling tabs-sibling-compact">
+
+            </ul>
+          </div>
+              <span data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
+                  <span class="tabs-sibling tabs-sibling-compact">
                       <div class="btn-group pull-right ">
                           <button class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                               <g:message code="actions" /> <span class="caret"></span>
@@ -185,10 +188,8 @@
                               </li>
                           </ul>
                       </div>
-                    </span>
-                </li>
-            </ul>
-          </div>
+                  </span>
+              </span>
         </div>
 
 
@@ -196,30 +197,16 @@
 <!-- TABS -->
             <div class="tab-content">
                 <div class="tab-pane " id="result">
+                    <!-- ko if: error() -->
                     <div class="row row-space">
                         <div class="col-sm-12">
-
-                            <span data-bind="if: error()"  class="text-danger">
+                            <span class="text-danger">
                                 <i class="glyphicon glyphicon-warning-sign"></i>
                                 <span data-bind="text: error()"></span>
                             </span>
-                            <g:if test="${tagsummary}">
-                                <g:render template="tagsummary"
-                                          model="${[hidetop:!summaryOnly,tagsummary: tagsummary, link: [action: 'nodes', controller: 'framework', param: 'nodeIncludeTags']]}"/>
-                            </g:if>
-                            <g:elseif test="${tagsummary?.size() == 0}">
-                            %{--<span class="text-primary">no tags</span>--}%
-                        </g:elseif>
-
+                        </div>
                     </div>
-                    <g:form class="form form-inline" action="adhoc" controller="framework" method="get" name="runform">
-                        <g:hiddenField name="project" value="${params.project ?: request.project}"/>
-                        <g:render template="nodeFiltersHidden" model="${[params: params, query: query]}"/>
-                    </g:form>
-
-                </div>
-                <div class=" clear matchednodes " id="nodelist" >
-                </div>
+                    <!-- /ko -->
                 <div class="clear matchednodes" id="nodeview">
                     <g:render template="allnodesKO" />
                 </div>

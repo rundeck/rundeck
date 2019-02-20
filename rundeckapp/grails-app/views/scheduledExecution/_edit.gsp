@@ -350,17 +350,24 @@
           <div class=" col-sm-10  ">
 
               <div class="well well-sm embed matchednodes">
-                  <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                          data-loading-text="${g.message(code:'loading')}"
-                      data-bind="click: $data.updateMatchedNodes"
-                          title="${g.message(code:'click.to.refresh')}">
-                      <g:message code="refresh" />
-                      <i class="glyphicon glyphicon-refresh"></i>
-                  </button>
-                  <span class="text-primary" data-bind="if: loaded" >
-                      <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
-                  </span>
-                  <div id='matchednodes' class="clearfix">
+                  <div class="row">
+                      <div class="col-sm-6">
+                      <span class="text-primary" data-bind="if: loaded">
+                          <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
+                                  code="count.nodes.matched"/></span>
+                      </span>
+                  </div>
+                  <div class="col-sm-6">
+                      <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                              data-loading-text="${g.message(code: 'loading')}"
+                              data-bind="click: $data.updateMatchedNodes"
+                              title="${g.message(code: 'click.to.refresh')}">
+                          <g:message code="refresh"/>
+                          <i class="glyphicon glyphicon-refresh"></i>
+                      </button>
+                  </div>
+                  </div>
+                  <div id='matchednodes' class="clearfix row">
                       <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
                   </div>
               </div>

@@ -25,12 +25,12 @@
         <g:set var="hidetop" value="${hidetop?:tagsummary.findAll {it.value>1}.size()>30}"/>
         <g:if test="${hidetop}">
             <span class="textbtn textbtn-secondary tag"
-                  title="Show tag demographics" onclick="Element.toggle('tagdemo'); Element.toggleClassName(this,'active');">
+                  title="Show tag demographics" onclick="Element.toggle('nodes_tags'); Element.toggleClassName(this,'active');">
                 <i class="glyphicon glyphicon-tags text-primary "></i>
                 <g:enc>${tagsummary.size()}</g:enc> tags
                 <i class="glyphicon glyphicon-chevron-right"></i></span>
         </g:if>
-        <span id="tagdemo" style="display:block;${wdgt.styleVisible(unless: hidetop)}">
+        <span id="nodes_tags" style="display:block;${wdgt.styleVisible(unless: hidetop)}">
             <g:if test="${!hidetop}">
                 <i class="glyphicon glyphicon-tags text-primary"></i>
             </g:if>
