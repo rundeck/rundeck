@@ -334,11 +334,6 @@ function NodeSet(data) {
         }
         return styles;
     };
-    self.nodeUnselectedStyle=function(attrs){
-        var styles={};
-        styles['color']="red";
-        return styles;
-    };
     self.startsWith = function (a, b) {
         return ( a.length >= (b.length)) && a.substring(0, b.length) == b;
     };
