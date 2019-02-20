@@ -157,7 +157,7 @@
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
-                                        <div class="checkbox checkbox-inline">
+                                        <div class="checkbox node_select_checkbox" >
                                           <input id="${enc(attr:nkey)}"
                                                  type="checkbox"
                                                  data-ident="node"
