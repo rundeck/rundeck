@@ -170,7 +170,17 @@
                                             <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
                                                    id="${enc(attr:nkey)}_key">
-                                                   <g:enc>${node.nodename}</g:enc>
+
+
+                                                    <g:nodeIconStatusColor node="${node}" icon="true">
+                                                        <g:nodeIcon node="${node}">
+                                                            <i class="fas fa-hdd"></i>
+                                                        </g:nodeIcon>
+                                                    </g:nodeIconStatusColor>&nbsp;<span class="${unselectedNodes&& unselectedNodes.contains(node.nodename)?'node_unselected':''}"><g:enc>${node.nodename}</g:enc></span>
+                                                    <g:nodeHealthStatusColor node="${node}" title="${node.attributes['ui:status:text']}">
+                                                        <g:nodeStatusIcon node="${node}"/>
+                                                    </g:nodeHealthStatusColor>
+
                                                  </label>
 
                                         </div>

@@ -2854,6 +2854,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if(model.unselectedNodes && !params.retryExecId){
             def selectedNodes = model.nodes.findAll{ ! model.unselectedNodes.contains(it)  }
             model.selectedNodes = selectedNodes*.nodename
+            model.unselectedNodes = model.unselectedNodes*.nodename
         }
         model.localNodeName=framework.getFrameworkNodeName()
 
