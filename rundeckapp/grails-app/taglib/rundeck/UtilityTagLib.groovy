@@ -1732,11 +1732,17 @@ ansi-bg-default'''))
     }
     /**
      * @emptyTag
-     * @attr name REQUIRED glyphicon name
+     * @attr name REQUIRED glyphicon name (default) or prefixed with glyphicon-, or font-awesome icon like "fa-name" or "fab-name"
      */
     def icon= { attrs, body ->
         if (attrs.name.startsWith('glyphicon-')) {
             attrs.name=attrs.name.substring('glyphicon-'.length())
+        }else if(attrs.name.startsWith('fa-')){
+            out << "<i class=\"fas ${attrs.name} ${attrs.css?:''}\"></i>"
+            return
+        }else if(attrs.name.startsWith('fab-')){
+            out << "<i class=\"fab fa-${attrs.name.substring(4)} ${attrs.css?:''}\"></i>"
+            return
         }
         if (glyphiconSet.contains(attrs.name)) {
             out << "<i class=\"glyphicon glyphicon-${attrs.name} ${attrs.css?:''}\"></i>"
@@ -1744,6 +1750,7 @@ ansi-bg-default'''))
             if(Environment.current==Environment.DEVELOPMENT) {
                 throw new Exception("icon name not recognized: ${attrs.name}, suggestions: "+(glyphiconSet.findAll{it.contains(attrs.name)||it=~attrs.name})+"?")
             }
+            out<<body()
         }
     }
     /**
