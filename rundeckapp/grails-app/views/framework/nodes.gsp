@@ -197,17 +197,16 @@
 <!-- TABS -->
             <div class="tab-content">
                 <div class="tab-pane " id="result">
+                    <!-- ko if: error() -->
                     <div class="row row-space">
                         <div class="col-sm-12">
-
-                            <span data-bind="if: error()"  class="text-danger">
+                            <span class="text-danger">
                                 <i class="glyphicon glyphicon-warning-sign"></i>
                                 <span data-bind="text: error()"></span>
                             </span>
-
+                        </div>
                     </div>
-
-                </div>
+                    <!-- /ko -->
                 <div class="clear matchednodes" id="nodeview">
                     <g:render template="allnodesKO" />
                 </div>
