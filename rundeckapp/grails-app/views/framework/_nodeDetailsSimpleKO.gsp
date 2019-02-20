@@ -1,5 +1,5 @@
 <div style="margin-top:10px">
-  <table class="table table-condensed table-embed">
+  <table class="table table-condensed table-embed node-details-simple">
       <tbody>
       <tr data-bind="if: attributes.description">
           <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
@@ -136,19 +136,17 @@
                   data-toggle="collapse"
                     class="textbtn textbtn-muted textbtn-saturated ">
                   <span data-bind="text: namespace.ns"></span>
-                  (<span data-bind="text: namespace.values.size()"></span>)
                   <i class="auto-caret "></i>
               </a>
           </td>
-          <td colspan="3"></td>
+          <td colspan="3" class="text-muted">
+              <span data-bind="text: namespace.values.size()"></span>
+          </td>
       </tr>
           <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_'+$index()+'_'+$parentContext.$index()}" >
-      <tr >
-          <td colspan="4">
-              <table class="table table-condensed table-embed">
-                  <tbody data-bind="foreach: { data: $data.values , as: 'nsattr' }" >
+          <!-- ko foreach: { data: $data.values , as: 'nsattr' } -->
+                <tr  class="hover-action-holder">
 
-                  <tr class="hover-action-holder ">
                       <td class="key setting">
 
                           <node-filter-link params="
@@ -169,12 +167,9 @@
                                                               "></node-filter-link>
                           </div>
                       </td>
-                  </tr>
 
-                  </tbody>
-              </table>
-          </td>
-      </tr>
+                </tr>
+          <!-- /ko -->
           </tbody>
       <!-- /ko -->
 
