@@ -14,15 +14,13 @@
 - limitations under the License.
 --}%
 
-<div xdata-bind="if: view()=='table'">
-    <div id="tagdemo">
-        <span data-bind="if: nodeSet().tagsummary">
+<div>
+    <div id="nodes_tags" data-bind="if: nodeSet().tagsummary">
             <span data-bind="foreach: nodeSet().tagsummary">
                 <span class="summary nodetags">
                     <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-default', tag: tag"></node-filter-link>
                 </span>
             </span>
-        </span>
     </div>
     <div class="row row-space">
         <div class="col-sm-12 ">
