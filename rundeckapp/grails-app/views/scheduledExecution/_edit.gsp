@@ -330,11 +330,9 @@
                           model="[filterset: filterset, filtvalue: excludeFilterValue, filterName: filterName]"/>
             </span>
 
-            <div class=" collapse" id="queryFilterHelp">
-                <div class="help-block">
-                    <g:render template="/common/nodefilterStringHelp"/>
-                </div>
-            </div>
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.excludeFilter.description" />
+            </span>
         </div>
 
 
