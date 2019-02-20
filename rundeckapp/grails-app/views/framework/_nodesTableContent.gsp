@@ -46,12 +46,12 @@
                 <td class="nodeident" title="${enc(attr:node.description)}" >
                     <g:if test="${expanddetail||params.expanddetail}">
                         <g:expander key="${ukey+'node_detail_'+i}" imgfirst="true">
-                        <span class="node_ident ${nodeStatusColorCss(node:node)}"
-                              style="${nodeStatusColorStyle(node:node)}"
+                        <span class="node_ident ${nodeIconStatusColorCss(node:node)}"
+                              style="${nodeIconStatusColorStyle(node:node)}"
                               id="${enc(attr:ukey)}_${enc(attr:node.nodename)}_key">
-                            <g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon
+                            <g:nodeIconStatusColor node="${node}" icon="true"><g:nodeIcon
                                     node="${node}"
-                            >   <i class="fas fa-hdd"></i></g:nodeStatusIcon></g:nodeStatusColor>
+                            >   <i class="fas fa-hdd"></i></g:nodeIcon></g:nodeIconStatusColor>
 
                             ${resName}
                         </span>

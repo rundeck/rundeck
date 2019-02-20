@@ -1430,6 +1430,10 @@ menu-up''')
     static final String UI_ICON_COLOR = 'ui:icon:color'
     static final String UI_ICON_BGCOLOR = 'ui:icon:bgcolor'
     static final String UI_ICON_NAME = 'ui:icon:name'
+    static final String UI_NODE_STATUS_COLOR = 'ui:status:color'
+    static final String UI_NODE_STATUS_BGCOLOR = 'ui:status:bgcolor'
+    static final String UI_NODE_STATUS_ICON = 'ui:status:icon'
+    static final String UI_NODE_STATUS_TEXT = 'ui:status:text'
     static final String UI_BADGES_GLYPHICON = 'ui:badges'
     static final String glyphiconName(String name){
         if(name && name.startsWith('glyphicon-')) {
@@ -1448,10 +1452,16 @@ menu-up''')
             }
         }
     }
-    def nodeStatusIcon={attrs,body->
-        def found=glyphiconName( attrs.node?.attributes[UI_ICON_NAME])
-        if(found){
-            out<<"<i class='glyphicon glyphicon-${found}'></i>"
+    def nodeIcon ={ attrs, body->
+        if(attrs.node?.attributes[UI_ICON_NAME]){
+            out<<icon([name:attrs.node?.attributes[UI_ICON_NAME]],body)
+        }else{
+            out<<body()
+        }
+    }
+    def nodeStatusIcon ={ attrs, body->
+        if(attrs.node?.attributes[UI_NODE_STATUS_ICON]){
+            out<<icon([name:attrs.node?.attributes[UI_NODE_STATUS_ICON]],body)
         }else{
             out<<body()
         }
@@ -1639,42 +1649,28 @@ ansi-bg-default'''))
         cssColors.contains(bgcol?.toLowerCase()) || bgcol =~ /^#[0-9a-fA-F]{3,6}$/
     }
     static final Map nodeColors(def node){
+        nodeColors(node, [UI_ICON_COLOR, UI_COLOR, UI_ICON_BGCOLOR, UI_BGCOLOR])
+    }
+
+    static final Map nodeStatusColors(def node) {
+        nodeColors(node, [UI_NODE_STATUS_COLOR, UI_NODE_STATUS_BGCOLOR])
+    }
+
+    static final Map nodeColors(def node, List keys) {
         def map=[:]
-        def iconColor=node?.attributes[UI_ICON_COLOR]
-        def uiColor=node?.attributes[UI_COLOR]
-        def iconBgColor=node?.attributes[UI_ICON_BGCOLOR]
-        def uiBgcolor=node?.attributes[UI_BGCOLOR]
-        if(iconColor) {
-            if (testAnsiFg(iconColor)) {
-                map[UI_ICON_COLOR] = [className: iconColor]
-            } else if (cssColor(iconColor)) {
-                map[UI_ICON_COLOR] = [style: iconColor]
-            }
-        }
-        if(uiColor) {
-            if (testAnsiFg(uiColor)) {
-                map[UI_COLOR] = [className: uiColor]
-            } else if (cssColor(uiColor)) {
-                map[UI_COLOR] = [style: uiColor]
-            }
-        }
-        if(iconBgColor) {
-            if (testAnsiBg(iconBgColor)) {
-                map[UI_ICON_BGCOLOR] = [className: iconBgColor]
-            } else if (cssColor(iconBgColor)) {
-                map[UI_ICON_BGCOLOR] = [style: iconBgColor]
-            }
-        }
-        if(uiBgcolor) {
-            if (testAnsiBg(uiBgcolor)) {
-                map[UI_BGCOLOR] = [className: uiBgcolor]
-            } else if (cssColor(uiBgcolor)) {
-                map[UI_BGCOLOR] = [style: uiBgcolor]
+        keys.each { attr ->
+            def attrVal = node?.attributes[attr]
+            if (attrVal) {
+                if (testAnsiFg(attrVal)) {
+                    map[attr] = [className: attrVal]
+                } else if (cssColor(attrVal)) {
+                    map[attr] = [style: attrVal]
+                }
             }
         }
         map
     }
-    def nodeStatusColor={attrs,body->
+    def nodeIconStatusColor ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
@@ -1699,7 +1695,35 @@ ansi-bg-default'''))
         }
         out<<body()
     }
-    def nodeStatusColorCss={attrs,body->
+    def nodeHealthStatusColor ={ attrs, body->
+        def colors=nodeColors(attrs.node, [UI_NODE_STATUS_COLOR, UI_NODE_STATUS_BGCOLOR])
+        def found=colors[UI_NODE_STATUS_COLOR]
+        def bgcol=colors[UI_NODE_STATUS_BGCOLOR]
+        def dbg=''
+        if(found || bgcol){
+            def text=[
+                    (found?.style?'color: '+found.style:''),
+                    (bgcol?.style?'background-color: '+bgcol.style:''),
+            ].findAll{it}.join('; ')
+            def classcol=([found,bgcol].findAll{it}*.className).join(' ')
+            if(classcol||text) {
+                out << "<span class='${classcol}' style='${text}'"
+                if(attrs.title){
+                    out<<" title=\"${enc(attr:attrs.title)}\""
+                }
+                out << ">"
+                out << body()
+                out << "</span>"
+                return
+            }
+
+        }else{
+            dbg+=' zilch found: '+found+"/"+bgcol + " "+colors
+        }
+        out<<dbg
+        out<<body()
+    }
+    def nodeIconStatusColorCss ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
@@ -1710,10 +1734,9 @@ ansi-bg-default'''))
             if(classcol){
                 return classcol
             }
-
         }
     }
-    def nodeStatusColorStyle={attrs,body->
+    def nodeIconStatusColorStyle ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
