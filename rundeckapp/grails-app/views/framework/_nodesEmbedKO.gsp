@@ -43,7 +43,7 @@
                 <!-- /ko -->
                 <!-- /ko -->
                 <!-- ko if: !attributes['ui:icon:name'] -->
-                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <i class="fas fa-hdd"></i>
                 <!-- /ko -->
             </span>
             <span data-bind="text: nodename"></span>
@@ -63,7 +63,7 @@
              data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
 
             <span>
-                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <i class="fas fa-hdd"></i>
                 <span data-bind="text: nodename"></span>
             </span>
 

@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<i class="rdicon icon-small node"></i>
+<i class="fas fa-hdd"></i>
 <span class="execstate isnode"
       data-bind="text: name, attr: { 'data-execstate': summaryState() } "></span>
 
