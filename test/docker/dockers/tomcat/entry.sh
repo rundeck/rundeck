@@ -28,4 +28,4 @@ service.NodeExecutor.default.provider=jsch-ssh
 END
 
 
-exec catalina.sh run
+exec bash -c "catalina.sh run | tee /usr/local/tomcat/webapps/rundeck/rundeck/var/log/service.log"

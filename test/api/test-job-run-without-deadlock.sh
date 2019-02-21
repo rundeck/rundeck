@@ -208,7 +208,7 @@ status=$($XMLSTARLET sel -T -t -v "/result/executions/execution/@status" $DIR/cu
 assert "succeeded" "$status" "execution status should be succeeded"
 
 
-grep -i "Deadlock" /home/rundeck/var/log/service.log -q
+grep -i "Deadlock" $RDECK_BASE/var/log/service.log -q
 found=$?
 if [ 1 != $found ] ; then
     errorMsg "ERROR: Deadlock found on multiple executions"
