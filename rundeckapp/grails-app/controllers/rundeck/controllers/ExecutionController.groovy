@@ -359,9 +359,8 @@ class ExecutionController extends ControllerBase{
         def execState = e.executionState
         def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
-        if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
-            jobAverage = avg
+        if (e.scheduledExecution && e.scheduledExecution.getAverageDuration() > 0) {
+            jobAverage = e.scheduledExecution.getAverageDuration()
         }
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()

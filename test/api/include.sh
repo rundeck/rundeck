@@ -139,7 +139,7 @@ api_waitfor_execution(){
     local status='running'
 
     local rsleep=3
-    local rmax=10
+    local rmax=${3:-10}
     local rc=0
     
     while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do

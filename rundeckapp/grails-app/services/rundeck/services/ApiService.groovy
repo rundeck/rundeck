@@ -963,8 +963,9 @@ class ApiService {
                     }
                     if (e.scheduledExecution) {
                         def jobparams = [id: e.scheduledExecution.extid]
-                        if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-                            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                        def seStats = e.scheduledExecution.getStats()
+                        if(e.scheduledExecution.getAverageDuration() > 0) {
+                            def long avg = e.scheduledExecution.getAverageDuration()
                             jobparams.averageDuration = avg
                         }
                         jobparams.'href'=(apiHrefForJob(e.scheduledExecution))
@@ -1053,8 +1054,9 @@ class ApiService {
                 }
                 if (e.scheduledExecution) {
                     def jobparams = [id: e.scheduledExecution.extid]
-                    if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-                        def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                    def seStats = e.scheduledExecution.getStats()
+                    if (e.scheduledExecution.getAverageDuration() > 0) {
+                        def long avg = e.scheduledExecution.getAverageDuration()
                         jobparams.averageDuration = avg
                     }
                     execMap.job=jobparams

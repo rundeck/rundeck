@@ -63,6 +63,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.transaction.TransactionDefinition
+import org.springframework.dao.DuplicateKeyException
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -2802,47 +2803,108 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param execution
      * @return
      */
-    def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
+    def updateScheduledExecStatistics(Long schedId, eId, long time) {
         def success = false
         try {
-            ScheduledExecution.withTransaction {
+            ScheduledExecutionStats.withTransaction {
                 def scheduledExecution = ScheduledExecution.get(schedId)
+                def seStats = scheduledExecution.getStats()
+
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                }
-                //TODO: record job stats in separate domain class
-                if (null == scheduledExecution.execCount || 0 == scheduledExecution.execCount || null == scheduledExecution.totalTime || 0 == scheduledExecution.totalTime) {
-                    scheduledExecution.execCount = 1
-                    scheduledExecution.totalTime = time
-                } else if (scheduledExecution.execCount > 0 && scheduledExecution.execCount < 10) {
-                    scheduledExecution.execCount++
-                    scheduledExecution.totalTime += time
-                } else if (scheduledExecution.execCount >= 10) {
-                    def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
-                    scheduledExecution.totalTime -= popTime
-                    scheduledExecution.totalTime += time
-                }
-                if(jobRef){
-                    if(!scheduledExecution.refExecCount){
-                        scheduledExecution.refExecCount=1
-                    }else{
-                        scheduledExecution.refExecCount++
+                    if (scheduledExecution.save(flush: true)) {
+                        log.info("updated scheduled Execution nextExecution")
+                    } else {
+                        scheduledExecution.errors.allErrors.each { log.warn(it.defaultMessage) }
+                        log.warn("failed saving scheduled Execution nextExecution")
                     }
+                }
+                def statsMap = seStats.getContentMap()
+                if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                    statsMap.execCount = 1
+                    statsMap.totalTime = time
+                } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                    statsMap.execCount++
+                    statsMap.totalTime += time
+                } else if (statsMap.execCount >= 10) {
+                    def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                    statsMap.totalTime -= popTime
+                    statsMap.totalTime += time
+                }
+                seStats.setContentMap(statsMap)
 
+                if (seStats.validate()) {
+                    if (seStats.save(flush: true)) {
+                        log.info("updated scheduled Execution Stats")
+                    } else {
+                        seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
+                        log.warn("failed saving execution to history")
+                    }
+                    success = true
                 }
-                if (scheduledExecution.save(flush:true)) {
-                    log.info("updated scheduled Execution")
-                } else {
-                    scheduledExecution.errors.allErrors.each {log.warn(it.defaultMessage)}
-                    log.warn("failed saving execution to history")
-                }
-                success = true
+
+
             }
         } catch (org.springframework.dao.ConcurrencyFailureException e) {
             log.warn("Caught ConcurrencyFailureException, will retry updateScheduledExecStatistics for ${eId}")
         } catch (StaleObjectStateException e) {
             log.warn("Caught StaleObjectState, will retry updateScheduledExecStatistics for ${eId}")
+        } catch (DuplicateKeyException ve) {
+            log.warn("Caught DuplicateKeyException for migrated stats, will retry updateScheduledExecStatistics for ${eId}")
+        }
+        return success
+    }
+
+    /**
+     * Update jobref stats
+     * @param schedId
+     * @param time
+     * @return
+     */
+    def updateJobRefScheduledExecStatistics(Long schedId, long time) {
+        def success = false
+        try {
+            def scheduledExecution = ScheduledExecution.get(schedId)
+            def seStats = scheduledExecution.getStats()
+            def statsMap = seStats.getContentMap()
+
+            if (null == statsMap.execCount || 0 == statsMap.execCount || null == statsMap.totalTime || 0 == statsMap.totalTime) {
+                statsMap.execCount = 1
+                statsMap.totalTime = time
+            } else if (statsMap.execCount > 0 && statsMap.execCount < 10) {
+                statsMap.execCount++
+                statsMap.totalTime += time
+            } else if (statsMap.execCount >= 10) {
+                def popTime = statsMap.totalTime.intdiv(statsMap.execCount)
+                statsMap.totalTime -= popTime
+                statsMap.totalTime += time
+            }
+
+
+            if (!statsMap.refExecCount) {
+                statsMap.refExecCount = 1
+            } else {
+                statsMap.refExecCount++
+            }
+            seStats.setContentMap(statsMap)
+
+            if (seStats.validate()) {
+                if (seStats.save(flush: true)) {
+                    log.info("updated referenced Job Stats")
+                } else {
+                    seStats.errors.allErrors.each { log.warn(it.defaultMessage) }
+                    log.warn("failed saving referenced Job Stats")
+                }
+                success = true
+            }
+        } catch (org.springframework.dao.ConcurrencyFailureException e) {
+            log.warn("Caught ConcurrencyFailureException, dismissed statistic for referenced Job")
+        } catch (StaleObjectStateException e) {
+            log.warn("Caught StaleObjectState, dismissed statistic for for referenced Job")
+        } catch (DuplicateKeyException ve) {
+            // Do something ...
+            log.warn("Caught DuplicateKeyException for migrated stats, dismissed statistic for referenced Job")
         }
         return success
     }
@@ -3510,10 +3572,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(wresult.result) {
             def savedJobState = false
             if(!disableRefStats) {
-                savedJobState = updateScheduledExecStatistics(id, 'jobref', duration, true)
-                if (!savedJobState) {
-                    log.info("ExecutionJob: Failed to update job statistics for jobref")
-                }
+                updateJobRefScheduledExecStatistics(id, duration)
             }
             ReferencedExecution.withTransaction { status ->
                 refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED

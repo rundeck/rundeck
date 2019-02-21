@@ -39,6 +39,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.ApiService
@@ -60,7 +61,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:

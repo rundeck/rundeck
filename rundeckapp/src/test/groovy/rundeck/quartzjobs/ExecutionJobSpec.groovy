@@ -25,6 +25,7 @@ import org.quartz.Scheduler
 import rundeck.CommandExec
 import rundeck.Option
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.Workflow
 import rundeck.Execution
 import rundeck.services.ExecutionService
@@ -35,7 +36,7 @@ import spock.lang.Specification
 /**
  * Created by greg on 4/12/16.
  */
-@Mock([ScheduledExecution, Workflow, CommandExec, Execution])
+@Mock([ScheduledExecution, Workflow, CommandExec, Execution,ScheduledExecutionStats])
 class ExecutionJobSpec extends Specification {
     def "execute missing job"() {
         given:
