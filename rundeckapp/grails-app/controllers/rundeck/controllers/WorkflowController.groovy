@@ -1139,14 +1139,6 @@ class WorkflowController extends ControllerBase {
             if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }
-            if(exec.uuid && exec.jobName){
-                def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
-                if(refSe?.generateFullName()!=ScheduledExecution.generateFullName(exec.jobGroup, exec.jobName)){
-                    exec.jobName = refSe?.jobName
-                    exec.jobGroup = refSe?.groupPath
-                    exec.errors.rejectValue('jobName', 'commandExec.jobName.wrong.name.message')
-                }
-            }
             if(exec.uuid && !exec.jobName){
                 def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
                 if(refSe){
