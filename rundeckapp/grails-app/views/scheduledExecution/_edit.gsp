@@ -330,11 +330,9 @@
                           model="[filterset: filterset, filtvalue: excludeFilterValue, filterName: filterName]"/>
             </span>
 
-            <div class=" collapse" id="queryFilterHelp">
-                <div class="help-block">
-                    <g:render template="/common/nodefilterStringHelp"/>
-                </div>
-            </div>
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.excludeFilter.description" />
+            </span>
         </div>
 
 
@@ -347,21 +345,22 @@
 
         <div class="${fieldColSize}">
             <div class="radio radio-inline">
-                <g:radio value="false" name="excludeFilterUncheck"
-                         checked="${!scheduledExecution.excludeFilterUncheck}"
-                         data-bind="checked: excludeFilterUncheck"
-                         id="editableFalse"/>
-                <label for="editableFalse">
-                    <g:message code="no"/>
-                </label>
-            </div>
-            <div class="radio radio-inline">
                 <g:radio name="excludeFilterUncheck" value="true"
                          checked="${scheduledExecution.excludeFilterUncheck}"
                          data-bind="checked: excludeFilterUncheck"
                          id="editableTrue"/>
                 <label for="editableTrue">
                     <g:message code="yes"/>
+                </label>
+            </div>
+
+            <div class="radio radio-inline">
+                <g:radio value="false" name="excludeFilterUncheck"
+                         checked="${!scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableFalse"/>
+                <label for="editableFalse">
+                    <g:message code="no"/>
                 </label>
             </div>
 
@@ -413,23 +412,31 @@
               <div class="well well-sm embed matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
-                      <span class="text-primary" data-bind="if: loaded">
-                          <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
-                                  code="count.nodes.matched"/></span>
-                      </span>
-                  </div>
-                  <div class="col-sm-6">
-                      <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                              data-loading-text="${g.message(code: 'loading')}"
-                              data-bind="click: $data.updateMatchedNodes"
-                              title="${g.message(code: 'click.to.refresh')}">
-                          <g:message code="refresh"/>
-                          <i class="glyphicon glyphicon-refresh"></i>
-                      </button>
-                  </div>
+                          <span class="text-primary" data-bind="if: loaded">
+                              <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
+                                      code="count.nodes.matched"/></span>
+                          </span>
+                          <span data-bind="visible: loading() " class="text-info">
+                              <i class="glyphicon glyphicon-time"></i>
+                              <g:message code="loading.matched.nodes"/>
+                          </span>
+                      </div>
+
+                      <div class="col-sm-6">
+
+                          <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                                  data-loading-text="${g.message(code: 'loading')}"
+                                  data-bind="click: $data.updateMatchedNodes, attr: {disabled: loading}"
+                                  title="${g.message(code: 'click.to.refresh')}">
+                              <g:message code="refresh"/>
+                              <i class="glyphicon glyphicon-refresh"></i>
+                          </button>
+
+                      </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
+                      <g:render template="/framework/nodesEmbedKO"
+                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
                   </div>
               </div>
           </div>

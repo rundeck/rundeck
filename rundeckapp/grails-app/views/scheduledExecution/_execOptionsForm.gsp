@@ -52,7 +52,7 @@
 <div>
 <div class="row">
 <div class="col-xs-12">
-<!-- <div class="${hideHead?'col-sm-9':'col-sm-12'}"> -->
+
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
@@ -81,7 +81,7 @@
 
 
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes!=null? selectedNodes.split(',').findAll{it}:null}"/>
+                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes instanceof String? selectedNodes.split(',').findAll{it}:selectedNodes instanceof Collection? selectedNodes:null}"/>
 
             <div class="row">
                 <div class="col-sm-12 checkbox">
@@ -146,7 +146,7 @@
                         </div>
                         <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
-                                <div class="group_select_control" style="display:none">
+                                <div class="group_select_control" style="${selectedNodes!=null?'':'display:none'}">
                                     <g:message code="select.prompt" />
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectall" ><g:message code="all" /></span>
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectnone" ><g:message code="none" /></span>
@@ -157,7 +157,7 @@
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
-                                        <div class="checkbox checkbox-inline">
+                                        <div class="checkbox node_select_checkbox" >
                                           <input id="${enc(attr:nkey)}"
                                                  type="checkbox"
                                                  data-ident="node"
@@ -170,7 +170,17 @@
                                             <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
                                                    id="${enc(attr:nkey)}_key">
-                                                   <g:enc>${node.nodename}</g:enc>
+
+
+                                                    <g:nodeIconStatusColor node="${node}" icon="true">
+                                                        <g:nodeIcon node="${node}">
+                                                            <i class="fas fa-hdd"></i>
+                                                        </g:nodeIcon>
+                                                    </g:nodeIconStatusColor>&nbsp;<span class="${unselectedNodes&& unselectedNodes.contains(node.nodename)?'node_unselected':''}"><g:enc>${node.nodename}</g:enc></span>
+                                                    <g:nodeHealthStatusColor node="${node}" title="${node.attributes['ui:status:text']}">
+                                                        <g:nodeStatusIcon node="${node}"/>
+                                                    </g:nodeHealthStatusColor>
+
                                                  </label>
 
                                         </div>

@@ -115,14 +115,15 @@
                                               classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
                                               linkicon: 'glyphicon glyphicon-plus text-success'
                                               "></node-filter-link>
-
-                              <node-exclude-filter-link class="text-danger" params="
+                                <g:if test="${showExcludeFilterLinks}">
+                                    <node-exclude-filter-link class="text-danger" params="
                                               filterkey: 'tags',
                                               filterval: $data,
                                               classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
                                               linkicon: 'glyphicon glyphicon-minus text-danger'
 
                                               "></node-exclude-filter-link>
+                                </g:if>
                           </span>
                       </span>
                   </span>
@@ -151,14 +152,15 @@
                                           classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
                                           linkicon: 'glyphicon glyphicon-zoom-in'
                                           "></node-filter-link>
-
-                  <node-exclude-filter-link class="text-danger" params="
+                  <g:if test="${showExcludeFilterLinks}">
+                      <node-exclude-filter-link class="text-danger" params="
                                           filterkey: key,
                                           filterval: value(),
                                           classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
                                           linkicon: 'glyphicon glyphicon-zoom-out text-danger'
 
                                           "></node-exclude-filter-link>
+                  </g:if>
               </div>
 
           </td>
@@ -205,6 +207,15 @@
                                                               classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
                                                               linkicon: 'glyphicon glyphicon-search'
                                                               "></node-filter-link>
+                              <g:if test="${showExcludeFilterLinks}">
+                                  <node-exclude-filter-link class="text-danger" params="
+                                          filterkey: $data.name,
+                                          filterval: $data.value,
+                                          classnames: 'textbtn textbtn-info textbtn-saturated hover-action',
+                                          linkicon: 'glyphicon glyphicon-zoom-out text-danger'
+
+                                          "></node-exclude-filter-link>
+                              </g:if>
                           </div>
                       </td>
 

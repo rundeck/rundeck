@@ -15,7 +15,6 @@
   --}%
 
 %{--Filter navigation/selection dropdown--}%
-<span class="input-group-addon input-group-addon-title"><g:message code="nodes" /></span>
 <div class="input-group-btn">
   <button type="button" class="btn btn-default dropdown-toggle" data-bind="css: { 'btn-success': filterExcludeName(), 'btn-default': !filterExcludeName() }" data-toggle="dropdown">
     <span data-bind="text: filterExcludeNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
@@ -36,10 +35,7 @@
        data-container="body"
        value="${enc(attr:filtvalue)}" id="schedJobNodeFilter"/>
 <div class="input-group-btn">
-  <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeExcludeFilter'}" onclick="jQuery('#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}').popover('toggle')">
-    <i class="glyphicon glyphicon-question-sign"></i>
-  </a>
   <a class="btn btn-warning btn-fill" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
-    <g:message code="refresh" />
+    <g:message code="search" />
   </a>
 </div>

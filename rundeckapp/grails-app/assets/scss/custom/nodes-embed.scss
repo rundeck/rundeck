@@ -6,6 +6,15 @@
   }
 }
 
+.node_unselected {
+  color: red;
+  text-decoration: line-through;
+}
+
+.node_select_checkbox {
+  display: inline-block;
+  margin-right: 10px;
+}
 .node-details-simple {
   .subattrs {
     td {
