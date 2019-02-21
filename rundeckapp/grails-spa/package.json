@@ -1,7 +1,7 @@
 {
-  "name": "project-motd",
+  "name": "rundeck-vue-ui",
   "version": "1.0.0",
-  "description": "Rundeck Project Message of the Day",
+  "description": "Rundeck User Interface",
   "author": "jesse@rundeck.com",
   "private": true,
   "scripts": {

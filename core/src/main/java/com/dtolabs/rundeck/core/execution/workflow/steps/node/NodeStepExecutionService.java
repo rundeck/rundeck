@@ -35,11 +35,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -53,13 +51,20 @@ public class NodeStepExecutionService
     implements PluggableProviderService<NodeStepExecutor>, DescribableService
 {
     public static final String                                     SERVICE_NAME = ServiceNameConstants.WorkflowNodeStep;
-    private final       PluggableProviderService<NodeStepExecutor> nodeStepPluginAdapterService;
-    private final       PluggableProviderService<NodeStepExecutor> remoteScriptNodeStepPluginAdapterService;
+    private final PluggableProviderService<NodeStepExecutor> nodeStepPluginAdaptedNodeStepExecutorService;
+    private final PluggableProviderService<NodeStepExecutor> remoteScriptAdaptedNodeStepExecutorService;
 
     private List<ProviderService<NodeStepExecutor>> serviceList;
 
     private PresetBaseProviderRegistryService<NodeStepExecutor> primaryService;
     private PresetBaseProviderRegistryService<NodeStepExecutor> dynamicRegistryService;
+    private final NodeStepPluginService nodeStepPluginService;
+    private final RemoteScriptNodeStepPluginService remoteScriptNodeStepPluginService;
+    private final ChainedNodeStepPluginService chainedNodeStepPluginService;
+
+    public static final boolean
+            ENABLE_OLD_ADAPTER_BEHAVIOR =
+            Boolean.getBoolean("org.rundeck.NodeStepExecutionService.oldAdapterBehavior");
 
     public NodeStepExecutionService(final Framework framework) {
         this.serviceList = new ArrayList<>();
@@ -79,37 +84,123 @@ public class NodeStepExecutionService
         this.dynamicRegistryService =
             new PresetBaseProviderRegistryService<>(new HashMap<>(), framework, true, SERVICE_NAME);
 
-        NodeStepPluginService
-            nodeStepPluginService =
-            new NodeStepPluginService(ServiceNameConstants.WorkflowNodeStep, framework);
-        nodeStepPluginAdapterService = nodeStepPluginService.adapter(NodeStepPluginAdapter.CONVERTER);
+        nodeStepPluginService = new NodeStepPluginService(ServiceNameConstants.WorkflowNodeStep, framework);
 
-        RemoteScriptNodeStepPluginService
-            remoteScriptNodeStepPluginService =
-            new RemoteScriptNodeStepPluginService(ServiceNameConstants.RemoteScriptNodeStep, framework);
-        remoteScriptNodeStepPluginAdapterService =
-            remoteScriptNodeStepPluginService.adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
+        remoteScriptNodeStepPluginService =
+                new RemoteScriptNodeStepPluginService(ServiceNameConstants.RemoteScriptNodeStep, framework);
 
-        serviceList.add(primaryService);
-        serviceList.add(dynamicRegistryService);
-        serviceList.add(nodeStepPluginAdapterService);
-        serviceList.add(remoteScriptNodeStepPluginAdapterService);
+
+        List<ProviderService<NodeStepPlugin>>
+                serviceList =
+                new ArrayList<>(Collections.singletonList(nodeStepPluginService));
+
+        if (ENABLE_OLD_ADAPTER_BEHAVIOR) {
+            /*
+            This behavior uses the old adapter to convert RemoteScriptNodeStepPlugin to NodeExecutor,
+            and doesn't have a service to use in the chained service list for RemoteScriptNodeStepPlugins.
+            the consequence is that plugin loading requests for "NodeStepPlugin" service, and a remote script provider name will fail
+             */
+            remoteScriptAdaptedNodeStepExecutorService =
+                    remoteScriptNodeStepPluginService.adapter(RemoteScriptNodeStepPluginAdapter.CONVERTER);
+
+        } else {
+            /*
+             * this new behavior converts RemoteScriptNodeStepPlugin to a NodeStepPlugin
+             * which we then convert using the NodeStepPluginAdapter to NodeStepExecutor
+             * and allows us to add the remote script plugin service to the NodeStepPlugin service chain
+             */
+
+            //convert (original)RemoteScriptNodeStepPlugin -> NodeStepPlugin (adapted sevice)
+            final PluggableProviderService<NodeStepPlugin>
+                    remoteScriptAdaptedNodeStepPluginService =
+                    getRemoteScriptNodeStepPluginService().adapter(RemoteScriptNodeStepPluginAdapter_Ext.CONVERT_TO_NODE_STEP_PLUGIN);
+
+            //convert (adapted)NodeStepPlugin -> NodeStepExecutor
+            remoteScriptAdaptedNodeStepExecutorService =
+                    remoteScriptAdaptedNodeStepPluginService.adapter(
+                            new NodeStepPluginAdapter.ConvertToNodeStepExecutor(
+                                    ServiceNameConstants.RemoteScriptNodeStep,
+                                    false
+                            )
+                    );
+
+            //chain both (original)NodeStepPlugin and (adapted)RemoteScriptNodestepPlugin services as single service with
+            // NodeStepPlugin type
+            serviceList.add(remoteScriptAdaptedNodeStepPluginService);
+        }
+
+        //convert (original)NodeStepPlugin -> NodeStepExecutor
+        nodeStepPluginAdaptedNodeStepExecutorService =
+                getNodeStepPluginService().adapter(NodeStepPluginAdapter.CONVERT_TO_NODE_STEP_EXECUTOR);
+
+
+        chainedNodeStepPluginService = new ChainedNodeStepPluginService(
+                ServiceNameConstants.WorkflowNodeStep,
+                serviceList
+        );
+
+        //add list of services to the chain
+        this.serviceList.add(primaryService);
+        this.serviceList.add(dynamicRegistryService);
+        this.serviceList.add(nodeStepPluginAdaptedNodeStepExecutorService);
+        this.serviceList.add(remoteScriptAdaptedNodeStepExecutorService);
+    }
+
+    public ChainedNodeStepPluginService getChainedNodeStepPluginService() {
+        return chainedNodeStepPluginService;
+    }
+
+    static class ChainedNodeStepPluginService
+            extends ChainedProviderService<NodeStepPlugin>
+            implements PluggableProviderService<NodeStepPlugin>
+    {
+        private String name;
+        private List<ProviderService<NodeStepPlugin>> serviceList;
+
+        public ChainedNodeStepPluginService(
+                final String name,
+                final List<ProviderService<NodeStepPlugin>> serviceList
+        )
+        {
+            this.name = name;
+            this.serviceList = serviceList;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public List<ProviderService<NodeStepPlugin>> getServiceList() {
+            return serviceList;
+        }
+
+        @Override
+        public List<ProviderIdent> listDescribableProviders() {
+            return listProviders();
+        }
+
+        @Override
+        public List<Description> listDescriptions() {
+            return DescribableServiceUtil.listDescriptions(this);
+        }
     }
 
     @Override
     public boolean canLoadWithLoader(final ProviderLoader loader) {
-        return nodeStepPluginAdapterService.canLoadWithLoader(loader) ||
-               remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader);
+        return nodeStepPluginAdaptedNodeStepExecutorService.canLoadWithLoader(loader) ||
+               remoteScriptAdaptedNodeStepExecutorService.canLoadWithLoader(loader);
     }
 
     @Override
     public NodeStepExecutor loadWithLoader(final String providerName, final ProviderLoader loader)
         throws ProviderLoaderException
     {
-        if (nodeStepPluginAdapterService.canLoadWithLoader(loader)) {
-            return nodeStepPluginAdapterService.loadWithLoader(providerName, loader);
-        } else if (remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader)) {
-            return remoteScriptNodeStepPluginAdapterService.loadWithLoader(providerName, loader);
+        if (nodeStepPluginAdaptedNodeStepExecutorService.canLoadWithLoader(loader)) {
+            return nodeStepPluginAdaptedNodeStepExecutorService.loadWithLoader(providerName, loader);
+        } else if (remoteScriptAdaptedNodeStepExecutorService.canLoadWithLoader(loader)) {
+            return remoteScriptAdaptedNodeStepExecutorService.loadWithLoader(providerName, loader);
         } else {
             return null;
         }
@@ -120,10 +211,10 @@ public class NodeStepExecutionService
         final String providerName, final ProviderLoader loader
     ) throws ProviderLoaderException
     {
-        if (nodeStepPluginAdapterService.canLoadWithLoader(loader)) {
-            return nodeStepPluginAdapterService.loadCloseableWithLoader(providerName, loader);
-        } else if (remoteScriptNodeStepPluginAdapterService.canLoadWithLoader(loader)) {
-            return remoteScriptNodeStepPluginAdapterService.loadCloseableWithLoader(providerName, loader);
+        if (nodeStepPluginAdaptedNodeStepExecutorService.canLoadWithLoader(loader)) {
+            return nodeStepPluginAdaptedNodeStepExecutorService.loadCloseableWithLoader(providerName, loader);
+        } else if (remoteScriptAdaptedNodeStepExecutorService.canLoadWithLoader(loader)) {
+            return remoteScriptAdaptedNodeStepExecutorService.loadCloseableWithLoader(providerName, loader);
         } else {
             return null;
         }
@@ -176,5 +267,13 @@ public class NodeStepExecutionService
      */
     public ProviderRegistryService<NodeStepExecutor> getProviderRegistryService() {
         return dynamicRegistryService;
+    }
+
+    public NodeStepPluginService getNodeStepPluginService() {
+        return nodeStepPluginService;
+    }
+
+    public RemoteScriptNodeStepPluginService getRemoteScriptNodeStepPluginService() {
+        return remoteScriptNodeStepPluginService;
     }
 }

@@ -36,6 +36,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
+import com.dtolabs.rundeck.plugins.descriptions.PluginMeta;
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata;
 
 
 /**
@@ -44,7 +47,12 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = "stub", service = ServiceNameConstants.NodeExecutor)
-public class StubNodeExecutor implements NodeExecutor, Describable {
+@PluginDescription(title = "Stub",
+                   description = "Prints the command instead of executing it. (Useful for mocking processes.)")
+@PluginMetadata(key = "faicon", value = "circle")
+public class StubNodeExecutor
+        implements NodeExecutor
+{
     public static final String SERVICE_PROVIDER_NAME = "stub";
     private static final String STUB_EXEC_SUCCESS = "stub-exec-success";
     private static final String STUB_RESULT_CODE = "stub-result-code";
@@ -96,21 +104,4 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
         Intentional
     }
 
-    static final Description DESC = new AbstractBaseDescription() {
-        public String getName() {
-            return SERVICE_PROVIDER_NAME;
-        }
-
-        public String getTitle() {
-            return "Stub";
-        }
-
-        public String getDescription() {
-            return "Prints the command instead of executing it. (Useful for mocking processes.)";
-        }
-    };
-
-    public Description getDescription() {
-        return DESC;
-    }
 }

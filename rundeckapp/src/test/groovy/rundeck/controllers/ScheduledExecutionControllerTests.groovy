@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
 import rundeck.services.optionvalues.OptionValuesService
+import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
 
@@ -67,7 +68,7 @@ import javax.servlet.http.HttpServletResponse
 * $Id$
 */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution])
+@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec, ReferencedExecution, ScheduledExecutionStats])
 class ScheduledExecutionControllerTests  {
     /**
      * utility method to mock a class
@@ -2483,7 +2484,7 @@ class ScheduledExecutionControllerTests  {
         assertNull sec.response.redirectedUrl
         assertNotNull model
         assertNotNull(model.scheduledExecution)
-        assertEquals("", model.selectedNodes)
+        assertEquals([], model.selectedNodes)
         assertEquals('fwnode',model.localNodeName)
         assertEquals('name: nodea,nodeb',model.nodefilter)
         assertEquals(null,model.nodesetvariables)
@@ -2820,7 +2821,7 @@ class ScheduledExecutionControllerTests  {
         assertEquals(null,model.failedNodes)
         assertEquals(null,model.nodesetempty)
         assertEquals(testNodeSet.nodes,model.nodes)
-        assertEquals('nodea',model.selectedNodes)
+        assertEquals(['nodea'],model.selectedNodes)
         assertEquals([:],model.grouptags)
         assertEquals(null,model.selectedoptsmap)
         assertEquals(true,model.nodesSelectedByDefault)

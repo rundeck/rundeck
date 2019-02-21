@@ -13,19 +13,6 @@ const translationStrings = {
       close: 'Close'
     }
   },
-  ja: {
-    message: {
-      hello: 'こんにちは、世界',
-      sidebarNotificationText: 'Rundeck update available',
-      updateAvailable: 'Update Available',
-      updateHasBeenReleased: 'An update to Rundeck has been released.',
-      installedVersion: 'The installed version of Rundeck is',
-      currentVersion: 'The most recent release of Rundeck is',
-      getUpdate: 'Get Update',
-      dismissMessage: 'To dismiss this notification until the next release, please click here.',
-      close: 'Close'
-    }
-  },
   es_419: {
     message: {
       hello: 'Hola!',

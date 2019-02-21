@@ -20,6 +20,7 @@
     [
             type       : it.value.name,
             iconSrc    : stepplugin.pluginIconSrc(service: 'LogFilter', name: it.value.name),
+            providerMeta    : stepplugin.pluginProviderMeta(service: 'LogFilter', name: it.value.name),
             title      :
                     stepplugin.messageText(
                             service: 'LogFilter',
@@ -75,7 +76,16 @@
                         <!-- ko if: iconSrc -->
                         <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                         <!-- /ko -->
-                        <!-- ko if: !iconSrc() -->
+                        <!-- ko if: glyphicon -->
+                        <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                        <!-- /ko -->
+                        <!-- ko if: faicon -->
+                        <i data-bind="css: 'fas fa-'+faicon()"></i>
+                        <!-- /ko -->
+                        <!-- ko if: fabicon -->
+                        <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                        <!-- /ko -->
+                        <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                         <i class="rdicon icon-small plugin"></i>
                         <!-- /ko -->
                         <span data-bind="text: title"></span>

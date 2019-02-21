@@ -61,7 +61,7 @@ import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.events.ExecutionPrepareEvent
-import rundeck.services.framework.RundeckProjectConfigurable
+import org.rundeck.core.projects.ProjectConfigurable
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
 @Transactional
-class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable, EventPublisher {
+class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, ProjectConfigurable, EventPublisher {
     static transactional = true
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
@@ -925,6 +925,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 errmsg = 'Cannot delete {{Job ' + scheduledExecution.extid + '}} "' + scheduledExecution.jobName  +
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return [success:false,error:errmsg]
+            }
+            def stats= ScheduledExecutionStats.findAllBySe(scheduledExecution)
+            if(stats){
+                stats.each { st ->
+                    st.delete()
+                }
             }
             def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
             if(refExec){
@@ -2084,6 +2090,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         scheduledExecution.nodeFilterEditable = (params.nodeFilterEditable && 'false' != params.nodeFilterEditable)
+        scheduledExecution.excludeFilterUncheck = (params.excludeFilterUncheck && 'false' != params.excludeFilterUncheck)
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
@@ -3189,6 +3196,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
         if (!failed && scheduledExecution.save(flush:true)) {
+            def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
+            if (!stats) {
+                stats = new ScheduledExecutionStats(se: scheduledExecution)
+                        .save(flush:true)
+            }
             rescheduleJob(scheduledExecution)
             def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.CREATE, scheduledExecution)
             return [success: true, scheduledExecution: scheduledExecution,jobChangeEvent: event]

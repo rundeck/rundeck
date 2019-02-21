@@ -112,5 +112,10 @@ class ScriptOptionValuesTest extends Specification {
         boolean getDefaultMergeEnvVars() {
             return false
         }
+
+        @Override
+        Map<String, String> getProviderMeta() {
+            return null
+        }
     }
 }

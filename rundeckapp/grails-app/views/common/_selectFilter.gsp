@@ -34,7 +34,7 @@
         %{--<g:set var="lastproject" value="${filter.project}"/>--}%
         %{--<li>--}%
         %{--<g:link action="nodes" controller="framework" params="[filterName: filter.name, project: projectName]"--}%
-                %{--class="${isActive ? 'active' : ''} textbtn textbtn-primary nodefilterlink "--}%
+                %{--class="${isActive ? 'active' : ''} textbtn textbtn-primary ${className} "--}%
             %{--data-node-filter-name="${enc(attr:filter.name)}"--}%
             %{--data-node-filter="${enc(attr:filter.asFilter())}"--}%
                 %{--title="Apply filter: ${enc(attr:filter.name)}">--}%
@@ -44,7 +44,7 @@
     <!-- ko if: nodeSummary() -->
     <!-- ko foreach: nodeSummary().filters -->
     <li>
-        <a class=" nodefilterlink"
+        <a class=" ${className}"
         data-bind="text: name(), attr: { 'data-node-filter-name': name(), 'data-node-filter': filter() }, css: { active: name()==$root.filterName() }"
         ></a>
     </li>
@@ -58,7 +58,7 @@
     <g:each in="${filterset.sort({ a, b -> a.name.compareTo(b.name) })}" var="filter">
         <g:set var="isActive" value="${filter.name == filterName}"/>
         <g:link action="nodes" controller="framework" params="[filterName: filter.name,project:project?:params.project]"
-                class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip nodefilterlink "
+                class="${isActive ? 'active' : ''} textbtn textbtn-primary has_tooltip ${className} "
             data-node-filter-name="${enc(attr:filter.name)}"
             data-node-filter="${enc(attr:filter.asFilter())}"
             data-placement="bottom"

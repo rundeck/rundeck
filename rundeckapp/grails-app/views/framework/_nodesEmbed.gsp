@@ -41,19 +41,21 @@
             <a id="${enc(attr:nkey)}_key"
                 tabindex="0"
                 role="button"
-                  class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident textbtn-default textbtn-plain ${nodeStatusColorCss(node:node)}"
+                  class="${i%2==1?'alternateRow':''} node_entry ${nodedata.islocal?'server':''} node_ident textbtn-default textbtn-plain ${nodeIconStatusColorCss(node:node)}"
                   data-toggle="popover"
                   data-placement="bottom"
                   data-trigger="focus"
                   data-popover-content-ref="#${nkey+'_key_tooltip'}"
                   data-popover-template-class="popover-wide"
-                  style="${nodeStatusColorStyle(node:node)}"
+                  style="${nodeIconStatusColorStyle(node:node)}"
                   data-node="${enc(attr:node.nodename)}"
                   data-key="${enc(attr:nkey)}">
 
-                <g:nodeStatusColor node="${node}" icon="true"><g:nodeStatusIcon
-                        node="${node}"
-                ><i class="rdicon node ${runnable?'node-runnable':''} icon-small"></i></g:nodeStatusIcon></g:nodeStatusColor>&nbsp;${node.nodename}
+                <g:nodeIconStatusColor node="${node}" icon="true">
+                    <g:nodeIcon node="${node}">
+                        <i class="fas fa-hdd"></i>
+                    </g:nodeIcon>
+                </g:nodeIconStatusColor>&nbsp;${node.nodename}
             </a>
 
             <g:render template="nodeTooltipView" model="[node:node,key: nkey+'_key',islocal:nodedata.islocal,runnable:runnable, nodefilterLinkId: nodefilterLinkId?:'']"/>

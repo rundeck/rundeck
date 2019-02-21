@@ -36,6 +36,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.User
 import rundeck.services.ApiService
@@ -47,7 +48,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
 import rundeck.services.authorization.PoliciesValidation
-import rundeck.services.framework.RundeckProjectConfigurable
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -980,7 +981,7 @@ class FrameworkControllerSpec extends Specification {
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
 
-    static class TestConfigurableBean implements RundeckProjectConfigurable {
+    static class TestConfigurableBean implements ProjectConfigurable {
 
         Map<String, String> categories = [:]
 

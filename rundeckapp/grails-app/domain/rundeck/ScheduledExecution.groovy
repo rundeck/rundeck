@@ -337,6 +337,14 @@ class ScheduledExecution extends ExecutionContext {
             }else{
                 map.nodefilters.filter = asFilter()
             }
+
+            if(this.filterExclude){
+                map.nodefilters.filterExclude = this.filterExclude
+
+                if(this.excludeFilterUncheck){
+                    map.excludeFilterUncheck = true
+                }
+            }
         }
         if(notifications){
             map.notification=[:]
@@ -383,6 +391,7 @@ class ScheduledExecution extends ExecutionContext {
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
+        se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
         
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
@@ -517,6 +526,10 @@ class ScheduledExecution extends ExecutionContext {
                     }
                 }
                 se.filter = asFilter(map)
+            }
+
+            if(data.nodefilters.filterExclude){
+                se.filterExclude= data.nodefilters.filterExclude
             }
         }
         if(data.notification){
@@ -1052,8 +1065,10 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     long getAverageDuration() {
-        if (totalTime && execCount) {
-            return Math.floor(totalTime / execCount)
+        def stats = getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent && statsContent.totalTime && statsContent.execCount) {
+            return Math.floor(statsContent.totalTime / statsContent.execCount)
         }
         return 0;
     }
@@ -1104,5 +1119,46 @@ class ScheduledExecution extends ExecutionContext {
         }
     }
 
+    ScheduledExecutionStats getStats() {
+        def stats
+        if(this.id) {
+            stats = ScheduledExecutionStats.findBySe(this)
+            if (!stats) {
+                def content = [execCount   : this.execCount,
+                               totalTime   : this.totalTime,
+                               refExecCount: this.refExecCount]
+
+                stats = new ScheduledExecutionStats(se: this, contentMap: content).save()
+            }
+        }
+        stats
+    }
+
+    Long getRefExecCountStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.refExecCount) {
+            return statsContent.refExecCount
+        }
+        return 0;
+    }
+
+    Long getTotalTimeStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.totalTime) {
+            return statsContent.totalTime
+        }
+        return 0;
+    }
+
+    Long getExecCountStats(){
+        def stats = this.getStats()
+        def statsContent= stats?.getContentMap()
+        if (statsContent?.execCount) {
+            return statsContent.execCount
+        }
+        return 0;
+    }
 }
 

@@ -382,12 +382,12 @@ public class TestDefaultFileCopierUtil extends TestCase {
         }
 
         @Override
-        public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
+        public NodeExecutorService getNodeExecutorService()  {
             return null;
         }
 
         @Override
-        public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+        public NodeStepExecutionService getNodeStepExecutorService()  {
             return null;
         }
 

@@ -23,8 +23,7 @@
             role="button"
       -->
         <a
-           style="display: inline-block; cursor:pointer;"
-           class="col-sm-4 node_ident"
+           class="col-sm-3 node_ident embedded_node"
            data-toggle="popover"
            data-placement="auto"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
@@ -44,10 +43,19 @@
                 <!-- /ko -->
                 <!-- /ko -->
                 <!-- ko if: !attributes['ui:icon:name'] -->
-                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <i class="fas fa-hdd"></i>
                 <!-- /ko -->
             </span>
-            <span data-bind="text: nodename"></span>
+
+            <span data-bind="text: nodename, css: {'node_unselected':unselected}"></span>
+
+            <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes), attr: {title: attributes['ui:status:text']}">
+                <!-- ko if: attributes['ui:status:icon'] -->
+                <!-- ko with: attributes['ui:status:icon']() -->
+                <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                <!-- /ko -->
+                <!-- /ko -->
+            </span>
         </a>
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
@@ -56,7 +64,7 @@
              data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
 
             <span>
-                <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                <i class="fas fa-hdd"></i>
                 <span data-bind="text: nodename"></span>
             </span>
 
@@ -68,8 +76,8 @@
 
             <span class="nodedesc"></span>
 
-            <div class="nodedetail">
-                <g:render template="/framework/nodeDetailsSimpleKO"/>
+            <div class="nodedetail" style="overflow-x: scroll;">
+                <g:render template="/framework/nodeDetailsSimpleKO" model="[useNamespace:true]"/>
             </div>
         </div>
 

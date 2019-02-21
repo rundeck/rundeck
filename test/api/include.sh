@@ -84,6 +84,13 @@ shift
 APIURL="${RDURL}/api/${API_VERSION}"
 CUR_APIURL="${RDURL}/api/${API_CURRENT_VERSION}"
 
+# Extract the API base in case Rundeck is running under a path ie Tomcat
+# http://127.0.0.1:8080/rundeck -> /rundeck
+URL_SLASH="${RDURL}/"
+API_BASE=${URL_SLASH#*//*/}
+if [[ -n "${API_BASE}" ]] ; then
+    API_BASE="/${API_BASE%/}"
+fi
 
 api_request(){
     local ENDPOINT=$1
@@ -139,7 +146,7 @@ api_waitfor_execution(){
     local status='running'
 
     local rsleep=3
-    local rmax=10
+    local rmax=${3:-10}
     local rc=0
     
     while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do

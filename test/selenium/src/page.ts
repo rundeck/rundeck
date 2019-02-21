@@ -27,7 +27,7 @@ export abstract class Page {
     async freeze() {
         await Promise.all([
             this.hideSpinners(),
-            this.hideVersionBox(),
+            this.hideSidebarBottom(),
             this.disableTransitions(),
             this.hideServerUuid(),
             this.hideTests(),
@@ -36,8 +36,8 @@ export abstract class Page {
     }
 
     /** Hides version box for screenshots */
-    async hideVersionBox() {
-        const versionBox = await this.ctx.driver.findElement(By.id('snapshot-version'))
+    async hideSidebarBottom() {
+        const versionBox = await this.ctx.driver.findElement(By.id('sidebar-bottom'))
         await this.ctx.driver.executeScript((element: HTMLElement) => {
             element.style.setProperty('display', 'none')
         }, versionBox)

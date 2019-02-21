@@ -171,6 +171,10 @@ function NodeSet(data) {
     self.glyphiconCss=function(name){
         if(name.match(/^glyphicon-[a-z-]+$/)){
             return 'glyphicon '+name;
+        }else if(name.match(/^fa-[a-z-]+$/)){
+            return 'fas '+name;
+        }else if(name.match(/^fab-[a-z-]+$/)){
+            return 'fab fa-'+name.substring(4);
         }
         return '';
     };
@@ -180,6 +184,10 @@ function NodeSet(data) {
             var found=attributes['ui:badges']().split(/,\s*/g);
             for(var i=0;i<found.length;i++){
                 if(found[i].match(/^glyphicon-[a-z-]+$/)){
+                    badges.push(found[i]);
+                }else if(found[i].match(/^fa-[a-z-]+$/)){
+                    badges.push(found[i]);
+                }else if(found[i].match(/^fab-[a-z-]+$/)){
                     badges.push(found[i]);
                 }
             }
@@ -199,9 +207,8 @@ function NodeSet(data) {
     self.isStyleBg=function(str){
         return str!=null && typeof(str)=='string' && str.match(/^#[0-9a-fA-F]{3,6}$/)|| CSSColors.indexOf(str)>=0;
     };
-    self.iconFgCss=function(attrs){
-
-        var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
+    self.iconFgCss=function(attrs,attrName){
+        var uiIconColor = attrs[attrName]?attrs[attrName]():null;
         var uiColor = attrs['ui:color']?attrs['ui:color']():null;
         if(self.isAnsiFg(uiIconColor)){
             return uiIconColor;
@@ -210,7 +217,7 @@ function NodeSet(data) {
         }
         return null;
     };
-    self.iconBgCss=function(attrs){
+    self.iconBgCss=function(attrs,attrName){
         var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
         var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
         if(self.isAnsiBg(uiIconBgcolor)){
@@ -220,13 +227,25 @@ function NodeSet(data) {
         }
         return null;
     };
-    self.iconCss=function(attrs){
+    self.statusIconCss=function(attrs){
         var classnames=[];
-        var fgColor= self.iconFgCss(attrs);
+        var fgColor= self.iconFgCss(attrs,'ui:status:color');
         if(fgColor){
             classnames.push(fgColor);
         }
-        var bgColor = self.iconBgCss(attrs);
+        var bgColor = self.iconBgCss(attrs,'ui:status:bgcolor');
+        if(bgColor){
+            classnames.push(bgColor);
+        }
+        return classnames.join(' ');
+    };
+    self.iconCss=function(attrs){
+        var classnames=[];
+        var fgColor= self.iconFgCss(attrs,'ui:icon:color');
+        if(fgColor){
+            classnames.push(fgColor);
+        }
+        var bgColor = self.iconBgCss(attrs,'ui:icon:bgcolor');
         if(bgColor){
             classnames.push(bgColor);
         }
@@ -259,9 +278,8 @@ function NodeSet(data) {
         return classnames.join(' ');
     };
     self.iconStyle=function(attrs){
-
         var styles={};
-        if(!self.iconFgCss(attrs)) {
+        if(!self.iconFgCss(attrs,'ui:icon:color')) {
             var uiIconColor = attrs['ui:icon:color']?attrs['ui:icon:color']():null;
             var uiColor = attrs['ui:color']?attrs['ui:color']():null;
             if (self.isStyleFg(uiIconColor)){
@@ -270,8 +288,30 @@ function NodeSet(data) {
                 styles['color']=uiColor;
             }
         }
-        if(!self.iconBgCss(attrs)) {
+        if(!self.iconBgCss(attrs,'ui:icon:bgcolor')) {
             var uiIconBgcolor = attrs['ui:icon:bgcolor']?attrs['ui:icon:bgcolor']():null;
+            var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
+            if (self.isStyleBg(uiIconBgcolor)){
+                styles['background-color']=uiIconBgcolor;
+            }else if(self.isStyleBg(uiBgcolor)){
+                styles['background-color']=uiBgcolor;
+            }
+        }
+        return styles;
+    };
+    self.statusIconStyle=function(attrs){
+        var styles={};
+        if(!self.iconFgCss(attrs,'ui:status:color')) {
+            var uiIconColor = attrs['ui:status:color']?attrs['ui:status:color']():null;
+            var uiColor = attrs['ui:color']?attrs['ui:color']():null;
+            if (self.isStyleFg(uiIconColor)){
+                styles['color']=uiIconColor;
+            }else if(self.isStyleFg(uiColor)){
+                styles['color']=uiColor;
+            }
+        }
+        if(!self.iconBgCss(attrs,'ui:status:bgcolor')) {
+            var uiIconBgcolor = attrs['ui:status:bgcolor']?attrs['ui:status:bgcolor']():null;
             var uiBgcolor = attrs['ui:bgcolor']?attrs['ui:bgcolor']():null;
             if (self.isStyleBg(uiIconBgcolor)){
                 styles['background-color']=uiIconBgcolor;
@@ -402,7 +442,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.baseSaveJobUrl = baseSaveJobUrl;
     self.baseNodesPageUrl = baseNodesPageUrl;
     self.filterName = ko.observable(data.filterName);
+    self.filterExcludeName = ko.observable(data.filterExcludeName);
     self.filter = ko.observable(data.filter);
+    self.filterExclude = ko.observable(data.filterExclude);
     self.filterAll = ko.observable(data.filterAll);
     self.nodeExcludePrecedence = ko.observable(null== data.nodeExcludePrecedence || data.nodeExcludePrecedence?'true':'false');
     self.nodefilterLinkId=data.nodefilterLinkId;
@@ -423,6 +465,8 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
     self.loaded=ko.observable(false);
+    self.excludeFilterUncheck = ko.observable(data.excludeFilterUncheck?'true':'false');
+
     /**
      *
      * can be subscribed to for browser history updating, will be changed to 'true'
@@ -471,8 +515,14 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.isFilterNameAll=ko.pureComputed(function(){
         return self.filterName()==NODE_FILTER_ALL;
     });
+    self.isFilterExcludeNameAll=ko.pureComputed(function(){
+        return self.filterExcludeName()==NODE_FILTER_ALL;
+    });
     self.filterNameDisplay=ko.pureComputed(function(){
        return self.isFilterNameAll()?'All Nodes':self.filterName();
+    });
+    self.filterExcludeNameDisplay=ko.pureComputed(function(){
+        return self.isFilterExcludeNameAll()?'All Nodes':self.filterExcludeName();
     });
     self.canSaveFilter=ko.pureComputed(function(){
        return !self.filterName() && self.filterWithoutAll();
@@ -544,6 +594,18 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         },
         owner: this
     });
+    self.filterExcludeWithoutAll = ko.computed({
+        read: function () {
+            if (self.filterExclude() == NODE_FILTER_ALL && self.hideAll()) {
+                return '';
+            }
+            return self.filterExclude();
+        },
+        write: function (value) {
+            self.filterExclude(value);
+        },
+        owner: this
+    });
     self.filterIsSet=ko.pureComputed(function(){
         return !!self.filterWithoutAll() || !!self.filterName();
     });
@@ -566,7 +628,29 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             self.filterName(null);
         }
     });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue == '' && self.hideAll()) {
+            self.filterAll(true);
+        }else if(newValue==NODE_FILTER_ALL){
+            self.filterAll(true);
+        }
+    });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue == '' && self.emptyMode() == 'blank') {
+            self.clear();
+        }
+    });
+    self.filterExclude.subscribe(function (newValue) {
+        if (newValue === NODE_FILTER_ALL) {
+            self.filterExcludeName(NODE_FILTER_ALL);
+        }else if (newValue != '' && self.filterExcludeName()) {
+            self.filterExcludeName(null);
+        }
+    });
     self.nodeExcludePrecedence.subscribe(function(newValue){
+        self.updateMatchedNodes();
+    });
+    self.excludeFilterUncheck.subscribe(function(newValue){
         self.updateMatchedNodes();
     });
     self.loading.subscribe(function(newValue){
@@ -736,6 +820,43 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         self.clear();
         self.updateMatchedNodes();
     };
+    self.selectNodeFilterExcludeLink=function(link,isappend){
+
+        var oldfilter = self.filterExclude();
+        var filterName = jQuery(link).data('node-filter-name');
+        var filterString = jQuery(link).data('node-filter');
+        var filterTag = jQuery(link).data('node-tag');
+        if(filterString && filterString.indexOf("&")>=0){
+            filterString = html_unescape(filterString);
+        }
+        var filterAll = jQuery(link).data('node-filter-all');
+        var v=oldfilter?oldfilter.indexOf('tags: '):-1;
+        if(isappend && filterTag && v>=0){
+            var first=oldfilter.substring(0, v);
+            var rest=oldfilter.substring(v + 6);
+            var last='';
+            while(rest.indexOf(" ")==0){
+                rest = rest.substring(1);
+            }
+            v = rest.indexOf(" ");
+            if(v>0){
+                last = rest.substring(v);
+                rest = rest.substring(0,v);
+            }
+            filterString = first + 'tags: ' + rest + '+' + filterTag + last ;
+        }else if (filterString && !filterName && oldfilter && !filterAll && oldfilter != NODE_FILTER_ALL) {
+            filterString = oldfilter + ' ' + filterString;
+        } else if (filterAll) {
+            filterString = NODE_FILTER_ALL;
+        }
+
+        self.filterAll(filterAll);
+        self.filterExclude(filterString);
+        self.filterExcludeName(filterName);
+        self.clear();
+        self.updateMatchedNodes();
+
+    };
     self.updateNodesNextPage=function(){
         if(!self.page()){
             self.page(0);
@@ -800,9 +921,11 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             return;
         }
         var filterdata = self.filterName() ? {filterName: self.filterName()} : self.filter()?{filter: self.filter()}:{};
+        var filterExcludedata = self.filterExcludeName() ? {filterExcludeName: self.filterExcludeName()} : self.filterExclude()?{filterExclude: self.filterExclude()}:{};
+        var excludeFilterUncheck =  self.excludeFilterUncheck()
         var page = self.page();
         var view = self.view() ? self.view() : 'table';
-        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId};
+        var basedata = {view: view, declarenone: true, fullresults: true, expanddetail: true, inlinepaging: false, nodefilterLinkId: self.nodefilterLinkId, excludeFilterUncheck: self.excludeFilterUncheck()};
         if(self.paging()){
             basedata.page = page;
             basedata.max = self.pagingMax();
@@ -814,8 +937,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
         if(self.maxShown()){
             basedata.maxShown=self.maxShown();
         }
-
-        var params = jQuery.extend(basedata, filterdata);
+        var params = jQuery.extend(basedata, filterdata, filterExcludedata);
         if(self.emptyMode()=='localnode' && !self.filter()){
             params.localNodeOnly = 'true';
         }else if(self.emptyMode()=='blank' && !self.filter()){
@@ -830,7 +952,6 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             params.nodeExcludePrecedence = "true";
         }
         self.loading(true);
-
         var requrl=_genUrl(appLinks.frameworkNodesQueryAjax, params);
         jQuery.ajax({
             type:'GET',

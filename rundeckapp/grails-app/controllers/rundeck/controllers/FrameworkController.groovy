@@ -333,10 +333,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def total=0
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
+        NodeSet nsetUnselected = ExecutionService.filtersExcludeAsNodeSet(query)
         def projects=[]
         def filterErrors=[:]
         def project = framework.getFrameworkProjectMgr().getFrameworkProject(query.project)
         def INodeSet nodeset
+        def INodeSet unselectedNodeSet
 
         long mark=System.currentTimeMillis()
         INodeSet nodes1 = project.getNodeSet()
@@ -362,6 +364,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //match only local node if filters are blank
             nodeset = new NodeSetImpl()
 //            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
+        }
+        if (nsetUnselected && !(nsetUnselected.include?.blank && nsetUnselected.exclude?.blank)){
+            try {
+                unselectedNodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nsetUnselected, nodes1)
+            } catch (PatternSyntaxException e) {
+                filterErrors['filter']=e.getMessage()
+                unselectedNodeSet=new NodeSetImpl()
+            }
         }
 //            nodes = nodes.sort { INodeEntry a, INodeEntry b -> return a.nodename.compareTo(b.nodename) }
         //filter nodes by read authorization
@@ -410,7 +420,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def nlist=new ArrayList<INodeEntry>(nodes)
         for(int i=first;i < last && i<nodes.size();i++){
             INodeEntry nd  = nlist[i]
-            allnodes[nd.nodename]=[node:nd,project:project.name,islocal:nd.nodename==framework.getFrameworkNodeName()]
+            def unSelected = unselectedNodeSet?.getNodes().findAll{it.nodename == nd.nodename}
+
+            allnodes[nd.nodename]=[node:nd,project:project.name,islocal:nd.nodename==framework.getFrameworkNodeName(), unselected: unSelected?true:false]
             if(params.requireRunAuth == 'true'  || runnodes.getNode(nd.nodename)){
                 noderunauthmap[nd.nodename]=true
             }
@@ -547,6 +559,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
         def User u = userService.findOrCreateUser(session.user)
         def usedFilter = null
+        def usedFilterExclude = null
         if (!params.filterName && u && query.nodeFilterIsEmpty() && params.formInput != 'true') {
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
             if (filterpref['nodes']) {
@@ -559,9 +572,21 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 NodeFilter filter = NodeFilter.findByNameAndUser(params.filterName, u)
                 if (filter) {
                     def query2 = filter.createExtNodeFilters()
+                    query2.excludeFilterUncheck = query.excludeFilterUncheck
                     //XXX: node query doesn't use pagination, as it is not an actual DB query
                     query = query2
                     usedFilter = params.filterName
+                }
+            }
+        }
+        if (params.filterExcludeName) {
+            if (u) {
+                NodeFilter filter = NodeFilter.findByNameAndUser(params.filterExcludeName, u)
+                if (filter) {
+                    def queryExclude = filter.createExtNodeFilters()
+                    query.filterExclude = queryExclude.filter
+                    query.filterExcludeName = null
+                    usedFilterExclude = params.filterExcludeName
                 }
             }
         }
@@ -583,6 +608,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         result.colkeys = filterSummaryKeys(query)
         if (usedFilter) {
             result['filterName'] = usedFilter
+        }
+        if (usedFilterExclude) {
+            result['filterExcludeName'] = usedFilterExclude
         }
         if (!result.nodesvalid) {
             request.error = "Error parsing file \"${result.nodesfile}\": " + result.nodeserror ? result.nodeserror*.message?.
@@ -628,7 +656,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                     islocal:entry.value.islocal,
                                     tags:entry.value.node.tags,
                                     attributes:entry.value.node.attributes,
-                                    authrun:result.nodeauthrun[entry.key]?true:false
+                                    authrun:result.nodeauthrun[entry.key]?true:false,
+                                    unselected:entry.value.unselected
                             ]
                         }
                 ]) as JSON)
