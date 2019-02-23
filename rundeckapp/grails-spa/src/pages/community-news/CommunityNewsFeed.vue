@@ -18,16 +18,20 @@
         @click="openBlog(blog.absolute_url)"
       >
         <div class="row">
-          <div class="col-xs-12">
-            <h6 class="pub-date">{{blog.publish_date | moment("MMMM do YYYY hh:mm")}}</h6>
+          <div class="col-xs-12 col-sm-9">
+            <div style="padding-bottom:.5em;">
+              <h6
+                class="pub-date"
+                style="padding-bottom:.6em; color: #989898;"
+              >{{blog.publish_date | moment("MMMM do YYYY hh:mm")}}</h6>
+              <h3 class="blog-title">{{blog.title}}</h3>
+            </div>
+            <div>{{blog.meta_description}}</div>
+
+            <!-- <div v-html="blog.post_summary" class="blog-summary"></div> -->
           </div>
           <div class="col-xs-12 col-sm-3">
             <img :src="blog.featured_image" alt class="img-responsive">
-          </div>
-          <div class="col-xs-12 col-sm-9">
-            <h3 class="blog-title">{{blog.title}}</h3>
-            <h6 class="blog-subtitle">{{blog.meta_description}}</h6>
-            <div v-html="blog.post_summary"></div>
           </div>
         </div>
       </article>
@@ -109,7 +113,7 @@ export default {
   h4,
   h5,
   h6 {
-    margin: 0;
+    margin: 0 !important;
     padding: 0;
   }
   .pub-date {
@@ -118,6 +122,8 @@ export default {
   .blog-title {
     line-height: 1em;
     margin-bottom: 0.2em;
+    padding-left: 0.4em;
+    border-left: 3px solid red;
   }
   .blog-subtitle {
     // font-size: 1.3em;

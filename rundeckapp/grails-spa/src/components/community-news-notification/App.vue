@@ -1,7 +1,7 @@
 <template>
   <div>
     <i class="far fa-newspaper" style="margin-right:5px;"></i>
-    {{ $t("message.communityNews")}}
+    <span>{{ $t("message.communityNews")}}</span>
     <span v-if="count > 0" class="newNotice">&nbsp;</span>
   </div>
 </template>
@@ -83,6 +83,16 @@ export default {
   background-color: #737373;
   margin-left: 0.4em;
   line-height: 1em;
+}
+</style>
+<style lang="scss">
+.sidebar-mini {
+  #community-news-notification {
+    width: 79px;
+    span {
+      display: none;
+    }
+  }
 }
 </style>
 

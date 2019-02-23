@@ -188,3 +188,11 @@ function returnVersionInformation(versionString) {
 }
 </style>
 
+<style lang="scss">
+.sidebar-mini #sidebar-bottom .version-notification-container {
+  width: 79px;
+  .sidebar-footer-line-item span {
+    display: none;
+  }
+}
+</style>
