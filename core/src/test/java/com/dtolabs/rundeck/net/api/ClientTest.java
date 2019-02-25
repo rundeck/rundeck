@@ -53,7 +53,7 @@ public class ClientTest {
         Client client = new Client("https://test.com", "admin");
         client.setApi(mock);
         File file = Mockito.mock(File.class);
-        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false);
+        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false, false);
         assertNotNull(resp);
         assertEquals(true,resp.getResultSuccess());
     }
@@ -64,7 +64,7 @@ public class ClientTest {
         Client client = new Client("https://test.com", "admin");
         client.setApi(mock);
         File file = Mockito.mock(File.class);
-        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false);
+        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false, false);
         assertNotNull(resp);
         assertEquals(false,resp.getResultSuccess());
     }
@@ -76,7 +76,7 @@ public class ClientTest {
         Client client = new Client("https://test.com", "admin");
         client.setApi(mock);
         File file = Mockito.mock(File.class);
-        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false);
+        ProjectImportStatus resp = client.importProjectArchive("",file,true,true,false, false,false);
     }
 }
 
@@ -98,7 +98,7 @@ class MockRundeckApi implements RundeckApi{
 
     public Call<ProjectImportStatus> importProjectArchive(String project,String jobUuidOption,
                                                           Boolean importExecutions,Boolean importConfig,
-                                                          Boolean importACL,RequestBody body
+                                                          Boolean importACL,Boolean importScm, RequestBody body
     ){
         ProjectImportStatus resp = new ProjectImportStatus();
         resp.successful = this.success;
@@ -109,9 +109,9 @@ class MockRundeckApi implements RundeckApi{
         if(fail){
             retrofit2.Response response = retrofit2.Response.error(401, ResponseBody.create(MediaType.parse("application/json") ,"{\"result\": {\"error\": {\"message\": \"error\"}}}"));
             return delegate.returning(Calls.response(response)).importProjectArchive(project,jobUuidOption,importExecutions,
-                    importConfig,importACL,body);
+                    importConfig,importACL,importScm,body);
         }
         return delegate.returningResponse(resp).importProjectArchive(project,jobUuidOption,importExecutions,
-                importConfig,importACL,body);
+                importConfig,importACL,importScm,body);
     }
 }

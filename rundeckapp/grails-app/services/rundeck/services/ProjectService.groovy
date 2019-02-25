@@ -616,7 +616,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         File file = exportProjectToFile(project,framework,listener,aclReadAuth,options, scmConfigure)
         Client client = new Client(instanceUrl,apiToken)
         ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
-                    options.configs,options.acls)
+                    options.configs,options.acls, options.scm)
         ImportResponse response = new ImportResponse(file:file,errors: ret.errors, ok:ret.getResultSuccess(),
                 executionErrors:ret.executionErrors, aclErrors:ret.aclErrors)
         listener?.done()
