@@ -153,7 +153,7 @@ public class Validator {
                     if (null != validator) {
                         try {
                             if (!validator.isValid(value)) {
-                                report.errors.put(key, "Invalid value");
+                                report.errors.put(key, "Invalid value: " + value);
                             }
                         } catch (ValidationException e) {
                             report.errors.put(key, "Invalid value: " + e.getMessage());

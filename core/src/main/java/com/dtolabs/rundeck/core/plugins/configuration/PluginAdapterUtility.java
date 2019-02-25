@@ -545,40 +545,51 @@ public class PluginAdapterUtility {
             }
             resolvedValue = boolvalue;
         } else if (type == Property.Type.Options) {
+            final List<String> splitList;
             if (value instanceof String) {
                 String valstring = (String) value;
-                Set<String> resolvedValueSet=null;
-                //not a String field
-                if (field.getType().isAssignableFrom(Set.class)) {
-                    HashSet<String> strings = new HashSet<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = strings;
-                    resolvedValue = strings;
-                } else if (field.getType().isAssignableFrom(List.class)) {
-                    ArrayList<String> strings = new ArrayList<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = new HashSet<>(strings);
-                    resolvedValue = strings;
-                } else if (field.getType() == String[].class) {
-                    ArrayList<String> strings = new ArrayList<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = new HashSet<>(strings);
-                    resolvedValue = strings.toArray(new String[strings.size()]);
-                } else if (field.getType() == String.class) {
-                    resolvedValueSet = new HashSet<>();
-                    resolvedValueSet.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValue = value;
-                } else {
-                    return false;
-                }
-                if (!property.getSelectValues().containsAll(resolvedValueSet)) {
-                    throw new RuntimeException(
-                            "Some options values were not allowed for property " + property.getName() + ": " + resolvedValue);
-                }
+                splitList = Arrays.asList(valstring.split(", *"));
+            } else if (value instanceof List) {
+                splitList = (List<String>) value;
+            } else if (value instanceof Set) {
+                splitList = new ArrayList<>((Set) value);
+            } else if (value.getClass() == String[].class) {
+                splitList = Arrays.asList((String[]) value);
             } else {
-                //XXX
                 return false;
             }
+            Set<String> resolvedValueSet = null;
+            //not a String field
+            if (field.getType().isAssignableFrom(Set.class)) {
+                HashSet<String> strings = new HashSet<>();
+                strings.addAll(splitList);
+                resolvedValueSet = strings;
+                resolvedValue = strings;
+            } else if (field.getType().isAssignableFrom(List.class)) {
+                ArrayList<String> strings = new ArrayList<>();
+                strings.addAll(splitList);
+                resolvedValueSet = new HashSet<>(strings);
+                resolvedValue = strings;
+            } else if (field.getType() == String[].class) {
+                ArrayList<String> strings = new ArrayList<>();
+                strings.addAll(splitList);
+                resolvedValueSet = new HashSet<>(strings);
+                resolvedValue = strings.toArray(new String[strings.size()]);
+            } else if (field.getType() == String.class) {
+                resolvedValueSet = new HashSet<>();
+                resolvedValueSet.addAll(splitList);
+                resolvedValue = value;
+            } else {
+                return false;
+            }
+            if (property.getSelectValues() != null && !property.getSelectValues().containsAll(resolvedValueSet)) {
+                throw new RuntimeException(String.format(
+                        "Some options values were not allowed for property %s: %s",
+                        property.getName(),
+                        resolvedValue
+                ));
+            }
+
         } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
             if (value instanceof String) {
                 resolvedValue = value;
