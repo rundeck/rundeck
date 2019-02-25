@@ -77,6 +77,9 @@ class PluginAdapterUtilitySpec extends Specification {
         @SelectLabels(values = ["A", "B", "C"])
         String testSelect10;
 
+        @PluginProperty(description = 'String List multioption')
+        List<String> testSelect11;
+
         @PluginProperty
         Boolean testbool1;
         @PluginProperty
@@ -105,7 +108,7 @@ class PluginAdapterUtilitySpec extends Specification {
     }
 
 
-    def "configure options value string"() {
+    def "configure options field string"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -124,7 +127,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b,c' | _
     }
 
-    def "configure options value set"() {
+    def "configure options field set"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -144,7 +147,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,c'   | ['a', 'c']
     }
 
-    def "configure options value array"() {
+    def "configure options field array"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -163,7 +166,8 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b,c' | ['a', 'b', 'c']
         'a,c'   | ['a', 'c']
     }
-    def "configure options value list"() {
+
+    def "configure options field list"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -181,6 +185,66 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b'   | ['a', 'b']
         'a,b,c' | ['a', 'b', 'c']
         'a,c'   | ['a', 'c']
+    }
+
+    def "configure options value list"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", value);
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value           | expect
+            ['a']           | ['a']
+            ['a', 'b']      | ['a', 'b']
+            ['a', 'b', 'c'] | ['a', 'b', 'c']
+            ['a', 'c']      | ['a', 'c']
+    }
+
+    def "configure options value array"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", value);
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value                                  | expect
+            ['a'].toArray(new String[1])           | ['a']
+            ['a', 'b'].toArray(new String[2])      | ['a', 'b']
+            ['a', 'b', 'c'].toArray(new String[3]) | ['a', 'b', 'c']
+            ['a', 'c'].toArray(new String[2])      | ['a', 'c']
+    }
+
+    def "configure options value set"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", new HashSet<String>(value));
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value           | expect
+            ['a']           | ['a']
+            ['a', 'b']      | ['a', 'b']
+            ['a', 'b', 'c'] | ['a', 'b', 'c']
+            ['a', 'c']      | ['a', 'c']
     }
 
     def "build String select property with value labels"() {
