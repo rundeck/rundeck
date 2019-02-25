@@ -1720,7 +1720,6 @@ ansi-bg-default'''))
         }else{
             dbg+=' zilch found: '+found+"/"+bgcol + " "+colors
         }
-        out<<dbg
         out<<body()
     }
     def nodeIconStatusColorCss ={ attrs, body->
