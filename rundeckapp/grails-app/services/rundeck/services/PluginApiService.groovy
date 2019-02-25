@@ -274,8 +274,19 @@ class PluginApiService {
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : prop.renderingOptions
+            options               : asStringMap(prop)
         ]
+    }
+
+    public Map<String, String> asStringMap(Property prop) {
+        if (!prop.renderingOptions) {
+            return null
+        }
+        Map<String, String> opts = [:]
+        prop.renderingOptions.each { String k, Object v ->
+            opts[k]=v.toString()
+        }
+        opts
     }
 
     def listInstalledPluginIds() {
