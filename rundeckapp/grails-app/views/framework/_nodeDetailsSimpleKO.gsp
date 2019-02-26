@@ -1,15 +1,4 @@
-<div style="margin-top:10px">
-  <table class="table table-condensed table-embed node-details-simple">
-      <tbody>
-      <tr data-bind="if: attributes.description">
-          <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
-
-          </td>
-      </tr>
-      <tr data-bind="if: !authrun">
-          <td class="value text-primary" colspan="4">
-              <i class="glyphicon glyphicon-ban-circle"></i>
-              %{--
+%{--
     - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
     -
     - Licensed under the Apache License, Version 2.0 (the "License");
@@ -24,8 +13,18 @@
     - See the License for the specific language governing permissions and
     - limitations under the License.
     --}%
+<div style="margin-top:10px">
+  <table class="table table-condensed table-embed node-details-simple">
+      <tbody>
+      <tr data-bind="if: attributes.description">
+          <td class="value text-primary" colspan="4" data-bind="text: attributes.description">
 
-  <g:message code="node.access.not-runnable.message" />
+          </td>
+      </tr>
+      <tr data-bind="if: !authrun">
+          <td class="value text-primary" colspan="4">
+              <i class="glyphicon glyphicon-ban-circle"></i>
+            <g:message code="node.access.not-runnable.message" />
           </td>
       </tr>
       <tr data-bind="if: attributes['ui:status:icon'] || attributes['ui:status:text']">
