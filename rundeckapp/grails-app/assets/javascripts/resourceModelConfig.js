@@ -127,7 +127,6 @@ error: function(req) {
     }
 },
 renderConfig: function (elem, type, prefix, index, revert) {
-    this.hidePicker();
     var params = Form.serialize(elem);
     if (revert) {
         params += "&revert=true";
@@ -192,7 +191,6 @@ editConfig: function (elem, type, prefix, index) {
 
     },
 cancelConfig: function (elem, type, prefix, index) {
-    this.hidePicker();
     var li;
     if (elem.tagName == 'li') {
         li = elem;
@@ -209,7 +207,6 @@ cancelConfig: function (elem, type, prefix, index) {
     }
 },
 addConfig: function(type) {
-    this.hidePickerAll();
     var num = ++this.configCount;
     var prefix = this.prefixKey+'.' + num + '.';
     var wrapper = new Element("li");
@@ -244,27 +241,8 @@ checkForm: function () {
     }
     return true;
 },
-showPicker: function () {
-    $('sourcebutton').hide();
-    $('sourcepicker').show();
-},
-hidePicker: function () {
-    $('sourcebutton').show();
-    $('sourcepicker').hide();
-},
-hidePickerAll: function() {
-    $$('.sourcechrome').each(Element.hide);
-},
 pageInit:function () {
     var self = this;
-    Event.observe($('sourcebutton'), 'click', function(e) {
-        Event.stop(e);
-        self.showPicker();
-    });
-    Event.observe($('sourcecancel'), 'click', function(e) {
-        Event.stop(e);
-        self.hidePicker();
-    });
     //load widgets for any in-page configs
     // widgets must be indexed from 1.  PasswordFieldsService depends on this ordering.
     var n = 0;
