@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
@@ -40,6 +41,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
@@ -1358,6 +1360,74 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return redirect(action: 'projectNodeSources', params: [project: project])
     }
 
+    def projectNodePlugins() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+    }
+
+    def projectNodePluginsAjax() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+        final fmk = frameworkService.getRundeckFramework()
+        final enhancerDescs = pluginService.listPluginDescriptions(
+                NodeEnhancerPlugin,
+                pluginService.createPluggableService(
+                        NodeEnhancerPlugin
+                )
+        )
+
+        def framework = frameworkService.getRundeckFramework()
+        def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
+        def plugins = ProjectNodeSupport.listPluginConfigurations(
+                rdprojectconfig.projectProperties,
+                "nodes.plugin",
+                "NodeEnhancer"
+        )
+        //TODO: password fields
+        // Reset Password Fields in Session
+//        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+
+        respond(
+                formats: ['json'],
+                [
+                        project            : project,
+                        nodeEnhancerPlugins: plugins.collect { PluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration]
+                        },
+                ]
+        )
+    }
     def projectNodeSources() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
