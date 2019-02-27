@@ -35,6 +35,7 @@ const webpackConfig = {
     'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/repository': './src/pages/repository/main.js',
+    'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
   },
   output: {
     path: assetsRoot,
