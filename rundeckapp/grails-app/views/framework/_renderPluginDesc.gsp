@@ -11,7 +11,7 @@
   <g:if test="${showNodeIcon}">
       <i class="rdicon icon-small node"></i>
   </g:if>
-  <span class=" text-info">
+  <span class=" text-info ${titleCss?:''}">
     <g:if test="${!hideTitle}">
       <stepplugin:message service="${serviceName}"
                           name="${description.name}"
