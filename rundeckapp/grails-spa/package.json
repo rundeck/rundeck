@@ -18,7 +18,8 @@
     "vue-i18n": "^8.8.0",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "^7.3.0",
-    "vue2-filters": "^0.3.0"
+    "vue2-filters": "^0.3.0",
+    "ts-rundeck": "0.0.15"
   },
   "devDependencies": {
     "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#exp/expandable-component",
@@ -68,6 +69,7 @@
     "typescript": "^3.1.6",
     "uglifyjs-webpack-plugin": "^1.1.1",
     "url-loader": "^0.5.8",
+    "uiv": "^0.27.0",
     "vue-loader": "^15.4.2",
     "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.5.2",
