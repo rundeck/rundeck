@@ -21,7 +21,7 @@
     "vue2-filters": "^0.3.0"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#typescript",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#exp/expandable-component",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
