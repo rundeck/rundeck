@@ -67,18 +67,14 @@ public class UUIDPropertyValidator
             if (!report) {
                 return false;
             }
-            throw new ValidationException(
-                "Input should be 36 characters in the form: 00000000-0000-0000-0000-000000000000"
-            );
+            throw new ValidationException(String.format("Expected 36 characters, saw input: '%s'", value));
 
         }
         if (!UUID_PAT.matcher(value).matches()) {
             if (!report) {
                 return false;
             }
-            throw new ValidationException(
-                "Input does not match UUID form: 01234567-89ab-cdef-0123-456789abcdef"
-            );
+            throw new ValidationException(String.format("Expected valid UUID, saw input: '%s'", value));
         }
         try {
             UUID ignored = UUID.fromString(value);
