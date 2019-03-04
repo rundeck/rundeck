@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionException
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
+import com.dtolabs.rundeck.core.execution.UnauthorizedException
+import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import groovy.transform.CompileStatic
@@ -55,8 +57,34 @@ class AuthorizingNodeExecutionService implements NodeExecutionService {
             final INodeEntry node
     ) throws ExecutionException {
         if (!authCheckNode(context.getFrameworkProject(), authContext, node)) {
-            throw new ExecutionException("Unauthorized: cannot execute on node: " + node.getNodename())
+            throw new UnauthorizedException("Unauthorized: cannot execute on node: " + node.getNodename())
         }
         return nodeExecutionService.executeCommand(context, command, node)
+    }
+
+    @Override
+    String fileCopyFileStream(
+            final ExecutionContext context,
+            final InputStream input,
+            final INodeEntry node,
+            final String destinationPath
+    ) throws FileCopierException,ExecutionException {
+        if (!authCheckNode(context.getFrameworkProject(), authContext, node)) {
+            throw new UnauthorizedException("Unauthorized: cannot copy file to node: " + node.getNodename())
+        }
+        return nodeExecutionService.fileCopyFileStream(context, input, node, destinationPath)
+    }
+
+    @Override
+    String fileCopyFile(
+            final ExecutionContext context,
+            final File file,
+            final INodeEntry node,
+            final String destinationPath
+    ) throws FileCopierException,ExecutionException {
+        if (!authCheckNode(context.getFrameworkProject(), authContext, node)) {
+            throw new UnauthorizedException("Unauthorized: cannot copy file to node: " + node.getNodename())
+        }
+        return nodeExecutionService.fileCopyFile(context, file, node, destinationPath)
     }
 }

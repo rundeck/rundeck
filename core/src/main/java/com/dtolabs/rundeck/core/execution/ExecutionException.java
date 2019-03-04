@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+
 /**
  * ExecutionException thrown when an error occurs during execution. 
  *
@@ -44,5 +46,22 @@ public class ExecutionException extends Exception {
 
     public ExecutionException(String msg, Exception cause) {
         super(msg, cause);
+    }
+
+    public ExecutionException(final String message, final FailureReason failureReason) {
+        super(message);
+        this.failureReason = failureReason;
+    }
+
+    private FailureReason failureReason = Reason.Unknown;
+
+    public FailureReason getFailureReason() {
+        return failureReason;
+    }
+
+    static enum Reason
+            implements FailureReason
+    {
+        Unknown
     }
 }

@@ -48,7 +48,9 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-public interface ExecutionService extends FrameworkSupportService {
+public interface ExecutionService
+        extends FrameworkSupportService, NodeExecutionService
+{
     public static final String SERVICE_NAME = "ExecutionService";
 
     /**
