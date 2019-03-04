@@ -26,27 +26,9 @@ import java.util.function.Consumer
  * Created by greg on 2/18/16.
  */
 class ThreadBoundLogOutputStreamSpec extends Specification {
-    static class TestBuffer implements LogBuffer<String> {
-
-        boolean empty = false
-
-
-        @Override
-        void reset() {
-
-        }
-
-        @Override
-        void write(final byte b) {
-
-        }
-
-        @Override
-        void clear() {
-
-        }
-        String get(){
-
+    static class TestBuffer extends StringLogBuffer {
+        TestBuffer(final Charset charset) {
+            super(charset)
         }
     }
 
@@ -128,9 +110,9 @@ class ThreadBoundLogOutputStreamSpec extends Specification {
 
     def "write with newline"() {
         given:
-            List<TestBuffer> buffs = []
+            List<String> buffs = []
             ThreadBoundLogOutputStream<String,TestBuffer> stream = new ThreadBoundLogOutputStream<String,TestBuffer>(
-                    { TestBuffer buff -> buffs.push buff },
+                    { String buff -> buffs.push buff },
                     Charset.defaultCharset(),
                     { new TestManager() }
             )
@@ -144,9 +126,9 @@ class ThreadBoundLogOutputStreamSpec extends Specification {
 
     def "write multi then newline"() {
         given:
-            List<TestBuffer> buffs = []
+            List<String> buffs = []
             ThreadBoundLogOutputStream<String,TestBuffer> stream = new ThreadBoundLogOutputStream<String,TestBuffer>(
-                    { TestBuffer buff -> buffs.push buff },
+                    { String buff -> buffs.push buff },
                     Charset.defaultCharset(),
                     { new TestManager() }
             )
@@ -163,9 +145,9 @@ class ThreadBoundLogOutputStreamSpec extends Specification {
 
     def "write without newline then close"() {
         given:
-            List<TestBuffer> buffs = []
+            List<String> buffs = []
             ThreadBoundLogOutputStream<String,TestBuffer> stream = new ThreadBoundLogOutputStream<String,TestBuffer>(
-                    { TestBuffer buff -> buffs.push buff },
+                    { String buff -> buffs.push buff },
                     Charset.defaultCharset(),
                     { new TestManager() }
             )
@@ -180,9 +162,9 @@ class ThreadBoundLogOutputStreamSpec extends Specification {
 
     def "write multi without newline then close"() {
         given:
-            List<TestBuffer> buffs = []
+            List<String> buffs = []
             ThreadBoundLogOutputStream<String,TestBuffer> stream = new ThreadBoundLogOutputStream<String,TestBuffer>(
-                    { TestBuffer buff -> buffs.push buff },
+                    { String buff -> buffs.push buff },
                     Charset.defaultCharset(),
                     { new TestManager() }
             )
@@ -192,6 +174,23 @@ class ThreadBoundLogOutputStreamSpec extends Specification {
         stream.write(' still not'.bytes)
         stream.write(' more not'.bytes)
         stream.close()
+
+        then:
+            1 == buffs.size()
+    }
+
+    def "write multi without newline with cr"() {
+        given:
+            List<String> buffs = []
+            ThreadBoundLogOutputStream<String, TestBuffer> stream = new ThreadBoundLogOutputStream<String, TestBuffer>(
+                    { String buff -> buffs.push buff },
+                    Charset.defaultCharset(),
+                    { new TestManager() }
+            )
+
+        when:
+            stream.write('no newline'.bytes)
+            stream.write(' with cr\rmonkey'.bytes)
 
         then:
             1 == buffs.size()

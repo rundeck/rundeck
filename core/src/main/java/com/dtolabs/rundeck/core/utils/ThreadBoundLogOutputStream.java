@@ -44,7 +44,16 @@ public class ThreadBoundLogOutputStream<D, T extends LogBuffer<D>>
     private static class Holder<X extends LogBuffer> {
         final X buffer;
         boolean crchar;
-        boolean empty;
+
+        public void clear() {
+            crchar = false;
+            buffer.clear();
+        }
+
+        public void reset() {
+            crchar = false;
+            buffer.reset();
+        }
     }
     /**
      * Create a new thread local buffered stream
@@ -117,7 +126,7 @@ public class ThreadBoundLogOutputStream<D, T extends LogBuffer<D>>
      * @return
      */
     private Holder<T> getOrReset() {
-        if (buffer.get() == null || buffer.get().isEmpty()) {
+        if (buffer.get() == null || buffer.get().getBuffer().isEmpty()) {
             resetEventBuffer();
         }
         return buffer.get();
@@ -130,7 +139,7 @@ public class ThreadBoundLogOutputStream<D, T extends LogBuffer<D>>
         if (buffer.get() == null) {
             buffer.set(new Holder<>(getOrCreateManager().create(charset.get())));
         } else {
-            buffer.get().getBuffer().reset();
+            buffer.get().reset();
         }
     }
 
@@ -138,9 +147,9 @@ public class ThreadBoundLogOutputStream<D, T extends LogBuffer<D>>
      * emit a log event for the current contents of the buffer
      */
     private void flushEventBuffer() {
-        T logstate = buffer.get().getBuffer();
-        logger.accept(logstate.get());
-        logstate.clear();
+        Holder<T> holder = buffer.get();
+        logger.accept(holder.getBuffer().get());
+        holder.clear();
     }
 
     /**
