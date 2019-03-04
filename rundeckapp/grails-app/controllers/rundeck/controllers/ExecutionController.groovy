@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.util.MetricsStatsBuilder
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
@@ -748,7 +749,7 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            response.outputStream << msg
+            appendOutput(msg)
             return
         }else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
@@ -783,8 +784,8 @@ class ExecutionController extends ControllerBase{
                 } catch (Exception exc) {
                 }
             }
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message)
-            response.outputStream<<lineSep
+            appendOutput((isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message))
+            appendOutput(lineSep)
         }
         iterator.close()
     }
@@ -808,11 +809,12 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            response.outputStream << msg
+            appendOutput(msg)
             return
         }else if(reader.state == ExecutionLogState.WAITING){
             if(params.reload=='true') {
-                response.outputStream << '''<html>
+                response.setContentType("text/html")
+                appendOutput('''<html>
                 <head>
                 <title></title>
                 </head>
@@ -820,9 +822,9 @@ class ExecutionController extends ControllerBase{
                 <div class="container">
                 <div class="row">
                 <div class="col-sm-12">
-                '''
-                response.outputStream << g.message(code: "execution.html.waiting")
-                response.outputStream << '''
+                ''')
+                appendOutput(g.message(code: "execution.html.waiting"))
+                appendOutput('''
                 </div>
                 <script>
                 setTimeout(function(){
@@ -831,7 +833,7 @@ class ExecutionController extends ControllerBase{
                 </script>
                 </body>
                 </html>
-                '''
+                ''')
             }else{
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND)
                 log.error("Output file not available")
@@ -852,7 +854,8 @@ class ExecutionController extends ControllerBase{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        response.outputStream<<"""<html>
+        response.setContentType("text/html")
+        appendOutput("""<html>
 <head>
 <title></title>
 <link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
@@ -862,7 +865,7 @@ class ExecutionController extends ControllerBase{
 <div class="container">
 <div class="row">
 <div class="col-sm-12">
-<div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >"""
+<div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >""")
 
         def csslevel=!(params.loglevels in ['off','false'])
         def renderContent = shouldConvertContent(params)
@@ -894,23 +897,23 @@ class ExecutionController extends ControllerBase{
             }
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
-            response.outputStream << "<div class=\"$css\" >"
-            response.outputStream << msghtml
-            response.outputStream << '</div>'
+            appendOutput("<div class=\"$css\" >")
+            appendOutput(msghtml)
+            appendOutput('</div>')
 
-            response.outputStream<<lineSep
+            appendOutput(lineSep)
         }
         iterator.close()
         if(jobcomplete || params.reload!='true'){
-            response.outputStream << '''</div>
+            appendOutput('''</div>
 </div>
 </div>
 </div>
 </body>
 </html>
-'''
+''')
         }else{
-            response.outputStream << '''</div>
+            appendOutput('''</div>
 </div>
 </div>
 </div>
@@ -921,9 +924,14 @@ setTimeout(function(){
 </script>
 </body>
 </html>
-'''
+''')
         }
 
+    }
+
+    @CompileStatic
+    private void appendOutput(def output) {
+        response.outputStream << output
     }
 
     /**
