@@ -223,9 +223,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         params:[project:it.scheduledExecution.project]
                 )
                 if (it.scheduledExecution){
-                    def seStats = it.scheduledExecution.getStats()
-                    if(scheduledExecution.getAverageDuration() > 0) {
-                        data['jobAverageDuration'] = scheduledExecution.getAverageDuration()
+                    def avgDur = it.scheduledExecution.getAverageDuration()
+                    if(avgDur > 0) {
+                        data['jobAverageDuration'] = avgDur
                     }
                 }
                 if (it.argString) {
