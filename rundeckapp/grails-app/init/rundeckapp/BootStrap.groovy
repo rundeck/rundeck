@@ -228,7 +228,7 @@ class BootStrap {
                  servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
                  servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
                  if (tokens) {
-                     log.debug("Loaded ${tokens.size} tokens from tokens file: ${tokensfile}...")
+                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                  }
              }
 

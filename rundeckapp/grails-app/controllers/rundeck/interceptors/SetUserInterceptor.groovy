@@ -147,6 +147,7 @@ class SetUserInterceptor {
         }
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
+            if(log.traceEnabled) log.trace("checking static tokens: ${tokens}")
             if (tokens[authtoken]) {
                 def userLine = tokens[authtoken]
                 def user = userLine.toString().split(",")[0]
