@@ -50,13 +50,17 @@ public class ExecutionException extends Exception {
 
     public ExecutionException(final String message, final FailureReason failureReason) {
         super(message);
-        this.failureReason = failureReason;
+        this.setFailureReason(failureReason);
     }
 
     private FailureReason failureReason = Reason.Unknown;
 
     public FailureReason getFailureReason() {
         return failureReason;
+    }
+
+    protected void setFailureReason(FailureReason failureReason) {
+        this.failureReason = failureReason;
     }
 
     static enum Reason

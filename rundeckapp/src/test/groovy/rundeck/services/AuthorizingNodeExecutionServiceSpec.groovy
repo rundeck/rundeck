@@ -50,6 +50,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             ) >> emptyset
             0 * sut.nodeExecutionService.executeCommand(*_)
             UnauthorizedException e = thrown()
+            e.failureReason.toString() == 'Unauthorized'
             e.message.contains 'cannot execute on node'
     }
 
@@ -105,6 +106,7 @@ class AuthorizingNodeExecutionServiceSpec extends Specification {
             ) >> emptyset
             0 * sut.nodeExecutionService."$action"(*_)
             UnauthorizedException e = thrown()
+            e.failureReason.toString() == 'Unauthorized'
             e.message.contains 'cannot copy file to node'
 
         where:

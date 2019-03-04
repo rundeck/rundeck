@@ -22,6 +22,7 @@ public class UnauthorizedException
         extends ExecutionException
 {
     public UnauthorizedException() {
+        setFailureReason(Reason.Unauthorized);
     }
 
     public UnauthorizedException(final String msg) {
@@ -30,10 +31,12 @@ public class UnauthorizedException
 
     public UnauthorizedException(final Exception cause) {
         super(cause);
+        setFailureReason(Reason.Unauthorized);
     }
 
     public UnauthorizedException(final String msg, final Exception cause) {
         super(msg, cause);
+        setFailureReason(Reason.Unauthorized);
     }
 
     static enum Reason
