@@ -16,7 +16,6 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 

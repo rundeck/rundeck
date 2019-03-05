@@ -16,11 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 import groovy.mock.interceptor.MockFor
 
 import static org.junit.Assert.*
 
-import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
@@ -615,7 +615,7 @@ class LoggingServiceTests  {
 
     public testCreateLogOutputStream() {
         LoggingService svc = new LoggingService()
-        def stream = svc.createLogOutputStream(new testWriter(), LogLevel.NORMAL, null)
+        def stream = svc.createLogOutputStream(new testWriter(), LogLevel.NORMAL, null, null)
         assertNotNull(stream)
         assert stream instanceof ThreadBoundLogOutputStream
     }

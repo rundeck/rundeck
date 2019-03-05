@@ -26,10 +26,10 @@ import spock.lang.Specification
 class LogEventBufferManagerSpec extends Specification {
     def "create buffer"() {
         given:
-        def manager = new LogEventBufferManager()
+        def manager = new LogEventBufferManager(listener: {[abc: 'xyz']})
 
         when:
-        def buffer = manager.create([abc: 'xyz'])
+        def buffer = manager.create()
 
         then:
         buffer != null
@@ -42,12 +42,12 @@ class LogEventBufferManagerSpec extends Specification {
 
     def "create multiple buffers"() {
         given:
-        def manager = new LogEventBufferManager()
+        def manager = new LogEventBufferManager(listener: {[abc: 'xyz']})
 
         when:
-        def buffer = manager.create([abc: 'xyz'])
-        def buffer2 = manager.create([abc: 'def'])
-        def buffer3 = manager.create([abc: 'ghi'])
+        def buffer = manager.create()
+        def buffer2 = manager.create()
+        def buffer3 = manager.create()
 
         then:
         manager.buffers.size() == 3
@@ -55,15 +55,15 @@ class LogEventBufferManagerSpec extends Specification {
 
     def "flush buffers"() {
         given:
-        def manager = new LogEventBufferManager()
-        def buffer = manager.create([abc: 'xyz'])
-        def buffer2 = manager.create([abc: 'def'])
-        def buffer3 = manager.create([abc: 'ghi'])
+        def manager = new LogEventBufferManager(listener: {[abc: 'xyz']})
+        def buffer = manager.create()
+        def buffer2 = manager.create()
+        def buffer3 = manager.create()
         def writer = Mock(StreamingLogWriter)
         when:
         buffer.baos.write('abc'.bytes)
 
-        manager.flush(writer, LogLevel.DEBUG)
+        manager.flush({writer.addEvent(it)})
         then:
         3 * writer.addEvent(_)
         manager.buffers.isEmpty()
@@ -71,16 +71,16 @@ class LogEventBufferManagerSpec extends Specification {
 
     def "flush buffers after clear"() {
         given:
-        def manager = new LogEventBufferManager()
-        def buffer = manager.create([abc: 'xyz'])
-        def buffer2 = manager.create([abc: 'def'])
-        def buffer3 = manager.create([abc: 'ghi'])
+        def manager = new LogEventBufferManager(listener: {[abc: 'xyz']})
+        def buffer = manager.create()
+        def buffer2 = manager.create()
+        def buffer3 = manager.create()
         def writer = Mock(StreamingLogWriter)
         when:
         buffer.clear()
         buffer2.clear()
         buffer3.clear()
-        manager.flush(writer, LogLevel.DEBUG)
+        manager.flush({writer.addEvent(it.get())})
         then:
         0 * writer.addEvent(_)
         manager.buffers.isEmpty()

@@ -30,7 +30,7 @@ class LogEventBufferSpec extends Specification {
 
     def "clear buffer is empty"() {
         given:
-        def buff = new LogEventBuffer([:])
+        def buff = new LogEventBuffer(null,{[:]})
         when:
         buff.clear()
         then:
@@ -38,27 +38,27 @@ class LogEventBufferSpec extends Specification {
         0 == buff.baos.size()
         null == buff.context
         null == buff.time
-        !buff.crchar
+
         buff.isEmpty()
     }
 
     def "new buffer not empty"() {
         given:
-        def buff = new LogEventBuffer([:])
+        def buff = new LogEventBuffer(null,{[:]})
         expect:
         null != buff.baos
         0 == buff.baos.size()
         null != buff.context
         null != buff.time
-        !buff.crchar
+
         !buff.isEmpty()
     }
 
     def "clear after modify is empty"() {
         given:
-        def buff = new LogEventBuffer([:])
+        def buff = new LogEventBuffer(null,{[:]})
         buff.baos.write('abc'.bytes)
-        buff.crchar = true
+
         when:
         buff.clear()
         then:
@@ -66,17 +66,16 @@ class LogEventBufferSpec extends Specification {
         0 == buff.baos.size()
         null == buff.context
         null == buff.time
-        !buff.crchar
         buff.isEmpty()
     }
 
     def "create event with data"() {
 
-        def buff = new LogEventBuffer([abc: 'xyz'])
+        def buff = new LogEventBuffer(LogLevel.DEBUG,{[abc: 'xyz']})
         buff.baos.write('abc'.bytes)
 
         when:
-        def log = buff.createEvent(LogLevel.DEBUG)
+        def log = buff.get()
 
         then:
         null != log
@@ -109,11 +108,11 @@ class LogEventBufferSpec extends Specification {
     def "create event with charset #charset"() {
 
         given:
-        def buff = new LogEventBuffer([:], charset ? Charset.forName(charset) : null)
+        def buff = new LogEventBuffer(LogLevel.DEBUG,{[:]}, charset ? Charset.forName(charset) : null)
         buff.baos.write(bytes)
 
         when:
-        def log = buff.createEvent(LogLevel.DEBUG)
+        def log = buff.get()
 
         then:
         null != log
