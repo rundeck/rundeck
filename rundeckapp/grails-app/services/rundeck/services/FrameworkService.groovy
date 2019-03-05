@@ -53,8 +53,7 @@ import java.util.function.Predicate
 /**
  * Interfaces with the core Framework object
  */
-class FrameworkService implements ApplicationContextAware, AuthContextProvider, ClusterInfoService {
-
+class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
 
@@ -388,32 +387,25 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
     def Map authResourceForJob(String name, String groupPath, String uuid){
         return AuthorizationUtil.resource(AuthConstants.TYPE_JOB,[name:name,group:groupPath?:'',uuid: uuid])
     }
-    /**
-     * Return the resource definition for a project for use by authorization checks
-     * @param name the project name
-     * @return resource map for authorization check
-     */
-    def Map authResourceForProject(String name){
+
+    @Override
+    def Map<String, String> authResourceForProject(String name) {
         return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
     }
-    /**
-     * Return the resource definition for a project ACL for use by authorization checks
-     * @param name the project name
-     * @return resource map for authorization check
-     */
-    def Map authResourceForProjectAcl(String name){
+
+    @Override
+    def Map<String, String> authResourceForProjectAcl(String name) {
         return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: name])
     }
 
-    /**
-     * return the decision set for all actions on all resources in the project context
-     * @param framework
-     * @param resources
-     * @param actions
-     * @param project
-     * @return
-     */
-    def Set authorizeProjectResources( AuthContext authContext, Set resources, Set actions, String project) {
+
+    @Override
+    def Set<Decision> authorizeProjectResources(
+            AuthContext authContext,
+            Set<Map<String, String>> resources,
+            Set<String> actions,
+            String project
+    ) {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
@@ -425,19 +417,24 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             decisions= authContext.evaluate(
                     resources,
                     actions,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+                    Collections.singleton(
+                            new Attribute(
+                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
+                                    project
+                            )
+                    )
+            )
         }
         return decisions
     }
-    /**
-     * return true if the action is authorized for the resource in the project context
-     * @param framework
-     * @param resource
-     * @param action
-     * @param project
-     * @return
-     */
-    def boolean authorizeProjectResource(AuthContext authContext, Map resource, String action, String project){
+
+    @Override
+    def boolean authorizeProjectResource(
+            AuthContext authContext,
+            Map<String, String> resource,
+            String action,
+            String project
+    ) {
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
@@ -448,19 +445,24 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             authContext.evaluate(
                     resource,
                     action,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+                    Collections.singleton(
+                            new Attribute(
+                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
+                                    project
+                            )
+                    )
+            )
         }
         return decision.authorized
     }
-    /**
-     * Return true if all actions are authorized for the resource in the project context
-     * @param framework
-     * @param resource
-     * @param actions
-     * @param project
-     * @return
-     */
-    def boolean authorizeProjectResourceAll(AuthContext authContext, Map resource, Collection actions, String project){
+
+    @Override
+    def boolean authorizeProjectResourceAll(
+            AuthContext authContext,
+            Map<String, String> resource,
+            Collection<String> actions,
+            String project
+    ) {
         if(null==project){
             throw new IllegalArgumentException("null project")
         }
@@ -471,19 +473,24 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
             authContext.evaluate(
                     [resource] as Set,
                     actions as Set,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+                    Collections.singleton(
+                            new Attribute(
+                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
+                                    project
+                            )
+                    )
+            )
         }
         return !(decisions.find {!it.authorized})
     }
-    /**
-     * Return true if any actions are authorized for the resource in the project context
-     * @param framework
-     * @param resource
-     * @param actions
-     * @param project
-     * @return
-     */
-    def boolean authorizeProjectResourceAny(AuthContext authContext, Map resource, Collection actions, String project){
+
+    @Override
+    def boolean authorizeProjectResourceAny(
+            AuthContext authContext,
+            Map<String, String> resource,
+            Collection<String> actions,
+            String project
+    ) {
         if(null==project){
             throw new IllegalArgumentException("null project")
         }
@@ -506,7 +513,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param actions
      * @return true/false
      */
-    boolean authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection actions){
+    boolean authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection<String> actions){
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project)  :
@@ -520,7 +527,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param actions
      * @return true/false
      */
-    boolean authorizeProjectExecutionAny( AuthContext authContext, Execution exec, Collection actions){
+    boolean authorizeProjectExecutionAny( AuthContext authContext, Execution exec, Collection<String> actions){
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAny(authContext, se, actions, se.project)  :
@@ -534,7 +541,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param actions
      * @return List of authorized executions
      */
-    def List filterAuthorizedProjectExecutionsAll( AuthContext authContext, List<Execution> execs, Collection actions){
+    List<Execution> filterAuthorizedProjectExecutionsAll( AuthContext authContext, List<Execution> execs, Collection<String> actions){
         def semap=[:]
         def adhocauth=null
         def results=[]
@@ -562,7 +569,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param project
      * @return true/false
      */
-    def authorizeProjectJobAny(AuthContext authContext, ScheduledExecution job, Collection actions, String project) {
+    boolean authorizeProjectJobAny(AuthContext authContext, ScheduledExecution job, Collection<String> actions, String project) {
         actions.any {
             authorizeProjectJobAll(authContext, job, [it], project)
         }
@@ -575,7 +582,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
      * @param project
      * @return true/false
      */
-    def authorizeProjectJobAll( AuthContext authContext, ScheduledExecution job, Collection actions, String project){
+    boolean authorizeProjectJobAll( AuthContext authContext, ScheduledExecution job, Collection<String> actions, String project){
         if (null == project) {
             throw new IllegalArgumentException("null project")
         }
@@ -591,34 +598,34 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         return !(decisions.find {!it.authorized})
     }
 
-    /**
-     * return true if the action is authorized for the resource in the application context
-     * @param framework
-     * @param resource
-     * @param action
-     * @return
-     */
-    def boolean authorizeApplicationResource(AuthContext authContext, Map resource, String action) {
+
+    @Override
+    boolean authorizeApplicationResource(AuthContext authContext, Map<String, String> resource, String action) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
 
         def decision = metricService.withTimer(this.class.name,'authorizeApplicationResource') {
             authContext.evaluate(
-                resource,
-                action,
-                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
+                    resource,
+                    action,
+                    Collections.singleton(
+                            new Attribute(
+                                    URI.create(EnvironmentalContext.URI_BASE + "application"),
+                                    'rundeck'
+                            )
+                    )
+            )
         }
         return decision.authorized
     }
-    /**
-     * return all authorized resources for the action evaluated in the application context
-     * @param framework
-     * @param resources requested resources to authorize
-     * @param actions set of any actions to authorize
-     * @return set of authorized resources
-     */
-    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, Set<String> actions) {
+
+    @Override
+    def Set<Map<String, String>> authorizeApplicationResourceSet(
+            AuthContext authContext,
+            Set<Map<String, String>> resources,
+            Set<String> actions
+    ) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
@@ -631,14 +638,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         return decisions.findAll {it.authorized}.collect {it.resource}
     }
 
-    /**
-     * return true if all of the actions are authorized for the resource in the application context
-     * @param framework
-     * @param resource
-     * @param actions
-     * @return
-     */
-    def boolean authorizeApplicationResourceAll(AuthContext authContext, Map resource, Collection actions) {
+
+    @Override
+    boolean authorizeApplicationResourceAll(AuthContext authContext, Map<String, String> resource, Collection<String> actions) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
@@ -651,26 +653,16 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
 
         return !(decisions.find {!it.authorized})
     }
-    /**
-     * return true if any of the actions are authorized for the resource in the application context
-     * @param framework
-     * @param resource
-     * @param actions
-     * @return
-     */
-    def boolean authorizeApplicationResourceAny(AuthContext authContext, Map resource, List actions) {
+
+    @Override
+    boolean authorizeApplicationResourceAny(AuthContext authContext, Map<String, String> resource, List<String> actions) {
         return actions.any {
             authorizeApplicationResourceAll(authContext,resource,[it])
         }
     }
-    /**
-     * return true if the action is authorized for the resource type in the application context
-     * @param framework
-     * @param resourceType
-     * @param action
-     * @return
-     */
-    def boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
+
+    @Override
+    boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
 
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
@@ -683,14 +675,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProvider, 
         }
         return decision.authorized
     }
-    /**
-     * return true if all of the actions are authorized for the resource type in the application context
-     * @param framework
-     * @param resourceType
-     * @param actions
-     * @return
-     */
-    def boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection actions) {
+
+    @Override
+    boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection<String> actions) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
