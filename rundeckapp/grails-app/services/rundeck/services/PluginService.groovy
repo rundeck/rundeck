@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.plugins.RenamedDescription
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import groovy.transform.CompileStatic
@@ -150,6 +151,7 @@ class PluginService {
                     (Framework) frameworkService.rundeckFramework
             )
         }
+        if(type == StoragePlugin) return frameworkService.storageProviderPluginService
         rundeckPluginRegistry?.createPluggableService(type)
     }
 
