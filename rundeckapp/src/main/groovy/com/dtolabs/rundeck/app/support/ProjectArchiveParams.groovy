@@ -34,6 +34,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean importConfig=false
     Boolean importACL=false
     Boolean importScm=false
+    Boolean validateJobref=false
     Boolean exportAll
     Boolean exportJobs
     Boolean exportExecutions

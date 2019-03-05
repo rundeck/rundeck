@@ -923,6 +923,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
         boolean importScm = options.importScm
+        boolean validateJobref = options.validateJobref
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
@@ -1048,7 +1049,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                         'update',
                         null,
                         [:],
-                        authContext
+                        authContext,
+                        validateJobref
                 )
 
                 scheduledExecutionService.issueJobChangeEvents(results.jobChangeEvents)
