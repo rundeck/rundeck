@@ -17,12 +17,51 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import org.rundeck.app.spi.AppService;
+
+import java.io.File;
+import java.io.InputStream;
 
 public interface NodeExecutionService
         extends AppService
 {
+
+    /**
+     * Copy stream as a file to the node to a specific path
+     *
+     * @param context         context
+     * @param input           input stream
+     * @param node            node
+     * @param destinationPath destination path
+     * @return filepath on the node for the destination file.
+     * @throws FileCopierException on error
+     */
+    public String fileCopyFileStream(
+            final ExecutionContext context,
+            InputStream input,
+            INodeEntry node,
+            String destinationPath
+    ) throws FileCopierException, ExecutionException;
+
+    /**
+     * Copy file to the node to a specific path
+     *
+     * @param context         context
+     * @param file            input file
+     * @param node            node
+     * @param destinationPath destination path
+     * @return filepath
+     * @throws FileCopierException on error
+     */
+    public String fileCopyFile(
+            final ExecutionContext context,
+            File file,
+            INodeEntry node,
+            String destinationPath
+    ) throws FileCopierException, ExecutionException;
+
     /**
      * Execute a command within the context on the node.
      *
