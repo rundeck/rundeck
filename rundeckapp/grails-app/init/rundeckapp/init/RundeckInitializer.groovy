@@ -55,6 +55,7 @@ class RundeckInitializer {
     private static final String LINESEP = System.getProperty("line.separator");
 
     private static final String WAR_BASE = "WEB-INF/classes"
+    private static final String FILE_PROTOCOL = "file:"
 
     private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
 
@@ -309,7 +310,7 @@ class RundeckInitializer {
                 if(sloc.endsWith(".class") && sloc.contains(WAR_BASE)) {
                     //An unusual case where the location returned by the protection domain code source did not give us a usable location.
                     //Seen in Tomcat 7 on Centos 7
-                    String webinfclassesdir = sloc.substring(5,sloc.indexOf(WAR_BASE)+WAR_BASE.length())
+                    String webinfclassesdir = sloc.substring(FILE_PROTOCOL.length(),sloc.indexOf(WAR_BASE)+WAR_BASE.length())
                     return new File(webinfclassesdir)
                 }
             }
