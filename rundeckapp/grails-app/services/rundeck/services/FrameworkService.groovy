@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
+import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
@@ -70,6 +71,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def PluginService pluginService
     def PluginControlService pluginControlService
     def AuthContextEvaluator rundeckAuthContextEvaluator
+    StoragePluginProviderService storagePluginProviderService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -1299,5 +1301,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
                 props : projProps,
                 remove: removePrefixes
         ]
+    }
+
+    public <T> PluggableProviderService<T> getStorageProviderPluginService() {
+        return (PluggableProviderService<T>)storagePluginProviderService
     }
 }
