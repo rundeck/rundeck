@@ -134,19 +134,19 @@
         </p>
       </g:link>
     </li>
-    <g:ifMenuItems type="PROJECT">
+    <g:ifMenuItems type="PROJECT" project="${params.project}">
         <li role="separator" class="divider"></li>
+        <g:forMenuItems type="PROJECT" var="item" project="${params.project}">
+            <li>
+                <a href="${enc(attr: item.getProjectHref(params.project))}"
+                   class=" toptab "
+                   title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
+                    <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
+                    <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+                </a>
+            </li>
+        </g:forMenuItems>
     </g:ifMenuItems>
-    <g:forMenuItems type="PROJECT" var="item">
-        <li>
-            <a href="${enc(attr: item.getProjectHref(params.project))}"
-               class=" toptab "
-               title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
-                <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
-                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
-            </a>
-        </li>
-    </g:forMenuItems>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
