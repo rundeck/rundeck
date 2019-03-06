@@ -29,10 +29,20 @@ public interface MenuItem {
         /**
          *
          */
-        PROJECT,
-        PROJECT_CONFIG,
-        SYSTEM_CONFIG,
-        USER_MENU
+        PROJECT(true),
+        PROJECT_CONFIG(true),
+        SYSTEM_CONFIG(false),
+        USER_MENU(false);
+
+        MenuType(final boolean projectType) {
+            this.projectType = projectType;
+        }
+
+        private final boolean projectType;
+
+        public boolean isProjectType() {
+            return projectType;
+        }
     }
 
     /**
@@ -65,6 +75,21 @@ public interface MenuItem {
      */
     default String getIconCSS() {
         return null;
+    }
+
+    /**
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabled() {
+        return true;
+    }
+
+    /**
+     * @param project name for project oriented items
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabled(String project) {
+        return true;
     }
 
 }
