@@ -69,6 +69,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def rundeckPluginRegistry
     def PluginService pluginService
     def PluginControlService pluginControlService
+    def AuthContextEvaluator rundeckAuthContextEvaluator
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -389,121 +390,62 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     @Override
-    def Map<String, String> authResourceForProject(String name) {
-        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT, [name: name])
+    Map<String, String> authResourceForProject(String name) {
+        rundeckAuthContextEvaluator.authResourceForProject(name)
     }
 
     @Override
-    def Map<String, String> authResourceForProjectAcl(String name) {
-        return AuthorizationUtil.resource(AuthConstants.TYPE_PROJECT_ACL, [name: name])
+    Map<String, String> authResourceForProjectAcl(String name) {
+        rundeckAuthContextEvaluator.authResourceForProjectAcl(name)
     }
 
 
     @Override
-    def Set<Decision> authorizeProjectResources(
+    Set<Decision> authorizeProjectResources(
             AuthContext authContext,
             Set<Map<String, String>> resources,
             Set<String> actions,
             String project
     ) {
-        if (null == project) {
-            throw new IllegalArgumentException("null project")
-        }
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
-        }
-        def Set decisions
         metricService.withTimer(this.class.name,'authorizeProjectResources') {
-            decisions= authContext.evaluate(
-                    resources,
-                    actions,
-                    Collections.singleton(
-                            new Attribute(
-                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
-                                    project
-                            )
-                    )
-            )
+            rundeckAuthContextEvaluator.authorizeProjectResources(authContext, resources, actions, project)
         }
-        return decisions
     }
 
     @Override
-    def boolean authorizeProjectResource(
+    boolean authorizeProjectResource(
             AuthContext authContext,
             Map<String, String> resource,
             String action,
             String project
     ) {
-        if (null == project) {
-            throw new IllegalArgumentException("null project")
+        metricService.withTimer(this.class.name, 'authorizeProjectResource') {
+            rundeckAuthContextEvaluator.authorizeProjectResource(authContext, resource, action, project)
         }
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
-        }
-        def decision= metricService.withTimer(this.class.name,'authorizeProjectResource') {
-            authContext.evaluate(
-                    resource,
-                    action,
-                    Collections.singleton(
-                            new Attribute(
-                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
-                                    project
-                            )
-                    )
-            )
-        }
-        return decision.authorized
     }
 
     @Override
-    def boolean authorizeProjectResourceAll(
+    boolean authorizeProjectResourceAll(
             AuthContext authContext,
             Map<String, String> resource,
             Collection<String> actions,
             String project
     ) {
-        if(null==project){
-            throw new IllegalArgumentException("null project")
+        metricService.withTimer(this.class.name, 'authorizeProjectResourceAll') {
+            rundeckAuthContextEvaluator.authorizeProjectResourceAll(authContext, resource, actions, project)
         }
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
-        }
-        def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
-            authContext.evaluate(
-                    [resource] as Set,
-                    actions as Set,
-                    Collections.singleton(
-                            new Attribute(
-                                    URI.create(EnvironmentalContext.URI_BASE + "project"),
-                                    project
-                            )
-                    )
-            )
-        }
-        return !(decisions.find {!it.authorized})
     }
 
     @Override
-    def boolean authorizeProjectResourceAny(
+    boolean authorizeProjectResourceAny(
             AuthContext authContext,
             Map<String, String> resource,
             Collection<String> actions,
             String project
     ) {
-        if(null==project){
-            throw new IllegalArgumentException("null project")
+        metricService.withTimer(this.class.name, 'authorizeProjectResourceAny') {
+            rundeckAuthContextEvaluator.authorizeProjectResourceAny(authContext, resource, actions, project)
         }
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
-        }
-        def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
-            authContext.evaluate(
-                    [resource] as Set,
-                    actions as Set,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
-        }
-        return (decisions.find {it.authorized})
     }
 
     /**
@@ -601,93 +543,50 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
 
     @Override
     boolean authorizeApplicationResource(AuthContext authContext, Map<String, String> resource, String action) {
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
+
+        metricService.withTimer(this.class.name, 'authorizeApplicationResource') {
+            rundeckAuthContextEvaluator.authorizeApplicationResource(authContext, resource, action)
         }
 
-        def decision = metricService.withTimer(this.class.name,'authorizeApplicationResource') {
-            authContext.evaluate(
-                    resource,
-                    action,
-                    Collections.singleton(
-                            new Attribute(
-                                    URI.create(EnvironmentalContext.URI_BASE + "application"),
-                                    'rundeck'
-                            )
-                    )
-            )
-        }
-        return decision.authorized
     }
 
     @Override
-    def Set<Map<String, String>> authorizeApplicationResourceSet(
+    Set<Map<String, String>> authorizeApplicationResourceSet(
             AuthContext authContext,
             Set<Map<String, String>> resources,
             Set<String> actions
     ) {
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
+        metricService.withTimer(this.class.name, 'authorizeApplicationResourceSet') {
+            rundeckAuthContextEvaluator.authorizeApplicationResourceSet(authContext, resources, actions)
         }
-        def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
-            authContext.evaluate(
-                    resources,
-                    actions,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        }
-        return decisions.findAll {it.authorized}.collect {it.resource}
     }
 
 
     @Override
     boolean authorizeApplicationResourceAll(AuthContext authContext, Map<String, String> resource, Collection<String> actions) {
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
+        metricService.withTimer(this.class.name, 'authorizeApplicationResourceAll') {
+            rundeckAuthContextEvaluator.authorizeApplicationResourceAll(authContext, resource, actions)
         }
-        def Set decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceAll') {
-            authContext.evaluate(
-                [resource] as Set,
-                actions as Set,
-                Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        }
-
-        return !(decisions.find {!it.authorized})
     }
 
     @Override
     boolean authorizeApplicationResourceAny(AuthContext authContext, Map<String, String> resource, List<String> actions) {
-        return actions.any {
-            authorizeApplicationResourceAll(authContext,resource,[it])
-        }
+        rundeckAuthContextEvaluator.authorizeApplicationResourceAny(authContext, resource, actions)
     }
 
     @Override
     boolean authorizeApplicationResourceType(AuthContext authContext, String resourceType, String action) {
 
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
+        metricService.withTimer(this.class.name, 'authorizeApplicationResourceType') {
+            rundeckAuthContextEvaluator.authorizeApplicationResourceType(authContext, resourceType, action)
         }
-        def decision = metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
-            authContext.evaluate(
-                    AuthorizationUtil.resourceType(resourceType),
-                    action,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        }
-        return decision.authorized
     }
 
     @Override
     boolean authorizeApplicationResourceTypeAll(AuthContext authContext, String resourceType, Collection<String> actions) {
-        if (null == authContext) {
-            throw new IllegalArgumentException("null authContext")
+        return metricService.withTimer(this.class.name, 'authorizeApplicationResourceTypeAll') {
+            rundeckAuthContextEvaluator.authorizeApplicationResourceTypeAll(authContext, resourceType, actions)
         }
-        def Set decisions= metricService.withTimer(this.class.name,'authorizeApplicationResourceType') {
-            authContext.evaluate(
-                    [AuthorizationUtil.resourceType(resourceType)] as Set,
-                    actions as Set,
-                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
-        }
-        return !(decisions.find {!it.authorized})
     }
 
     def getFrameworkNodeName() {

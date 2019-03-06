@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Utility interface for checking authorization
+ * Utility interface for checking authorization for common resources using AuthContext
  */
 public interface AuthContextEvaluator {
 
