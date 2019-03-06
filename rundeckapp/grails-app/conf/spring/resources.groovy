@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.services.EnhancedNodeService
@@ -185,6 +186,8 @@ beans={
     rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider) {
         baseServices = ref('rundeckSpiBaseServicesProvider')
     }
+
+    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator)
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
