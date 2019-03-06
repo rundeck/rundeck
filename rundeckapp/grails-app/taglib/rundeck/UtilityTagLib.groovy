@@ -1784,7 +1784,7 @@ ansi-bg-default'''))
      * @attr data required list of data points in order
      */
     def basicTable = { attrs, body ->
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         out << "<tr>"
         attrs.columns.each {
@@ -1812,7 +1812,7 @@ ansi-bg-default'''))
      */
     def basicData = { attrs, body ->
         def data = attrs.data
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         attrs.fields.each {
             out << "<tr>"
