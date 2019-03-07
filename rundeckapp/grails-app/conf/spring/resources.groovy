@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
@@ -174,10 +175,12 @@ beans={
     clusterInfoService(ClusterInfo) {
         clusterInfoServiceDelegate = ref('frameworkService')
     }
+    rundeckApiInfoService(ApiInfo)
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-            (ClusterInfoService): ref('clusterInfoService')
+                (ClusterInfoService): ref('clusterInfoService'),
+                (ApiInfo)           : ref('rundeckApiInfoService')
         ]
     }
 
