@@ -6,17 +6,13 @@ IFS=$'\n\t'
 readonly ARGS=("$@")
 DOCKER_DIR=$PWD/test/docker
 
+TOMCAT_TAG="${1:-8}"
+
 usage() {
       grep '^#/' <"$0" | cut -c4- # prints the #/ lines above as usage info
 }
 die(){
     echo >&2 "$@" ; exit 2
-}
-
-check_args(){
-    if [ ${#ARGS[@]} -gt 0 ] ; then
-        DOCKER_DIR=$1
-    fi
 }
 
 copy_jar(){
@@ -34,7 +30,7 @@ run_tests(){
     local DIR=${FARGS[0]}
 
     cd $DIR
-    bash $DIR/test-api-tomcat.sh
+    bash $DIR/test-api-tomcat.sh $TOMCAT_TAG
 }
 
 run_docker_test(){
@@ -46,7 +42,6 @@ run_docker_test(){
 
 
 main() {
-    check_args
     run_docker_test  $DOCKER_DIR
 }
 main
