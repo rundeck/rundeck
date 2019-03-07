@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
@@ -46,6 +47,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
     public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
+    public static final String NODE_ENHANCER_PROP_PREFIX = "nodes.plugin";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
     public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
@@ -539,6 +541,34 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return listResourceModelConfigurations(properties);
     }
 
+    /**
+     * list the configurations of resource model providers.
+     *
+     * @return a list of PluginConfiguration
+     */
+    @Override
+    public synchronized List<PluginConfiguration> listResourceModelPluginConfigurations() {
+        return listPluginConfigurations(
+                projectConfig.getProjectProperties(),
+                RESOURCES_SOURCE_PROP_PREFIX,
+                ServiceNameConstants.ResourceModelSource
+        );
+    }
+
+    /**
+     * list the configurations of node enhancer providers.
+     *
+     * @return a list of PluginConfiguration
+     */
+    @Override
+    public synchronized List<PluginConfiguration> listNodeEnhancerConfigurations() {
+        return listPluginConfigurations(
+                projectConfig.getProjectProperties(),
+                NODE_ENHANCER_PROP_PREFIX,
+                ServiceNameConstants.NodeEnhancer
+        );
+    }
+
 
     /**
      * @return Properties form for the serialized list of model source configurations
@@ -598,12 +628,24 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * Return a list of resource model configuration
      *
      * @param serviceName
+     * @param keyprefix prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public List<PluginConfiguration> listPluginConfigurations(final String keyprefix, final String serviceName)
+    {
+        return listPluginConfigurations(projectConfig.getProjectProperties(), keyprefix, serviceName);
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName service name
      * @param props       properties
-     * @param prefix
+     * @param keyprefix   prefix for properties
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
     public static List<PluginConfiguration> listPluginConfigurations(
-            final Map<String,String> props,
+            final Map<String, String> props,
             final String keyprefix,
             final String serviceName
     )
@@ -623,9 +665,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.put(key.substring(len), props.get(key));
                     }
                 }
-                final HashMap<String, Object> map = new HashMap<>();
-                map.put("type", providerType);
-                map.put("props", configProps);
                 list.add(new SimplePluginConfiguration(serviceName, providerType, configProps));
             } else {
                 done = true;
