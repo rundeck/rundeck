@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.FrameworkService
@@ -12,7 +13,9 @@ import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
 
+import java.io.InputStream
 import java.text.SimpleDateFormat
+import javax.servlet.http.HttpServletResponse
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
 
@@ -51,15 +54,11 @@ class PluginController extends ControllerBase {
             response.status = 404
             return render(view: '/404')
         }
-        try {
-            def format = servletContext.getMimeType(resourceReq.path)
 
-            response.contentType = format
-            response.outputStream << istream.bytes
-            response.flushBuffer()
-        }finally{
-            istream.close()
-        }
+        def format = servletContext.getMimeType(resourceReq.path)
+
+        sendResponse(format, istream)
+
     }
 
     def pluginMessages(PluginResourceReq resourceReq) {
@@ -126,15 +125,9 @@ class PluginController extends ControllerBase {
             return render(contentType: 'application/json', text: new HashMap(jprops) as JSON)
         }
 
-        try {
-            def format = servletContext.getMimeType(resourceReq.path)
+        def format = servletContext.getMimeType(resourceReq.path)
 
-            response.contentType = format
-            response.outputStream << istream.bytes
-            response.flushBuffer()
-        }finally{
-            istream.close()
-        }
+        sendResponse(format, istream)
     }
 
     def listPlugins() {
@@ -303,6 +296,17 @@ class PluginController extends ControllerBase {
                 plural: message(code: "framework.service.${service}.label.plural", default: singularMessage),
                 addButton: message(code: "framework.service.${service}.add.title", default: 'Add ' + singularMessage),
                 )
+        }
+    }
+
+    @CompileStatic
+    private def sendResponse(String contentType, InputStream stream) {
+        try {
+            response.contentType = contentType
+            response.outputStream << stream.bytes
+            response.flushBuffer()
+        }finally{
+            stream.close()
         }
     }
 

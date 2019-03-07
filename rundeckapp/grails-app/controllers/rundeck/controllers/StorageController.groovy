@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -190,7 +191,7 @@ class StorageController extends ControllerBase{
                 //problem reading storage contents
                 log.error("Failed reading storage content: "+e.message,e)
                 response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-                response.outputStream<<"Failed reading storage content: "+e.message
+                appendOutput("Failed reading storage content: "+e.message)
                 response.outputStream.close()
             }
 
@@ -636,6 +637,12 @@ class StorageController extends ControllerBase{
         }
         return getResource(storageParams)
     }
+
+    @CompileStatic
+    private void appendOutput(def output) {
+        response.outputStream << output
+    }
+
     private def getResource(StorageParams storageParams,boolean forceDownload=false) {
         if (storageParams.hasErrors()) {
             apiService.renderErrorFormat(response, [
