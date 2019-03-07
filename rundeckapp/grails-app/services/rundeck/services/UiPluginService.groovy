@@ -1,5 +1,7 @@
 package rundeck.services
 
+import java.io.InputStream
+
 import com.dtolabs.rundeck.core.plugins.PluginException
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -320,7 +322,7 @@ class UiPluginService implements InitializingBean {
      * @param path
      * @return
      */
-    def openResourceForPlugin(String service, String name, String path) {
+    def InputStream openResourceForPlugin(String service, String name, String path) {
         try {
             return rundeckPluginRegistry.getResourceLoader(service, name)?.openResourceStreamFor(path)
         } catch (IOException | PluginException e) {
