@@ -615,12 +615,19 @@ class EditOptsController {
             params.secureExposed = false
             params.isDate = true
         }
-
+        if(null==params.sortValues){
+            params.sortValues=false
+        }
         opt.properties = params
         if (params.optionType && params.configMap) {
             opt.configMap = params.configMap
         }
-        opt.valuesList = params.valuesList
+        if(params.valuesList){
+            opt.valuesList = params.valuesList
+        }else{
+            opt.valuesList = null
+            opt.values = null
+        }
         if(params.valuesType == 'list'){
             opt.realValuesUrl=null
         }else if(params.valuesType == 'url'){

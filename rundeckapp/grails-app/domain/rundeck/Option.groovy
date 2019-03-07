@@ -17,6 +17,7 @@
 package rundeck
 
 import com.dtolabs.rundeck.plugins.option.OptionValue
+import com.dtolabs.rundeck.util.StringNumericSort
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -41,6 +42,7 @@ import java.util.regex.Pattern
 
 public class Option implements Comparable{
 
+    static final String DEFAULT_DELIMITER =','
 
     ScheduledExecution scheduledExecution
     String name
@@ -52,7 +54,7 @@ public class Option implements Comparable{
     Boolean required
     Boolean isDate
     String dateFormat
-    SortedSet<String> values
+    Set<String> values
     static hasMany = [values:String]
     URL valuesUrl
     String label
@@ -62,6 +64,7 @@ public class Option implements Comparable{
     URL valuesUrlLong
     String regex
     String valuesList
+    String valuesListDelimiter
     Boolean multivalued
     String delimiter
     Boolean secureInput
@@ -72,9 +75,11 @@ public class Option implements Comparable{
     String optionValuesPluginType
     List<OptionValue> valuesFromPlugin
     Boolean hidden
+    Boolean sortValues
+
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
+    static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -101,6 +106,9 @@ public class Option implements Comparable{
         label(nullable: true)
         optionValuesPluginType(nullable: true)
         hidden(nullable: true)
+        valuesList(nullable: true)
+        valuesListDelimiter(nullable: true)
+        sortValues(nullable: true)
     }
 
 
@@ -136,6 +144,7 @@ public class Option implements Comparable{
         regex type: 'text'
         optionType type: 'text'
         configData type: 'text'
+        valuesList type: 'text'
 //        values type: 'string'//, lazy: false
     }
     /**
@@ -183,6 +192,7 @@ public class Option implements Comparable{
         }
         if(values){
             map.values=values as List
+            map.valuesListDelimiter = valuesListDelimiter?:','
         }
         if(multivalued){
             map.multivalued=multivalued
@@ -245,6 +255,11 @@ public class Option implements Comparable{
         }
         if(data.values){
             opt.values=data.values instanceof Collection?new TreeSet(data.values):new TreeSet([data.values])
+            if(data.valuesListDelimiter){
+                opt.valuesListDelimiter=data.valuesListDelimiter
+            }else{
+                opt.valuesListDelimiter=DEFAULT_DELIMITER
+            }
         }
         if(data.multivalued){
             opt.multivalued=true
@@ -276,7 +291,10 @@ public class Option implements Comparable{
      */
     public String produceValuesList(){
         if(values){
-            return values.join(",")
+            if(valuesListDelimiter==null){
+                valuesListDelimiter = DEFAULT_DELIMITER
+            }
+            return values.join(valuesListDelimiter)
         }else{
             return ''
         }
@@ -311,10 +329,12 @@ public class Option implements Comparable{
      */
     void convertValuesList(){
         if(valuesList!=null){
-            def x=new TreeSet()
-            x.addAll(valuesList.split(",").collect{it.trim()}.grep{it} as List)
+            if(valuesListDelimiter == null){
+                valuesListDelimiter=DEFAULT_DELIMITER
+            }
+            def x=new ArrayList()
+            x.addAll(valuesList.split(valuesListDelimiter).collect{it.trim()}.grep{it} as List)
             values=x
-            valuesList=null
         }
     }
 
@@ -357,7 +377,7 @@ public class Option implements Comparable{
          'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
          'multivalueAllSelected', 'label',
          'delimiter', 'optionValuesPluginType',
-         'secureInput', 'secureExposed', 'optionType', 'configData', 'hidden'].
+         'secureInput', 'secureExposed', 'optionType', 'configData', 'hidden','sortValues','valuesListDelimiter'].
                 each { k ->
             opt[k]=this[k]
         }
@@ -365,6 +385,27 @@ public class Option implements Comparable{
             opt.valuesList=this.produceValuesList()
         }
         return opt
+    }
+
+    Set<String> getValues(){
+        if(valuesList){
+            convertValuesList()
+        }
+        if(values && sortValues){
+            sortValuesList()
+        }
+        values
+    }
+
+    void sortValuesList(){
+        def numericValues = values.findAll { it.isNumber() }.collect {it.toDouble()}
+        if(numericValues.size()==values.size()){
+            def stringNumericList= values.findAll { it.isNumber() }.collect {new StringNumericSort(it, it.toDouble())}
+            stringNumericList.sort{ a,b -> a.numericValue <=> b.numericValue }
+            values = stringNumericList.collect{it.strValue}
+        }else{
+            values = values.sort()
+        }
     }
 
     public String toString ( ) {
