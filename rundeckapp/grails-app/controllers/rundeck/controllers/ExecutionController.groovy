@@ -1591,12 +1591,14 @@ setTimeout(function(){
                 response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
-                response.outputStream.withWriter("UTF-8"){w->
+
+                try {
                     entry.each{
-                        w<<it.mesg+lineSep
+                        appendOutput(it.mesg+lineSep)
                     }
+                } finally {
+                    response.outputStream.close()
                 }
-                response.outputStream.close()
             }
         }
     }

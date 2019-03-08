@@ -294,6 +294,12 @@ class ApiService {
 
         null
     }
+
+    @CompileStatic
+    def appendResponseOutput(HttpServletResponse response, String output) {
+        response.outputStream << output
+    }
+
     def respondXml(HttpServletResponse response, Closure recall) {
         return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderXml(recall))
     }
@@ -569,7 +575,7 @@ class ApiService {
             if (err.status) {
                 response.setStatus(err.status)
             }
-            response.outputStream<< renderErrorText(err)
+            appendResponseOutput(response, renderErrorText(err))
         }]
         def eformat = error.format
         def rformat = response.format

@@ -185,13 +185,14 @@ class StorageController extends ControllerBase{
             def baos = new ByteArrayOutputStream()
             try{
                 def len=contents.writeContent(baos)
-                baos.writeTo(response.outputStream)
+                writeOutputStream(baos)
                 response.outputStream.close()
             }catch (IOException e){
                 //problem reading storage contents
                 log.error("Failed reading storage content: "+e.message,e)
                 response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
                 appendOutput("Failed reading storage content: "+e.message)
+            } finally {
                 response.outputStream.close()
             }
 
@@ -210,6 +211,12 @@ class StorageController extends ControllerBase{
             default:
                 render jsonRenderResource(resource) as JSON
         }
+    }
+
+    @CompileStatic
+    private void writeOutputStream(ByteArrayOutputStream out) {
+        out.writeTo(response.outputStream)
+        response.outputStream.close()
     }
 
     private Object renderError(String message) {
