@@ -163,7 +163,7 @@
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
-      window._rundeck = {
+        window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.toString() ?: request.locale?.toString()}',
@@ -171,7 +171,7 @@
         activeTour: '${session.filterPref?.activeTour}',
         activeTourStep: '${session.filterPref?.activeTourStep}',
         hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
-      }
+        })
     </script>
     <asset:javascript src="static/components/central.js"/>
 </head>
