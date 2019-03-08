@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.common
 
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -122,5 +124,48 @@ class ProjectNodeSupportSpec extends Specification {
         result2 != null
         result2.nodeNames != null
         result2.nodeNames.size() == 1
+    }
+
+    def "serialize plugin config"() {
+        given:
+            def prefix = "test1.abc"
+            List<PluginConfiguration> configs = [
+                    new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                            .service('AService')
+                            .provider('provider1')
+                            .configuration(
+                            [
+                                    a: 'b',
+                                    c: 'd'
+                            ]
+                    ).build(),
+
+                    new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                            .service('AService')
+                            .provider('provider2')
+                            .configuration(
+                            [
+                                    x: 'y',
+                                    z: 'w'
+                            ]
+                    ).build(),
+
+            ]
+        when:
+            def result = ProjectNodeSupport.serializePluginConfigurations(prefix, configs)
+        then:
+            result
+            result.size() == 6
+            result == [
+                    (prefix + '.1.type'): 'provider1',
+                    (prefix + '.1.config.a'): 'b',
+                    (prefix + '.1.config.c'): 'd',
+                    (prefix + '.2.type'): 'provider2',
+                    (prefix + '.2.config.x'): 'y',
+                    (prefix + '.2.config.z'): 'w',
+
+            ]
+
+
     }
 }

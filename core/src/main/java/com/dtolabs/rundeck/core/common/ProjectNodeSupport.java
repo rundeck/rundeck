@@ -592,6 +592,26 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
+     * @return Properties form for the serialized list of indexed plugin configurations with a prefix
+     */
+    public static Properties serializePluginConfigurations(String prefix, final List<PluginConfiguration> configs) {
+        Properties projProps = new Properties();
+        int count = 1;
+        for (PluginConfiguration config : configs) {
+
+            String propPrefix = prefix + "." + count + ".";
+            projProps.setProperty(propPrefix + "type", config.getProvider());
+            Map<String, Object> configuration = config.getConfiguration();
+            for (String k : configuration.keySet()) {
+                Object v = configuration.get(k);
+                projProps.setProperty(propPrefix + "config." + k, v.toString());
+            }
+            count++;
+        }
+        return projProps;
+    }
+
+    /**
      * Return a list of resource model configuration
      * @param props properties
      * @return List of Maps, each map containing "type": String, "props":Properties
