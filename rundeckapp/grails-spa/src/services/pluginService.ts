@@ -75,21 +75,6 @@ export const getServiceProviderDescription = (svcName:string, provider:string) =
   }).catch(e => console.warn('Error getting service provider detail', e))
 }
 
-export const getEventSourceEventTypes = (provider:string) => {
-  return getParameters().then(params => {
-    return client.sendRequest({
-      url: `${params.apiBase}/reactions/events/sources/${provider}/types`,
-      method: 'GET'
-    })
-  }).then(resp => {
-    if (!resp.parsedBody) {
-      throw new Error(`Error getting Event Types for Event Source ${provider}`)
-    } else {
-      return resp
-    }
-  }).catch(e => console.warn(`Error getting Event Types for Event Source ${provider}`, e))
-}
-
 export const validatePluginConfig = async (svcName:string, provider:string, config:any) => {
   const params = await getParameters()
   const resp = await client.sendRequest({
@@ -108,6 +93,5 @@ export const validatePluginConfig = async (svcName:string, provider:string, conf
 export default {
   getPluginProvidersForService,
   getServiceProviderDescription,
-  getEventSourceEventTypes,
   validatePluginConfig
 }
