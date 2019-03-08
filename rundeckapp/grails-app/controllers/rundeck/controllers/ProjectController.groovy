@@ -927,7 +927,7 @@ class ProjectController extends ControllerBase{
                 response.setContentType("text/plain")
                 def props=proj.getProjectProperties() as Properties
                 props.store(response.outputStream,request.forwardURI)
-                flush()
+                flush(response)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
