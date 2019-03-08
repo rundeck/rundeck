@@ -29,7 +29,16 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
-    <meta name="projtabtitle" content="${message(code: 'Node.plural')}"/>
+    <meta name="projtabtitle" content="${message(code: 'framework.service.NodeEnhancer.label.plural')}"/>
+    <meta name="skipPrototypeJs" content="true"/>
+    <script lang="js">
+        const pageConfig = {
+            'configPrefix': 'nodes.plugin',
+            'serviceName': 'NodeEnhancer',
+            'title': '${enc(js:g.message(code:'framework.service.NodeEnhancer.label.plural'))}'
+        };
+        window._rundeck = Object.assign(window._rundeck || {}, {data: pageConfig});
+    </script>
 
     <!-- VUE JS REQUIREMENTS -->
     <asset:javascript src="static/manifest.js"/>
@@ -51,21 +60,7 @@
 
     <div class="row">
         <div class="col-xs-12">
-            <div class="card" id="createform">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <g:message code="Node.plural" default="Nodes"/>
-                        <g:message code="page.Plugins.title" />
-
-                        : <g:enc>${params.project ?: request.project}</g:enc>
-                    </h3>
-                </div>
-
-                <div class="card-content">
-
-                    <div id="project-nodes-config-vue"></div>
-                </div>
-            </div>
+            <div id="project-nodes-config-vue"></div>
         </div>
     </div>
 </div>
