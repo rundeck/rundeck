@@ -30,11 +30,6 @@
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'Node.plural')}"/>
 
-  <!-- VUE JS REQUIREMENTS -->
-  <asset:javascript src="static/manifest.js"/>
-  <asset:javascript src="static/vendor.js"/>
-  <!-- /VUE JS REQUIREMENTS -->
-
     <title><g:message code="Node.plural"/></title>
 
 </head>
@@ -127,9 +122,7 @@
                         </ol>
                       </g:if>
                     </div>
-                  <div class="list-group-item">
-                    <div id="project-nodes-config-vue"></div>
-                  </div>
+
                   </div>
                 </div>
           </div>
@@ -138,8 +131,5 @@
     </div>
   </div>
 
-<!-- VUE JS MODULES -->
-<asset:javascript src="static/pages/project-nodes-config.js"/>
-<!-- /VUE JS MODULES -->
 </body>
 </html>
