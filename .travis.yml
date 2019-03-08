@@ -76,10 +76,15 @@ jobs:
     - script_block 'docker.pull' pull_rdtest
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
 
-  - env: JOB='Docker Tomcat API tests'
+  - env: JOB='Docker Tomcat 8 API tests'
     script:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh'
+
+  - env: JOB='Docker Tomcat 7 API tests'
+    script:
+    - script_block 'sync-artifacts' fetch_common_artifacts
+    - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 7-jre8'
 
   - stage: test
     env: JOB='Test deb install'
