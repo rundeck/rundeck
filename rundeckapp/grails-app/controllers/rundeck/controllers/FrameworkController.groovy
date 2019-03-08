@@ -2986,7 +2986,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
             configStorageService.loadFileResource(storagePath,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
             configStorageService.loadFileResource(storagePath,baos)
@@ -3020,7 +3020,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 configStorageService.loadFileResource(projectFilePath,response.outputStream)
-                response.outputStream.close()
+                flush(response)
             }else{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()

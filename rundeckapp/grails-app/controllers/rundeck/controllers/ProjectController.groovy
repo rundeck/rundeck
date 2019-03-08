@@ -927,7 +927,7 @@ class ProjectController extends ControllerBase{
                 response.setContentType("text/plain")
                 def props=proj.getProjectProperties() as Properties
                 props.store(response.outputStream,request.forwardURI)
-                response.outputStream.close()
+                flush(response)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
@@ -1065,7 +1065,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
             project.loadFileResource(projectFilePath,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
             project.loadFileResource(projectFilePath,baos)
@@ -1104,7 +1104,7 @@ class ProjectController extends ControllerBase{
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 project.loadFileResource(projectFilePath,response.outputStream)
-                response.outputStream.close()
+                flush(response)
             }else if(respFormat in ['json','xml','all'] ){
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
@@ -1255,7 +1255,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
 
             def baos=new ByteArrayOutputStream()
@@ -1313,7 +1313,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
 
             def baos=new ByteArrayOutputStream()
@@ -1404,7 +1404,7 @@ class ProjectController extends ControllerBase{
                 response.setContentType("text/plain")
                 def props=project.getProjectProperties() as Properties
                 props.store(response.outputStream,request.forwardURI)
-                response.outputStream.close()
+                flush(response)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
