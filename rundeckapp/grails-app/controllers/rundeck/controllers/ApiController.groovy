@@ -186,10 +186,10 @@ class ApiController extends ControllerBase{
             response.contentType='text/plain'
             response.outputStream.withWriter('UTF-8') { w ->
                 grailsApplication.config.feature?.incubator?.each { k, v ->
-                    w << "${k}:${v in [true, 'true']}\n"
+                    appendOutput(response, "${k}:${v in [true, 'true']}\n")
                 }
             }
-            response.outputStream.close()
+            flush(response)
         }
     }
     /**

@@ -40,7 +40,6 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.util.MetricsStatsBuilder
 import grails.converters.JSON
-import groovy.transform.CompileStatic
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
@@ -749,7 +748,7 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            appendOutput(msg)
+            appendOutput(response, msg)
             return
         }else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
@@ -784,8 +783,8 @@ class ExecutionController extends ControllerBase{
                 } catch (Exception exc) {
                 }
             }
-            appendOutput((isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message))
-            appendOutput(lineSep)
+            appendOutput(response, (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message))
+            appendOutput(response, lineSep)
         }
         iterator.close()
     }
@@ -809,12 +808,12 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            appendOutput(msg)
+            appendOutput(response, msg)
             return
         }else if(reader.state == ExecutionLogState.WAITING){
             if(params.reload=='true') {
                 response.setContentType("text/html")
-                appendOutput('''<html>
+                appendOutput(response, '''<html>
                 <head>
                 <title></title>
                 </head>
@@ -823,8 +822,8 @@ class ExecutionController extends ControllerBase{
                 <div class="row">
                 <div class="col-sm-12">
                 ''')
-                appendOutput(g.message(code: "execution.html.waiting"))
-                appendOutput('''
+                appendOutput(response, g.message(code: "execution.html.waiting"))
+                appendOutput(response, '''
                 </div>
                 <script>
                 setTimeout(function(){
@@ -855,7 +854,7 @@ class ExecutionController extends ControllerBase{
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
         response.setContentType("text/html")
-        appendOutput("""<html>
+        appendOutput(response, """<html>
 <head>
 <title></title>
 <link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
@@ -897,15 +896,15 @@ class ExecutionController extends ControllerBase{
             }
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
-            appendOutput("<div class=\"$css\" >")
-            appendOutput(msghtml)
-            appendOutput('</div>')
+            appendOutput(response, "<div class=\"$css\" >")
+            appendOutput(response, msghtml)
+            appendOutput(response, '</div>')
 
-            appendOutput(lineSep)
+            appendOutput(response, lineSep)
         }
         iterator.close()
         if(jobcomplete || params.reload!='true'){
-            appendOutput('''</div>
+            appendOutput(response, '''</div>
 </div>
 </div>
 </div>
@@ -913,7 +912,7 @@ class ExecutionController extends ControllerBase{
 </html>
 ''')
         }else{
-            appendOutput('''</div>
+            appendOutput(response, '''</div>
 </div>
 </div>
 </div>
@@ -927,11 +926,6 @@ setTimeout(function(){
 ''')
         }
 
-    }
-
-    @CompileStatic
-    private void appendOutput(def output) {
-        response.outputStream << output
     }
 
     /**
@@ -1592,12 +1586,9 @@ setTimeout(function(){
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
 
-                try {
-                    entry.each{
-                        appendOutput(it.mesg+lineSep)
-                    }
-                } finally {
-                    response.outputStream.close()
+                
+                entry.each{
+                    appendOutput(response, it.mesg+lineSep)
                 }
             }
         }
