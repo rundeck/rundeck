@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.WriteableModelSource;
 
@@ -97,9 +98,18 @@ public interface IProjectNodes {
      * <ul>
      * <li>type - provider type name</li>
      * <li>props - configuration properties</li>
-     * </ul>
+     * </ul>@deprecated use {@link #listResourceModelPluginConfigurations()}
      */
+    @Deprecated
     List<Map<String, Object>> listResourceModelConfigurations();
 
+    List<PluginConfiguration> listResourceModelPluginConfigurations();
+
+    List<PluginConfiguration> listNodeEnhancerConfigurations();
+
+    List<PluginConfiguration> listPluginConfigurations(
+            final String keyprefix,
+            final String serviceName
+    );
 
 }
