@@ -23,20 +23,14 @@ import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.*
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.*
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
@@ -47,6 +41,7 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.ExecutionServiceException
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -57,6 +52,7 @@ import java.util.function.Predicate
 class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
+    public static final List PLUGINS_TYPES = ['Notification','WorkflowNodeStep', 'RemoteScriptNodeStep']
 
     boolean initialized = false
     private String serverUUID
@@ -954,6 +950,23 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         ProjectNodeSupport.listResourceModelConfigurations(properties)
     }
 
+    public def listPluginsConfigurations(Properties properties) {
+        Properties props = [:]
+        List config = []
+        PLUGINS_TYPES.each { pluginType ->
+            Set<String> types = pluginService.listPlugins(pluginService.getPluginTypeByService(pluginType))?.keySet()
+            types.each {type ->
+                Properties projectProperties = properties.findAll {p -> p.key.startsWith "project.plugin.${pluginType}.${type}"}
+                if(projectProperties){
+                    props.putAll(projectProperties)
+                    config += [type: type, props: props]
+                }
+            }
+        }
+
+        return config
+    }
+
     /**
      * Return all the Node Exec plugin type descriptions for the Rundeck Framework, in the order:
 
@@ -965,6 +978,20 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         final nodeexecdescriptions = pluginService.listPluginDescriptions(NodeExecutor, fmk.getNodeExecutorService())
         final filecopydescs = pluginService.listPluginDescriptions(FileCopier, fmk.getFileCopierService())
         return [descriptions, nodeexecdescriptions, filecopydescs]
+    }
+
+    public def listPluginsDescriptions() {
+        List descs = []
+        PLUGINS_TYPES.each { pluginType ->
+            List descriptions = pluginService.listPlugins(pluginService.getPluginTypeByService(pluginType))?.values()?.description
+            descs.addAll(descriptions)
+        }
+
+        return descs
+    }
+
+    public List getPluginsTypes(){
+        return PLUGINS_TYPES
     }
 
 

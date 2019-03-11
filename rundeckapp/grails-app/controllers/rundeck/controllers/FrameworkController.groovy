@@ -16,36 +16,31 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.api.project.sources.Source
+import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.project.sources.Resources
+import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodes
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.ProjectNodeSupport
-import com.dtolabs.rundeck.core.common.ProviderService
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource
-import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
-import com.dtolabs.shared.resources.ResourceXMLGenerator
-
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
@@ -53,43 +48,15 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
-import org.springframework.util.MimeTypeUtils
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PluginService
-import rundeck.services.ScheduledExecutionService
+import rundeck.User
+import rundeck.services.*
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
-import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.common.INodeSet
-import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.core.common.Framework
-
-import com.dtolabs.rundeck.core.common.NodesFileGenerator
-import com.dtolabs.rundeck.core.common.NodesYamlGenerator
-import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-
-import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.FrameworkResource
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.ExtNodeFilters
-import rundeck.User
-import rundeck.NodeFilter
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.UserService
-import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
@@ -99,6 +66,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     PasswordFieldsService resourcesPasswordFieldsService
     PasswordFieldsService execPasswordFieldsService
+    PasswordFieldsService pluginsPasswordFieldsService
     PasswordFieldsService fcopyPasswordFieldsService
 
     def metricService
@@ -1060,6 +1028,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 errors << e.getMessage()
             }
 
+            def ndx=0
+            final def pluginsDescs = frameworkService.listPluginsDescriptions()
+            final def pluginsConfig = frameworkService.
+                    listPluginsConfigurations(projProps).
+                    collect{
+                        [
+                                config: it,
+                                index:ndx++
+                        ]
+                    }
+
+            try {
+                pluginsPasswordFieldsService.untrack(pluginsConfig, *pluginsDescs)
+                pluginsConfig.each {pconfig ->
+                    def props=pconfig.config.props
+                    def type = pconfig.config.type
+                    frameworkService.getPluginsTypes().each {
+                        String propPassowordName = "project.plugin.${it}.${type}.password"
+                        if(props[propPassowordName]){
+                            projProps[propPassowordName] = props[propPassowordName]
+                        }
+                    }
+                }
+            } catch (rundeck.services.ExecutionServiceException e){
+                log.error(e.message)
+                errors << e.getMessage()
+            }
+
             //validate input values
             final fcvalidation = frameworkService.validateServiceConfig(fileCopyType, "", filecopyConfig, fileCopierService)
             if (!fcvalidation.valid) {
@@ -1119,6 +1115,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 flash.message = "Project ${project} configuration file saved"
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
+                pluginsPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
                 return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
@@ -2133,6 +2130,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final def framework = frameworkService.getRundeckFramework()
         final def fwkProject = frameworkService.getFrameworkProject(project)
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
+        final def pluginsDescs = frameworkService.listPluginsDescriptions()
 
         def projectProps = fwkProject.getProjectProperties() as Properties
 
@@ -2144,13 +2142,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, projectProps)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, projectProps)
         final resourceConfig = frameworkService.listResourceModelConfigurations(projectProps)
+        final pluginsConfig = frameworkService.listPluginsConfigurations(projectProps)
 
         // Reset Password Fields in Session
         resourcesPasswordFieldsService.reset()
         execPasswordFieldsService.reset()
+        pluginsPasswordFieldsService.reset()
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
+        pluginsPasswordFieldsService.trackPluginFields(pluginsConfig, true, *pluginsDescs)
         resourcesPasswordFieldsService.track(resourceConfig,true, *resourceDescs)
         if(defaultNodeExec) {
             execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], true, *execDesc)
@@ -2179,6 +2180,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projectProps[resourceType] = type
             resconfig.props.each{k,v->
                 projectProps[resourceConfigPrefix+k]=v
+            }
+        }
+
+        pluginsConfig.each {pconfig ->
+            def type = pconfig.type
+            frameworkService.getPluginsTypes().each {
+                String propPassowordName = "project.plugin.${it}.${type}.password"
+                String value = pconfig.props[propPassowordName]
+                if(value){
+                    projectProps[propPassowordName] = pconfig.props[propPassowordName]
+                }
             }
         }
 

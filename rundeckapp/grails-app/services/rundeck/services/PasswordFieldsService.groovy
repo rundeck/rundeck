@@ -24,6 +24,7 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import java.security.InvalidKeyException
 import java.security.SecureRandom
+import java.util.Map.Entry
 
 class PasswordFieldsService {
 
@@ -100,6 +101,43 @@ class PasswordFieldsService {
             for (property in desc.getProperties()) {
                 if (isPasswordDisplay(property)) {
                     String key = property.getName()
+                    String value = config.props[key]
+                    if(value!=null){
+                        def h = hidden?'*****':hash(value)
+
+                        config.props[key] = h
+                        fields.put(fieldKey(key, configPos), [original: value, hash: h])
+                        count++
+                    }
+                }
+            }
+            configPos++
+        }
+        return count
+    }
+
+    public int trackPluginFields(configurations,boolean hidden, Description... descriptions) {
+        if(!configurations) {
+            return 0
+        }
+
+        int count = 0
+        int configPos = 0
+        for (config in configurations) {
+            Map props =  config.props
+            if (config == null) {
+                continue
+            }
+
+            Description desc = descriptions.find { it.name == config.type }
+            if (desc == null) {
+                configPos++
+                continue
+            }
+
+            for (property in props) {
+                if (isPluginPasswordProperty(property)) {
+                    String key = property.getKey()
                     String value = config.props[key]
                     if(value!=null){
                         def h = hidden?'*****':hash(value)
@@ -215,6 +253,11 @@ class PasswordFieldsService {
 
     private boolean isPasswordDisplay(Property property) {
         property.renderingOptions[StringRenderingConstants.DISPLAY_TYPE_KEY]?.toString() == StringRenderingConstants.DisplayType.PASSWORD.toString()
+    }
+
+    private boolean isPluginPasswordProperty(Entry property) {
+        String propName = property.getKey()
+        propName?.split("\\.")?.last() == "password"
     }
 
     private String hash(String input) {
