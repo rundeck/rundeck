@@ -1040,8 +1040,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         if (serviceType) {
             try {
                 def described = pluginService.getPluginDescriptor(serviceType, service)
-                final desc = described.description
-                properties = Validator.demapProperties(props, desc)
+                if(described) {
+                    final desc = described.description
+                    properties = Validator.demapProperties(props, desc)
+                }
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
                 log.debug(e.message,e)
@@ -1115,6 +1117,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         Set removePrefixes
     ) {
         final described = pluginService.getPluginDescriptor(type, service)
+        if(!described){
+            return
+        }
         final Description desc = described.description
         projProps[defaultProviderProp] = type
         mapProperties(config, desc, projProps)
