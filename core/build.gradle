@@ -70,7 +70,7 @@ dependencies {
         'jaxen:jaxen:1.1.6',
         'commons-cli:commons-cli:1.0',
         'org.apache.ant:ant-jsch:1.8.3',
-        'com.jcraft:jsch:0.1.54',
+        'com.jcraft:jsch:0.1.55',
         'com.jcraft:jsch.agentproxy.jsch:0.0.9',
         'com.jcraft:jsch.agentproxy.sshagent:0.0.9',
         'com.jcraft:jsch.agentproxy.usocket-jna:0.0.9',

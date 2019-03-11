@@ -112,7 +112,7 @@ fi
 /var/lib/rundeck/cli/jsch.agentproxy.sshagent-0.0.9.jar
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-jna-0.0.9.jar
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-nc-0.0.9.jar
-/var/lib/rundeck/cli/jsch-0.1.54.jar
+/var/lib/rundeck/cli/jsch-0.1.55.jar
 /var/lib/rundeck/cli/log4j-1.2.17.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
