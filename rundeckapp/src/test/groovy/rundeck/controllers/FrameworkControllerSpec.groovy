@@ -18,12 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodes
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -34,29 +29,17 @@ import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerato
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.plugins.metricsweb.MetricService
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.User
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.FrameworkService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.StorageManager
-import rundeck.services.UserService
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
-
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
@@ -1102,6 +1085,36 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==200
         request.errors == ['project.name.can.only.contain.these.characters']
+        model.projectDescription == description
+
+    }
+
+    def "create project with invalid description name"(){
+        setup:
+        controller.metricService = Mock(MetricService)
+        def rdframework=Mock(Framework){
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+
+
+        def description = '<b>Project Desc</b>'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==200
+        request.errors == ['project.description.can.only.contain.these.characters']
         model.projectDescription == description
 
     }
