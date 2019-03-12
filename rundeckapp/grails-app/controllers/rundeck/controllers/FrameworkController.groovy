@@ -31,12 +31,22 @@ import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.resources.FileResourceModelSource
+import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.converters.XML
@@ -83,6 +93,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         storeNodeFilter          : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
+            saveProjectPluginsAjax   : 'POST',
     ]
 
     def index = {
@@ -1331,6 +1342,207 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return redirect(action: 'projectNodeSources', params: [project: project])
     }
 
+    def projectNodePlugins() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+    }
+
+    def projectPluginsAjax() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!params.serviceName) {
+            return renderErrorView("serviceName parameter is required")
+        }
+        if (!params.configPrefix) {
+            return renderErrorView("configPrefix parameter is required")
+        }
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        def framework = frameworkService.getRundeckFramework()
+        def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
+        def plugins = ProjectNodeSupport.listPluginConfigurations(
+                rdprojectconfig.projectProperties,
+                params.configPrefix,//"nodes.plugin",
+                params.serviceName
+        )
+        //TODO: password fields
+        // Reset Password Fields in Session
+//        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+
+        respond(
+                formats: ['json'],
+                [
+                        project: project,
+                        plugins: plugins.collect { PluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration, service: conf.service]
+                        },
+                ]
+        )
+    }
+
+    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+        if (!valid) {
+            return
+        }
+
+        if (request.format != 'json') {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args  : [request.format]
+            ]
+            )
+        }
+
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!serviceName) {
+            return renderErrorView("serviceName parameter is required")
+        }
+        if (!configPrefix) {
+            return renderErrorView("configPrefix parameter is required")
+        }
+        def plugins = request.JSON.plugins
+
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        //TODO: password fields
+        // Reset Password Fields in Session
+//        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+
+        def errors = []
+        def reports = [:]
+        List<PluginConfiguration> configs = []
+
+        //only attempt project create if form POST is used
+
+
+//        resourcesPasswordFieldsService.adjust(ndxes)
+
+        plugins.eachWithIndex { pluginDef, int ndx ->
+
+            String type = pluginDef.type
+            if (!type) {
+                errors << "[$ndx]: missing type"
+                return
+            }
+
+            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "Invalid provider type name for #${ndx} "
+                return
+            }
+
+            def described = pluginService.getPluginDescriptor(type, serviceName)
+            if (!described) {
+                errors << "$serviceName provider was not found: ${type}"
+                return
+            }
+
+            //validate
+            Map configMap = pluginDef.config ?: [:]
+            ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
+            if (!validated.valid) {
+                errors << "[$ndx]: configuration was invalid: $validated.report"
+                reports["$ndx"] = validated.report.errors
+                return
+            }
+
+
+            configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                    .service(serviceName)
+                    .provider(type)
+                    .configuration(configMap)
+                    .build()
+        }
+
+        //replace any unmodified password fields with the session data
+//        resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
+
+
+        if (!errors) {
+
+            Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs)
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix].toSet())
+            if (!result.success) {
+                errors << result.error
+            }
+        }
+
+        if (errors) {
+            return respond(
+                    formats: ['json'],
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    [
+                            errors : errors,
+                            reports: reports
+                    ]
+            )
+        }
+
+//            resourcesPasswordFieldsService.reset()
+//        return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+
+        respond(
+                formats: ['json'],
+                [
+                        project: project,
+                        plugins: plugins
+                ]
+        )
+    }
     def projectNodeSources() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -2959,7 +3171,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
             configStorageService.loadFileResource(storagePath,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
             configStorageService.loadFileResource(storagePath,baos)
@@ -2993,7 +3205,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 configStorageService.loadFileResource(projectFilePath,response.outputStream)
-                response.outputStream.close()
+                flush(response)
             }else{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()

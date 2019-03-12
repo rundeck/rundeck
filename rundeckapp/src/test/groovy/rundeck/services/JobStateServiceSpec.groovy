@@ -44,6 +44,8 @@ class JobStateServiceSpec extends Specification {
 
         service.frameworkService=Stub(FrameworkService){
             authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
+            authorizeProjectJobAny(null,!null,!null,!null) >>> [true,true]
+            authorizeProjectJobAny(!null,!null,!null,!null) >>> [true,true]
             filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth, exec,actions->
                 return exec
             }

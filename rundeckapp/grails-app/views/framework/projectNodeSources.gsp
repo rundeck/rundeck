@@ -29,6 +29,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'Node.plural')}"/>
+
     <title><g:message code="Node.plural"/></title>
 
 </head>
@@ -121,6 +122,7 @@
                         </ol>
                       </g:if>
                     </div>
+
                   </div>
                 </div>
           </div>
@@ -128,5 +130,6 @@
       </g:form>
     </div>
   </div>
+
 </body>
 </html>

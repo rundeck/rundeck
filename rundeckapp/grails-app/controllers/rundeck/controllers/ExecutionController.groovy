@@ -748,7 +748,7 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            response.outputStream << msg
+            appendOutput(response, msg)
             return
         }else if (reader.state != ExecutionLogState.AVAILABLE) {
             //TODO: handle other states
@@ -783,8 +783,8 @@ class ExecutionController extends ControllerBase{
                 } catch (Exception exc) {
                 }
             }
-            response.outputStream << (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message)
-            response.outputStream<<lineSep
+            appendOutput(response, (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message))
+            appendOutput(response, lineSep)
         }
         iterator.close()
     }
@@ -808,11 +808,12 @@ class ExecutionController extends ControllerBase{
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
-            response.outputStream << msg
+            appendOutput(response, msg)
             return
         }else if(reader.state == ExecutionLogState.WAITING){
             if(params.reload=='true') {
-                response.outputStream << '''<html>
+                response.setContentType("text/html")
+                appendOutput(response, '''<html>
                 <head>
                 <title></title>
                 </head>
@@ -820,9 +821,9 @@ class ExecutionController extends ControllerBase{
                 <div class="container">
                 <div class="row">
                 <div class="col-sm-12">
-                '''
-                response.outputStream << g.message(code: "execution.html.waiting")
-                response.outputStream << '''
+                ''')
+                appendOutput(response, g.message(code: "execution.html.waiting"))
+                appendOutput(response, '''
                 </div>
                 <script>
                 setTimeout(function(){
@@ -831,7 +832,7 @@ class ExecutionController extends ControllerBase{
                 </script>
                 </body>
                 </html>
-                '''
+                ''')
             }else{
                 response.setStatus(HttpServletResponse.SC_NOT_FOUND)
                 log.error("Output file not available")
@@ -852,7 +853,8 @@ class ExecutionController extends ControllerBase{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
-        response.outputStream<<"""<html>
+        response.setContentType("text/html")
+        appendOutput(response, """<html>
 <head>
 <title></title>
 <link rel="stylesheet" href="${g.assetPath(src:'app.less.css')}"  />
@@ -862,7 +864,7 @@ class ExecutionController extends ControllerBase{
 <div class="container">
 <div class="row">
 <div class="col-sm-12">
-<div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >"""
+<div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >""")
 
         def csslevel=!(params.loglevels in ['off','false'])
         def renderContent = shouldConvertContent(params)
@@ -894,23 +896,23 @@ class ExecutionController extends ControllerBase{
             }
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
-            response.outputStream << "<div class=\"$css\" >"
-            response.outputStream << msghtml
-            response.outputStream << '</div>'
+            appendOutput(response, "<div class=\"$css\" >")
+            appendOutput(response, msghtml)
+            appendOutput(response, '</div>')
 
-            response.outputStream<<lineSep
+            appendOutput(response, lineSep)
         }
         iterator.close()
         if(jobcomplete || params.reload!='true'){
-            response.outputStream << '''</div>
+            appendOutput(response, '''</div>
 </div>
 </div>
 </div>
 </body>
 </html>
-'''
+''')
         }else{
-            response.outputStream << '''</div>
+            appendOutput(response, '''</div>
 </div>
 </div>
 </div>
@@ -921,7 +923,7 @@ setTimeout(function(){
 </script>
 </body>
 </html>
-'''
+''')
         }
 
     }
@@ -1583,12 +1585,11 @@ setTimeout(function(){
                 response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
-                response.outputStream.withWriter("UTF-8"){w->
-                    entry.each{
-                        w<<it.mesg+lineSep
-                    }
+
+                
+                entry.each{
+                    appendOutput(response, it.mesg+lineSep)
                 }
-                response.outputStream.close()
             }
         }
     }

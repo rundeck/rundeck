@@ -16,13 +16,13 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionException
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
+import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import groovy.transform.CompileStatic
 import org.springframework.beans.factory.annotation.Autowired
@@ -36,6 +36,28 @@ class DirectNodeExecutionService implements NodeExecutionService {
             throws ExecutionException {
         def service = frameworkService.getRundeckFramework().getExecutionService()
         return service.executeCommand(context, command, node)
+    }
+
+    @Override
+    String fileCopyFileStream(
+            final ExecutionContext context,
+            final InputStream input,
+            final INodeEntry node,
+            final String destinationPath
+    ) throws FileCopierException {
+        def service = frameworkService.getRundeckFramework().getExecutionService()
+        return service.fileCopyFileStream(context, input, node, destinationPath)
+    }
+
+    @Override
+    String fileCopyFile(
+            final ExecutionContext context,
+            final File file,
+            final INodeEntry node,
+            final String destinationPath
+    ) throws FileCopierException {
+        def service = frameworkService.getRundeckFramework().getExecutionService()
+        return service.fileCopyFile(context, file, node, destinationPath)
     }
 
     NodeExecutionService nodeExecutionServiceWithAuth(final UserAndRolesAuthContext authContext) {

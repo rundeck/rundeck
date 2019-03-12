@@ -47,6 +47,13 @@
         //-->
     </script>
     <style type="text/css">
+        .sso-login-container {
+            display: flex;
+            flex-wrap: nowrap;
+            padding: 0 30px;
+            align-items: center;
+            justify-items: center;
+        }
         .sso-login {
             margin: 10px auto;
             border-bottom: 1px solid #0f0f0f;
@@ -55,14 +62,13 @@
         .sso-login-img {
             border: 2px solid #167df0;
             border-radius: 2px 0 0 2px;
-            padding: 5px 6px;
-            margin: -5px;
-            height: 16px;
-            width: auto;
+            padding: 7px 6px 6px 6px;
+            flex: 0 0 auto;
         }
         .sso-login-link {
+            flex: auto;
             padding: 4px 10px;
-            border-radius: 2px;
+            border-radius: 0 2px 2px 0;
             border: 1px solid #167df0;
             background-color: #167df0;
             color: #fff;
@@ -119,8 +125,10 @@
                     <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled in [true,'true']}">
                           <div class="sso-login">
                               <div class='form-group'>
+                                  <div class="sso-login-container">
                                   <g:if test="${grailsApplication.config.rundeck.sso.loginButton.image.enabled in [true,'true']}"><img src="${resource(dir: 'images', file: 'rundeck2-icon-16.png')}" alt="Rundeck" class="sso-login-img" /></g:if>
                                   <a class='sso-login-link' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                                  </div>
                               </div>
                           </div>
                     </g:if>
