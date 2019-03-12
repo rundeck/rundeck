@@ -33,6 +33,7 @@ import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
+import rundeck.Project
 import rundeck.User
 import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
@@ -1089,7 +1090,7 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
-    def "create project with invalid description name"(){
+    def "create project description name with invalid characters"(){
         setup:
         controller.metricService = Mock(MetricService)
         def rdframework=Mock(Framework){
@@ -1116,6 +1117,66 @@ class FrameworkControllerSpec extends Specification {
         response.status==200
         request.errors == ['project.description.can.only.contain.these.characters']
         model.projectDescription == description
+
+    }
+
+    def "create project description name starting with space"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ' Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+    }
+
+    def "create project description name starting with numbers"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = '1 Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+
+    }
+
+    def "create project description name starting with parenthesis"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+
+        def description = '(1) Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
 
     }
 
@@ -1173,5 +1234,27 @@ class FrameworkControllerSpec extends Specification {
         response.redirectedUrl == "/project/$project/nodes/sources"
         flash.message == "Project ${project} Node Sources saved"
         result == null
+    }
+
+    def setupNewProjectWithDescriptionOkTest(){
+        controller.metricService = Mock(MetricService)
+        def project = Mock(Project){
+            getName()>>"projName"
+        }
+        def projectManager = Mock(ProjectManager){
+            existsFrameworkProject( )>>false
+        }
+        def rdframework=Mock(Framework){
+            1 * getFrameworkProjectMgr()>>projectManager
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            1 * createFrameworkProject(_,_)>>[project, null]
+            1 * refreshSessionProjects(_,_)>>null
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
     }
 }
