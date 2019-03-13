@@ -79,11 +79,11 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
 
     static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
 
-    private exportJob(ScheduledExecution job, Writer writer)
+    private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
         throws ProjectServiceException {
         //convert map to xml
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder([job], xml)
+        JobsXMLCodec.encodeWithBuilder([job], xml, true, [:], stripJobRef)
     }
 
     def exportHistoryReport(ZipBuilder zip, BaseReport report, String name) throws ProjectServiceException {
@@ -675,6 +675,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportReadmes = !options || options.all || options.readmes
         def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
         def isExportScm = scmConfigure && (!options || options.all || options.scm)
+        def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
         if (options && options.executionsOnly) {
             listener?.total(
                     'export',
@@ -710,7 +711,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 dir('jobs/') {
                     jobs.each { ScheduledExecution job ->
                         zip.file("job-${job.extid.encodeAsURL()}.xml") { Writer writer ->
-                            exportJob job, writer
+                            exportJob job, writer, stripJobRef
                             listener?.inc('export', 1)
                         }
                     }
@@ -1489,6 +1490,8 @@ class ArchiveOptions{
     boolean readmes = false
     boolean acls = false
     boolean scm = false
+    String stripJobRef = null
+
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){
             executionIds=new HashSet(execidsparam.split(',') as List)
