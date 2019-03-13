@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopier
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -51,6 +52,7 @@ import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
 import org.springframework.util.MimeTypeUtils
@@ -1381,17 +1383,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
     }
 
-    def projectPluginsAjax() {
-        if (!params.project) {
+    def projectPluginsAjax(String project, String serviceName, String configPrefix) {
+        if (!project) {
             return renderErrorView("Project parameter is required")
         }
-        if (!params.serviceName) {
+        if (!serviceName) {
             return renderErrorView("serviceName parameter is required")
         }
-        if (!params.configPrefix) {
+        if (!configPrefix) {
             return renderErrorView("configPrefix parameter is required")
         }
-        def project = params.project
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAll(
                         frameworkService.getAuthContextForSubject(session.subject),
@@ -1407,8 +1408,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def plugins = ProjectNodeSupport.listPluginConfigurations(
                 rdprojectconfig.projectProperties,
-                params.configPrefix,//"nodes.plugin",
-                params.serviceName
+                configPrefix,
+                serviceName,
+                true
         )
         //TODO: password fields
         // Reset Password Fields in Session
@@ -1421,8 +1423,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 formats: ['json'],
                 [
                         project: project,
-                        plugins: plugins.collect { PluginConfiguration conf ->
-                            [type: conf.provider, config: conf.configuration, service: conf.service]
+                        plugins: plugins.collect { ExtPluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
                         },
                 ]
         )
@@ -1486,7 +1488,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def errors = []
         def reports = [:]
-        List<PluginConfiguration> configs = []
+        List<ExtPluginConfiguration> configs = []
 
         //only attempt project create if form POST is used
 
@@ -1502,13 +1504,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
-                errors << "Invalid provider type name for #${ndx} "
+                errors << "[$ndx]: Invalid provider type name"
                 return
             }
 
             def described = pluginService.getPluginDescriptor(type, serviceName)
             if (!described) {
-                errors << "$serviceName provider was not found: ${type}"
+                errors << "[$ndx]: $serviceName provider was not found: ${type}"
                 return
             }
 
@@ -1520,12 +1522,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 reports["$ndx"] = validated.report.errors
                 return
             }
+            Map extraMap = pluginDef.extra ?: [:]
 
 
             configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
                     .service(serviceName)
                     .provider(type)
                     .configuration(configMap)
+                    .extra(extraMap)
                     .build()
         }
 
@@ -1535,8 +1539,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         if (!errors) {
 
-            Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs)
-            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix].toSet())
+            Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
             if (!result.success) {
                 errors << result.error
             }
@@ -1545,7 +1549,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (errors) {
             return respond(
                     formats: ['json'],
-                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
                     [
                             errors : errors,
                             reports: reports
