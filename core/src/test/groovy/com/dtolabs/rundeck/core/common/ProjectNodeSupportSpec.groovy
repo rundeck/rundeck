@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common
 
+import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -165,6 +166,92 @@ class ProjectNodeSupportSpec extends Specification {
                     (prefix + '.2.config.z'): 'w',
 
             ]
+    }
+
+    def "serialize plugin config with extra"() {
+        given:
+            def prefix = "test1.abc"
+            List<ExtPluginConfiguration> configs = [
+                    new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                            .service('AService')
+                            .provider('provider1')
+                            .extra([q: 't', r: 'v', type: 'nogo', 'config.blah': 'alsonot'])
+                            .configuration(
+                            [
+                                    a: 'b',
+                                    c: 'd'
+                            ]
+                    ).build(),
+
+                    new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                            .service('AService')
+                            .provider('provider2')
+                            .configuration(
+                            [
+                                    x: 'y',
+                                    z: 'w'
+                            ]
+                    ).build(),
+
+            ]
+        when:
+            def result = ProjectNodeSupport.serializePluginConfigurations(prefix, configs, true)
+        then:
+            result
+            result.size() == 8
+            result == [
+                    (prefix + '.1.type')    : 'provider1',
+                    (prefix + '.1.config.a'): 'b',
+                    (prefix + '.1.config.c'): 'd',
+                    (prefix + '.1.q')       : 't',
+                    (prefix + '.1.r')       : 'v',
+                    (prefix + '.2.type')    : 'provider2',
+                    (prefix + '.2.config.x'): 'y',
+                    (prefix + '.2.config.z'): 'w',
+
+            ]
+    }
+
+    def "read plugin configs with extra"() {
+
+        given:
+            def prefix = "xyz"
+            def props = [
+                    (prefix + '.1.type')    : 'provider1',
+                    (prefix + '.1.config.a'): 'b',
+                    (prefix + '.1.config.c'): 'd',
+                    (prefix + '.1.q')       : 't',
+                    (prefix + '.1.r')       : 'v',
+                    (prefix + '.2.type')    : 'provider2',
+                    (prefix + '.2.config.x'): 'y',
+                    (prefix + '.2.config.z'): 'w',
+
+            ]
+            def svc = "asdf"
+        when:
+
+            def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
+        then:
+            result.size() == 2
+            result[0].service == svc
+            result[0].provider == 'provider1'
+            result[0].configuration == [
+                    a: 'b',
+                    c: 'd'
+            ]
+            result[0].extra == [
+                    q: 't',
+                    r: 'v'
+            ]
+
+
+            result[1].service == svc
+            result[1].provider == 'provider2'
+            result[1].configuration == [
+                    x: 'y',
+                    z: 'w'
+            ]
+            result[1].extra == [:]
 
 
     }
