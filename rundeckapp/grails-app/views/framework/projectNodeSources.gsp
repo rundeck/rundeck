@@ -58,6 +58,18 @@
                 <g:icon name="pencil"/>
                 <g:message code="project.configure.nodes.title"/>
               </g:link>
+              
+              <feature:enabled name="enhanced-nodes">
+                <g:link controller="framework" action="projectNodePlugins"
+                        params="[project: params.project ?: request.project]"
+                        class="has_tooltip pull-right btn btn-default btn-xs"
+                        data-placement="bottom"
+                        title="Node Enhancer Plugins">
+                  <i class="fas fa-puzzle-piece"></i>
+                  Manage Plugins
+                </g:link>
+              </feature:enabled>
+
             </h3>
           </div>
           <div class="card-content">
