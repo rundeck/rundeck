@@ -21,7 +21,10 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
@@ -1236,6 +1239,7 @@ class FrameworkControllerSpec extends Specification {
         result == null
     }
 
+
     def setupNewProjectWithDescriptionOkTest(){
         controller.metricService = Mock(MetricService)
         def project = Mock(Project){
@@ -1256,5 +1260,335 @@ class FrameworkControllerSpec extends Specification {
             1 * refreshSessionProjects(_,_)>>null
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
+    }
+  
+    def "projectPluginsAjax"() {
+        given:
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+        when:
+            controller.projectPluginsAjax(project, serviceName, configPrefix)
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
+                        getProjectProperties() >> [
+                                'xyz.1.type'          : 'atype1',
+                                'xyz.1.config.blah'   : 'blahval',
+                                'xyz.1.mongo'         : 'extramongo',
+                                'xyz.2.type'          : 'atype2',
+                                'xyz.2.config.zeeblah': 'zblahval',
+                                'xyz.2.blango'        : 'extrablango',
+                        ]
+                    }
+                }
+            }
+
+
+            response.status == 200
+            response.json == [
+                    project: project,
+                    plugins: [
+                            [
+                                    type   : 'atype1',
+                                    service: serviceName,
+                                    config : [blah: 'blahval'],
+                                    extra  : [mongo: 'extramongo']
+                            ],
+                            [
+                                    type   : 'atype2',
+                                    service: serviceName,
+                                    config : [zeeblah: 'zblahval'],
+                                    extra  : [blango: 'extrablango']
+                            ]
+                    ]
+            ]
+    }
+
+    def "save project plugins ajax ok"() {
+        given:
+
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            def inputData = [
+                    plugins: [
+                            [type  : '1type',
+                             config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 200
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == ([project: project] + inputData)
+    }
+
+    def "save project plugins ajax error  type name"() {
+        given:
+
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : type,
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            type        | msg
+            null        | '[0]: missing type'
+            'asdf asdf' | '[0]: Invalid provider type name'
+    }
+
+    def "save project plugins ajax error missing plugin"() {
+        given:
+
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            msg = '[0]: SomeService provider was not found: 1type'
+    }
+
+    def "save project plugins ajax error plugin validation"() {
+        given:
+
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
+
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: false, report: report)
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: ['0': [bongo: 'Invalid value']],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            msg = '[0]: configuration was invalid: Property validation FAILED. errors={bongo=Invalid value}'
+    }
+
+    def "save project plugins ajax error saving config"() {
+        given:
+
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
+
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: false, error: 'Project does not exist']
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            'Project does not exist'
+                    ]
+            ]
+
     }
 }
