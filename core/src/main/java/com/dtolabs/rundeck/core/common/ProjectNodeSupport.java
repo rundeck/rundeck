@@ -17,10 +17,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.CloseableProvider;
-import com.dtolabs.rundeck.core.plugins.Closeables;
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
-import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
@@ -547,7 +544,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return a list of PluginConfiguration
      */
     @Override
-    public synchronized List<PluginConfiguration> listResourceModelPluginConfigurations() {
+    public synchronized List<ExtPluginConfiguration> listResourceModelPluginConfigurations() {
         return listPluginConfigurations(
                 projectConfig.getProjectProperties(),
                 RESOURCES_SOURCE_PROP_PREFIX,
@@ -561,7 +558,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return a list of PluginConfiguration
      */
     @Override
-    public synchronized List<PluginConfiguration> listNodeEnhancerConfigurations() {
+    public synchronized List<ExtPluginConfiguration> listNodeEnhancerConfigurations() {
         return listPluginConfigurations(
                 projectConfig.getProjectProperties(),
                 NODE_ENHANCER_PROP_PREFIX,
@@ -599,12 +596,49 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         int count = 1;
         for (PluginConfiguration config : configs) {
 
+            serializeProp(prefix, projProps, count, config);
+            count++;
+        }
+        return projProps;
+    }
+
+    public static void serializeProp(
+            final String prefix,
+            final Properties projProps,
+            final int count,
+            final PluginConfiguration config
+    )
+    {
+        String propPrefix = prefix + "." + count + ".";
+        projProps.setProperty(propPrefix + "type", config.getProvider());
+        Map<String, Object> configuration = config.getConfiguration();
+        for (String k : configuration.keySet()) {
+            Object v = configuration.get(k);
+            projProps.setProperty(propPrefix + "config." + k, v.toString());
+        }
+    }
+
+    /**
+     * @param extra if true, include extra data
+     * @return Properties form for the serialized list of indexed plugin configurations with a prefix
+     */
+    public static Properties serializePluginConfigurations(
+            String prefix,
+            final List<ExtPluginConfiguration> configs,
+            boolean extra
+    )
+    {
+        Properties projProps = new Properties();
+        int count = 1;
+        for (ExtPluginConfiguration config : configs) {
             String propPrefix = prefix + "." + count + ".";
-            projProps.setProperty(propPrefix + "type", config.getProvider());
-            Map<String, Object> configuration = config.getConfiguration();
-            for (String k : configuration.keySet()) {
-                Object v = configuration.get(k);
-                projProps.setProperty(propPrefix + "config." + k, v.toString());
+            serializeProp(prefix, projProps, count, config);
+            if (extra && config.getExtra() != null && config.getExtra().size() > 0) {
+                for (String s : config.getExtra().keySet()) {
+                    if (!"type".equalsIgnoreCase(s) && !s.startsWith("config.")) {
+                        projProps.setProperty(propPrefix + s, config.getExtra().get(s).toString());
+                    }
+                }
             }
             count++;
         }
@@ -651,9 +685,25 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param keyprefix prefix for properties
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
-    public List<PluginConfiguration> listPluginConfigurations(final String keyprefix, final String serviceName)
+    public List<ExtPluginConfiguration> listPluginConfigurations(final String keyprefix, final String serviceName)
     {
-        return listPluginConfigurations(projectConfig.getProjectProperties(), keyprefix, serviceName);
+        return listPluginConfigurations(keyprefix, serviceName, true);
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName
+     * @param keyprefix   prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public List<ExtPluginConfiguration> listPluginConfigurations(
+            final String keyprefix,
+            final String serviceName,
+            boolean extra
+    )
+    {
+        return listPluginConfigurations(projectConfig.getProjectProperties(), keyprefix, serviceName, extra);
     }
 
     /**
@@ -664,13 +714,32 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @param keyprefix   prefix for properties
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
-    public static List<PluginConfiguration> listPluginConfigurations(
+    public static List<ExtPluginConfiguration> listPluginConfigurations(
             final Map<String, String> props,
             final String keyprefix,
             final String serviceName
     )
     {
-        final ArrayList<PluginConfiguration> list = new ArrayList<>();
+        return listPluginConfigurations(props, keyprefix, serviceName, false);
+
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName service name
+     * @param props       properties
+     * @param keyprefix   prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public static List<ExtPluginConfiguration> listPluginConfigurations(
+            final Map<String, String> props,
+            final String keyprefix,
+            final String serviceName,
+            final boolean extra
+    )
+    {
+        final ArrayList<ExtPluginConfiguration> list = new ArrayList<>();
         int i = 1;
         boolean done = false;
         while (!done) {
@@ -678,6 +747,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             if (props.containsKey(prefix + ".type")) {
                 final String providerType = props.get(prefix + ".type");
                 final Map<String, Object> configProps = new HashMap<>();
+                final Map<String, Object> extraData = extra ? new HashMap<>() : null;
                 final int len = (prefix + ".config.").length();
                 for (final Object o : props.keySet()) {
                     final String key = (String) o;
@@ -685,7 +755,18 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.put(key.substring(len), props.get(key));
                     }
                 }
-                list.add(new SimplePluginConfiguration(serviceName, providerType, configProps));
+                if (extra) {
+                    //list all extra props
+                    for (String s : props.keySet()) {
+                        if (s.startsWith(prefix + ".")) {
+                            String suffix = s.substring(prefix.length() + 1);
+                            if (!"type".equalsIgnoreCase(suffix) && !suffix.startsWith("config.")) {
+                                extraData.put(suffix, props.get(s));
+                            }
+                        }
+                    }
+                }
+                list.add(new SimplePluginConfiguration(serviceName, providerType, configProps, extraData));
             } else {
                 done = true;
             }
