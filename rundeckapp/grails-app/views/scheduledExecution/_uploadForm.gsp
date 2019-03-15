@@ -180,12 +180,12 @@
               <div class="control-label text-form-label">Imported Jobs:</div>
               <div class="radio">
                 <input type="radio" name="uuidOption" value="preserve" checked/>
-                <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
+                <label><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
                 <div class="help-block"><g:message code="project.archive.import.jobUuidOption.preserve.description"/></div>
               </div>
               <div class="radio">
                 <input type="radio" name="uuidOption" value="remove"/>
-                <label title="New UUIDs will be generated for every imported Job"><g:message code="project.archive.import.jobUuidOption.remove.label"/></label>
+                <label><g:message code="project.archive.import.jobUuidOption.remove.label"/></label>
                 <div class="help-block"><g:message code="project.archive.import.jobUuidOption.remove.description"/></div>
               </div>
             </div>
@@ -193,12 +193,12 @@
               <div class="control-label text-form-label">Validate Referenced Jobs:</div>
               <div class="radio">
                 <input type="radio" name="validateJobref" value="false" checked/>
-                <label title="Original UUIDs will be preserved, conflicting UUIDs will be replaced"><g:message code="archive.import.importJobRef.false.title"/></label>
+                <label><g:message code="archive.import.importJobRef.false.title"/></label>
                 <div class="help-block"><g:message code="archive.import.importJobRef.false.help"/></div>
               </div>
               <div class="radio">
                 <input type="radio" name="validateJobref" value="true"/>
-                <label title="New UUIDs will be generated for every imported Job"><g:message code="archive.import.importJobRef.true.title"/></label>
+                <label><g:message code="archive.import.importJobRef.true.title"/></label>
                 <div class="help-block"><g:message code="archive.import.importJobRef.true.help"/></div>
               </div>
             </div>
