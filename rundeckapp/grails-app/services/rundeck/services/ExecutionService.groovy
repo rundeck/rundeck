@@ -62,9 +62,8 @@ import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
-import org.springframework.transaction.annotation.Propagation
-import org.springframework.transaction.TransactionDefinition
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
@@ -1360,6 +1359,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     {
         if (!userName) {
             userName=execMap.user
+        }
+
+        def userLogin = User.findByLogin(userName)
+        if(userLogin && userLogin.email){
+            jobcontext['user.email'] = userLogin.email
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs
