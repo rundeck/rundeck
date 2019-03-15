@@ -1,0 +1,261 @@
+# Java Gradle CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-java/ for more details
+#
+version: 2.1
+orbs:
+  docker-publish: circleci/docker-publish@0.1.6
+  node: circleci/node@1.1.6
+  trigger: rundeck/trigger-pipeline@0.0.5
+
+defaults: &defaults
+  working_directory: ~/repo
+  environment:
+    CIRCLE_PIPELINE_NUM: << pipeline.number >>
+
+executors:
+  gradle-docker:
+    parameters:
+      resourceClass:
+        type: string
+        default: medium
+      RUNDECK_GRADLE_OPTS:
+        type: string
+        default: --no-daemon --max-workers 2 -x check install --stacktrace --info --parallel
+    
+    docker:
+      - image: rundeck/ci@sha256:35959d78f651fa31665253b37d0f09ae1a6c884b00a5d1d2d14838fdb60e9651
+
+    resource_class: << parameters.resourceClass >>
+
+
+    environment:
+      CIRCLE_PIPELINE_NUM: << pipeline.number >>
+      RUNDECK_GRADLE_OPTS: << parameters.RUNDECK_GRADLE_OPTS >>
+      TERM: dumb  
+      GRADLE_OPTS: -Xmx512m -XX:MaxPermSize=192m -Xss50m
+      _JAVA_OPTIONS: "-Xmx512m -Xms200m -Xss50m"
+      BASH_ENV: ~/.bash_profile
+
+jobs:
+  build:
+    <<: *defaults
+    # machine: true
+
+    executor:
+      name: gradle-docker
+      RUNDECK_GRADLE_OPTS: --no-daemon --max-workers 7 -x check install --stacktrace --info --parallel
+      resourceClass: xlarge
+      
+    steps:
+      - checkout
+      # - node/install-node:
+      #     version: '8.13.0'
+      - restore_cache:
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+      - restore_cache:
+          key: v1-gradle-cache-{{ checksum "build.gradle" }}
+      - run:
+          name: Build
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-build.sh build
+      - setup_remote_docker
+      - run: 
+          name: Build Docker Images
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-build.sh buildDocker
+            build_rdtest
+      - run:
+          name: Upload artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            copy_artifacts && sync_to_s3
+            seal_artifacts
+      - save_cache:
+          paths:
+            - ~/.gradle/wrapper
+          key: v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
+      - save_cache:
+          paths:
+            - ~/.gradle/caches
+          key: v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
+
+  test-gradle:
+    <<: *defaults
+    machine: true
+    steps:
+      - checkout
+      - node/install-node:
+          version: '8.13.0'
+      - restore_cache:
+          keys:
+            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-{{ .BuildNum }}
+            - v1-gradle-wrapper-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}-
+      - restore_cache:
+          keys:
+            - v1-gradle-cache-{{ checksum "build.gradle" }}-{{ .BuildNum }}
+            - v1-gradle-cache-{{ checksum "build.gradle" }}-
+      - run: ./gradlew --no-daemon test --stacktrace --info
+
+  test-docker:
+    <<: *defaults
+    executor: gradle-docker
+
+    parameters:
+      command:
+        description: Command that will execute the docker tests
+        type: string
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_common_artifacts
+            pull_rdtest
+      - run:
+          name: Test
+          command: |
+            source .circleci/travis-shim.sh
+            << parameters.command >>
+
+  trigger-enterprise:
+    docker:
+      - image: circleci/node:8
+    resource_class: small
+    steps:
+      - trigger/trigger:
+          debug: true
+          branch: ${CIRCLE_BRANCH}
+          token: '${CIRCLECI_API_TOKEN}'
+          project-slug: 'gh/rundeckpro/rundeckpro'
+          pipeline-number: '<<pipeline.number>>'
+
+  test-docker-machine:
+    <<: *defaults
+    machine: true
+    parameters:
+      command:
+        description: Command that will execute the docker tests
+        type: string
+    steps:
+      - checkout
+      - run:
+          name: Fetch Artifacts
+          command: |
+            source .circleci/travis-shim.sh
+            fetch_common_artifacts
+            pull_rdtest
+      - run:
+          name: Test
+          command: |
+            source .circleci/travis-shim.sh
+            << parameters.command >>
+  
+  snapshot-publish:
+    <<: *defaults
+    executor: gradle-docker
+
+    steps:
+      - checkout
+      - run:
+          name: Publish
+          command: |
+            source .circleci/travis-shim.sh
+            bash scripts/travis-build.ssh publish_oss 
+
+stages:
+  test: &stage-test
+  - Gradle Test
+  - Docker Test
+  - Tomcat 8 API Test
+  - Tomcat 7 API Test
+  - API Test
+  - SSL Test
+  - Ansible Test
+  - LDAP Test
+  - LDAP Bind Test
+  - PAM Test
+
+filters:
+  all: &filter-default
+    filters:
+      branches:
+        ignore: /pull\/[0-9]+/
+      tags: {only: '/^v.*/'}
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - test-gradle:
+          <<: *filter-default
+          name: Gradle Test
+          requires: [build]
+      # Optimistically build snapshot
+      - trigger-enterprise:
+          name: Enterprise Snapshot
+          requires: [build]
+          filters:
+            branches: {only: master}
+      - test-docker:
+          <<: *filter-default
+          name: Docker Test
+          requires: [build]
+          command: bash test/run-docker-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 8 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Tomcat 7 API Test
+          requires: [build]
+          command: bash test/run-docker-tomcat-tests.sh 7-jre8
+      - test-docker-machine:
+          <<: *filter-default
+          name: API Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: SSL Test
+          requires: [build]
+          command: bash test/run-docker-ssl-tests.sh
+      - test-docker:
+          <<: *filter-default
+          name: Ansible Test
+          requires: [build]
+          command: bash test/run-docker-ansible-tests.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Test
+          requires: [build]
+          command: bash test/run-docker-ldap-tests.sh
+      - test-docker-machine:
+          <<: *filter-default
+          name: LDAP Bind Test
+          requires: [build]
+          command: DOCKER_COMPOSE_SPEC=docker-compose-ldap-binding-test.yaml bash test/run-docker-ldap-tests.sh
+      - test-docker:
+          name: PAM Test
+          requires: [build]
+          command: bash test/run-docker-pam-tests.sh
+
+      - snapshot-publish:
+          name: Publish Snapshots
+          requires: *stage-test
+          filters: {branches: {only: master}}
+
+      # Build enterprise for maint branches and tag releases
+      # - trigger-enterprise:
+      #     name: Enterprise Build
+      #     requires: *stage-test
+      #     filters:
+      #       branches: {only: [/maint-.*/, master, circle-ci]}
+      #       tags: {only: /^v.*$/}

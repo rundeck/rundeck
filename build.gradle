@@ -51,7 +51,7 @@ plugins {
     id "org.dvaske.gradle.git-build-info" version "0.8"
 }
 
-
+apply plugin: 'java'
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
@@ -352,4 +352,9 @@ gradle.taskGraph.whenReady { taskGraph ->
 buildScan {
     termsOfServiceUrl = 'https://gradle.com/terms-of-service'
     termsOfServiceAgree = 'yes'
+}
+
+// Limit heap size in forked test processes for CI
+test {
+    maxHeapSize = "512m"
 }
