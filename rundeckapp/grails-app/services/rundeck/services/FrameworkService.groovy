@@ -52,7 +52,19 @@ import java.util.function.Predicate
 class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
-    public static final List PLUGINS_TYPES = ['Notification','WorkflowNodeStep', 'RemoteScriptNodeStep']
+    public static final List PLUGINS_TYPES = [
+            'StreamingLogReader',
+            'StreamingLogWriter',
+            'ExecutionFileStorage',
+            'LogFilter',
+            'ContentConverter',
+            'Notification',
+            'NodeExecutor',
+            'FileCopier',
+            'ResourceModelSource',
+            'WorkflowNodeStep',
+            'RemoteScriptNodeStep'
+    ]
 
     boolean initialized = false
     private String serverUUID

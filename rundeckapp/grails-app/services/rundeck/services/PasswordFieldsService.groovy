@@ -207,8 +207,6 @@ class PasswordFieldsService {
             }
             Integer configurationPosition = resource.index
 
-
-
             Description desc = descriptions.find { it.name == config.type }
             if (desc == null) {
                 continue
@@ -222,33 +220,74 @@ class PasswordFieldsService {
                 String key = property.getName()
                 String value = config.props[key]
 
-                if (!fields.containsKey(fieldKey(key, configurationPosition))) {
-                    if (value == null) {
-                        continue
-                    }
-                    config.props[key] = value
-                    continue
+                if(untrackField(config, key, value, configurationPosition)){
+                    count++
                 }
-
-
-                def field = fields[fieldKey(key, configurationPosition)]
-
-                if (value != field.hash) {
-                    if(value){
-                        config.props[key] = value
-                    }else{
-                        config.props.remove(key)
-                    }
-                } else {
-                    config.props[key] = field.original
-                }
-
-                fields.remove(fieldKey(key, configurationPosition))
-                count++
 
             }
         }
         count
+    }
+
+    public int untrackPluginFields(configurations, Description... descriptions) {
+        def count = 0
+        for(resource in configurations) {
+            if (resource == null) {
+                continue
+            }
+            Map config=resource.config
+            if(config == null) {
+                continue
+            }
+            Map props =  config.props
+
+            Integer configurationPosition = resource.index
+            Description desc = descriptions.find { it.name == config.type }
+            if (desc == null) {
+                continue
+            }
+
+            for (property in props) {
+                if (!isPluginPasswordProperty(property)) {
+                    continue
+                }
+
+                String key = property.getKey()
+                String value = config.props[key]
+
+                if(untrackField(config, key, value, configurationPosition)){
+                    count++
+                }
+
+            }
+        }
+        count
+    }
+
+    private boolean untrackField(config, key, value, configurationPosition){
+        if (!fields.containsKey(fieldKey(key, configurationPosition))) {
+            if (value == null) {
+                return false
+            }
+            config.props[key] = value
+            return false
+        }
+
+
+        def field = fields[fieldKey(key, configurationPosition)]
+
+        if (value != field.hash) {
+            if(value){
+                config.props[key] = value
+            }else{
+                config.props.remove(key)
+            }
+        } else {
+            config.props[key] = field.original
+        }
+
+        fields.remove(fieldKey(key, configurationPosition))
+        return true
     }
 
     private boolean isPasswordDisplay(Property property) {

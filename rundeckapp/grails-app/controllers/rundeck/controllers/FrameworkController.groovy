@@ -1044,7 +1044,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
 
             try {
-                pluginsPasswordFieldsService.untrack(pluginsConfig, *pluginsDescs)
+                pluginsPasswordFieldsService.untrackPluginFields(pluginsConfig, *pluginsDescs)
                 pluginsConfig.each {pconfig ->
                     def props=pconfig.config.props
                     def type = pconfig.config.type
