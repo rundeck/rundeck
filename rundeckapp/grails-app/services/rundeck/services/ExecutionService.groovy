@@ -3699,10 +3699,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
 
-        def queryCriteria = query.createCriteria()
+//        def queryCriteria = query.createCriteria()
         def criteriaClos = { isCount ->
 
-            queryCriteria.delegate = delegate
+            // Run main query criteria
+//            queryCriteria.delegate = delegate
+            def queryCriteria =  query.createCriteria(delegate)
             queryCriteria()
 
             if (!isCount) {
