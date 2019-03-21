@@ -18,14 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodes
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -39,29 +32,18 @@ import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerato
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.grails.plugins.metricsweb.MetricService
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
+import rundeck.Project
 import rundeck.User
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.FrameworkService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.StorageManager
-import rundeck.services.UserService
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
-
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
@@ -1111,6 +1093,96 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
+    def "create project description name with invalid characters"(){
+        setup:
+        controller.metricService = Mock(MetricService)
+        def rdframework=Mock(Framework){
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+
+
+        def description = '<b>Project Desc</b>'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==200
+        request.errors == ['project.description.can.only.contain.these.characters']
+        model.projectDescription == description
+
+    }
+
+    def "create project description name starting with space"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ' Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+    }
+
+    def "create project description name starting with numbers"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = '1 Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+
+    }
+
+    def "create project description name starting with parenthesis"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+
+        def description = '(1) Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+
+    }
+
     def "node summary ajax lists filters"() {
         given:
         def project = 'testProj'
@@ -1167,6 +1239,29 @@ class FrameworkControllerSpec extends Specification {
         result == null
     }
 
+
+    def setupNewProjectWithDescriptionOkTest(){
+        controller.metricService = Mock(MetricService)
+        def project = Mock(Project){
+            getName()>>"projName"
+        }
+        def projectManager = Mock(ProjectManager){
+            existsFrameworkProject( )>>false
+        }
+        def rdframework=Mock(Framework){
+            1 * getFrameworkProjectMgr()>>projectManager
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            1 * createFrameworkProject(_,_)>>[project, null]
+            1 * refreshSessionProjects(_,_)>>null
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+    }
+  
     def "projectPluginsAjax"() {
         given:
             def project = "aProject"
