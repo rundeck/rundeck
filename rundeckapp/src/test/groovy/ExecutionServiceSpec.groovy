@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -21,9 +22,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
@@ -32,10 +33,10 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
@@ -57,7 +58,7 @@ import java.time.ZoneId
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1002,6 +1003,46 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 == val.loglevel
         !val.executionListener
         val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with email of user profile"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        User user = new User(login: 'testuser', password: '12345', email: 'email@test.com')
+        user.save(flush: true)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, [:], null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.job['user.email'] == user.email
+
+        where:
+        charset      | _
+        null         | _
+        'UTF-8'      | _
+        'ISO-8859-1' | _
     }
 
     def "Create execution context with charset"() {
