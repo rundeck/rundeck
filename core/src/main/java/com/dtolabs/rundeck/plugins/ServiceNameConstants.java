@@ -67,4 +67,5 @@ public class ServiceNameConstants {
     public static final String FileUpload              = "FileUploadPluginService";
     public static final String OptionValues            = "OptionValues";
     public static final String NodeEnhancer            = "NodeEnhancer";
+    public static final String UserGroupSource         = "UserGroupSource";
 }

@@ -16,6 +16,9 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.gorm.transactions.Transactional
 import rundeck.User
 
@@ -103,5 +106,28 @@ class UserService {
         u.lastName = lastName
         u.email = email
         u.save()
+    }
+
+    List<String> getUserGroupSourcePluginRoles(String username) {
+        PluggableProviderService groupSourcePluginService = frameworkService.getRundeckPluginRegistry().createPluggableService(UserGroupSourcePlugin)
+
+        List<String> roles = []
+
+        frameworkService.getPluginService().listPlugins(UserGroupSourcePlugin).each { prov ->
+            try {
+                def configuredPlugin = frameworkService.getPluginService().
+                        configurePlugin(
+                                prov.key,
+                                groupSourcePluginService,
+                                frameworkService.getFrameworkPropertyResolver(),
+                                PropertyScope.Unspecified
+                        )
+                roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))
+            } catch(Exception ex) {
+                log.error("Unable to get groups from plugin: " + prov.key, ex)
+            }
+        }
+
+        return roles
     }
 }

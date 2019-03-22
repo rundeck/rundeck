@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
 import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
@@ -87,6 +88,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.WorkflowStrategy, WorkflowStrategy.class);
         map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
+        map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }
