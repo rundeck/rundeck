@@ -29,23 +29,13 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource
-import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
-import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
@@ -55,7 +45,6 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
-import org.springframework.util.MimeTypeUtils
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
@@ -73,8 +62,6 @@ import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.Framework
 
-import com.dtolabs.rundeck.core.common.NodesFileGenerator
-import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
