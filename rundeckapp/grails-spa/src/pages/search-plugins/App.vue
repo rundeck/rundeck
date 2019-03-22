@@ -20,91 +20,87 @@
             </div>
             <div class="column is-one-fifth has-text-right">
               <label for>Per Page</label>
-              <div class="select-wrapper">
+              <!-- <div class="select-wrapper">
                 <ais-results-per-page-selector
                   :options="[12, 24, 48]"
-                  :classNames="{
-              'ais-results-per-page-selector': 'form-control'
-            }"
+                  :classNames="{'ais-results-per-page-selector': 'form-control'}"
                 />
-              </div>
+              </div>-->
             </div>
           </div>
           <div class="columns">
             <div class="column">
               <section class="collapse-section">
-                <b-collapse :open="false" animation="slide">
-                  <button
-                    class="button is-dark is-medium is-rounded is-padded collapse-trigger"
-                    slot="trigger"
-                    slot-scope="{open}"
-                  >
-                    <span v-show="open">Close</span>
-                    <span v-show="!open">Filter Results</span>
-                  </button>
-                  <div>
-                    <div class="support-tab-row">
-                      <ais-refinement-list
-                        attribute-name="support"
-                        :sort-by="['name:asc']"
-                        :classNames="{
+                <button
+                  class="button is-dark is-medium is-rounded is-padded collapse-trigger"
+                  slot="trigger"
+                  slot-scope="{open}"
+                >
+                  <span v-show="open">Close</span>
+                  <span v-show="!open">Filter Results</span>
+                </button>
+                <div>
+                  <div class="support-tab-row">
+                    <ais-refinement-list
+                      attribute-name="support"
+                      :sort-by="['name:asc']"
+                      :classNames="{
                           'ais-refinement-list': 'support-refinement-tabs-wrapper',
                           'ais-refinement-list__count': 'is-hidden',
                           'ais-refinement-list__item': 'support-refinement-tab-item'
                         }"
-                      ></ais-refinement-list>
-                    </div>
-
-                    <div class="tag-cloud">
-                      <span class="side-title is-size-6">Tags</span>
-                      <ais-refinement-list
-                        attribute-name="tags"
-                        :sort-by="['count:desc', 'name:asc']"
-                        :classNames="{
-                            'ais-refinement-list': 'field is-grouped is-grouped-multiline',
-                            'ais-refinement-list__count': '',
-                            'ais-refinement-list__item': 'control'
-                          }"
-                      >
-                        <template slot-scope="{ value, active, count }">
-                          <div class="tags has-addons">
-                            <a
-                              class="tag"
-                              v-bind:class="{'is-red':active, 'is-dark': !active}"
-                            >{{value | capitalSplit}}</a>
-                            <a class="tag">{{count}}</a>
-                          </div>
-                        </template>
-                      </ais-refinement-list>
-                    </div>
-                    <div
-                      class="type-cloud"
-                      style="margin-top:2em;border-top: 1px solid #dbd;padding-top:1em;"
-                    >
-                      <span class="side-title is-size-6">Types</span>
-
-                      <ais-refinement-list
-                        attribute-name="providesServices"
-                        :sort-by="['count:desc', 'name:asc']"
-                        :classNames="{
-                            'ais-refinement-list': 'field is-grouped is-grouped-multiline',
-                            'ais-refinement-list__count': '',
-                            'ais-refinement-list__item': 'control'
-                          }"
-                      >
-                        <template slot-scope="{ value, active, count }">
-                          <div class="tags has-addons">
-                            <a
-                              class="tag"
-                              v-bind:class="{'is-red':active, 'is-dark': !active}"
-                            >{{value | capitalSplit}}</a>
-                            <a class="tag">{{count}}</a>
-                          </div>
-                        </template>
-                      </ais-refinement-list>
-                    </div>
+                    ></ais-refinement-list>
                   </div>
-                </b-collapse>
+
+                  <div class="tag-cloud">
+                    <span class="side-title is-size-6">Tags</span>
+                    <ais-refinement-list
+                      attribute-name="tags"
+                      :sort-by="['count:desc', 'name:asc']"
+                      :classNames="{
+                            'ais-refinement-list': 'field is-grouped is-grouped-multiline',
+                            'ais-refinement-list__count': '',
+                            'ais-refinement-list__item': 'control'
+                          }"
+                    >
+                      <template slot-scope="{ value, active, count }">
+                        <div class="tags has-addons">
+                          <a
+                            class="tag"
+                            v-bind:class="{'is-red':active, 'is-dark': !active}"
+                          >{{value | capitalSplit}}</a>
+                          <a class="tag">{{count}}</a>
+                        </div>
+                      </template>
+                    </ais-refinement-list>
+                  </div>
+                  <div
+                    class="type-cloud"
+                    style="margin-top:2em;border-top: 1px solid #dbd;padding-top:1em;"
+                  >
+                    <span class="side-title is-size-6">Types</span>
+
+                    <ais-refinement-list
+                      attribute-name="providesServices"
+                      :sort-by="['count:desc', 'name:asc']"
+                      :classNames="{
+                            'ais-refinement-list': 'field is-grouped is-grouped-multiline',
+                            'ais-refinement-list__count': '',
+                            'ais-refinement-list__item': 'control'
+                          }"
+                    >
+                      <template slot-scope="{ value, active, count }">
+                        <div class="tags has-addons">
+                          <a
+                            class="tag"
+                            v-bind:class="{'is-red':active, 'is-dark': !active}"
+                          >{{value | capitalSplit}}</a>
+                          <a class="tag">{{count}}</a>
+                        </div>
+                      </template>
+                    </ais-refinement-list>
+                  </div>
+                </div>
               </section>
             </div>
           </div>
@@ -135,6 +131,9 @@
                               <i class="fas fa-external-link-alt fa-sm"></i>
                             </span>
                           </a>
+                        </div>
+                        <div style="margin-bottom: .7em;">
+                          <a @click="install(result)" class="has-text-danger">INSTALL</a>
                         </div>
                         <!-- <div>{{result.support}}</div> -->
                         <div>
@@ -199,6 +198,8 @@
 <script>
 import config from "./config";
 
+console.log("config", config);
+
 export default {
   name: "RepositoryBrowser",
   components: {},
@@ -212,7 +213,12 @@ export default {
       searchStore: null
     };
   },
-  methods: {},
+  methods: {
+    install(plugin) {
+      console.log("plugin", plugin);
+      // do install codez here
+    }
+  },
   filters: {
     capitalize: function(value) {
       if (!value) return "";
@@ -227,7 +233,9 @@ export default {
   }
 };
 </script>
-
+<style scoped src='bulma/bulma.sass'>
+/* global styles */
+</style>
 <style lang="scss">
 .tag-cloud,
 .type-cloud {

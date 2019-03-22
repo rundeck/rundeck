@@ -20,15 +20,15 @@
     <meta name="layout" content="base"/>
     <title><g:appTitle/></title>
     <!-- VUE CSS MODULES -->
-    <%-- <asset:stylesheet href="static/css/pages/community-news.css"/> --%>
+    <asset:stylesheet href="static/css/pages/search-plugins.css"/>
     <!-- /VUE CSS MODULES -->
 </head>
 
 <body>
   SEARCH PLUGINS
-  <div id="community-news-vue"></div>
+  <div id="plugin-search-vue"></div>
   <!-- VUE JS MODULES -->
-  <%-- <asset:javascript src="static/pages/community-news.js"/> --%>
+  <asset:javascript src="static/pages/search-plugins.js"/>
   <!-- /VUE JS MODULES -->
 </body>
 </html>
