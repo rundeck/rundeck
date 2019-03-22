@@ -1,5 +1,5 @@
 let ConfigConstants = {
-  repoName: "Rundeck",
+  repoName: "official",
   algolia: {
     AppId: "GRSXNRCDRG",
     ApiKey: "c463f74d6f36a5af808650e0f69aadfa",

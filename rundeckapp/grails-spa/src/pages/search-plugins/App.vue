@@ -133,7 +133,7 @@
                           </a>
                         </div>
                         <div style="margin-bottom: .7em;">
-                          <a @click="install(result)" class="has-text-danger">INSTALL</a>
+                          <a @click="install(result.id)" class="has-text-danger">INSTALL</a>
                         </div>
                         <!-- <div>{{result.support}}</div> -->
                         <div>
@@ -196,6 +196,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import config from "./config";
 
 console.log("config", config);
@@ -210,13 +211,31 @@ export default {
       algoliaApiKey: config.algolia.ApiKey,
       algoliaIndex: config.algolia.Index,
       repoName: config.repoName,
-      searchStore: null
+      searchStore: null,
+      errors: null
     };
   },
   methods: {
-    install(plugin) {
-      console.log("plugin", plugin);
-      // do install codez here
+    install(pluginId) {
+      this.errors = null;
+      let rdBase = window._rundeck.rdBase;
+      console.log("install");
+      axios({
+        method: "post",
+        headers: { "x-rundeck-ajax": true },
+        url: `${rdBase}repository/${this.repoName}/install/${pluginId}`,
+        withCredentials: true
+      })
+        .then(response => {
+          console.log("response", response);
+          let repo = this.repositories.find(r => r.repositoryName === repoName);
+          let plugin = repo.results.find(r => r.id === pluginId);
+          plugin.installed = true;
+        })
+        .catch(error => {
+          this.errors = error;
+          console.log("ERROR", this.errors);
+        });
     }
   },
   filters: {
