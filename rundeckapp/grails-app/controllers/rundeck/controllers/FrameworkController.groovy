@@ -850,7 +850,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
             projectNameError = message(code: "project.name.can.only.contain.these.characters")
             errors << projectNameError
-        } else if (!(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
+        } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
         } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
