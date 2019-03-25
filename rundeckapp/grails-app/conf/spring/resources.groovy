@@ -55,6 +55,7 @@ import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckAuthenticationSuccessEventListener
+import org.rundeck.security.RundeckJaasAuthenticationProvider
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -481,7 +482,7 @@ beans={
         //spring security jaas configuration
         jaasApiIntegrationFilter(JaasApiIntegrationFilter)
 
-        jaasAuthProvider(DefaultJaasAuthenticationProvider) {
+        jaasAuthProvider(RundeckJaasAuthenticationProvider) {
             configuration = Configuration.getConfiguration()
             loginContextName = grailsApplication.config.rundeck.security.jaasLoginModuleName
             authorityGranters = [
