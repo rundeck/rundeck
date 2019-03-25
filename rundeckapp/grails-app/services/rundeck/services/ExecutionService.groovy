@@ -3476,21 +3476,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         def props = frameworkService.getFrameworkProperties()
         def disableRefStats = (props?.getProperty('rundeck.disable.ref.stats') == 'true')
-        ReferencedExecution refExec
 
 
         Execution exec = Execution.get(execid as Long)
-        refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
-
+        def refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
 
 
         if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
-            ReferencedExecution.withTransaction { status ->
-                refExec.status = EXECUTION_FAILED
-                refExec.save()
-            }
+            saveRefExecution(EXECUTION_FAILED, refId)
 
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
@@ -3571,10 +3566,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (!disableRefStats) {
                 updateJobRefScheduledExecStatistics(id, duration)
             }
-            ReferencedExecution.withTransaction { status ->
-                refExec.status = wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED
-                refExec.save()
-            }
+            saveRefExecution(wresult.result.success ? EXECUTION_SUCCEEDED : EXECUTION_FAILED, refId)
         }
 
         Execution execution = Execution.get(execid as Long)
@@ -3614,6 +3606,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return result
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    def saveRefExecution(String status, Long refId, Long seId = null, Long execId=null){
+        ReferencedExecution.withTransaction {
+            if(refId){
+                ReferencedExecution refExec = ReferencedExecution.findById(refId)
+                refExec.status = status
+                refExec.save(flush:true)
+            }else{
+                ScheduledExecution se = ScheduledExecution.findById(seId)
+                Execution exec = Execution.findById(execId)
+                ReferencedExecution refExec = new ReferencedExecution(
+                        scheduledExecution: se, execution: exec, status: status).save(flush:true)
+                return refExec.id
+            }
+        }
+    }
     /**
      * Query for executions for the specified job
      * @param scheduledExecution the job
