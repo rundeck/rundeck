@@ -116,7 +116,7 @@ data for configuring remote option cascading/dependencies
                         <span class="remotestatus"
                               data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
                         </span>
-                        <span data-bind="text: name"></span>
+                        <span data-bind="text: label"></span>
                     </span>
                     <span data-bind="if: !hasRemote()">
                         <span data-bind="text: label"></span>
