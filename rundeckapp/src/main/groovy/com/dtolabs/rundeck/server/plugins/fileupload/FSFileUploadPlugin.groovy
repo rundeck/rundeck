@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.server.plugins.fileupload
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -30,7 +31,7 @@ import java.nio.file.Files
  * @author greg
  * @since 2/15/17
  */
-@Plugin(name = 'filesystem-temp', service = 'FileUploadPluginService')
+@Plugin(name = 'filesystem-temp', service = ServiceNameConstants.FileUpload)
 @PluginDescription(title = 'Temporary File',
         description = 'Stores uploaded files temporarily on the file system for the duration of the execution.')
 @ToString(includeNames = true)
