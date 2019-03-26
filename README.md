@@ -30,8 +30,7 @@ Gradle Build
 
 Artifacts: 
 
-* `rundeckapp/target/rundeck-X.Y.war`
-* `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
+* `rundeckapp/build/libs/rundeck-X.Y.war`
 
 
 Other builds
@@ -61,11 +60,11 @@ To build clean:
 Installation
 ======
 
-There are several install options: a self-contained jar file, or RPM, or Debian.
+There are several install options: a self-contained war file, or RPM, or Debian.
 
-To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
+To start from the rundeck-X.Y.war, put it in a directory named ~/rundeck, then execute:
 
-    java -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -jar rundeck-launcher-2.0.0.jar
+    java -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -jar rundeck-X.Y.war
 
 If you'd like to install via RPM, you can use Yum:
 
