@@ -3506,7 +3506,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         long startTime = System.currentTimeMillis()
 
         def wresult = metricService.withTimer(this.class.name, 'runJobReference') {
-            println("Made it!!!!")
             WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
             def timeoutms = 1000 * timeout
