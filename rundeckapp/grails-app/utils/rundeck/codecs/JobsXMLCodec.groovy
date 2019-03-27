@@ -523,6 +523,9 @@ class JobsXMLCodec {
                 if(x.values){
                     BuilderUtil.addAttribute(x,'values',x.remove('values').join(","))
                 }
+                if(x.valuesListDelimiter){
+                    BuilderUtil.addAttribute(x,'valuesListDelimiter',x.remove('valuesListDelimiter'))
+                }
                 if(x.enforced){
                     //convert 'enforced' to @enforcedvalues
                     BuilderUtil.addAttribute(x,'enforcedvalues',x.remove('enforced'))

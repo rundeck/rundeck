@@ -61,7 +61,7 @@ used by _editOptions.gsp template
                                               dateFormat         : optionSelect.dateFormat,
                                               optionType         : optionSelect.optionType,
 //                                              config             : optionSelect.configMap,
-                                              values             : optionSelect.values,
+                                              values             : optionSelect.optionValues,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,
                                               multivalued        : optionSelect.multivalued,
@@ -77,7 +77,7 @@ used by _editOptions.gsp template
                                               optionDepsMet      : !optiondependencies[optName] || selectedoptsmap &&
                                                       optiondependencies[optName].every { selectedoptsmap[it] },
                                               secureInput        : optionSelect.secureInput,
-                                              hasExtended        : !optionSelect.secureInput && (values || optionSelect.values ||
+                                              hasExtended        : !optionSelect.secureInput && (values || optionSelect.optionValues ||
                                                       optionSelect.multivalued || optionSelect.valuesFromPlugin),
                                               value              : selectedvalue ? selectedvalue :
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?

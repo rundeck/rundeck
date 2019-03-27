@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.api.marshall.CollectionElement
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
 import com.fasterxml.jackson.core.JsonParseException
@@ -54,7 +55,7 @@ public class Option implements Comparable{
     Boolean required
     Boolean isDate
     String dateFormat
-    Set<String> values
+    SortedSet<String> values
     static hasMany = [values:String]
     URL valuesUrl
     String label
@@ -76,10 +77,11 @@ public class Option implements Comparable{
     List<OptionValue> valuesFromPlugin
     Boolean hidden
     Boolean sortValues
+    List<String> optionValues
 
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin']
+    static transients = ['realValuesUrl', 'configMap', 'typeFile','valuesFromPlugin','optionValues']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -190,8 +192,8 @@ public class Option implements Comparable{
         if(regex){
             map.regex=regex
         }
-        if(values){
-            map.values=values as List
+        if(getOptionValues()){
+            map.values=getOptionValues()
             map.valuesListDelimiter = valuesListDelimiter?:','
         }
         if(multivalued){
@@ -260,6 +262,8 @@ public class Option implements Comparable{
             }else{
                 opt.valuesListDelimiter=DEFAULT_DELIMITER
             }
+            opt.valuesList = opt.produceValuesList()
+            opt.values = null
         }
         if(data.multivalued){
             opt.multivalued=true
@@ -294,7 +298,9 @@ public class Option implements Comparable{
             if(valuesListDelimiter==null){
                 valuesListDelimiter = DEFAULT_DELIMITER
             }
-            return values.join(valuesListDelimiter)
+            valuesList = values.join(valuesListDelimiter)
+            values = null
+            return valuesList
         }else{
             return ''
         }
@@ -332,9 +338,12 @@ public class Option implements Comparable{
             if(valuesListDelimiter == null){
                 valuesListDelimiter=DEFAULT_DELIMITER
             }
-            def x=new ArrayList()
-            x.addAll(valuesList.split(valuesListDelimiter).collect{it.trim()}.grep{it} as List)
-            values=x
+            optionValues=new ArrayList()
+            optionValues.addAll(valuesList.split(Pattern.quote(valuesListDelimiter)).collect{it.trim()}.grep{it} as List)
+
+            if(optionValues && sortValues){
+                sortValuesList()
+            }
         }
     }
 
@@ -387,25 +396,29 @@ public class Option implements Comparable{
         return opt
     }
 
-    Set<String> getValues(){
-        if(valuesList){
-            convertValuesList()
-        }
-        if(values && sortValues){
-            sortValuesList()
-        }
-        values
-    }
 
     void sortValuesList(){
-        def numericValues = values.findAll { it.isNumber() }.collect {it.toDouble()}
-        if(numericValues.size()==values.size()){
-            def stringNumericList= values.findAll { it.isNumber() }.collect {new StringNumericSort(it, it.toDouble())}
-            stringNumericList.sort{ a,b -> a.numericValue <=> b.numericValue }
-            values = stringNumericList.collect{it.strValue}
+        def numericValues = optionValues.findAll { it.isNumber() }.collect {it.toDouble()}
+        if(numericValues.size()==optionValues.size()){
+            def stringNumericList= optionValues.findAll { it.isNumber() }.collect {new StringNumericSort(it, it.toDouble())}
+            StringNumericSort.sortNumeric(stringNumericList)
+            optionValues = stringNumericList.collect{it.strValue}
         }else{
-            values = values.sort()
+            optionValues = optionValues.sort()
         }
+    }
+
+    List<String> getOptionValues(){
+        if(optionValues==null){
+            if(values !=null && values.size()> 0 && valuesList == null){
+                produceValuesList()
+                convertValuesList()
+                values = null
+            }else if(valuesList){
+                convertValuesList()
+            }
+        }
+        optionValues
     }
 
     public String toString ( ) {

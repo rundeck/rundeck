@@ -2585,14 +2585,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (opt.enforced && opt.values && optparams[opt.name]) {
+                    if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
                         } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
-                        if (!opt.values.containsAll(val.grep { it })) {
+                        if (!opt.optionValues.containsAll(val.grep { it })) {
                             invalidOpt opt,lookupMessage("domain.Option.validation.allowed.values",[opt.name,optparams[opt.name],opt.values])
                             return
                         }
@@ -2607,10 +2607,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (opt.enforced && opt.values &&
+                    if (opt.enforced && opt.optionValues &&
                             optparams[opt.name] &&
                             optparams[opt.name] instanceof String &&
-                            !opt.values.contains(optparams[opt.name])) {
+                            !opt.optionValues.contains(optparams[opt.name])) {
                         invalidOpt opt,  opt.secureInput ?
                                 lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
                                 : lookupMessage("domain.Option.validation.allowed.invalid",[opt.name,optparams[opt.name],opt.values])
