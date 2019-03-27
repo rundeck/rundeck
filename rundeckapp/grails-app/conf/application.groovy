@@ -25,9 +25,6 @@ environments {
         feature.incubator.feature = false
         //enable takeover schedule feature
         feature.incubator.jobs = true
-
-        //enable dynamic workflow step descriptions in GUI by default
-        rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
@@ -49,6 +46,8 @@ environments {
         }
     }
     production {
+        //enable dynamic workflow step descriptions in GUI by default
+        rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"
