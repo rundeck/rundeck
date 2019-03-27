@@ -471,49 +471,44 @@
             <div class="col-sm-10">
                 <div class="radio">
                     <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
-                        id="enforcedType_none"
-                             class="evnonregex"/>
+                            id="enforcedType_none"
+                            data-bind="checked: enforceType"/>
                     <label for="enforcedType_none">
                         <g:message code="none" />
                     </label>
                     <span class="text-primary"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
                 <div class="radio">
-                    <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
-                             id="enforcedType_enforced"
+                    <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}"
+                            id="enforcedType_enforced"
+                            data-bind="checked: enforceType"
                     />
                     <label for="enforcedType_enforced" class="${hasErrors(bean:option,field:'enforced','fieldError')}">
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
                 <div class="radio">
-                    <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
+                    <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"
+                            data-bind="checked: enforceType"/>
                     <label for="etregex_${enc(attr:rkey)}" class="${hasErrors(bean:option,field:'regex','fieldError')}">
                         <g:message code="form.option.regex.label" />
                     </label>
                 </div>
             </div>
             <div class="col-sm-10 col-sm-offset-2">
-
+                <!-- ko if: isRegexEnforceType() -->
                 <g:textField
                         name="regex"
                         class="form-control"
                         value="${option?.regex}"
-                        style="${wdgt.styleVisible(if: option?.regex)}"
                         size="40"
                         placeholder="Enter a Regular Expression"
                         id="vregex_${enc(attr: rkey)}"/>
                     <g:if test="${regexError}">
                         <pre class="text-danger"><g:enc>${regexError.trim()}</g:enc></pre>
                     </g:if>
+                <!-- /ko -->
             </div>
-            <wdgt:eventHandler for="etregex_${rkey}" state="unempty" inline="true">
-                <wdgt:action target="vregex_${rkey}" focus="true"/>
-                <wdgt:action target="vregex_${rkey}" visible="true"/>
-            </wdgt:eventHandler>
-            <wdgt:eventHandler forSelector=".evnonregex" state="unempty" inline="true">
-                <wdgt:action target="vregex_${rkey}" visible="false"/>
-            </wdgt:eventHandler>
         </div>
         <!-- /ko -->
         <div class="form-group">
@@ -723,7 +718,15 @@
     </div>
     <g:javascript>
       fireWhenReady('optedit_${enc(js: rkey)}',function(){
-          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
+          var isRegex = ${null!=option?.regex};
+          var enforced = ${option?.enforced?true:false};
+          var currentEnforceType = "none";
+          if(enforced && !isRegex){
+              currentEnforceType = "enforced";
+          } else if(isRegex) {
+              currentEnforceType = "regex";
+          }
+          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}",enforceType:currentEnforceType});
           ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
       });
     </g:javascript>
