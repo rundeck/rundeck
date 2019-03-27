@@ -73,21 +73,21 @@
         <div class="form-group">
             <div class="col-sm-10 col-sm-offset-2">
                 <g:if test="${fileUploadPluginDescription}">
-                    <stepplugin:pluginIcon service="FileUploadPluginService"
+                    <stepplugin:pluginIcon service="FileUpload"
                                            name="${fileUploadPluginDescription.name}"
                                            width="16px"
                                            height="16px">
                         <i class="rdicon icon-small plugin"></i>
                     </stepplugin:pluginIcon>
                     <stepplugin:message
-                            service="FileUploadPluginService"
+                            service="FileUpload"
                             name="${fileUploadPluginDescription.name}"
                             code="plugin.title"
                             default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
                     <span class="text-primary"><g:render template="/scheduledExecution/description"
                                                        model="[description:
                                                                        stepplugin.messageText(
-                                                                               service: 'FileUploadPluginService',
+                                                                               service: 'FileUpload',
                                                                                name: fileUploadPluginDescription.name,
                                                                                code: 'plugin.description',
                                                                                default: fileUploadPluginDescription.description
@@ -98,7 +98,7 @@
                     <g:if test="${fileUploadPluginDescription?.properties}">
                         <g:set var="prefix" value="${'configMap.'}"/>
                         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                service:'FileUploadPluginService',
+                                service:'FileUpload',
                                 provider:fileUploadPluginDescription.name,
                                 properties:fileUploadPluginDescription?.properties,
                                 report: configMapValidate,
