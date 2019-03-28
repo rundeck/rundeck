@@ -229,11 +229,20 @@
 <div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
   <div id="community-news-notification">
     <div class="sidebar-footer-line-item">
-      <g:link controller="communityNews" action="index">
-        <span id="community-news-notification-vue"></span>
-      </g:link>
+      <g:if test="${grailsApplication.config.rundeck.communityNews.disabled in [true,'true']}">
+        <a href="https://www.rundeck.com/community-updates" target="_blank">
+          <div>
+            <i class="far fa-newspaper" style="margin-right:5px;"></i>
+            <span>Community News</span>
+          </div>
+        </a>
+      </g:if>
+      <g:else>
+        <g:link controller="communityNews" action="index">
+          <span id="community-news-notification-vue"></span>
+        </g:link>
+      </g:else>
     </div>
-
   </div>
   <div id="version-notification-vue"></div>
   <div id="snapshot-version" class="snapshot-version">
