@@ -3454,7 +3454,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 executionContext.getExecutionListener().log(0, msg)
                 throw new StepException(msg, JobReferenceFailureReason.NotFound)
             }
-            
+
             def enableSe = true
             se = ScheduledExecution.get(id)
             enableSe = se.executionEnabled
@@ -3703,11 +3703,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
 
-//        def queryCriteria = query.createCriteria()
         def criteriaClos = { isCount ->
 
             // Run main query criteria
-//            queryCriteria.delegate = delegate
             def queryCriteria =  query.createCriteria(delegate)
             queryCriteria()
 
