@@ -58,6 +58,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.type.StandardBasicTypes
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
@@ -79,6 +81,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.nio.charset.Charset
+import java.sql.Time
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -86,6 +89,7 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -3724,6 +3728,96 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def total = Execution.createCriteria().count(criteriaClos.curry(true))
         return [result:result,total:total]
     }
+
+
+
+
+    /**
+     * Return statistics over a Query resultset.
+     * @param query query
+     * @return result map [total: long, duration: Map[average: double, max: long, min: long]]
+     */
+    def queryExecutionMetrics(ExecutionQuery query) {
+
+        // Prepare Query Criteria
+
+        def metricCriteria = {
+
+            // Run main query criteria
+            def baseQueryCriteria = query.createCriteria(delegate)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                /* Group by Calculated Status */
+//                groupProperty("state") // state field added as formula on Execution.groovy
+//                property("state", "state")
+
+/*
+                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
+                sqlProjection "CASE " +
+                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
+                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
+                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
+                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
+                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
+                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
+                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
+                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
+                    'estado',
+                    StandardBasicTypes.STRING
+*/
+
+                rowCount("count")
+                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                    'durationSum',
+                    StandardBasicTypes.TIME
+                sqlProjection 'min(date_completed - date_started) as durationMin',
+                    'durationMin',
+                    StandardBasicTypes.TIME
+                sqlProjection 'max(date_completed - date_started) as durationMax',
+                    'durationMax',
+                    StandardBasicTypes.TIME
+
+            }
+        }
+
+        // get data and calculate
+        def metricsData = Execution.createCriteria().get(metricCriteria)
+
+        def totalCount = metricsData?.count ? metricsData.count : 0
+
+        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
+        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
+        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
+        double avgDuration = totalCount != 0 ? durationSum / totalCount : 0
+
+        // Build response
+        def metrics = [
+            total: totalCount,
+
+            duration: [
+                average: avgDuration,
+                max: maxDuration,
+                min: minDuration
+            ]
+        ]
+
+    }
+
+    /**
+     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
+     * @param t
+     * @return
+     */
+    static long sqlTimeToMillis(Time t) {
+        if (t == null) return 0
+        def arr = t.toString().split(":")
+        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    }
+
+
     /**
      * Execute the node step, the executionItem is expected to be a {@link JobExecutionItem} to execute a Job reference
      * as a node step on a single node.

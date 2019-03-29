@@ -2371,69 +2371,10 @@ setTimeout(function(){
         }
 
 
-        // Prepare Query Criteria
+        // Get metric data
+        def metrics = executionService.queryExecutionMetrics(query)
 
-        def metricCriteria = {
-
-            // Run main query criteria
-            def baseQueryCriteria = query.createCriteria(delegate)
-            baseQueryCriteria()
-            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
-            projections {
-
-                /* Group by Calculated Status */
-//                groupProperty("state") // state field added as formula on Execution.groovy
-//                property("state", "state")
-/*
-                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
-                sqlProjection "CASE " +
-                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
-                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
-                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
-                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
-                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
-                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
-                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
-                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
-                    'estado',
-                    StandardBasicTypes.STRING
-*/
-
-                rowCount("count")
-                sqlProjection 'sum(date_completed - date_started) as durationSum',
-                    'durationSum',
-                    StandardBasicTypes.TIME
-                sqlProjection 'min(date_completed - date_started) as durationMin',
-                    'durationMin',
-                    StandardBasicTypes.TIME
-                sqlProjection 'max(date_completed - date_started) as durationMax',
-                    'durationMax',
-                    StandardBasicTypes.TIME
-
-            }
-        }
-
-        // get data and calculate
-        def metricsData = Execution.createCriteria().get(metricCriteria)
-
-        def totalCount = metricsData?.count ? metricsData.count : 0
-
-        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
-        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
-        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
-        double avgDuration = totalCount != 0 ? durationSum / totalCount : 0
-
-        // Build and format response
-        def metrics = [
-            total: totalCount,
-
-            duration: [
-                average: avgDuration,
-                max: maxDuration,
-                min: minDuration
-            ]
-        ]
-
+        // Format times to be human readable.
         metricsOutputFormatTimeNumberAsString(metrics.duration, [
                 "average",
                 "min",
@@ -2498,20 +2439,5 @@ setTimeout(function(){
         return String.valueOf(duration)
     }
 
-    /**
-     * Convert a sql time to
-     * @param t
-     * @return
-     */
-    static long sqlTimeToMillis(Time t) {
-        if (t == null)
-            return 0
-
-        def arr = Arrays.stream(t.toString().split(":"))
-            .map { s -> Long.parseLong(s) }
-            .collect(Collectors.toList())
-
-        return ((arr[0] * 3600) + (arr[1] * 60) + arr[2]) * 1000
-    }
 
 }
