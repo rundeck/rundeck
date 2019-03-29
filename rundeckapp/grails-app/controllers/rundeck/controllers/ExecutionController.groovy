@@ -22,7 +22,6 @@ import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.app.support.ExecutionQueryMetrics
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
@@ -38,8 +37,9 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.util.MetricsStatsBuilder
 import grails.converters.JSON
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
@@ -51,10 +51,10 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.workflow.StateMapping
 
 import javax.servlet.http.HttpServletResponse
+import java.sql.Time
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.stream.Collectors
 
 /**
 * ExecutionController
@@ -1588,7 +1588,7 @@ setTimeout(function(){
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
 
-                
+
                 entry.each{
                     appendOutput(response, it.mesg+lineSep)
                 }
@@ -2302,14 +2302,8 @@ setTimeout(function(){
                 ])
         }
 
-        AuthContext authContext;
-
         if(params.project) {
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
             query.projFilter = params.project
-        }
-        else {
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
 
         if (null != query) {
@@ -2376,50 +2370,75 @@ setTimeout(function(){
             }
         }
 
-        def resOffset = params.int('offset', 0)
-        def resMax = params.int('max', -1)
 
-        def results = executionService.queryExecutions(query, resOffset, resMax)
-        def result = results.result
-        def total = results.total
-        //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
+        // Prepare Query Criteria
 
-        // Calculate stats
-        def metricsBuilder = new MetricsStatsBuilder()
-        def metricsBuilderStatus = new MetricsStatsBuilder()
-        def metricsBuilderDuration = new MetricsStatsBuilder()
-        filtered.each { Execution exec ->
+        def metricCriteria = {
 
-            // count total
-            metricsBuilder.count(ExecutionQueryMetrics.TOTAL_COUNT)
+            // Run main query criteria
+            def baseQueryCriteria = query.createCriteria(delegate)
+            baseQueryCriteria()
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
 
-            // count state
-            metricsBuilderStatus.count(exec.getExecutionState())
+                /* Group by Calculated Status */
+//                groupProperty("state") // state field added as formula on Execution.groovy
+//                property("state", "state")
+/*
+                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
+                sqlProjection "CASE " +
+                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
+                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
+                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
+                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
+                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
+                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
+                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
+                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
+                    'estado',
+                    StandardBasicTypes.STRING
+*/
 
-            // duration stats.
-            def dur = exec.durationAsLong()
-            if (dur) {
-                // register duration avg
-                metricsBuilderDuration.average(ExecutionQueryMetrics.DURATION_AVERAGE, dur)
-                // register duration max
-                metricsBuilderDuration.max(ExecutionQueryMetrics.DURATION_MAX, dur)
-                // register duration min
-                metricsBuilderDuration.min(ExecutionQueryMetrics.DURATION_MIN, dur)
+                rowCount("count")
+                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                    'durationSum',
+                    StandardBasicTypes.TIME
+                sqlProjection 'min(date_completed - date_started) as durationMin',
+                    'durationMin',
+                    StandardBasicTypes.TIME
+                sqlProjection 'max(date_completed - date_started) as durationMax',
+                    'durationMax',
+                    StandardBasicTypes.TIME
+
             }
         }
 
-        // Build and format response
-        def metrics = new HashMap(metricsBuilder.buildStatsMap())
-        def metricsDur = new HashMap(metricsBuilderDuration.buildStatsMap())
-        metricsOutputFormatTimeNumberAsString(metricsDur, [
-                ExecutionQueryMetrics.DURATION_AVERAGE,
-                ExecutionQueryMetrics.DURATION_MIN,
-                ExecutionQueryMetrics.DURATION_MAX
-        ])
-        metrics['status']=metricsBuilderStatus.buildStatsMap()
-        metrics['duration']=metricsDur
+        // get data and calculate
+        def metricsData = Execution.createCriteria().get(metricCriteria)
 
+        def totalCount = metricsData?.count ? metricsData.count : 0
+
+        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
+        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
+        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
+        double avgDuration = totalCount != 0 ? durationSum / totalCount : 0
+
+        // Build and format response
+        def metrics = [
+            total: totalCount,
+
+            duration: [
+                average: avgDuration,
+                max: maxDuration,
+                min: minDuration
+            ]
+        ]
+
+        metricsOutputFormatTimeNumberAsString(metrics.duration, [
+                "average",
+                "min",
+                "max"
+        ])
 
 
         withFormat {
@@ -2452,7 +2471,7 @@ setTimeout(function(){
      * On the supplied map, formats the specified keys as a time String.
      * Map values must subclass java.lang.Number
      */
-    static void metricsOutputFormatTimeNumberAsString(Map<String, Object> map, List<String> keys) {
+    static void metricsOutputFormatTimeNumberAsString(Map<Object, Number> map, List<String> keys) {
         keys.each { k ->
             if(map.containsKey(k)) {
                 map[k] = formatTimeNumberAsString(map[k])
@@ -2479,5 +2498,20 @@ setTimeout(function(){
         return String.valueOf(duration)
     }
 
+    /**
+     * Convert a sql time to
+     * @param t
+     * @return
+     */
+    static long sqlTimeToMillis(Time t) {
+        if (t == null)
+            return 0
+
+        def arr = Arrays.stream(t.toString().split(":"))
+            .map { s -> Long.parseLong(s) }
+            .collect(Collectors.toList())
+
+        return ((arr[0] * 3600) + (arr[1] * 60) + arr[2]) * 1000
+    }
 
 }

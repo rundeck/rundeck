@@ -147,7 +147,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
   /**
    * Creates a criteria closure for this query.
-   * @param customDelegate sets a custom closure delegate. If not defines the default will be used.
+   * @param customDelegate sets a custom closure delegate. If not defined the default will be used.
    * @return A closure to run this query within a criteria of Execution
    */
   def createCriteria(def customDelegate = null) {
