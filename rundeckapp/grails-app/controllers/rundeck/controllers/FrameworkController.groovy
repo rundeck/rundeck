@@ -35,6 +35,9 @@ import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.FileCopier
+import com.dtolabs.rundeck.core.execution.service.NodeExecutor
+import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
@@ -1077,7 +1080,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
 
             try {
-                pluginsPasswordFieldsService.untrack(pluginsConfig, *pluginsDescs)
+                pluginsPasswordFieldsService.untrackPluginFields(pluginsConfig, *pluginsDescs)
                 pluginsConfig.each {pconfig ->
                     def props=pconfig.config.props
                     def type = pconfig.config.type
