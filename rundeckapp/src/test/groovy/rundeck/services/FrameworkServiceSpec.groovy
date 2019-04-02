@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -292,5 +293,40 @@ class FrameworkServiceSpec extends Specification {
             ['framework.plugin.AService.AProvider.aprop': 'aval'] | [:]       | [aprop: 'aval']
             ['framework.plugin.AService.AProvider.aprop': 'aval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval']
             ['framework.plugin.AService.AProvider.xprop': 'xval'] | ['project.plugin.AService.AProvider.aprop': 'bval']       | [aprop: 'bval',xprop:'xval']
+    }
+
+    def "getServicePropertiesMapForType missing provider"() {
+        given:
+            service.pluginService = Mock(PluginService)
+            def type = 'atype'
+            def svc = null
+            def props = [:]
+        when:
+            def result = service.getServicePropertiesMapForType(type, svc, props)
+        then:
+            1 * service.pluginService.getPluginDescriptor(type, svc) >> null
+            result == [:]
+    }
+
+    def "addProjectNodeExecutorPropertiesForType missing provider"() {
+        given:
+            def type = 'atype'
+            Properties props = [:]
+            def config = [:]
+            def remove = ['blah'].toSet()
+            service.pluginService = Mock(PluginService)
+            service.initialized = true
+            service.rundeckFramework = Mock(Framework) {
+
+            }
+        when:
+            service."$method"(type, props, config, remove)
+        then:
+            1 * service.pluginService.getPluginDescriptor(type, _) >> null
+            props == [:]
+            config == [:]
+
+        where:
+            method << ['addProjectNodeExecutorPropertiesForType', 'addProjectFileCopierPropertiesForType']
     }
 }

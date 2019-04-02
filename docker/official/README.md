@@ -163,3 +163,17 @@ Specify location of a static tokens file. See [configuration file reference](htt
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXWKCSPHEADER=false`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_POLICY`
 Controls for CSP headers.
+
+
+### `RUNDECK_MAIL_SMTP_HOST`
+### `RUNDECK_MAIL_SMTP_PORT`
+### `RUNDECK_MAIL_SMTP_USERNAME`
+### `RUNDECK_MAIL_SMTP_PASSWORD`
+### `RUNDECK_MAIL_FROM`
+Default from address.
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_SUBJECT`
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_FILE`
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_LOG_FORMATTED`
+
+### `RUNDECK_MAIL_PROPS`
+Mail properties that get passed through to Grails. For example, to use StartTLS(required by many servers including AWS SES), `["mail.smtp.starttls.enable":"true","mail.smtp.port":"587"]`.

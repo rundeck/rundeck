@@ -26,6 +26,7 @@
            class="col-sm-3 node_ident embedded_node"
            data-toggle="popover"
            data-placement="auto"
+           data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
 

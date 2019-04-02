@@ -20,13 +20,8 @@ import com.dtolabs.rundeck.core.utils.FileUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,6 +33,8 @@ import java.util.stream.Stream;
 public class FrameworkResource implements IFrameworkResource {
     public static final String VALID_RESOURCE_NAME_CHARSET_REGEX = "[-_a-zA-Z0-9+][-\\._a-zA-Z0-9+]*";
     public static final String VALID_RESOURCE_NAME_REGEX = "^"+VALID_RESOURCE_NAME_CHARSET_REGEX+"$";
+    public static final String VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX = "[a-zA-Z0-9\\s\\.,\\(\\)-]+";
+    public static final String VALID_RESOURCE_DESCRIPTION_REGEX = "^"+VALID_RESOURCE_DESCRIPTION_CHARSET_REGEX+"$";
 
     final Logger logger;
 

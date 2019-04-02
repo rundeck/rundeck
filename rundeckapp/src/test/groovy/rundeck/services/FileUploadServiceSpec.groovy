@@ -3,8 +3,11 @@ package rundeck.services
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -144,8 +147,11 @@ class FileUploadServiceSpec extends Specification {
             getString('fileupload.plugin.type', _) >> { it[1] }
             getLong('fileUploadService.tempfile.expiration', _) >> 30000L
         }
+        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
         service.frameworkService = Mock(FrameworkService) {
-
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
         }
         service.pluginService = Mock(PluginService)
         service.taskService = Mock(TaskService)
@@ -187,8 +193,8 @@ class FileUploadServiceSpec extends Specification {
         def result = service.loadFileOptionInputs(exec, job, context)
         then:
         result != null
-
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
                 new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         1 * context.getDataContext() >> new BaseDataContext([option: [(optionName): ref]])
         1 * context.getExecutionListener() >> Mock(ExecutionListener)
@@ -372,7 +378,12 @@ class FileUploadServiceSpec extends Specification {
 
         ScheduledExecution job = mkjob(jobid)
         job.validate()
-        service.frameworkService = Mock(FrameworkService)
+        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+        }
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
@@ -386,7 +397,8 @@ class FileUploadServiceSpec extends Specification {
         service.checkAndExpireAllRecords()
         then:
         1 * service.frameworkService.getServerUUID()
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
                 new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
@@ -428,7 +440,12 @@ class FileUploadServiceSpec extends Specification {
                 execution: exec
         ).save()
 
-        service.frameworkService = Mock(FrameworkService)
+        def rundeckPluginRegistry = Mock(RundeckPluginRegistry) {
+            createPluggableService(_) >> Mock(PluggableProviderService)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+        }
         service.pluginService = Mock(PluginService)
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
@@ -441,7 +458,8 @@ class FileUploadServiceSpec extends Specification {
         when:
         service.executionComplete(event)
         then:
-        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+        1 * service.getFrameworkService().getFrameworkPropertyResolver() >> Mock(PropertyResolver)
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, _,_) >>
                 new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
