@@ -51,6 +51,7 @@ class UrlMappings {
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
+        "/api/$api_version/job/$id/forecast"(controller: 'menu', action: 'apiJobForecast')
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']

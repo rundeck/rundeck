@@ -2711,6 +2711,89 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
+
+    def apiJobForecast() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (!frameworkService.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+        )) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : 'api.error.item.unauthorized',
+                            args  : ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!(response.format in ['all', 'xml', 'json'])) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+
+        def extra = [:]
+
+        //future scheduled executions forecast
+        def daysAhead = params.daysAhead ? params.int('daysAhead') : 1
+
+        def futureDate = new Date() + daysAhead
+
+        def maxFutures = null
+        if (params.maxFutures) {
+            maxFutures = params.int('maxFutures')
+            if (maxFutures <= 0) {
+                maxFutures = null
+            }
+        }
+
+        if (scheduledExecution.shouldScheduleExecution()) {
+            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate)
+            if (maxFutures
+                    && extra.futureScheduledExecutions
+                    && extra.futureScheduledExecutions.size() > maxFutures) {
+                extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<maxFutures]
+            }
+        }
+
+
+        respond(
+
+                JobInfo.from(
+                        scheduledExecution,
+                        apiService.apiHrefForJob(scheduledExecution),
+                        apiService.guiHrefForJob(scheduledExecution),
+                        extra
+                ),
+
+                [formats: ['xml', 'json']]
+        )
+    }
+
     private void respondApiJobsList(List<ScheduledExecution> results) {
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
