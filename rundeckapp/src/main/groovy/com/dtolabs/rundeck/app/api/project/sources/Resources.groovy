@@ -35,4 +35,7 @@ class Resources {
     Boolean writeable
     @XmlAttribute
     String href
+
+    @XmlAttribute
+    String editPermalink
 }

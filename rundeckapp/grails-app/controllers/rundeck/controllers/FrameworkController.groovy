@@ -2553,7 +2553,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                     project    : project,
                                     index      : index
                                 ]
-                            )
+                            ),
+                            editPermalink: writeableSource ? createLink(
+                                absolute: true,
+                                controller: 'framework',
+                                action: 'editProjectNodeSourceFile',
+                                params: [
+                                        project: project,
+                                        index  : index
+                                ]
+                            ) : null
                         )
                     )
                 }
@@ -2751,7 +2760,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     project    : project,
                     index      : index
                 ]
-            )
+            ),
+            editPermalink: writeableSource ? createLink(
+                    absolute: true,
+                    controller: 'framework',
+                    action: 'editProjectNodeSourceFile',
+                    params: [
+                            project: project,
+                            index  : index
+                    ]
+            ) : null
         )
         if (writeableSource) {
             sourceContent.description = writeableSource.writeableSource.sourceDescription
