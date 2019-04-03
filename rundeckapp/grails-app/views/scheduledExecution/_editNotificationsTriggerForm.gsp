@@ -45,7 +45,7 @@ implied. - See the License for the specific language governing permissions and -
 
                 <g:set var="attachTrue" value="${params[triggerEmailAttachName] == 'true' || defEmail?.mailConfiguration()?.attachLog in ['true', true]}"/>
 
-                <g:set var="attachAsFileTrue" value="${params[triggerEmailAttachTypeName] == 'file' || defEmail?.mailConfiguration()?.attachLogInFile in ['true', true]}"/>
+                <g:set var="attachAsFileTrue" value="${params[triggerEmailAttachTypeName] == 'file' || defEmail?.mailConfiguration()?.attachLogInFile in ['true', true] || !(defEmail?.mailConfiguration() in ['attachLogInFile','attachLogInline']) }" />
                 <g:set var="attachInlineTrue" value="${params[triggerEmailAttachTypeName] == 'inline' || defEmail?.mailConfiguration()?.attachLogInline in ['true', true]}"/>
 
                 <div class="checkbox">
