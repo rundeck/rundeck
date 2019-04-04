@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -43,8 +45,18 @@ class PasswordFieldsService {
         fields.clear();
     }
 
+    public reset(String arg) {
+        def keys = fields.keySet().findAll { it.arg == arg }
+        keys.each { fields.remove(it) }
+    }
+
     public int tracking() {
         return fields.size()
+    }
+
+    public int tracking(String arg) {
+        def keys = fields.keySet().findAll { it.arg == arg }
+        keys.size()
     }
 
     public int adjust(List<Integer> updates) {
@@ -76,10 +88,25 @@ class PasswordFieldsService {
      * @param descriptions list of possible plugins
      * @return
      */
-    public int track(configurations, Description... descriptions) {
-        return track(configurations,false,descriptions)
+    public int track(Collection configurations, Collection<Description> descriptions) {
+        track('_', configurations, descriptions)
     }
-    public int track(configurations,boolean hidden, Description... descriptions) {
+    /**
+     * Track password values by replacing them with hashed versions
+     * @param configurations Collection of Map, Map should have entries "type" (plugin type) and "props" (Map of
+     * key/values)
+     * @param descriptions list of possible plugins
+     * @return
+     */
+    public int track(String arg, Collection configurations, Collection<Description> descriptions) {
+        return track(arg, configurations, false, descriptions)
+    }
+
+    public int track(configurations, boolean hidden, Collection<Description> descriptions) {
+        track('_', configurations, hidden, descriptions)
+    }
+
+    public int track(String arg, Collection configurations, boolean hidden, Collection<Description> descriptions) {
         if(!configurations) {
             return 0
         }
@@ -91,7 +118,7 @@ class PasswordFieldsService {
                 continue
             }
 
-            Description desc = descriptions.find { it.name == config.type }
+            Description desc = findDescription(descriptions, config)
             if (desc == null) {
                 configPos++
                 continue
@@ -100,12 +127,12 @@ class PasswordFieldsService {
             for (property in desc.getProperties()) {
                 if (isPasswordDisplay(property)) {
                     String key = property.getName()
-                    String value = config.props[key]
+                    String value = getConfigProp(config, key)
                     if(value!=null){
                         def h = hidden?'*****':hash(value)
 
-                        config.props[key] = h
-                        fields.put(fieldKey(key, configPos), [original: value, hash: h])
+                        setConfigProp(h, config, key)
+                        fields.put(fieldKey(arg, key, configPos), [original: value, hash: h])
                         count++
                     }
                 }
@@ -115,19 +142,53 @@ class PasswordFieldsService {
         return count
     }
 
+    public void setConfigProp(String h, config, String key) {
+        if (config instanceof PluginConfiguration) {
+            if (h != null) {
+                config.configuration[key] = h
+            } else {
+                config.configuration.remove(key)
+            }
+        } else {
+            if (h != null) {
+                config.props[key] = h
+            } else {
+                config.configuration.remove(key)
+            }
+        }
+
+    }
+
+    public Object getConfigProp(config, String key) {
+        if (config instanceof PluginConfiguration) {
+            config.configuration[key]
+        } else {
+            config.props[key]
+        }
+    }
+
+    public Description findDescription(Collection<Description> descriptions, config) {
+        if (config instanceof PluginConfiguration) {
+            descriptions.find { it.name == config.provider }
+        } else {
+            descriptions.find { it.name == config.type }
+        }
+    }
+
     /**
      * generate a key object
      * @param key
      * @param configPos
      * @return
      */
-    private static Fieldkey fieldKey(String key, int configPos) {
-        [name: key, position: configPos] as Fieldkey
+    private static Fieldkey fieldKey(String arg, String key, int configPos) {
+        [arg: arg, name: key, position: configPos] as Fieldkey
     }
     /**
      * Key class suitable for hash map
      */
     static class Fieldkey {
+        String arg
         String name
         Integer position
 
@@ -137,6 +198,9 @@ class PasswordFieldsService {
 
             Fieldkey keyvalue = (Fieldkey) o
 
+            if (arg != keyvalue.arg) {
+                return false
+            }
             if (name != keyvalue.name) return false
             if (position != keyvalue.position) return false
 
@@ -145,7 +209,8 @@ class PasswordFieldsService {
 
         int hashCode() {
             int result
-            result = name.hashCode()
+            result = arg.hashCode()
+            result = 31 * result + name.hashCode()
             result = 31 * result + position.hashCode()
             return result
         }
@@ -157,7 +222,11 @@ class PasswordFieldsService {
      * @param descriptions plugin descriptions
      * @return
      */
-    public int untrack(configurations, Description... descriptions) {
+    public int untrack(Collection configurations, Collection<Description> descriptions) {
+        untrack('_', configurations, descriptions)
+    }
+
+    public int untrack(String arg, Collection configurations, Collection<Description> descriptions) {
         def count = 0
         for(resource in configurations) {
             if (resource == null) {
@@ -170,8 +239,7 @@ class PasswordFieldsService {
             Integer configurationPosition = resource.index
 
 
-
-            Description desc = descriptions.find { it.name == config.type }
+            Description desc = findDescription(descriptions, config)
             if (desc == null) {
                 continue
             }
@@ -182,30 +250,27 @@ class PasswordFieldsService {
                 }
 
                 String key = property.getName()
-                String value = config.props[key]
+                String value = getConfigProp(config, key)
 
-                if (!fields.containsKey(fieldKey(key, configurationPosition))) {
-                    if (value == null) {
-                        continue
-                    }
-                    config.props[key] = value
+                if (!fields.containsKey(fieldKey(arg, key, configurationPosition))) {
+
                     continue
                 }
 
 
-                def field = fields[fieldKey(key, configurationPosition)]
+                def field = fields[fieldKey(arg, key, configurationPosition)]
 
                 if (value != field.hash) {
                     if(value){
-                        config.props[key] = value
+                        setConfigProp(value, config, key)
                     }else{
-                        config.props.remove(key)
+                        setConfigProp(null, config, key)
                     }
                 } else {
-                    config.props[key] = field.original
+                    setConfigProp(field.original, config, key)
                 }
 
-                fields.remove(fieldKey(key, configurationPosition))
+                fields.remove(fieldKey(arg, key, configurationPosition))
                 count++
 
             }
