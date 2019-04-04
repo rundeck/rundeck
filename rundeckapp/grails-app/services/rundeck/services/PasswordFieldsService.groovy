@@ -32,13 +32,13 @@ class PasswordFieldsService {
     static scope = "session"
 
     private Map<Fieldkey, Map<String,String>> fields = new HashMap<Fieldkey, Map<String, String>>()
-    private final sessionPassphrase = generateSessionPassphrase()
+    private final byte[] sessionPassphrase = generateSessionPassphrase()
 
-    private static String generateSessionPassphrase() {
+    private static byte[] generateSessionPassphrase() {
         SecureRandom random = new SecureRandom()
-        byte[] bytes = new byte[20]
+        byte[] bytes = new byte[32]
         random.nextBytes(bytes)
-        return byteArrayToString(bytes)
+        bytes
     }
 
     public reset() {
@@ -291,9 +291,9 @@ class PasswordFieldsService {
      * @param data
      * @return HMAC/SHA256 representation of the given string
      */
-    private static String hmac_sha256(String secretKey, String data) {
+    private static String hmac_sha256(byte[] secretKey, String data) {
         try {
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes("UTF-8"), "HmacSHA256")
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, "HmacSHA256")
             Mac mac = Mac.getInstance("HmacSHA256")
             mac.init(secretKeySpec)
             byte[] digest = mac.doFinal(data.getBytes("UTF-8"))
