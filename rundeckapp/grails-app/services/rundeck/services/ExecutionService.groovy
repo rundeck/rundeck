@@ -3405,7 +3405,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         ScheduledExecution.withTransaction {
-            if(!useName && uuid){ {
+            if(!useName && uuid){
                 schedlist = ScheduledExecution.findAllScheduledExecutions(uuid)
                 if (!schedlist || 1 != schedlist.size()) {
                   def msg = "Job [${uuid}] not found by uuid, project: ${project}"
