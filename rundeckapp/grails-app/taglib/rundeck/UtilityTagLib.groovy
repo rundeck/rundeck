@@ -1784,7 +1784,7 @@ ansi-bg-default'''))
      * @attr data required list of data points in order
      */
     def basicTable = { attrs, body ->
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         out << "<tr>"
         attrs.columns.each {
@@ -1812,7 +1812,7 @@ ansi-bg-default'''))
      */
     def basicData = { attrs, body ->
         def data = attrs.data
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         attrs.fields.each {
             out << "<tr>"
@@ -1834,19 +1834,32 @@ ansi-bg-default'''))
     def forMenuItems = { attrs, body ->
         String type = attrs.type
         String var = attrs.var
+        String project = attrs.project
+        def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
+        if (menuType.projectType && !project) {
+            throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
+        }
         applicationContext.getBeansOfType(MenuItem).
-            findAll { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }.
+                findAll { it.value.type == menuType }.
+                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
             each { name, MenuItem item ->
                 out << body((var): item)
             }
     }
+
     /**
      * Render the contents if menu items of the specified type exist
      * @attr type REQUIRED menu type PROJECT, PROJECT_CONFIG, SYSTEM_CONFIG or USER_MENU
      */
     def ifMenuItems = { attrs, body ->
         String type = attrs.type
+        String project = attrs.project
+        def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
+        if (menuType.projectType && !project) {
+            throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
+        }
         if (applicationContext.getBeansOfType(MenuItem).
+                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
             any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
             out << body()
         }

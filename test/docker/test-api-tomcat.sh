@@ -4,6 +4,8 @@ set -euo pipefail
 
 . common.sh
 
+TOMCAT_TAG="${1}"
+
 # Sets the compose file to use for test run
 # Different compose files used for different environments
 export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-tomcat-test.yml}
@@ -28,6 +30,7 @@ cp -r ../api dockers/tomcat/api_test/
 docker build \
     -t rd-tomcat:latest \
     --cache-from rdtest:latest \
+    --build-arg TOMCAT_TAG=$TOMCAT_TAG \
     --build-arg LAUNCHER_URL=$LAUNCHER_URL \
     --build-arg CLI_DEB_URL=$CLI_DEB_URL \
     --build-arg CLI_VERS=$CLI_VERS \

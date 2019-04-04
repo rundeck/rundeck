@@ -110,7 +110,7 @@ grails.project.dependency.resolution = {
         compile 'org.yaml:snakeyaml:1.9',
                 'org.apache.ant:ant:1.8.3',
                 'org.apache.ant:ant-jsch:1.8.3',
-                'com.jcraft:jsch:0.1.54',
+                'com.jcraft:jsch:0.1.55',
                 'log4j:log4j:1.2.17',
                 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',

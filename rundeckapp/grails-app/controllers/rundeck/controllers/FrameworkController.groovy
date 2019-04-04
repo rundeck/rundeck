@@ -29,27 +29,22 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource
-import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
+import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.util.InvalidMimeTypeException
-import org.springframework.util.MimeTypeUtils
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
@@ -67,8 +62,6 @@ import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.Framework
 
-import com.dtolabs.rundeck.core.common.NodesFileGenerator
-import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
@@ -115,6 +108,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         storeNodeFilter          : 'POST',
         saveProjectNodeSources   : 'POST',
         saveProjectNodeSourceFile: 'POST',
+            saveProjectPluginsAjax   : 'POST',
     ]
 
     def index = {
@@ -776,6 +770,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def fcopy, fcopyreport
         def resourcesUrl
         def projectNameError
+        def projectDescriptionError
         def Properties projProps = new Properties()
         if(params.description) {
             projProps['project.description'] = params.description
@@ -855,6 +850,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
             projectNameError = message(code: "project.name.can.only.contain.these.characters")
             errors << projectNameError
+        } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
+            projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
+            errors << projectDescriptionError
         } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {
             projectNameError = "Project already exists: ${project}"
             log.error(projectNameError)
@@ -880,6 +878,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projectDescription: params.description,
                 projectLabel: params.label,
                 projectNameError: projectNameError,
+                projectDescriptionError: projectDescriptionError,
                 resourcesUrl: resourcesUrl,
                 resourceModelConfigDescriptions: descriptions,
                 defaultNodeExec: defaultNodeExec,
@@ -1358,6 +1357,209 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return redirect(action: 'projectNodeSources', params: [project: project])
     }
 
+    def projectNodePlugins() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+    }
+
+    def projectPluginsAjax(String project, String serviceName, String configPrefix) {
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!serviceName) {
+            return renderErrorView("serviceName parameter is required")
+        }
+        if (!configPrefix) {
+            return renderErrorView("configPrefix parameter is required")
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        def framework = frameworkService.getRundeckFramework()
+        def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
+        def plugins = ProjectNodeSupport.listPluginConfigurations(
+                rdprojectconfig.projectProperties,
+                configPrefix,
+                serviceName,
+                true
+        )
+        //TODO: password fields
+        // Reset Password Fields in Session
+//        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+
+        respond(
+                formats: ['json'],
+                [
+                        project: project,
+                        plugins: plugins.collect { ExtPluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
+                        },
+                ]
+        )
+    }
+
+    def saveProjectPluginsAjax(String project, String serviceName, String configPrefix) {
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+        if (!valid) {
+            return
+        }
+
+        if (request.format != 'json') {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                    code  : 'api.error.item.unsupported-format',
+                    args  : [request.format]
+            ]
+            )
+        }
+
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (!serviceName) {
+            return renderErrorView("serviceName parameter is required")
+        }
+        if (!configPrefix) {
+            return renderErrorView("configPrefix parameter is required")
+        }
+        def plugins = request.JSON.plugins
+
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        //TODO: password fields
+        // Reset Password Fields in Session
+//        resourcesPasswordFieldsService.reset()
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+
+        def errors = []
+        def reports = [:]
+        List<ExtPluginConfiguration> configs = []
+
+        //only attempt project create if form POST is used
+
+
+//        resourcesPasswordFieldsService.adjust(ndxes)
+
+        plugins.eachWithIndex { pluginDef, int ndx ->
+
+            String type = pluginDef.type
+            if (!type) {
+                errors << "[$ndx]: missing type"
+                return
+            }
+
+            if (!(type =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
+                errors << "[$ndx]: Invalid provider type name"
+                return
+            }
+
+            def described = pluginService.getPluginDescriptor(type, serviceName)
+            if (!described) {
+                errors << "[$ndx]: $serviceName provider was not found: ${type}"
+                return
+            }
+
+            //validate
+            Map configMap = pluginDef.config ?: [:]
+            ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
+            if (!validated.valid) {
+                errors << "[$ndx]: configuration was invalid: $validated.report"
+                reports["$ndx"] = validated.report.errors
+                return
+            }
+            Map extraMap = pluginDef.extra ?: [:]
+
+
+            configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
+                    .service(serviceName)
+                    .provider(type)
+                    .configuration(configMap)
+                    .extra(extraMap)
+                    .build()
+        }
+
+        //replace any unmodified password fields with the session data
+//        resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
+
+
+        if (!errors) {
+
+            Properties projProps = ProjectNodeSupport.serializePluginConfigurations(configPrefix, configs, true)
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, [configPrefix+'.'].toSet())
+            if (!result.success) {
+                errors << result.error
+            }
+        }
+
+        if (errors) {
+            return respond(
+                    formats: ['json'],
+                    status: HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                    [
+                            errors : errors,
+                            reports: reports
+                    ]
+            )
+        }
+
+//            resourcesPasswordFieldsService.reset()
+//        return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+
+        respond(
+                formats: ['json'],
+                [
+                        project: project,
+                        plugins: plugins
+                ]
+        )
+    }
     def projectNodeSources() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
@@ -2986,7 +3188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
             configStorageService.loadFileResource(storagePath,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
             configStorageService.loadFileResource(storagePath,baos)
@@ -3020,7 +3222,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 configStorageService.loadFileResource(projectFilePath,response.outputStream)
-                response.outputStream.close()
+                flush(response)
             }else{
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()

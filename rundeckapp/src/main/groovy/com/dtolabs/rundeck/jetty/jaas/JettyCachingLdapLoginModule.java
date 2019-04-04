@@ -19,11 +19,9 @@ package com.dtolabs.rundeck.jetty.jaas;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Principal;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,6 +45,7 @@ import org.eclipse.jetty.jaas.callback.ObjectCallback;
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.eclipse.jetty.util.security.Credential;
+import org.eclipse.jetty.util.security.Password;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -843,7 +842,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
-        UserInfo userInfo = new UserInfo(username, null, roles);
+        UserInfo userInfo = new UserInfo(username, new Password(password.toString()), roles);
         if (_cacheDuration > 0) {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,

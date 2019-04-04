@@ -134,19 +134,19 @@
         </p>
       </g:link>
     </li>
-    <g:ifMenuItems type="PROJECT">
+    <g:ifMenuItems type="PROJECT" project="${params.project}">
         <li role="separator" class="divider"></li>
+        <g:forMenuItems type="PROJECT" var="item" project="${params.project}">
+            <li>
+                <a href="${enc(attr: item.getProjectHref(params.project))}"
+                   class=" toptab "
+                   title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
+                    <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
+                    <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+                </a>
+            </li>
+        </g:forMenuItems>
     </g:ifMenuItems>
-    <g:forMenuItems type="PROJECT" var="item">
-        <li>
-            <a href="${enc(attr: item.getProjectHref(params.project))}"
-               class=" toptab "
-               title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
-                <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
-                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
-            </a>
-        </li>
-    </g:forMenuItems>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
@@ -229,11 +229,20 @@
 <div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
   <div id="community-news-notification">
     <div class="sidebar-footer-line-item">
-      <g:link controller="communityNews" action="index">
-        <span id="community-news-notification-vue"></span>
-      </g:link>
+      <g:if test="${grailsApplication.config.rundeck.communityNews.disabled in [true,'true']}">
+        <a href="https://www.rundeck.com/community-updates" target="_blank">
+          <div>
+            <i class="far fa-newspaper" style="margin-right:5px;"></i>
+            <span>Community News</span>
+          </div>
+        </a>
+      </g:if>
+      <g:else>
+        <g:link controller="communityNews" action="index">
+          <span id="community-news-notification-vue"></span>
+        </g:link>
+      </g:else>
     </div>
-
   </div>
   <div id="version-notification-vue"></div>
   <div id="snapshot-version" class="snapshot-version">

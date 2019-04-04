@@ -18,9 +18,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.ExecArgList;
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.DefaultFileCopierUtil;
 import com.dtolabs.rundeck.core.execution.impl.common.FileCopierUtil;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
@@ -71,7 +69,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             String[] args,
             String scriptInterpreter,
             boolean quoted,
-            final ExecutionService executionService,
+            final NodeExecutionService executionService,
             final boolean expandTokens
     ) throws NodeStepException
     {
@@ -116,6 +114,13 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                 ScriptfileUtils.releaseTempFile(temp);
             }
         } catch (FileCopierException e) {
+            throw new NodeStepException(
+                    e.getMessage(),
+                    e,
+                    e.getFailureReason(),
+                    node.getNodename()
+            );
+        } catch (ExecutionException e) {
             throw new NodeStepException(
                     e.getMessage(),
                     e,

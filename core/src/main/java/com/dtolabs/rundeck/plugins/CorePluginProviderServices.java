@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.plugins;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
@@ -46,7 +48,9 @@ public class CorePluginProviderServices {
             ResourceModelSourceFactory.class,
             ResourceFormatParser.class,
             ResourceFormatGenerator.class,
-            OrchestratorPlugin.class
+            OrchestratorPlugin.class,
+            WorkflowExecutor.class,
+            WorkflowStrategy.class
     )));
 
     /**
@@ -100,6 +104,12 @@ public class CorePluginProviderServices {
             return (PluggableProviderService<T>) svc;
         } else if (type.equals(OrchestratorPlugin.class)) {
             PluggableProviderService<OrchestratorPlugin> svc = framework.getOrchestratorService();
+            return (PluggableProviderService<T>) svc;
+        } else if (type.equals(WorkflowStrategy.class)) {
+            PluggableProviderService<WorkflowStrategy> svc = framework.getWorkflowStrategyService();
+            return (PluggableProviderService<T>) svc;
+        } else if (type.equals(WorkflowExecutor.class)) {
+            PluggableProviderService<WorkflowExecutor> svc = framework.getWorkflowExecutionService();
             return (PluggableProviderService<T>) svc;
         }
         return null;

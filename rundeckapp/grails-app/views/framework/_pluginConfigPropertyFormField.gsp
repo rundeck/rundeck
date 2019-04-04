@@ -51,7 +51,7 @@
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
-    <div class="${fullWidthCol}">
+    <div class="${offsetColType}">
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
           <g:checkBox name="${fieldname}" value="true"

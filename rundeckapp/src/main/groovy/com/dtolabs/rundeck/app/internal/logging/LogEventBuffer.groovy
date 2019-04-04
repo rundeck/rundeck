@@ -16,28 +16,33 @@
 
 package com.dtolabs.rundeck.app.internal.logging
 
+import com.dtolabs.rundeck.core.execution.Contextual
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
+import com.dtolabs.rundeck.core.utils.LogBuffer
 
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Buffer of log event data used by {@link ThreadBoundLogOutputStream}
+ * Buffer of log event data used by {@link com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream}
  */
-class LogEventBuffer implements Comparable {
+class LogEventBuffer implements Comparable, LogBuffer<LogEvent> {
     Date time
     Map<String, String> context
-    Boolean crchar
+    Contextual listener
     ByteArrayOutputStream baos
     Long serial
     final static AtomicLong counter = new AtomicLong(0)
     private Charset charset
+    private LogLevel level
 
-    LogEventBuffer(final Map<String, String> context, Charset charset = null) {
+    LogEventBuffer(LogLevel level, final Contextual listener, Charset charset = null) {
+        this.level = level
         serial = counter.incrementAndGet()
-        reset(context)
+        this.listener = listener
+        reset(listener.context)
         this.charset = charset
     }
 
@@ -49,16 +54,24 @@ class LogEventBuffer implements Comparable {
         this.time = null
         this.context = null
         this.baos = new ByteArrayOutputStream()
-        this.crchar = false
     }
 
+    void reset() {
+        reset(listener.context)
+    }
     void reset(final Map<String, String> context) {
         this.time = new Date()
         this.context = context
         this.baos = new ByteArrayOutputStream()
     }
 
-    LogEvent createEvent(LogLevel level) {
+    @Override
+    void write(final byte b) {
+        baos.write(b)
+    }
+
+
+    LogEvent get() {
         def string = baos?(charset?new String(baos.toByteArray(), (Charset) charset):new String(baos.toByteArray())):''
         return new DefaultLogEvent(
                 loglevel: level,

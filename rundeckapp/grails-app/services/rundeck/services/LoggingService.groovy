@@ -16,12 +16,16 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.logging.LogEventBuffer
+import com.dtolabs.rundeck.app.internal.logging.LogEventBufferManager
 import com.dtolabs.rundeck.app.internal.logging.LogFlusher
-import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.core.execution.Contextual
+import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.StreamingLogWriter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.utils.LogBuffer
+import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
@@ -263,7 +267,13 @@ class LoggingService implements ExecutionFileProducer {
             Charset charset=null
     )
     {
-        def stream = new ThreadBoundLogOutputStream(logWriter, level, listener, charset)
+        def stream = new ThreadBoundLogOutputStream(
+                logWriter.&addEvent,
+                charset,
+                { Charset charset1 ->
+                    LogEventBufferManager.createManager(level,listener, charset1)
+                }
+        )
         flusherWorkflowListener.logOut=stream
         return stream
     }

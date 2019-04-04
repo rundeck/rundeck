@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
+import com.dtolabs.rundeck.core.execution.NodeExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
@@ -61,7 +62,7 @@ public interface ScriptFileNodeStepUtils {
             String[] args,
             String scriptInterpreter,
             boolean quoted,
-            ExecutionService executionService,
+            NodeExecutionService executionService,
             boolean expandTokens
     ) throws NodeStepException;
 

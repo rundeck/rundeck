@@ -29,6 +29,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'Node.plural')}"/>
+
     <title><g:message code="Node.plural"/></title>
 
 </head>
@@ -57,6 +58,18 @@
                 <g:icon name="pencil"/>
                 <g:message code="project.configure.nodes.title"/>
               </g:link>
+
+              <feature:enabled name="enhanced-nodes">
+                <g:link controller="framework" action="projectNodePlugins"
+                        params="[project: params.project ?: request.project]"
+                        class="has_tooltip pull-right btn btn-default btn-xs"
+                        data-placement="bottom"
+                        title="${g.message(code: 'framework.service.NodeEnhancer.label.plural')}">
+                  <i class="fas fa-puzzle-piece"></i>
+                  <g:message code="button.title.manage.plugins"/>
+                </g:link>
+              </feature:enabled>
+
             </h3>
           </div>
           <div class="card-content">
@@ -121,6 +134,7 @@
                         </ol>
                       </g:if>
                     </div>
+
                   </div>
                 </div>
           </div>
@@ -128,5 +142,6 @@
       </g:form>
     </div>
   </div>
+
 </body>
 </html>
