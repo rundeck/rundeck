@@ -54,9 +54,14 @@ cat > $DIR/temp.out <<END
           <project>$xmlproj</project>
       </context>
       <nodeFilterEditable>false</nodeFilterEditable>
-      <sequence keepgoing="false" strategy="node-first">
+      <sequence keepgoing="false" strategy="parallel">
          <command>
              <jobref name="Long Run Job">
+               <uuid>db9a5f0d</uuid>
+             </jobref>
+         </command>
+         <command>
+             <jobref name="Long Run Job" nodeStep="true">
                <uuid>db9a5f0d</uuid>
              </jobref>
          </command>
