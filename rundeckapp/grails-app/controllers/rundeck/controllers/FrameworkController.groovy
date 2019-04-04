@@ -1018,7 +1018,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
             //restore tracked password values
             try {
-                execPasswordFieldsService.untrack([[config: [type: nodeExecType, props: nodeConfig], index: 0]], * nodeexecdescriptions)
+                execPasswordFieldsService.untrack(
+                        [[config: [type: nodeExecType, props: nodeConfig], index: 0]],
+                        nodeexecdescriptions
+                )
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
                 errors << e.getMessage()
@@ -1048,7 +1051,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
             //restore tracked password values
             try {
-                fcopyPasswordFieldsService.untrack([[config: [type: fileCopyType, props: filecopyConfig], index: 0]], * filecopydescs)
+                fcopyPasswordFieldsService.untrack(
+                        [[config: [type: fileCopyType, props: filecopyConfig], index: 0]],
+                        filecopydescs
+                )
             } catch (ExecutionServiceException e) {
                 log.error(e.message)
                 errors << e.getMessage()
@@ -1081,7 +1087,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     }
 
             //replace any unmodified password fields with the session data
-            resourcesPasswordFieldsService.untrack(resourceConfig, *resourceModelSourceDescriptions)
+            resourcesPasswordFieldsService.untrack(resourceConfig, resourceModelSourceDescriptions)
             //for each resources model source definition, add project properties from the input config
             resourceConfig.each{ Map mapping->
                 def props=mapping.config.props
@@ -1190,7 +1196,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if (params.defaultNodeExec) {
                 (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
                 try {
-                    execPasswordFieldsService.untrack([[config: [type: defaultNodeExec, props: nodeexec], index: 0]], * nodeexecdescriptions)
+                    execPasswordFieldsService.untrack(
+                            [[config: [type: defaultNodeExec, props: nodeexec], index: 0]],
+                            nodeexecdescriptions
+                    )
                     frameworkService.addProjectNodeExecutorPropertiesForType(defaultNodeExec, projProps, nodeexec, removePrefixes)
                 } catch (ExecutionServiceException e) {
                     log.error(e.message)
@@ -1200,7 +1209,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if (params.defaultFileCopy) {
                 (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, params.defaultFileCopy, "fcopy", frameworkService.getFileCopierService(),'File Copier')
                 try {
-                    fcopyPasswordFieldsService.untrack([[config: [type: defaultFileCopy, props: fcopy], index: 0]], * filecopydescs)
+                    fcopyPasswordFieldsService.untrack(
+                            [[config: [type: defaultFileCopy, props: fcopy], index: 0]],
+                            filecopydescs
+                    )
                     frameworkService.addProjectFileCopierPropertiesForType(defaultFileCopy, projProps, fcopy, removePrefixes)
                 } catch (ExecutionServiceException e) {
                     log.error(e.message)
@@ -1990,8 +2002,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        execPasswordFieldsService.track([[type:defaultNodeExec,props:nodeConfig]], *execDesc)
-        fcopyPasswordFieldsService.track([[type:defaultFileCopy,props:filecopyConfig]], *filecopyDesc)
+        execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], execDesc)
+        fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], filecopyDesc)
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
 
@@ -2147,12 +2159,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         fcopyPasswordFieldsService.reset()
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig,true, *resourceDescs)
+        resourcesPasswordFieldsService.track(resourceConfig, true, resourceDescs)
         if(defaultNodeExec) {
-            execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], true, *execDesc)
+            execPasswordFieldsService.track([[type: defaultNodeExec, props: nodeConfig]], true, execDesc)
         }
         if(defaultFileCopy) {
-            fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], true, *filecopyDesc)
+            fcopyPasswordFieldsService.track([[type: defaultFileCopy, props: filecopyConfig]], true, filecopyDesc)
         }
         // resourceConfig CRUD rely on this session mapping
         // saveProject will replace the password fields on change
