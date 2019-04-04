@@ -415,7 +415,7 @@
                                  class="form-control"
                                  value="${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}"
                                  size="60"
-                                 placeholder="Comma separated list"
+                                 placeholder="${message(code:"form.option.valuesList.placeholder")}"
                                  id="vlist_${rkey}"
                     />
 
@@ -428,7 +428,7 @@
                                  name="valuesUrl"
                                  value="${option?.realValuesUrl?.toString()}"
                                  size="60"
-                                 placeholder="Remote URL"
+                                 placeholder="${message(code:"form.option.valuesURL.placeholder")}"
                                  id="vurl_${rkey}"
                     />
 

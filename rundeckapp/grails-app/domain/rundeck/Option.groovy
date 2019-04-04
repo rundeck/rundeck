@@ -339,7 +339,7 @@ public class Option implements Comparable{
                 valuesListDelimiter=DEFAULT_DELIMITER
             }
             optionValues=new ArrayList()
-            optionValues.addAll(valuesList.split(Pattern.quote(valuesListDelimiter)).collect{it.trim()}.grep{it} as List)
+            optionValues.addAll(valuesList.split(Pattern.quote(valuesListDelimiter)).collect{it.trim()}.grep{it}.unique() as List)
 
             if(optionValues && sortValues){
                 sortValuesList()
