@@ -385,6 +385,16 @@ class PluginService {
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
         listPlugins(clazz, createPluggableService(clazz))
     }
+
+    /**
+     * List all plugins with a valid Description
+     * @param serviceName name of service
+     * @return List of Description
+     */
+    def List<Description> listPluginDescriptions(String serviceName) {
+        Class pluginClazz = ServiceTypes.getPluginType(serviceName)
+        listPluginDescriptions(pluginClazz, createPluggableService(pluginClazz))
+    }
     /**
      * List all plugins with a valid Description
      * @param clazz
