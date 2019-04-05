@@ -1947,7 +1947,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         try {
             size = source.writeableSource.writeData(bais)
         } catch (ResourceModelSourceException exc) {
-            log.error(exc)
+            log.error('Error Saving nodes file content', exc)
             exc.printStackTrace()
             error = exc
         }
