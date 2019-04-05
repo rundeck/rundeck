@@ -1438,6 +1438,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         boolean valid = false
         withForm {
             valid = true
+            g.refreshFormTokensHeader()
         }.invalidToken {
             return apiService.renderErrorFormat(
                     response, [
