@@ -86,6 +86,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ScheduledExecutionService scheduledExecutionService
     UserService userService
 
+    PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
     PasswordFieldsService execPasswordFieldsService
     PasswordFieldsService fcopyPasswordFieldsService
@@ -1416,12 +1417,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 serviceName,
                 true
         )
-        //TODO: password fields
+        final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
+
         // Reset Password Fields in Session
-//        resourcesPasswordFieldsService.reset()
+        obscurePasswordFieldsService.reset("${project}/${serviceName}/${configPrefix}")
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
+        obscurePasswordFieldsService.track("${project}/${serviceName}/${configPrefix}", plugins, pluginDescriptions)
 
         respond(
                 formats: ['json'],
@@ -1484,23 +1486,33 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
-        //TODO: password fields
-        // Reset Password Fields in Session
-//        resourcesPasswordFieldsService.reset()
-        // Store Password Fields values in Session
-        // Replace the Password Fields in configs with hashes
-//        resourcesPasswordFieldsService.track(plugins, *enhancerDescs)
 
         def errors = []
         def reports = [:]
         List<ExtPluginConfiguration> configs = []
 
-        //only attempt project create if form POST is used
-
-
-//        resourcesPasswordFieldsService.adjust(ndxes)
-
+        def mappedConfigs = []
         plugins.eachWithIndex { pluginDef, int ndx ->
+            def confData = new HashMap<>(pluginDef.config ?: [:])
+            mappedConfigs << [
+                    type    : pluginDef.type,
+                    props   : confData,
+                    config  : [props: confData, type: pluginDef.type],
+                    extra   : pluginDef.extra,
+                    index   : pluginDef.origIndex,
+                    newIndex: ndx
+            ]
+        }
+        final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
+
+        //replace obscured values with original values
+        obscurePasswordFieldsService.untrack(
+                "${project}/${serviceName}/${configPrefix}",
+                mappedConfigs,
+                pluginDescriptions
+        )
+
+        mappedConfigs.eachWithIndex { pluginDef, int ndx ->
 
             String type = pluginDef.type
             if (!type) {
@@ -1520,14 +1532,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             //validate
-            Map configMap = pluginDef.config ?: [:]
+            Map<String, Object> configMap = pluginDef.props
             ValidatedPlugin validated = pluginService.validatePluginConfig(serviceName, type, configMap)
             if (!validated.valid) {
                 errors << "[$ndx]: configuration was invalid: $validated.report"
                 reports["$ndx"] = validated.report.errors
                 return
             }
-            Map extraMap = pluginDef.extra ?: [:]
+            Map<String, Object> extraMap = pluginDef.extra ?: [:]
 
 
             configs << new SimplePluginConfiguration.SimplePluginConfigurationBuilder()
@@ -1537,10 +1549,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     .extra(extraMap)
                     .build()
         }
-
-        //replace any unmodified password fields with the session data
-//        resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
-
 
         if (!errors) {
 
@@ -1562,14 +1570,24 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             )
         }
 
-//            resourcesPasswordFieldsService.reset()
-//        return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+
+        // Reset Password Fields in Session
+        obscurePasswordFieldsService.reset("${project}/${serviceName}/${configPrefix}")
+        // Store Password Fields values in Session
+        // Replace the Password Fields in configs with hashes
+        obscurePasswordFieldsService.track(
+                "${project}/${serviceName}/${configPrefix}",
+                configs,
+                pluginDescriptions
+        )
 
         respond(
                 formats: ['json'],
                 [
                         project: project,
-                        plugins: plugins
+                        plugins: configs.collect { ExtPluginConfiguration conf ->
+                            [type: conf.provider, config: conf.configuration, service: conf.service, extra: conf.extra]
+                        },
                 ]
         )
     }
