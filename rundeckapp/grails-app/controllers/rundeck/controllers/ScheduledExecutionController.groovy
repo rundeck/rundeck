@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -2753,11 +2754,12 @@ class ScheduledExecutionController  extends ControllerBase{
                 //if failed nodes are not part of original node filter, it will be added
                 def failedNodeNotInNodes = failedNodes.findAll{ !nodes.contains( it ) }
                 if(failedNodeNotInNodes && failedNodeNotInNodes.size()>0){
+                    def nodeImp = new NodeSetImpl()
                     if(nodes){
-                        nodes.addAll(failedNodeNotInNodes)
-                    }else{
-                        nodes=failedNodeNotInNodes
+                        nodeImp.putNodes(nodes)
                     }
+                    nodeImp.putNodes(failedNodeNotInNodes)
+                    nodes=nodeImp.getNodes()
                 }
             }
 
