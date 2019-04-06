@@ -24,8 +24,8 @@ source scripts/helpers.sh
 # RUNDECK_BUILD_NUMBER="4093"
 # RUNDECK_TAG="v3.0.0-alpha4"
 
-export ECR_REPO=055798170027.dkr.ecr.us-east-2.amazonaws.com/rundeck/rundeck
-export ECR_REGISTRY=055798170027.dkr.ecr.us-east-2.amazonaws.com
+export ECR_REPO=481311893001.dkr.ecr.us-west-2.amazonaws.com/rundeck/rundeck
+export ECR_REGISTRY=481311893001.dkr.ecr.us-west-2.amazonaws.com
 
 
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
