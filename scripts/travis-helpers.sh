@@ -40,11 +40,11 @@ else
 fi
 
 # Location of CI resources such as private keys
-S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
+S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
 # The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
-S3_ARTIFACT_BASE="s3://rundeck-travis-artifacts/oss/rundeck"
+S3_ARTIFACT_BASE="s3://rundeck-ci-artifacts/oss/rundeck"
 
 S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
