@@ -329,4 +329,36 @@ class FrameworkServiceSpec extends Specification {
         where:
             method << ['addProjectNodeExecutorPropertiesForType', 'addProjectFileCopierPropertiesForType']
     }
+
+    def "getFirstLoginFile"() {
+        when:
+        File tmpVar = File.createTempDir()
+        service.rundeckFramework = Mock(Framework) {
+            hasProperty('framework.var.dir') >> { true }
+            getProperty('framework.var.dir') >> { tmpVar }
+        }
+        File firstLoginMarker = service.getFirstLoginFile()
+
+        then:
+        !firstLoginMarker.exists()
+        firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/"+FrameworkService.FIRST_LOGIN_FILE
+
+    }
+
+    def "getFirstLoginFile no framework var dir"() {
+        when:
+        File tmpVar = File.createTempDir()
+        service.rundeckFramework = Mock(Framework) {
+            hasProperty('framework.var.dir') >> { false }
+            getBaseDir() >> { tmpVar }
+        }
+        File firstLoginMarker = service.getFirstLoginFile()
+
+        then:
+        !firstLoginMarker.exists()
+        firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/var/"+FrameworkService.FIRST_LOGIN_FILE
+
+    }
 }

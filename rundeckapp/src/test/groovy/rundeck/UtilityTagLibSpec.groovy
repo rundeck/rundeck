@@ -19,6 +19,8 @@ package rundeck
 import grails.test.mixin.TestFor
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.URIComponentCodec
+import rundeck.services.ConfigurationService
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -115,5 +117,54 @@ class UtilityTagLibSpec extends Specification {
         [a: 'b', c: 'd e'] | 'a=b&c=d%20e'
         [a: 'b', 'c f': 'd e'] | 'a=b&c%20f=d%20e'
 
+    }
+
+    def "shouldShowLogin show local after first login"() {
+        when:
+        File firstLoginFile = File.createTempFile("first","login")
+        tagLib.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.localLogin.enabled",true) >> { false }
+            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
+        }
+        tagLib.frameworkService = Mock(FrameworkService) {
+            getFirstLoginFile() >> { return firstLoginFile }
+        }
+        def result = tagLib.showLocalLogin(null,"loginform").toString()
+
+        then:
+        result == "loginform"
+    }
+
+    def "shouldShowLogin suppress local if no first login"() {
+        when:
+        File firstLoginFile = new File("/tmp/doesnotexist")
+        tagLib.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.localLogin.enabled",true) >> { false }
+            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { true }
+        }
+        tagLib.frameworkService = Mock(FrameworkService) {
+            getFirstLoginFile() >> { return firstLoginFile }
+        }
+        def result = tagLib.showLocalLogin(null,"loginform").toString()
+
+        then:
+        !result
+    }
+
+    def "shouldShowLogin localLogin toggle"() {
+        when:
+        tagLib.configurationService = Mock(ConfigurationService) {
+            getBoolean("login.localLogin.enabled",true) >> { toggle }
+            getBoolean("login.showLocalLoginAfterFirstSSOLogin",false) >> { false }
+        }
+        def result = tagLib.showLocalLogin(null,"loginform").toString()
+
+        then:
+        result == check
+
+        where:
+        toggle | check
+        true   | "loginform"
+        false  | ""
     }
 }

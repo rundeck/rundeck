@@ -57,6 +57,7 @@ import java.util.function.Predicate
 class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
+    public static final String FIRST_LOGIN_FILE = ".firstLogin"
 
     boolean initialized = false
     private String serverUUID
@@ -1310,5 +1311,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {
         return (PluggableProviderService<T>)storagePluginProviderService
+    }
+
+    public File getFirstLoginFile() {
+        String vardir
+        if(rundeckFramework.hasProperty('framework.var.dir')) {
+            vardir = rundeckFramework.getProperty('framework.var.dir')
+        } else {
+            vardir = getRundeckBase()+"/var"
+        }
+        return new File(vardir, FIRST_LOGIN_FILE)
     }
 }
