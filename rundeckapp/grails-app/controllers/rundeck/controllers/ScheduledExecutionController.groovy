@@ -70,6 +70,8 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
+    static Logger logger = Logger.getLogger(ScheduledExecutionController)
+
     public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
     public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'
     public static final String NOTIFY_ONSTART_EMAIL = 'notifyOnstartEmail'
@@ -1047,8 +1049,8 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
-        log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+    static Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+        logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
