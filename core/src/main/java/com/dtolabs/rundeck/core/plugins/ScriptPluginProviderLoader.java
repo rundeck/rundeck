@@ -749,7 +749,7 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
         try {
             String date = getPluginMeta().getDate();
             return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(date);
-        } catch (IOException | ParseException e) {
+        } catch (IOException | NullPointerException | ParseException e) {
 
         }
         return null;
