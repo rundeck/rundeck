@@ -123,6 +123,14 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
     )
     @SelectLabels(values = ['JSON', 'Java Properties', 'CSV', 'HTML', 'Markdown'])
     String datatype = null
+
+    @PluginProperty(
+            title = "Table striped",
+            description = '''Display the rows striped.''',
+            required = false
+    )
+    boolean striped = false
+
     private StringBuilder buffer;
 
     @Override
@@ -170,12 +178,19 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
             if (buffer.length() > 0) {
                 buffer.append("\n")
             }
+
+            def meta = [
+                    'content-data-type': SYNONYMS[datatype.toLowerCase()] ?: datatype
+            ]
+
+            if(striped){
+                meta << ['content-meta:css-class' : 'table-striped']
+            }
+
             context.log(
                     2,
                     buffer.toString(),
-                    [
-                            'content-data-type': SYNONYMS[datatype.toLowerCase()] ?: datatype
-                    ]
+                    meta
             )
         }
         buffer = new StringBuilder()

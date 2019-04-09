@@ -109,7 +109,7 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
@@ -152,7 +152,7 @@ class PluginApiService {
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
-                FileUploadPluginService: ['filesystem-temp'],
+                FileUpload: ['filesystem-temp'],
         ]
         //list included plugins
         def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
@@ -182,8 +182,8 @@ class PluginApiService {
                 (scmService.scmImportPluginProviderService.name):[
                         description: message("plugin.scmImport.special.description",locale),
                 ],
-                FileUploadPluginService:[
-                        description: message("plugin.FileUploadPluginService.special.description",locale),
+                FileUpload:[
+                        description: message("plugin.FileUpload.special.description",locale),
                 ]
         ]
         def specialScoping=[

@@ -1093,6 +1093,25 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
+    def "create project description empty"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ''
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+    }
+
     def "create project description name with invalid characters"(){
         setup:
         controller.metricService = Mock(MetricService)

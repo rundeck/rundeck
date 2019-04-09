@@ -374,7 +374,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
-        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
         if (null != beanPlugin) {
             return beanPlugin
         }

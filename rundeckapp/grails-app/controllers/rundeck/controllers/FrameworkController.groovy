@@ -16,39 +16,27 @@
 
 package rundeck.controllers
 
-import com.dtolabs.client.utils.Constants
-import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Source
+import com.dtolabs.rundeck.app.api.project.sources.Resources
 import com.dtolabs.rundeck.app.api.project.sources.Sources
-import com.dtolabs.rundeck.app.support.BaseNodeFilters
-import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectNodes
+import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.resources.FileResourceModelSource
-import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
@@ -60,12 +48,37 @@ import org.springframework.util.InvalidMimeTypeException
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
-import rundeck.User
-import rundeck.services.*
+import rundeck.services.ApiService
+import rundeck.services.AuthorizationService
+import rundeck.services.PasswordFieldsService
+import rundeck.services.PluginService
+import rundeck.services.ScheduledExecutionService
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.FrameworkProject
+import com.dtolabs.rundeck.core.common.Framework
+
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+
+import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.FrameworkResource
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import rundeck.User
+import rundeck.NodeFilter
+import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
+import rundeck.services.UserService
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
@@ -837,7 +850,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
             projectNameError = message(code: "project.name.can.only.contain.these.characters")
             errors << projectNameError
-        } else if (!(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
+        } else if (params.description && !(params.description =~ FrameworkResource.VALID_RESOURCE_DESCRIPTION_REGEX)) {
             projectDescriptionError = message(code: "project.description.can.only.contain.these.characters")
             errors << projectDescriptionError
         } else if (framework.getFrameworkProjectMgr().existsFrameworkProject(project)) {

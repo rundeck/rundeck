@@ -24,6 +24,25 @@ import static com.dtolabs.rundeck.core.plugins.PluginValidation.State.INVALID
 import static com.dtolabs.rundeck.core.plugins.PluginValidation.State.VALID
 
 class ScriptPluginProviderLoaderTest extends Specification {
+
+    def "LoadMetadataYaml with null date"() {
+        setup:
+        File tmpCacheDir = File.createTempDir()
+
+        when:
+        String pluginName = "Test script plugin"
+        ScriptPluginProviderLoader loader = new ScriptPluginProviderLoader(File.createTempFile("throwaway","unneeded"),tmpCacheDir)
+        def pluginYaml = createPluginYaml(pluginName,"1.2")
+        def meta = loader.loadMetadataYaml(pluginYaml)
+        def dte = loader.getPluginDate()
+
+        then:
+        noExceptionThrown()
+        meta.name == pluginName
+        meta.rundeckPluginVersion == "1.2"
+        dte == null
+    }
+
     def "LoadMetadataYaml"() {
         setup:
         File tmpCacheDir = File.createTempDir()
@@ -37,6 +56,7 @@ class ScriptPluginProviderLoaderTest extends Specification {
         then:
         meta.name == pluginName
         meta.rundeckPluginVersion == "1.2"
+        meta.date == null
     }
 
     @Unroll
