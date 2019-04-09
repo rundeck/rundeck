@@ -156,7 +156,6 @@
             if(firstLoad){
                 firstLoad=false;
             }else if(event.state){
-                console.log("event.state");
                 Object.extend(eventsparams,event.state);
                 setAutoLoad(event.state.refresh);
                 loadHistory();
