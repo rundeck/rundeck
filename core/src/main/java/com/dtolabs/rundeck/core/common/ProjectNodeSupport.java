@@ -93,7 +93,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
 
-    static Set<String> uncachedResourceTypes = new HashSet<String>();
+    private static Set<String> uncachedResourceTypes = new HashSet<>();
 
     static {
         uncachedResourceTypes.add("file");
@@ -151,7 +151,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                 index + ".source",
                                 new ResourceModelSourceException(
                                         TextUtils.join(
-                                                modelSourceErrors.toArray(new String[modelSourceErrors.size()]),
+                                                modelSourceErrors.toArray(new String[0]),
                                                 ';'
                                         )
                                 )
@@ -321,7 +321,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     class StoreExceptionHandler implements ExceptionCatchingResourceModelSource.ExceptionHandler {
         String sourceIdent;
 
-        public StoreExceptionHandler(final String sourceIdent) {
+        StoreExceptionHandler(final String sourceIdent) {
             this.sourceIdent = sourceIdent;
         }
 
@@ -346,12 +346,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static class ProjectNodesSource implements ResourceModelSource {
         IProjectNodes nodes;
 
-        public ProjectNodesSource(final IProjectNodes nodes) {
+        ProjectNodesSource(final IProjectNodes nodes) {
             this.nodes = nodes;
         }
 
         @Override
-        public INodeSet getNodes() throws ResourceModelSourceException {
+        public INodeSet getNodes() {
             return nodes.getNodeSet();
         }
     }
@@ -433,7 +433,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return factoryFunction;
     }
 
-    static interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
+    interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
         int getIndex();
 
         String getType();
@@ -459,7 +459,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     private LoadedResourceModelSource loadResourceModelSource(
-            String type, Properties configuration, boolean useCache,
+            String type,
+            Properties configuration,
+            boolean useCache,
             String ident,
             int index
     ) throws ExecutionServiceException
@@ -467,7 +469,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         configuration.put("project", projectConfig.getName());
 
-        CloseableProvider<ResourceModelSource> sourceForConfiguration = null;
+        CloseableProvider<ResourceModelSource> sourceForConfiguration;
 
         if (null == factoryFunction) {
             sourceForConfiguration =
@@ -643,7 +645,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
     public static List<Map<String, Object>> listResourceModelConfigurations(final Properties props) {
-        final ArrayList<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        final ArrayList<Map<String, Object>> list = new ArrayList<>();
         int i = 1;
         boolean done = false;
         while (!done) {
@@ -658,7 +660,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
-                final HashMap<String, Object> map = new HashMap<String, Object>();
+                final HashMap<String, Object> map = new HashMap<>();
                 map.put("type", providerType);
                 map.put("props", configProps);
                 list.add(map);
