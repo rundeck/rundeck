@@ -25,6 +25,8 @@ environments {
         feature.incubator.feature = false
         //enable takeover schedule feature
         feature.incubator.jobs = true
+
+        rundeck.feature.'enhanced-nodes'.enabled = true
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
