@@ -962,14 +962,23 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 }
 
                 'files/' {
-                    if (importConfig) {
-                        'etc/' {
+                    'etc/' {
+                        if (importConfig) {
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
                             }
+
+                            '(readme|motd)\\.md' { path, name, inputs ->
+                                mdfilestemp[name] = copyToTemp()
+                            }
                         }
-                        '(readme|motd)\\.md' { path, name, inputs ->
-                            mdfilestemp[name] = copyToTemp()
+                        if(importScm){
+                            'scm-import.properties' { path, name, inputs ->
+                                scmimporttemp = copyToTemp()
+                            }
+                            'scm-export.properties' { path, name, inputs ->
+                                scmexporttemp = copyToTemp()
+                            }
                         }
                     }
                     if (importACL) {
@@ -979,16 +988,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                     }
-                    if(importScm){
-                        'etc/' {
-                            'scm-import.properties' { path, name, inputs ->
-                                scmimporttemp = copyToTemp()
-                            }
-                            'scm-export.properties' { path, name, inputs ->
-                                scmexporttemp = copyToTemp()
-                            }
-                        }
-                    }
+
                 }
             }
         }

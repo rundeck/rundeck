@@ -13,7 +13,7 @@ export class Context {
     contextId: string
 
     constructor(readonly driver: WebDriver, readonly baseUrl: string, readonly s3Upload: boolean, readonly s3Base: string) {
-        this.s3 = new S3({region: 'us-east-2'})
+        this.s3 = new S3({region: 'us-west-2'})
         this.contextId = generateUuid().slice(0,4)
     }
 
@@ -50,7 +50,7 @@ export class Context {
     async screenCapToS3(screen: string, name: string) {
         this.uploadPromises.push(
             this.s3.putObject(
-                {Bucket: 'ci.rundeck.org', Key: `${this.s3Base}/${name}`, Body: Buffer.from(screen, 'base64'), ContentType: 'image/png'}
+                {Bucket: 'test.rundeck.org', Key: `${this.s3Base}/${name}`, Body: Buffer.from(screen, 'base64'), ContentType: 'image/png'}
             ).promise()
         )
     }
