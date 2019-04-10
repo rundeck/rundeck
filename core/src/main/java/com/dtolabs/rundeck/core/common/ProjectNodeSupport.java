@@ -39,15 +39,11 @@ import java.util.stream.Collectors;
  */
 public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static final Logger logger = Logger.getLogger(ProjectNodeSupport.class);
-    public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
-    public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     public static final String NODE_ENHANCER_PROP_PREFIX = "nodes.plugin";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
-    public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
-    public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;
@@ -506,16 +502,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
 
-    private Properties createFileSourceConfiguration() {
-        String format = null;
-        if (projectConfig.hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
-            format = projectConfig.getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
-        }
-        return generateFileSourceConfigurationProperties(
-                projectConfig.getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
-                true
-        );
-    }
     /**
      * list the configurations of resource model providers.
      * @return a list of maps containing:
