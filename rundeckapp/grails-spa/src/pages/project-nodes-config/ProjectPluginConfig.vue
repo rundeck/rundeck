@@ -318,7 +318,7 @@ export default Vue.extend({
       },
       async saveProjectPluginConfig(project:string,configPrefix:string,serviceName:string,data:ProjectPluginConfigEntry[]){
         const serializedData=data.map(this.serializeConfigEntry)
-        console.log("data is: ",serializedData)
+
         const resp = await client.sendRequest({
           url: `/framework/saveProjectPluginsAjax`,
           method: 'POST',
