@@ -75,7 +75,7 @@ export default Vue.extend({
         return this.sourcesData.length>index && this.sourcesData[index].resources.editPermalink ? this.sourcesData[index].resources.editPermalink : '#'
     },
     sourceErrors(index:number) :string|undefined{
-        return this.sourcesData[index].errors
+        return this.sourcesData.length>index?this.sourcesData[index].errors:undefined
     },
     pluginsSaved(){
 
