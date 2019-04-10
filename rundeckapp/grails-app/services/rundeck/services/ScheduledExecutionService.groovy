@@ -697,7 +697,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def adhocRescheduleResult = rescheduleAdHocJobs(executionList)
 
-        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.succeedExecutions, failedExecutions: adhocRescheduleResult.cleanupExecutions]
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
     }
 
     /**
