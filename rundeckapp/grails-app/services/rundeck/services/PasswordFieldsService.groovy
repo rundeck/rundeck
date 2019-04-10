@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.plugins.Plugin
+
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -31,7 +31,7 @@ class PasswordFieldsService {
 
     static scope = "session"
 
-    private Map<Fieldkey, Map<String,String>> fields = new HashMap<Fieldkey, Map<String, String>>()
+    private final Map<Fieldkey, Map<String, String>> fields = Collections.synchronizedMap(new HashMap<Fieldkey, Map<String, String>>())
     private final byte[] sessionPassphrase = generateSessionPassphrase()
 
     private static byte[] generateSessionPassphrase() {
@@ -46,8 +46,10 @@ class PasswordFieldsService {
     }
 
     public reset(String arg) {
-        def keys = fields.keySet().findAll { it.arg == arg }
-        keys.each { fields.remove(it) }
+        synchronized (fields) {
+            def keys = fields.keySet().findAll { it.arg == arg }
+            keys.each { fields.remove(it) }
+        }
     }
 
     public int tracking() {
@@ -55,8 +57,10 @@ class PasswordFieldsService {
     }
 
     public int tracking(String arg) {
-        def keys = fields.keySet().findAll { it.arg == arg }
-        keys.size()
+        synchronized (fields) {
+            def keys = fields.keySet().findAll { it.arg == arg }
+            return keys.size()
+        }
     }
 
     public int adjust(List<Integer> updates) {
@@ -75,10 +79,12 @@ class PasswordFieldsService {
     }
 
     private void shift(int pos) {
-        fields.keySet().findAll {
-            it.position==pos
-        }.each {
-            fields.remove(it)
+        synchronized (fields) {
+            fields.keySet().findAll {
+                it.position == pos
+            }.each {
+                fields.remove(it)
+            }
         }
     }
 
@@ -90,6 +96,19 @@ class PasswordFieldsService {
      */
     public int track(Collection configurations, Collection<Description> descriptions) {
         track('_', configurations, descriptions)
+    }
+    /**
+     * Reset the arg, and Track password values by replacing them with hashed versions
+     * @param configurations Collection of Map, Map should have entries "type" (plugin type) and "props" (Map of
+     * key/values)
+     * @param descriptions list of possible plugins
+     * @return
+     */
+    public int resetTrack(String arg, Collection configurations, Collection<Description> descriptions) {
+        synchronized (fields) {
+            reset(arg)
+            return track(arg, configurations, descriptions)
+        }
     }
     /**
      * Track password values by replacing them with hashed versions
@@ -236,10 +255,15 @@ class PasswordFieldsService {
             if(config == null) {
                 continue
             }
+
+            if (null == resource.index) {
+                continue
+            }
+
             Integer configurationPosition = resource.index
 
 
-            Description desc = findDescription(descriptions, config)
+            Description desc = findDescription(descriptions, resource)
             if (desc == null) {
                 continue
             }

@@ -43,6 +43,7 @@ import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1237,7 +1238,7 @@ class FrameworkControllerSpec extends Specification {
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-//        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
 
         setupFormTokens(params)
         def project = 'testProj'
@@ -1347,6 +1348,22 @@ class FrameworkControllerSpec extends Specification {
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
             controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
+            def expectData = [
+                    plugins: [
+                            [type   : '1type',
+                             config : [bongo: 'asdf'],
+                             extra  : [:],
+                             service: 'SomeService'
+                            ],
+
+                            [type   : '2type',
+                             config : [zingo: 'azsdf'],
+                             extra  : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             service: 'SomeService'
+                            ]
+                    ]
+            ]
             def inputData = [
                     plugins: [
                             [type     : '1type',
@@ -1391,11 +1408,11 @@ class FrameworkControllerSpec extends Specification {
                         it[1].index==2 &&
                         it[1].props==[zingo:'azsdf']
             }, _)
-            1 * controller.obscurePasswordFieldsService.reset('aProject/SomeService/xyz')
+            1 * controller.obscurePasswordFieldsService.resetTrack('aProject/SomeService/xyz', _, _)
             1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
             [success: true]
 
-            response.json == ([project: project] + inputData)
+            response.json == ([project: project] + expectData)
     }
 
     def "save project plugins ajax error  type name"() {

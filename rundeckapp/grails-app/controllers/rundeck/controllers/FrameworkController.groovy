@@ -1421,11 +1421,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
         final pluginDescriptions = pluginService.listPluginDescriptions(serviceName)
 
-        // Reset Password Fields in Session
-        obscurePasswordFieldsService.reset("${project}/${serviceName}/${configPrefix}")
-        // Store Password Fields values in Session
-        // Replace the Password Fields in configs with hashes
-        obscurePasswordFieldsService.track("${project}/${serviceName}/${configPrefix}", plugins, pluginDescriptions)
+        obscurePasswordFieldsService.resetTrack("${project}/${serviceName}/${configPrefix}", plugins, pluginDescriptions)
 
         respond(
                 formats: ['json'],
@@ -1573,11 +1569,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
 
-        // Reset Password Fields in Session
-        obscurePasswordFieldsService.reset("${project}/${serviceName}/${configPrefix}")
-        // Store Password Fields values in Session
-        // Replace the Password Fields in configs with hashes
-        obscurePasswordFieldsService.track(
+        obscurePasswordFieldsService.resetTrack(
                 "${project}/${serviceName}/${configPrefix}",
                 configs,
                 pluginDescriptions
