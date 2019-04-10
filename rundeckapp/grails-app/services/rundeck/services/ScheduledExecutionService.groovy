@@ -693,10 +693,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(project) {
             results = results.withProject(project)
         }
+        def executionList = results.list()
+
+        def adhocRescheduleResult = rescheduleAdHocJobs(executionList)
+
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.succeedExecutions, failedExecutions: adhocRescheduleResult.cleanupExecutions]
+    }
+
+    /**
+     * Reschedule the provided ad-hoc scheduled executions. Invalid executions will be cleaned up.
+     * @param serverUUID
+     * @param project
+     * @return
+     */
+    def rescheduleAdHocJobs(List<Execution> executionList) {
+
+        Date now = new Date()
+        // Reschedule any executions which were scheduled ad hoc
 
         List<Execution> cleanupExecutions   = []
         def succeedExecutions = []
-        def executionList = results.list()
+
         executionList.each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
@@ -753,7 +770,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
-        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
+        [executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**
@@ -1081,7 +1098,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            
+
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
@@ -1912,12 +1929,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     static def parseOrchestratorFromParams(params){
-        
+
         if (params.orchestratorId) {
             params.orchestrator = parseParamOrchestrator(params)
         }
     }
-    
+
     static Orchestrator parseParamOrchestrator(params){
         Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
         def plugin = params.orchestratorPlugin[params.orchestratorId];
@@ -2459,7 +2476,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -2746,7 +2763,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
                 (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
-        
+
         def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
@@ -3050,7 +3067,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
             scheduledExecution.orchestrator.save()
@@ -3650,7 +3667,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -3661,7 +3678,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             scheduledExecution.orchestrator = null
         }
-        
+
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications
