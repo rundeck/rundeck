@@ -93,6 +93,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
 
+    //TODO: add flag to ResourceModelSource that allows disabling local file cache
     private static Set<String> uncachedResourceTypes = new HashSet<>();
 
     static {
