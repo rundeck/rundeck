@@ -132,7 +132,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final NodeSetMerge list = getNodeSetMerge();
         Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         int index=1;
-        Set<String> validSources = new HashSet<>();
+
+        nodesSourceExceptions.clear();
         for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
             try {
                 INodeSet nodes = nodesSource.getNodes();
@@ -141,12 +142,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 } else {
                     list.addNodeSet(nodes);
                 }
-                boolean hasErrors=false;
                 if(nodesSource instanceof ResourceModelSourceErrors){
                     ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
                     List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
                     if(modelSourceErrors!=null && modelSourceErrors.size()>0){
-                        hasErrors=true;
+
                         logger.error("Some errors getting nodes from [" +
                                      nodesSource.toString() +
                                      "]: " +
@@ -161,9 +161,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                 )
                         );
                     }
-                }
-                if(!hasErrors) {
-                    validSources.add(index + ".source");
                 }
             } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
@@ -188,9 +185,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
         synchronized (nodesSourceExceptions){
             nodesSourceExceptions.putAll(exceptions);
-            for (String validSource : validSources) {
-                nodesSourceExceptions.remove(validSource);
-            }
         }
         return list;
 
