@@ -440,10 +440,22 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     @Data
-    static class LoadedSource implements LoadedResourceModelSource {
+    static class LoadedSource
+            extends DelegateResourceModelSource implements LoadedResourceModelSource
+    {
         final int index;
         final String type;
-        @Delegate final ResourceModelSource source;
+
+        LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
+            super(delegate);
+            this.index = index;
+            this.type = type;
+        }
+
+        @Override
+        public ResourceModelSource getSource() {
+            return getDelegate();
+        }
     }
 
     private LoadedResourceModelSource loadResourceModelSource(
