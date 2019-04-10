@@ -98,6 +98,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def ApplicationContext applicationContext
     def MenuService menuService
     def PluginService pluginService
+    def configurationService
+    def featureService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -1591,7 +1593,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 ]
         )
     }
-    def projectNodeSources() {
+
+    def projectNodeSources_orig() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
         }
@@ -1617,10 +1620,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
 
         // Reset Password Fields in Session
-        resourcesPasswordFieldsService.reset()
+        resourcesPasswordFieldsService.reset('_')
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
+        resourcesPasswordFieldsService.track(resourceConfig, resourceDescs)
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
                 'extraConfig.',
                 fwkProject.projectProperties,
@@ -1637,11 +1640,54 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 writeableSources               : writeableModelSources,
                 prefixKey                      : 'plugin',
                 extraConfig                    : extraConfig,
-                parseExceptions                : parseExceptions
+                parseExceptions                : parseExceptions,
+                legacyProjectNodesUi           : true
         ]
     }
 
-    def saveProjectNodeSources() {
+    def projectNodeSources() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
+            return projectNodeSources_orig()
+        }
+
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties,
+                'resourceModelSource'
+        )
+        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
+
+        def parseExceptions = fwkProject.projectNodes.getResourceModelSourceExceptionsMap()
+
+        [
+                project           : project,
+                projectDescription: fwkProject.getProjectProperties().get("project.description"),
+                prefixKey         : 'plugin',
+                extraConfig       : extraConfig,
+                parseExceptions   : parseExceptions,
+                writeableSources  : writeableModelSources,
+        ]
+    }
+
+    def saveProjectNodeSources_orig() {
 
         if (!requestHasValidToken()) {
             return
@@ -1729,7 +1775,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             resourceMappings << [config: config, prefix: resourceConfigPrefix, index: ndx - 1]
         }
         //replace any unmodified password fields with the session data
-        resourcesPasswordFieldsService.untrack(resourceMappings, *resourceModelSourceDescriptions)
+        resourcesPasswordFieldsService.untrack(resourceMappings, resourceModelSourceDescriptions)
 
         def Properties projProps = ProjectNodeSupport.serializeResourceModelConfigurations(configs)
 
@@ -1756,7 +1802,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!errors) {
             flash.message = "Project ${project} Node Sources saved"
 
-            resourcesPasswordFieldsService.reset()
+            resourcesPasswordFieldsService.reset('_')
             return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
         }
         if (errors) {
@@ -1771,12 +1817,96 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                         resourceModelConfigDescriptions: resourceModelSourceDescriptions,
                         prefixKey                      : prefixKey,
                         configs                        : configs,
-                        extraConfig                    : extraConfig
+                        extraConfig                    : extraConfig,
+                        legacyProjectNodesUi           : true
                 ]
         )
     }
 
-    def editProjectNodeSources() {
+
+    def saveProjectNodeSources() {
+
+        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
+            return saveProjectNodeSources_orig()
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+
+        def project = params.project
+        if (!project) {
+            return renderErrorView("Project parameter is required")
+        }
+
+        //cancel modification
+        if (params.cancel) {
+            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        def framework = frameworkService.getRundeckFramework()
+
+        def prefixKey = 'plugin'
+        def errors = []
+        //only attempt project create if form POST is used
+
+        def Set<String> removePrefixes = []
+
+
+        def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                params.extraConfig,
+                'extraConfig.',
+                { String category -> category == 'resourceModelSource' }
+        )
+        if (pconfigurable.errors) {
+            errors.addAll(pconfigurable.errors)
+        }
+        Map<String, Map> extraConfig = pconfigurable.config
+        def projProps = new Properties()
+        projProps.putAll(pconfigurable.props)
+        removePrefixes.addAll(pconfigurable.remove)
+
+        if (!errors) {
+
+            def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+            if (!result.success) {
+                errors << result.error
+            }
+        }
+
+        if (!errors) {
+            flash.message = "Project ${project} Node Sources saved"
+
+            return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: project])
+        }
+        if (errors) {
+            request.errors = errors
+        }
+
+
+        return render(
+                view: 'projectNodeSources', model:
+                [
+                        project    : params.project,
+                        newproject : params.newproject,
+                        prefixKey  : prefixKey,
+                        extraConfig: extraConfig
+                ]
+        )
+    }
+
+    def editProjectNodeSources_orig() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
         }
@@ -1802,10 +1932,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
 
         // Reset Password Fields in Session
-        resourcesPasswordFieldsService.reset()
+        resourcesPasswordFieldsService.reset('_')
         // Store Password Fields values in Session
         // Replace the Password Fields in configs with hashes
-        resourcesPasswordFieldsService.track(resourceConfig, *resourceDescs)
+        resourcesPasswordFieldsService.track(resourceConfig, resourceDescs)
         //get grails services that declare project configurations
 
         Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
@@ -1820,9 +1950,46 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 configs                        : resourceConfig,
                 writeableSources               : writeableModelSources,
                 prefixKey                      : 'plugin',
-                extraConfig                    : extraConfig
+                extraConfig                    : extraConfig,
+                legacyProjectNodesUi           : true
         ]
     }
+
+    def editProjectNodeSources() {
+        if (!params.project) {
+            return renderErrorView("Project parameter is required")
+        }
+        if (featureService.featurePresent('legacyProjectNodesUi', false)) {
+            return projectNodeSources_orig()
+        }
+
+        def project = params.project
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        final def fwkProject = frameworkService.getFrameworkProject(project)
+
+        Map<String, Map> extraConfig = frameworkService.loadProjectConfigurableInput(
+                'extraConfig.',
+                fwkProject.projectProperties,
+                'resourceModelSource'
+        )
+        [
+                project           : project,
+                projectDescription: fwkProject.getProjectProperties().get("project.description"),
+                prefixKey         : 'plugin',
+                extraConfig       : extraConfig
+        ]
+    }
+
     static final Map<String, String> Formats = [
             'text/xml'        : 'xml',
             'application/xml' : 'xml',

@@ -3,10 +3,15 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
+import ProjectPluginConfig from './ProjectPluginConfig'
+import ProjectNodeSourcesConfig from './ProjectNodesourcesConfig'
+import WriteableProjectNodeSources from './WriteableProjectNodeSources'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
+import {
+  EventBus
+} from '../../utilities/vueEventBus.js'
 
 Vue.config.productionTip = false
 
@@ -23,16 +28,26 @@ if (!messages[language]) {
 }
 
 // Create VueI18n instance with options
-const i18n = new VueI18n({
-  silentTranslationWarn: true,
-  locale: language, // set locale
-  messages // set locale messages,
-
-})
 /* eslint-disable no-new */
-new Vue({
-  el: '#project-nodes-config-vue',
-  components: { App },
-  template: '<App />',
-  i18n
-})
+const els = document.body.getElementsByClassName('project-plugin-config-vue')
+
+for (var i = 0; i < els.length; i++) {
+  const e = els[i]
+
+  const i18n = new VueI18n({
+    silentTranslationWarn: false,
+    locale: language, // set locale
+    messages // set locale messages,
+
+  })
+  new Vue({
+    el: e,
+    data(){
+      return{
+        EventBus:EventBus
+      }
+    },
+    components: { ProjectPluginConfig, ProjectNodeSourcesConfig , WriteableProjectNodeSources},
+    i18n
+  })
+}

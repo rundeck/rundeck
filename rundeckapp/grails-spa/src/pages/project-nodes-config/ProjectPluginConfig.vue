@@ -1,13 +1,16 @@
 <template>
-  <div class="card">
-    <div class="card-header">
-        <h3 class="card-title">
+  <div class="">
+    <div class="" v-if="title">
+        <h3 class="">
             {{title}}
-          <btn type="info" @click="mode='edit'" v-if="mode!=='edit'" >{{$t('edit')}}</btn>
+          <a class="btn btn-info btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
+            <i class="glyphicon glyphicon-pencil"></i>
+            {{editButtonText || $t('Edit')}}
+          </a>
         </h3>
     </div>
 
-    <div class="card-content">
+    <div class="">
       <div v-if="errors.length>0" class="alert alert-danger">
           <ul>
             <li v-for="(error,index) in errors" :key="'error_'+index">
@@ -15,7 +18,15 @@
             </li>
           </ul>
       </div>
-      <div id="project-plugin-config">
+      <div>
+          <a class="btn btn-info btn-sm" @click="mode='edit'" v-if="mode!=='edit'">
+            <i class="glyphicon glyphicon-pencil"></i>
+            {{editButtonText || $t('Edit')}}
+          </a>
+          <div class="help-block" v-if="help">
+            {{help}}
+          </div>
+
 
           <div class="list-group">
               <div class="list-group-item" v-for="(plugin,index) in pluginConfigs" :key="'plugin_'+index">
@@ -24,9 +35,11 @@
                     :serviceName="serviceName"
                     :provider="plugin.entry.type"
                     :key="plugin.entry.type+'title/'+index"
+                    :show-description="true"
                     >
                     <span slot="titlePrefix">{{index+1}}.</span>
                   </plugin-config>
+
                    <div  v-if="additionalProps && additionalProps.props.length>0">
 
                       <plugin-config :mode="editFocus===(index) ? plugin.create?'create':'edit':'show'"
@@ -49,53 +62,65 @@
                     :show-title="false"
                     :show-description="false"
                     :validation="plugin.validation"
+                    @input="configUpdated"
                     >
                      <div slot="extra" class="row" v-if="mode==='edit'">
 
                             <div class="col-xs-12 col-sm-12">
                               <span v-if="editFocus===-1" >
-                                  <btn class="btn-primary btn-xs" @click="editFocus=index" :key="edit">{{$t('edit')}}</btn>
+                                  <a class="btn btn-info btn-link btn-xs" @click="editFocus=index" :key="edit">{{$t('Edit')}}</a>
                               </span>
                               <span v-if="editFocus===index" >
-                                  <btn  class="btn-success btn-xs" @click="savePlugin(plugin,index)" :key="save">{{$t('save')}}</btn>
+                                  <a  class="btn btn-success  btn-xs" @click="savePlugin(plugin,index)" :key="save">{{$t('Save')}}</a>
+                              </span>
+                              <span class="small text-info" v-if="plugin.modified">
+                                <i class="fas fa-pen-square"></i>
+                                Modified
                               </span>
                               <div class="btn-group pull-right" v-if="(editFocus===-1||editFocus===index)">
-                                <btn class="btn-xs btn-danger" @click="removePlugin(plugin,index)" :disabled="editFocus!==-1&&editFocus!==(index)">{{$t('delete')}} <i class="fas fa-minus"></i></btn>
+                                <btn class="btn-xs btn-danger" @click="removePlugin(plugin,index)" :disabled="editFocus!==-1&&editFocus!==(index)">{{$t('Delete')}} <i class="fas fa-minus"></i></btn>
                                 <btn class="btn-xs" @click="movePlugin(index,plugin,-1)" :disabled="editFocus!==-1 || index==0"><i class="fas fa-arrow-up"></i></btn>
                                 <btn class="btn-xs" @click="movePlugin(index,plugin,1)" :disabled="editFocus!==-1 || index>=pluginConfigs.length-1"><i class="fas fa-arrow-down"></i></btn>
                               </div>
                             </div>
                           </div>
                     </plugin-config>
-
+                  <slot name="item-extra" :plugin="plugin" :editFocus="editFocus===index" :mode="mode"></slot>
               </div>
 
-              <div class="list-group-item"  v-if="mode==='edit' && editFocus===-1">
-              <div class="btn-group " >
-
-                <dropdown ref="dropdown">
-                  <btn type="primary" class="dropdown-toggle">
-                    <i class="fas fa-plus"></i>
-                    {{pluginLabels&&pluginLabels.addButton||serviceName}}
-                    <span class="caret"></span>
-                  </btn>
-                  <template slot="dropdown">
-
-                    <li v-for="plugin in pluginProviders" v-bind:key="plugin.name">
-                        <a href="#" @click="addPlugin(plugin.name)">
-                          <plugin-info :detail="plugin"/>
-                        </a>
-                    </li>
-                  </template>
-                </dropdown>
-              </div>
-            </div>
       </div>
+
+              <div class="card-footer"  v-if="mode==='edit' && editFocus===-1">
+                <btn type="success" @click="modalAddOpen=true">
+                  {{pluginLabels && pluginLabels.addButton || serviceName}}
+                  <i class="fas fa-plus"></i>
+                </btn>
+
+               <modal v-model="modalAddOpen"
+                      :title="pluginLabels && pluginLabels.addButton || serviceName"
+                      ref="modal"
+                      size="lg"
+                      id="add-new-modal"
+                      >
+                  <div class="list-group">
+                    <a v-for="plugin in pluginProviders" v-bind:key="plugin.name" href="#" @click="addPlugin(plugin.name)" class="list-group-item">
+
+                      <plugin-info :detail="plugin" :show-description="true" :show-extended="false" description-css="help-block">
+                        <i class="glyphicon glyphicon-plus text-muted"></i>
+                      </plugin-info>
+                    </a>
+                  </div>
+                  <div slot="footer">
+                    <btn @click="modalAddOpen=false">{{$t('Cancel')}}</btn>
+                  </div>
+              </modal>
+
+            </div>
       <div class="card-footer" v-if="mode==='edit' && editFocus===-1">
-          <div >
-            <btn type="default" @click="cancelAction">{{$t('cancel')}}</btn>
-            <btn type="success" @click="savePlugins">{{$t('save')}}</btn>
-          </div>
+        <btn type="default" @click="cancelAction" v-if="modeToggle">{{$t('Cancel')}}</btn>
+        <btn type="default" @click="cancelAction" v-else-if="modified">{{$t('Revert')}}</btn>
+        <a class="btn btn-success"  @click="savePlugins" v-if="modified" href="#">{{$t('Save')}}</a>
+        <span class="text-warning" v-if="modified">Changes have not been saved.</span>
       </div>
 
     </div>
@@ -129,6 +154,8 @@ interface ProjectPluginConfigEntry{
   extra:PluginConf
   validation:PluginValidation,
   create?:boolean
+  origIndex?:number
+  modified:boolean
 }
 export default Vue.extend({
     name: 'App',
@@ -139,16 +166,14 @@ export default Vue.extend({
     },
     data () {
         return {
-            title:'Project Plugins',
-            mode: 'show',
+            loaded: false,
+            modified: false,
+            mode: this.editMode?'edit':'show',
             project: '',
             rdBase: '',
-            configPrefix:'',
-            serviceName:'',
             cancelUrl:'',
             pluginConfigs: [] as ProjectPluginConfigEntry[],
             configOrig:[] as any[],
-            additionalProps: null as any,
             rundeckContext: {} as RundeckContext,
             modalAddOpen:false,
             pluginProviders:[],
@@ -156,6 +181,23 @@ export default Vue.extend({
             editFocus:-1,
             errors: [] as string[]
         }
+    },
+    props:{
+      "editMode":{
+        type:Boolean, default:false
+      },
+      "modeToggle":{
+        type:Boolean, default:true
+      },
+      "serviceName":String,
+      "title":{
+        required:false,
+        type:String
+      },
+      "configPrefix":String,
+      "additionalProps":{required:false,type:Object},
+      "help":{required:false,type:String},
+      "editButtonText":{required:false,type:String}
     },
     methods: {
       notifyError(msg:string, args:any[]) {
@@ -175,10 +217,11 @@ export default Vue.extend({
           duration: 5000
         });
       },
-      createConfigEntry(entry:any): ProjectPluginConfigEntry{
+      createConfigEntry(entry:any,origIndex:number): ProjectPluginConfigEntry{
         return {
           extra:{config:Object.assign({},entry.extra)},
-          entry:{type:entry.type,config:Object.assign({},entry.config)}
+          entry:{type:entry.type,config:Object.assign({},entry.config)},
+          origIndex: origIndex
         } as ProjectPluginConfigEntry
       },
 
@@ -186,12 +229,15 @@ export default Vue.extend({
         return {
           extra: Object.assign({},entry.extra.config),
           type: entry.entry.type,
-          config: Object.assign({},entry.entry.config)
+          config: Object.assign({},entry.entry.config),
+          origIndex: entry.origIndex
         }
       },
       addPlugin(provider:string){
-          this.pluginConfigs.push({entry:{type:provider,config:{}},extra:{},create:true} as ProjectPluginConfigEntry)
-          this.setFocus(this.pluginConfigs.length-1)
+        this.modalAddOpen=false
+        this.pluginConfigs.push({entry:{type:provider,config:{}},extra:{},create:true} as ProjectPluginConfigEntry)
+
+        this.setFocus(this.pluginConfigs.length-1)
       },
       setFocus(focus:number){
         this.editFocus=focus
@@ -204,12 +250,17 @@ export default Vue.extend({
           return
         }
         Vue.delete(plugin,'validation')
-        plugin.create=false
+        plugin.create = false
+        plugin.modified = true
+        this.setPluginConfigsModified()
         this.setFocus(-1)
       },
       removePlugin(plugin:ProjectPluginConfigEntry,index:string){
         const found=this.pluginConfigs.indexOf(plugin)
         this.pluginConfigs.splice(found,1)
+        if(!plugin.create){
+          this.setPluginConfigsModified()
+        }
         this.setFocus(-1)
       },
 
@@ -218,14 +269,28 @@ export default Vue.extend({
         const item= this.pluginConfigs.splice(found,1)[0]
         const newindex=found+shift
         this.pluginConfigs.splice(newindex,0,item)
+        this.setPluginConfigsModified()
         this.editFocus=-1
+      },
+      didSave(success:boolean){
+        if(this.modeToggle){
+          this.mode='show'
+        }
+        if(success){
+          this.pluginConfigsModified()
+        }
       },
       async savePlugins () {
         try{
           const result= await this.saveProjectPluginConfig(this.project, this.configPrefix, this.serviceName, this.pluginConfigs)
           if(result.success){
-            this.mode='show'
+            this.didSave(true)
             this.notifySuccess("Success","Configuration Saved")
+            this.configOrig =  result.data.plugins
+              //copy
+            this.pluginConfigs = this.configOrig.map(this.createConfigEntry)
+            this.pluginConfigsModifiedReset()
+            this.$emit('pluginsSaved',result)
           }
         } catch (error){
           this.notifyError(error.message,[])
@@ -252,6 +317,8 @@ export default Vue.extend({
         }
       },
       async saveProjectPluginConfig(project:string,configPrefix:string,serviceName:string,data:ProjectPluginConfigEntry[]){
+        const serializedData=data.map(this.serializeConfigEntry)
+        console.log("data is: ",serializedData)
         const resp = await client.sendRequest({
           url: `/framework/saveProjectPluginsAjax`,
           method: 'POST',
@@ -260,7 +327,7 @@ export default Vue.extend({
                 configPrefix: this.configPrefix,
                 serviceName: this.serviceName,
                 },
-          body: {plugins:data.map(this.serializeConfigEntry)}
+          body: {plugins:serializedData}
         })
 
         if (resp && resp.status >= 200 && resp.status < 300 ) {
@@ -272,7 +339,7 @@ export default Vue.extend({
             this.errors = resp.parsedBody.errors
             if(resp.parsedBody.reports){
               const reports=resp.parsedBody.reports as {[key:string]:any}
-              console.log("reports ",resp.parsedBody.reports)
+              //console.log("reports ",resp.parsedBody.reports)
               this.pluginConfigs.forEach((plugin,index)=>{
                   if(reports[`${index}`]!==undefined){
                       plugin.validation={valid:false,errors:reports[`${index}`]}
@@ -286,7 +353,22 @@ export default Vue.extend({
       },
       cancelAction(){
         this.pluginConfigs =  this.configOrig.map(this.createConfigEntry)
-        this.mode='show'
+        this.pluginConfigsModifiedReset()
+        this.didSave(false)
+      },
+      setPluginConfigsModified(){
+        this.modified = true
+      },
+      pluginConfigsModified(){
+        if(this.loaded){
+          this.setPluginConfigsModified()
+        }
+      },
+      pluginConfigsModifiedReset(){
+        this.modified = false
+      },
+      configUpdated(){
+        this.pluginConfigsModified()
       }
     },
     mounted () {
@@ -295,15 +377,12 @@ export default Vue.extend({
         if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
             this.rdBase = window._rundeck.rdBase
             this.project = window._rundeck.projectName
-            this.serviceName=window._rundeck.data['serviceName']||''
-            this.configPrefix=window._rundeck.data['configPrefix']||''
-            this.additionalProps=window._rundeck.data['projectPluginConfigExtra']
-            this.title=window._rundeck.data['title']||this.title
 
             this.loadProjectPluginConfig(window._rundeck.projectName,this.configPrefix,this.serviceName).then((pluginConfigs)=>{
               this.configOrig =  pluginConfigs
               //copy
-              this.pluginConfigs = pluginConfigs.map(this.createConfigEntry)
+              this.pluginConfigs = pluginConfigs.map((val:any,index:number)=>this.createConfigEntry(val,index))
+              this.loaded = true
             })
             pluginService.getPluginProvidersForService(this.serviceName).then(data=>{
                 if (data.service) {
