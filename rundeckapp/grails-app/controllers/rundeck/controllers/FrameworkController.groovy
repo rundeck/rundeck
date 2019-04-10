@@ -2743,6 +2743,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                             writeable: writeableSource ? true : false,
                             description: writeableSource?.writeableSource?.sourceDescription,
                             empty: writeableSource ? !writeableSource.writeableSource.hasData() : null,
+                            syntaxMimeType: writeableSource?.writeableSource?.syntaxMimeType,
                             href: createLink(
                                 absolute: true,
                                 mapping: 'apiProjectSourceResources',
@@ -2971,6 +2972,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         )
         if (writeableSource) {
             sourceContent.description = writeableSource.writeableSource.sourceDescription
+            sourceContent.syntaxMimeType = writeableSource.writeableSource.syntaxMimeType
             sourceContent.empty = !writeableSource.writeableSource.hasData()
         }
 
