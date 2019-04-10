@@ -1372,24 +1372,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return redirect(action: 'projectNodeSources', params: [project: project])
     }
 
-    def projectNodePlugins() {
-        if (!params.project) {
-            return renderErrorView("Project parameter is required")
-        }
-
-        def project = params.project
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
-                        frameworkService.getAuthContextForSubject(session.subject),
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
-                ),
-                AuthConstants.ACTION_CONFIGURE, 'Project', project
-        )) {
-            return
-        }
-    }
-
     def projectPluginsAjax(String project, String serviceName, String configPrefix) {
         if (!project) {
             return renderErrorView("Project parameter is required")
