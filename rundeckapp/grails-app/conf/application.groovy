@@ -31,7 +31,6 @@ environments {
         application.refreshDelay=5000
         grails.profiler.disable=false
         feature.incubator.'*'=true
-        rundeck.feature.'*'.enabled=true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"
