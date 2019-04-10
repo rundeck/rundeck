@@ -50,7 +50,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
     private IRundeckProjectConfig                                                  projectConfig;
-    private Map<String, Exception>                                                 nodesSourceExceptions;
+    private final Map<String, Throwable>                                           nodesSourceExceptions;
     private long                                                                   nodesSourcesLastReload = -1L;
     private List<LoadedResourceModelSource>                                        nodesSourceList;
     /**
@@ -79,7 +79,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
         this.factoryFunction = factoryFunction;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
     /**
      * @param projectConfig
@@ -94,7 +94,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
 
     static Set<String> uncachedResourceTypes = new HashSet<String>();
@@ -130,7 +130,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public INodeSet getNodeSet() {
         //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         int index=1;
         Set<String> validSources = new HashSet<>();
         for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
@@ -200,7 +200,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public ArrayList<Exception> getResourceModelSourceExceptions() {
+    public ArrayList<Throwable> getResourceModelSourceExceptions() {
         synchronized (nodesSourceExceptions) {
             return new ArrayList<>(nodesSourceExceptions.values());
         }
@@ -209,7 +209,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public Map<String,Exception> getResourceModelSourceExceptionsMap() {
+    public Map<String,Throwable> getResourceModelSourceExceptionsMap() {
         synchronized (nodesSourceExceptions) {
             return Collections.unmodifiableMap(nodesSourceExceptions);
         }
@@ -269,7 +269,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     private void loadResourceModelSources() {
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         Set<String> validSources = new HashSet<>();
         //generate Configuration for file source
         if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
@@ -336,7 +336,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
 
         @Override
-        public void handleException(final Exception t, final ResourceModelSource origin) {
+        public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
         }
     }
