@@ -34,7 +34,7 @@
             <g:set var="replTokens" value="${['plugin.url':pluginBaseUrl]}"/>
         </g:if>
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
-            <details class="more-info">
+            <details class="more-info" ${mode=='expanded'?'open':''}>
                 <summary>
                     <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
                     <span class="btn btn-default btn-xs more-indicator-verbiage">
