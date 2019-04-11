@@ -52,7 +52,7 @@
       </span>
       <span data-bind="if: !scheduled()">
           <g:message code="at" />
-      </span>
+      </span><g:relativeDate atDate="${execution.dateStarted}"/>
       <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
           <g:if test="${execution.dateStarted}">
               <g:relativeDate atDate="${execution.dateStarted}"/>
