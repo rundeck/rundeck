@@ -6,6 +6,7 @@ import VueCookies from 'vue-cookies'
 import ProjectPluginConfig from './ProjectPluginConfig'
 import ProjectNodeSourcesConfig from './ProjectNodesourcesConfig'
 import WriteableProjectNodeSources from './WriteableProjectNodeSources'
+import PageConfirm from '../../components/PageConfirm'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
@@ -47,7 +48,7 @@ for (var i = 0; i < els.length; i++) {
         EventBus:EventBus
       }
     },
-    components: { ProjectPluginConfig, ProjectNodeSourcesConfig , WriteableProjectNodeSources},
+    components: { ProjectPluginConfig, ProjectNodeSourcesConfig , WriteableProjectNodeSources, PageConfirm},
     i18n
   })
 }

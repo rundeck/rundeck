@@ -52,7 +52,7 @@
       <div class="" id="createform">
         <div class=" vue-tabs">
 
-          <ul class="nav nav-pills">
+          <ul class="nav nav-pills" style="display: inline-block">
 
             <g:if test="${!legacyProjectNodesUi && feature.isDisabled(name: 'legacyProjectNodesUi')}">
 
@@ -89,6 +89,32 @@
               </a>
             </li>
           </ul>
+
+
+          %{--Shared page-confirm handler--}%
+          <page-confirm :event-bus="EventBus"
+                        class="project-plugin-config-vue pull-right"
+                        message="${enc(attr:message(code:'page.unsaved.changes'))}"
+                        :display="true" style="display: inline-block">
+            <div class="well well-sm" slot="default" slot-scope="{confirm}">
+              <span class="text-warning">
+                <g:message code="page.unsaved.changes"/>:
+              </span>
+
+              <span v-if="confirm.indexOf('Node Sources')>=0">
+                <a href="#node_sources" onclick="jQuery('#tab_link_sources').tab('show')">
+                  <i class="fas fa-hdd fa-edit"></i>
+                  <g:message code="project.node.sources.title.short"/>
+                </a>
+              </span>
+              <span v-if="confirm.indexOf('Node Enhancers')>=0">
+                <a href="#node_plugins" onclick="jQuery('#tab_link_plugins').tab('show')">
+                  <i class="fas fa-puzzle-piece"></i>
+                  <g:message code="framework.service.NodeEnhancer.label.short.plural"/>
+                </a>
+              </span>
+            </div>
+          </page-confirm>
         </div>
       </div>
     </div>
@@ -211,6 +237,8 @@
                                              :edit-mode="true"
                                              :mode-toggle="false"
                                              @saved="EventBus.$emit('project-node-sources-saved')"
+                                             @modified="EventBus.$emit('page-modified','Node Sources')"
+                                             @reset="EventBus.$emit('page-reset','Node Sources')"
                                              :event-bus="EventBus">
                 </project-node-sources-config>
 
@@ -230,6 +258,8 @@
                                        help="${enc(attr: g.message(code: 'framework.service.NodeEnhancer.explanation'))}"
                                        edit-button-text="${enc(attr: g.message(code: 'edit.node.enhancers'))}"
                                        :mode-toggle="false"
+                                       @modified="EventBus.$emit('page-modified','Node Enhancers')"
+                                       @reset="EventBus.$emit('page-reset','Node Enhancers')"
                                        :event-bus="EventBus"
                                        :edit-mode="true">
 
