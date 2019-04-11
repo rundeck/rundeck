@@ -277,9 +277,6 @@ export default Vue.extend({
         if(this.modeToggle){
           this.mode='show'
         }
-        if(success){
-          this.pluginConfigsModified()
-        }
       },
       async savePlugins () {
         try{
@@ -291,7 +288,7 @@ export default Vue.extend({
               //copy
             this.pluginConfigs = this.configOrig.map(this.createConfigEntry)
             this.pluginConfigsModifiedReset()
-            this.$emit('pluginsSaved',result)
+            this.$emit('saved',result)
           }
         } catch (error){
           this.notifyError(error.message,[])
@@ -359,6 +356,7 @@ export default Vue.extend({
       },
       setPluginConfigsModified(){
         this.modified = true
+        this.$emit('modified')
       },
       pluginConfigsModified(){
         if(this.loaded){
@@ -367,6 +365,7 @@ export default Vue.extend({
       },
       pluginConfigsModifiedReset(){
         this.modified = false
+        this.$emit('reset')
       },
       configUpdated(){
         this.pluginConfigsModified()

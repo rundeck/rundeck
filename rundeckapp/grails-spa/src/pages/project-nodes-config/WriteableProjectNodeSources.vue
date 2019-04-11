@@ -87,7 +87,7 @@ export default Vue.extend({
 
   mounted() {
 
-    this.eventBus&&this.eventBus.$on('projectNodeSourcesChanged', () => {
+    this.eventBus&&this.eventBus.$on('project-node-sources-saved', () => {
       this.loadNodeSourcesData()
     })
     if (

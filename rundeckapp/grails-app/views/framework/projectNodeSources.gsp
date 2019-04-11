@@ -210,6 +210,7 @@
                                              help="${enc(attr: g.message(code: "domain.Project.edit.ResourceModelSource.explanation"))}"
                                              :edit-mode="true"
                                              :mode-toggle="false"
+                                             @saved="EventBus.$emit('project-node-sources-saved')"
                                              :event-bus="EventBus">
                 </project-node-sources-config>
 

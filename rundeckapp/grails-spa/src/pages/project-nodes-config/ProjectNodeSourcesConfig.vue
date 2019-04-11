@@ -2,7 +2,9 @@
   <project-plugin-config config-prefix="resources.source"
                          service-name="ResourceModelSource"
                          :help="help"
-                         @pluginsSaved="pluginsSaved"
+                         @saved="pluginsConfigWasSaved"
+                         @modified="pluginsConfigWasModified"
+                         @reset="pluginsConfigWasReset"
                          :edit-button-text="$t('Edit Node Sources')"
                          :edit-mode="editMode"
                          :mode-toggle="modeToggle"
@@ -77,10 +79,16 @@ export default Vue.extend({
     sourceErrors(index:number) :string|undefined{
         return this.sourcesData.length>index?this.sourcesData[index].errors:undefined
     },
-    pluginsSaved(){
-
-       this.eventBus&&this.eventBus.$emit('projectNodeSourcesChanged')
-       this.loadNodeSourcesData().then()
+    pluginsConfigWasSaved(){
+      this.$emit('saved')
+      this.$emit('reset')
+      this.loadNodeSourcesData().then()
+    },
+    pluginsConfigWasModified(){
+       this.$emit('modified')
+    },
+    pluginsConfigWasReset(){
+       this.$emit('reset')
     },
     async loadNodeSourcesData(){
       try {
