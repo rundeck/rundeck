@@ -64,6 +64,7 @@ import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
+import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -710,7 +711,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //load expand variables in URL source
 
                 def realUrl = opt.realValuesUrl.toExternalForm()
-                String srcUrl = expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
+                String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null

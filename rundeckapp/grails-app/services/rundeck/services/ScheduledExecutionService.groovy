@@ -2384,7 +2384,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def optfailed = false
             optsmap.values().each {Option opt ->
-                EditOptsController._validateOption(opt,[project: scheduledExecution.project],scheduledExecution.scheduled)
+                EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
                 fileUploadService.validateFileOptConfig(opt)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
@@ -2422,7 +2422,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def Map optdefparams = params.options["options[${i}]"]
                 def Option theopt = new Option(optdefparams)
                 scheduledExecution.addToOptions(theopt)
-                EditOptsController._validateOption(theopt,[project: scheduledExecution.project],scheduledExecution.scheduled)
+                EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                 fileUploadService.validateFileOptConfig(theopt)
                 if (theopt.errors.hasErrors() || !theopt.validate()) {
                     failed = true
@@ -2442,7 +2442,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else if(scheduledExecution.options && scheduledExecution.scheduled){
             //evaluate required option defaults
             scheduledExecution.options.each{Option theopt->
-                EditOptsController._validateOption(theopt,[project: scheduledExecution.project],scheduledExecution.scheduled)
+                EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                 fileUploadService.validateFileOptConfig(theopt)
                 if(theopt.errors.hasErrors()) {
                     failed=true
