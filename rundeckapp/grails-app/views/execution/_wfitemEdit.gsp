@@ -62,7 +62,9 @@
                         <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
                     </div>
                     <div class="col-sm-10 col-sm-offset-2" style="maring-top:1em;">
-                      <p class="help-block">You can search and select a job by selecting the project and job, or by typing the Job name or group.</p>
+                      <p class="help-block">
+                        <g:message code="Workflow.Step.jobreference.jobName.help" />
+                      </p>
                     </div>
                 </div>
                 <div class="form-group">
