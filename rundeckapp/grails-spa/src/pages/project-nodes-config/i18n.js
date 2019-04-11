@@ -9,6 +9,7 @@ const translationStrings = {
     'Modify': 'Modify',
     'Edit Node Sources': 'Edit Node Sources',
     'The Node Source had an error': 'The Node Source had an error',
+    'Validation errors': 'Validation errors',
     uiv: {
       modal: {
         cancel: "Cancel",

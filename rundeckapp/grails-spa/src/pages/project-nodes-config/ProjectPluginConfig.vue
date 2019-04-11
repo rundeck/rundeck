@@ -62,6 +62,7 @@
                     :show-title="false"
                     :show-description="false"
                     :validation="plugin.validation"
+                    :validation-warning-text="$t('Validation errors')"
                     @input="configUpdated"
                     >
                      <div slot="extra" class="row" v-if="mode==='edit'">
