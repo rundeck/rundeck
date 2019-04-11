@@ -5,6 +5,7 @@ const translationStrings = {
     Save: 'Save',
     Delete: 'Delete',
     Cancel: 'Cancel',
+    Revert: 'Revert',
     'Edit Nodes': 'Edit Nodes',
     'Modify': 'Modify',
     'Edit Node Sources': 'Edit Node Sources',
