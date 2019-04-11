@@ -16,3 +16,27 @@
     }
   }
 }
+
+details.more-info {
+  > summary {
+    .less-indicator-verbiage {
+      display: none
+    }
+  }
+
+  &[open] > summary {
+    .more-indicator-verbiage {
+      display: none
+    }
+
+    .less-indicator-verbiage {
+      display: inline-block;
+    }
+  }
+
+  .more-info-content {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 0.5em;
+  }
+}
