@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
+import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
@@ -2759,24 +2760,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def extra = [:]
 
         //future scheduled executions forecast
-        def daysAhead = params.daysAhead ? params.int('daysAhead') : 1
+        def time = params.time? params.time : '1d'
 
-        def futureDate = new Date() + daysAhead
+        Date futureDate = futureRelativeDate(time)
 
-        def maxFutures = null
-        if (params.maxFutures) {
-            maxFutures = params.int('maxFutures')
-            if (maxFutures <= 0) {
-                maxFutures = null
+        def max = null
+        if (params.max) {
+            max = params.int('max')
+            if (max <= 0) {
+                max = null
             }
         }
 
         if (scheduledExecution.shouldScheduleExecution()) {
             extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate)
-            if (maxFutures
+            if (max
                     && extra.futureScheduledExecutions
-                    && extra.futureScheduledExecutions.size() > maxFutures) {
-                extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<maxFutures]
+                    && extra.futureScheduledExecutions.size() > max) {
+                extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
             }
         }
 
@@ -2792,6 +2793,43 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
                 [formats: ['xml', 'json']]
         )
+    }
+
+    private Date futureRelativeDate(String recentFilter){
+        Calendar n = GregorianCalendar.getInstance()
+        n.setTime(new Date())
+        def matcher = recentFilter =~ /^(\d+)([hdwmyns])$/
+        if (matcher.matches()) {
+            def i = matcher.group(1).toInteger()
+            def ndx
+            switch (matcher.group(2)) {
+                case 'h':
+                    ndx = Calendar.HOUR_OF_DAY
+                    break
+                case 'n':
+                    ndx = Calendar.MINUTE
+                    break
+                case 's':
+                    ndx = Calendar.SECOND
+                    break
+                case 'd':
+                    ndx = Calendar.DAY_OF_YEAR
+                    break
+                case 'w':
+                    ndx = Calendar.WEEK_OF_YEAR
+                    break
+                case 'm':
+                    ndx = Calendar.MONTH
+                    break
+                case 'y':
+                    ndx = Calendar.YEAR
+                    break
+            }
+            n.add(ndx, i)
+
+            return n.getTime()
+        }
+        null
     }
 
     private void respondApiJobsList(List<ScheduledExecution> results) {
