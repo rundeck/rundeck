@@ -50,6 +50,7 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
+import grails.gorm.transactions.NotTransactional
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
@@ -3957,6 +3958,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @throws StepException
      */
     @Override
+    @NotTransactional
     NodeStepResult executeNodeStep(StepExecutionContext executionContext, NodeStepExecutionItem executionItem,
                                    INodeEntry node) throws NodeStepException {
         if (!(executionItem instanceof JobExecutionItem)) {
