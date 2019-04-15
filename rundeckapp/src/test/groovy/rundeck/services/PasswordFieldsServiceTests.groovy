@@ -103,7 +103,7 @@ class PasswordFieldsServiceTests {
                     "type" : "withPasswordDescription",
                     "props": props("password=secret_set2", "textField=a test field")
             ],
-        ].collect { [config: it, index: i++] }
+        ].collect { [config: it, index: i++, type: it.type] }
     }
 
     private def genMissingType() {
@@ -135,7 +135,7 @@ class PasswordFieldsServiceTests {
                         "type": "noPasswordFieldDescription",
                         "props": props("simple=text", "password=secret", "textField=a test field")
                 ]
-        ].collect { [config: it, index: i++] }
+        ].collect { [config: it, index: i++, type: it.type] }
     }
     private def genConfiguration2() {
         def i=0

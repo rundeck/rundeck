@@ -74,6 +74,7 @@ class PasswordFieldsServiceSpec extends Specification {
             def configs = [
                     [
 
+                            type: 'asdf',
                             config: [
                                     type: 'asdf',
                                     props: new HashMap(inputConfigs[0].props)
@@ -165,9 +166,9 @@ class PasswordFieldsServiceSpec extends Specification {
             def count2 = service.track('arg2', configs2, descs)
             def unconfig1 = [
                     [
+                            type: 'asdf',
 
                             config: [
-                                    type: 'asdf',
                                     props: new HashMap(configs[0].props)
                             ],
                             index : 0

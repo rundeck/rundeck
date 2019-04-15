@@ -172,7 +172,7 @@ class PasswordFieldsService {
             if (h != null) {
                 config.props[key] = h
             } else {
-                config.configuration.remove(key)
+                config.props.remove(key)
             }
         }
 
