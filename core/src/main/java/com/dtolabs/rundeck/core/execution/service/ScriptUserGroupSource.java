@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.core.utils.ScriptExecUtil;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.option.OptionValue;
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
 import org.apache.log4j.Logger;
@@ -96,7 +97,7 @@ public class ScriptUserGroupSource extends BaseScriptPlugin implements UserGroup
             }
 
         } catch(Exception ex) {
-            ex.printStackTrace();
+            LOG.error(ServiceNameConstants.UserGroupSource + " plugin: " + getProvider().getName() + " failed", ex);
         }
         return groups;
     }
