@@ -22,6 +22,10 @@ details.more-info {
     .less-indicator-verbiage {
       display: none
     }
+
+    .more-indicator-verbiage, .less-indicator-verbiage {
+      cursor: pointer;
+    }
   }
 
   &[open] > summary {
