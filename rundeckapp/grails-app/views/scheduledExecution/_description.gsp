@@ -37,10 +37,10 @@
             <details class="more-info" ${mode=='expanded'?'open':''}>
                 <summary>
                     <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
-                    <span class="btn btn-default btn-xs more-indicator-verbiage">
+                    <span class="btn-link btn-xs more-indicator-verbiage">
                         ${moreText?:message(code: "more", default: "More")}
                     </span>
-                    <span class="btn btn-default btn-xs less-indicator-verbiage">
+                    <span class="btn-link btn-xs less-indicator-verbiage">
                         <g:message code="less"  default="Less"/>
                     </span>
                 </summary>
