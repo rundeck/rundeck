@@ -66,6 +66,7 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Resour
                       .required(true)
                       .build()
         )
+        .metadata("glyphicon", "folder-open")
         .build();
 
     public void configure(final Properties configuration) throws ConfigurationException {

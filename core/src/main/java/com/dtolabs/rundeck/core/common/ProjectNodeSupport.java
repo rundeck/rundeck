@@ -39,18 +39,14 @@ import java.util.stream.Collectors;
  */
 public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static final Logger logger = Logger.getLogger(ProjectNodeSupport.class);
-    public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
-    public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     public static final String NODE_ENHANCER_PROP_PREFIX = "nodes.plugin";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
-    public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
-    public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
     private IRundeckProjectConfig                                                  projectConfig;
-    private Map<String, Exception>                                                 nodesSourceExceptions;
+    private final Map<String, Throwable>                                           nodesSourceExceptions;
     private long                                                                   nodesSourcesLastReload = -1L;
     private List<LoadedResourceModelSource>                                        nodesSourceList;
     /**
@@ -79,7 +75,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
         this.factoryFunction = factoryFunction;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
     /**
      * @param projectConfig
@@ -94,10 +90,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
 
-    static Set<String> uncachedResourceTypes = new HashSet<String>();
+    //TODO: add flag to ResourceModelSource that allows disabling local file cache
+    private static Set<String> uncachedResourceTypes = new HashSet<>();
 
     static {
         uncachedResourceTypes.add("file");
@@ -130,9 +127,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public INodeSet getNodeSet() {
         //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         int index=1;
-        Set<String> validSources = new HashSet<>();
+
+        nodesSourceExceptions.clear();
         for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
             try {
                 INodeSet nodes = nodesSource.getNodes();
@@ -141,12 +139,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 } else {
                     list.addNodeSet(nodes);
                 }
-                boolean hasErrors=false;
                 if(nodesSource instanceof ResourceModelSourceErrors){
                     ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
                     List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
                     if(modelSourceErrors!=null && modelSourceErrors.size()>0){
-                        hasErrors=true;
+
                         logger.error("Some errors getting nodes from [" +
                                      nodesSource.toString() +
                                      "]: " +
@@ -155,15 +152,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                 index + ".source",
                                 new ResourceModelSourceException(
                                         TextUtils.join(
-                                                modelSourceErrors.toArray(new String[modelSourceErrors.size()]),
+                                                modelSourceErrors.toArray(new String[0]),
                                                 ';'
                                         )
                                 )
                         );
                     }
-                }
-                if(!hasErrors) {
-                    validSources.add(index + ".source");
                 }
             } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
@@ -188,9 +182,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
         synchronized (nodesSourceExceptions){
             nodesSourceExceptions.putAll(exceptions);
-            for (String validSource : validSources) {
-                nodesSourceExceptions.remove(validSource);
-            }
         }
         return list;
 
@@ -200,7 +191,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public ArrayList<Exception> getResourceModelSourceExceptions() {
+    public ArrayList<Throwable> getResourceModelSourceExceptions() {
         synchronized (nodesSourceExceptions) {
             return new ArrayList<>(nodesSourceExceptions.values());
         }
@@ -209,7 +200,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public Map<String,Exception> getResourceModelSourceExceptionsMap() {
+    public Map<String,Throwable> getResourceModelSourceExceptionsMap() {
         synchronized (nodesSourceExceptions) {
             return Collections.unmodifiableMap(nodesSourceExceptions);
         }
@@ -269,7 +260,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     private void loadResourceModelSources() {
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         Set<String> validSources = new HashSet<>();
         //generate Configuration for file source
         if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
@@ -331,12 +322,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     class StoreExceptionHandler implements ExceptionCatchingResourceModelSource.ExceptionHandler {
         String sourceIdent;
 
-        public StoreExceptionHandler(final String sourceIdent) {
+        StoreExceptionHandler(final String sourceIdent) {
             this.sourceIdent = sourceIdent;
         }
 
         @Override
-        public void handleException(final Exception t, final ResourceModelSource origin) {
+        public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
         }
     }
@@ -356,12 +347,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static class ProjectNodesSource implements ResourceModelSource {
         IProjectNodes nodes;
 
-        public ProjectNodesSource(final IProjectNodes nodes) {
+        ProjectNodesSource(final IProjectNodes nodes) {
             this.nodes = nodes;
         }
 
         @Override
-        public INodeSet getNodes() throws ResourceModelSourceException {
+        public INodeSet getNodes() {
             return nodes.getNodeSet();
         }
     }
@@ -443,21 +434,35 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return factoryFunction;
     }
 
-    static interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
+    interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
         int getIndex();
 
         String getType();
     }
 
     @Data
-    static class LoadedSource implements LoadedResourceModelSource {
+    static class LoadedSource
+            extends DelegateResourceModelSource implements LoadedResourceModelSource
+    {
         final int index;
         final String type;
-        @Delegate final ResourceModelSource source;
+
+        LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
+            super(delegate);
+            this.index = index;
+            this.type = type;
+        }
+
+        @Override
+        public ResourceModelSource getSource() {
+            return getDelegate();
+        }
     }
 
     private LoadedResourceModelSource loadResourceModelSource(
-            String type, Properties configuration, boolean useCache,
+            String type,
+            Properties configuration,
+            boolean useCache,
             String ident,
             int index
     ) throws ExecutionServiceException
@@ -465,7 +470,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         configuration.put("project", projectConfig.getName());
 
-        CloseableProvider<ResourceModelSource> sourceForConfiguration = null;
+        CloseableProvider<ResourceModelSource> sourceForConfiguration;
 
         if (null == factoryFunction) {
             sourceForConfiguration =
@@ -512,16 +517,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
 
-    private Properties createFileSourceConfiguration() {
-        String format = null;
-        if (projectConfig.hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
-            format = projectConfig.getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
-        }
-        return generateFileSourceConfigurationProperties(
-                projectConfig.getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
-                true
-        );
-    }
     /**
      * list the configurations of resource model providers.
      * @return a list of maps containing:
@@ -651,7 +646,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
     public static List<Map<String, Object>> listResourceModelConfigurations(final Properties props) {
-        final ArrayList<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        final ArrayList<Map<String, Object>> list = new ArrayList<>();
         int i = 1;
         boolean done = false;
         while (!done) {
@@ -666,7 +661,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
-                final HashMap<String, Object> map = new HashMap<String, Object>();
+                final HashMap<String, Object> map = new HashMap<>();
                 map.put("type", providerType);
                 map.put("props", configProps);
                 list.add(map);
