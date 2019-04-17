@@ -1024,6 +1024,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         providers
     }
 
+
+    /**
      * Return all the Node Exec plugin type descriptions for the Rundeck Framework, in the order:
 
      * @return tuple(resourceConfigs, nodeExec, filecopier)
