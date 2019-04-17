@@ -66,7 +66,7 @@ dependencies {
                 project(':plugins:upvar-plugin'),
                 "com.github.Batix:rundeck-ansible-plugin:2.5.0",
                 "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
-                "com.github.rundeck-plugins:py-winrm-plugin:1.0.10",
+                "com.github.rundeck-plugins:py-winrm-plugin:2.0.1",
                 "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
 
     spa project(path: ':rundeck:grails-spa', configuration: 'spa')
