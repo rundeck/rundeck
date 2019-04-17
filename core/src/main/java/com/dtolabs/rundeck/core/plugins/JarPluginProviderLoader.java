@@ -919,7 +919,8 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public String getPluginArtifactName() {
         Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        String name = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        return name != null ? name : pluginJar.getName();
     }
 
     @Override
@@ -931,7 +932,8 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public String getPluginFileVersion() {
         Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+        String version = mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+        return version != null ? version : "1.0.0";
     }
 
     @Override
@@ -961,8 +963,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
 
     @Override
     public String getPluginName() {
-        Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        return getPluginArtifactName();
     }
 
     @Override
