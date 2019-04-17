@@ -89,6 +89,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     PasswordFieldsService obscurePasswordFieldsService
     PasswordFieldsService resourcesPasswordFieldsService
     PasswordFieldsService execPasswordFieldsService
+    PasswordFieldsService pluginsPasswordFieldsService
     PasswordFieldsService fcopyPasswordFieldsService
 
     def metricService
@@ -1063,6 +1064,29 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 errors << e.getMessage()
             }
 
+            //untrack any project level defaults for plugins
+            def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projProps, "project.plugin")
+            projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+                final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+                def pconfigs = []
+                providers.each { String provider, Map<String, String> config ->
+                    def desc = pluginDescriptions.find { it.name == provider }
+                    if (!desc) {
+                        return null
+                    }
+                    pconfigs << [type: provider, props: config]
+                }
+
+                pconfigs.each { conf ->
+                    pluginsPasswordFieldsService.untrack("${project}/${svcName}/defaults/${conf.type}", [[config:conf,index:0,type:conf.type]],  pluginDescriptions)
+                    def provprefix = "project.plugin.${svcName}.${conf.type}."
+                    conf.props.each { k, v ->
+                        projProps["${provprefix}${k}"] = v
+                    }
+                }
+            }
+
+
             //validate input values
             final fcvalidation = frameworkService.validateServiceConfig(fileCopyType, "", filecopyConfig, fileCopierService)
             if (!fcvalidation.valid) {
@@ -1122,6 +1146,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 flash.message = "Project ${project} configuration file saved"
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
+                pluginsPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
                 return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
@@ -2351,9 +2376,29 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
 
-//        def baos=new ByteArrayOutputStream()
-//        projectProps.storeToXML(baos,"edit below",'UTF-8')
-//        def projectPropertiesText = new String(baos.toByteArray(),"UTF-8")//.
+        // track project plugin default attributes for any discovered plugin types configured at project level
+        def projectScopedConfigs = frameworkService.discoverScopedConfiguration(projectProps, "project.plugin")
+        projectScopedConfigs.each { String svcName, Map<String, Map<String, String>> providers ->
+            final pluginDescriptions = pluginService.listPluginDescriptions(svcName)
+            def configs = []
+            providers.each { String provider, Map<String, String> config ->
+                def desc = pluginDescriptions.find { it.name == provider }
+                if (!desc) {
+                    log.warn("Not found provider: ${svcName}/${provider}")
+                    return null
+                }
+                configs << [type: provider, props: config]
+            }
+            configs.each { conf ->
+                pluginsPasswordFieldsService.reset("${project}/${svcName}/defaults/${conf.type}")
+                pluginsPasswordFieldsService.track("${project}/${svcName}/defaults/${conf.type}", [conf], true, pluginDescriptions)
+                def provprefix = "project.plugin.${svcName}.${conf.type}."
+                conf.props.each { k, v ->
+                    projectProps["${provprefix}${k}"] = v
+                }
+            }
+        }
+
         def sw=new StringWriter()
         projectProps.store(sw,"edit below")
         def projectPropertiesText = sw.toString().
