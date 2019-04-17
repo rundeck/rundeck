@@ -8,13 +8,14 @@ import retrofit2.http.*;
 public interface RundeckApi {
 
     @Headers("Accept: application/json")
-    @PUT("/api/14/project/{project}/import")
+    @PUT("/api/29/project/{project}/import")
     Call<ProjectImportStatus> importProjectArchive(
             @Path("project") String project,
             @Query("jobUuidOption") String jobUuidOption,
             @Query("importExecutions") Boolean importExecutions,
             @Query("importConfig") Boolean importConfig,
             @Query("importACL") Boolean importACL,
+            @Query("importScm") Boolean importScm,
             @Body RequestBody body
     );
 

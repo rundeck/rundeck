@@ -47,6 +47,15 @@
     ]}" id="homeDataPagingParams"/>
     <asset:javascript src="menu/home.js"/>
 
+    <!-- VUE JS REQUIREMENTS -->
+    <asset:javascript src="static/manifest.js"/>
+    <asset:javascript src="static/vendor.js"/>
+    <!-- /VUE JS REQUIREMENTS -->
+
+    <!-- VUE CSS MODULES -->
+    <asset:stylesheet href="static/css/components/version-notification.css"/>
+    <!-- /VUE CSS MODULES -->
+
 </head>
 <body>
 <div class="row">

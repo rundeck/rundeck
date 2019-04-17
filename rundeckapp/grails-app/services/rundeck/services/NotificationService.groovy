@@ -324,15 +324,23 @@ public class NotificationService implements ApplicationContextAware{
                         def template = new File(templatePath)
                         if (template.isFile()) {
 
-                            if(attachlogbody){
-                                if(template.text.indexOf('${logoutput.data}')>0){
-                                    outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
+                            //check if the custom template is calling ${logoutput.data}
+                            def templateLogOutput=false
+                            if(template.text.indexOf('${logoutput.data}')>=0){
+                                templateLogOutput=true
+                            }
+                            def contextOutput=[:]
+                            if(attachlogbody && templateLogOutput){
+                                //just attached the output if the template uses ${logoutput.data}
+                                outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
+                                contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
+                            }else if(templateLogOutput) {
+                                // add null value if template uses ${logoutput.data} and the attachlogbody is disabled
+                                contextOutput['logoutput'] = ["data":""]
+                            }
 
-                                    //add to context in order to display output using a custom template ( using ${logoutput.data} )
-                                    def contextOutput=[:]
-                                    contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
-                                    context = DataContextUtils.merge(context, contextOutput)
-                                }
+                            if(!contextOutput.isEmpty()) {
+                                context = DataContextUtils.merge(context, contextOutput)
                             }
 
                             if (template.name.endsWith('.md') || template.name.endsWith('.markdown')) {
@@ -393,6 +401,7 @@ public class NotificationService implements ApplicationContextAware{
                                     if(attachlogbody){
                                         outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
                                     }
+                                    def renderJobStats = false
 
                                     body(
                                             view: "/execution/mailNotification/status",
@@ -403,7 +412,8 @@ public class NotificationService implements ApplicationContextAware{
                                                     execstate         : state,
                                                     nodestatus        : content.nodestatus,
                                                     jobref            : content.jobref,
-                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null
+                                                    logOutput         : outputBuffer!=null? outputBuffer.toString(): null,
+                                                    renderJobStats    : renderJobStats
                                             ]
                                     )
                                 }
@@ -599,9 +609,8 @@ public class NotificationService implements ApplicationContextAware{
                 project: scheduledExecution.project,
                 description: scheduledExecution.description
         ]
-        if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
-            def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
-            job.averageDuration = avg
+        if (scheduledExecution.getAverageDuration() > 0) {
+            job.averageDuration = scheduledExecution.getAverageDuration()
         }
         job
     }

@@ -27,7 +27,7 @@
 <g:set var="selectedclass" value="active"/>
 
 <g:set var="wfselected" value=""/>
-<ul class="nav">
+<ul id="sidebar-nav" class="nav">
   <!-- <li>
     <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
        title="Home">
@@ -134,19 +134,19 @@
         </p>
       </g:link>
     </li>
-    <g:ifMenuItems type="PROJECT">
+    <g:ifMenuItems type="PROJECT" project="${params.project}">
         <li role="separator" class="divider"></li>
+        <g:forMenuItems type="PROJECT" var="item" project="${params.project}">
+            <li>
+                <a href="${enc(attr: item.getProjectHref(params.project))}"
+                   class=" toptab "
+                   title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
+                    <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
+                    <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+                </a>
+            </li>
+        </g:forMenuItems>
     </g:ifMenuItems>
-    <g:forMenuItems type="PROJECT" var="item">
-        <li>
-            <a href="${enc(attr: item.getProjectHref(params.project))}"
-               class=" toptab "
-               title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
-                <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
-                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
-            </a>
-        </li>
-    </g:forMenuItems>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
@@ -184,15 +184,6 @@
     </g:if>
 </g:if>
 </g:if>
-  <%-- <li class="snapshot-version">
-    <span class="rundeck-version-identity"
-          data-version-string="${enc(attr: buildIdent)}"
-          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-          data-app-id="${enc(attr: appId)}"></span>
-    <g:link controller="menu" action="welcome" class="version link-bare">
-        <g:appTitle/> ${buildIdent}
-    </g:link>
-  </li> --%>
 </ul>
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabtitle'>
@@ -235,16 +226,35 @@
     </g:ifExecutionMode>
 </g:if>
 --}%
-<div id="snapshot-version" class="snapshot-version">
+<div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
+  <div id="community-news-notification">
+    <div class="sidebar-footer-line-item">
+      <g:if test="${grailsApplication.config.rundeck.communityNews.disabled in [true,'true']}">
+        <a href="https://www.rundeck.com/community-updates" target="_blank">
+          <div>
+            <i class="far fa-newspaper" style="margin-right:5px;"></i>
+            <span>Community News</span>
+          </div>
+        </a>
+      </g:if>
+      <g:else>
+        <g:link controller="communityNews" action="index">
+          <span id="community-news-notification-vue"></span>
+        </g:link>
+      </g:else>
+    </div>
+  </div>
   <div id="version-notification-vue"></div>
-  <span class="rundeck-version-identity"
-        data-version-string="${enc(attr: buildIdent)}"
-        data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-        data-app-id="${enc(attr: appId)}"
-        style="display:block;"></span>
-  <g:link controller="menu" action="welcome" class="version link-bare">
-      <g:appTitle/> ${buildIdent}
-  </g:link>
+  <div id="snapshot-version" class="snapshot-version">
+    <span class="rundeck-version-identity"
+          data-version-string="${enc(attr: buildIdent)}"
+          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
+          data-app-id="${enc(attr: appId)}"
+          style="display:block;"></span>
+    <g:link controller="menu" action="welcome" class="version link-bare">
+        <g:appTitle/> ${buildIdent}
+    </g:link>
+  </div>
 </div>
 
 <g:javascript>
@@ -282,4 +292,10 @@
   const ps = new PerfectScrollbar('.sidebar-wrapper', {
     suppressScrollX: true
   });
+
+  setTimeout(function(){
+    var announcementHeight = document.getElementById("sidebar-bottom").offsetHeight;
+    document.getElementById("sidebar-nav").style['marginBottom'] = announcementHeight.toString() + "px";
+  }, 500)
+
 </g:javascript>

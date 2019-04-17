@@ -46,11 +46,16 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import groovy.io.FileType
+import org.grails.spring.beans.factory.InstanceFactoryBean
+import org.rundeck.app.api.ApiInfo
+import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
 import org.rundeck.security.RundeckAuthenticationSuccessEventListener
+import org.rundeck.security.RundeckJaasAuthenticationProvider
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -73,6 +78,7 @@ import org.springframework.security.web.authentication.session.RegisterSessionAu
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import rundeck.services.DirectNodeExecutionService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -138,6 +144,8 @@ beans={
     rundeckNodeSupport(NodeSupport){
 
     }
+    
+    rundeckNodeService(EnhancedNodeService)
 
     frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
         baseDir=rdeckBase
@@ -168,16 +176,22 @@ beans={
     clusterInfoService(ClusterInfo) {
         clusterInfoServiceDelegate = ref('frameworkService')
     }
+    rundeckApiInfoService(ApiInfo)
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-            (ClusterInfoService): ref('clusterInfoService')
+                (ClusterInfoService): ref('clusterInfoService'),
+                (ApiInfo)           : ref('rundeckApiInfoService')
         ]
     }
+
+    directNodeExecutionService(DirectNodeExecutionService)
 
     rundeckAuthorizedServicesProvider(RundeckAuthorizedServicesProvider) {
         baseServices = ref('rundeckSpiBaseServicesProvider')
     }
+
+    rundeckAuthContextEvaluator(RundeckAuthContextEvaluator)
 
     def configDir = new File(Constants.getFrameworkConfigDir(rdeckBase))
 
@@ -408,6 +422,7 @@ beans={
     /**
      * Track passwords on these plugins
      */
+    obscurePasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
     fcopyPasswordFieldsService(PasswordFieldsService)
@@ -468,7 +483,7 @@ beans={
         //spring security jaas configuration
         jaasApiIntegrationFilter(JaasApiIntegrationFilter)
 
-        jaasAuthProvider(DefaultJaasAuthenticationProvider) {
+        jaasAuthProvider(RundeckJaasAuthenticationProvider) {
             configuration = Configuration.getConfiguration()
             loginContextName = grailsApplication.config.rundeck.security.jaasLoginModuleName
             authorityGranters = [

@@ -66,7 +66,7 @@
 
                 %{--display if it is a node step--}%
                 <g:if test="${item.nodeStep}">
-                    <g:if test="${!noimgs && item.nodeStep}"><i class="rdicon node node-runnable icon-small"></i></g:if>
+                    <g:if test="${!noimgs && item.nodeStep}"> <i class="fas fa-hdd"></i> </g:if>
                     <span class="info note" title="${enc(code:'JobExec.nodeStep.true.description')}">
                         <g:message code="JobExec.nodeStep.true.label" />
                     </span>

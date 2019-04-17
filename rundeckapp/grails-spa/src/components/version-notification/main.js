@@ -19,6 +19,10 @@ Vue.use(VueMoment);
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'
 
+if (!messages[language]) {
+  language = 'en_US'
+}
+
 // Create VueI18n instance with options
 const i18n = new VueI18n({
   silentTranslationWarn: true,

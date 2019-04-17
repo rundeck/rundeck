@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.testing.services.ServiceUnitTest
@@ -135,6 +136,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
                                       .defaultValue("alpha")
                                       .values("alpha", "beta", "gamma")
                                       .type(Property.Type.Select)
+            .renderingOptions([(StringRenderingConstants.DISPLAY_TYPE_KEY):StringRenderingConstants.DisplayType.CODE])
                                       .build()
 
             service.metaClass.getLocale = { -> Locale.ENGLISH }
@@ -166,7 +168,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
             result.allowed == ['alpha', 'beta', 'gamma']
             result.selectLabels == null
             result.scope == null
-            result.options == [:]
+            result.options == ['displayType':'CODE']
 
     }
 

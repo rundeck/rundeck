@@ -57,11 +57,11 @@ public class Client {
 
     public ProjectImportStatus importProjectArchive(String project, File file, boolean preserveUuids,
                                                     boolean importExecutions,
-                                                    boolean importConfig,boolean importACL) throws IOException{
+                                                    boolean importConfig,boolean importACL, boolean importSCM) throws IOException{
         ProjectImportStatus response = new ProjectImportStatus();
         response.successful = true;
         RequestBody body = RequestBody.create(MEDIA_TYPE_ZIP, file);
-        Response<ProjectImportStatus> status = getApi().importProjectArchive(project,preserveUuids? "remove" : "preserve",importExecutions,importConfig,importACL,body).execute();
+        Response<ProjectImportStatus> status = getApi().importProjectArchive(project,preserveUuids? "remove" : "preserve",importExecutions,importConfig,importACL,importSCM,body).execute();
         if(status.isSuccessful()){
             if(null != status.body()) {
                 response = status.body();

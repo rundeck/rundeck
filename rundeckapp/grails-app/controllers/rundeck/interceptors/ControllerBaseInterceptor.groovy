@@ -63,7 +63,8 @@ class ControllerBaseInterceptor {
         def uiplugins = [:]
 
         def addPath=false
-        if(configurationService.getBoolean('ui.plugin.enableAllPages', false)){
+        def enableAllPages = configurationService.getBoolean('ui.plugin.enableAllPages', true)
+        if(enableAllPages){
             addPath=true
         }else if((path in UIPLUGIN_PAGES)){
             addPath=true
@@ -112,7 +113,7 @@ class ControllerBaseInterceptor {
 
     boolean after() {
         if(!currentRequestAttributes().isRequestActive()) return true
-        if(InterceptorHelper.matchesStaticAssets(controllerName, request) || !model) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName, request) || !view) return true
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
         model.uipluginsorder = sortUiPlugins(model.uiplugins)
         model.uipluginsPath = controllerName + "/" + actionName

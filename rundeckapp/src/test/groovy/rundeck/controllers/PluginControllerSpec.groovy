@@ -75,6 +75,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         1 * controller.frameworkService.rundeckFramework.pluginManager.getPluginMetadata(_,_) >> new PluginApiServiceSpec.FakePluginMetadata()
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.title','Fake Plugin',_)>>'plugin.title'
         1 * controller.uiPluginService.getPluginMessage('Notification','fake','plugin.description','This is the best fake plugin',_)>>'plugin.description'
+        1 * controller.uiPluginService.getProfileFor('Notification','fake')>>[:]
         1* controller.pluginApiService.pluginPropertiesAsMap('Notification','fake',_)>>[
                 [name:'prop1',apiData:true],
                 [name:'password',apiData:true]
@@ -150,6 +151,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             'XYZ title'
             1 * controller.uiPluginService.getPluginMessage(svcName, 'XYZfake', 'plugin.description', _, _) >>
             'XYZ desc'
+            1 * controller.uiPluginService.getProfileFor(svcName,'XYZfake')>>[:]
+            1 * controller.uiPluginService.getProfileFor(svcName,'ABCfake')>>[:]
             def json = response.json
             json.service == svcName
             json.descriptions

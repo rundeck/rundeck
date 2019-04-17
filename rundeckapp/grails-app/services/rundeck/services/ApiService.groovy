@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.web.JSONBuilder
+import groovy.transform.CompileStatic
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.grails.web.converters.exceptions.ConverterException
@@ -282,6 +283,7 @@ class ApiService {
         string ? Sizes.parseTimeDuration(string) : 0
     }
 
+    @CompileStatic
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
@@ -289,8 +291,15 @@ class ApiService {
         def out = response.outputStream
         out << output
         out.flush()
+
         null
     }
+
+    @CompileStatic
+    def appendResponseOutput(HttpServletResponse response, String output) {
+        response.outputStream << output
+    }
+
     def respondXml(HttpServletResponse response, Closure recall) {
         return respondOutput(response, TEXT_XML_CONTENT_TYPE, renderXml(recall))
     }
@@ -566,7 +575,7 @@ class ApiService {
             if (err.status) {
                 response.setStatus(err.status)
             }
-            response.outputStream<< renderErrorText(err)
+            appendResponseOutput(response, renderErrorText(err))
         }]
         def eformat = error.format
         def rformat = response.format
@@ -960,8 +969,9 @@ class ApiService {
                     }
                     if (e.scheduledExecution) {
                         def jobparams = [id: e.scheduledExecution.extid]
-                        if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-                            def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                        def seStats = e.scheduledExecution.getStats()
+                        if(e.scheduledExecution.getAverageDuration() > 0) {
+                            def long avg = e.scheduledExecution.getAverageDuration()
                             jobparams.averageDuration = avg
                         }
                         jobparams.'href'=(apiHrefForJob(e.scheduledExecution))
@@ -1050,8 +1060,9 @@ class ApiService {
                 }
                 if (e.scheduledExecution) {
                     def jobparams = [id: e.scheduledExecution.extid]
-                    if (e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
-                        def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
+                    def seStats = e.scheduledExecution.getStats()
+                    if (e.scheduledExecution.getAverageDuration() > 0) {
+                        def long avg = e.scheduledExecution.getAverageDuration()
                         jobparams.averageDuration = avg
                     }
                     execMap.job=jobparams

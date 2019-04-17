@@ -1,8 +1,6 @@
 'use strict'
 require('./check-versions')()
 
-console.log('foo')
-
 const ora = require('ora')
 const rm = require('rimraf')
 const path = require('path')
@@ -35,6 +33,7 @@ const webpackConfig = {
     'components/tour': './src/components/tour/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/repository': './src/pages/repository/main.js',
+    'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
   },
   output: {
     path: assetsRoot,

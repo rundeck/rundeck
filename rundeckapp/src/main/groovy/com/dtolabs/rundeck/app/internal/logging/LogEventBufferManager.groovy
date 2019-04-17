@@ -16,39 +16,39 @@
 
 package com.dtolabs.rundeck.app.internal.logging
 
+import com.dtolabs.rundeck.core.execution.Contextual
+import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.StreamingLogWriter
+import com.dtolabs.rundeck.core.utils.LogBufferManager
 
 import java.nio.charset.Charset
+import java.util.function.Consumer
 
 /**
  * Creates log event buffers, and retains references to them, so that they can be
  * flushed later even if any thread-local references are lost when a thread finishes
  */
-class LogEventBufferManager {
+class LogEventBufferManager implements LogBufferManager<LogEvent,LogEventBuffer> {
     Set<LogEventBuffer> buffers = new TreeSet<>()
     Charset charset
+    Contextual listener
+    LogLevel level
 
-    LogEventBuffer create(Map context, Charset charset = null) {
-        def buffer = new LogEventBuffer(context, charset ?: this.charset)
+    LogEventBuffer create(Charset charset = null) {
+        def buffer = new LogEventBuffer(level,listener, charset ?: this.charset)
         buffers.add(buffer)
         return buffer
     }
 
-    static LogEventBufferManager createManager(Charset charset = null) {
-        new LogEventBufferManager(charset: charset)
+    static LogEventBufferManager createManager(LogLevel level, Contextual listener, Charset charset = null) {
+        new LogEventBufferManager(level: level, listener: listener, charset: charset)
     }
 
-    /**
-     * flush all incomplete event buffers in the appropriate order, then clear all buffers from the cache
-     * @param writer
-     * @param level
-     */
-    void flush(StreamingLogWriter writer, LogLevel level) {
-
+    @Override
+    void flush(final Consumer<LogEvent> writer) {
         for (def b : buffers) {
             if (!b.isEmpty()) {
-                writer.addEvent(b.createEvent(level))
+                writer.accept(b.get())
             }
             b.clear()
         }

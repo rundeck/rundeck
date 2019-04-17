@@ -80,6 +80,7 @@ public class TestScriptPluginFileCopier {
         private boolean interpreterArgsQuoted;
         private Map<String, Object> metadata;
         private PluginMeta pluginMeta;
+        private Map<String, String> providerMeta;
 
         @Override public String getName() {
             return name;
@@ -170,6 +171,15 @@ public class TestScriptPluginFileCopier {
         @Override
         public boolean getDefaultMergeEnvVars() {
             return false;
+        }
+
+        @Override
+        public Map<String, String> getProviderMeta() {
+            return providerMeta;
+        }
+
+        public void setProviderMeta(Map<String, String> providerMeta) {
+            this.providerMeta = providerMeta;
         }
     }
 

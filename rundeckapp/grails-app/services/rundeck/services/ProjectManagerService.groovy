@@ -77,7 +77,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     ConfigurationService configurationService
     def grailsApplication
     def metricService
-    def nodeService
+    def rundeckNodeService
     /**
      * Scheduled executor for retries
      */
@@ -443,7 +443,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = writeProjectFileResource(projectName, storagePath, bais, metadata)
 
         projectCache.invalidate(projectName)
-        nodeService.expireProjectNodes(projectName)
+        rundeckNodeService.refreshProjectNodes(projectName)
         return [
                 config      : properties,
                 lastModified: resource.contents.modificationTime,
@@ -456,7 +456,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             log.error("Failed to delete all associated resources for project ${projectName}")
         }
         projectCache.invalidate(projectName)
-        nodeService.expireProjectNodes(projectName)
+        rundeckNodeService.refreshProjectNodes(projectName)
     }
 
     private IPropertyLookup createProjectPropertyLookup(String projectName, Properties config) {
@@ -523,7 +523,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 projectService: this,
                 description: description? description: null
         )
-        newproj.nodesFactory = nodeService
+        newproj.nodesFactory = rundeckNodeService
         return newproj
     }
 
@@ -569,7 +569,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
-        project.nodesFactory = nodeService
+        project.nodesFactory = rundeckNodeService
     }
 
     Map mergeProjectProperties(
@@ -619,7 +619,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
-        project.nodesFactory = nodeService
+        project.nodesFactory = rundeckNodeService
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         def description = properties['project.description']
@@ -730,7 +730,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                 projectService: this,
                 description: description? description : null
         )
-        rdproject.nodesFactory = nodeService
+        rdproject.nodesFactory = rundeckNodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")
         return rdproject
     }

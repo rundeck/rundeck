@@ -77,6 +77,9 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
+    <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+      <asset:stylesheet href="static/css/components/community-news-notification.css"/>
+    </g:if>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -162,14 +165,15 @@
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
-      window._rundeck = {
+        window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
         language: '${response.locale?.toString() ?: request.locale?.toString()}',
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
-        activeTourStep: '${session.filterPref?.activeTourStep}'
-      }
+        activeTourStep: '${session.filterPref?.activeTourStep}',
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
+        })
     </script>
     <asset:javascript src="static/components/central.js"/>
 </head>
@@ -236,6 +240,10 @@ disable for now because profiler plugin is not compatible with grails 3.x
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/tour.js"/>
+<g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+  <asset:javascript src="static/components/community-news-notification.js"/>
+</g:if>
+
 <!-- /VUE JS MODULES -->
 
 </body>

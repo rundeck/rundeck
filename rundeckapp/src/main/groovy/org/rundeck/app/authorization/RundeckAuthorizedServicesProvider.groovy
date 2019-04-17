@@ -18,6 +18,7 @@ package org.rundeck.app.authorization
 
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import groovy.transform.CompileStatic
@@ -26,6 +27,7 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.DirectNodeExecutionService
 import rundeck.services.JobStateService
 import rundeck.services.StorageService
 
@@ -33,8 +35,9 @@ import rundeck.services.StorageService
 class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired JobStateService jobStateService
     @Autowired StorageService storageService
+    @Autowired DirectNodeExecutionService directNodeExecutionService
     ServicesProvider baseServices
-    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree]
+    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)NodeExecutionService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
@@ -65,6 +68,9 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
             }
             if (type == KeyStorageTree) {
                 return (T) storageService.storageTreeWithContext(authContext)
+            }
+            if (type == NodeExecutionService) {
+                return (T) directNodeExecutionService.nodeExecutionServiceWithAuth(authContext)
             }
             throw new IllegalStateException("Required service " + type.getName() + " was not available");
         }

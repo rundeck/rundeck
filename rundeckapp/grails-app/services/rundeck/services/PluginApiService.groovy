@@ -108,7 +108,7 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
@@ -127,7 +127,7 @@ class PluginApiService {
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
-                def filename = uiPluginProfiles[provIdent].get('metadata')?.filename
+                def filename = uiPluginProfiles[provIdent].get('fileMetadata')?.filename
                 if(filename){
                     if(!loadedFileNameMap[filename]){
                         loadedFileNameMap[filename]=[]
@@ -148,7 +148,7 @@ class PluginApiService {
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
-                FileUploadPluginService: ['filesystem-temp'],
+                FileUpload: ['filesystem-temp'],
         ]
         //list included plugins
         def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
@@ -178,8 +178,8 @@ class PluginApiService {
                 (scmService.scmImportPluginProviderService.name):[
                         description: message("plugin.scmImport.special.description",locale),
                 ],
-                FileUploadPluginService:[
-                        description: message("plugin.FileUploadPluginService.special.description",locale),
+                FileUpload:[
+                        description: message("plugin.FileUpload.special.description",locale),
                 ]
         ]
         def specialScoping=[
@@ -274,8 +274,19 @@ class PluginApiService {
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : prop.renderingOptions
+            options               : asStringMap(prop)
         ]
+    }
+
+    public Map<String, String> asStringMap(Property prop) {
+        if (!prop.renderingOptions) {
+            return null
+        }
+        Map<String, String> opts = [:]
+        prop.renderingOptions.each { String k, Object v ->
+            opts[k]=v.toString()
+        }
+        opts
     }
 
     def listInstalledPluginIds() {

@@ -17,16 +17,14 @@
 package com.dtolabs.rundeck.plugins.descriptions;
 
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
 /**
  * Declares a Plugin class' field as a configurable property
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Repeatable(value = RenderingOptions.class)
 /**
  * Define rendering options for a field
  */

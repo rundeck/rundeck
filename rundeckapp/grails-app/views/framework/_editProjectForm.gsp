@@ -96,6 +96,9 @@
             <g:message code="domain.Project.description.label" default="Description"/>
         </label>
         <g:textField name="description" size="50"  value="${projectDescription}" class="form-control"/>
+        <g:if test="${projectDescriptionError}">
+            <div class="text-warning"><g:enc>${projectDescriptionError}</g:enc></div>
+        </g:if>
     </div>
   </div>
   <div class="list-group-item">
@@ -187,6 +190,7 @@
   </div>
   <g:set var="categories" value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
   <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
+    <div class="list-group-item">
     <g:render template="projectConfigurableForm"
               model="${[extraConfigSet: extraConfig?.values(),
                           category      : category,
@@ -194,6 +198,7 @@
                           titleCode     : 'project.configuration.extra.category.' + category + '.title',
                           helpCode      : 'project.configuration.extra.category.' + category + '.description'
               ]}"/>
+    </div>
   </g:each>
   <g:if test="${nodeExecDescriptions}">
     <div class="list-group-item">

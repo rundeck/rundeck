@@ -17,12 +17,11 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.CloseableProvider;
-import com.dtolabs.rundeck.core.plugins.Closeables;
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
@@ -40,17 +39,14 @@ import java.util.stream.Collectors;
  */
 public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static final Logger logger = Logger.getLogger(ProjectNodeSupport.class);
-    public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
     public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
-    public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
+    public static final String NODE_ENHANCER_PROP_PREFIX = "nodes.plugin";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
-    public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
-    public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
     private IRundeckProjectConfig                                                  projectConfig;
-    private Map<String, Exception>                                                 nodesSourceExceptions;
+    private final Map<String, Throwable>                                           nodesSourceExceptions;
     private long                                                                   nodesSourcesLastReload = -1L;
     private List<LoadedResourceModelSource>                                        nodesSourceList;
     /**
@@ -79,7 +75,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
         this.factoryFunction = factoryFunction;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
     /**
      * @param projectConfig
@@ -94,10 +90,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
-        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<>());
     }
 
-    static Set<String> uncachedResourceTypes = new HashSet<String>();
+    //TODO: add flag to ResourceModelSource that allows disabling local file cache
+    private static Set<String> uncachedResourceTypes = new HashSet<>();
 
     static {
         uncachedResourceTypes.add("file");
@@ -130,9 +127,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     public INodeSet getNodeSet() {
         //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         int index=1;
-        Set<String> validSources = new HashSet<>();
+
+        nodesSourceExceptions.clear();
         for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
             try {
                 INodeSet nodes = nodesSource.getNodes();
@@ -141,12 +139,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 } else {
                     list.addNodeSet(nodes);
                 }
-                boolean hasErrors=false;
                 if(nodesSource instanceof ResourceModelSourceErrors){
                     ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
                     List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
                     if(modelSourceErrors!=null && modelSourceErrors.size()>0){
-                        hasErrors=true;
+
                         logger.error("Some errors getting nodes from [" +
                                      nodesSource.toString() +
                                      "]: " +
@@ -155,15 +152,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                                 index + ".source",
                                 new ResourceModelSourceException(
                                         TextUtils.join(
-                                                modelSourceErrors.toArray(new String[modelSourceErrors.size()]),
+                                                modelSourceErrors.toArray(new String[0]),
                                                 ';'
                                         )
                                 )
                         );
                     }
-                }
-                if(!hasErrors) {
-                    validSources.add(index + ".source");
                 }
             } catch (ResourceModelSourceException | RuntimeException e) {
                 logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
@@ -188,9 +182,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
         synchronized (nodesSourceExceptions){
             nodesSourceExceptions.putAll(exceptions);
-            for (String validSource : validSources) {
-                nodesSourceExceptions.remove(validSource);
-            }
         }
         return list;
 
@@ -200,7 +191,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public ArrayList<Exception> getResourceModelSourceExceptions() {
+    public ArrayList<Throwable> getResourceModelSourceExceptions() {
         synchronized (nodesSourceExceptions) {
             return new ArrayList<>(nodesSourceExceptions.values());
         }
@@ -209,7 +200,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
     @Override
-    public Map<String,Exception> getResourceModelSourceExceptionsMap() {
+    public Map<String,Throwable> getResourceModelSourceExceptionsMap() {
         synchronized (nodesSourceExceptions) {
             return Collections.unmodifiableMap(nodesSourceExceptions);
         }
@@ -269,7 +260,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     private void loadResourceModelSources() {
-        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<>());
         Set<String> validSources = new HashSet<>();
         //generate Configuration for file source
         if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
@@ -331,12 +322,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     class StoreExceptionHandler implements ExceptionCatchingResourceModelSource.ExceptionHandler {
         String sourceIdent;
 
-        public StoreExceptionHandler(final String sourceIdent) {
+        StoreExceptionHandler(final String sourceIdent) {
             this.sourceIdent = sourceIdent;
         }
 
         @Override
-        public void handleException(final Exception t, final ResourceModelSource origin) {
+        public void handleException(final Throwable t, final ResourceModelSource origin) {
             nodesSourceExceptions.put(sourceIdent, t);
         }
     }
@@ -356,12 +347,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static class ProjectNodesSource implements ResourceModelSource {
         IProjectNodes nodes;
 
-        public ProjectNodesSource(final IProjectNodes nodes) {
+        ProjectNodesSource(final IProjectNodes nodes) {
             this.nodes = nodes;
         }
 
         @Override
-        public INodeSet getNodes() throws ResourceModelSourceException {
+        public INodeSet getNodes() {
             return nodes.getNodeSet();
         }
     }
@@ -443,21 +434,35 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return factoryFunction;
     }
 
-    static interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
+    interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
         int getIndex();
 
         String getType();
     }
 
     @Data
-    static class LoadedSource implements LoadedResourceModelSource {
+    static class LoadedSource
+            extends DelegateResourceModelSource implements LoadedResourceModelSource
+    {
         final int index;
         final String type;
-        @Delegate final ResourceModelSource source;
+
+        LoadedSource(final int index, final String type, final ResourceModelSource delegate) {
+            super(delegate);
+            this.index = index;
+            this.type = type;
+        }
+
+        @Override
+        public ResourceModelSource getSource() {
+            return getDelegate();
+        }
     }
 
     private LoadedResourceModelSource loadResourceModelSource(
-            String type, Properties configuration, boolean useCache,
+            String type,
+            Properties configuration,
+            boolean useCache,
             String ident,
             int index
     ) throws ExecutionServiceException
@@ -465,7 +470,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         configuration.put("project", projectConfig.getName());
 
-        CloseableProvider<ResourceModelSource> sourceForConfiguration = null;
+        CloseableProvider<ResourceModelSource> sourceForConfiguration;
 
         if (null == factoryFunction) {
             sourceForConfiguration =
@@ -512,16 +517,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
 
-    private Properties createFileSourceConfiguration() {
-        String format = null;
-        if (projectConfig.hasProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY)) {
-            format = projectConfig.getProperty(PROJECT_RESOURCES_FILEFORMAT_PROPERTY);
-        }
-        return generateFileSourceConfigurationProperties(
-                projectConfig.getProperty(PROJECT_RESOURCES_FILE_PROPERTY), format, true,
-                true
-        );
-    }
     /**
      * list the configurations of resource model providers.
      * @return a list of maps containing:
@@ -536,6 +531,34 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         Properties properties = new Properties();
         properties.putAll(propertiesMap);
         return listResourceModelConfigurations(properties);
+    }
+
+    /**
+     * list the configurations of resource model providers.
+     *
+     * @return a list of PluginConfiguration
+     */
+    @Override
+    public synchronized List<ExtPluginConfiguration> listResourceModelPluginConfigurations() {
+        return listPluginConfigurations(
+                projectConfig.getProjectProperties(),
+                RESOURCES_SOURCE_PROP_PREFIX,
+                ServiceNameConstants.ResourceModelSource
+        );
+    }
+
+    /**
+     * list the configurations of node enhancer providers.
+     *
+     * @return a list of PluginConfiguration
+     */
+    @Override
+    public synchronized List<ExtPluginConfiguration> listNodeEnhancerConfigurations() {
+        return listPluginConfigurations(
+                projectConfig.getProjectProperties(),
+                NODE_ENHANCER_PROP_PREFIX,
+                ServiceNameConstants.NodeEnhancer
+        );
     }
 
 
@@ -561,12 +584,69 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     /**
+     * @return Properties form for the serialized list of indexed plugin configurations with a prefix
+     */
+    public static Properties serializePluginConfigurations(String prefix, final List<PluginConfiguration> configs) {
+        Properties projProps = new Properties();
+        int count = 1;
+        for (PluginConfiguration config : configs) {
+
+            serializeProp(prefix, projProps, count, config);
+            count++;
+        }
+        return projProps;
+    }
+
+    public static void serializeProp(
+            final String prefix,
+            final Properties projProps,
+            final int count,
+            final PluginConfiguration config
+    )
+    {
+        String propPrefix = prefix + "." + count + ".";
+        projProps.setProperty(propPrefix + "type", config.getProvider());
+        Map<String, Object> configuration = config.getConfiguration();
+        for (String k : configuration.keySet()) {
+            Object v = configuration.get(k);
+            projProps.setProperty(propPrefix + "config." + k, v.toString());
+        }
+    }
+
+    /**
+     * @param extra if true, include extra data
+     * @return Properties form for the serialized list of indexed plugin configurations with a prefix
+     */
+    public static Properties serializePluginConfigurations(
+            String prefix,
+            final List<ExtPluginConfiguration> configs,
+            boolean extra
+    )
+    {
+        Properties projProps = new Properties();
+        int count = 1;
+        for (ExtPluginConfiguration config : configs) {
+            String propPrefix = prefix + "." + count + ".";
+            serializeProp(prefix, projProps, count, config);
+            if (extra && config.getExtra() != null && config.getExtra().size() > 0) {
+                for (String s : config.getExtra().keySet()) {
+                    if (!"type".equalsIgnoreCase(s) && !s.startsWith("config.")) {
+                        projProps.setProperty(propPrefix + s, config.getExtra().get(s).toString());
+                    }
+                }
+            }
+            count++;
+        }
+        return projProps;
+    }
+
+    /**
      * Return a list of resource model configuration
      * @param props properties
      * @return List of Maps, each map containing "type": String, "props":Properties
      */
     public static List<Map<String, Object>> listResourceModelConfigurations(final Properties props) {
-        final ArrayList<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+        final ArrayList<Map<String, Object>> list = new ArrayList<>();
         int i = 1;
         boolean done = false;
         while (!done) {
@@ -581,10 +661,107 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                         configProps.setProperty(key.substring(len), props.getProperty(key));
                     }
                 }
-                final HashMap<String, Object> map = new HashMap<String, Object>();
+                final HashMap<String, Object> map = new HashMap<>();
                 map.put("type", providerType);
                 map.put("props", configProps);
                 list.add(map);
+            } else {
+                done = true;
+            }
+            i++;
+        }
+        return list;
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName
+     * @param keyprefix prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public List<ExtPluginConfiguration> listPluginConfigurations(final String keyprefix, final String serviceName)
+    {
+        return listPluginConfigurations(keyprefix, serviceName, true);
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName
+     * @param keyprefix   prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public List<ExtPluginConfiguration> listPluginConfigurations(
+            final String keyprefix,
+            final String serviceName,
+            boolean extra
+    )
+    {
+        return listPluginConfigurations(projectConfig.getProjectProperties(), keyprefix, serviceName, extra);
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName service name
+     * @param props       properties
+     * @param keyprefix   prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public static List<ExtPluginConfiguration> listPluginConfigurations(
+            final Map<String, String> props,
+            final String keyprefix,
+            final String serviceName
+    )
+    {
+        return listPluginConfigurations(props, keyprefix, serviceName, false);
+
+    }
+
+    /**
+     * Return a list of resource model configuration
+     *
+     * @param serviceName service name
+     * @param props       properties
+     * @param keyprefix   prefix for properties
+     * @return List of Maps, each map containing "type": String, "props":Properties
+     */
+    public static List<ExtPluginConfiguration> listPluginConfigurations(
+            final Map<String, String> props,
+            final String keyprefix,
+            final String serviceName,
+            final boolean extra
+    )
+    {
+        final ArrayList<ExtPluginConfiguration> list = new ArrayList<>();
+        int i = 1;
+        boolean done = false;
+        while (!done) {
+            final String prefix = keyprefix + "." + i;
+            if (props.containsKey(prefix + ".type")) {
+                final String providerType = props.get(prefix + ".type");
+                final Map<String, Object> configProps = new HashMap<>();
+                final Map<String, Object> extraData = extra ? new HashMap<>() : null;
+                final int len = (prefix + ".config.").length();
+                for (final Object o : props.keySet()) {
+                    final String key = (String) o;
+                    if (key.startsWith(prefix + ".config.")) {
+                        configProps.put(key.substring(len), props.get(key));
+                    }
+                }
+                if (extra) {
+                    //list all extra props
+                    for (String s : props.keySet()) {
+                        if (s.startsWith(prefix + ".")) {
+                            String suffix = s.substring(prefix.length() + 1);
+                            if (!"type".equalsIgnoreCase(suffix) && !suffix.startsWith("config.")) {
+                                extraData.put(suffix, props.get(s));
+                            }
+                        }
+                    }
+                }
+                list.add(new SimplePluginConfiguration(serviceName, providerType, configProps, extraData));
             } else {
                 done = true;
             }

@@ -63,9 +63,9 @@ public interface IFrameworkServices {
 
     NodeExecutor getNodeExecutorForNodeAndProject(INodeEntry node, String project) throws ExecutionServiceException;
 
-    NodeExecutorService getNodeExecutorService() throws ExecutionServiceException;
+    NodeExecutorService getNodeExecutorService();
 
-    NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException;
+    NodeStepExecutionService getNodeStepExecutorService();
 
     NodeStepExecutor getNodeStepExecutorForItem(NodeStepExecutionItem item) throws ExecutionServiceException;
 

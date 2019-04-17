@@ -18,6 +18,20 @@ rundeck:
   features:
     repository:
       enabled: "true"
+  mail:
+    smtp:
+      host: foo.bar
+      port: '1234'
+      username: foo
+      password: bar
+    props: 'asdfasdfs'
+    default:
+      from: 'foo@foo.bar'
+      template:
+        file: /tmp/foo.md
+        # subject: "\"You've got mail\""
+        log:
+          formatted: 'true'
   security:
     httpheaders:
       enabled: "false"

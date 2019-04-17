@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
@@ -30,7 +31,30 @@ import java.util.Map;
  */
 public interface PluginRegistry {
 
+    /**
+     * Create PluggableProviderService for plugin type that doesn't require Framework
+     * @param type
+     * @param <T>
+     * @return
+     */
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type);
+
+    /**
+     * Test if a type requires framework argument for plugin provider service
+     * @param type type
+     * @param <T> type
+     * @return true if the plugin type is a core framework plugin type
+     */
+    public <T> boolean isFrameworkDependentPluginType(Class<T> type);
+
+    /**
+     * get a PluggablePRoviderService for a core plugin type that requires Framework
+     * @param type
+     * @param framework
+     * @param <T>
+     * @return
+     */
+    public <T> PluggableProviderService<T> getFrameworkDependentPluggableService(Class<T> type, Framework framework);
 
     /**
      * Create and configure a plugin instance with the given bean or provider name
@@ -51,7 +75,7 @@ public interface PluginRegistry {
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
      */
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-                                                     Framework framework,
+                                                     IFramework framework,
                                         String project, Map instanceConfiguration) ;
     /**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
@@ -126,7 +150,7 @@ public interface PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework,
+    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, IFramework framework,
                                     String project, Map instanceConfiguration);
 
     /**
@@ -179,7 +203,7 @@ public interface PluginRegistry {
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
 
     /**
-     * Return plugin metadata
+     * Return plugin file metadata
      * @param service
      * @param provider
      * @return

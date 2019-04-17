@@ -142,15 +142,6 @@ public abstract class BasePluggableProviderService<T>
         return DescribableServiceUtil.listDescribableProviders(this);
     }
 
-    /**
-     * @return Create an adapted form of this service given a converter.
-     * @param <X> provider type
-     * @param converter converter
-     */
-    public <X> PluggableProviderService<X> adapter(final Converter<T, X> converter) {
-        return AdapterService.adaptFor(this, converter);
-    }
-
     public String getName() {
         return name;
     }

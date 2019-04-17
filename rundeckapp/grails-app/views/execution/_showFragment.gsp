@@ -186,7 +186,7 @@
                         title="${message(code:'execution.show.log.text.button.description',default:'View text output')}"
                         controller="execution" action="downloadOutput" id="${execution.id}"
                         params="[view: 'inline', formatted: false, project: execution.project,
-                                stripansi:true]">
+                                stripansi:true]" target="_blank">
                   <g:message code="execution.show.log.text.button.title" />
                 </g:link>
               </span>
@@ -194,7 +194,7 @@
                 <g:link class="btn btn-default btn-xs"
                         title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
                         controller="execution" action="renderOutput" id="${execution.id}"
-                        params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']">
+                        params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']" target="_blank">
                   <g:message code="execution.show.log.html.button.title" />
                 </g:link>
               </span>
@@ -202,7 +202,7 @@
                 <g:link class="btn btn-default btn-xs"
                       title="${message(code:'execution.show.log.download.button.description',default:'Download {0} bytes',args:[filesize>0?filesize:'?'])}"
                       controller="execution" action="downloadOutput" id="${execution.id}"
-                      params="[project: execution.project]">
+                      params="[project: execution.project]" target="_blank">
                   <b class="glyphicon glyphicon-file"></b>
                   <g:message code="execution.show.log.download.button.title" />
                 </g:link>

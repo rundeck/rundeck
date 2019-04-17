@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -21,9 +22,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
@@ -32,10 +33,10 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
@@ -57,7 +58,7 @@ import java.time.ZoneId
 class ExecutionServiceSpec extends Specification implements ServiceUnitTest<ExecutionService>, DataTest, AutowiredTest {
 
     Class[] getDomainClassesToMock() {
-        [Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution]
+        [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1002,6 +1003,46 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 == val.loglevel
         !val.executionListener
         val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with email of user profile"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        User user = new User(login: 'testuser', password: '12345', email: 'email@test.com')
+        user.save(flush: true)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, [:], null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.job['user.email'] == user.email
+
+        where:
+        charset      | _
+        null         | _
+        'UTF-8'      | _
+        'ISO-8859-1' | _
     }
 
     def "Create execution context with charset"() {
@@ -2382,7 +2423,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.jobStateService = Mock(JobStateService) {
             1 * jobServiceWithAuthContext(_)
         }
-        service.nodeService = Mock(NodeService){}
+        service.rundeckNodeService = Mock(NodeService){}
 
         Execution se = new Execution(
                 argString: "-test args",
@@ -2534,7 +2575,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.jobStateService = Mock(JobStateService) {
             1 * jobServiceWithAuthContext(_)
         }
-        service.nodeService = Mock(NodeService){}
+        service.rundeckNodeService = Mock(NodeService){}
 
         Execution se = new Execution(
                 argString: "-test args",
@@ -3219,12 +3260,11 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
         def refexec = ReferencedExecution.findByScheduledExecution(job)
-        println(refexec)
-        println(expectedRef)
+        def seStats = ScheduledExecutionStats.findBySe(job)
         if(expectedRef){
-            refexec
+            seStats.getContentMap().refExecCount==0
         }else{
-            !refexec
+            seStats.getContentMap().refExecCount==1
         }
         0 * executionListener.log(_)
         ret.success
@@ -3993,5 +4033,114 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 return 'newtest1'.bytes
             }
         }
+    }
+
+    def "notification invocation on job ref pass ScheduledExecution directly"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        1 * service.notificationService.triggerJobNotification('start', job, _)
+        1 * service.notificationService.triggerJobNotification(trigger, job, _)
+        where:
+        success      | trigger
+        true         | 'success'
+        false        | 'failure'
     }
 }

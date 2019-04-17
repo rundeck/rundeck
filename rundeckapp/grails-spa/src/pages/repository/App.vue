@@ -28,7 +28,7 @@
           <div class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</div>
           <div class="artifact-grid">
               <div class="artifact" v-for="result in repo.results" :key="result.id">
-                <div class="em">{{result.name}}</div>
+                <div class="em">{{result.display || result.name}}</div>
                 <hr>
                 <div><label>Description:</label>{{result.description}}</div>
                 <div><label>Plugin Type:</label>{{result.artifactType}}</div>
@@ -36,7 +36,7 @@
                 <div><label>Rundeck Compatibility:</label>{{result.rundeckCompatibility}}</div>
                 <div><label>Support:</label>{{result.support}}</div>
                 <div><label>Author:</label>{{result.author}}</div>
-                <div class="provides"><label>Provides:</label><span v-for="svc in result.providesServices">{{svc}}</span></div>
+                <div class="provides"><label>Provides:</label><span v-for="svc in unqSortedSvcs(result.providesServices)">{{svc}}</span></div>
                 <div><label>Tags:</label><span class="tag" v-for="tag in result.tags" :key="tag">{{tag}}</span></div>
                 <div><span class="install" v-if="!result.installed && canInstall" @click="install(repo.repositoryName,result.id)">Install</span></div>
                 <div><span class="installed" v-if="result.installed">Installed</span></div>
@@ -68,6 +68,14 @@ export default {
     }
   },
   methods: {
+    unqSortedSvcs: function(serviceList) {
+      if(!serviceList) return []
+      var unq = []
+      serviceList.forEach((svc) => {
+        if(unq.indexOf(svc) === -1) unq.push(svc)
+      })
+      return unq.sort()
+    },
     search () {
       this.errors = null
       this.searchWarnings = null

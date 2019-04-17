@@ -448,8 +448,8 @@ class ScheduledExecutionController  extends ControllerBase{
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
-        if(scheduledExecution.refExecCount) {
-            reftotal = scheduledExecution.refExecCount
+        if(scheduledExecution.getRefExecCountStats()) {
+            reftotal = scheduledExecution.getRefExecCountStats()
         }
 
         def remoteClusterNodeUUID=null
@@ -2487,6 +2487,7 @@ class ScheduledExecutionController  extends ControllerBase{
         params.nodeKeepgoing= runAdhocRequest.nodeKeepgoing!=null?runAdhocRequest.nodeKeepgoing:true
         params.nodeThreadcount= runAdhocRequest.nodeThreadcount?:1
         params.description = runAdhocRequest.description ?: ""
+        params.excludeFilterUncheck = false
         if (params.filterName) {
             def User u = userService.findOrCreateUser(authContext.username)
             //load a named filter and create a query from it
@@ -2703,6 +2704,7 @@ class ScheduledExecutionController  extends ControllerBase{
         //test nodeset to make sure there are matches
         if(scheduledExecution.doNodedispatch){
             NodeSet nset = ExecutionService.filtersAsNodeSet(scheduledExecution)
+            NodeSet unselectedNset = ExecutionService.filtersExcludeAsNodeSet(scheduledExecution)
             model.nodefilter=scheduledExecution.asFilter()
             //check nodeset filters for variable expansion
             def varfound = scheduledExecution.asFilter().contains("\${")
@@ -2725,6 +2727,20 @@ class ScheduledExecutionController  extends ControllerBase{
                     frameworkService.filterNodeSet(nset, scheduledExecution.project),
                     authContext).nodes;
 
+            def unselectedNodes
+
+            if(unselectedNset && !(unselectedNset.include?.blank && unselectedNset.exclude?.blank)){
+                def unselectedNodesFilter = frameworkService.filterAuthorizedNodes(
+                                                    scheduledExecution.project,
+                                                    new HashSet<String>(["read", "run"]),
+                                                    frameworkService.filterNodeSet(unselectedNset, scheduledExecution.project),
+                                                    authContext)
+
+                if(unselectedNodesFilter){
+                    unselectedNodes = unselectedNodesFilter.nodes
+                }
+            }
+
             if(!nodes || nodes.size()<1){
                 //error
                 model.nodesetempty=true
@@ -2736,7 +2752,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 model.grouptags=[:]
                 model.nodesSelectedByDefault=scheduledExecution.hasNodesSelectedByDefault()
                 if (!model.nodesSelectedByDefault) {
-                    model.selectedNodes = ""
+                    model.selectedNodes = []
                 }
                 //summarize node groups
                 def namegroups=[other: new TreeList()]
@@ -2808,6 +2824,9 @@ class ScheduledExecutionController  extends ControllerBase{
             }else{
                 model.nodes = nodes
             }
+            if(unselectedNodes){
+                model.unselectedNodes = unselectedNodes
+            }
 
         }
 
@@ -2826,11 +2845,16 @@ class ScheduledExecutionController  extends ControllerBase{
                             ),
                             authContext).nodes;
 
-                    model.selectedNodes = retryNodes*.nodename.join(',')
+                    model.selectedNodes = retryNodes*.nodename
                 }
             }
         }else if(params.argString){
             model.selectedoptsmap = FrameworkService.parseOptsFromString(params.argString)
+        }
+        if(model.unselectedNodes && !params.retryExecId){
+            def selectedNodes = model.nodes.findAll{ ! model.unselectedNodes.contains(it)  }
+            model.selectedNodes = selectedNodes*.nodename
+            model.unselectedNodes = model.unselectedNodes*.nodename
         }
         model.localNodeName=framework.getFrameworkNodeName()
 

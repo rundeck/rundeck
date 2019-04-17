@@ -38,6 +38,7 @@ public class ProviderDef {
     public static final String META_SCRIPT_INTERPRETER = "script-interpreter";
     public static final String META_INTERPRETER_ARGS_QUOTED = "interpreter-args-quoted";
     public static final String META_PLUGIN_TYPE = "plugin-type";
+    public static final String META_PLUGIN_METADATA = "plugin-meta";
     private Map<String, Object> pluginData;
 
     public ProviderDef(final Map<String, Object> pluginData) {
@@ -105,5 +106,12 @@ public class ProviderDef {
 
     public Map<String, Object> getPluginData() {
         return pluginData;
+    }
+
+    public Map<String, String> getProviderMeta() {
+        if (pluginData.get(META_PLUGIN_METADATA) instanceof Map) {
+            return (Map<String, String>) pluginData.get(META_PLUGIN_METADATA);
+        }
+        return null;
     }
 }

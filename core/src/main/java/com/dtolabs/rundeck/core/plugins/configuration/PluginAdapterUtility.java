@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
@@ -91,12 +92,26 @@ public class PluginAdapterUtility {
                 builder.description(descAnnotation.description());
             }
         }
+        builder.metadata(loadPluginMetadata(object.getClass()));
 
         if (includeAnnotatedFieldProperties) {
             buildFieldProperties(object, builder);
         }
         builder.collaborate(object);
         return builder.build();
+    }
+
+    public static Map<String, String> loadPluginMetadata(final Class<?> clazz) {
+        HashMap<String, String> meta = new HashMap<>();
+        final PluginMetadata[] metadata = clazz.getAnnotationsByType(PluginMetadata.class);
+        if (null != metadata) {
+            if (metadata.length > 0) {
+                for (PluginMetadata metadatum : metadata) {
+                    meta.put(metadatum.key(), metadatum.value());
+                }
+            }
+        }
+        return meta;
     }
 
     /**
@@ -234,15 +249,8 @@ public class PluginAdapterUtility {
             pbuild.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, renderBehaviour);
 
 
-            RenderingOption option = field.getAnnotation(RenderingOption.class);
-            if(option!=null) {
-                pbuild.renderingOption(option.key(), option.value());
-            }
-            RenderingOptions options = field.getAnnotation(RenderingOptions.class);
-            if(options!=null) {
-                for (RenderingOption renderingOption : options.value()) {
-                    pbuild.renderingOption(renderingOption.key(), renderingOption.value());
-                }
+            for (RenderingOption renderingOption : field.getAnnotationsByType(RenderingOption.class)) {
+                pbuild.renderingOption(renderingOption.key(), renderingOption.value());
             }
         }
 
@@ -537,40 +545,51 @@ public class PluginAdapterUtility {
             }
             resolvedValue = boolvalue;
         } else if (type == Property.Type.Options) {
+            final List<String> splitList;
             if (value instanceof String) {
                 String valstring = (String) value;
-                Set<String> resolvedValueSet=null;
-                //not a String field
-                if (field.getType().isAssignableFrom(Set.class)) {
-                    HashSet<String> strings = new HashSet<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = strings;
-                    resolvedValue = strings;
-                } else if (field.getType().isAssignableFrom(List.class)) {
-                    ArrayList<String> strings = new ArrayList<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = new HashSet<>(strings);
-                    resolvedValue = strings;
-                } else if (field.getType() == String[].class) {
-                    ArrayList<String> strings = new ArrayList<>();
-                    strings.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValueSet = new HashSet<>(strings);
-                    resolvedValue = strings.toArray(new String[strings.size()]);
-                } else if (field.getType() == String.class) {
-                    resolvedValueSet = new HashSet<>();
-                    resolvedValueSet.addAll(Arrays.asList(valstring.split(", *")));
-                    resolvedValue = value;
-                } else {
-                    return false;
-                }
-                if (!property.getSelectValues().containsAll(resolvedValueSet)) {
-                    throw new RuntimeException(
-                            "Some options values were not allowed for property " + property.getName() + ": " + resolvedValue);
-                }
+                splitList = Arrays.asList(valstring.split(", *"));
+            } else if (value instanceof List) {
+                splitList = (List<String>) value;
+            } else if (value instanceof Set) {
+                splitList = new ArrayList<>((Set) value);
+            } else if (value.getClass() == String[].class) {
+                splitList = Arrays.asList((String[]) value);
             } else {
-                //XXX
                 return false;
             }
+            Set<String> resolvedValueSet = null;
+            //not a String field
+            if (field.getType().isAssignableFrom(Set.class)) {
+                HashSet<String> strings = new HashSet<>();
+                strings.addAll(splitList);
+                resolvedValueSet = strings;
+                resolvedValue = strings;
+            } else if (field.getType().isAssignableFrom(List.class)) {
+                ArrayList<String> strings = new ArrayList<>();
+                strings.addAll(splitList);
+                resolvedValueSet = new HashSet<>(strings);
+                resolvedValue = strings;
+            } else if (field.getType() == String[].class) {
+                ArrayList<String> strings = new ArrayList<>();
+                strings.addAll(splitList);
+                resolvedValueSet = new HashSet<>(strings);
+                resolvedValue = strings.toArray(new String[strings.size()]);
+            } else if (field.getType() == String.class) {
+                resolvedValueSet = new HashSet<>();
+                resolvedValueSet.addAll(splitList);
+                resolvedValue = value;
+            } else {
+                return false;
+            }
+            if (property.getSelectValues() != null && !property.getSelectValues().containsAll(resolvedValueSet)) {
+                throw new RuntimeException(String.format(
+                        "Some options values were not allowed for property %s: %s",
+                        property.getName(),
+                        resolvedValue
+                ));
+            }
+
         } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
             if (value instanceof String) {
                 resolvedValue = value;

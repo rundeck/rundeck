@@ -12,7 +12,7 @@ runurl="${APIURL}/project/${proj}"
 
 echo "TEST: get mising project ${proj}..."
 
-$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Invalid API Request: /api/$API_VERSION/project/" 404 || exit 2
+$SHELL $SRC_DIR/api-expect-error.sh "${runurl}" "${params}" "Invalid API Request: $API_BASE/api/$API_VERSION/project/" 404 || exit 2
 echo "OK"
 
 rm $DIR/curl.out

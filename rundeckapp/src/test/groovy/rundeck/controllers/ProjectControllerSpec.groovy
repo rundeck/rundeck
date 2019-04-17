@@ -1795,4 +1795,51 @@ class ProjectControllerSpec extends Specification{
         'url2'   | '456'  | null        | true
 
     }
+
+
+    def "export Instance with scm config"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.exportScm = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true &&
+                    opts.scm == true
+        },_,_,_,preserveuuid?:false,_
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
+
+        where:
+        url      | token  | target      | preserveuuid
+        'url1'   | '123'  | 'proj1'     | null
+        'url2'   | '456'  | 'proj2'     | true
+
+    }
 }
