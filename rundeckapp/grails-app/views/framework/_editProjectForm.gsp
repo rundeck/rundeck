@@ -101,6 +101,7 @@
         </g:if>
     </div>
   </div>
+<feature:enabled name="cleanExecutionsHistoryJob">
   <div class="list-group-item">
       <label class=" control-label"><g:message code="execution.history.clean.label"/>:</label>
       <div class="row">
@@ -188,6 +189,7 @@
         </div>
     </div>
   </div>
+</feature:enabled>
   <g:set var="categories" value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
   <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
     <div class="list-group-item">

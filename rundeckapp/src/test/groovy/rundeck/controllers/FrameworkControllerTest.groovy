@@ -16,6 +16,11 @@
 
 package rundeck.controllers
 
+import groovy.mock.interceptor.MockFor
+import rundeck.services.PluginService
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -27,10 +32,17 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.*
-import rundeck.services.*
-
-import static org.junit.Assert.*
+import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.Project
+import rundeck.ScheduledExecution
+import rundeck.Workflow
+import rundeck.WorkflowStep
+import rundeck.services.FrameworkService
+import rundeck.services.PasswordFieldsService
+import rundeck.services.PasswordFieldsServiceTests
+import rundeck.services.ScheduledExecutionService
+import rundeck.services.UserService
 
 /**
  * $INTERFACE is ...

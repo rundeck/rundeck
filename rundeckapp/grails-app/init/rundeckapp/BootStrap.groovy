@@ -324,7 +324,13 @@ class BootStrap {
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
-         frameworkService.rescheduleAllCleanerExecutionsJob()
+         if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
+             println("cleanExecutionsHistoryJob ${grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled}")
+             log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
+            frameworkService.rescheduleAllCleanerExecutionsJob()
+         } else {
+             log.info("Feature 'cleanExecutionHistoryJob' is disabled")
+         }
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
              protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {
