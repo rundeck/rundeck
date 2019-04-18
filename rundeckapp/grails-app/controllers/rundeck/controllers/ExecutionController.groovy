@@ -320,7 +320,9 @@ class ExecutionController extends ControllerBase{
     def bulkDelete(){
         withForm{
         def ids
-        if(params.bulk_edit){
+        if(params.checkedIds){
+            ids=params.checkedIds.toString().split(',').flatten()
+        }else if(params.bulk_edit){
             ids=[params.bulk_edit].flatten()
         }else if(params.ids){
             ids = [params.ids].flatten()

@@ -95,12 +95,13 @@
                 <span class="btn btn-default btn-xs act_bulk_edit_selectall  " data-bind="click: bulkEditSelectAll">
                     <g:message code="select.all"/>
                 </span>
-                <span class="btn btn-default btn-xs act_bulk_edit_deselectall  " data-bind="click: bulkEditDeselectAll">
+                <span class="btn btn-default btn-xs act_bulk_edit_deselectall  " data-toggle="modal"
+                      data-target="#cleanselections">
                     <g:message code="select.none"/>
                 </span>
 
                 <span class="btn btn-xs btn-danger btn-fill"
-                      data-bind=" visible: $root.bulkEditMode(), attr: { disabled: bulkEditIds().length<1 }"
+                      data-bind=" visible: $root.bulkEditMode(), attr: { disabled: (bulkEditIds().length<1  && bulkSelectedIds().length<1)}"
                       data-toggle="modal"
                       data-target="#bulkexecdelete">
                     <g:message code="delete.selected.executions"/>
@@ -136,7 +137,7 @@
 
                         <div class="modal-body">
 
-                            <p>Really delete <strong data-bind="text: $root.bulkEditIds().length"></strong>
+                            <p>Really delete <strong data-bind="text: $root.bulkSelectedIds().length"></strong>
                                 <g:message code="domain.Execution.title.plural" default="Executions"/>?
                             </p>
                         </div>
@@ -149,6 +150,38 @@
                                 <button class="btn btn-danger "
                                         data-bind="click: function(){$root.doBulkDelete('#bulkexecdelete','#bulkexecdeleteresult');}" >
                                     Delete Selected
+                                </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        %{--confirm bulk delete modal--}%
+            <div class="modal" id="cleanselections" tabindex="-1" role="dialog"
+                 aria-labelledby="cleanselectionstitle" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"
+                                    aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="cleanselectionstitle">Clean bulk selection</h4>
+                        </div>
+
+                        <div class="modal-body">
+
+                            <p>Clean all <strong data-bind="text: $root.bulkSelectedIds().length"></strong>
+                                selections or clean only selections of actual page?
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+
+                                <button type="submit" class="btn btn-default  " data-bind="click: $root.bulkEditDeselectAll">
+                                    Only actual page
+                                </button>
+                                <button class="btn btn-danger "
+                                        data-bind="click: $root.bulkEditDeselectAllPages" >
+                                    All selections
                                 </button>
                         </div>
                     </div>
