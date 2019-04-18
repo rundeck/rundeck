@@ -111,6 +111,20 @@ class PasswordFieldsService {
         }
     }
     /**
+     * Reset the arg, and Track password values by replacing them with hashed versions
+     * @param configurations Collection of Map, Map should have entries "type" (plugin type) and "props" (Map of
+     * key/values)
+     * @param hidden if true, use obscure string instead of hash
+     * @param descriptions list of possible plugins
+     * @return
+     */
+    public int resetTrack(String arg, Collection configurations, boolean hidden, Collection<Description> descriptions) {
+        synchronized (fields) {
+            reset(arg)
+            return track(arg, configurations, hidden, descriptions)
+        }
+    }
+    /**
      * Track password values by replacing them with hashed versions
      * @param configurations Collection of Map, Map should have entries "type" (plugin type) and "props" (Map of
      * key/values)
@@ -251,7 +265,7 @@ class PasswordFieldsService {
             if (resource == null) {
                 continue
             }
-            Map config=resource.config
+            def config = resource.config
             if(config == null) {
                 continue
             }
