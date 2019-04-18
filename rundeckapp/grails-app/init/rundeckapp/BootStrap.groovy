@@ -325,7 +325,6 @@ class BootStrap {
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
          }
          if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
-             println("cleanExecutionsHistoryJob ${grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled}")
              log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
             frameworkService.rescheduleAllCleanerExecutionsJob()
          } else {
