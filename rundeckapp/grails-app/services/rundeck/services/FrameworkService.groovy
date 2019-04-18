@@ -955,7 +955,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * Return a map of ServiceName to list of Provider name, where a property was found matching the pattern [prefix]
+     * Return a map of ServiceName to list of set of Descriptions, where a property was found matching the pattern [prefix]
      * .[service].[provider].[pluginPropertyName]=value
      * @param properties
      * @param prefix
@@ -994,7 +994,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
-     * Return a map of ServiceName to list of Provider name, where a property was found matching the pattern [prefix]
+     * Return a map of ServiceName to Provider name to config map, where a property was found matching the pattern [prefix]
      * .[service].[provider].[pluginPropertyName]=value
      * @param properties
      * @param prefix
