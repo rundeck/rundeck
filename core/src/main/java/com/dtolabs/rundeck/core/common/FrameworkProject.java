@@ -419,7 +419,7 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
     /**
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    public ArrayList<Exception> getResourceModelSourceExceptions() {
+    public ArrayList<Throwable> getResourceModelSourceExceptions() {
         return getProjectNodes().getResourceModelSourceExceptions();
     }
 
