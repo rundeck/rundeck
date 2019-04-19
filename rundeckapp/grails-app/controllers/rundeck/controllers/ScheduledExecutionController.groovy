@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -2711,6 +2712,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if (varfound) {
                 model.nodesetvariables = true
             }
+            def failedNodes = null
             if (params.retryFailedExecId) {
                 Execution e = Execution.get(params.retryFailedExecId)
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
@@ -2719,6 +2721,13 @@ class ScheduledExecutionController  extends ControllerBase{
                         nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
                     }
                     model.nodesetvariables = false
+
+                    def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                    failedNodes = frameworkService.filterAuthorizedNodes(
+                            scheduledExecution.project,
+                            new HashSet<String>(["read", "run"]),
+                            frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
+                            authContext).nodes;
                 }
             }
             def nodes = frameworkService.filterAuthorizedNodes(
@@ -2738,6 +2747,19 @@ class ScheduledExecutionController  extends ControllerBase{
 
                 if(unselectedNodesFilter){
                     unselectedNodes = unselectedNodesFilter.nodes
+                }
+            }
+
+            if(failedNodes && failedNodes.size()>0){
+                //if failed nodes are not part of original node filter, it will be added
+                def failedNodeNotInNodes = failedNodes.findAll{ !nodes.contains( it ) }
+                if(failedNodeNotInNodes && failedNodeNotInNodes.size()>0){
+                    def nodeImp = new NodeSetImpl()
+                    if(nodes){
+                        nodeImp.putNodes(nodes)
+                    }
+                    nodeImp.putNodes(failedNodeNotInNodes)
+                    nodes=nodeImp.getNodes()
                 }
             }
 
