@@ -38,15 +38,10 @@
   </div>
 </template>
 <script lang="ts">
-import axios from "axios"
 import Vue from "vue"
-import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis"
-
-import { client } from "@rundeck/ui-trellis/src/modules/rundeckClient"
 import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
 import {
   getProjectNodeSources,
-  NodeSourceResources,
   NodeSource
 } from "./nodeSourcesUtil"
 
