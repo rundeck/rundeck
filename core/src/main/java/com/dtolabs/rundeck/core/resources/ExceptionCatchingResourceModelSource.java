@@ -55,15 +55,10 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
         INodeSet nodes = null;
         try {
             nodes = getDelegate().getNodes();
-        } catch (ResourceModelSourceException e) {
-            logException(e);
-            if (null != handler) {
-                handler.handleException(e, getDelegate());
-            }
         } catch (Throwable e) {
             logException(e);
             if (null != handler) {
-                handler.handleException(new RuntimeException(e), getDelegate());
+                handler.handleException(e, getDelegate());
             }
         }
         try {
@@ -88,6 +83,6 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
     abstract INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException;
 
     public static interface ExceptionHandler {
-        void handleException(Exception t, ResourceModelSource origin);
+        void handleException(Throwable t, ResourceModelSource origin);
     }
 }

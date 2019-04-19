@@ -85,12 +85,12 @@ public interface IProjectNodes {
     /**
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    ArrayList<Exception> getResourceModelSourceExceptions();
+    ArrayList<Throwable> getResourceModelSourceExceptions();
 
     /**
      * @return the set of exceptions produced by source name
      */
-    Map<String,Exception> getResourceModelSourceExceptionsMap();
+    Map<String,Throwable> getResourceModelSourceExceptionsMap();
 
     /**
      * list the configurations of resource model providers.

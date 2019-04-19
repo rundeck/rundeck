@@ -330,6 +330,7 @@ class FrameworkServiceSpec extends Specification {
             method << ['addProjectNodeExecutorPropertiesForType', 'addProjectFileCopierPropertiesForType']
     }
 
+
     def "getFirstLoginFile"() {
         when:
         File tmpVar = File.createTempDir()
@@ -360,5 +361,68 @@ class FrameworkServiceSpec extends Specification {
         firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
         firstLoginMarker.absolutePath == tmpVar.absolutePath+"/var/"+FrameworkService.FIRST_LOGIN_FILE
 
+    }
+  
+    @Unroll
+    def "discoverScopedConfiguration"() {
+        given:
+            service.pluginService = Mock(PluginService)
+        when:
+            def result = service.discoverScopedConfiguration(props as Properties, prefix)
+
+        then:
+            count * service.pluginService.hasPluginService(_) >> {
+                types.contains(it[0])
+            }
+            service.pluginService.listPluginDescriptions('svc')>>[
+                    DescriptionBuilder.builder().name('type1').property(PropertyBuilder.builder().string('p1')).build(),
+                    DescriptionBuilder.builder().name('type2').property(PropertyBuilder.builder().string('p2')).build(),
+            ]
+            service.pluginService.listPluginDescriptions('svc2')>>[
+                    DescriptionBuilder.builder().name('typeA').property(PropertyBuilder.builder().string('pA')).build(),
+                    DescriptionBuilder.builder().name('typeB').property(PropertyBuilder.builder().string('pB')).build(),
+            ]
+            result == expect
+
+        where:
+            props                         | prefix | count | expect           | types
+            [:]                           | 'a'    | 0     | [:]              | []
+            ['a.svc.type1.p1': 'v'] | 'a'    | 1     | [svc: [type1:[p1:'v']]] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc.type2.p2': 'd'] | 'a'    | 1     | [svc: [type1:[p1:'v'],type2:[p2:'d']]] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: [type1:[p1:'v']],svc2:[typeA:[pA:'q']]] | ['svc','svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:[typeA:[pA:'q']]] | ['svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: [type1:[p1:'v']]] | ['svc']
+    }
+    @Unroll
+    def "list scoped service providers"() {
+        given:
+            service.pluginService = Mock(PluginService)
+        when:
+            def result = service.listScopedServiceProviders(props as Properties, prefix)
+
+        then:
+            count * service.pluginService.hasPluginService(_) >> {
+                types.contains(it[0])
+            }
+            service.pluginService.listPluginDescriptions('svc')>>[
+                    DescriptionBuilder.builder().name('type1').property(PropertyBuilder.builder().string('p1')).build(),
+                    DescriptionBuilder.builder().name('type2').property(PropertyBuilder.builder().string('p2')).build(),
+            ]
+            service.pluginService.listPluginDescriptions('svc2')>>[
+                    DescriptionBuilder.builder().name('typeA').property(PropertyBuilder.builder().string('pA')).build(),
+                    DescriptionBuilder.builder().name('typeB').property(PropertyBuilder.builder().string('pB')).build(),
+            ]
+            result.keySet() == expect.keySet()
+            expect['svc']?.toSet() == (result['svc']*.name)?.toSet()
+            expect['svc2']?.toSet() == (result['svc2']*.name)?.toSet()
+
+        where:
+            props                         | prefix | count | expect           | types
+            [:]                           | 'a'    | 0     | [:]              | []
+            ['a.svc.type1.p1': 'v'] | 'a'    | 1     | [svc: ['type1']] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc.type2.p2': 'd'] | 'a'    | 1     | [svc: ['type1','type2']] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1'],svc2:['typeA']] | ['svc','svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:['typeA']] | ['svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1']] | ['svc']
     }
 }

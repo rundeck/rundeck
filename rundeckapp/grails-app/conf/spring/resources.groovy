@@ -424,8 +424,10 @@ beans={
     /**
      * Track passwords on these plugins
      */
+    obscurePasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
+    pluginsPasswordFieldsService(PasswordFieldsService)
     fcopyPasswordFieldsService(PasswordFieldsService)
 
 
