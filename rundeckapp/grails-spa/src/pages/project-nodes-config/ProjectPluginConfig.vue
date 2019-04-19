@@ -144,7 +144,6 @@ import PluginInfo from '@rundeck/ui-trellis/src/components/plugins/PluginInfo.vu
 import PluginConfig from '@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue'
 import pluginService from '@rundeck/ui-trellis/src/modules/pluginService'
 import PluginValidation from '@rundeck/ui-trellis/src/interfaces/PluginValidation'
-import {client} from '@rundeck/ui-trellis/src/modules/rundeckClient'
 
 interface PluginConf{
   readonly type:string
@@ -317,7 +316,7 @@ export default Vue.extend({
       async saveProjectPluginConfig(project:string,configPrefix:string,serviceName:string,data:ProjectPluginConfigEntry[]){
         const serializedData=data.map(this.serializeConfigEntry)
 
-        const resp = await client.sendRequest({
+        const resp = await this.rundeckContext.rundeckClient.sendRequest({
           url: `/framework/saveProjectPluginsAjax`,
           method: 'POST',
           queryParameters: {
