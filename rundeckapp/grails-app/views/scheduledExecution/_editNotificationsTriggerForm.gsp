@@ -171,7 +171,7 @@ implied. - See the License for the specific language governing permissions and -
           <div class="col-sm-12">
 
             <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>
-            <div>
+            <div class="checkbox">
               <g:checkBox name="${checkboxFieldName}" value="true" checked="${definedNotif ? true : false}"/>
               <label for="${enc(attr:checkboxFieldName)}">
                 <stepplugin:pluginIcon service="Notification" name="${pluginName}" width="16px" height="16px"></stepplugin:pluginIcon>
