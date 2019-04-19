@@ -27,13 +27,13 @@
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%
-                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project,item.uuid)}"/>
+                <g:set var="foundjob" value="${edit?null:(item.useName?ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project):ScheduledExecution.findScheduledExecution(null,null,null,item.uuid))}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+(item.jobName?:item.uuid) + (item.jobProject?' (' + item.jobProject+') ':'') }</g:enc></g:link>
+                    <g:enc>${foundjob.generateFullName()}${(item.jobProject?' (' + item.jobProject+') ':'') }</g:enc></g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs }">

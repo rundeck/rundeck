@@ -1802,7 +1802,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid = params.id
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -1875,7 +1876,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid=params.id
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -2664,7 +2666,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                 changeinfo,authContext)
+                 changeinfo,authContext, (params?.validateJobref=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
@@ -3530,7 +3532,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (request.api_version < ApiVersions.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs

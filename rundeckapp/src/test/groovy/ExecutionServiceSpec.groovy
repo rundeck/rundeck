@@ -2675,7 +2675,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 false,
                 false,
-                null
+                null,
+                false
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -2775,7 +2776,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 false,
                 false,
-                null
+                null,
+                false
         )
 
 
@@ -2886,7 +2888,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 failOnDisable,
                 false,
-                null
+                null,
+                false
         )
 
 
@@ -3125,6 +3128,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
                 )
 
 
@@ -3234,6 +3238,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -3745,6 +3750,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -3853,6 +3859,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -4109,7 +4116,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 false,
                 false,
-                null
+                null,
+                false
         )
 
 
