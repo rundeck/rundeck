@@ -132,10 +132,8 @@
 import axios from 'axios'
 import Vue from 'vue'
 import { Notification } from 'uiv'
-import Trellis, {
+import {
     getRundeckContext,
-    getSynchronizerToken,
-    RundeckBrowser,
     RundeckContext
 } from "@rundeck/ui-trellis"
 

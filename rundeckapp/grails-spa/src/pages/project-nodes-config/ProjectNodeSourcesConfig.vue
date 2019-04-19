@@ -30,16 +30,14 @@
 </template>
 <script lang="ts">
 
-import axios from 'axios'
 import Vue from 'vue'
 import {
     getRundeckContext,
     RundeckContext
 } from "@rundeck/ui-trellis"
 
-import {client} from '@rundeck/ui-trellis/src/modules/rundeckClient'
 import ProjectPluginConfig from './ProjectPluginConfig.vue'
-import {getProjectNodeSources,NodeSourceResources,NodeSource} from './nodeSourcesUtil'
+import {getProjectNodeSources,NodeSource} from './nodeSourcesUtil'
 
 export default Vue.extend({
   props:{
