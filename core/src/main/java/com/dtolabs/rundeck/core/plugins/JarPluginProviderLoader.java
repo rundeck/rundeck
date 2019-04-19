@@ -273,7 +273,12 @@ public class JarPluginProviderLoader implements ProviderLoader,
         if (null == mainAttributes) {
             mainAttributes = getJarMainAttributes(pluginJar);
             String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
-            if(pluginName == null) pluginName = pluginJar.getName();
+            if(pluginName == null) {
+                //Fallback to something that will rarely change
+                //This is not ideal, but old plugins do not always have a name
+                //set in the attributes
+                pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
+            }
             pluginId = PluginUtils.generateShaIdFromName(pluginName);
         }
         return mainAttributes;
