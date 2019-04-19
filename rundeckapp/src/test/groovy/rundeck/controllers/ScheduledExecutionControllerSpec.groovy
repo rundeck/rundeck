@@ -88,38 +88,6 @@ class ScheduledExecutionControllerSpec extends Specification {
 
     }
 
-    def "expandUrl with project globals"() {
-        given:
-        Option option = new Option()
-        ScheduledExecution job = new ScheduledExecution(createJobParams())
-        def optsmap = [:]
-        def ishttp = true
-        controller.frameworkService = Mock(FrameworkService)
-
-
-        when:
-        def result = controller.expandUrl(option, url, job, optsmap, ishttp)
-
-        then:
-        expected == result
-        1 * controller.frameworkService.getFrameworkNodeName() >> 'anode'
-        1 * controller.frameworkService.getProjectGlobals('AProject') >> globals
-        1 * controller.frameworkService.getServerUUID()
-        0 * controller.frameworkService._(*_)
-
-
-        where:
-        url                                             | globals                           | expected
-        ''                                              | [:]                               | ''
-        'http://${globals.host}/a/path'                 | [host: 'myhost.com']              | 'http://myhost.com/a/path'
-        'http://${globals.host}/a/path/${globals.path}' | [host: 'myhost.com', path: 'x y'] |
-                'http://myhost.com/a/path/x%20y'
-        'http://${globals.host}/a/path?q=${globals.q}'  | [host: 'myhost.com', q: 'a b']    |
-                'http://myhost.com/a/path?q=a+b'
-
-
-    }
-
     def "flip execution enabled"() {
         given:
         def job1 = new ScheduledExecution(createJobParams())
