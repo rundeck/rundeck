@@ -120,10 +120,10 @@ implied. - See the License for the specific language governing permissions and -
               <g:message code="notification.webhook.label"/>
             </label>
           </div>
+        </div>
           <div id="notifholder_url_${tkey}" style="${wdgt.styleVisible(if: isUrl)}">
-            <div class="well well-sm well-nobg">
-              <div class="form-group col-sm-10 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName,
-                              'has-error')} ">
+            <div class="col-sm-12 ${hasErrors(bean: scheduledExecution, field: triggerUrlFieldName, 'has-error')} ">
+              <div class="">
 
                 <g:set var="notifurlcontent" value="${params[triggerUrlFieldName] ?: defUrl?.content}"/>
                 <g:if test="${notifurlcontent && notifurlcontent.size() > 100}">
@@ -142,19 +142,16 @@ implied. - See the License for the specific language governing permissions and -
                     <g:helpTooltip code="notification.webhook.field.description" css="input-group-addon text-info"/>
                   </div>
                 </g:else>
-
               </div>
-
-              <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
-                <div class="col-sm-12 text-warning">
-                  <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerUrlFieldName}"/>
-                </div>
-              </g:hasErrors>
-
             </div>
+
+            <g:hasErrors bean="${scheduledExecution}" field="${triggerUrlFieldName}">
+              <div class="col-sm-12 text-warning">
+                <g:renderErrors bean="${scheduledExecution}" as="list" field="${triggerUrlFieldName}"/>
+              </div>
+            </g:hasErrors>
           </div>
           <wdgt:eventHandler for="${triggerUrlCheckboxName}" state="checked" target="notifholder_url_${tkey}" visible="true"/>
-        </div>
       </div>
       <hr>
       <g:each in="${notificationPlugins?.keySet()}" var="pluginName">
@@ -171,7 +168,7 @@ implied. - See the License for the specific language governing permissions and -
           <div class="col-sm-12">
 
             <g:hiddenField name="notifyPlugin.${trigger}.type" value="${pluginName}"/>
-            <div>
+            <div class="checkbox">
               <g:checkBox name="${checkboxFieldName}" value="true" checked="${definedNotif ? true : false}"/>
               <label for="${enc(attr:checkboxFieldName)}">
                 <stepplugin:pluginIcon service="Notification" name="${pluginName}" width="16px" height="16px"></stepplugin:pluginIcon>
