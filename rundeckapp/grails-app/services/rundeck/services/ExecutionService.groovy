@@ -3387,6 +3387,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         def failOnDisable = false
         def uuid
+
         def schedlist
 
         def StepExecutionContext newContext
@@ -3396,16 +3397,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def props = frameworkService.getFrameworkProperties()
         def disableRefStats = (props?.getProperty('rundeck.disable.ref.stats') == 'true')
-
+        def useName = false
         if (jitem instanceof JobRefCommand) {
             project = jitem.project
             failOnDisable = jitem.failOnDisable
             uuid = jitem.uuid
+            useName = jitem.useName
         }
 
         ScheduledExecution.withTransaction {
-            if (uuid) {
+            if(!useName && uuid){
                 schedlist = ScheduledExecution.findAllScheduledExecutions(uuid)
+                if (!schedlist || 1 != schedlist.size()) {
+                  def msg = "Job [${uuid}] not found by uuid, project: ${project}"
+                  executionContext.getExecutionListener().log(0, msg)
+                  throw new StepException(msg, JobReferenceFailureReason.NotFound)
+                }
             } else {
                 def group = null
                 def name = null
@@ -3418,9 +3425,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 project = project ? project : executionContext.getFrameworkProject()
                 schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
+                if (!schedlist || 1 != schedlist.size()) {
+                  def msg = "Job [${jitem.jobIdentifier}] not found by name, project: ${project}"
+                  executionContext.getExecutionListener().log(0, msg)
+                  throw new StepException(msg, JobReferenceFailureReason.NotFound)
+                }
             }
-
-
+                                 
             if (!schedlist || 1 != schedlist.size()) {
                 def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
                 executionContext.getExecutionListener().log(0, msg)

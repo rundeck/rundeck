@@ -57,6 +57,7 @@ import java.util.function.Predicate
 class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
+    public static final String FIRST_LOGIN_FILE = ".firstLogin"
 
     boolean initialized = false
     private String serverUUID
@@ -955,6 +956,77 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     /**
+     * Return a map of ServiceName to list of set of Descriptions, where a property was found matching the pattern [prefix]
+     * .[service].[provider].[pluginPropertyName]=value
+     * @param properties
+     * @param prefix
+     * @return
+     */
+    public Map<String, Set<Description>> listScopedServiceProviders(
+            Properties properties,
+            String prefix
+    ) {
+        Map<String, Set<Description>> services = new HashMap<>()
+        Map<String, List<Description>> providers = new HashMap<>()
+        properties.stringPropertyNames().each { key ->
+            if (key.startsWith(prefix + '.')) {
+                def substring = key.substring(prefix.length() + 1)
+                String[] parts = substring.split(/\./, 2)
+                if (parts.length < 2) {
+                    return
+                }
+                def svcName = parts[0]
+                if (!providers.containsKey(svcName) && pluginService.hasPluginService(svcName)) {
+                    providers[svcName] = pluginService.listPluginDescriptions(svcName)
+                }
+                if (providers.containsKey(svcName)) {
+                    def provPrefix = parts[1]
+                    //find applicable provider
+                    def found = providers[svcName].find { Description plugin ->
+                        provPrefix.startsWith(plugin.name + '.')
+                    }
+                    if (found) {
+                        services.computeIfAbsent(svcName, { new HashSet<Description>() }).add(found)
+                    }
+                }
+            }
+        }
+        return services
+    }
+
+    /**
+     * Return a map of ServiceName to Provider name to config map, where a property was found matching the pattern [prefix]
+     * .[service].[provider].[pluginPropertyName]=value
+     * @param properties
+     * @param prefix
+     * @return
+     */
+    public Map<String, Map<String, Map<String, String>>> discoverScopedConfiguration(
+            Properties properties,
+            String prefix
+    ) {
+        Map<String, Map<String, Map<String, String>>> providers = new HashMap<>()
+        def providers1 = listScopedServiceProviders(properties, prefix)
+        providers1.each { svcName, providerSet ->
+            providerSet.each { Description provider ->
+                String provpref = "${prefix}.${svcName}.${provider.name}"
+                def providerConf = providers
+                        .computeIfAbsent(svcName, { new HashMap<String, Map<String, String>>() })
+                        .computeIfAbsent(provider.name, { new HashMap<String, String>() })
+                provider.properties.each { pprop ->
+                    String key = "${provpref}.${pprop.name}"
+                    String val = properties[key]
+                    if (val) {
+                        providerConf.put(pprop.name, val)
+                    }
+                }
+            }
+        }
+        providers
+    }
+
+
+    /**
      * Return all the Node Exec plugin type descriptions for the Rundeck Framework, in the order:
 
      * @return tuple(resourceConfigs, nodeExec, filecopier)
@@ -1310,5 +1382,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {
         return (PluggableProviderService<T>)storagePluginProviderService
+    }
+
+    public File getFirstLoginFile() {
+        String vardir
+        if(rundeckFramework.hasProperty('framework.var.dir')) {
+            vardir = rundeckFramework.getProperty('framework.var.dir')
+        } else {
+            vardir = getRundeckBase()+"/var"
+        }
+        return new File(vardir, FIRST_LOGIN_FILE)
     }
 }

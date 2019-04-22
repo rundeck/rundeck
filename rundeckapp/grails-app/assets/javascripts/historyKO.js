@@ -197,6 +197,9 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
     self.bulkEditPrevious=ko.observable(-1);
     self.bulkEditResults=ko.observable();
     self.bulkEditProgress=ko.observable(false);
+    self.selectedIds=[];
+    self.selectedIdsPreviousPage=[];
+    self.changingPage=false;
     self.results=ko.computed(function(){
        if(self.showReports()){
            return self.reports()
@@ -231,18 +234,32 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
 
         return pages;
     });
+    self.bulkSelectedIds=ko.computed(function(){
+        var ids =  [];
+        ko.utils.arrayPushAll(ids, self.selectedIds);
+        ko.utils.arrayForEach(self.reports(),function(el){
+            if(el.bulkEditSelected()){
+                ko.utils.addOrRemoveItem(self.selectedIds, el.executionId(), el.bulkEditSelected());
+               ko.utils.addOrRemoveItem(ids, el.executionId(), el.bulkEditSelected());
+            }
+        });
+
+        return ids;
+
+    });
     //array of selected ids for bulk edit
     self.bulkEditIds=ko.computed(function(){
+        
        var ids=[];
         ko.utils.arrayForEach(self.reports(),function(el){
-           if(el.bulkEditSelected()){
+            if(el.bulkEditSelected()){
                ids.push(el.executionId());
            }
         });
         return ids;
     });
     self.visitPage=function(page){
-        loadHistoryLink(self,self.ajaxHistoryLink,page.url);
+        loadHistoryLink(self,self.ajaxHistoryLink,page.url, null, true);
     };
     self.activateNowRunningTab=function() {
         jQuery('ul.activity_links > li:first-child').addClass('active');
@@ -252,6 +269,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
     };
 
     self.toggleBulkEdit=function(){
+        self.selectedIds = [];
         self.bulkEditMode(!self.bulkEditMode());
     };
 
@@ -274,9 +292,14 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
                 for(c=b;c>=a && c>=0;c--){
                     var x=self.reports()[c];
                     x.bulkEditSelected(!prevSel);
+                    
+                    ko.utils.addOrRemoveItem(self.selectedIds, x.executionId(), !prevSel)
                 }
             }else{
                 report.bulkEditSelected(!report.bulkEditSelected());
+                
+                ko.utils.addOrRemoveItem(self.selectedIds, report.executionId(), report.bulkEditSelected());
+                
             }
             self.bulkEditPrevious(index);
         }
@@ -288,11 +311,21 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
     };
     self.bulkEditSelectAll=function(){
         ko.utils.arrayForEach(self.reports(),function(e){
+            if(!self.selectedIds) self.selectedIds = [];
+            ko.utils.addOrRemoveItem(self.selectedIds, e.executionId(), true);
             e.bulkEditSelected(true);
         });
     };
+    self.bulkEditDeselectAllPages=function(){
+        self.selectedIds = [];
+        self.bulkEditDeselectAll();
+    };
     self.bulkEditDeselectAll=function(){
+        jQuery("#cleanselections").modal('hide');
         ko.utils.arrayForEach(self.reports(),function(e){
+            if(self.selectedIds){
+                ko.utils.addOrRemoveItem(self.selectedIds, e.executionId(), false);
+            }
             e.bulkEditSelected(false);
         });
     };
@@ -304,11 +337,12 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
         jQuery.ajax({
             url: self.ajaxBulkDeleteLink,
             type:'post',
-            data: JSON.stringify({"ids": self.bulkEditIds()}),
+            data: JSON.stringify({"ids": self.bulkSelectedIds()}),
             contentType: 'application/json',
             dataType:'json',
             beforeSend:_ajaxSendTokens.curry('history_tokens'),
             success:function(data,status,xhr){
+                self.selectedIds = [];
                 self.bulkEditProgress(false);
                 self.bulkEditResults(data);
                 if(data.allsuccessful){
@@ -319,6 +353,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
                 self.reloadData();
             },
             error:function(xhr,status,err){
+                self.selectedIds = [];
                 self.bulkEditProgress(false);
                 self.bulkEditResults({error:"Request did not succeed: "+((xhr.responseJSON && xhr.responseJSON.message)? xhr.responseJSON.message:err)});
                 jQuery(resultmodal).modal('show');
@@ -350,11 +385,23 @@ var binding = {
         }
     }
 };
-function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
+function loadHistoryLink(history, ajaxBaseUrl, href,reload, keepSelections) {
     var params = href.substring(href.indexOf('?')+1);
     var url = ajaxBaseUrl.indexOf("?")>0? ajaxBaseUrl+'&' + params : ajaxBaseUrl+'?' + params;
 
     var handleResult;
+    
+    
+    if(keepSelections){
+        if(!history.selectedIds) {
+            history.selectedIds = [];
+        }
+        ko.utils.arrayForEach(history.reports(),function(el){
+            if(el.bulkEditSelected()){
+                ko.utils.addOrRemoveItem(history.selectedIds, el.executionId(), true)
+            }
+        });
+    }
     var load=function(){
         history.href(href);
         jQuery.getJSON(url, handleResult);
@@ -367,7 +414,18 @@ function loadHistoryLink(history, ajaxBaseUrl, href,reload) {
                 load();
             }
         }, reload * 1000);
+        
+        
+        if(keepSelections){
+            ko.utils.arrayForEach(history.reports(),function(el){
+                if(ko.utils.arrayIndexOf(history.selectedIds, el.executionId()) > -1){
+                    el.bulkEditSelected(true);
+                }
+            });
+        }
     };
+    
+    
     load();
 }
 

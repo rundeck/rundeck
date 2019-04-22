@@ -151,6 +151,7 @@
         var pageTitle="${enc(js:g.message(code: 'gui.menu.Events'))} - ${enc(js:params.project ?: request.project)}";
         var firstLoad=true;
         var firstparams=Object.extend({refresh:${params.refresh == 'true' ? true : false}},eventsparams);
+        var checkedIds = [];
         window.onpopstate = function(event) {
             if(firstLoad){
                 firstLoad=false;
@@ -203,6 +204,10 @@
                         stepBehavior:pagefunc,
                         nextBehavior:pagefunc
                     });
+                     if(jQuery('.obs_bulk_edit_enable .bulk_edit_enabled').length>0){
+                        bulkEditEnable();
+                        bulkEditcheckSelected();
+                     }
                 }
             }
             if (name == 'nowrunning' && data.lastExecId && data.lastExecId != lastRunExec) {
@@ -291,21 +296,38 @@
         function bulkEditDisable(){
             jQuery('.obs_bulk_edit_enable').hide().removeClass('bulk_edit_enabled');
             jQuery('.obs_bulk_edit_disable').show();
+            bulkEditDeselectAll();
         }
         function bulkEditSelectAll(){
             jQuery('input.bulk_edit').each(function(ndx,el){
                 el.checked=true;
+                ko.utils.addOrRemoveItem(checkedIds, el.value, el.checked);
+                jQuery('#checkedIdsField').val(checkedIds)
             });
         }
         function bulkEditDeselectAll(){
             jQuery('input.bulk_edit').each(function(ndx,el){
                 el.checked=false;
+                checkedIds=[];
+                jQuery('#checkedIdsField').val(checkedIds);
+            });
+        }
+        function bulkEditcheckSelected(){
+            jQuery('input.bulk_edit').each(function(ndx,el){
+                if(ko.utils.arrayIndexOf(checkedIds, el.value)>-1){
+                    el.checked=true;
+                }
             });
         }
         function bulkEditToggleAll(){
             jQuery('input.bulk_edit').each(function(ndx,el){
                 el.checked=!el.checked;
+                ko.utils.addOrRemoveItem(checkedIds, el.value, el.checked)
+                jQuery('#checkedIdsField').val(checkedIds)
             });
+        }
+        function setLengthCheckedIds(){
+            jQuery('#checkedIdsLength').text(checkedIds.length);
         }
         function init(){
             _pageInit();
@@ -315,11 +337,14 @@
                 if(jQuery(ac).find('.bulk_edit_enabled').length>0){
                     var dc=jQuery(ac).find('input._defaultInput')[0]
                     dc.checked=!dc.checked;
+                    ko.utils.addOrRemoveItem(checkedIds, dc.value, dc.checked)
+                    jQuery('#checkedIdsField').val(checkedIds)
                 }else{
                     var dc=jQuery(ac).find('a._defaultAction')[0]
                     dc.click();
                 }
             });
+            jQuery('.act_bulk_delete').click(setLengthCheckedIds);
             jQuery('.act_bulk_edit_enable').click(bulkEditEnable);
             jQuery('.act_bulk_edit_disable').click(bulkEditDisable);
             jQuery('.act_bulk_edit_selectall').click(bulkEditSelectAll);

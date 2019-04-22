@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -1801,7 +1802,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid = params.id
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -1874,7 +1876,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid=params.id
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -2663,7 +2666,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                 changeinfo,authContext)
+                 changeinfo,authContext, (params?.validateJobref=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
@@ -2711,6 +2714,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if (varfound) {
                 model.nodesetvariables = true
             }
+            def failedNodes = null
             if (params.retryFailedExecId) {
                 Execution e = Execution.get(params.retryFailedExecId)
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
@@ -2719,6 +2723,13 @@ class ScheduledExecutionController  extends ControllerBase{
                         nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
                     }
                     model.nodesetvariables = false
+
+                    def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                    failedNodes = frameworkService.filterAuthorizedNodes(
+                            scheduledExecution.project,
+                            new HashSet<String>(["read", "run"]),
+                            frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
+                            authContext).nodes;
                 }
             }
             def nodes = frameworkService.filterAuthorizedNodes(
@@ -2738,6 +2749,19 @@ class ScheduledExecutionController  extends ControllerBase{
 
                 if(unselectedNodesFilter){
                     unselectedNodes = unselectedNodesFilter.nodes
+                }
+            }
+
+            if(failedNodes && failedNodes.size()>0){
+                //if failed nodes are not part of original node filter, it will be added
+                def failedNodeNotInNodes = failedNodes.findAll{ !nodes.contains( it ) }
+                if(failedNodeNotInNodes && failedNodeNotInNodes.size()>0){
+                    def nodeImp = new NodeSetImpl()
+                    if(nodes){
+                        nodeImp.putNodes(nodes)
+                    }
+                    nodeImp.putNodes(failedNodeNotInNodes)
+                    nodes=nodeImp.getNodes()
                 }
             }
 
@@ -3508,7 +3532,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (request.api_version < ApiVersions.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs

@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
@@ -37,6 +39,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
 import org.rundeck.core.projects.ProjectConfigurable
+import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import rundeck.services.nodes.CachedProjectNodes
@@ -46,7 +49,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Provides asynchronous loading and caching of nodesets for projects
  */
-class NodeService implements InitializingBean, ProjectConfigurable, IProjectNodesFactory, ProjectNodeService {
+class NodeService implements InitializingBean, ProjectConfigurable, IProjectNodesFactory, ProjectNodeService, ProjectPluginListConfigurable {
     public static final String PROJECT_NODECACHE_DELAY = 'project.nodeCache.delay'
     public static final String PROJECT_NODECACHE_ENABLED = 'project.nodeCache.enabled'
     public static final String PROJECT_NODECACHE_FIRSTLOAD_SYNCH = 'project.nodeCache.firstLoadSynch'
@@ -90,6 +93,8 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
                 }.build()
         ]
     }
+    String serviceName= ServiceNameConstants.ResourceModelSource
+    String propertyPrefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX
 
     @Override
     Map<String, String> getPropertiesMapping() {

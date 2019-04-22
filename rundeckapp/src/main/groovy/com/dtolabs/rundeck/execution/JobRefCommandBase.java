@@ -89,4 +89,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return false;
     }
 
+    public Boolean isUseName(){
+        return false;
+    }
+
 }

@@ -54,8 +54,9 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
-import org.rundeck.security.RundeckAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthenticationProvider
+import org.rundeck.security.RundeckAuthSuccessEventListener
+import org.rundeck.security.RundeckJaasAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -79,6 +80,7 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -422,8 +424,10 @@ beans={
     /**
      * Track passwords on these plugins
      */
+    obscurePasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
+    pluginsPasswordFieldsService(PasswordFieldsService)
     fcopyPasswordFieldsService(PasswordFieldsService)
 
 
@@ -509,8 +513,12 @@ beans={
         }
     }
 
+    rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
+        frameworkService = ref('frameworkService')
+    }
+
     if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
-        rundeckAuthenticationSuccessEventListener(RundeckAuthenticationSuccessEventListener) {
+        rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
             userService = ref("userService")
             grailsApplication = grailsApplication
         }
