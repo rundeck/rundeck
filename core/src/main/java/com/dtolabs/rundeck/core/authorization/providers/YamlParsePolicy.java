@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
  */
 public class YamlParsePolicy implements Policy {
     public static final String BY_SECTION = "by";
+    public static final String NOT_BY_SECTION = "notBy";
     public static final String USERNAME_KEY = "username";
     public static final String GROUP_KEY = "group";
     ACLPolicyDoc policyDoc;
@@ -148,8 +149,15 @@ public class YamlParsePolicy implements Policy {
 
     private void parseByClause() {
 
-        final Object u = policyDoc.getBy().getUsername();
-        final Object g = policyDoc.getBy().getGroup();
+        Object u = null;
+        Object g = null;
+        if(null != policyDoc.getBy()) {
+            u = policyDoc.getBy().getUsername();
+            g = policyDoc.getBy().getGroup();
+        }else if(null != policyDoc.getNotBy()){
+            u = policyDoc.getNotBy().getUsername();
+            g = policyDoc.getNotBy().getGroup();
+        }
 
         if (null != u) {
             if (u instanceof String) {
@@ -227,12 +235,14 @@ public class YamlParsePolicy implements Policy {
     }
 
     private void validate() {
-        if (null == policyDoc.getBy()) {
+        if (null == policyDoc.getBy() && null == policyDoc.getNotBy()) {
             throw new AclPolicySyntaxException(
-                    "Required 'by:' section was not present"
+                    "Required 'by:' or 'not-by:' section was not present"
             );
         }
-        if (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername()) {
+
+        if (null != policyDoc.getBy() &&
+                (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername())) {
 
             throw new AclPolicySyntaxException(
                     "Section '" + BY_SECTION +
@@ -242,6 +252,19 @@ public class YamlParsePolicy implements Policy {
                     ":' and/or '" +
                     USERNAME_KEY +
                     ":'"
+            );
+        }
+        if (null != policyDoc.getNotBy() &&
+                (null == policyDoc.getNotBy().getGroup() && null == policyDoc.getNotBy().getUsername())) {
+
+            throw new AclPolicySyntaxException(
+                    "Section '" + NOT_BY_SECTION +
+                            ":' is not valid: " +
+                            " it must contain '" +
+                            GROUP_KEY +
+                            ":' and/or '" +
+                            USERNAME_KEY +
+                            ":'"
             );
         }
         if (null == policyDoc.getFor()) {
