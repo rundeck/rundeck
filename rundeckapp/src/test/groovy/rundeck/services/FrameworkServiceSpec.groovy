@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -424,5 +425,31 @@ class FrameworkServiceSpec extends Specification {
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1'],svc2:['typeA']] | ['svc','svc2']
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:['typeA']] | ['svc2']
             ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1']] | ['svc']
+    }
+
+    def "get plugin control service"() {
+        given:
+            service.rundeckFramework = Mock(Framework)
+
+            def ctrla = service.getPluginControlService('projectA')
+            def ctrlb = service.getPluginControlService('projectB')
+        when:
+            def pluga = ctrla.listDisabledPlugins()
+            def plugb = ctrlb.listDisabledPlugins()
+        then:
+            ctrla != ctrlb
+            pluga != plugb
+            2 * service.rundeckFramework.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                1 * getFrameworkProject('projectA') >> Mock(IRundeckProject) {
+                    1 * hasProperty('disabled.plugins') >> true
+                    1 * getProperty('disabled.plugins') >> 'a,b,c'
+                }
+                1 * getFrameworkProject('projectB') >> Mock(IRundeckProject) {
+                    hasProperty('disabled.plugins') >> false
+
+                }
+            }
+            pluga == ['a', 'b', 'c']
+            plugb == []
     }
 }

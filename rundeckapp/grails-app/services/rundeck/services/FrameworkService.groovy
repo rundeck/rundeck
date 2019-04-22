@@ -70,7 +70,6 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def Framework rundeckFramework
     def rundeckPluginRegistry
     def PluginService pluginService
-    def PluginControlService pluginControlService
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
 
@@ -615,10 +614,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     def PluginControlService getPluginControlService(String project) {
-        if(!pluginControlService){
-            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
-        }
-        return pluginControlService
+        PluginControlServiceImpl.forProject(getRundeckFramework(), project)
     }
 
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
