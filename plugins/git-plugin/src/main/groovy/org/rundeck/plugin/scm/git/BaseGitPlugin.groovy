@@ -520,7 +520,6 @@ class BaseGitPlugin {
 
             //test url matches origin
             def config = agit.getRepository().getConfig()
-            println config
             def found = config.getString("remote", REMOTE_NAME, "url")
             def projectName = config.getString("rundeck", "scm-plugin", "project-name")
             if (projectName && !projectName.equals(context.frameworkProject)) {
