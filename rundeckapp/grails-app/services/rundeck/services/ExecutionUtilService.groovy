@@ -274,7 +274,8 @@ class ExecutionUtilService {
                     tmpProj,
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions,
-                    jobcmditem.uuid
+                    jobcmditem.uuid,
+                    jobcmditem.useName
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep

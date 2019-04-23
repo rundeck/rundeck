@@ -38,6 +38,30 @@
         <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
             <section >
                 <div class="form-group">
+                    <label class="col-sm-2 control-label"><g:message code="Workflow.Step.jobreference.title" /></label>
+                    <div class="col-sm-10">
+                        <g:set var="isUseName" value="${item ? item.useName : newitemusename == 'true'}"/>
+                        <div class="radio">
+                            <g:radio id="useNameTrue"  name="useName" value="true"
+                                     onclick="_enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
+                                     checked="${!!isUseName}"/>
+                            <label for="useNameTrue">
+                                <g:message code="Workflow.Step.jobreference.name.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.name.description"/></span>
+                        </div>
+                        <div class="radio">
+                            <g:radio id="useNameFalse"  name="useName" value="false"
+                                     onclick="_enableNameJobRefFields(false,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
+                                     checked="${!isUseName}"/>
+                            <label for="useNameFalse">
+                                <g:message code="Workflow.Step.jobreference.uuid.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.uuid.description"/></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="col-sm-2 control-label" for="jobNameField${rkey}"><g:message code="Workflow.Step.jobreference.name-group.label" /></label>
                     <div class="col-sm-6">
                         <g:select name="jobProject" from="${fprojects}" id="jobProjectField${rkey}" value="${enc(attr:item?.jobProject)}" noSelection="${['':message(code:'step.type.jobreference.project.label',args:[project])]}"
@@ -47,6 +71,7 @@
                     <div class="col-sm-2">
                         <g:javascript>
                         fireWhenReady('jobProjectField${rkey}',function(){
+                            _enableNameJobRefFields(${isUseName},'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                             _initJobPickerAutocomplete('jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                         });
                         </g:javascript>
@@ -88,6 +113,7 @@
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.uuid.label" /></label>
                     <div class="col-sm-10">
                         <input type='text' name="uuid" value="${enc(attr:item?.uuid)}" size="100"
+                            ${!isUseName?"":"readonly='true'"}
                                placeholder="${message(code:"Workflow.Step.jobreference.uuid.placeholder")}"
                                id="jobUuidField${rkey}"
                                class="form-control context_var_autocomplete"/>

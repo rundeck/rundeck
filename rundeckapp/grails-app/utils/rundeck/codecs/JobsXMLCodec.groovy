@@ -63,11 +63,11 @@ class JobsXMLCodec {
         return writer.toString()
     }
 
-    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
-        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds)
+    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
+        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds, stripJobRef)
     }
 
-    static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
+    static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:], String stripJobRef = null) {
         BuilderUtil bu = new BuilderUtil()
         bu.forceLineEndings=true
         bu.lineEndingChars='\n'
@@ -77,7 +77,7 @@ class JobsXMLCodec {
             list.each{ Map jobMap->
                 job{
                     bu.mapToDom(
-                            JobsXMLCodec.convertJobMap(jobMap, preserveUuid, replaceIds[jobMap.id]),
+                            JobsXMLCodec.convertJobMap(jobMap, preserveUuid, replaceIds[jobMap.id], stripJobRef),
                             delegate
                     )
                 }
@@ -473,7 +473,7 @@ class JobsXMLCodec {
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
-    static convertJobMap = { Map map, boolean preserveUuid = true, String replaceId = null ->
+    static convertJobMap = { Map map, boolean preserveUuid = true, String replaceId = null, String stripJobRef = null ->
         map.remove('project')
         if (!preserveUuid) {
             map.remove('id')
@@ -614,7 +614,7 @@ class JobsXMLCodec {
             BuilderUtil.makeAttribute(map.retry,'delay')
         }
 
-        convertWorkflowMapForBuilder(map.sequence)
+        convertWorkflowMapForBuilder(map.sequence, stripJobRef)
         if(map.notification){
             def convertNotificationPlugin={Map pluginMap->
                 def confMap = pluginMap.remove('configuration')
@@ -662,7 +662,7 @@ class JobsXMLCodec {
      * Convert result of Workflow.toMap() to format used by BuilderUtil
      * @param map
      */
-    static void convertWorkflowMapForBuilder(Map map) {
+    static void convertWorkflowMapForBuilder(Map map, String stripJobRef = null) {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
@@ -678,7 +678,7 @@ class JobsXMLCodec {
 
         //convert script args values to idiosyncratic label
 
-        def gencmd= { cmd, iseh=false ->
+        def gencmd= { cmd, iseh=false, strip=stripJobRef ->
             if (cmd.scriptfile || cmd.script || cmd.scripturl) {
                 cmd.scriptargs = cmd.remove('args')
                 if (cmd.script) {
@@ -692,6 +692,22 @@ class JobsXMLCodec {
                 }
                 cmd.remove('interpreterArgsQuoted')
             } else if (cmd.jobref) {
+
+                if(strip == 'name') {
+                    if (cmd.jobref.uuid) {
+                        cmd.jobref.remove('group')
+                        cmd.jobref.remove('name')
+                        cmd.jobref.remove('project')
+                        cmd.jobref.useName = false
+                    }
+                }
+                if(strip == 'uuid') {
+                    if (cmd.jobref.name) {
+                        cmd.jobref.remove('uuid')
+                        cmd.jobref.useName = true
+                    }
+                }
+
                 BuilderUtil.makeAttribute(cmd.jobref, 'name')
                 if (cmd.jobref.group) {
                     BuilderUtil.makeAttribute(cmd.jobref, 'group')

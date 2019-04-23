@@ -145,6 +145,28 @@
                   </span>
                 </div>
             </div>
+            <div class="list-group-item">
+                <h4 class="list-group-item-heading">Referenced Jobs Validation</h4>
+                <div class="radio">
+                  <input type="radio" name="validateJobref" id="jobreffalse" value="false" checked/>
+                  <label title="" for="jobreffalse">
+                    <g:message code="archive.import.importJobRef.false.title"/>
+                  </label>
+                  <span class="help-block">
+                      <g:message code="archive.import.importJobRef.false.help"/>
+                  </span>
+                </div>
+                <div class="radio">
+                  <input type="radio" name="validateJobref" id="jobreftrue" value="true"/>
+                  <label title="" for="jobreftrue">
+                    <g:message code="archive.import.importJobRef.true.title"/>
+                  </label>
+                  <span class="help-block">
+                      <g:message code="archive.import.importJobRef.true.help"/>
+                  </span>
+                </div>
+
+            </div>
           </div>
         </div>
         <div class="card-footer">

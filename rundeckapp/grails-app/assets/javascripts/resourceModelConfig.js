@@ -246,7 +246,7 @@ pageInit:function () {
     //load widgets for any in-page configs
     // widgets must be indexed from 1.  PasswordFieldsService depends on this ordering.
     var n = 0;
-    $('configs').select('li div.inpageconfig').each(function(e) {
+    jQuery('#configs').find('li div.inpageconfig').each(function(ndx,e) {
         n++;
         self.addConfigChrome(e, null, '${prefixKey}.' + n + '.', n, true);
     });

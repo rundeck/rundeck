@@ -126,6 +126,7 @@ public class LocalResourceModelSource implements ResourceModelSource {
                     .title("Attributes")
                     .description("Custom attributes, in Java properties format")
             )
+            .metadata("faicon", "hdd")
         );
     }
 

@@ -420,8 +420,10 @@ function autocompleteBase(baseVarData,liitem, iseh, isnodestepfunc, istextareate
 function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
     "use strict";
     var currentProject = jQuery('#schedEditFrameworkProject').val();
+    var isReadOnly = jQuery("#" + nameid).attr('readonly');
+    var minChar = isReadOnly?500:0;
     jQuery("#" + nameid).devbridgeAutocomplete({
-        minChars: 0,
+        minChars: minChar,
         deferRequestBy: 500,
         lookup: function (q, callback) {
             var project = projid && jQuery('#' + projid).val() || currentProject;
@@ -443,6 +445,29 @@ function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
             jQuery('#' + uuid).val(selected.data.id);
         }
     });
+}
+
+function _enableNameJobRefFields(enable,uuid,nameid, groupid, projid) {
+    "use strict";
+    var nameField = jQuery("#" + nameid);
+    var groupField = jQuery("#" + groupid);
+    var uuidField = jQuery("#" + uuid);
+
+    nameField.attr('readonly', !enable);
+    groupField.attr('readonly', !enable);
+    uuidField.attr('readonly', enable);
+    //_initJobPickerAutocomplete(uuid,nameid, groupid, projid);
+    if(nameField.devbridgeAutocomplete()) {
+        if (enable) {
+            nameField.devbridgeAutocomplete().setOptions({
+                minChars: 0
+            });
+        } else {
+            nameField.devbridgeAutocomplete().setOptions({
+                minChars: 500
+            });
+        }
+    }
 }
 var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {

@@ -132,6 +132,7 @@
                     <g:if test="${reports}">
                         <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm" useToken="true">
                             <g:hiddenField name="project" value="${params.project}"/>
+                            <g:hiddenField name="checkedIds" value="${params.checkedIds}" id="checkedIdsField"/>
                         <table class=" table table-hover table-condensed events-table" style="width:100%">
                         <g:if test="${includeNowRunning}">
                             <tbody id="nowrunning"></tbody>
@@ -160,7 +161,7 @@
                                     <g:message code="select.none"/>
                                 </span>
 
-                                <span class="btn btn-xs btn-danger obs_bulk_edit_enable"
+                                <span class="btn btn-xs btn-danger obs_bulk_edit_enable act_bulk_delete"
                                       data-toggle="modal"
                                       data-target="#bulkexecdelete">
                                     <g:message code="delete.selected.executions"/>
@@ -197,7 +198,7 @@
 
                                         <div class="modal-body">
 
-                                            <p>Really delete all selected
+                                            <p>Really delete all <b id="checkedIdsLength"></b> selected
                                                 <g:message code="domain.Execution.title.plural" default="Executions"/>?
                                             </p>
                                         </div>

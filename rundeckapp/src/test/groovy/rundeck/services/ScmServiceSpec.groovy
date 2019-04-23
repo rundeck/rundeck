@@ -169,13 +169,13 @@ class ScmServiceSpec extends Specification {
         when:
         service.removePluginConfiguration(integration, 'test1', null)
         then:
-        1 * service.pluginConfigService.loadScmConfig(
+        0 * service.pluginConfigService.loadScmConfig(
                 'test1',
                 "etc/scm-${integration}.properties",
                 'scm.' + integration
         ) >> config
-        1 * config.setEnabled(false)
-        1 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-${integration}.properties")
+        0 * config.setEnabled(false)
+        0 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-${integration}.properties")
         1 * service.jobEventsService.removeListener(_)
         1 * service.pluginConfigService.removePluginConfiguration('test1', "etc/scm-${integration}.properties")
 
@@ -208,10 +208,10 @@ class ScmServiceSpec extends Specification {
         ) >> config2
         config.getType()>>'scm.import'
         config2.getType()>>'scm.export'
-        1 * config.setEnabled(false)
-        1 * config2.setEnabled(false)
-        1 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-import.properties")
-        1 * service.pluginConfigService.storeConfig(config2, 'test1', "etc/scm-export.properties")
+        0 * config.setEnabled(false)
+        0 * config2.setEnabled(false)
+        0 * service.pluginConfigService.storeConfig(config, 'test1', "etc/scm-import.properties")
+        0 * service.pluginConfigService.storeConfig(config2, 'test1', "etc/scm-export.properties")
         2 * service.jobEventsService.removeListener(_)
         1 * service.pluginConfigService.removePluginConfiguration('test1', "etc/scm-import.properties")
         1 * service.pluginConfigService.removePluginConfiguration('test1', "etc/scm-export.properties")
