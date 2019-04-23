@@ -1114,7 +1114,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
     }
 
     def "create project description name with invalid characters"(){
@@ -1163,7 +1163,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
     }
 
     def "create project description name starting with numbers"(){
@@ -1182,7 +1182,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
 
     }
 
@@ -1203,7 +1203,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
 
     }
 
