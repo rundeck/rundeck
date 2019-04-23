@@ -868,6 +868,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 frameworkService.refreshSessionProjects(authContext, session)
+                flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
                 return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: proj.name])
             }
         }
