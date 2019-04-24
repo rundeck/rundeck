@@ -1966,6 +1966,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(!scheduledExecution.scheduled){
 
                 return [success: false, scheduledExecution: scheduledExecution,
+                        message: "Cannot toggle schedule for Job {{Job ${scheduledExecution.uuid}}}: not a scheduled Job",
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
             if(frameworkService.isClusterModeEnabled()) {
