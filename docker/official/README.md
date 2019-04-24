@@ -1,14 +1,8 @@
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
-- `3.0.12`
-- `3.0.11`
-- `3.0.9`
-- `3.0.8`
-- `3.0.7`
-- `3.0.6`
-- `3.0.5`
-- `3.0.3`
+- `3.0.20`
+- `3.0.19` , `3.0.18` , `3.0.17` , `3.0.16` , `3.0.15` , `3.0.14` , `3.0.13` , `3.0.12` , `3.0.11` , `3.0.9` , `3.0.8` , `3.0.7` , `3.0.6` , `3.0.5` , `3.0.3`
 
 # What is Rundeck?
 
@@ -79,6 +73,17 @@ RUNDECK_JAAS_FILE_*
 
 By convention the module name matches the name in the docs, and the config keys match
 the config options listed in the docs uppercase, and all one word.
+
+## Extending Configuration
+[Remco](https://github.com/HeavyHorst/remco) is used to generate configuration files
+from templates. It supports different key/value sources such as vault, etcd, and dynamodb.
+The default configuration uses environment variables.
+
+Extending the configuration involves building a derived image
+with additional template files.
+
+See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/config) for a complete example.
+
 
 ## Environment Variables
 
