@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.api.ApiInfo
@@ -72,6 +73,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy
@@ -438,6 +440,12 @@ beans={
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
         rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:''
+    }
+
+    if(!grailsApplication.config.rundeck.logout.expire.cookies.isEmpty()) {
+        cookieClearingLogoutHandler(CookieClearingLogoutHandler,grailsApplication.config.rundeck.logout.expire.cookies.split(","))
+        SpringSecurityUtils.registerLogoutHandler("cookieClearingLogoutHandler")
+
     }
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
