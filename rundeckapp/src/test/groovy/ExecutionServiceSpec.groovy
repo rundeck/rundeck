@@ -4151,4 +4151,72 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         true         | 'success'
         false        | 'failure'
     }
+
+    void "create execution exclude filter"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.filterExclude == 'name: nodea'
+    }
+
+
+    def "Create execution context with exclude filter"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea'
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.nodeSelector != null
+        val.nodeSelector.excludes.name == "nodea"
+        val.frameworkProject == "testproj"
+    }
 }

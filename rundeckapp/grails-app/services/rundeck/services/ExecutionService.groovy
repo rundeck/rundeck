@@ -1415,8 +1415,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
+            def filterExclude = DataContextUtils.replaceDataReferencesInString(execMap.asExcludeFilter(),datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
+                    filterExclude: filterExclude,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
                     nodeKeepgoing: execMap.nodeKeepgoing
@@ -1842,6 +1844,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       user:params.user, loglevel:params.loglevel,
                                       doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
                                       filter: params.filter,
+                                      filterExclude: params.filterExclude,
                                       nodeExcludePrecedence:params.nodeExcludePrecedence,
                                       nodeThreadcount:params.nodeThreadcount,
                                       nodeKeepgoing:params.nodeKeepgoing,
@@ -2183,6 +2186,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'loglevel',
                 'doNodedispatch',
                 'filter',
+                'filterExclude',
                 'nodeExcludePrecedence',
                 'nodeThreadcount',
                 'nodeThreadcountDynamic',
