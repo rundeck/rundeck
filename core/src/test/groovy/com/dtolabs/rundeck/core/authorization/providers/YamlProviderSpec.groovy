@@ -205,7 +205,7 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]'] == ['Required \'by:\' section was not present']
+        validation.errors['test1[1]'] == ['Required \'by:\' or \'notBy:\' section was not present']
     }
     def "validate no for"(){
         when:

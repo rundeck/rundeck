@@ -424,7 +424,7 @@ public class ACLPolicyDoc {
                ", description='" + description + '\'' +
                ", for=" + forSection +
                ", by=" + by +
-               ", not-by=" + notBy +
+               ", notBy=" + notBy +
                ", id='" + id + '\'' +
                '}';
     }

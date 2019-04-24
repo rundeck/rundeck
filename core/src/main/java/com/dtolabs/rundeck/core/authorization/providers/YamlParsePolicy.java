@@ -52,6 +52,7 @@ public class YamlParsePolicy implements Policy {
     private Set<String> usernames = new HashSet<String>();
     private Set<String> groups = new HashSet<String>();
     private Set<AclRule> rules = new HashSet<>();
+    private boolean isBy;
 
     private YamlParsePolicy(
             final Set<Attribute> context,
@@ -133,6 +134,7 @@ public class YamlParsePolicy implements Policy {
     private void enumerateRules() {
         String description = policyDoc.getDescription();
         AclRuleBuilder envProto = AclRuleBuilder.builder()
+                                                .by(isBy)
                                                 .environment(environment.toBasic())
                                                 .description(description)
                                                 .sourceIdentity(sourceIdent);
@@ -152,9 +154,11 @@ public class YamlParsePolicy implements Policy {
         Object u = null;
         Object g = null;
         if(null != policyDoc.getBy()) {
+            this.isBy = true;
             u = policyDoc.getBy().getUsername();
             g = policyDoc.getBy().getGroup();
         }else if(null != policyDoc.getNotBy()){
+            this.isBy=false;
             u = policyDoc.getNotBy().getUsername();
             g = policyDoc.getNotBy().getGroup();
         }
@@ -237,7 +241,7 @@ public class YamlParsePolicy implements Policy {
     private void validate() {
         if (null == policyDoc.getBy() && null == policyDoc.getNotBy()) {
             throw new AclPolicySyntaxException(
-                    "Required 'by:' or 'not-by:' section was not present"
+                    "Required 'by:' or 'notBy:' section was not present"
             );
         }
 
@@ -494,6 +498,11 @@ public class YamlParsePolicy implements Policy {
     @Override
     public EnvironmentalContext getEnvironment() {
         return environment.toBasic();
+    }
+
+    @Override
+    public boolean isBy(){
+        return isBy;
     }
 
     static private class YamlEnvironmentalContext {
