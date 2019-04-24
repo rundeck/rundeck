@@ -1376,24 +1376,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     render ([success: true] as JSON)
                 }
             }
-        } else if(result.errorCode){
-            return withFormat {
-                xml {
-                    return apiService.renderSuccessXml(request,response) {
-                        delegate.'toggleScheduleResult'(errorCode: result.errorCode) {
-                            delegate.'error'(result.message)
-                        }
-                    }
-                }
-
-                json {
-                    return apiService.renderSuccessJson(response) {
-                        delegate.'element'(errorCode:result.errorCode,message:result.message)
-                    }
-                }
-            }
         } else {
-            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(response, [status: result.status?:400, code: result.errorCode] + result);
         }
     }
 
