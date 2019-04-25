@@ -65,12 +65,15 @@ import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
+import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
+    static Logger logger = Logger.getLogger(ScheduledExecutionController)
+
     public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
     public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'
     public static final String NOTIFY_ONSTART_EMAIL = 'notifyOnstartEmail'
@@ -709,7 +712,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //load expand variables in URL source
 
                 def realUrl = opt.realValuesUrl.toExternalForm()
-                String srcUrl = expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
+                String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null
@@ -956,77 +959,6 @@ class ScheduledExecutionController  extends ControllerBase{
         name:'name',
 
     ]
-    /**
-     * Expand the URL string's embedded property references of the form
-     * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
-     * limited
-     */
-    protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true) {
-        def invalid = []
-        def rundeckProps=[
-                'nodename':frameworkService.getFrameworkNodeName(),
-                'serverUUID':frameworkService.serverUUID?:''
-        ]
-        if(!isHttp) {
-            rundeckProps.basedir= frameworkService.getRundeckBase()
-        }
-        def extraJobProps=[
-                'user.name': (session?.user?: "anonymous"),
-        ]
-        extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
-        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
-
-        def replacement= { Object[] group ->
-            if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
-                scheduledExecution.properties.get(jobprops[group[3]]).toString()
-            } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
-                def value = extraJobProps[group[3]]
-                value.toString()
-            }else if (group[2] == 'globals' && null != globals[group[3]]) {
-                def value = globals[group[3]]
-                value.toString()
-            }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
-                def value = rundeckProps[group[3]]
-                value.toString()
-            } else if (group[2] == 'option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
-                opt.properties.get(optprops[group[3]]).toString()
-            } else if (group[2] == 'option' && group[4] == '.value') {
-                def optname = group[3].substring(0, group[3].length() - '.value'.length())
-                def value = selectedoptsmap && selectedoptsmap instanceof Map ? selectedoptsmap[optname] : null
-                //find option with name
-                def Option expopt = scheduledExecution.options.find { it.name == optname }
-                if (value && expopt?.multivalued && (value instanceof Collection || value instanceof String[])) {
-                    value = value.join(expopt.delimiter)
-                }
-                (value ?: '')
-            } else {
-                null
-            }
-        }
-        //replace variables in the URL, using appropriate encoding before/after the URL parameter '?' separator
-        def arr=url.split(/\?/,2)
-        def codecs=['URIComponent','URL']
-        def result=[]
-        arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option|rundeck|globals)\.([^}]+?(\.value)?)\})/) { Object[] group ->
-                def val = replacement(group)
-                 if (null != val) {
-                     if(!isHttp){
-                         return val
-                     }
-                     val."encodeAs${codecs[i]}"()
-                 } else {
-                     invalid << group[0]
-                     group[0]
-                 }
-             }
-        }
-        String srcUrl = result.join('?')
-        if (invalid) {
-            log.error("invalid expansion: " + invalid);
-        }
-        return srcUrl
-    }
 
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.
@@ -1048,8 +980,8 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
-        log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+    static Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+        logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){

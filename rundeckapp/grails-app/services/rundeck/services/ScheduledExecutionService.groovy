@@ -2385,7 +2385,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def optfailed = false
             optsmap.values().each {Option opt ->
-                EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
+                EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
                 fileUploadService.validateFileOptConfig(opt)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
