@@ -1309,7 +1309,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         } else {
-            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(response, [status: result.status?:400, code: result.errorCode] + result);
         }
     }
 
