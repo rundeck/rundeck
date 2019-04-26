@@ -162,8 +162,8 @@
 }
 
 .navbar-default {
-  background-color: $bg-nude;
-  border-bottom: 1px solid $medium-gray;
+  background-color: $bg-subheader;
+  border-bottom: 1px solid darken($bg-subheader, 10%);
 
   .brand{
     color: $font-color !important;

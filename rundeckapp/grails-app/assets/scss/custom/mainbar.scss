@@ -1,6 +1,11 @@
 .mainbar {
   min-height: 59px;
   height: 59px;
+  background: $bg-subheader;
+
+  &.navbar{
+    border-bottom: 1px solid darken($bg-subheader, 10%);
+  }
 
   .navbar-minimize .btn,
   li#projectSelect a.dropdown-toggle.btn {
