@@ -73,24 +73,52 @@ blockquote small {
   color: $medium-gray;
 }
 
-.text-primary, .text-primary:hover {
+.text-primary, .text-primary:hover, .text-primary:focus, a.text-primary {
   color: $primary-states-color;
 }
 
-.text-info, .text-info:hover {
+a.text-primary:hover, a.text-primary:focus {
+  color: lighten($primary-states-color, 25%);
+}
+
+.text-secondary, .text-secondary:hover, .text-secondary:focus, a.text-secondary {
+  color: lighten($primary-states-color, 40%);
+}
+
+a.text-secondary:hover, a.text-secondary:focus {
+  color: lighten($primary-states-color, 65%);
+}
+
+.text-info, .text-info:hover, .text-info:focus, a.text-info {
   color: $info-states-color;
 }
 
-.text-success, .text-success:hover {
+a.text-info:hover, .text-info:focus {
+  color: lighten($info-states-color, 25%);
+}
+
+.text-success, .text-success:hover, .text-success:focus, a.text-success {
   color: $success-states-color;
 }
 
-.text-warning, .text-warning:hover {
+a.text-success:hover, .text-success:focus {
+  color: lighten($success-states-color, 25%);
+}
+
+.text-warning, .text-warning:hover, .text-warning:focus, a.text-warning {
   color: $warning-states-color;
 }
 
-.text-danger, .text-danger:hover {
+a.text-warning:hover, .text-warning:focus {
+  color: lighten($warning-states-color, 25%);
+}
+
+.text-danger, .text-danger:hover, .text-danger:focus, a.text-danger {
   color: $danger-states-color;
+}
+
+a.text-danger:hover, .text-danger:focus {
+  color: lighten($danger-states-color, 25%);
 }
 
 .glyphicon {
