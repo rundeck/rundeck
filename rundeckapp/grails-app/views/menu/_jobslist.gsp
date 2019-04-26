@@ -43,7 +43,7 @@
                                        </span>
 
                                        <g:render template="/scheduledExecution/description"
-                                                 model="[description: scheduledExecution?.description, textCss: 'text-primary', firstLineOnly:true]"/>
+                                                 model="[description: scheduledExecution?.description, textCss: 'text-secondary', firstLineOnly:true]"/>
                                </div>
                             </div>
                         </g:if>
@@ -142,7 +142,7 @@
                                 <div>
                                   <g:render template="/scheduledExecution/description"
                                             model="[description: scheduledExecution?.description,
-                                                    textCss:'text-primary',
+                                                    textCss:'text-secondary',
                                                     mode:'collapsed',
                                                     rkey:g.rkey(),
                                                     jobLinkId:scheduledExecution?.extid,
