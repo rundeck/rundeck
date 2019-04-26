@@ -79,7 +79,7 @@
     <g:if test="${execdata instanceof ExecutionContext && execdata?.workflow}">
         <g:unless test="${hideAdhoc}">
         <tr>
-            <td><g:message code="steps" />:</td>
+            <td><g:message code="steps" /></td>
             <td >
                 <g:render template="/execution/execDetailsWorkflow" model="${[strategyPlugins:strategyPlugins, edit: false, workflow:execdata.workflow,context:execdata,noimgs:noimgs,project:execdata.project]}"/>
             </td>
@@ -117,7 +117,7 @@
     <tbody>
     <g:if test="${!nomatchednodes}">
             <tr>
-                <td><g:message code="Node.plural" />:</td>
+                <td><g:message code="Node.plural" /></td>
                 <td >
                     <span id="matchednodes_${rkey}" class="matchednodes embed">
                         <span class="text-primary"><g:message code="include.nodes.matching" /></span>
