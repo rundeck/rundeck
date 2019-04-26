@@ -17,30 +17,35 @@
   }
 }
 
-details.more-info {
+details {
   > summary {
-    > .less-indicator-verbiage {
-      display: none
-    }
+    cursor: pointer;
 
-    .more-indicator-verbiage, .less-indicator-verbiage {
-      cursor: pointer;
+    &:focus {
+      outline: none;
     }
   }
-
-  &[open] > summary {
-    > .more-indicator-verbiage {
-      display: none
+  &.more-info {
+    > summary {
+      > .less-indicator-verbiage {
+        display: none
+      }
     }
 
-    > .less-indicator-verbiage {
-      display: inline-block;
-    }
-  }
+    &[open] > summary {
+      > .more-indicator-verbiage {
+        display: none
+      }
 
-  .more-info-content {
-    margin-top: 1em;
-    margin-bottom: 1em;
-    padding-left: 0.5em;
+      > .less-indicator-verbiage {
+        display: inline-block;
+      }
+    }
+
+    .more-info-content {
+      margin-top: 1em;
+      margin-bottom: 1em;
+      padding-left: 0.5em;
+    }
   }
 }
