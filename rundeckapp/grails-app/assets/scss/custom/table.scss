@@ -14,9 +14,9 @@
   }
 }
 
-th.table-header {
+th.table-header, td.table-header {
   text-transform: uppercase;
-  color: $medium-gray;
+  color: $dark-gray;
   padding: .5em;
 }
 
