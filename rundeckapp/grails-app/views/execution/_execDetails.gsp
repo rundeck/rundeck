@@ -47,7 +47,7 @@
 
                 <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
-                          data-placement="auto left"
+                          data-placement="auto right"
                           title="${g.message(code: 'disabled.schedule.run')}">
                         <i class="glyphicon glyphicon-time"></i>
                         <span class="detail"><g:message code="disabled.schedule.run" /></span>
