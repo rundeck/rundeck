@@ -1,17 +1,17 @@
 .expandComponentHolder{
   .expandComponentControl{
-    > .more-indicator-verbiage{
+    .more-indicator-verbiage{
       display: inline-block;
     }
-    > .less-indicator-verbiage{
+    .less-indicator-verbiage{
       display: none;
     }
   }
   &.expanded{
-    > .more-indicator-verbiage{
+    .more-indicator-verbiage{
       display: none;
     }
-    > .less-indicator-verbiage{
+    .less-indicator-verbiage{
       display: inline-block;
     }
   }
@@ -53,6 +53,9 @@ details {
     > summary {
       > .less-indicator-verbiage {
         display: none
+      }
+      .more-info-icon {
+        color: $medium-gray;
       }
     }
 
