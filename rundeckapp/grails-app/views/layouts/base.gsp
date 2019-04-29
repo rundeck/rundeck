@@ -224,11 +224,6 @@
     </div>
 
   </div>
-<!--
-disable for now because profiler plugin is not compatible with grails 3.x
- < g:profilerOutput />
--->
-<miniprofiler:javascript/>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
     <script type="text/javascript" defer>

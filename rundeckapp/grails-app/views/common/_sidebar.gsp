@@ -28,15 +28,7 @@
 
 <g:set var="wfselected" value=""/>
 <ul id="sidebar-nav" class="nav">
-  <!-- <li>
-    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-       title="Home">
-       <i class="fas fa-home"></i>
-       <p>
-         Home
-       </p>
-    </a>
-  </li> -->
+
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
@@ -65,7 +57,7 @@
 <g:if test="${session?.user && request.subject }">
 <g:if test="${session.frameworkProjects}">
     <li id="projectSelect">
-      <a href="#" data-toggle="collapse" href="javascript:void(0)">
+      <a href="#" data-toggle="collapse">
         <i class="fas fa-suitcase"></i>
         <p>
           <g:message code="gui.menu.Projects"/>
@@ -87,16 +79,6 @@
       <i class="fas fa-clipboard-list"></i>
         <p>
           <g:message code="gui.menu.Dashboard"/>
-          <!--
-          <br>
-          <g:if test="${session.frameworkLabels}">
-              <small>
-                <g:enc>${project ?session.frameworkLabels[project]: params.project ?
-                      session.frameworkLabels[params.project]: request.project ?
-                      session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
-              </small>
-          </g:if>
-          -->
         </p>
       </g:link>
     </li>
@@ -174,7 +156,6 @@
           <a href="#" data-toggle="collapse" href="javascript:void(0)">
             <i class="fas fa-cogs"></i>
             <p>
-              <!-- <g:message code="Project"/> -->
               <g:message code="gui.menu.ProjectSettings"/>
               <b class="caret"></b>
             </p>
@@ -199,33 +180,6 @@
         </ul>
     </g:ifPageProperty>
 </g:if>
-%{--
-<g:if test="${session?.user && request.subject }">
-    <g:ifExecutionMode passive="true">
-        <p class="navbar-text has_tooltip navbar-text-warning"
-           title="${g.message(code:'system.executionMode.description.passive')}"
-           data-toggle="tooltip"
-           data-placement="bottom"
-        >
-            <i class="glyphicon glyphicon-exclamation-sign"></i>
-            <g:message code="passive.mode" />
-        </p>
-        <auth:resourceAllowed action="${[AuthConstants.ACTION_ENABLE_EXECUTIONS,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
-            <g:form class="navbar-form navbar-left" controller="execution" action="executionMode" method="POST" useToken="true">
-                <g:hiddenField name="mode" value="active"/>
-                <g:hiddenField name="project" value="${params.project}"/>
-                <g:link action="executionMode"
-                        controller="menu"
-                        class="btn btn-default "
-                        title="${message(code:"action.executionMode.set.active.help")}"
-                >
-                    Change
-                </g:link>
-            </g:form>
-        </auth:resourceAllowed>
-    </g:ifExecutionMode>
-</g:if>
---}%
 <div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
   <div id="community-news-notification">
     <div class="sidebar-footer-line-item">
