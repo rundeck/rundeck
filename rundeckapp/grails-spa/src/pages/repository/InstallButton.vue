@@ -2,9 +2,12 @@
   <div class="row">
     <div class="col-xs-12 col-sm-8">
       <span v-if="isInstalled || installed">
-        <!-- <span class="btn btn-default">Installed</span> -->
         <span @click="uninstall" class="btn btn-sm btn-danger">Uninstall</span>
-        <span class="btn btn-sm btn-warning" v-if="updateAvailable">Update Available</span>
+        <span
+          @click="install"
+          class="btn btn-sm btn-warning"
+          v-if="updateAvailable"
+        >Update Available</span>
       </span>
       <span v-else>
         <span @click="install" class="btn btn-sm btn-info">Install</span>
@@ -12,12 +15,6 @@
     </div>
     <div class="col-xs-12 col-sm-4">
       <a :href="pluginUrl" target="_blank" class="btn btn-sm btn-default pull-right">Docs</a>
-      <!-- <a
-      v-if="sourceUrl"
-      :href="sourceUrl"
-      target="_blank"
-      class="btn btn-sm btn-default pull-right"
-      >Source</a>-->
     </div>
   </div>
 </template>
@@ -52,8 +49,6 @@ export default {
           this.plugin.current_version.replace(/\D/g, "")
         );
 
-        console.log("InstalledPluginVersion", installedPluginVersion);
-        console.log("remotePluginVersion", remotePluginVersion);
         if (remotePluginVersion > installedPluginVersion) {
           return true;
         } else {
@@ -79,6 +74,7 @@ export default {
       console.log("starting install");
       this.errors = null;
       const rdBase = window._rundeck.rdBase;
+      console.log("rdBase", rdBase);
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
@@ -90,9 +86,6 @@ export default {
         .then(response => {
           console.log("done installing");
           this.installed = true;
-          // let repo = this.repositories.find(r => r.repositoryName === repoName);
-          // let plugin = repo.results.find(r => r.id === pluginId);
-          // plugin.installed = true;
         })
         .catch(error => {
           this.errors = error.response.data;
@@ -102,10 +95,11 @@ export default {
       console.log("start5ing uninstall");
       this.errors = null;
       const rdBase = window._rundeck.rdBase;
+      const apiVer = window._rundeck.apiVersion;
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
-        url: `${rdBase}repository/${this.repo}/uninstall/${
+        url: `${rdBase}api/${apiVer}/plugins/uninstall/${
           this.plugin.object_id
         }`,
         withCredentials: true

@@ -6,9 +6,16 @@
         <div id="search" class="omnisearch-box">
           <div class="row">
             <div class="col-xs-12">
-              <div class="omnisearch-search card">
-                <div class="omnisearch-search--bar card-content">
-                  <ais-search-box v-model="query"/>
+              <div class="omnisearch-search">
+                <div class="omnisearch-search--bar">
+                  <ais-search-box
+                    v-model="query"
+                    :class-names="{
+                      'ais-SearchBox-input': 'form-control input-lg',
+                      'ais-SearchBox-submit': 'hidden',
+                      'ais-SearchBox-reset': 'onmisearch-reset-button'
+                    }"
+                  />
                 </div>
               </div>
             </div>
@@ -253,5 +260,20 @@ export default {
     bottom: 0;
     width: 100%;
   }
+}
+.omnisearch-pagination {
+  text-align: center;
+}
+.onmisearch-reset-button {
+  position: absolute;
+  right: 25px;
+  z-index: 9999;
+  top: 17px;
+  border: 0;
+  background: transparent;
+}
+.ais-SearchBox-input {
+  background-color: white;
+  font-size: 18px;
 }
 </style>
