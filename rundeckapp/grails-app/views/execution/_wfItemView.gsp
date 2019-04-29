@@ -52,7 +52,7 @@
 
                 %{--display step description--}%
                 <g:if test="${item.description}">
-                    <div class="text-info">
+                    <div class="wfstep-description">
                         <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
@@ -85,7 +85,7 @@
                     </g:if>
                 </g:if>
                 <g:if test="${item.description}">
-                    <g:enc>${item.description}</g:enc>
+                    <span class="wfstep-description"><g:enc>${item.description}</g:enc></span>
                 </g:if>
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"
                                     showPluginIcon="${!noimgs && !item.description}"
@@ -104,7 +104,7 @@
                               model="${[rkey: g.rkey(), script: item.adhocLocalString, label: '', edit: edit, noimgs: noimgs, icon: icon]}"/>
                 </g:elseif>
                 <g:if test="${item.description}">
-                    <div class="text-info">
+                    <div class="wfstep-description">
                         <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
