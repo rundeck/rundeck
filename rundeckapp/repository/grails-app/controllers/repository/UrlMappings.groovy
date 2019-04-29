@@ -73,6 +73,10 @@ class UrlMappings {
                     controller: "repository",
                     action: "installArtifact"
             )
+            post "/repository/${repoName}/uninstall/$artifactId"(
+                    controller: "repository",
+                    action: "uninstallArtifact"
+            )
         }
 
         "/"(view:"/index")
