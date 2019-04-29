@@ -49,3 +49,26 @@ $padding-xs-horizontal:          3px;
     margin-bottom: $padding-base-vertical;
   }
 }
+
+section {
+  &.section-space {
+    margin-top: $padding-base-vertical;
+  }
+
+  &.section-space-sm {
+    margin-top: $padding-small-vertical;
+  }
+
+  &.section-space-lg {
+    margin-top: $padding-large-vertical;
+  }
+
+  & + &.section-separator {
+    border-top: 1px solid $legend-border-color;
+  }
+
+  &.section-separator-solo {
+    border-top: 1px solid $legend-border-color;
+    border-bottom: 1px solid $legend-border-color;
+  }
+}
