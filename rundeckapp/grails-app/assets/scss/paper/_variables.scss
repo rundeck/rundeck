@@ -44,8 +44,9 @@ $transparent-bg:             transparent !default;
 $default-color:              #66615B !default;
 $default-states-color:       darken($default-color,11%) !default;
 
-$primary-color:              #7A9E9F !default;
+$primary-color:              #616161 !default;
 $primary-states-color:       darken($primary-color,11%) !default;
+$primary-highlight-color:    lighten($primary-color, 11%) !default;
 
 $success-color:              #7AC29A !default;
 $success-states-color:       darken($success-color,11%) !default;
@@ -228,13 +229,13 @@ $red-navbar:                rgba(#FF4C40, .98);
 
 $bg-mainpanel:          #f5f5f5 !default;
 $bg-subheader:          #f0f0f0 !default;
-$bg-primary:            #8ECFD5 !default;
-$bg-info:               #7CE4FE !default;
-$bg-success:            #8EF3C5 !default;
-$bg-warning:            #FFE28C !default;
-$bg-danger:             #FF8F5E !default;
 $bg-default:            #66615B !default;
 $bg-default-inverse:    #e6e6e6 !default;
+$bg-primary:            #b8b8b8 !default;
+$bg-info:               #caf3fc !default;
+$bg-success:            #cafce5 !default;
+$bg-warning:            #fff8e6 !default;
+$bg-danger:             #ffede6 !default;
 
 $background-light-grey:     #E8E7E3 !default;
 $background-lighter-grey:   #F0EFEB !default;
