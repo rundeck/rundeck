@@ -25,6 +25,30 @@ details {
       outline: none;
     }
   }
+
+  &.details-inline {
+    display: inline-block;
+
+    > summary {
+      display: inline-block;
+    }
+  }
+
+  &.details-reset {
+
+    > summary {
+      list-style: none;
+    }
+
+    > summary::before {
+      display: none;
+    }
+
+    > summary::-webkit-details-marker {
+      display: none;
+    }
+  }
+
   &.more-info {
     > summary {
       > .less-indicator-verbiage {
