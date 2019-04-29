@@ -653,6 +653,7 @@
                     <g:set var="pluginprefix" value="pluginConfig."/>
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
+                            groupTitleCss      : 'h5',
                             service            : serviceName,
                             dynamicProperties  : dynamicProperties,
                             provider           : newitemDescription.name,
