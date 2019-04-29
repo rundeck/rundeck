@@ -336,6 +336,9 @@
   &[data-active-color="danger"]{
     @include sidebar-active-color($danger-color);
   }
+  &[data-active-color="white"]{
+    @include sidebar-active-color($white-color);
+  }
 
 }
 

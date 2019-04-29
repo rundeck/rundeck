@@ -179,7 +179,7 @@
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
-    <div class="sidebar" data-background-color="black" data-active-color="danger">
+    <div class="sidebar" data-background-color="black" data-active-color="white">
 
       <div class="logo">
           <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
