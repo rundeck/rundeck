@@ -31,6 +31,11 @@
 
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabpage'>
+        <g:ifPageProperty name='meta.tabpage' equals='projectHome'>
+            <g:set var="homeselected" value="${selectedclass}"/>
+        </g:ifPageProperty>
+    </g:ifPageProperty>
+    <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
             <g:set var="wfselected" value="${selectedclass}"/>
         </g:ifPageProperty>
@@ -74,7 +79,7 @@
     </li>
 </g:if>
 <g:if test="${params.project ?: request.project}">
-    <li id="nav-project-dashboard-link">
+    <li id="nav-project-dashboard-link" class="${enc(attr: homeselected)}">
       <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
       <i class="fas fa-clipboard-list"></i>
         <p>
