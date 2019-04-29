@@ -145,9 +145,9 @@
       </div>
       <div class="card-footer">
         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-        <button type="submit" class="btn btn-success"><g:message code="export.archive"/></button>
+        <button type="submit" class="btn btn-primary"><g:message code="export.archive"/> <g:icon name="download"/></button>
         <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
-          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
+          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>
     </div>
@@ -214,7 +214,7 @@
             </div>
           </div>
           <div class="modal-footer">
-              <g:actionSubmit action="exportInstancePrepare" class="small btn btn-success" value="${message(code:'export.another.instance.go')}" />
+              <g:actionSubmit action="exportInstancePrepare" class="small btn btn-primary" value="${message(code:'export.another.instance.go')}" />
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->
