@@ -692,6 +692,7 @@
             </div>
         </g:if>
         <g:else>
+            <hr/>
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="description${rkey}"><g:message
                         code="Workflow.step.property.description.label"/></label>
