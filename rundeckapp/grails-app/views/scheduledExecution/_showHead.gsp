@@ -108,7 +108,7 @@
 
   </section>
 <g:if test="${scheduledExecution.groupPath}">
-    <section>
+    <section class="text-secondary section-space">
         <g:set var="parts" value="${scheduledExecution.groupPath.split('/')}"/>
         <g:each in="${parts}" var="part" status="i">
             <g:if test="${i != 0}">/</g:if>
@@ -116,7 +116,7 @@
             <g:if test="${groupBreadcrumbMode!='static'}">
             <g:link controller="menu"
                     action="jobs"
-                    class="secondary"
+                    class="text-secondary"
                     params="${[groupPath: subgroup, project: scheduledExecution.project]}"
                     title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
                     absolute="${absolute ? 'true' : 'false'}">
