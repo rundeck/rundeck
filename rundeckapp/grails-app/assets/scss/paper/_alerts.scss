@@ -46,6 +46,16 @@
   }
 }
 
+.alert {
+  background-color: $bg-default-inverse;
+  color: $default-states-color;
+}
+
+.alert-primary {
+  background-color: $bg-primary;
+  color: $primary-states-color;
+}
+
 .alert-info {
   background-color: $bg-info;
   color: $info-states-color;
