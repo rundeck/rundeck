@@ -170,7 +170,7 @@
 .pagination > li > a,
 .pagination > li > span{
     background-color: transparent;
-    border: 2px solid $default-color;
+    border: $border-thin solid $default-color;
     border-radius: 20px;
     color: $default-color;
     height: $line-height;
