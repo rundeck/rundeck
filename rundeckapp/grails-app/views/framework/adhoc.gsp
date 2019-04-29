@@ -245,12 +245,14 @@
       </div>
       <div id="activity_section">
         <div class="col-sm-12">
-          <div class="card">
+          <div class="card card-plain">
             <div class="card-header">
-              <h4 class="card-title">
+              <h3 class="card-title">
                 <g:message code="page.section.Activity.for.adhoc.commands" />
-              </h4>
+              </h3>
             </div>
+          </div>
+          <div class="card">
             <div class="card-content">
               <g:render template="/reports/activityLinks" model="[filter: [
                       jobIdFilter: 'null',

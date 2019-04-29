@@ -743,12 +743,13 @@
   </g:if>
   <div class="row">
     <div class="col-xs-12">
+
+      <div class="card card-plain">
+          <div class="card-header">
+            <h3 class="card-title"><g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)</h3>
+          </div>
+      </div>
       <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">
-            <g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
-          </h3>
-        </div>
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
             <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
@@ -788,10 +789,12 @@
   </div>
   <div class="row">
     <div class="col-xs-12">
+      <div class="card card-plain">
+          <div class="card-header">
+            <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
+          </div>
+      </div>
       <div class="card"  id="activity_section">
-        <div class="card-header">
-          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
-        </div>
         <div class="card-content">
           <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
         </div>
