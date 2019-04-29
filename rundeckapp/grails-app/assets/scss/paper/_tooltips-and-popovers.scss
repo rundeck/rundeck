@@ -1,6 +1,6 @@
 .tooltip {
     font-size: $font-size-base;
-    font-weight: $font-weight-bold;
+    font-weight: $font-weight-normal;
 
     &.top {
         margin-top: -11px;
@@ -84,7 +84,7 @@
     background-color: $popover-color;
     border-radius: 4px;
     box-shadow: 0 1px 13px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(115, 71, 38, 0.23);
-    color: #734726;
+    color: #737373;
     max-width: 280px;
     min-width: 90px;
     padding: 6px 10px;
@@ -151,6 +151,6 @@
 }
 .popover-filter.in{
      visibility:visible;
-     @include opacity(0.2);
+     @include opacity(1.0);
      transition-delay: 0s;
 }
