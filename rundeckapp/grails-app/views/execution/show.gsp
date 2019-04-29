@@ -694,10 +694,15 @@
       <g:if test="${scheduledExecution}">
           <div class="row" id="activity_section">
               <div class="col-sm-12">
-                <div class="card">
-                  <div class="card-header">
-                    <h4 class="card-title"><g:message code="page.section.Activity.for.this.job"/></h4>
+
+                  <div class="card card-plain">
+                      <div class="card-header">
+                          <h3 class="card-title">
+                              <g:message code="page.section.Activity.for.this.job"/>
+                          </h3>
+                      </div>
                   </div>
+                <div class="card">
                   <div class="card-content">
                     <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted,execution:execution,scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
                   </div>
