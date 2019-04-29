@@ -423,15 +423,17 @@ class ProjectController extends ControllerBase{
                 flash.error=message(code:"failed.to.import.some.jobs")
                 flash.joberrors=result.joberrors
             }
+            def warning = []
             if(result.execerrors){
-                flash.execerrors=result.execerrors
+                warning.add(result.execerrors)
             }
             if(result.aclerrors){
-                flash.aclerrors=result.aclerrors
+                warning.add(result.aclerrors)
             }
             if(result.scmerrors){
-                flash.scmerrors=result.scmerrors
+                warning.add(result.scmerrors)
             }
+            flash.warn=warning.join(",")
             return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
         }
         }.invalidToken {

@@ -77,7 +77,9 @@
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
-    <asset:stylesheet href="static/css/components/community-news-notification.css"/>
+    <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+      <asset:stylesheet href="static/css/components/community-news-notification.css"/>
+    </g:if>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -238,7 +240,10 @@ disable for now because profiler plugin is not compatible with grails 3.x
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/tour.js"/>
-<asset:javascript src="static/components/community-news-notification.js"/>
+<g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+  <asset:javascript src="static/components/community-news-notification.js"/>
+</g:if>
+
 <!-- /VUE JS MODULES -->
 
 </body>

@@ -32,14 +32,18 @@ import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerato
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.GroovyPageUnitTestMixin
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
 import rundeck.Project
 import rundeck.User
+import rundeck.UtilityTagLib
 import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -50,6 +54,7 @@ import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
  */
 @TestFor(FrameworkController)
 @Mock([NodeFilter, User])
+@TestMixin(GroovyPageUnitTestMixin)
 class FrameworkControllerSpec extends Specification {
     def "system acls require api_version 14"(){
         setup:
@@ -1093,6 +1098,25 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
+    def "create project description empty"(){
+        setup:
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ''
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+    }
+
     def "create project description name with invalid characters"(){
         setup:
         controller.metricService = Mock(MetricService)
@@ -1139,7 +1163,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
     }
 
     def "create project description name starting with numbers"(){
@@ -1158,7 +1182,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
 
     }
 
@@ -1179,7 +1203,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==302
         request.errors == null
-        response.redirectedUrl == "/project/projName/nodes/sources/edit"
+        response.redirectedUrl == "/project/projName/nodes/sources"
 
     }
 
@@ -1214,7 +1238,7 @@ class FrameworkControllerSpec extends Specification {
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
 
         setupFormTokens(params)
         def project = 'testProj'
@@ -1227,12 +1251,12 @@ class FrameworkControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubject(*_)
         1 * controller.frameworkService.authResourceForProject(project)
         1 * controller.frameworkService.getRundeckFramework()
-        1 * controller.frameworkService.listResourceModelSourceDescriptions()
+//        1 * controller.frameworkService.listResourceModelSourceDescriptions()
         1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
         1 * controller.frameworkService.validateProjectConfigurableInput(*_) >> [props: [:], remove: []]
         1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, _) >> [success: true]
         0 * controller.frameworkService._(*_)
-        1 * controller.resourcesPasswordFieldsService.reset()
+//        1 * controller.resourcesPasswordFieldsService.reset()
 
         response.redirectedUrl == "/project/$project/nodes/sources"
         flash.message == "Project ${project} Node Sources saved"
@@ -1268,6 +1292,8 @@ class FrameworkControllerSpec extends Specification {
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
         when:
             controller.projectPluginsAjax(project, serviceName, configPrefix)
         then:
@@ -1313,20 +1339,42 @@ class FrameworkControllerSpec extends Specification {
     def "save project plugins ajax ok"() {
         given:
 
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
             def project = "aProject"
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
-            def inputData = [
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
+            def expectData = [
                     plugins: [
-                            [type  : '1type',
-                             config: [bongo: 'asdf']
+                            [type   : '1type',
+                             config : [bongo: 'asdf'],
+                             extra  : [:],
+                             service: 'SomeService'
                             ],
 
-                            [type  : '2type',
-                             config: [zingo: 'azsdf'],
-                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            [type   : '2type',
+                             config : [zingo: 'azsdf'],
+                             extra  : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             service: 'SomeService'
+                            ]
+                    ]
+            ]
+            def inputData = [
+                    plugins: [
+                            [type     : '1type',
+                             config   : [bongo: 'asdf'],
+                             origIndex: 1
+                            ],
+
+                            [type     : '2type',
+                             config   : [zingo: 'azsdf'],
+                             extra    : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             origIndex: 2
                             ]
                     ]
             ]
@@ -1351,20 +1399,34 @@ class FrameworkControllerSpec extends Specification {
             1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
             new ValidatedPlugin(valid: true)
 
+            1 * controller.obscurePasswordFieldsService.untrack('aProject/SomeService/xyz', {
+                it.size()==2 &&
+                        it[0].type=='1type' &&
+                        it[0].index==1 &&
+                        (it[0].props==[bongo:'asdf']) &&
+                        it[1].type=='2type' &&
+                        it[1].index==2 &&
+                        it[1].props==[zingo:'azsdf']
+            }, _)
+            1 * controller.obscurePasswordFieldsService.resetTrack('aProject/SomeService/xyz', _, _)
             1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
             [success: true]
 
-            response.json == ([project: project] + inputData)
+            response.json == ([project: project] + expectData)
     }
 
     def "save project plugins ajax error  type name"() {
         given:
 
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
             def project = "aProject"
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
                     plugins: [
                             [
@@ -1419,11 +1481,15 @@ class FrameworkControllerSpec extends Specification {
     def "save project plugins ajax error missing plugin"() {
         given:
 
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
             def project = "aProject"
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
                     plugins: [
                             [
@@ -1475,11 +1541,15 @@ class FrameworkControllerSpec extends Specification {
     def "save project plugins ajax error plugin validation"() {
         given:
 
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
             def project = "aProject"
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
                     plugins: [
                             [
@@ -1536,11 +1606,15 @@ class FrameworkControllerSpec extends Specification {
     def "save project plugins ajax error saving config"() {
         given:
 
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
             def project = "aProject"
             def serviceName = "SomeService"
             def configPrefix = "xyz"
             controller.frameworkService = Mock(FrameworkService)
             controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
             def inputData = [
                     plugins: [
                             [

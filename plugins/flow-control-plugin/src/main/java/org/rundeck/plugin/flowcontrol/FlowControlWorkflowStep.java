@@ -63,7 +63,7 @@ public class FlowControlWorkflowStep implements StepPlugin {
             if (null != status) {
                 context.getFlowControl().Halt(status);
             } else {
-                context.getFlowControl().Halt(fail);
+                context.getFlowControl().Halt(!fail);
             }
         } else if (context.getFlowControl() != null) {
             context.getFlowControl().Continue();

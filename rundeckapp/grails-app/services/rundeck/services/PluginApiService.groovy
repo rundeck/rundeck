@@ -14,6 +14,7 @@ import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
@@ -108,7 +109,7 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
@@ -118,6 +119,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
@@ -148,7 +152,7 @@ class PluginApiService {
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
-                FileUploadPluginService: ['filesystem-temp'],
+                FileUpload: ['filesystem-temp'],
         ]
         //list included plugins
         def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
@@ -178,8 +182,8 @@ class PluginApiService {
                 (scmService.scmImportPluginProviderService.name):[
                         description: message("plugin.scmImport.special.description",locale),
                 ],
-                FileUploadPluginService:[
-                        description: message("plugin.FileUploadPluginService.special.description",locale),
+                FileUpload:[
+                        description: message("plugin.FileUpload.special.description",locale),
                 ]
         ]
         def specialScoping=[

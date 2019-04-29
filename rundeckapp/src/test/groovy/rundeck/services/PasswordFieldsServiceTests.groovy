@@ -103,7 +103,7 @@ class PasswordFieldsServiceTests {
                     "type" : "withPasswordDescription",
                     "props": props("password=secret_set2", "textField=a test field")
             ],
-        ].collect { [config: it, index: i++] }
+        ].collect { [config: it, index: i++, type: it.type] }
     }
 
     private def genMissingType() {
@@ -135,7 +135,7 @@ class PasswordFieldsServiceTests {
                         "type": "noPasswordFieldDescription",
                         "props": props("simple=text", "password=secret", "textField=a test field")
                 ]
-        ].collect { [config: it, index: i++] }
+        ].collect { [config: it, index: i++, type: it.type] }
     }
     private def genConfiguration2() {
         def i=0
@@ -181,36 +181,36 @@ class PasswordFieldsServiceTests {
     }
 
     void testTrackNull() {
-        service.track([null], noPasswordFieldDescription)
+        service.track([null], [noPasswordFieldDescription])
     }
 
     void testPasswordIdentifyPasswordFieldsEmptyList() {
-        int count = service.track(genConfiguration()*.config)
+        int count = service.track(genConfiguration()*.config,[])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
     void testTrackDescription() {
-        int count = service.track(genConfiguration()*.config, noPasswordFieldDescription)
+        int count = service.track(genConfiguration()*.config, [noPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
     void testTrackDescriptionPassword() {
-        int count = service.track(genConfiguration()*.config, withPasswordFieldDescription)
+        int count = service.track(genConfiguration()*.config, [withPasswordFieldDescription])
         assertEquals(1, count)
         assertEquals(1, service.tracking())
     }
 
     void testTrackDescriptionPasswordText() {
-        int count = service.track(genConfiguration2()*.config, withPasswordFieldDescriptionText)
+        int count = service.track(genConfiguration2()*.config, [withPasswordFieldDescriptionText])
         assertEquals(1, count)
         assertEquals(1, service.tracking())
     }
 
     void testAdjustFields() {
         def cnf = genMultiConfiguration(12)
-        service.track(cnf*.config, withPasswordFieldDescription,noPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription,noPasswordFieldDescription])
         assertEquals(12, service.tracking())
         assertEquals(1, service.adjust([2]))
         assertEquals(11, service.tracking())
@@ -218,24 +218,24 @@ class PasswordFieldsServiceTests {
 
     void testTrackRemoveWithoutPassword() {
         def cnf = genConfiguration()
-        service.track(cnf*.config, noPasswordFieldDescription)
+        service.track(cnf*.config, [noPasswordFieldDescription])
         // index = [1,2]
         cnf = cnf.subList(0,1)
         // index = [1]
         assertEquals(0, service.adjust([1]))  // not tracking
-        service.untrack(cnf, noPasswordFieldDescription)
+        service.untrack(cnf, [noPasswordFieldDescription])
         assertEquals(0, service.tracking())
     }
 
     void testTrackRemoveWithPasswordKeptInFinalArray() {
         def cnf = genConfiguration()
-        service.track(cnf*.config, withPasswordFieldDescription, noPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription,noPasswordFieldDescription])
         cnf = cnf.subList(0,1) // index = [1,2]=>[1] remove last element.
 
         def adjusted = service.adjust([1])
         assertEquals(0, adjusted)
 
-        service.untrack(cnf, withPasswordFieldDescription, noPasswordFieldDescription)
+        service.untrack(cnf, [withPasswordFieldDescription, noPasswordFieldDescription])
         assertPassword("secret", cnf[0].config)
         assertEquals(0, service.tracking())
     }
@@ -243,12 +243,12 @@ class PasswordFieldsServiceTests {
     void testTrackRemoveWithPasswordRemovedInFinalArray() {
 
         def cnf = genConfiguration()
-        service.track(cnf*.config, withPasswordFieldDescription, noPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription, noPasswordFieldDescription])
         cnf = cnf.subList(1,2) // index = [1,2]=>[2] dropping the first configuration, which is the one with a password we're tracking
         assertPassword("secret", cnf[0].config) // b/c untracked in noPasswordFieldDescription
 
         def adjusted = service.adjust([2])
-        service.untrack(cnf, withPasswordFieldDescription, noPasswordFieldDescription)
+        service.untrack(cnf, [withPasswordFieldDescription, noPasswordFieldDescription])
 
         assertEquals(1, adjusted)
         assertPassword("secret", cnf[0].config) // b/c untracked in noPasswordFieldDescription
@@ -258,13 +258,13 @@ class PasswordFieldsServiceTests {
     void testTrackMultipleDescription() {
         def cnf = genConfiguration()
 
-        int count = service.track(cnf*.config, noPasswordFieldDescription, noPasswordFieldDescription)
+        int count = service.track(cnf*.config, [noPasswordFieldDescription, noPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
 
     void testTrackDescriptionWithUnknownConfigurationType() {
-        int count = service.track(configurationUnknownType, withPasswordFieldDescription)
+        int count = service.track(configurationUnknownType, [withPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
     }
@@ -273,7 +273,7 @@ class PasswordFieldsServiceTests {
         def cnf = genConfiguration()
 
         Properties original = props("simple=text", "password=secret", "textField=a test field")
-        int count = service.track(cnf*.config, withPasswordFieldDescription)
+        int count = service.track(cnf*.config, [withPasswordFieldDescription])
         assertEquals(1, count)
         assertEquals(1, service.tracking())
 
@@ -291,7 +291,7 @@ class PasswordFieldsServiceTests {
         cnf[0].config.props.remove('password')
 
         Properties original = props("simple=text", "textField=a test field")
-        int count = service.track(cnf*.config, withPasswordFieldDescription)
+        int count = service.track(cnf*.config, [withPasswordFieldDescription])
         assertEquals(0, count)
         assertEquals(0, service.tracking())
 
@@ -301,33 +301,33 @@ class PasswordFieldsServiceTests {
     void testUntrackDescriptionWithPasswordFieldNullArguments() {
         for(arg in [null, [null]]) {
             def cnf = genConfiguration()
-            service.track(cnf*.config, withPasswordFieldDescription)
-            service.untrack(arg, withPasswordFieldDescription)
+            service.track(cnf*.config, [withPasswordFieldDescription])
+            service.untrack(arg, [withPasswordFieldDescription])
         }
     }
     void testUntrackNullValueFields() {
         def cnf = genConfiguration()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
         cnf[0].config.props.remove('password')
-        service.untrack(cnf, withPasswordFieldDescription)
+        service.untrack(cnf, [withPasswordFieldDescription])
         assertNull(cnf[0].config.props.password)
     }
 
     void testUntrackDescriptionWithPasswordField() {
         def cnf = genConfiguration()
 
-        service.track(cnf*.config, withPasswordFieldDescription)
-        service.untrack(cnf, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
+        service.untrack(cnf, [withPasswordFieldDescription])
         assertPassword(SECRET, cnf[0].config)
         assertEquals(0, service.tracking())
     }
 
     void testDetectChangeAndDiscardOriginalValue() {
         def cnf = genConfiguration()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
 
         cnf[0].config.props["password"] = "NEW_PASSWORD"
-        int cnt = service.untrack(cnf, withPasswordFieldDescription)
+        int cnt = service.untrack(cnf, [withPasswordFieldDescription])
         assertEquals(1, cnt)
         assertPassword("NEW_PASSWORD", cnf[0].config)
         assertEquals(0, service.tracking())
@@ -335,12 +335,12 @@ class PasswordFieldsServiceTests {
 
     void testMultipleConfigs() {
         def cnf = genTwoSimilarTypes()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
 
         setPassword("NEW_PASSWORD1", cnf[0].config)
         setPassword("NEW_PASSWORD2", cnf[2].config)
 
-        int cnt = service.untrack(cnf, withPasswordFieldDescription)
+        int cnt = service.untrack(cnf, [withPasswordFieldDescription])
 
         assertEquals(2, cnt)
         assertPassword("NEW_PASSWORD1", cnf[0].config)
@@ -351,10 +351,10 @@ class PasswordFieldsServiceTests {
     void testThreeConfigsInsertionEditOnInsertion() {
         def cnf = genTwoSimilarTypes()
         def cnfTwoResources = cnf.subList(0,1)
-        service.track(cnfTwoResources*.config, withPasswordFieldDescription)
+        service.track(cnfTwoResources*.config, [withPasswordFieldDescription])
 
         cnf[2].config.props["password"] = "NEW_PASSWORD2"
-        int cnt = service.untrack(cnf, withPasswordFieldDescription)
+        int cnt = service.untrack(cnf, [withPasswordFieldDescription])
 
         assertEquals(1, cnt)
         assertPassword("secret_set1", cnf[0].config)
@@ -365,10 +365,10 @@ class PasswordFieldsServiceTests {
     void testThreeConfigsInsertionEditOnExisting() {
         def cnf = genTwoSimilarTypes()
         def cnfTwoResources = cnf.subList(0,1)
-        service.track(cnfTwoResources*.config, withPasswordFieldDescription)
+        service.track(cnfTwoResources*.config, [withPasswordFieldDescription])
 
         cnf[0].config.props["password"] = "NEW_PASSWORD2"
-        int cnt = service.untrack(cnf, withPasswordFieldDescription)
+        int cnt = service.untrack(cnf, [withPasswordFieldDescription])
 
         assertEquals(1, cnt)
         assertPassword("NEW_PASSWORD2", cnf[0].config)
@@ -378,12 +378,12 @@ class PasswordFieldsServiceTests {
 
     void testThreeConfigsRemoveEditOnExisting() {
         def cnf = genTwoSimilarTypes()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
 
         cnf[0].config.props["password"] = "NEW_PASSWORD2"
 
         def cnfTwoResources = cnf.subList(0, 1)
-        int cnt = service.untrack(cnfTwoResources, withPasswordFieldDescription)
+        int cnt = service.untrack(cnfTwoResources, [withPasswordFieldDescription])
 
         assertEquals(1, cnt)
         assertPassword("NEW_PASSWORD2", cnfTwoResources[0].config)
@@ -393,11 +393,11 @@ class PasswordFieldsServiceTests {
 
     void testThreeConfigsMissingTypeExisting() {
         def cnf = genTwoSimilarTypes()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
 
         setPassword("NEW_PASSWORD2", cnf[2].config)  // set password on 3rd resource.
 
-        int cnt = service.untrack(cnf, withPasswordFieldDescription)
+        int cnt = service.untrack(cnf, [withPasswordFieldDescription])
 
         assertEquals(2, cnt)
         assertPassword("NEW_PASSWORD2", cnf[2].config)
@@ -406,9 +406,9 @@ class PasswordFieldsServiceTests {
 
     void testAbsentPasswordField() {
         def cnf = genMissingPropField()
-        service.track(cnf*.config, withPasswordFieldDescription)
+        service.track(cnf*.config, [withPasswordFieldDescription])
 
-        service.untrack(cnf, withPasswordFieldDescription)
+        service.untrack(cnf, [withPasswordFieldDescription])
 
         assertTrue("No exception should be thrown if password field value is not present.", true )
     }

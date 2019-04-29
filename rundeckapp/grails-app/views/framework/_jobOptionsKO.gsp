@@ -61,7 +61,7 @@ used by _editOptions.gsp template
                                               dateFormat         : optionSelect.dateFormat,
                                               optionType         : optionSelect.optionType,
 //                                              config             : optionSelect.configMap,
-                                              values             : optionSelect.values,
+                                              values             : optionSelect.optionValuesPluginType ? optionSelect.valuesFromPlugin.collect { it.value } : optionSelect.values,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,
                                               multivalued        : optionSelect.multivalued,
@@ -116,7 +116,7 @@ data for configuring remote option cascading/dependencies
                         <span class="remotestatus"
                               data-bind=" css: {ok: !remoteError() && remoteValues().length>0 && remoteValues, error: remoteError()}">
                         </span>
-                        <span data-bind="text: name"></span>
+                        <span data-bind="text: label"></span>
                     </span>
                     <span data-bind="if: !hasRemote()">
                         <span data-bind="text: label"></span>

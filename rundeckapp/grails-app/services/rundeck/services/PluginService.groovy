@@ -95,6 +95,10 @@ class PluginService {
         ServiceTypes.getPluginType(service)
     }
 
+    boolean hasPluginService(String service){
+        return ServiceTypes.getPluginType(service)!=null
+    }
+
     /**
      * Return the map of Java plugin interface class associated with service name
      * @param service
@@ -384,6 +388,16 @@ class PluginService {
 
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
         listPlugins(clazz, createPluggableService(clazz))
+    }
+
+    /**
+     * List all plugins with a valid Description
+     * @param serviceName name of service
+     * @return List of Description
+     */
+    def List<Description> listPluginDescriptions(String serviceName) {
+        Class pluginClazz = ServiceTypes.getPluginType(serviceName)
+        listPluginDescriptions(pluginClazz, createPluggableService(pluginClazz))
     }
     /**
      * List all plugins with a valid Description

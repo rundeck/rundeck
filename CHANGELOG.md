@@ -1,3 +1,229 @@
+Release 3.0.21
+===========
+
+Date: 2019-04-24
+
+Name: <span style="color: pink"><span class="glyphicon glyphicon-plane"></span> "jalapeño popper pink plane"</span>
+
+## Notes
+
+Bug fixes
+
+## Contributors
+
+* Carlos Eduardo Roriz Franco
+* Greg Schueler (gschueler)
+* Greg Zapp (ProTip)
+* Jaime Tobar (jtobard)
+* Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
+* Stefan Kirrmann (kirrmann)
+* Stephen Joyner (sjrd218)
+* carlos (carlosrfranco)
+
+## Bug Reporters
+
+* G3NSVRV
+* JesusRo
+* ProTip
+* benruset
+* carlosrfranco
+* ckaiser79
+* dabest1
+* fgutierrezz
+* gschueler
+* hs-hub-world
+* jessemarple
+* jplassnibatt
+* jtobard
+* kirrmann
+* ltamaster
+* marcoc610
+* sebastianbello
+* sjrd218
+
+## Issues
+
+[Milestone 3.0.21](https://github.com/rundeck/rundeck/milestone/106)
+
+* [Add docker configuration extension information](https://github.com/rundeck/rundeck/pull/4751)
+* [Fix: job exclude filter doesn't work for scheduled jobs](https://github.com/rundeck/rundeck/pull/4750)
+* [Fix new project / edit node source flow](https://github.com/rundeck/rundeck/pull/4746)
+* [Fixes StaticHostKeyChecking when using password for git plugin via ssh](https://github.com/rundeck/rundeck/pull/4745)
+* [Logout enhancements.](https://github.com/rundeck/rundeck/pull/4743)
+* [new project flow: after creation, should go to updated nodes config page](https://github.com/rundeck/rundeck/issues/4741)
+* [Fix: project does not exist error](https://github.com/rundeck/rundeck/pull/4735)
+* [Fix style on job form for Notification plugins, and webhook field](https://github.com/rundeck/rundeck/pull/4733)
+* [Fix: mask plugin password properties in project config](https://github.com/rundeck/rundeck/pull/4724)
+* [new version of python winrm plugin](https://github.com/rundeck/rundeck/pull/4722)
+* [Default java plugin metadata](https://github.com/rundeck/rundeck/pull/4719)
+* [node Config UI updates](https://github.com/rundeck/rundeck/pull/4714)
+* [Add server.session.timeout to docker remco template](https://github.com/rundeck/rundeck/pull/4712)
+* [Bug/3514/help popover not showing all content](https://github.com/rundeck/rundeck/pull/4709)
+* [Task/update location of job name group button](https://github.com/rundeck/rundeck/pull/4708)
+* [User group plugin type](https://github.com/rundeck/rundeck/pull/4701)
+* [Flow Control fail flag right behavior](https://github.com/rundeck/rundeck/pull/4700)
+* [Exclude Filter Ignored for Scheduled Job but not Adhoc Run](https://github.com/rundeck/rundeck/issues/4699)
+* [Add configuration for hiding the user/password login fields when SSO ](https://github.com/rundeck/rundeck/pull/4697)
+* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/pull/4689)
+* [compatibility for old versions of email notification (issue #4643)](https://github.com/rundeck/rundeck/pull/4688)
+* [Api endpoint for job forecast](https://github.com/rundeck/rundeck/pull/4682)
+* [Allow multi-page selections on job exections history report #4416](https://github.com/rundeck/rundeck/pull/4673)
+* [Fix problem deleting SCM configured project.](https://github.com/rundeck/rundeck/pull/4670)
+* [Use Password field type for password encryptor input](https://github.com/rundeck/rundeck/pull/4669)
+* ["Attached as file to Email" should be default when upgrading Rundeck](https://github.com/rundeck/rundeck/issues/4643)
+* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/issues/4639)
+* [Make password utilitlity field Value To Encrypt to type password](https://github.com/rundeck/rundeck/issues/4624)
+* [Cannot delete SCM configured project after upgrade to Rundeck ver 3.0.17](https://github.com/rundeck/rundeck/issues/4623)
+* [Job with Flow Control with Halt option enabled doesn't work when called by another job.  ](https://github.com/rundeck/rundeck/issues/4605)
+* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/pull/4583)
+* [Old look&feel on notification plugins](https://github.com/rundeck/rundeck/issues/4530)
+* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/issues/4527)
+* [UI Error: "Project does not exist" when working on another project](https://github.com/rundeck/rundeck/issues/3905)
+* ["help balloon" is not showing all its content](https://github.com/rundeck/rundeck/issues/3514)
+* [Enable API endpoint for Schedule Forecast](https://github.com/rundeck/rundeck/issues/3469)
+
+---
+
+Release 3.0.20
+===========
+
+Date: 2019-04-08
+
+Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></span> "jalapeño popper peru piggy-bank"</span>
+
+## Notes
+
+Bug fixes
+
+## Contributors
+
+* Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
+* ProTip
+* Stephen Joyner (sjrd218)
+
+## Bug Reporters
+
+* ProTip
+* boudekerk
+* jessemarple
+* jplassnibatt
+* ltamaster
+* marcioyoshida
+* sjrd218
+
+## Issues
+
+[Milestone 3.0.20](https://github.com/rundeck/rundeck/milestone/105)
+
+* [Avoid holding db connection during job runs](https://github.com/rundeck/rundeck/pull/4678)
+* [After upgrade, certain jobs are not terminating](https://github.com/rundeck/rundeck/issues/4677)
+* [fixing project configuration not overwritten when importing archive](https://github.com/rundeck/rundeck/pull/4672)
+* [Fix date NPE for script plugins that specify no date.](https://github.com/rundeck/rundeck/pull/4666)
+* [Implement tini as pid 1 to reap processes](https://github.com/rundeck/rundeck/pull/4663)
+* [Adds check for disabled flag for Community News](https://github.com/rundeck/rundeck/pull/4661)
+* [informative box behind menu](https://github.com/rundeck/rundeck/issues/4597)
+* [project configuration not overwritten when importing archive](https://github.com/rundeck/rundeck/issues/4582)
+* [Docker image init process](https://github.com/rundeck/rundeck/issues/4402)
+
+---
+
+Release 3.0.19
+===========
+
+Date: 2019-03-27
+
+Name: <span style="color: peachpuff"><span class="glyphicon glyphicon-phone"></span> "jalapeño popper peachpuff phone"</span>
+
+## Notes
+
+Bug fixes
+
+## Contributors
+
+* David Hewitt (davidmhewitt)
+* Jaime Tobar (jtobard)
+* Greg Zapp (ProTip)
+* Stephen Joyner (sjrd218)
+* carlos (carlosrfranco)
+
+## Bug Reporters
+
+* Daryes
+* ProTip
+* carlosrfranco
+* cwaltherf
+* danifr
+* davidmhewitt
+* gschueler
+* jplassnibatt
+* sjrd218
+
+## Issues
+
+[Milestone 3.0.19](https://github.com/rundeck/rundeck/milestone/104)
+
+* [Switch edit regex field visibility to knockout handler](https://github.com/rundeck/rundeck/pull/4658)
+* [Fix file upload plugin on job creation page.](https://github.com/rundeck/rundeck/pull/4656)
+* [Making GUI feature as default on production envirionment to show step…](https://github.com/rundeck/rundeck/pull/4655)
+* [Stop holding DB connections during job execution](https://github.com/rundeck/rundeck/pull/4654)
+* [Fixes configurability of file upload plugin #4369](https://github.com/rundeck/rundeck/pull/4653)
+* [Display label instead of name for remote options](https://github.com/rundeck/rundeck/pull/4652)
+* [Update README for spring boot launch](https://github.com/rundeck/rundeck/pull/4651)
+* [Addresses #1111 and #3939. ](https://github.com/rundeck/rundeck/pull/4647)
+* [Rundeck holds connections on job referenced jobs](https://github.com/rundeck/rundeck/issues/4459)
+* [step labels from child jobs not listed in GUI Report view](https://github.com/rundeck/rundeck/issues/4310)
+* [RD3 : NullPointerException on session timeout with LDAP](https://github.com/rundeck/rundeck/issues/3939)
+* [option regex field doesn't appear after selecting File type](https://github.com/rundeck/rundeck/issues/3136)
+* [Null Pointer Exception while logging out using an AD user](https://github.com/rundeck/rundeck/issues/1111)
+
+---
+
+Release 3.0.18
+===========
+
+Date: 2019-03-22
+
+Name: <span style="color: palevioletred"><span class="glyphicon glyphicon-paperclip"></span> "jalapeño popper palevioletred paperclip"</span>
+
+## Notes
+
+Bug fixes.
+
+## Contributors
+
+* Carlos Eduardo Roriz Franco
+* Greg Schueler (gschueler)
+* Greg Zapp (ProTip)
+* Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
+* Stephen Joyner (sjrd218)
+* carlos (carlosrfranco)
+
+## Bug Reporters
+
+* carlosrfranco
+* gschueler
+* ltamaster
+* sjrd218
+
+## Issues
+
+[Milestone 3.0.18](https://github.com/rundeck/rundeck/milestone/103)
+
+* [Adding a flag on the Render Formatted Data filter to add table-striped style](https://github.com/rundeck/rundeck/pull/4640)
+* [Make email of user profile accessible on context #4212](https://github.com/rundeck/rundeck/pull/4631)
+* [UI: Button to Edit node enhancer plugins if enabled](https://github.com/rundeck/rundeck/pull/4630)
+* [update ui-trellis commit](https://github.com/rundeck/rundeck/pull/4629)
+* [Enabling ui plugins on all pages by default](https://github.com/rundeck/rundeck/pull/4628)
+* [Bump repository dependency](https://github.com/rundeck/rundeck/pull/4627)
+* [Add extended project plugin config](https://github.com/rundeck/rundeck/pull/4621)
+* [updating jsch version to 0.1.55](https://github.com/rundeck/rundeck/pull/4609)
+* [Error message when create project with invalid description #4518](https://github.com/rundeck/rundeck/pull/4570)
+
+---
+
 Release 3.0.17
 ===========
 

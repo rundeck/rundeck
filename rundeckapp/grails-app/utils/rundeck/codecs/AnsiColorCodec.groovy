@@ -139,9 +139,9 @@ class AnsiColorCodec {
                             // or in english, r,g,b can be 0-5. encoded value is = 36*r + 6*g + b + 16
                             def val = (int) cols[2] - 0x10
                             def b = val % 6
-                            val = (int) (val - b) / 6
+                            val = (int) ((val - b) / 6)
                             def g = val % 6
-                            val = (int) (val - b) / 6
+                            val = (int) ((val - b) / 6)
                             def r = val % 6
                             ncols << "${fg}-rgb-${r}-${g}-${b}"
                         } else if (cols[2] >= 0xe8 && cols[2] <= 0xff) {

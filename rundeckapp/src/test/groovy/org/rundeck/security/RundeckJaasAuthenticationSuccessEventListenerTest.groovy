@@ -30,13 +30,13 @@ import javax.security.auth.login.LoginContext
 import java.security.Principal
 
 
-class RundeckAuthenticationSuccessEventListenerTest extends Specification implements GrailsUnitTest {
+class RundeckJaasAuthenticationSuccessEventListenerTest extends Specification implements GrailsUnitTest {
     def "OnApplicationEvent - syncLdap disabled"() {
         setup:
         grailsApplication.config.rundeck.security.syncLdapUser = false
 
         when:
-        RundeckAuthenticationSuccessEventListener listener = new RundeckAuthenticationSuccessEventListener()
+        RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
         listener.grailsApplication = grailsApplication
         listener.userService = Mock(UserService)
         0 * listener.userService.updateUserProfile(_,_,_,_)
@@ -51,7 +51,7 @@ class RundeckAuthenticationSuccessEventListenerTest extends Specification implem
         grailsApplication.config.rundeck.security.syncLdapUser = true
 
         when:
-        RundeckAuthenticationSuccessEventListener listener = new RundeckAuthenticationSuccessEventListener()
+        RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
         listener.grailsApplication = grailsApplication
         listener.userService = Mock(UserService) {
             1 * updateUserProfile({it == username},{it == last},{it == first},{it == email}) >> {}
@@ -78,7 +78,7 @@ class RundeckAuthenticationSuccessEventListenerTest extends Specification implem
         grailsApplication.config.rundeck.security.syncLdapUser = true
 
         when:
-        RundeckAuthenticationSuccessEventListener listener = new RundeckAuthenticationSuccessEventListener()
+        RundeckJaasAuthenticationSuccessEventListener listener = new RundeckJaasAuthenticationSuccessEventListener()
         listener.grailsApplication = grailsApplication
         listener.userService = Mock(UserService) {
             0 * updateUserProfile(_,_,_,_)

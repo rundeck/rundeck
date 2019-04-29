@@ -2675,7 +2675,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 false,
                 false,
-                null
+                null,
+                false
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -2775,7 +2776,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 false,
                 false,
-                null
+                null,
+                false
         )
 
 
@@ -2886,7 +2888,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 project,
                 failOnDisable,
                 false,
-                null
+                null,
+                false
         )
 
 
@@ -3125,6 +3128,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
                 )
 
 
@@ -3234,6 +3238,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -3745,6 +3750,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -3853,6 +3859,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false
         )
 
 
@@ -4033,5 +4040,183 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 return 'newtest1'.bytes
             }
         }
+    }
+
+    def "notification invocation on job ref pass ScheduledExecution directly"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        1 * service.notificationService.triggerJobNotification('start', job, _)
+        1 * service.notificationService.triggerJobNotification(trigger, job, _)
+        where:
+        success      | trigger
+        true         | 'success'
+        false        | 'failure'
+    }
+
+    void "create execution exclude filter"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.filterExclude == 'name: nodea'
+    }
+
+
+    def "Create execution context with exclude filter"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea'
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.nodeSelector != null
+        val.nodeSelector.excludes.name == "nodea"
+        val.frameworkProject == "testproj"
     }
 }

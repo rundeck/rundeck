@@ -16,8 +16,11 @@
 
 package rundeck.controllers
 
+import org.apache.log4j.Logger
 import rundeck.Option
 import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
+import rundeck.utils.OptionsUtil
 
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -26,6 +29,8 @@ import java.util.regex.PatternSyntaxException
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController {
+    static Logger logger = Logger.getLogger(EditOptsController)
+    def FrameworkService frameworkService
     def fileUploadService
     def optionValuesService
     def static allowedMethods = [
@@ -553,12 +558,30 @@ class EditOptsController {
             opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
         }
         if(jobWasScheduled && opt.required && !(opt.defaultValue||opt.defaultStoragePath)){
-            opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
+            boolean hasSelectedOnRemoteValue = false
+            if(opt.realValuesUrl){
+                try{
+                    def realUrl = opt.realValuesUrl.toExternalForm()
+                    ScheduledExecution se = opt.scheduledExecution
+                    def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, [:], realUrl.matches(/(?i)^https?:.*$/))
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, 10, 0, 5)
+                    if(remoteResult){
+                        def remoteJson = remoteResult.json
+                        if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){
+                            hasSelectedOnRemoteValue = true
+                        }
+                    }
+                } catch (Exception e){
+                    logger.error("getRemoteJSON error: ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+            if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
         return result
     }
 
-    /**
+        /**
      * Use input parameters to configure an Option object.
      * Special properties "valuesType" and "enforcedType" configure
      * the option when mutually exclusive properties are in the input parameters.

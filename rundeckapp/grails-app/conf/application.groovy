@@ -26,6 +26,8 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
+        rundeck.feature.'enhanced-nodes'.enabled = true
+
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
     }
@@ -34,7 +36,6 @@ environments {
         application.refreshDelay=5000
         grails.profiler.disable=false
         feature.incubator.'*'=true
-        rundeck.feature.'*'.enabled=true
         dataSource {
             dbCreate = "create-drop" // one of 'create', 'create-drop','update'
             url = "jdbc:h2:file:./db/devDb"

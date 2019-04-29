@@ -13,15 +13,16 @@ import java.util.stream.Collectors;
  */
 public class PluginControlServiceImpl implements PluginControlService {
 
-    private final Framework framework;
+    public static final String DISABLED_PLUGINS = "disabled.plugins";
+    private final IFramework framework;
     private final String    projectName;
 
-    private PluginControlServiceImpl(Framework framework, String project) {
+    private PluginControlServiceImpl(IFramework framework, String project) {
         this.framework = framework;
         this.projectName = project;
     }
 
-    public static PluginControlService forProject(Framework framework, String project) {
+    public static PluginControlService forProject(IFramework framework, String project) {
         return new PluginControlServiceImpl(framework, project);
     }
 
@@ -30,7 +31,11 @@ public class PluginControlServiceImpl implements PluginControlService {
      */
     @Override
     public List<String> listDisabledPlugins() {
-        String disabledPlugins = framework.getProjectProperty(projectName, "disabled.plugins");
+        IRundeckProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(projectName);
+        String disabledPlugins =
+                frameworkProject.hasProperty(DISABLED_PLUGINS)
+                ? frameworkProject.getProperty(DISABLED_PLUGINS)
+                : null;
         if (disabledPlugins != null && !disabledPlugins.trim().isEmpty()) {
             return Arrays.asList(disabledPlugins.split("\\s*,\\s*"));
         }

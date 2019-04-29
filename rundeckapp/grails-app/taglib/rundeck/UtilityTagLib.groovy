@@ -61,6 +61,7 @@ class UtilityTagLib{
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     def configurationService
     def scheduledExecutionService
+    FrameworkService frameworkService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -1864,5 +1865,15 @@ ansi-bg-default'''))
             out << body()
         }
 
+    }
+
+    def showLocalLogin = { attrs, body ->
+        boolean shouldShowLocalLogin = configurationService.getBoolean("login.localLogin.enabled", true)
+        if(configurationService.getBoolean("login.showLocalLoginAfterFirstSSOLogin",false)) {
+            shouldShowLocalLogin = frameworkService.getFirstLoginFile().exists()
+        }
+        if(shouldShowLocalLogin) {
+            out << body()
+        }
     }
 }

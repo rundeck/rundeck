@@ -28,8 +28,8 @@ import rundeck.services.UserService
 import javax.security.auth.Subject
 
 
-class RundeckAuthenticationSuccessEventListener implements ApplicationListener<JaasAuthenticationSuccessEvent> {
-    private static final Logger LOG = LoggerFactory.getLogger(RundeckAuthenticationSuccessEventListener)
+class RundeckJaasAuthenticationSuccessEventListener implements ApplicationListener<JaasAuthenticationSuccessEvent> {
+    private static final Logger LOG = LoggerFactory.getLogger(RundeckJaasAuthenticationSuccessEventListener)
     UserService userService
     def grailsApplication
 
