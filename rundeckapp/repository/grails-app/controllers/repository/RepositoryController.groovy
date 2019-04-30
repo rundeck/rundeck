@@ -38,7 +38,10 @@ class RepositoryController {
                                      : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.contains(it.id)
+                    it.installed = installedPluginIds.keySet().contains(it.id)
+                    if(it.installed) {
+                        it.updatable = checkUpdatable(installedPluginIds[it.id],it.currentVersion)
+                    }
                 }
             }
 
@@ -67,7 +70,7 @@ class RepositoryController {
 
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.contains(it.id)
+                    it.installed = installedPluginIds.keySet().contains(it.id)
                 }
             }
             def searchResponse = [:]
@@ -87,7 +90,7 @@ class RepositoryController {
             def artifacts = repoClient.listArtifacts(0,-1)*.results.flatten()
             def installedArtifacts = []
             artifacts.each {
-                if(installedPluginIds.contains(it.id)) {
+                if(installedPluginIds.keySet().contains(it.id)) {
                     installedArtifacts.add([artifactId:it.id, artifactName:it.name, version: it.currentVersion])
                 }
             }
@@ -217,6 +220,22 @@ class RepositoryController {
             response.setStatus(400)
             def err = [error:"You are not authorized to perform this action"]
             render err as JSON
+        }
+
+        private boolean checkUpdatable(installedVersion,latestVersion) {
+            String cleanInstalledVer = installedVersion.replaceAll(~/[^\d]/,"")
+            String cleanLatestVer = latestVersion.replaceAll(~/[^\d]/,"")
+            long installed = convertToNumber(cleanInstalledVer, "Installed")
+            long latest = convertToNumber(cleanLatestVer,"Current")
+            return latest > installed
+        }
+
+        private long convertToNumber(String val, String prefix) {
+            try {
+                Long.parseLong(val)
+            } catch(NumberFormatException nfe) {
+                log.error("${prefix} plugin version value can't be converted to a number. Can't check updatability. Value: ${val}",nfe)
+            }
         }
 
         @PackageScope
