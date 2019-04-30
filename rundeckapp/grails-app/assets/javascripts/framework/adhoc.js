@@ -283,7 +283,7 @@ function init() {
             nodesTitleSingular: message('Node'),
             nodesTitlePlural: message('Node.plural')
         }));
-    ko.applyBindings(nodeFilter, document.getElementById('actionButtonArea'));
+
     ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
     ko.applyBindings(nodeFilter, document.getElementById('nodefiltersHidden'));
 
