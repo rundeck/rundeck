@@ -29,3 +29,13 @@
   text-decoration: underline;
   color: $primary-states-color;
 }
+
+.jobstats {
+  .job-stats-item {
+    text-align: center;
+  }
+
+  .job-stats-value {
+    font-weight: bold;
+  }
+}
