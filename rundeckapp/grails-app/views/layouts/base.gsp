@@ -35,16 +35,10 @@
     <!-- fontawesome -->
     <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous"> -->
     <!-- /fontawesome -->
-    <!-- themify icons -->
-    <!-- <asset:stylesheet  href="themify.css" /> -->
-    <!-- /themify icons -->
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="fontawesome.css"/>
     <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="app.css"/>
-    <!-- <asset:stylesheet href="custom.less.css"/> -->
-    <!-- <asset:stylesheet href="app.less.css"/> -->
-    <!-- <asset:stylesheet href="rundeck1.css"/> -->
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
