@@ -127,11 +127,11 @@ import axios from "axios";
 import _ from "lodash";
 import algoliasearch from "algoliasearch/lite";
 import config from "./config";
-import ResultType from "./OfficialPluginsResults";
+import ResultType from "./AlgoliaPluginsResults";
 import InstallButton from "./InstallButton";
 
 export default {
-  name: "OfficialPlugins",
+  name: "AlgoliaPlugins",
   components: { InstallButton },
   data() {
     return {
