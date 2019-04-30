@@ -283,6 +283,11 @@ public class NotificationService implements ApplicationContextAware{
                         if (configAttachLogInFile in ['true',true]) {
                             attachlog = true
                         }
+
+                        //for old versions support
+                        if(!attachlog && !attachlogbody){
+                            attachlog = true
+                        }
                     }
 
                     //set up templates

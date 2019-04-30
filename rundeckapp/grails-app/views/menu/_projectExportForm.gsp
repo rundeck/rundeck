@@ -113,6 +113,33 @@
                 </auth:resourceAllowed>
               </div>
             </div>
+
+
+
+            <div class="form-group">
+              <label class="control-label col-sm-2">Referenced Jobs:</label>
+              <div class="col-sm-10">
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="no" id="dontStrip" checked="checked" />
+                    <label for="dontStrip">
+                    <g:message code="export.jobref.strip.none"/>
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="name" id="stripName"/>
+                    <label for="stripName">
+                    <g:message code="export.jobref.strip.name"/>
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="uuid" id="stripUuid"/>
+                    <label for="stripUuid">
+                    <g:message code="export.jobref.strip.uuid"/>
+                    </label>
+                  </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

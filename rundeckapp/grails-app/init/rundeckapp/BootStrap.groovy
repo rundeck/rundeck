@@ -286,6 +286,12 @@ class BootStrap {
              SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
          }
 
+         if(!grailsApplication.config.rundeck.logout.redirect.url.isEmpty()) {
+             log.debug("Setting logout url to: ${grailsApplication.config.rundeck.logout.redirect.url}")
+             def logoutSuccessHandler = grailsApplication.mainContext.getBean("logoutSuccessHandler")
+             logoutSuccessHandler.defaultTargetUrl = grailsApplication.config.rundeck.logout.redirect.url
+         }
+
          if(grailsApplication.config.execution.follow.buffersize){
              servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
          }else{

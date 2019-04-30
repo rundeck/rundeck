@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.plugins.scm.*
+import com.jcraft.jsch.Session
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.ListBranchCommand
@@ -29,6 +30,7 @@ import org.eclipse.jgit.api.RebaseCommand
 import org.eclipse.jgit.api.RebaseResult
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.api.TransportCommand
+import org.eclipse.jgit.api.TransportConfigCallback
 import org.eclipse.jgit.diff.RawTextComparator
 import org.eclipse.jgit.lib.BranchConfig
 import org.eclipse.jgit.lib.ConfigConstants
@@ -39,7 +41,11 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.transport.JschConfigSessionFactory
+import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.SshTransport
 import org.eclipse.jgit.transport.TrackingRefUpdate
+import org.eclipse.jgit.transport.Transport
 import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import org.eclipse.jgit.util.FileUtils
@@ -665,6 +671,22 @@ class BaseGitPlugin {
             def expandedPath = expandContextVarsInPath(context, commonConfig.gitPasswordPath)
 
             def data = loadStoragePathData(context, expandedPath)
+            command.setTransportConfigCallback(new TransportConfigCallback() {
+                @Override
+                void configure(final Transport transport) {
+                    if (transport instanceof SshTransport) {
+                        SshTransport sshTransport = (SshTransport) transport
+                        sshTransport.setSshSessionFactory(new JschConfigSessionFactory() {
+                            @Override
+                            protected void configure(final OpenSshConfig.Host hc, final Session session) {
+                                sshConfig.each { k, v ->
+                                    session.setConfig(k,v)
+                                }
+                            }
+                        })
+                    }
+                }
+            })
 
             if (null != data && data.length > 0) {
 

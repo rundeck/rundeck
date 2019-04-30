@@ -95,6 +95,10 @@ class PluginService {
         ServiceTypes.getPluginType(service)
     }
 
+    boolean hasPluginService(String service){
+        return ServiceTypes.getPluginType(service)!=null
+    }
+
     /**
      * Return the map of Java plugin interface class associated with service name
      * @param service
