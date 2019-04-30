@@ -1,8 +1,20 @@
 <template>
   <div id="app">
+    <div class="loading" v-show="isLoading">
+      <div class="loading-spinner">
+        <i class="fas fa-spinner fa-spin fa-5x"></i>
+        <div class="loading-text">loading plugins</div>
+      </div>
+    </div>
+    <div class="installing" v-show="isInstalling">
+      <div class="installing-spinner">
+        <i class="fas fa-spinner fa-spin fa-5x"></i>
+        <div class="installing-text">{{installVerb}} {{installPluginName}}</div>
+      </div>
+    </div>
     <div class="row">
       <div class="col-xs-12">
-        <AlgoliaPlugins/>
+        <!-- <AlgoliaPlugins/> -->
         <!-- <div v-if="showAlgolia">
           <OfficialPlugins
             :installed-plugins="installedPlugins"
@@ -31,7 +43,7 @@
                 </div>
               </div>
               <div class="card-content">
-                <div>{{result.description}}</div>
+                <div v-html="result.description"></div>
                 <div>
                   <label>Plugin Type:</label>
                   {{result.artifactType}}
@@ -60,7 +72,11 @@
                   >{{svc}}</span>
                 </div>
                 <div>
-                  <span class="label label-default" v-for="tag in result.tags" :key="tag">{{tag}}</span>
+                  <span
+                    class="label label-default"
+                    v-for="(tag, index) in result.tags"
+                    :key="index"
+                  >{{tag}}</span>
                 </div>
               </div>
               <div class="card-footer">
@@ -68,105 +84,15 @@
                 <div>
                   <a
                     class="btn btn-sm btn-info"
-                    v-if="!result.installed && canInstall"
-                    @click="install(repo.repositoryName,result.id)"
+                    v-if="!result.installed && canInstall && result.record && result.record.object_id"
+                    @click="install(repo.repositoryName,result.record.object_id, result.display)"
                   >Install</a>
                 </div>
                 <div v-if="result.installed">
-                  <a @click="uninstall" class="btn btn-sm btn-danger">Uninstall</a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- GO NO FURTHER -->
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="card">
-          <div class="card-content">
-            <div>
-              <div class="repo-header">
-                <h3 class="card-title flex-left">
-                  Repository
-                  <span style="font-size: smaller">/ Plugins</span>
-                </h3>
-                <div class="card-title flex-right">
-                  <form v-on:submit.prevent>
-                    <label>Search:</label>
-                    <input
-                      type="text"
-                      v-model="searchTerm"
-                      @keyup.enter="search"
-                      class="search-box"
-                    >
-                    <span @click="search" class="search-btn">&#x25b6;</span>
-                  </form>
-                </div>
-              </div>
-              <hr>
-              <div v-if="errors" class="warnings">
-                <div v-for="error in errors" :key="error">{{error.msg}}</div>
-              </div>
-              <div v-if="searchWarnings" class="warnings">
-                <div v-for="warn in searchWarnings" :key="warn">{{warn}}</div>
-              </div>
-              <div v-for="repo in repositories" :key="repo.repositoryName">
-                <div
-                  class="repo-name"
-                  v-if="repositories.length > 1"
-                >Repository: {{repo.repositoryName}}</div>
-                <div class="artifact-grid">
-                  <div class="artifact" v-for="result in repo.results" :key="result.id">
-                    <div class="em">{{result.display || result.name}}</div>
-                    <hr>
-                    <div>
-                      <label>Description:</label>
-                      {{result.description}}
-                    </div>
-                    <div>
-                      <label>Plugin Type:</label>
-                      {{result.artifactType}}
-                    </div>
-                    <div>
-                      <label>Plugin Version:</label>
-                      {{result.currentVersion}}
-                    </div>
-                    <div>
-                      <label>Rundeck Compatibility:</label>
-                      {{result.rundeckCompatibility}}
-                    </div>
-                    <div>
-                      <label>Support:</label>
-                      {{result.support}}
-                    </div>
-                    <div>
-                      <label>Author:</label>
-                      {{result.author}}
-                    </div>
-                    <div class="provides">
-                      <label>Provides:</label>
-                      <span
-                        v-for="(svc, index) in unqSortedSvcs(result.providesServices)"
-                        :key="index"
-                      >{{svc}}</span>
-                    </div>
-                    <div>
-                      <label>Tags:</label>
-                      <span class="tag" v-for="tag in result.tags" :key="tag">{{tag}}</span>
-                    </div>
-                    <div>
-                      <span
-                        class="install"
-                        v-if="!result.installed && canInstall"
-                        @click="install(repo.repositoryName,result.id)"
-                      >Install</span>
-                    </div>
-                    <div>
-                      <span class="installed" v-if="result.installed">Installed</span>
-                    </div>
-                  </div>
+                  <a
+                    @click="uninstall(repo.repositoryName,result.record.object_id, result.display)"
+                    class="btn btn-sm btn-danger"
+                  >Uninstall</a>
                 </div>
               </div>
             </div>
@@ -192,9 +118,13 @@ export default {
       searchTerm: null,
       searchWarnings: null,
       errors: null,
-      rdBase: null,
+      rdBase: window._rundeck.rdBase,
       canInstall: window.repocaninstall,
-      showAlgolia: false
+      showAlgolia: false,
+      isLoading: true,
+      isInstalling: false,
+      installVerb: null,
+      installPluginName: null
     };
   },
   methods: {
@@ -209,7 +139,6 @@ export default {
     search() {
       this.errors = null;
       this.searchWarnings = null;
-      this.rdBase = window._rundeck.rdBase;
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
@@ -229,9 +158,11 @@ export default {
           console.log(JSON.stringify(error));
         });
     },
-    install(repoName, pluginId) {
+    install(repoName, pluginId, pluginName) {
       this.errors = null;
-      this.rdBase = window._rundeck.rdBase;
+      this.isInstalling = true;
+      this.installVerb = "installing";
+      this.installPluginName = pluginName;
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
@@ -242,14 +173,18 @@ export default {
           let repo = this.repositories.find(r => r.repositoryName === repoName);
           let plugin = repo.results.find(r => r.id === pluginId);
           plugin.installed = true;
+          this.isInstalling = false;
         })
         .catch(error => {
           this.errors = error.response.data;
+          this.isInstalling = false;
         });
     },
-    uninstall(repoName, pluginId) {
+    uninstall(repoName, pluginId, pluginName) {
       this.errors = null;
-      this.rdBase = window._rundeck.rdBase;
+      this.isInstalling = true;
+      this.installVerb = "uninstalling";
+      this.installPluginName = pluginName;
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
@@ -259,10 +194,12 @@ export default {
         .then(response => {
           let repo = this.repositories.find(r => r.repositoryName === repoName);
           let plugin = repo.results.find(r => r.id === pluginId);
-          plugin.installed = true;
+          plugin.installed = false;
+          this.isInstalling = false;
         })
         .catch(error => {
           this.errors = error.response.data;
+          this.isInstalling = false;
         });
     }
   },
@@ -278,6 +215,7 @@ export default {
         if (response.data) {
           this.repositories = response.data;
         }
+        this.isLoading = false;
       });
     }
   }
@@ -393,12 +331,54 @@ export default {
     }
   }
   .card-content {
-    min-height: 280px;
+    min-height: 300px;
   }
   .card-footer {
     position: absolute;
     bottom: 0;
     width: 100%;
+  }
+}
+.loading {
+  position: fixed;
+  height: 100%;
+  background: #ffffffc9;
+  width: 100%;
+  z-index: 99;
+  top: 0;
+  left: 0;
+  .loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+  }
+  .loading-text {
+    font-size: 16px;
+    margin-top: 1em;
+    font-weight: bold;
+    text-align: center;
+    margin-left: -20px;
+  }
+}
+.installing {
+  position: fixed;
+  height: 100%;
+  background: #ffffffc9;
+  width: 100%;
+  z-index: 99;
+  top: 0;
+  left: 0;
+  .installing-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+  }
+  .installing-text {
+    font-size: 16px;
+    margin-top: 1em;
+    font-weight: bold;
+    text-align: center;
+    margin-left: -20px;
   }
 }
 </style>
