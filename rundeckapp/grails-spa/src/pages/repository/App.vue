@@ -11,19 +11,6 @@
         </ul>
       </div>
     </div>
-    <!-- <div class="loading" v-show="isLoading">
-      <div class="loading-spinner">
-
-        <div class="loading-text">loading plugins</div>
-      </div>
-    </div>
-    <div class="installing" v-show="isInstalling">
-      <div class="installing-spinner">
-        <i class="fas fa-spinner fa-spin fa-5x"></i>
-        <div class="installing-text">{{installVerb}} {{installPluginName}}</div>
-      </div>
-    </div>
-    -->
     <div class="row">
       <div class="col-xs-12">
         <div class="card">
@@ -57,10 +44,8 @@
     </div>
     <div class="row">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
-        <div class="card">
-          <div class="card-content">
-            <h2 class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</h2>
-          </div>
+        <div class>
+          <h2 class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</h2>
         </div>
 
         <div class="artifact-grid row">
@@ -88,11 +73,16 @@ export default {
   },
   data() {
     return {
-      // supportType: []
+      supportType: []
     };
   },
+  watch: {
+    supportType: function(newVal, oldVal) {
+      this.setSupportTypeFilter(newVal);
+    }
+  },
   methods: {
-    ...mapActions(["initData"])
+    ...mapActions(["initData", "setSupportTypeFilter"])
     // search() {
     //   this.errors = null;
     //   this.searchWarnings = null;
@@ -124,6 +114,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.card {
+  .card-header {
+    .card-title {
+      h4 {
+        margin: 0;
+      }
+    }
+  }
+}
 .loading {
   position: fixed;
   height: 100%;

@@ -15,10 +15,8 @@ export default new Vuex.Store({
     overlay: true,
     loadingMessage: null,
     loadingSpinner: false,
-    filter: {
-      supportType: [],
-      plugintype: []
-    }
+    filterSupportType: null,
+    filterPluginType: null
   },
   getters: {
     getRepos: state => state.repositories
@@ -49,9 +47,17 @@ export default new Vuex.Store({
     },
     SET_ERRORS(state, errors) {
       state.errors = errors
+    },
+    SET_SUPPORT_TYPE_FILTERS(state, filters) {
+      state.filterSupportType = filters
     }
   },
   actions: {
+    setSupportTypeFilter({
+      commit
+    }, filters) {
+      commit("SET_SUPPORT_TYPE_FILTERS", filters)
+    },
     initData({
       commit
     }) {

@@ -1,23 +1,18 @@
 <template>
-  <div class="card result">
+  <div class="card result" v-show="displayCard">
     <div class="card-header">
-      <div class="card-title">
-        <h4>{{result.display || result.name}}</h4>
-        <span class="current-version-number label label-default">{{result.currentVersion}}</span>
-      </div>
+      <span class="current-version-number label label-default">{{result.currentVersion}}</span>
+      <h5 class="support-type">{{result.support}}</h5>
+      <h3 class="card-title">{{result.display || result.name}}</h3>
+      <h5 class="requires-rundeck-version">
+        <span v-if="result.rundeckCompatibility">Requires Rundeck {{result.rundeckCompatibility}}</span>
+      </h5>
     </div>
     <div class="card-content">
-      <div v-html="result.description"></div>
+      <div class="plugin-description" v-html="result.description"></div>
       <div v-if="result.artifactType">
         <label>Plugin Type:</label>
         {{result.artifactType}}
-      </div>
-      <!-- <div>
-                  <label>Plugin Version:</label>
-                  {{result.currentVersion}}
-      </div>-->
-      <div v-if="result.rundeckCompatibility">
-        <strong>Requires Rundeck {{result.rundeckCompatibility}}</strong>
       </div>
       <!-- <div>
                   <label>Author:</label>
@@ -25,30 +20,42 @@
       </div>-->
 
       <ul class="provides">
-        <li
-          v-for="(svc, index) in unqSortedSvcs(result.providesServices)"
-          :key="index"
-          class="label label-default"
-        >{{svc}}</li>
+        <li v-for="(svc, index) in unqSortedSvcs(result.providesServices)" :key="index">{{svc}}</li>
       </ul>
-      <div>
-        <span class="label label-default" v-for="(tag, index) in result.tags" :key="index">{{tag}}</span>
-      </div>
     </div>
     <div class="card-footer">
-      <div class="button-group">
-        <a
-          class="btn btn-md btn-block btn-success btn-fill"
-          v-if="!result.installed && canInstall && result.installId"
-          @click="handleInstall"
-        >Install</a>
-        <a
-          v-if="result.installed"
-          @click="handleUninstall"
-          class="btn btn-md btn-block btn-fill btn-danger"
-        >Uninstall</a>
+      <div class="row">
+        <div class="col-xs-12">
+          <div class="col-xs-12 col-sm-6">
+            <div class="links fa-2x">
+              <a v-if="result.sourceLink" :href="result.sourceLink" target="_blank">
+                <i class="fas fa-file-code"></i>
+              </a>
+              <a
+                v-if="result.record && result.record.post_slug "
+                :href="`https://online.rundeck.com/plugins/${result.record.post_slug}`"
+                target="_blank"
+              >
+                <i class="fas fa-file-alt"></i>
+              </a>
+            </div>
+          </div>
+          <div class="col-xs-12 col-sm-6">
+            <div class="button-group">
+              <a
+                class="btn btn-lg btn-success"
+                v-if="!result.installed && canInstall && result.installId"
+                @click="handleInstall"
+              >Install</a>
+              <a
+                v-if="result.installed"
+                @click="handleUninstall"
+                class="btn btn-lg btn-danger"
+              >Uninstall</a>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="support-type">{{result.support}}</div>
     </div>
   </div>
 </template>
@@ -59,7 +66,21 @@ export default {
   name: "PluginCard",
   props: ["result", "repo"],
   computed: {
-    ...mapState(["canInstall", "rdBase"])
+    ...mapState(["canInstall", "rdBase", "filterSupportType"]),
+    displayCard() {
+      if (!this.filterSupportType) {
+        return true;
+      } else {
+        if (
+          this.filterSupportType &&
+          this.filterSupportType.includes(this.result.support)
+        ) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
   },
   data() {
     return {};
@@ -91,71 +112,84 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
-.plugin-types {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  li {
-    display: inline-block;
-    margin-right: 1em;
-    margin-bottom: 1em;
-  }
-}
-.card {
-  .card-header {
-    .card-title {
-      h4 {
-        margin: 0;
-      }
-    }
-  }
-}
 .card.result {
   .card-header {
+    background: black;
+    padding: 3em 2em 2em;
+    border-radius: 7px 7px 0 0;
     .card-title {
-      h4 {
-        margin: 0;
-      }
-      .current-version-number {
-        position: absolute;
-        right: -30px;
-        top: -30px;
-        font-size: 14px;
-      }
+      margin: 0;
+      color: white;
+      font-weight: bold;
+      font-size: 2em;
+    }
+    .support-type {
+      color: white;
+      // font-weight: bold;
+      margin: 0 0 0.25em;
+      // text-transform: uppercase;
+    }
+    .current-version-number {
+      position: absolute;
+      right: 1em;
+      top: 1em;
+      padding: 0.2em 1em;
+      font-size: 18px;
+      border-radius: 20px;
+    }
+    .requires-rundeck-version {
+      color: #f7403a;
+      // text-transform: capitalize;
+      // font-weight: bold;
+      margin: 0.7em 0 0;
+      height: 20px;
     }
   }
   .card-content {
-    min-height: 300px;
+    padding: 2em 2em 1em;
+    // min-height: 250px;
     .provides {
-      margin: 1em 0 0;
+      list-style: none;
+      margin: 2em 0 0;
       padding: 0;
       li {
-        padding-top: 5px;
+        display: inline-block;
         margin-right: 1em;
         margin-bottom: 1em;
+        padding: 6px 10px 5px;
+        border: 2px solid #20201f;
+        color: #20201f;
+        border-radius: 6px;
+        font-weight: bold;
       }
     }
   }
   .card-footer {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
+    padding: 0 2em auto;
+    border-radius: 0 0 7px 7px;
+    .links {
+      a {
+        color: black;
+        text-decoration: none;
+        margin-right: 0.6em;
+      }
+    }
     .button-group {
+      text-align: right;
       margin-bottom: 1em;
       .btn {
         border-radius: 6px;
+        font-weight: bold;
+        padding: 5px 30px;
       }
     }
-    .support-type {
-      background: black;
-      color: white;
-      text-align: center;
-      font-weight: bold;
-      padding: 1em;
-      margin: 0 -15px -15px;
-      border-bottom-left-radius: 6px;
-      border-bottom-right-radius: 6px;
-    }
   }
+}
+</style>
+<style lang="scss">
+.card.result .card-content p {
+  font-size: 1.3em;
+  line-height: 1.2em;
+  // font-weight: bold;
 }
 </style>
