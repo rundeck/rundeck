@@ -179,12 +179,12 @@ trigger_travis_build() {
             "message": "Rundeck OSS triggered build.",
             "config": {
                 "merge_mode": "deep_merge",
-                "env": {
+                "env": { "global": {
                     "UPSTREAM_PROJECT": "rundeck",
                     "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
                     "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}",
                     "UPSTREAM_TAG": "${RUNDECK_TAG}"
-                }
+                }}
             }
         }
     }
