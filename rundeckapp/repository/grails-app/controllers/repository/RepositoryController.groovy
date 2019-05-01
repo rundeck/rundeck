@@ -38,9 +38,9 @@ class RepositoryController {
                                      : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.keySet().contains(it.id)
+                    it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
                     if(it.installed) {
-                        it.updatable = checkUpdatable(installedPluginIds[it.id],it.currentVersion)
+                        it.updatable = checkUpdatable(installedPluginIds[it.installId],it.currentVersion)
                     }
                 }
             }
@@ -70,7 +70,7 @@ class RepositoryController {
 
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.keySet().contains(it.id)
+                    it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
                 }
             }
             def searchResponse = [:]
@@ -90,8 +90,8 @@ class RepositoryController {
             def artifacts = repoClient.listArtifacts(0,-1)*.results.flatten()
             def installedArtifacts = []
             artifacts.each {
-                if(installedPluginIds.keySet().contains(it.id)) {
-                    installedArtifacts.add([artifactId:it.id, artifactName:it.name, version: it.currentVersion])
+                if(installedPluginIds.keySet().contains(it.installId)) {
+                    installedArtifacts.add([artifactId:it.installId, artifactName:it.name, version: it.currentVersion])
                 }
             }
             render installedArtifacts as JSON
