@@ -1,8 +1,9 @@
 <template>
   <div>
     <div class>
-      <h2 class="repo-name" v-if="repositories.length > 1">
+      <h2 class="repo-name">
         <span class="capital-case">{{repo.repositoryName}}</span> Repository
+        <span class="badge">{{repo.results.length}}</span>
         <a class="pull-right btn btn-default" @click="toggleVisiblity">
           <span v-show="visible">Hide</span>
           <span v-show="!visible">Show</span>

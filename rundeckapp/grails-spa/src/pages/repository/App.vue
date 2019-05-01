@@ -11,37 +11,36 @@
         </ul>
       </div>
     </div>
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="card">
-          <div class="card-content">
-            <label>
-              Community
-              <input type="checkbox" value="Community" v-model="supportType">
-            </label>
-
-            <label>
-              Rundeck Supported
-              <input
-                type="checkbox"
-                value="Rundeck Supported"
-                v-model="supportType"
-              >
-            </label>
-
-            <label>
-              Enterprise Exclusive
-              <input
-                type="checkbox"
-                value="Enterprise Exclusive"
-                v-model="supportType"
-              >
-            </label>
+    <div class="col-xs-12">
+      <div class="support-filters row row-flex row-flex-wrap">
+        <div class="col-md-2">
+          <div class="flex-col">
+            <span class="title">Support</span>
           </div>
-          <pre>{{supportType}}</pre>
+        </div>
+        <div class="col-md-10">
+          <label>
+            Community
+            <input type="checkbox" value="Community" v-model="supportType">
+          </label>
+
+          <label>
+            Rundeck Supported
+            <input type="checkbox" value="Rundeck Supported" v-model="supportType">
+          </label>
+
+          <label>
+            Enterprise Exclusive
+            <input
+              type="checkbox"
+              value="Enterprise Exclusive"
+              v-model="supportType"
+            >
+          </label>
         </div>
       </div>
     </div>
+
     <div class="row">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
         <RepositoryRow :repo="repo"/>
@@ -106,6 +105,24 @@ export default {
   }
 };
 </script>
+
+<style lang="scss" scoped>
+.support-filters {
+  background: black;
+  color: white;
+  padding: 3em 2em;
+  font-size: 20px;
+  .title {
+    color: #cdcdcd;
+    display: flex;
+    align-items: center;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 3.44px;
+  }
+}
+</style>
+
 
 <style lang="scss" scoped>
 .card {

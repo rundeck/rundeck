@@ -26,7 +26,8 @@
     "vue-scrollto": "^2.15.0",
     "vue-select": "^2.6.0",
     "vue2-ace-editor": "0.0.11",
-    "vue2-filters": "^0.3.0"
+    "vue2-filters": "^0.3.0",
+    "vuex": "^3.1.0"
   },
   "devDependencies": {
     "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#c1e5cc32565f2c91e7e902df6f2049f397824749",

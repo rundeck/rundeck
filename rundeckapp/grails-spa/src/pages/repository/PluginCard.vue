@@ -115,7 +115,7 @@ export default {
 <style lang="scss" scoped>
 .card.result {
   .card-header {
-    background: black;
+    background: #20201f;
     padding: 3em 2em 2em;
     border-radius: 7px 7px 0 0;
     .card-title {
