@@ -1,8 +1,94 @@
 .popover {
   max-width: 100%;
 
+  &.bottom .arrow:after {
+    border-bottom-color: $bg-default;
+  }
+
   .popover-content {
-    border: 1px solid #5dccff;
+    border: 1px solid $bg-default;
     border-radius: 6px;
+  }
+
+  &.popover-default-inverse {
+    .popover-content {
+      border-color: $bg-default-inverse;
+    }
+
+    .arrow:after {
+      border-bottom-color: $bg-default-inverse;
+    }
+  }
+
+  &.popover-main {
+    .popover-content {
+      border-color: $bg-mainpanel;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-mainpanel;
+    }
+  }
+
+  &.popover-sub {
+    .popover-content {
+      border-color: $bg-subheader;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-subheader;
+    }
+  }
+
+  &.popover-primary {
+    .popover-content {
+      border-color: $bg-primary;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-primary;
+    }
+  }
+
+  &.popover-success {
+    .popover-content {
+      border-color: $bg-success;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-success;
+    }
+  }
+
+  &.popover-info {
+    .popover-content {
+      border-color: $bg-info;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-info;
+    }
+  }
+
+  &.popover-warning {
+    .popover-content {
+      border-color: $bg-warning;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-warning;
+    }
+  }
+
+  &.popover-warning {
+    .popover-content {
+      border-color: $bg-warning;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-warning;
+    }
+  }
+
+  &.popover-danger {
+    .popover-content {
+      border-color: $bg-danger;
+    }
+    .arrow:after {
+      border-bottom-color: $bg-danger;
+    }
   }
 }

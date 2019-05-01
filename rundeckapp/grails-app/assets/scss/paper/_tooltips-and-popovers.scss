@@ -115,7 +115,7 @@
 }
 .popover-title{
     font-size: $font-paragraph;
-    background-color: $azure-navbar;
+    background-color: $bg-default;
     font-weight: normal;
     line-height: 22px;
     padding: 8px 15px;
@@ -134,7 +134,7 @@
     margin-left: 0;
 }
 .popover.bottom .arrow:after{
-    border-bottom-color: $azure-navbar;
+    border-bottom-color: $bg-default;
 }
 .popover-filter{
     position: fixed;
