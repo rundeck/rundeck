@@ -110,13 +110,14 @@ export default {
 .support-filters {
   background: black;
   color: white;
-  padding: 3em 2em 3em 1em;
+  padding: 2em 1em;
   font-size: 20px;
   .title {
     color: #cdcdcd;
     display: flex;
-    align-items: center;
+    // align-items: center;
     font-size: 1.8rem;
+    padding: 1em 2em;
     text-transform: uppercase;
     letter-spacing: 3.44px;
   }

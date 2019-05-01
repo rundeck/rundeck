@@ -31,7 +31,7 @@ module.exports = {
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/repository': './src/pages/repository/main.js',
     'pages/community-news': './src/pages/community-news/main.js',
-    // 'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
+    'pages/project-nodes-config': './src/pages/project-nodes-config/main.js',
     'pages/search-plugins': './src/pages/search-plugins/main.js'
   },
   output: {
