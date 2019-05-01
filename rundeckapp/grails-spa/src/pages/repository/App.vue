@@ -110,15 +110,26 @@ export default {
 .support-filters {
   background: black;
   color: white;
-  padding: 3em 2em;
+  padding: 3em 2em 3em 1em;
   font-size: 20px;
   .title {
     color: #cdcdcd;
     display: flex;
     align-items: center;
-    font-size: 0.8rem;
+    font-size: 1.8rem;
     text-transform: uppercase;
     letter-spacing: 3.44px;
+  }
+  label {
+    border: 1px solid blue;
+    padding: 1em 2em;
+    input[type="checkbox"] {
+      display: none;
+    }
+  }
+  :checked + label {
+    font-weight: bold;
+    border: 1px solid red;
   }
 }
 </style>
