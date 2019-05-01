@@ -2,6 +2,7 @@ package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
 import com.rundeck.repository.manifest.search.ManifestSearch
 import grails.converters.JSON
@@ -95,6 +96,14 @@ class RepositoryController {
                 }
             }
             render installedArtifacts as JSON
+        }
+
+        def listPluginTypes() {
+            SortedSet<String> types = [] as SortedSet
+            ServiceTypes.getPluginTypesMap().keySet().each { name ->
+                types.add(name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, ''))
+            }
+            render types as JSON
         }
 
         def uploadArtifact() {
