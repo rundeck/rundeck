@@ -1,5 +1,5 @@
 <template>
-  <div class="card result" v-show="displayCard">
+  <div class="card result flex-col" v-show="displayCard">
     <div class="card-header">
       <span class="current-version-number label label-default">{{result.currentVersion}}</span>
       <h5 class="support-type">{{result.support}}</h5>
@@ -8,20 +8,17 @@
         <span v-if="result.rundeckCompatibility">Requires Rundeck {{result.rundeckCompatibility}}</span>
       </h5>
     </div>
-    <div class="card-content">
-      <div class="plugin-description" v-html="result.description"></div>
-      <div v-if="result.artifactType">
-        <label>Plugin Type:</label>
-        {{result.artifactType}}
+    <div class="card-content flex-grow">
+      <div class="flexible">
+        <div class="plugin-description" v-html="result.description"></div>
+        <div v-if="result.artifactType">
+          <label>Plugin Type:</label>
+          {{result.artifactType}}
+        </div>
+        <ul class="provides">
+          <li v-for="(svc, index) in unqSortedSvcs(result.providesServices)" :key="index">{{svc}}</li>
+        </ul>
       </div>
-      <!-- <div>
-                  <label>Author:</label>
-                  {{result.author}}
-      </div>-->
-
-      <ul class="provides">
-        <li v-for="(svc, index) in unqSortedSvcs(result.providesServices)" :key="index">{{svc}}</li>
-      </ul>
     </div>
     <div class="card-footer">
       <div class="row">
@@ -68,7 +65,8 @@ export default {
   computed: {
     ...mapState(["canInstall", "rdBase", "filterSupportType"]),
     displayCard() {
-      if (!this.filterSupportType) {
+      console.log("this.filterSupportType", this.filterSupportType);
+      if (!this.filterSupportType || this.filterSupportType.length === 0) {
         return true;
       } else {
         if (
@@ -108,6 +106,9 @@ export default {
         plugin: this.result
       });
     }
+  },
+  mounted() {
+    console.log("mounted PluginCard");
   }
 };
 </script>
@@ -169,7 +170,7 @@ export default {
     border-radius: 0 0 7px 7px;
     .links {
       a {
-        color: black;
+        color: #20201f;
         text-decoration: none;
         margin-right: 0.6em;
       }

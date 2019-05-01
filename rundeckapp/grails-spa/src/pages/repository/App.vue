@@ -44,15 +44,7 @@
     </div>
     <div class="row">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
-        <div class>
-          <h2 class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</h2>
-        </div>
-
-        <div class="artifact-grid row">
-          <div class="artifact col-xs-12 col-sm-4" v-for="result in repo.results" :key="result.id">
-            <PluginCard :result="result" :repo="repo"/>
-          </div>
-        </div>
+        <RepositoryRow :repo="repo"/>
       </div>
     </div>
   </div>
@@ -61,12 +53,14 @@
 <script>
 import axios from "axios";
 import PluginCard from "./PluginCard";
+import RepositoryRow from "./Repository.vue";
 import { mapState, mapActions } from "vuex";
 
 export default {
   name: "PluginSearch",
   components: {
-    PluginCard
+    PluginCard,
+    RepositoryRow
   },
   computed: {
     ...mapState(["repositories", "overlay", "loadingMessage", "loadingSpinner"])
