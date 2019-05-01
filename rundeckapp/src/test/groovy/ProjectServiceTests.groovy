@@ -955,7 +955,7 @@ class ProjectServiceTests  {
         svc.workflowService= workflowmock.proxyInstance()
 
         svc.executionUtilService = new ExecutionUtilService()
-        svc.executionUtilService.grailsApplication = [:]
+        svc.executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
         assertEquals EXEC_XML_TEST6, str
