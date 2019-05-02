@@ -27,7 +27,7 @@
     "vuex": "^3.1.0"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#c1e5cc32565f2c91e7e902df6f2049f397824749",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#2c51b7176250e809da79710bf45f7844a9dedc21",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
@@ -71,7 +71,7 @@
     "speed-measure-webpack-plugin": "^1.2.2",
     "style-loader": "^0.22.1",
     "ts-loader": "^5.3.0",
-    "typescript": "^3.1.6",
+    "typescript": "3.1.6",
     "uglifyjs-webpack-plugin": "^1.1.1",
     "url-loader": "^0.5.8",
     "uiv": "^0.27.0",
