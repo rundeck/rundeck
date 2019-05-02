@@ -115,17 +115,10 @@ export default {
   watch: {
     showWhichPlugins: function(newVal, oldVal) {
       this.setInstallStatusOfPluginsVisbility(newVal);
-    },
-    supportType: function(newVal, oldVal) {
-      this.setSupportTypeFilter(newVal);
     }
   },
   methods: {
-    ...mapActions([
-      "initData",
-      "setSupportTypeFilter",
-      "setInstallStatusOfPluginsVisbility"
-    ]),
+    ...mapActions(["initData", "setInstallStatusOfPluginsVisbility"]),
     search() {
       console.log(`Searching for ....${this.searchString}`);
     }
