@@ -1,28 +1,29 @@
 <template>
-  <div class="card result flex-col" v-show="displayCard">
-    <div class="card-header">
-      <span class="current-version-number label label-default">{{result.currentVersion}}</span>
-      <h5 class="support-type">{{result.support}}</h5>
-      <h3 class="card-title">{{result.display || result.name}}</h3>
-      <h5 class="requires-rundeck-version">
-        <span v-if="result.rundeckCompatibility">Requires Rundeck {{result.rundeckCompatibility}}</span>
-      </h5>
-    </div>
-    <div class="card-content flex-grow">
-      <div class="flexible">
-        <div class="plugin-description" v-html="result.description"></div>
-        <div v-if="result.artifactType">
-          <label>Plugin Type:</label>
-          {{result.artifactType}}
-        </div>
-        <ul class="provides">
-          <li v-for="(svc, index) in unqSortedSvcs(result.providesServices)" :key="index">{{svc}}</li>
-        </ul>
+  <div v-show="displayCard">
+    <div class="card result flex-col">
+      <div class="card-header">
+        <span class="current-version-number label label-default">{{result.currentVersion}}</span>
+        <h5 class="support-type">{{result.support}}</h5>
+        <h3 class="card-title">{{result.display || result.name}}</h3>
+        <h5 class="requires-rundeck-version">
+          <span v-if="result.support === 'Enterprise Exclusive'">Requires Enterprise</span>
+          <span v-if="result.rundeckCompatibility">Requires Rundeck {{result.rundeckCompatibility}}</span>
+        </h5>
       </div>
-    </div>
-    <div class="card-footer">
-      <div class="row">
-        <div class="col-xs-12">
+      <div class="card-content flex-grow">
+        <div class="flexible">
+          <div class="plugin-description" v-html="result.description"></div>
+          <div v-if="result.artifactType">
+            <label>Plugin Type:</label>
+            {{result.artifactType}}
+          </div>
+          <ul class="provides">
+            <li v-for="(svc, index) in unqSortedSvcs(result.providesServices)" :key="index">{{svc}}</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-footer">
+        <div class v-if="result.support !== 'Enterprise Exclusive'">
           <div class="col-xs-12 col-sm-6">
             <div class="links fa-2x">
               <a v-if="result.sourceLink" :href="result.sourceLink" target="_blank">
@@ -52,6 +53,9 @@
             </div>
           </div>
         </div>
+        <div class="col-xs-12" v-else>
+          <a class="btn btn-default btn-lg btn-block" href>Learn More</a>
+        </div>
       </div>
     </div>
   </div>
@@ -63,21 +67,33 @@ export default {
   name: "PluginCard",
   props: ["result", "repo"],
   computed: {
-    ...mapState(["canInstall", "rdBase", "filterSupportType"]),
+    ...mapState([
+      "canInstall",
+      "rdBase",
+      "filterSupportType",
+      "showWhichPlugins"
+    ]),
     displayCard() {
-      console.log("this.filterSupportType", this.filterSupportType);
-      if (!this.filterSupportType || this.filterSupportType.length === 0) {
+      if (this.showWhichPlugins === null) {
         return true;
       } else {
-        if (
-          this.filterSupportType &&
-          this.filterSupportType.includes(this.result.support)
-        ) {
-          return true;
-        } else {
-          return false;
-        }
+        return this.showWhichPlugins === this.result.installed;
       }
+      // The below is for the Support Type Facet Filter
+      // This is temporarily removed
+      // console.log("this.filterSupportType", this.filterSupportType);
+      // if (!this.filterSupportType || this.filterSupportType.length === 0) {
+      //   return true;
+      // } else {
+      //   if (
+      //     this.filterSupportType &&
+      //     this.filterSupportType.includes(this.result.support)
+      //   ) {
+      //     return true;
+      //   } else {
+      //     return false;
+      //   }
+      // }
     }
   },
   data() {
@@ -113,6 +129,9 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.artifact {
+  max-width: 33.33333333%;
+}
 .card.result {
   .card-header {
     background: #20201f;
@@ -157,15 +176,15 @@ export default {
         display: inline-block;
         margin-right: 1em;
         margin-bottom: 1em;
+        background-color: #d8d8d8;
         padding: 6px 10px 5px;
-        border: 2px solid #20201f;
-        color: #20201f;
-        border-radius: 6px;
-        font-weight: bold;
+        border-radius: 50px;
+        color: #6e6e6e;
       }
     }
   }
   .card-footer {
+    margin-bottom: 1em;
     padding: 0 2em auto;
     border-radius: 0 0 7px 7px;
     .links {
@@ -175,14 +194,13 @@ export default {
         margin-right: 0.6em;
       }
     }
+    .btn {
+      border-radius: 6px;
+      font-weight: bold;
+      padding: 5px 30px;
+    }
     .button-group {
       text-align: right;
-      margin-bottom: 1em;
-      .btn {
-        border-radius: 6px;
-        font-weight: bold;
-        padding: 5px 30px;
-      }
     }
   }
 }

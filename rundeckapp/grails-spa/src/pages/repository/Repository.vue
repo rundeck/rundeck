@@ -12,9 +12,13 @@
     </div>
 
     <div class="artifact-grid row row-flex row-flex-wrap" v-show="visible">
-      <div class="artifact col-xs-12 col-sm-4" v-for="result in repo.results" :key="result.id">
-        <PluginCard :result="result" :repo="repo"/>
-      </div>
+      <PluginCard
+        :result="result"
+        :repo="repo"
+        class="artifact col-xs-12 col-sm-4"
+        v-for="result in repo.results"
+        :key="result.id"
+      />
     </div>
   </div>
 </template>
@@ -50,9 +54,6 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.artifact {
-  max-width: 33.33333333%;
-}
 .capital-case {
   text-transform: capitalize;
 }

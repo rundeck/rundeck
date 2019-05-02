@@ -16,14 +16,15 @@ export default new Vuex.Store({
     loadingMessage: null,
     loadingSpinner: false,
     filterSupportType: null,
-    filterPluginType: null
+    filterPluginType: null,
+    showWhichPlugins: null
+
   },
   getters: {
     getRepos: state => state.repositories
   },
   mutations: {
     SET_REPOS(state, repositories) {
-      console.log('hello', repositories)
       state.repositories = repositories
     },
     SET_OVERLAY(state, properties) {
@@ -50,9 +51,18 @@ export default new Vuex.Store({
     },
     SET_SUPPORT_TYPE_FILTERS(state, filters) {
       state.filterSupportType = filters
+    },
+    SET_PLUGIN_VISIBILITY_BY_INSTALL_STATUS(state, showWhichPlugins) {
+      state.showWhichPlugins = showWhichPlugins
     }
   },
   actions: {
+    setInstallStatusOfPluginsVisbility({
+      commit
+    }, showWhichPlugins) {
+      console.log('setInstallStatusOfPluginsVisbility', showWhichPlugins)
+      commit("SET_PLUGIN_VISIBILITY_BY_INSTALL_STATUS", showWhichPlugins)
+    },
     setSupportTypeFilter({
       commit
     }, filters) {

@@ -11,7 +11,7 @@
         </ul>
       </div>
     </div>
-    <div class="col-xs-12">
+    <!-- <div class="col-xs-12">
       <div class="support-filters row row-flex row-flex-wrap">
         <div class="col-md-2">
           <div class="flex-col">
@@ -39,7 +39,39 @@
           </label>
         </div>
       </div>
+    </div>-->
+    <div class="row">
+      <div class="col-xs-12 col-sm-4">
+        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
+          <a
+            @click="showWhichPlugins = true"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === true}"
+          >Installed</a>
+          <a
+            @click="showWhichPlugins = null"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === null}"
+          >All</a>
+          <a
+            @click="showWhichPlugins = false"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === false}"
+          >Not Installed</a>
+        </div>
+      </div>
+      <div class="col-xs-12 col-sm-8">
+        <div class="input-group input-group-lg">
+          <input type="text" class="form-control" placeholder="Search for...">
+          <span class="input-group-btn">
+            <button class="btn btn-default btn-fill" type="button">
+              <i class="fas fa-search"></i>
+            </button>
+          </span>
+        </div>
+      </div>
     </div>
+    <div>* Private repos need to have the sourceLink and docs property added</div>
 
     <div class="row">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
@@ -66,16 +98,24 @@ export default {
   },
   data() {
     return {
-      supportType: []
+      supportType: [],
+      showWhichPlugins: null
     };
   },
   watch: {
+    showWhichPlugins: function(newVal, oldVal) {
+      this.setInstallStatusOfPluginsVisbility(newVal);
+    },
     supportType: function(newVal, oldVal) {
       this.setSupportTypeFilter(newVal);
     }
   },
   methods: {
-    ...mapActions(["initData", "setSupportTypeFilter"])
+    ...mapActions([
+      "initData",
+      "setSupportTypeFilter",
+      "setInstallStatusOfPluginsVisbility"
+    ])
     // search() {
     //   this.errors = null;
     //   this.searchWarnings = null;
@@ -105,8 +145,35 @@ export default {
   }
 };
 </script>
+<style lang="scss" scoped>
+// Search Input
+.input-group .form-control {
+  border: 3px solid #66615b;
+}
+.input-group-btn .btn-default:not(.btn-fill) {
+}
+</style>
 
 <style lang="scss" scoped>
+.btn-group.squareish-buttons
+  > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+.btn-group.squareish-buttons > .btn:last-child:not(:first-child),
+.btn-group > .dropdown-toggle:not(:first-child) {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+.btn-group.squareish-buttons > .btn:active,
+.btn-group.squareish-buttons > .btn:visited,
+.btn-group.squareish-buttons > .btn:hover,
+.btn-group.squareish-buttons > .btn:focus,
+.btn-group.squareish-buttons > .btn:focus-within {
+  background-color: #66615b;
+  color: rgba(255, 255, 255, 0.85);
+  border-color: #66615b;
+}
 .support-filters {
   background: black;
   color: white;
