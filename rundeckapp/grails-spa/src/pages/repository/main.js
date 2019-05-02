@@ -3,7 +3,6 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import InstantSearch from 'vue-instantsearch';
 import App from './App'
 import VueScrollTo from 'vue-scrollto'
 import store from './store'
@@ -12,7 +11,6 @@ Vue.config.productionTip = false
 
 Vue.use(Vue2Filters)
 Vue.use(VueCookies)
-Vue.use(InstantSearch)
 Vue.use(VueScrollTo)
 
 /* eslint-disable no-new */
