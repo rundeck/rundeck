@@ -11,16 +11,13 @@
     "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js"
   },
   "dependencies": {
-    "algoliasearch": "^3.32.1",
     "axios": "^0.18.0",
     "brace": "^0.11.1",
-    "bulma": "^0.7.4",
     "ts-rundeck": "0.0.15",
     "uiv": "^0.27.0",
     "vue": "2.6.10",
     "vue-cookies": "^1.5.6",
     "vue-i18n": "^8.8.0",
-    "vue-instantsearch": "^2.0.1",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "^7.3.0",
     "vue-scrollto": "^2.15.0",
