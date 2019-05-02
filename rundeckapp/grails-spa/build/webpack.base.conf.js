@@ -30,8 +30,8 @@ module.exports = {
     'components/community-news-notification': './src/components/community-news-notification/main.js',
     'pages/project-dashboard': './src/pages/project-dashboard/main.js',
     'pages/repository': './src/pages/repository/main.js',
-    'pages/community-news': './src/pages/community-news/main.js'
-    // 'pages/project-nodes-config': './src/pages/project-nodes-config/main.js'
+    'pages/community-news': './src/pages/community-news/main.js',
+    'pages/project-nodes-config': './src/pages/project-nodes-config/main.js'
   },
   output: {
     path: `config.build.assetsRoot/[path]`,

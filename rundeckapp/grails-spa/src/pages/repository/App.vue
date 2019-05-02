@@ -1,16 +1,6 @@
 <template>
   <div id="app">
-    <div class="loading" v-show="overlay">
-      <div class="loading-spinner" v-show="loadingSpinner">
-        <i class="fas fa-spinner fa-spin fa-5x"></i>
-        <div class="loading-text" v-show="loadingMessage" v-html="loadingMessage"></div>
-      </div>
-      <div class="errors" v-show="errors">
-        <ul class="error-list">
-          <li v-for="(error, index) in errors" :key="index">{{error}}</li>
-        </ul>
-      </div>
-    </div>
+    <Overlay/>
     <!-- <div class="col-xs-12">
       <div class="support-filters row row-flex row-flex-wrap">
         <div class="col-md-2">
@@ -62,7 +52,13 @@
       </div>
       <div class="col-xs-12 col-sm-8">
         <div class="input-group input-group-lg">
-          <input type="text" class="form-control" placeholder="Search for...">
+          <input
+            type="text"
+            @change="search"
+            class="form-control"
+            placeholder="Search for..."
+            v-model="searchString"
+          >
           <span class="input-group-btn">
             <button class="btn btn-default btn-fill" type="button">
               <i class="fas fa-search"></i>
@@ -83,15 +79,28 @@
 
 <script>
 import axios from "axios";
+import fuse from "fuse.js";
+import Overlay from "./Overlay";
 import PluginCard from "./PluginCard";
 import RepositoryRow from "./Repository.vue";
 import { mapState, mapActions } from "vuex";
+
+const FuseSearchOtions = {
+  shouldSort: true,
+  threshold: 0.6,
+  location: 0,
+  distance: 100,
+  maxPatternLength: 32,
+  minMatchCharLength: 1,
+  keys: ["display", "providesServices"]
+};
 
 export default {
   name: "PluginSearch",
   components: {
     PluginCard,
-    RepositoryRow
+    RepositoryRow,
+    Overlay
   },
   computed: {
     ...mapState(["repositories", "overlay", "loadingMessage", "loadingSpinner"])
@@ -99,7 +108,8 @@ export default {
   data() {
     return {
       supportType: [],
-      showWhichPlugins: null
+      showWhichPlugins: null,
+      searchString: ""
     };
   },
   watch: {
@@ -115,29 +125,10 @@ export default {
       "initData",
       "setSupportTypeFilter",
       "setInstallStatusOfPluginsVisbility"
-    ])
-    // search() {
-    //   this.errors = null;
-    //   this.searchWarnings = null;
-    //   axios({
-    //     method: "post",
-    //     headers: { "x-rundeck-ajax": true },
-    //     url: `${this.rdBase}repository/artifacts/search`,
-    //     params: { searchTerm: this.searchTerm },
-    //     withCredentials: true
-    //   })
-    //     .then(response => {
-    //       if (response.data) {
-    //         this.repositories = response.data.artifacts;
-    //         if (response.data.warnings.length > 0) {
-    //           this.searchWarnings = response.data.warnings;
-    //         }
-    //       }
-    //     })
-    //     .catch(error => {
-    //       console.log(JSON.stringify(error));
-    //     });
-    // },
+    ]),
+    search() {
+      console.log(`Searching for ....${this.searchString}`);
+    }
   },
   mounted() {
     console.log("mounted");
@@ -198,77 +189,6 @@ export default {
   :checked + label {
     font-weight: bold;
     border: 1px solid red;
-  }
-}
-</style>
-
-
-<style lang="scss" scoped>
-.card {
-  .card-header {
-    .card-title {
-      h4 {
-        margin: 0;
-      }
-    }
-  }
-}
-.loading {
-  position: fixed;
-  height: 100%;
-  background: #ffffffc9;
-  width: 100%;
-  z-index: 99;
-  top: 0;
-  left: 0;
-  .loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-  }
-  .loading-text {
-    font-size: 16px;
-    margin-top: 1em;
-    font-weight: bold;
-    text-align: center;
-    margin-left: -20px;
-  }
-}
-.installing {
-  position: fixed;
-  height: 100%;
-  background: #ffffffc9;
-  width: 100%;
-  z-index: 99;
-  top: 0;
-  left: 0;
-  .installing-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-  }
-  .installing-text {
-    font-size: 16px;
-    margin-top: 1em;
-    font-weight: bold;
-    text-align: center;
-    margin-left: -20px;
-  }
-}
-.errors {
-  position: fixed;
-  height: 100%;
-  background: #ffffffc9;
-  width: 100%;
-  z-index: 99;
-  top: 0;
-  left: 0;
-  .error-list {
-    top: 20%;
-    left: 20%;
-    max-width: 800px;
-    position: absolute;
-    font-size: 24px;
   }
 }
 </style>

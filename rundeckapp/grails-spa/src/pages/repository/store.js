@@ -57,6 +57,11 @@ export default new Vuex.Store({
     }
   },
   actions: {
+    closeOverlay({
+      commit
+    }) {
+      commit('SET_OVERLAY', false)
+    },
     setInstallStatusOfPluginsVisbility({
       commit
     }, showWhichPlugins) {
