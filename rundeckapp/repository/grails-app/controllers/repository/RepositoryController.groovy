@@ -92,7 +92,7 @@ class RepositoryController {
             def installedArtifacts = []
             artifacts.each {
                 if(installedPluginIds.keySet().contains(it.installId)) {
-                    installedArtifacts.add([artifactId:it.installId, artifactName:it.name, version: it.currentVersion])
+                    installedArtifacts.add([artifactId:it.installId, artifactName:it.name, version: installedPluginIds[it.installId]])
                 }
             }
             render installedArtifacts as JSON
