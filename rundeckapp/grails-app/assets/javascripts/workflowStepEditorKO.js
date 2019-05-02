@@ -272,7 +272,7 @@ function WorkflowStepLogFilterEditor(data) {
         return jQuery.ajax({
             type: 'post',
             url: _genUrl(appLinks.workflowRemoveStepFilter, params),
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
             success: function (data, status, xhr) {
                 if (data.valid) {
                     self.step.deleteFilter(stepfilter);
@@ -290,7 +290,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
             ;
     };
 
@@ -311,7 +311,7 @@ function WorkflowStepLogFilterEditor(data) {
             type: 'post',
             data: formdata,
             dataType: 'json',
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
             success: function (data, status, xhr) {
                 if (data.valid) {
                     if (!stepfilter) {
@@ -330,7 +330,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
             ;
     };
 

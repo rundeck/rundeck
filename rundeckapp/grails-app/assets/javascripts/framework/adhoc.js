@@ -88,7 +88,7 @@ function runFormSubmit(elem) {
     jQuery.ajax({
         type: 'POST',
         url: _genUrl(appLinks.scheduledExecutionRunAdhocInline, data),
-        beforeSend: _ajaxSendTokens.curry('adhoc_req_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('adhoc_req_tokens'),
         success: function (data, status, xhr) {
             try {
                 startRunFollow(data);
@@ -100,7 +100,7 @@ function runFormSubmit(elem) {
         error: function (data, jqxhr, err) {
             requestFailure(jqxhr);
         }
-    }).success(_ajaxReceiveTokens.curry('adhoc_req_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('adhoc_req_tokens'));
     return false;
 }
 /**

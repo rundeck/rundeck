@@ -92,8 +92,8 @@ function StorageStats(data) {
         return jQuery.ajax({
             url: _genUrl(url,opts),
             method:'POST',
-            beforeSend: _ajaxSendTokens.curry(self.tokensName)
-        }).success(_ajaxReceiveTokens.curry(self.tokensName));
+            beforeSend: _createAjaxSendTokensHandler(self.tokensName)
+        }).success(_createAjaxReceiveTokensHandler(self.tokensName));
     };
     self.resumeAllIncomplete = function () {
         return self.ajaxAction(self.resumeUrl,{}).success(function(data){

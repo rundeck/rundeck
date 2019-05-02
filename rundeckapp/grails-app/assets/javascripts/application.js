@@ -22,7 +22,11 @@
 // methods for modifying inner html or text content
 
 function clearHtml(elem) {
-  $(elem).innerHTML = '';
+  if (typeof (jQuery) !== 'undefined') {
+    jQuery(elem).html('')
+  } else if (typeof ($) !== 'undefined') {
+    $(elem).innerHTML = ''
+  }
 }
 
 function setHtml(elem, html) {
@@ -978,6 +982,20 @@ function _initAnsiToggle() {
   jQuery('.nodes_run_content').on('change', '.ansi-color-toggle', _toggleAnsiColor);
 }
 /**
+ * Create a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
+ * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
+ * embedded int the body of the element.
+ * @param id id of embedded token json script element
+ * @returns {boolean}
+ * @private
+ */
+function _createAjaxSendTokensHandler (id) {
+  return function (jqxhr, settings) {
+    return _ajaxSendTokens(id, jqxhr, settings)
+  }
+}
+
+/**
  * Use as a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
  * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
  * embedded int the body of the element.
@@ -1012,6 +1030,17 @@ function _ajaxSendTokens(id, jqxhr, settings) {
   }
 
 }
+/**
+ * Create a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
+ * @param id
+ * @private
+ */
+function _createAjaxReceiveTokensHandler (id) {
+  return function (data, status, jqxhr) {
+    return _ajaxReceiveTokens(id, data, status, jqxhr);
+  }
+}
+
 /**
  * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
  * @param id
@@ -1271,7 +1300,7 @@ function setFilter(name, value, callback) {
     url: _genUrl(appLinks.userAddFilterPref, {
       filterpref: str
     }),
-    beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
+    beforeSend: _createAjaxSendTokensHandler('filter_select_tokens'),
     success: function (data, status, jqxhr) {
       if (typeof (callback) === 'function') {
         callback(data, name);
@@ -1281,7 +1310,7 @@ function setFilter(name, value, callback) {
         } catch (e) {}
       }
     }
-  }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
+  }).success(_createAjaxReceiveTokensHandler('filter_select_tokens'));
 }
 var generateId = (function () {
   var counter = 0;

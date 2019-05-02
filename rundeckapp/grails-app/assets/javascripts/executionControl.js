@@ -1464,14 +1464,14 @@ var FollowControl = Class.create({
             url: this.appLinks.executionCancelExecution,
             dataType:'json',
             data: {id: this.executionId},
-            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            beforeSend: _createAjaxSendTokensHandler('exec_cancel_token'),
             success: function (data,status,jqxhr) {
                 obj.updatecancel(data);
             },
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
+        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
 
     doincomplete: function() {
@@ -1481,13 +1481,13 @@ var FollowControl = Class.create({
             url: this.appLinks.executionMarkExecutionIncomplete,
             dataType:'json',
             data: {id: this.executionId},
-            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            beforeSend: _createAjaxSendTokensHandler('exec_cancel_token'),
             success: function (data,status,jqxhr) {
                 obj.updatecancel(data);
             },
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to mark Job as incomplete: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
+        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
 });

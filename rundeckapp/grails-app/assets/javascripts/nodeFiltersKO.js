@@ -110,11 +110,11 @@ function NodeSummary(data){
         jQuery('#deleteFilterKOModal').modal('hide');
         jQuery.ajax({
             url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
-            beforeSend: _ajaxSendTokens.curry('ajaxDeleteFilterTokens')
+            beforeSend: _createAjaxSendTokensHandler('ajaxDeleteFilterTokens')
         }).success(function (resp, status, jqxhr) {
             self.filterToDelete(null);
             self.filters.remove(filter);
-        }).success(_ajaxReceiveTokens.curry('ajaxDeleteFilterTokens'));
+        }).success(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
     };
     if(data) {
         ko.mapping.fromJS(data, {}, self);
