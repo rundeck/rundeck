@@ -1020,12 +1020,7 @@ class ProjectServiceTests  {
         svc.executionUtilService = new ExecutionUtilService()
 
 
-        def enabled = [enabled:'true']
-        def jobp = [jobs:enabled]
-        def backupp= [backup:jobp]
-        def rundeckp = [rundeck:backupp]
-
-        svc.executionUtilService.grailsApplication = [config:rundeckp]
+        svc.executionUtilService.grailsApplication = [:]
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
         assertEquals EXEC_XML_TEST7, str
