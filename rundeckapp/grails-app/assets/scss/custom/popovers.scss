@@ -31,10 +31,10 @@
 
   &.popover-sub {
     .popover-content {
-      border-color: $bg-subheader;
+      border-color: $bg-mainheader;
     }
     .arrow:after {
-      border-bottom-color: $bg-subheader;
+      border-bottom-color: $bg-mainheader;
     }
   }
 
