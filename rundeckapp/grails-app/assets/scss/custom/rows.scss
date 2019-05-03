@@ -71,4 +71,14 @@ section {
     border-top: 1px solid $legend-border-color;
     border-bottom: 1px solid $legend-border-color;
   }
+
+  &.section-space-bottom{
+    margin-bottom: $padding-base-vertical;
+  }
+  &.section-space-bottom-sm{
+    margin-bottom: $padding-small-vertical;
+  }
+  &.section-space-bottom-lg{
+    margin-bottom: $padding-large-vertical;
+  }
 }
