@@ -17,7 +17,7 @@
 <g:link
         controller="execution"
         action="show"
-        class="primary"
+        class="primary ${linkCss?:''}"
         id="${execution.id}"
         absolute="${absolute ? 'true' : 'false'}"
         params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">

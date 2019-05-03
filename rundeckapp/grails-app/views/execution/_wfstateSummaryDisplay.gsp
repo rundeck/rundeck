@@ -14,69 +14,89 @@
   limitations under the License.
   --}%
 <div>
-  <script type="text/html" id="node-current-state-simple">
-      <g:render template="nodeCurrentStateSimpleKO"/>
-  </script>
+    <script type="text/html" id="node-current-state-simple">
+    <g:render template="nodeCurrentStateSimpleKO"/>
+    </script>
 
-  <div data-bind="if: !stateLoaded()">
-    <div data-bind="if: errorMessage()">
-        <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
-            <span class="text-warning" data-bind="text: errorMessage()">
-            </span>
-            <div>
-                <a class="btn btn-default btn-sm" href="#output" data-bind="click: showTab.curry('tab_link_output') "><g:message code="button.action.view.log.output" /></a>
+    <div data-bind="if: !stateLoaded()">
+        <div data-bind="if: errorMessage()">
+            <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
+                <span class="text-warning" data-bind="text: errorMessage()">
+                </span>
+
+                <div>
+                    <a class="btn btn-default btn-sm" href="#output"
+                       data-bind="click: showTab.curry('tab_link_output') "><g:message
+                            code="button.action.view.log.output"/></a>
+                </div>
+            </div>
+        </div>
+
+        <div data-bind="if: !errorMessage() && !statusMessage()">
+            <div class="well well-lg text-primary">
+                <g:message code="waiting.for.state.info"/>
+            </div>
+        </div>
+
+        <div data-bind="if: statusMessage()">
+            <div class="well well-lg text-primary" data-bind="text: statusMessage()"></div>
+        </div>
+    </div>
+
+
+    <div data-bind="if: stateLoaded()">
+        <div data-bind="if: completed()">
+            <tmpl:wfstateSummaryScore/>
+        </div>
+
+        <div class="row jobstats" data-bind="if: !completed()">
+            <div class="col-xs-12 col-sm-4 job-stats-item">
+                <span class="text-table-header has_tooltip"
+                      title="${enc(attr: g.message(code: 'workflowState.summary.nodes.waiting.description'))}"
+                      data-container="body"
+                      data-bind="bootstrapTooltip: true ">
+                    <g:message code="waiting"/>
+
+                </span>
+
+                <span class="job-stats-value">
+                    <span class="text-primary" data-bind="text: waitingNodes().length"></span>
+                </span>
+            </div>
+
+            <div class="col-xs-12 col-sm-4 job-stats-item">
+
+                <span class="text-table-header has_tooltip"
+                      title="${enc(attr: g.message(code: 'workflowState.summary.nodes.running.description'))}"
+                      data-container="body"
+                      data-bind="bootstrapTooltip: true ">
+                    <g:message code="running"/>
+                </span>
+
+                <span class="job-stats-value">
+                    <span
+                            data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
+                        <span class=" " data-bind="text: runningNodes().length"></span>
+                    </span>
+                </span>
+            </div>
+
+            <div class="col-xs-12 col-sm-4 job-stats-item">
+                <span class="text-table-header has_tooltip"
+                      title="${enc(attr: g.message(code: 'workflowState.summary.nodes.complete.description'))}"
+                      data-container="body"
+                      data-bind="bootstrapTooltip: true ">
+                    <g:message code="done"/>
+
+                </span>
+                <span class="job-stats-value">
+                    <span
+                            data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
+                        <span data-bind="text: completedNodes().length"></span>
+                    </span>
+                </span>
+
             </div>
         </div>
     </div>
-
-    <div data-bind="if: !errorMessage() && !statusMessage()">
-        <div class="well well-lg text-primary">
-            <g:message code="waiting.for.state.info" />
-        </div>
-    </div>
-    <div data-bind="if: statusMessage()">
-        <div class="well well-lg text-primary" data-bind="text: statusMessage()"></div>
-    </div>
-  </div>
-
-
-  <div data-bind="if: stateLoaded()">
-    <div data-bind="if: completed()">
-      <tmpl:wfstateSummaryScore />
-    </div>
-
-    <div class="row" data-bind="if: !completed()">
-        <div class="col-xs-12 col-sm-4">
-          <strong>
-            <g:message code="waiting" />
-            <span class="text-primary" data-bind="text: waitingNodes().length"></span>
-          </strong>
-          <g:render template="/common/helpTooltipIconKO"
-                  model="[messageCode:'workflowState.summary.nodes.waiting.description']"/>
-        </div>
-        <div class="col-xs-12 col-sm-4">
-          <strong>
-            <g:message code="running" />
-            <span
-                data-bind="css: {'text-info': runningNodes().length > 0 , 'text-primary': runningNodes().length < 1 } ">
-              <span class=" " data-bind="text: runningNodes().length"></span>
-            </span>
-          </strong>
-          <g:render template="/common/helpTooltipIconKO"
-                    model="[messageCode: 'workflowState.summary.nodes.running.description']"/>
-        </div>
-        <div class="col-xs-12 col-sm-4">
-          <strong>
-            <g:message code="done" />
-            <span
-                  data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
-                <span data-bind="text: completedNodes().length"></span>
-            </span>
-          </strong>
-          <g:render template="/common/helpTooltipIconKO"
-                      model="[messageCode: 'workflowState.summary.nodes.complete.description']"/>
-
-        </div>
-    </div>
-  </div>
 </div>
