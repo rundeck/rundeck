@@ -206,6 +206,28 @@
       <div>
         <g:render template="/common/mainbar"/>
       </div>
+        <g:ifPageProperty name="page.subtitle">
+            <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <ul class="nav navbar-nav">
+                            <li class="primarylink">
+                                <a href="#">
+                                    <g:pageProperty name="page.subtitle"/>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </g:ifPageProperty>
+        <g:ifPageProperty name="page.subtitlesection">
+            <nav id="subtitlebar" class=" subtitlebar has-content ${pageProperty(name: 'page.subtitlecss')}">
+
+                <g:pageProperty name="page.subtitlesection"/>
+
+            </nav>
+        </g:ifPageProperty>
       <div class="content">
         <div class="container-fluid">
           <div id=project-motd-vue></div>
