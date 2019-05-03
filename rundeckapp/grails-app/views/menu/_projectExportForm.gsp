@@ -44,11 +44,6 @@
 <div class="col-xs-12">
   <g:form style="display: inline;" controller="project" action="exportPrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
     <div class="card" id="exportform">
-      <div class="card-header">
-        <h3 class="card-title">
-          <g:message code="export.archive"/>
-        </h3>
-      </div>
       <div class="card-content">
         <div class="list-group">
           <div class="list-group-item">

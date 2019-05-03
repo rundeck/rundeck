@@ -22,7 +22,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
-    <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'edit.readme':filename=='motd.md'?'edit.motd':'edit.project.file')}"/>
+    <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'project.readme.title':filename=='motd.md'?'project.motd.title':'edit.project.file')}"/>
+    <meta name="projconfigselected" content="${(filename=='readme.md'?'edit-readme':filename=='motd.md'?'edit-motd':'edit.project.file')}"/>
     <title><g:message code="edit.project.file" /></title>
 
     <asset:javascript src="prototype/effects"/>

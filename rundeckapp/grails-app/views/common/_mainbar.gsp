@@ -55,11 +55,18 @@
                     <g:set var="projectName" value="${project ?: params.project ?: request.project}"/>
                     <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
-                    <li id="projectHomeLink">
+                    <li id="projectHomeLink" class="primarylink">
                         <g:link controller="menu" action="projectHome" params="[project: projectName]">
                             <g:enc>${projectLabel}</g:enc>
                         </g:link>
                     </li>
+                  <g:ifPageProperty name='meta.projtabtitle'>
+                    <li class="primarylink">
+                      <a href="#">
+                        <g:pageProperty name="meta.projtabtitle"/>
+                      </a>
+                    </li>
+                  </g:ifPageProperty>
                 </g:if>
               <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
                 <g:ifPageProperty name='meta.tabpage'>

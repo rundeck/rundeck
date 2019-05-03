@@ -157,15 +157,26 @@
            )}"/>
 
     <g:if test="${projConfigAuth||projACLAuth}">
-        <li class="${enc(attr: projconfigselected)}" id="nav-project-settings">
-          <a href="#" data-toggle="collapse" href="javascript:void(0)">
+
+        <g:ifPageProperty name='meta.projconfigselected'>
+            <script type="text/javascript">
+                jQuery(function () {
+                    jQuery('#nav-project-settings-${enc(js:g.pageProperty(name:"meta.projconfigselected"))}').addClass(
+                        'active');
+                })
+            </script>
+            <g:set var="projConfigOpen" value="${true}"/>
+        </g:ifPageProperty>
+
+        <li id="nav-project-settings">
+            <a href="#" data-toggle="collapse" class="${wdgt.css(if: projConfigOpen, then: 'subnav-open')}">
             <i class="fas fa-cogs"></i>
             <p>
               <g:message code="gui.menu.ProjectSettings"/>
               <b class="caret"></b>
             </p>
           </a>
-          <g:render template="/menu/sidebarProjectMenu"/>
+            <g:render template="/menu/sidebarProjectMenu" model="[projConfigOpen: projConfigOpen]"/>
         </li>
     </g:if>
 </g:if>
