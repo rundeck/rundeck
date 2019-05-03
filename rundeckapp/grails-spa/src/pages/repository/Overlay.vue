@@ -4,13 +4,17 @@
       <i class="fas fa-spinner fa-spin fa-5x"></i>
       <div class="loading-text" v-show="loadingMessage" v-html="loadingMessage"></div>
     </div>
-    <div class="errors" v-show="errors">
-      <ul class="error-list">
-        <li v-for="(error, index) in errors" :key="index">{{error}}</li>
-      </ul>
+    <div class="errors" v-if="errors && errors.length" v-show="errors">
       <div>
         <a @click="closeOverlay" class="btn btn-default">Close</a>
       </div>
+      <div class="error-list">
+        <h3 v-html="errors.code"></h3>
+        <p v-html="errors.msg"></p>
+      </div>
+      <!-- <ul class="error-list">
+        <li v-for="(error, index) in errors" :key="index">{{error}}</li>
+      </ul>-->
     </div>
   </div>
 </template>
@@ -40,35 +44,19 @@ export default {
   .loading-spinner {
     position: absolute;
     top: 50%;
-    left: 50%;
+    text-align: center;
+    left: 40%;
+    width: calc(100% - 70%);
+    // position: absolute;
+    // top: 50%;
+    // left: 50%;
   }
   .loading-text {
     font-size: 16px;
     margin-top: 1em;
     font-weight: bold;
-    text-align: center;
-    margin-left: -20px;
-  }
-}
-.installing {
-  position: fixed;
-  height: 100%;
-  background: #ffffffc9;
-  width: 100%;
-  z-index: 99;
-  top: 0;
-  left: 0;
-  .installing-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-  }
-  .installing-text {
-    font-size: 16px;
-    margin-top: 1em;
-    font-weight: bold;
-    text-align: center;
-    margin-left: -20px;
+    // text-align: center;
+    // margin-left: -20px;
   }
 }
 .errors {

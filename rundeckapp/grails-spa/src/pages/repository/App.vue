@@ -1,35 +1,6 @@
 <template>
   <div id="app">
     <Overlay/>
-    <!-- <div class="col-xs-12">
-      <div class="support-filters row row-flex row-flex-wrap">
-        <div class="col-md-2">
-          <div class="flex-col">
-            <span class="title">Support</span>
-          </div>
-        </div>
-        <div class="col-md-10">
-          <label>
-            Community
-            <input type="checkbox" value="Community" v-model="supportType">
-          </label>
-
-          <label>
-            Rundeck Supported
-            <input type="checkbox" value="Rundeck Supported" v-model="supportType">
-          </label>
-
-          <label>
-            Enterprise Exclusive
-            <input
-              type="checkbox"
-              value="Enterprise Exclusive"
-              v-model="supportType"
-            >
-          </label>
-        </div>
-      </div>
-    </div>-->
     <div class="row">
       <div class="col-xs-12 col-sm-4">
         <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
@@ -54,21 +25,18 @@
         <div class="input-group input-group-lg">
           <input
             type="text"
-            @change="search"
             class="form-control"
             placeholder="Search for..."
             v-model="searchString"
           >
           <span class="input-group-btn">
-            <button class="btn btn-default btn-fill" type="button">
+            <button @click="search" class="btn btn-default btn-fill" type="button">
               <i class="fas fa-search"></i>
             </button>
           </span>
         </div>
       </div>
     </div>
-    <div>* Private repos need to have the sourceLink and docs property added</div>
-
     <div class="row">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
         <RepositoryRow :repo="repo"/>
@@ -107,9 +75,9 @@ export default {
   },
   data() {
     return {
-      supportType: [],
       showWhichPlugins: null,
-      searchString: ""
+      searchString: "",
+      searchIndex: []
     };
   },
   watch: {
@@ -125,7 +93,9 @@ export default {
   },
   mounted() {
     console.log("mounted");
-    this.initData();
+    this.initData().then(() => {
+      console.log("hello world");
+    });
   }
 };
 </script>

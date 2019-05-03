@@ -30,6 +30,8 @@ export default new Vuex.Store({
     SET_OVERLAY(state, properties) {
       if (!properties) {
         state.overlay = false
+        state.loadingMessage = ""
+        state.loadingSpinner = false
       } else {
         state.overlay = true
         if (properties.loadingMessage) {
@@ -76,31 +78,34 @@ export default new Vuex.Store({
     initData({
       commit
     }) {
-      commit('SET_OVERLAY', {
-        loadingSpinner: true,
-        loadingMessage: 'loading plugins'
-      })
-      if (window._rundeck && window._rundeck.rdBase) {
-        const rdBase = window._rundeck.rdBase;
-        const canInstall = window.repocaninstall
-        axios({
-          method: "get",
-          headers: {
-            "x-rundeck-ajax": true
-          },
-          url: `${rdBase}repository/artifacts/list`,
-          withCredentials: true
-        }).then(response => {
-          commit('SET_RDBASE', rdBase)
-          commit('SET_CAN_INSTALL', canInstall)
-          if (response.data) {
-            commit('SET_REPOS', response.data)
-          }
-          setTimeout(() => {
-            commit('SET_OVERLAY', false)
-          }, 500)
-        });
-      }
+      return new Promise(resolve => {
+        commit('SET_OVERLAY', {
+          loadingSpinner: true,
+          loadingMessage: 'loading plugins'
+        })
+        if (window._rundeck && window._rundeck.rdBase) {
+          const rdBase = window._rundeck.rdBase;
+          const canInstall = window.repocaninstall
+          axios({
+            method: "get",
+            headers: {
+              "x-rundeck-ajax": true
+            },
+            url: `${rdBase}repository/artifacts/list`,
+            withCredentials: true
+          }).then(response => {
+            commit('SET_RDBASE', rdBase)
+            commit('SET_CAN_INSTALL', canInstall)
+            if (response.data) {
+              commit('SET_REPOS', response.data)
+            }
+            setTimeout(() => {
+              commit('SET_OVERLAY', false)
+              resolve();
+            }, 500)
+          });
+        }
+      });
     },
     installPlugin({
       commit
@@ -125,8 +130,13 @@ export default new Vuex.Store({
           commit("SET_OVERLAY", false)
         })
         .catch(error => {
+          console.log('error installing plugin', error.response)
+          commit("SET_OVERLAY", false)
           commit("SET_ERRORS", error.response)
-          commit("SET_OVERLAY", true)
+          commit("SET_OVERLAY", {
+            loadingSpinner: false,
+            loadingMessage: ''
+          })
         });
     },
     uninstallPlugin({
