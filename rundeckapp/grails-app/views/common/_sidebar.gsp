@@ -242,15 +242,15 @@
        jQuery.ajax({
             url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + sidebarClosed}),
             method: 'POST',
-            beforeSend: _ajaxSendTokens.curry('ui_token'),
+            beforeSend: _createAjaxSendTokensHandler('ui_token'),
             success: function () {
-                console.log("saved sidebar position" );
+                // console.log("saved sidebar position" );
             },
-            error: function () {
-                console.log("saving sidebar position failed" );
+            error: function (e) {
+               console.log("saving sidebar position failed: " + e);
             }
         })
-        .success(_ajaxReceiveTokens.curry('ui_token'));
+        .success(_createAjaxReceiveTokensHandler('ui_token'));
     })
     // Mobile Sidebar
     jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
