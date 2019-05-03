@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.util.MetricsStatsBuilder
 import grails.converters.JSON
+import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
@@ -1605,7 +1606,8 @@ setTimeout(function(){
     }
 
     //TODO: move to a service
-    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
+    @PackageScope
+    String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
 //        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
         def plugins = listViewPlugins()
 

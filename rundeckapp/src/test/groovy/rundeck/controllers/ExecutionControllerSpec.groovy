@@ -339,21 +339,21 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
+        controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
         controller.loggingService = Mock(LoggingService)
-        controller.configurationService = Mock(ConfigurationService)
+        controller.configurationService = Mock(ConfigurationService) {
+            getBoolean('gui.execution.logs.renderConvertedContent',true) >> true
+        }
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
-        def event = new DefaultLogEvent(
-                eventType: LogUtil.EVENT_TYPE_LOG,
-                datetime: new Date(),
-                message: message,
-                loglevel: LogLevel.NORMAL
-        )
-        event.metadata = [:]
-        event.metadata["content-meta:no-strip"] = "true"
-        event.metadata["content-data-type"] = "text/html"
         reader.reader = new TestReader(logs:
                                                [
-                                                       event,
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: new Date(),
+                                                               message: message,
+                                                               metadata: ["content-meta:no-strip":"true","content-data-type":"text/html"],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
                                                ]
         )
 
@@ -370,12 +370,8 @@ class ExecutionControllerSpec extends Specification {
         where:
         message                                            | output
         'a simple message'                                 | 'a simple message'
-        'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
-        'ansi sequence \033[31mred\033[0m now normal'      |
-        'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
-        '<script>alert("hi");</script> \033[31mred\033[0m' |
-        '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
-        'class="ansi-mode-normal"></span>'
+        'a simple <script>alert("hi");</script> message'   | 'a simple <script>alert("hi");</script> message'
+        '<style>.mystyle { font-weight: bold; }</style><div class="mystyle">Test</div>'   | '<style>.mystyle { font-weight: bold; }</style><div class="mystyle">Test</div>'
     }
 
     def "tail exec output maxlines param"() {
