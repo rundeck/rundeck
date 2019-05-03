@@ -1,10 +1,10 @@
 .mainbar {
   min-height: 59px;
   height: 59px;
-  background: $bg-subheader;
+  background: $bg-mainheader;
 
   &.navbar{
-    border-bottom: 1px solid darken($bg-subheader, 10%);
+    border-bottom: 1px solid darken($bg-mainheader, 10%);
   }
 
   .navbar-minimize .btn,
@@ -14,8 +14,47 @@
     width: 38px;
   }
 
-  .navbar-toggle {
-    z-index: 1;
+
+  // Cog
+  .fa-cog,
+  .fa-user {
+    color: #65605a;
+  }
+
+  #projectHomeLink {
+    font-size: 32px;
+    margin: 5px 0 0;
+  }
+
+  #appAdmin {
+    margin: 10px 0 0;
+  }
+
+  #appUser {
+    margin: 5px 0 0 20px;
+    font-size: 32px;
+    font-weight: lighter;
+  }
+}
+
+.subtitlebar, .mainbar {
+  min-height: 59px;
+}
+
+.mainbar, .subtitlebar.standard {
+  height: 59px;
+}
+
+.subtitlebar.has-content {
+  .navbar-header {
+    padding: 5px 5px 5px 0;
+  }
+}
+
+.subtitlebar, .mainbar {
+  .primarylink {
+    font-size: 32px;
+    margin: 5px 10px 0 0;
   }
 
   .nav.navbar-nav {
@@ -28,6 +67,20 @@
           cursor: pointer;
         }
       }
+
+      &.primarylink {
+        a {
+          margin: 0 10px 0 0;
+        }
+      }
+    }
+
+    li.primarylink + li.primarylink {
+      border-left: 1px solid darken($bg-subheader, 10%);
+
+      a {
+        margin-left: 10px;
+      }
     }
 
     .dropdown-menu {
@@ -37,6 +90,10 @@
         }
       }
     }
+  }
+
+  .navbar-toggle {
+    z-index: 1;
   }
 
   // sidebar open
@@ -59,24 +116,21 @@
     }
   }
 
-  // Cog
-  .fa-cog,
-  .fa-user {
-    color: #65605a;
-  }
+}
 
-  #projectHomeLink {
-    font-size: 32px;
-    margin: 5px 0 0;
-  }
+.subtitlebar {
+  background: $bg-subheader;
 
-  #appAdmin {
-    margin: 10px 0 0;
+  &.navbar {
+    border-bottom: 1px solid darken($bg-subheader, 10%);
   }
+}
 
-  #appUser {
-    margin: 5px 0 0 20px;
-    font-size: 32px;
-    font-weight: lighter;
+.subtitlebar{
+
+  .subtitle-head {
+    .subtitle-head-item {
+      padding: 15px;
+    }
   }
 }
