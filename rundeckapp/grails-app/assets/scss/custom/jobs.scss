@@ -39,3 +39,14 @@
     font-weight: bold;
   }
 }
+
+.job-action-button {
+  display: inline-block;
+  float: right;
+}
+
+.subtitlebar {
+  &.job-page {
+    background: $bg-default-inverse;
+  }
+}

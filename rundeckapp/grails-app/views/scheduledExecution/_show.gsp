@@ -23,26 +23,26 @@
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
 <g:set var="rundoctext"
        value="${extendeddesc ? g.textAfterLine(text: extendeddesc, marker: ScheduledExecution.RUNBOOK_MARKER) : null}"/>
+<content tag="subtitlecss">job-page</content>
+<content tag="subtitlesection">
+    <div class="container-fluid">
+        <g:render template="/scheduledExecution/showHead"
+                  model="[scheduledExecution: scheduledExecution,
+                          followparams      : [mode: followmode, lastlines: params.lastlines],
+                          jobDescriptionMode: 'expanded',
+                          jobActionButtons  : true,
+                          linkCss           : 'text-h4',
+                          scmExportEnabled  : scmExportEnabled,
+                          scmExportStatus   : scmExportStatus,
+                          scmImportEnabled  : scmImportEnabled,
+                          scmImportStatus   : scmImportStatus
+                  ]"/>
+    </div>
+</content>
 
 <div class="container-fluid">
-  <div class="row">
-      <div class="col-xs-8">
-      <div class="card">
-        <div class="card-content">
-          <g:render template="/scheduledExecution/showHead"
-                    model="[scheduledExecution: scheduledExecution,
-                            followparams      : [mode: followmode, lastlines: params.lastlines],
-                            jobDescriptionMode:'expanded',
-                            jobActionButtons  : true,
-                            scmExportEnabled  : scmExportEnabled,
-                            scmExportStatus   : scmExportStatus,
-                            scmImportEnabled  : scmImportEnabled,
-                            scmImportStatus   : scmImportStatus
-                    ]"/>
-
-        </div>
-      </div>
-
+    <div class="row">
+        <div class="col-xs-8">
           <div class="card">
               <div class="card-content">
                   <div class="vue-tabs">

@@ -31,17 +31,17 @@
 - limitations under the License.
 --}%
 <div class="btn-group">
-    <button type="button" class="btn ${enc(attr: btnClass ?: ' btn-default btn-sm')} dropdown-toggle"
+    <a href="#" class=" ${enc(attr: btnClass ?: 'btn btn-default btn-sm')} dropdown-toggle"
             data-toggle="dropdown"
             aria-expanded="false">
         <g:if test="${!hideIcon}">
         <i class="glyphicon glyphicon-list"></i>
         </g:if>
         <g:if test="${!hideTitle}">
-            <!-- <g:message code="button.Action"/> -->
+            <g:message code="button.Action"/>
         </g:if>
         <span class="caret"></span>
-    </button>
+    </a>
     <ul class="dropdown-menu dropdown-menu-right" role="menu">
         <g:render template="/scheduledExecution/jobActionButtonMenuContent" model="[scheduledExecution:scheduledExecution]"/>
     </ul>
