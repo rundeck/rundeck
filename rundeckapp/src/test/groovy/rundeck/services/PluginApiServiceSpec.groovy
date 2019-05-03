@@ -122,7 +122,7 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
         then:
         idList.size() == 2
-        idList.contains(uipluginid)
+        idList.keySet().contains(uipluginid)
     }
 
     def "plugin Property Map"() {
@@ -271,6 +271,11 @@ class PluginApiServiceSpec extends Specification implements ServiceUnitTest<Plug
 
         @Override
         String getPluginSourceLink() {
+            return null
+        }
+
+        @Override
+        String getPluginDocsLink() {
             return null
         }
 
