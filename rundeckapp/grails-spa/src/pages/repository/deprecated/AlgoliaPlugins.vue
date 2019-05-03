@@ -154,7 +154,6 @@ export default {
       });
     },
     checkInstalled(item) {
-      console.log("item", item);
       return this.installedPluginIds.includes(item.artifactId);
     },
     install(pluginId) {

@@ -54,7 +54,11 @@
           </div>
         </div>
         <div class="col-xs-12" v-else>
-          <a class="btn btn-default btn-lg btn-block" href>Learn More</a>
+          <a
+            href="https://www.rundeck.com/test-drive"
+            target="_blank"
+            class="btn btn-default btn-lg btn-block"
+          >Learn More</a>
         </div>
       </div>
     </div>
@@ -122,9 +126,6 @@ export default {
         plugin: this.result
       });
     }
-  },
-  mounted() {
-    console.log("mounted PluginCard");
   }
 };
 </script>

@@ -67,7 +67,6 @@ export default new Vuex.Store({
     setInstallStatusOfPluginsVisbility({
       commit
     }, showWhichPlugins) {
-      console.log('setInstallStatusOfPluginsVisbility', showWhichPlugins)
       commit("SET_PLUGIN_VISIBILITY_BY_INSTALL_STATUS", showWhichPlugins)
     },
     setSupportTypeFilter({
@@ -130,7 +129,6 @@ export default new Vuex.Store({
           commit("SET_OVERLAY", false)
         })
         .catch(error => {
-          console.log('error installing plugin', error.response)
           commit("SET_OVERLAY", false)
           commit("SET_ERRORS", error.response)
           commit("SET_OVERLAY", {

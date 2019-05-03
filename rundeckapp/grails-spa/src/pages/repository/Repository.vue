@@ -47,9 +47,6 @@ export default {
     toggleVisiblity() {
       this.visible = !this.visible;
     }
-  },
-  mounted() {
-    console.log("mounted RepositoryRow");
   }
 };
 </script>

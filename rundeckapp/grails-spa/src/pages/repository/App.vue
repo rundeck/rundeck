@@ -28,6 +28,7 @@
             class="form-control"
             placeholder="Search for..."
             v-model="searchString"
+            disabled
           >
           <span class="input-group-btn">
             <button @click="search" class="btn btn-default btn-fill" type="button">
@@ -92,9 +93,8 @@ export default {
     }
   },
   mounted() {
-    console.log("mounted");
     this.initData().then(() => {
-      console.log("hello world");
+      // Search work will happen here
     });
   }
 };

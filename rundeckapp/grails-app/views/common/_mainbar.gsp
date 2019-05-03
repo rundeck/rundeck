@@ -133,11 +133,6 @@
                 <g:render template="/menu/sysConfigNavMenu"/>
               </div>
             </li>
-            <li>
-              <g:link controller="searchPlugins" action="index">
-                 Search Plugins
-              </g:link>
-            </li>
             <li id="appUser">
               <div class="dropdown">
                 <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
