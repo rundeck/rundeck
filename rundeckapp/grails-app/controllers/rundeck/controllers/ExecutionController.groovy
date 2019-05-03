@@ -885,7 +885,11 @@ class ExecutionController extends ControllerBase{
                 }
                 String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html', e.project)
                 if (result != null) {
-                    msghtml = result.encodeAsSanitizedHTML()
+                    if(meta["no-strip"] == "true") {
+                        msghtml = result
+                    } else {
+                        msghtml = result.encodeAsSanitizedHTML()
+                    }
                     converted = true
                 }
             }
@@ -1507,7 +1511,11 @@ setTimeout(function(){
                             e.project
                     )
                     if (result != null) {
-                        logentry.loghtml = result.encodeAsSanitizedHTML()
+                        if(meta["no-strip"] == "true") {
+                            logentry.loghtml = result
+                        } else {
+                            logentry.loghtml = result.encodeAsSanitizedHTML()
+                        }
                     }
                 }
             }

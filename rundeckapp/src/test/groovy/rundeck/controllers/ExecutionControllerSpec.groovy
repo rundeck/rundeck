@@ -322,6 +322,62 @@ class ExecutionControllerSpec extends Specification {
                 'class="ansi-mode-normal"></span>'
     }
 
+    def "render output does not escape html with meta 'no-strip'"() {
+        given:
+        def assetTaglib = mockTagLib(AssetMethodTagLib)
+        assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+            assetBaseUrl(*_) >> ''
+            getAssetPath(*_) >> ''
+        }
+
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def event = new DefaultLogEvent(
+                eventType: LogUtil.EVENT_TYPE_LOG,
+                datetime: new Date(),
+                message: message,
+                loglevel: LogLevel.NORMAL
+        )
+        event.metadata = [:]
+        event.metadata["content-meta:no-strip"] = "true"
+        event.metadata["content-data-type"] = "text/html"
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       event,
+                                               ]
+        )
+
+        when:
+        params.id = e1.id.toString()
+        params.convertContent = "true"
+        controller.renderOutput()
+        def ostring = response.contentAsString
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        ostring.contains(output)
+
+
+        where:
+        message                                            | output
+        'a simple message'                                 | 'a simple message'
+        'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
+        'ansi sequence \033[31mred\033[0m now normal'      |
+        'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
+        '<script>alert("hi");</script> \033[31mred\033[0m' |
+        '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
+        'class="ansi-mode-normal"></span>'
+    }
+
     def "tail exec output maxlines param"() {
         given:
             def assetTaglib = mockTagLib(AssetMethodTagLib)
