@@ -794,7 +794,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps['project.label'] = params.label
         }
 
-        if(feature.isEnabled(name: "cleanExecutionsHistoryJob") && params.cleanerHistory == 'on') {
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
             projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
             projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
             projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
@@ -810,7 +810,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
-        if(feature.isEnabled(name: "cleanExecutionsHistoryJob") && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
             cleanerHistoryConfigError = "Execution history parameters is required if enabled"
             errors << cleanerHistoryConfigError
         }
@@ -894,7 +894,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
-                if(feature.isEnabled(name: "cleanExecutionsHistoryJob")){
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
                     frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
@@ -1265,12 +1265,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.label']=''
             }
 
-            if(feature.isEnabled(name: "cleanExecutionsHistoryJob") && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
                 cleanerHistoryConfigError = "All execution history parameters is required if enabled"
                 errors << cleanerHistoryConfigError
             }
 
-            if(feature.isEnabled(name: "cleanExecutionsHistoryJob") && params.cleanerHistory == 'on') {
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
                 projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
                 projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
                 projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
@@ -1360,7 +1360,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                if(feature.isEnabled(name: "cleanExecutionsHistoryJob")){
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
                     frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import groovy.mock.interceptor.MockFor
 import rundeck.services.PluginService
+import rundeck.services.feature.FeatureService
 
 import static org.junit.Assert.*
 
@@ -384,6 +385,7 @@ class FrameworkControllerTest {
 
     public void testSaveProjectNominal() {
         def fwk = new MockFor(FrameworkService, true)
+        def featureServiceMock = new MockFor(FeatureService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
@@ -408,8 +410,11 @@ class FrameworkControllerTest {
         fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
+        featureServiceMock.demand.featurePresent(1..3){a,b->true}
+
 
         controller.frameworkService = fwk.proxyInstance()
+        controller.featureService = featureServiceMock.proxyInstance()
 
         def execPFmck = new MockFor(PasswordFieldsService)
         def fcopyPFmck = new MockFor(PasswordFieldsService)
@@ -637,6 +642,7 @@ class FrameworkControllerTest {
 
     public void testSaveProjectLabel() {
         def fwk = new MockFor(FrameworkService, true)
+        def featureServiceMock = new MockFor(FeatureService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
@@ -660,7 +666,10 @@ class FrameworkControllerTest {
         fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
+        featureServiceMock.demand.featurePresent(1..3){a,b->true}
+
         controller.frameworkService = fwk.proxyInstance()
+        controller.featureService = featureServiceMock.proxyInstance()
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
             untrack{a, b -> return null}
