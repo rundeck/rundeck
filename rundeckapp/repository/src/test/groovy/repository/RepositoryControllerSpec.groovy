@@ -43,7 +43,9 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     void "list artifacts no repo specified"() {
         given:
-        controller.pluginApiService.installedPluginIds = [PluginUtils.generateShaIdFromName("InstalledPlugin")]
+        String pluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[pluginId] = "1.0"
 
         when:
         1 * client.listArtifacts(_,_) >> testArtifactList("private")
@@ -75,6 +77,8 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     }
 
     void "search artifacts"() {
+        given:
+        controller.pluginApiService.installedPluginIds = [:]
 
         when:
         1 * client.searchManifests(_) >> testSearch("private")
@@ -93,7 +97,8 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     void "list installed artifacts"() {
         given:
         def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
-        controller.pluginApiService.installedPluginIds = [installedPluginId]
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
 
         when:
         1 * client.listArtifacts(_,_) >> testArtifactList("private")

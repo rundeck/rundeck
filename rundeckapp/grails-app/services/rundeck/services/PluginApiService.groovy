@@ -294,16 +294,20 @@ class PluginApiService {
     }
 
     def listInstalledPluginIds() {
-        def idList = []
+        def idList = [:]
         def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         plugins.each{ entry ->
             def meta = frameworkService.getRundeckFramework().
                     getPluginManager().
                     getPluginMetadata("UI", entry.key)
             String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(entry.key)
-            idList.add(id)
+            idList[id] = meta?.pluginFileVersion ?: "1.0.0"
         }
-        idList.addAll(listPlugins()*.providers.collect { it.pluginId }.flatten())
+
+        listPlugins().each { p ->
+            p.providers.each { idList[it.pluginId] = it.pluginVersion }
+        }
+
         return idList
     }
 

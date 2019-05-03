@@ -316,6 +316,8 @@ class UrlMappings {
             action = [POST: 'register']
         }
 
+        "/search-plugins"(controller:'SearchPluginsController', action:'index')
+
         "404"(view: '/404')
         "500"(view: '/error')
     }

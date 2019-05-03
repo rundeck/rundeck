@@ -90,6 +90,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
     public static final String RUNDECK_PLUGIN_TAGS = "Rundeck-Plugin-Tags";
     public static final String RUNDECK_PLUGIN_THIRD_PARTY_DEPS = "Rundeck-Plugin-Third-Party-Dependencies";
     public static final String RUNDECK_PLUGIN_SOURCE_LINK = "Rundeck-Plugin-Source-Link";
+    public static final String RUNDECK_PLUGIN_DOCS_LINK = "Rundeck-Plugin-Docs-Link";
     public static final String RUNDECK_PLUGIN_TARGET_HOST_COMPAT = "Rundeck-Plugin-Target-Host-Compatibility";
 
     //End Plugin Version 2 attributes
@@ -1024,6 +1025,12 @@ public class JarPluginProviderLoader implements ProviderLoader,
     public String getPluginSourceLink() {
         Attributes mainAttributes = getMainAttributes();
         return mainAttributes.getValue(RUNDECK_PLUGIN_SOURCE_LINK);
+    }
+
+    @Override
+    public String getPluginDocsLink() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_DOCS_LINK);
     }
 
     @Override

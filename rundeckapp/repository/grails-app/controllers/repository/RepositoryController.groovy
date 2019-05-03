@@ -2,6 +2,7 @@ package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
 import com.rundeck.repository.manifest.search.ManifestSearch
 import grails.converters.JSON
@@ -38,7 +39,10 @@ class RepositoryController {
                                      : repoClient.listArtifacts(params.offset?.toInteger(),params.limit?.toInteger())
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.contains(it.id)
+                    it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
+                    if(it.installed) {
+                        it.updatable = checkUpdatable(installedPluginIds[it.installId],it.currentVersion)
+                    }
                 }
             }
 
@@ -67,7 +71,7 @@ class RepositoryController {
 
             artifacts.each {
                 it.results.each {
-                    it.installed = installedPluginIds.contains(it.id)
+                    it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
                 }
             }
             def searchResponse = [:]
@@ -87,11 +91,19 @@ class RepositoryController {
             def artifacts = repoClient.listArtifacts(0,-1)*.results.flatten()
             def installedArtifacts = []
             artifacts.each {
-                if(installedPluginIds.contains(it.id)) {
-                    installedArtifacts.add([artifactId:it.id, artifactName:it.name, version: it.currentVersion])
+                if(installedPluginIds.keySet().contains(it.installId)) {
+                    installedArtifacts.add([artifactId:it.installId, artifactName:it.name, version: installedPluginIds[it.installId]])
                 }
             }
             render installedArtifacts as JSON
+        }
+
+        def listPluginTypes() {
+            SortedSet<String> types = [] as SortedSet
+            ServiceTypes.getPluginTypesMap().keySet().each { name ->
+                types.add(name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, ''))
+            }
+            render types as JSON
         }
 
         def uploadArtifact() {
@@ -217,6 +229,22 @@ class RepositoryController {
             response.setStatus(400)
             def err = [error:"You are not authorized to perform this action"]
             render err as JSON
+        }
+
+        private boolean checkUpdatable(installedVersion,latestVersion) {
+            String cleanInstalledVer = installedVersion.replaceAll(~/[^\d]/,"")
+            String cleanLatestVer = latestVersion.replaceAll(~/[^\d]/,"")
+            long installed = convertToNumber(cleanInstalledVer, "Installed")
+            long latest = convertToNumber(cleanLatestVer,"Current")
+            return latest > installed
+        }
+
+        private long convertToNumber(String val, String prefix) {
+            try {
+                Long.parseLong(val)
+            } catch(NumberFormatException nfe) {
+                log.error("${prefix} plugin version value can't be converted to a number. Can't check updatability. Value: ${val}",nfe)
+            }
         }
 
         @PackageScope

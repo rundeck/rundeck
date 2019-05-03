@@ -851,6 +851,16 @@ public class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Exp
     }
 
     @Override
+    public String getPluginDocsLink() {
+        try {
+            return getPluginMeta().getDocsLink();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
     public String getPluginType() {
         return "script";
     }
