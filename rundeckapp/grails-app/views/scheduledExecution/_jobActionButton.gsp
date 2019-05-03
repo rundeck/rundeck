@@ -31,18 +31,6 @@
 - limitations under the License.
 --}%
 <div class="btn-group">
-    <g:if test="${includeRun && scheduledExecution.hasExecutionEnabled()}">
-        <g:link controller="scheduledExecution"
-                action="execute"
-                id="${scheduledExecution.extid}"
-                class=" btn btn-default btn-xs act_execute_job"
-                params="[project: scheduledExecution.project]"
-                title="${g.message(code:'action.prepareAndRun.tooltip')}"
-                data-job-id="${scheduledExecution.extid}"
-                >
-            <b class="glyphicon glyphicon-play"></b>
-        </g:link>
-    </g:if>
     <button type="button" class="btn ${enc(attr: btnClass ?: ' btn-default btn-sm')} dropdown-toggle"
             data-toggle="dropdown"
             aria-expanded="false">
