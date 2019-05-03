@@ -74,7 +74,7 @@
                data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
               <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
                   <i class="auto-caret"></i>
-                  <i class="rdicon icon-small node"></i>
+                  <i class="fas fa-hdd"></i>
                   <span data-bind="text: name"></span>
               </div>
           </div>
