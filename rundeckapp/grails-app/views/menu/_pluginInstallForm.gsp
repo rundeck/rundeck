@@ -1,5 +1,5 @@
  <div class="modal" id="installplugin" tabindex="-1" role="dialog" aria-labelledby="installplugin" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
               <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -36,6 +36,7 @@
                     </div>
                 </div>
                 </g:form>
+                <g:message code="plugin.form.groovyNote" />
             </div>
         </div>
     </div>

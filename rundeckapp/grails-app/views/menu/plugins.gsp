@@ -62,10 +62,16 @@ To change this template use File | Settings | File Templates.
               <g:message code="page.Plugins.title"/>
               <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
               <g:if test="${repoEnabled == 'true'}">
-                <g:link controller="artifact" action="index" class="btn btn-success pull-right">
-                  <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-                  <i class="glyphicon glyphicon-arrow-right"></i>
-                </g:link>
+                <div class="btn-toolbar">
+                  <g:link controller="artifact" action="index" class="btn btn-success pull-right">
+                    <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                    <i class="glyphicon glyphicon-arrow-right"></i>
+                  </g:link>
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
+                  </a>
+                </div>
               </g:if>
               <g:else>
                 <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>

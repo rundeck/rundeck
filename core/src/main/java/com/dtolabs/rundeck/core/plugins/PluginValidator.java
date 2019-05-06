@@ -25,12 +25,19 @@ public class PluginValidator {
     public static boolean validate(File pluginFile) {
         if(pluginFile.getName().endsWith(".jar")) {
             return JarPluginProviderLoader.isValidJarPlugin(pluginFile);
-        }
-        try {
-            return ScriptPluginProviderLoader.validatePluginMeta(ScriptPluginProviderLoader.loadMeta(pluginFile),
-                                                                 pluginFile).getState() == PluginValidation.State.VALID;
-        } catch(Exception iex) {
-            log.error("Error loading plugin.",iex);
+        } else if(pluginFile.getName().endsWith(".zip")) {
+            try {
+                return ScriptPluginProviderLoader.validatePluginMeta(
+                        ScriptPluginProviderLoader.loadMeta(pluginFile),
+                        pluginFile
+                ).getState() == PluginValidation.State.VALID;
+            } catch (Exception iex) {
+                log.error("Error loading plugin.", iex);
+            }
+        } else if(pluginFile.getName().endsWith(".groovy")) {
+            return true;
+        } else {
+            log.error("File: ${pluginFile.getName()} is not a valid Rundeck plugin.");
         }
         return false;
     }
