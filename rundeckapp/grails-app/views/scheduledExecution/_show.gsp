@@ -25,24 +25,36 @@
        value="${extendeddesc ? g.textAfterLine(text: extendeddesc, marker: ScheduledExecution.RUNBOOK_MARKER) : null}"/>
 <content tag="subtitlecss">job-page</content>
 <content tag="subtitlesection">
-    <div class="container-fluid">
-        <g:render template="/scheduledExecution/showHead"
-                  model="[scheduledExecution: scheduledExecution,
-                          followparams      : [mode: followmode, lastlines: params.lastlines],
-                          jobDescriptionMode: 'expanded',
-                          jobActionButtons  : true,
-                          linkCss           : 'text-h4',
-                          scmExportEnabled  : scmExportEnabled,
-                          scmExportStatus   : scmExportStatus,
-                          scmImportEnabled  : scmImportEnabled,
-                          scmImportStatus   : scmImportStatus
-                  ]"/>
+
+    <div class="  subtitle-head flex-container ">
+        <div class="subtitle-head-item  flex-item-2 flex-item flex-shrink-1">
+            <g:render template="/scheduledExecution/showHead"
+                      model="[scheduledExecution: scheduledExecution,
+                              followparams      : [mode: followmode, lastlines: params.lastlines],
+                              jobDescriptionMode: 'expanded',
+                              jobActionButtons  : true,
+                              linkCss           : 'text-h4',
+                              scmExportEnabled  : scmExportEnabled,
+                              scmExportStatus   : scmExportStatus,
+                              scmImportEnabled  : scmImportEnabled,
+                              scmImportStatus   : scmImportStatus
+                      ]"/>
+        </div>
+
+        <div class="subtitle-head-item  flex-item-1 flex-item flex-grow-2">
+
+            <div class="row">
+                <g:render template="/scheduledExecution/renderJobStats"
+                          model="${[scheduledExecution: scheduledExecution]}"/>
+            </div>
+
+        </div>
     </div>
 </content>
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col-xs-8">
+        <div class="col-xs-12">
           <div class="card">
               <div class="card-content">
                   <div class="vue-tabs">
@@ -109,12 +121,7 @@
           </div>
     </div>
 
-      <div class="col-xs-4">
-          <div class="row">
-              <g:render template="/scheduledExecution/renderJobStats"
-                        model="${[scheduledExecution: scheduledExecution]}"/>
-          </div>
-
+        <div class="col-xs-12">
           <div class="row">
               <div class="card" id="activity_section">
                   <div class="card-content">
