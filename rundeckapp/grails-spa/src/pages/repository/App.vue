@@ -4,41 +4,59 @@
     <div class="row">
       <div class="col-xs-12 col-sm-4">
         <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
-          <a
+          <button
             @click="showWhichPlugins = true"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === true}"
-          >Installed</a>
-          <a
+            :disabled="searchResults.length > 0"
+          >Installed</button>
+          <button
             @click="showWhichPlugins = null"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === null}"
-          >All</a>
-          <a
+            :disabled="searchResults.length > 0"
+          >All</button>
+          <button
             @click="showWhichPlugins = false"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === false}"
-          >Not Installed</a>
+            :disabled="searchResults.length > 0"
+          >Not Installed</button>
         </div>
       </div>
       <div class="col-xs-12 col-sm-8">
-        <div class="input-group input-group-lg">
-          <input
-            type="text"
-            class="form-control"
-            placeholder="Search for..."
-            v-model="searchString"
-            disabled
-          >
-          <span class="input-group-btn">
-            <button @click="search" class="btn btn-default btn-fill" type="button">
-              <i class="fas fa-search"></i>
-            </button>
-          </span>
-        </div>
+        <form @submit.prevent="search">
+          <div class="input-group input-group-lg">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search for..."
+              v-model="searchString"
+            >
+            <span class="input-group-btn" v-if="searchResults.length > 0">
+              <button @click="clearSearch" class="btn btn-default btn-fill" type="button">
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+            <span class="input-group-btn" v-else>
+              <button @click="search" class="btn btn-default btn-fill" type="button">
+                <i class="fas fa-search"></i>
+              </button>
+            </span>
+          </div>
+        </form>
       </div>
     </div>
-    <div class="row">
+    <div class="row" v-show="searchResults.length > 0">
+      <h3
+        class="col-xs-12"
+        style="margin: 1em 0 0; font-weight: bold; text-transform:uppercase;"
+      >Search Results</h3>
+      <div v-for="repo in searchResults" :key="repo.repositoryName" class="col-xs-12">
+        <RepositoryRow :repo="repo" type="search"/>
+      </div>
+    </div>
+    <div class="row" v-if="searchResults.length === 0">
       <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
         <RepositoryRow :repo="repo"/>
       </div>
@@ -54,14 +72,14 @@ import PluginCard from "./PluginCard";
 import RepositoryRow from "./Repository.vue";
 import { mapState, mapActions } from "vuex";
 
-const FuseSearchOtions = {
+const FuseSearchOptions = {
   shouldSort: true,
-  threshold: 0.6,
+  threshold: 0.2,
   location: 0,
-  distance: 100,
-  maxPatternLength: 32,
+  // distance: 100,
+  // maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: ["display", "providesServices"]
+  keys: ["display", "name"]
 };
 
 export default {
@@ -78,7 +96,8 @@ export default {
     return {
       showWhichPlugins: null,
       searchString: "",
-      searchIndex: []
+      searchIndex: [],
+      searchResults: []
     };
   },
   watch: {
@@ -88,8 +107,31 @@ export default {
   },
   methods: {
     ...mapActions(["initData", "setInstallStatusOfPluginsVisbility"]),
+    clearSearch() {
+      this.searchResults = [];
+    },
     search() {
-      console.log(`Searching for ....${this.searchString}`);
+      this.clearSearch();
+      // console.log(
+      //   `Searching for ....${this.searchString}`,
+      //   this.repositories[0].results
+      // );
+      this.showWhichPlugins = null;
+      if (this.searchString === "") {
+        this.searchResults = [];
+        return;
+      }
+      for (let index = 0; index < this.repositories.length; index++) {
+        let theRepo = this.repositories[index].results;
+        this.$search(this.searchString, theRepo, FuseSearchOptions).then(
+          results => {
+            this.searchResults.push({
+              repositoryName: this.repositories[index].repositoryName,
+              results: results
+            });
+          }
+        );
+      }
     }
   },
   mounted() {
@@ -104,8 +146,8 @@ export default {
 .input-group .form-control {
   border: 3px solid #66615b;
 }
-.input-group-btn .btn-default:not(.btn-fill) {
-}
+// .input-group-btn .btn-default:not(.btn-fill) {
+// }
 </style>
 
 <style lang="scss" scoped>
@@ -123,7 +165,8 @@ export default {
 .btn-group.squareish-buttons > .btn:visited,
 .btn-group.squareish-buttons > .btn:hover,
 .btn-group.squareish-buttons > .btn:focus,
-.btn-group.squareish-buttons > .btn:focus-within {
+.btn-group.squareish-buttons > .btn:focus-within,
+.btn-group.squareish-buttons > .btn.active:disabled {
   background-color: #66615b;
   color: rgba(255, 255, 255, 0.85);
   border-color: #66615b;

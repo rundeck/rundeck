@@ -18,6 +18,7 @@
     "uiv": "^0.27.0",
     "vue": "2.5.17",
     "vue-cookies": "^1.5.6",
+    "vue-fuse": "^2.0.2",
     "vue-i18n": "^8.8.0",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "^7.3.0",

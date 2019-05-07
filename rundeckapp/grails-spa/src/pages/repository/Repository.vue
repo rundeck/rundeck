@@ -10,8 +10,13 @@
       </a>
     </div>
     <div v-show="visible">
-      <div class="repo-meta">{{repo.results.length}} plugins in repo</div>
-      <div class="artifact-grid row row-flex row-flex-wrap">
+      <div class="repo-meta">
+        <span
+          v-if="type === 'search'"
+        >{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} found in this repo that match the search term</span>
+        <span v-else>{{repo.results.length}} {{ repo.results.length | pluralize('plugin')}} in repo</span>
+      </div>
+      <div class="artifact-grid row row-flex row-flex-wrap" :class="repo.repositoryName">
         <PluginCard
           :result="result"
           :repo="repo"
@@ -30,7 +35,7 @@ import { mapState } from "vuex";
 
 export default {
   name: "RepositoryRow",
-  props: ["repo"],
+  props: ["repo", "type"],
   components: {
     PluginCard
   },
@@ -55,6 +60,26 @@ export default {
 .repository {
   margin-top: 2em;
 }
+// .artifact-grid.official {
+//   min-height: 100px;
+//   max-height: 800px;
+//   overflow-y: hidden;
+//   &:after {
+//     position: absolute;
+//     z-index: 1;
+//     bottom: 0;
+//     left: 0;
+//     pointer-events: none;
+//     background-image: linear-gradient(
+//       to bottom,
+//       rgba(244, 243, 239, 0),
+//       #f4f3ef 90%
+//     );
+//     width: 100%;
+//     height: 4em;
+//   }
+// }
+
 .repo-header {
   background: #e5e2de;
   color: #5d5d5d;
@@ -69,23 +94,9 @@ export default {
   .visibility-toggle {
     line-height: 35px;
     display: inline-block;
-
-    // line-height: 35px;
-    // font-size: 1.2em;
-    // font-weight: bold;
-    // .fa-sort-up:after {
-    //   content: "Hide";
-    //   font-size: 12px;
-    // }
-    // .fa-sort-down:after {
-    //   content: "Show";
-    //   font-size: 12px;
-    // }
     i.fa-sort-up,
     i.fa-sort-down {
       line-height: inherit;
-      // margin-top: 5px;
-      // vertical-align: sub;
     }
     i.fa-sort-up {
       margin-top: 8px;
