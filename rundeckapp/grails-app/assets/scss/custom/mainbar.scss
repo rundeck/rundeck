@@ -124,6 +124,10 @@
   &.navbar {
     border-bottom: 1px solid darken($bg-subheader, 10%);
   }
+
+  &.plain {
+    background: none;
+  }
 }
 
 .subtitlebar{
