@@ -1386,31 +1386,6 @@ var FollowControl = Class.create({
     },
     jobFinishStatus: function(result,statusString) {
         if (null != result) {
-            if($('runstatus')){
-                setHtml($('runstatus'), result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
-                    : '<span class="exec-status fail">Failed</span>'));
-            }
-            $$('.execstatus').each(function(e){
-                setHtml(e, result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
-                    : '<span class="exec-status fail">Failed</span>'));
-            });
-            if ($('jobInfo_' + this.executionId)) {
-                var icon = $('jobInfo_' + this.executionId).down('.exec-status.icon');
-                if (icon) {
-                    var status = result == 'succeeded' ? 'succeed' :
-                        result == 'aborted' ? 'warn' :
-                        result == 'timedout' ? 'timedout' :
-                        result == 'failed-with-retry' ? 'retry' :
-                        result == 'failed' ? 'fail' :
-                            'other';
-                    ['succeed', 'fail', 'warn', 'running','retry','timedout','other'].each(function (s) {
-                        $(icon).removeClassName(s);
-                    });
-                    $(icon).addClassName(status);
-                }
-            }
             if (this.updatepagetitle) {
                 var prefix = (
                     result == 'succeeded' ?
@@ -1426,9 +1401,6 @@ var FollowControl = Class.create({
                 if (!document.title.startsWith(prefix)) {
                     document.title = prefix + document.title;
                 }
-            }
-            if($('cancelresult')){
-                $('cancelresult').hide();
             }
         }
     },
