@@ -1339,6 +1339,14 @@ var FollowControl = Class.create({
             setText(tddata,txt);
             tddata.addClassName('log_'+data.level.toLowerCase());
         }
+        //append node
+        if (shownode && data.node) {
+            let nodeCss = '';
+            if(!data['stepctx']){
+                nodeCss = 'console';
+            }
+            jQuery(tddata).prepend(jQuery('<span class="inset-node '+nodeCss+'"></span>').text(' '+data.node).prepend(jQuery('<i class="fas fa-hdd"></i>')))
+        }
     },
     clearCmdOutput: function() {
         clearHtml($(this.parentElement));
