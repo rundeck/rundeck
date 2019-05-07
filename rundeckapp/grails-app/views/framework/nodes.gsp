@@ -36,7 +36,6 @@
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
@@ -212,7 +211,8 @@
                         </h5>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li style="display:inline;">
-                                <node-filter-link class="label label-default" params="
+                                <node-filter-link  params="
+                                    classnames: 'label label-muted',
                                     filterkey: 'tags',
                                     filterval: tag,
                                     tag: tag,

@@ -32,6 +32,7 @@ $brown-background-color:        $font-color !default;
 $light-gray:                 #E3E3E3 !default;
 $medium-gray:                #cfcfca !default;
 $dark-gray:                  #9A9A9A !default;
+$very-light-gray:            #F8F8F8 !default;
 
 $gray-input-bg:              #eeeef3 !default;
 $gray-input-outline:         #e3e3e8 !default;
@@ -229,7 +230,7 @@ $red-navbar:                rgba(#FF4C40, .98);
 
 $bg-mainpanel:          #f5f5f5 !default;
 $bg-mainheader:         #f0f0f0 !default;
-$bg-subheader:          #f8f8f8 !default;
+$bg-subheader:          $very-light-gray !default;
 $bg-default:            #66615B !default;
 $bg-default-inverse:    #e6e6e6 !default;
 $bg-primary:            #b8b8b8 !default;
