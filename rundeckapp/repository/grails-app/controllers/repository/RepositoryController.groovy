@@ -156,10 +156,9 @@ class RepositoryController {
                 render successMsg as JSON
             } else {
                 def pkg = [:]
-                def errors = [:]
+                def errors = []
                 result.messages.each {
-                    errors.code = it.code
-                    errors.msg = it.message
+                    errors.add([code:it.code,msg:it.message])
                 }
                 pkg.errors = errors
                 response.setStatus(400)
