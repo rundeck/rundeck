@@ -61,6 +61,11 @@
     <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
 
       <span class="${linkCss ?: 'card-title h3'}">
+      <g:if test="${includeExecStatus}">
+          <i class="exec-status icon "
+             data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
+          </i>
+      </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
             class="text-primary"
             params="[project: scheduledExecution.project]"
