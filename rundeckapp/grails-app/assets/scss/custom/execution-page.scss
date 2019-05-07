@@ -21,23 +21,25 @@
     border-bottom: 1px solid darken($bg-subheader, 10%);
 
     .execution-head-info {
-      border-right: 1px solid darken($bg-subheader, 10%);
-
-      /* Medium screens */
-      @media all and (max-width: $screen-sm) {
-        border-right:none;
-        border-bottom: 1px solid darken($bg-subheader, 10%);
-      }
+      background: #ffffff;
     }
 
     .execution-aux-info {
-      border-left: 1px solid $bg-mainpanel;
 
-      /* Medium screens */
-      @media all and (max-width: $screen-sm) {
-        border-left:none;
-        border-top: 1px solid $bg-mainpanel;
-      }
     }
+  }
+}
+
+.execution-action-links {
+  a:not(.btn) {
+    text-decoration: underline;
+  }
+
+  li > a:not(.btn) {
+    text-decoration: none;
+  }
+
+  a + a {
+    margin-left: 10px;
   }
 }
