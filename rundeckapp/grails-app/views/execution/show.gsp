@@ -133,33 +133,99 @@
   <content tag="subtitlecss">execution-page</content>
   <content tag="subtitlesection">
 
-      <div class=" execution_ko subtitle-head flex-container flex-align-items-stretch">
+      <div class=" execution_ko subtitle-head flex-container reverse flex-align-items-stretch">
           <div class="subtitle-head-item execution-head-info flex-item-1">
-              <section>
-                  <section>
-                      <span class="jobInfo" id="jobInfo_${execution.id}">
-                          <g:render template="/scheduledExecution/showExecutionLink"
-                                    model="[scheduledExecution: scheduledExecution,
-                                            linkCss           : 'text-h3', noimgs: true, execution: execution, followparams: [mode: followmode, lastlines: params.lastlines]]"/>
-                      </span>
+              <section class="flex-container reverse">
+                  <section class="flex-item-1 text-right">
+                      <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
+                          <div class="btn-group" data-bind="visible: completed()">
+                              <button type="button"
+                                      class="btn btn-muted btn-sm dropdown-toggle"
+                                      data-toggle="dropdown"
+                                      aria-expanded="false">
+                                  <i class="glyphicon glyphicon-list"></i>
+                                  <span class="caret"></span>
+                              </button>
+                              <ul class="dropdown-menu dropdown-menu-right" role="menu">
+
+                                  <g:if test="${deleteExecAuth}">
+                                      <li>
+                                          <a href="#execdelete"
+                                             data-toggle="modal">
+                                              <i class="fas fa-trash"></i>
+                                              <g:message code="button.action.delete.this.execution"/>
+                                          </a>
+                                      </li>
+                                  </g:if>
+
+                                  <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                                      <li class="divider  ">
+
+                                      </li>
+                                      <li>
+                                          <a type="button" href="#details_modal" data-toggle="modal">
+                                              <g:icon name="info-sign"/>
+                                              <g:message code="definition"/>
+                                          </a>
+                                      </li>
+
+                                  </g:if>
+                              </ul>
+                          </div>
+                      </g:if>
+
+
+                      <g:render template="/scheduledExecution/showExecutionLink"
+                                model="[scheduledExecution: scheduledExecution,
+                                        linkCss           : 'text-h4',
+                                        noimgs            : true,
+                                        execution         : execution,
+                                        hideExecStatus    : true,
+                                        followparams      : [mode: followmode, lastlines: params.lastlines]
+                                ]"/>
+
+                  </section>
+                  <section class="flex-item-2">
+
+                      <section class="section-space">
+
+                          %{-- end of ifScheduledExecutions --}%
+                          <tmpl:wfstateSummaryLine/>
+
+                      </section>
+
+
+                      <g:if test="${execution.retryAttempt}">
+                          <section class="text-secondary section-space">
+                              <i class="glyphicon glyphicon-repeat"></i>
+                              <g:message code="execution.retry.info.label"
+                                         args="${[execution.retryAttempt, execution.retry]}"/>
+                          </section>
+                      </g:if>
+                  </section>
+              </section>
+
+              <section class="section-space execution-action-links ">
 
                       <g:if test="${null == execution.dateCompleted}">
                           <span data-bind="if: canKillExec()">
                               <span data-bind="visible: !completed() ">
                                   <!-- ko if: !killRequested() || killStatusFailed() -->
-                                  <span class="btn btn-sm"
+                                  <span class="btn btn-sm btn-danger pull-right"
                                         data-bind="click: killExecAction">
                                       <g:message code="button.action.kill.job"/>
+                                      <i class="glyphicon glyphicon-remove"></i>
                                   </span>
                                   <!-- /ko -->
                                   <!-- ko if: killRequested() -->
                                   <!-- ko if: killStatusPending() -->
-                                  <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
+                                  <g:img class="loading-spinner" file="spinner-gray.gif" width="16px"
+                                         height="16px"/>
                                   <!-- /ko -->
                                   <span class="loading" data-bind="text: killStatusText"></span>
                                   <!-- /ko -->
                                   <!-- ko if: killedbutNotSaved() -->
-                                  <span class="btn btn-danger btn-xs"
+                                  <span class="btn btn-danger btn-xs pull-right"
                                         data-bind="click: markExecAction">
                                       <g:message code="button.action.incomplete.job" default="Mark as Incomplete"/>
                                       <i class="glyphicon glyphicon-remove"></i>
@@ -168,52 +234,9 @@
                               </span>
                           </span>
                       </g:if>
-                  %{--job buttons--}%
 
-                      <g:if test="${deleteExecAuth}">
 
-                          <div class="btn-group" data-bind="visible: completed()">
-                              <button type="button"
-                                      class="btn btn-sm dropdown-toggle"
-                                      data-toggle="dropdown"
-                                      aria-expanded="false">
-                                  <i class="glyphicon glyphicon-list"></i>
-                                  <span class="caret"></span>
-                              </button>
-                              <ul class="dropdown-menu dropdown-menu-right" role="menu">
-                                  <li>
-                                      <a href="#execdelete"
-                                         data-toggle="modal">
-                                          <g:message code="button.action.delete.this.execution"/>
-                                          <i class="fas fa-trash"></i>
-                                      </a>
-                                  </li>
-                              </ul>
-                          </div>
-                      </g:if>
-                      <g:if test="${isAdhoc}">
-
-                      %{--save as job link--}%
-                          <g:if test="${auth.resourceAllowedTest(
-                                  kind: 'job',
-                                  action: [AuthConstants.ACTION_CREATE],
-                                  project: execution.project
-                          )}">
-                              <g:link
-                                      controller="scheduledExecution"
-                                      action="createFromExecution"
-                                      params="${[executionId: execution.id, project: execution.project]}"
-                                      class=" btn btn-sm header execRerun execRetry"
-                                      title="${g.message(code: 'execution.action.saveAsJob')}"
-                                      style="${wdgt.styleVisible(if: null != execution.dateCompleted)}"
-                                      data-bind="visible: completed()">
-
-                                  <g:message code="execution.action.saveAsJob" default="Save as Job"/>
-                                  <i class="fas fa-save"></i>
-                              </g:link>
-                          </g:if>
-                      </g:if>
-                      <g:if test="${scheduledExecution}">
+                  <g:if test="${scheduledExecution}">
                           <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(
                                   active: true,
                                   project: execution.project
@@ -222,7 +245,7 @@
                               <g:link controller="scheduledExecution"
                                       action="execute"
                                       id="${scheduledExecution.extid}"
-                                      class="btn btn-default btn-sm execRerun"
+                                      class=" pull-right"
                                       params="${[retryExecId: execution.id, project: execution.project]}"
                                       title="${g.message(code: 'execution.job.action.runAgain')}"
                                       style="${wdgt.styleVisible(
@@ -235,7 +258,7 @@
                                   <i class="fas fa-redo-alt"></i>
                               </g:link>
                           %{--Run again and retry failed links in a dropdown --}%
-                              <div class="btn-group execRetry"
+                              <div class="btn-group pull-right"
                                    style="${wdgt.styleVisible(
                                            if: null != execution.dateCompleted &&
                                                null !=
@@ -245,7 +268,7 @@
                                   <button class="btn btn-default btn-sm dropdown-toggle"
                                           data-target="#"
                                           data-toggle="dropdown">
-                                      <g:message code="execution.action.runAgain"/>
+                                      <g:message code="execution.action.runAgain.ellipsis"/>
                                       <i class="caret"></i>
                                   </button>
                                   <ul class="dropdown-menu pull-left" role="menu">
@@ -281,14 +304,17 @@
                       </g:if>
                       <g:if test="${isAdhoc}">
                       %{--run again links--}%
-                          <g:if test="${adhocRunAllowed && g.executionMode(active: true, project: execution.project)}">
+                          <g:if test="${adhocRunAllowed && g.executionMode(
+                                  active: true,
+                                  project: execution.project
+                          )}">
                           %{--run again only--}%
                               <g:link
                                       controller="framework"
                                       action="adhoc"
                                       params="${[fromExecId: execution.id, project: execution.project]}"
                                       title="${g.message(code: 'execution.action.runAgain')}"
-                                      class="btn btn-default btn-sm force-last-child execRerun"
+                                      class="  pull-right"
                                       style="${wdgt.styleVisible(
                                               if: null != execution.dateCompleted &&
                                                   null ==
@@ -300,17 +326,17 @@
                                   <i class="fas fa-redo-alt"></i>
                               </g:link>
                           %{--run again and retry failed --}%
-                              <div class="btn-group execRetry"
+                              <div class="btn-group pull-right"
                                    style="${wdgt.styleVisible(
                                            if: null != execution.dateCompleted &&
                                                null !=
                                                execution.failedNodeList
                                    )}"
                                    data-bind="visible: failed()">
-                                  <button class="btn btn-default btn-sm dropdown-toggle force-last-child"
+                                  <button class="btn btn-default btn-sm dropdown-toggle "
                                           data-target="#"
                                           data-toggle="dropdown">
-                                      <g:message code="execution.action.runAgain"/>
+                                      <g:message code="execution.action.runAgain.ellipsis"/>
                                       <i class="caret"></i>
                                   </button>
                                   <ul class="dropdown-menu pull-right" role="menu">
@@ -344,41 +370,27 @@
                           </g:if>
                       </g:if>
 
-                  </section>
-
-
-                  <g:if test="${execution.retryAttempt}">
-                      <section class="text-primary">
-                          <i class="glyphicon glyphicon-repeat"></i>
-                          Retry #<g:enc>${execution.retryAttempt}</g:enc>  (of <g:enc>${execution.retry}</g:enc>)
-                      </section>
-                  </g:if>
-
-
-                  <section class="section-space">
-
-                      %{-- end of ifScheduledExecutions --}%
-                      <tmpl:wfstateSummaryLine/>
-
-                  </section>
               </section>
+
           </div>
 
           <div class="subtitle-head-item execution-aux-info flex-item-1">
               <section>
                   <g:if test="${isAdhoc}">
                       <div class="text-h5">
+                          <i class="exec-status icon "
+                             data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
+                          </i>
                           <g:render template="wfItemView" model="[
-                                  item   : execution.workflow.commands[0],
-                                  icon   : 'icon-med',
-                                  iwidth : '24px',
-                                  iheight: '24px',
+                                  item: execution.workflow.commands[0],
+                                  icon: 'icon-small'
                           ]"/>
                       </div>
                   </g:if>
                   <g:if test="${scheduledExecution}">
                       <g:render template="/scheduledExecution/showHead"
                                 model="[scheduledExecution: scheduledExecution,
+                                        includeExecStatus : true,
                                         jobDescriptionMode: 'expanded',
                                         jobActionButtons  : true,
                                         linkCss           : 'text-h4',
@@ -396,33 +408,61 @@
                           </section>
                       </g:if>
 
-                  %{--progress bar--}%
-                      <div data-bind="if: !completed()">
-                          <section class="section-space runstatus "
-                                   data-bind="if: !completed() && jobAverageDuration()>0">
-                              <g:set var="progressBind"
-                                     value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
-                              <g:render template="/common/progressBar"
-                                        model="[completePercent : execution.dateCompleted ? 100 : 0,
-                                                progressClass   : 'rd-progress-exec progress-embed',
-                                                progressBarClass: '',
-                                                containerId     : 'progressContainer2',
-                                                innerContent    : '',
-                                                showpercent     : true,
-                                                height          : 28,
-                                                progressId      : 'progressBar',
-                                                bind            : 'jobPercentageFixed()',
-                                                bindText        : '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
-                                                progressBind    : progressBind,
-                                        ]"/>
-                          </section>
 
-                      </div>
 
                   </g:if>
+
               </section>
 
           </div>
+      </div>
+
+      <div class="execution_ko" data-bind="if: !completed()">
+          <g:if test="${scheduledExecution}">
+          %{--progress bar--}%
+              <div>
+                  <section
+                          data-bind="if: !completed() && jobAverageDuration()>0">
+                      <g:set var="progressBind"
+                             value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
+                      <g:render template="/common/progressBar"
+                                model="[completePercent : execution.dateCompleted ? 100 : 0,
+                                        progressClass   : 'rd-progress-exec progress-embed progress-square',
+                                        progressBarClass: '',
+                                        containerId     : 'progressContainer2',
+                                        innerContent    : '',
+                                        showpercent     : true,
+                                        height          : 28,
+                                        progressId      : 'progressBar',
+                                        bind            : 'jobPercentageFixed()',
+                                        bindText        : '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + formatDurationHumanize(jobAverageDuration())',
+                                        progressBind    : progressBind,
+                                ]"/>
+                  </section>
+
+              </div>
+          </g:if>
+          <g:if test="${isAdhoc}">
+
+          %{--progress bar--}%
+              <div>
+                  <section>
+                      <g:render template="/common/progressBar"
+                                model="[completePercent : 100,
+                                        indefinite      : true,
+                                        progressClass   : 'rd-progress-exec progress-embed progress-square',
+                                        progressBarClass: '',
+                                        containerId     : 'progressContainer2',
+                                        innerContent    : '',
+                                        showpercent     : false,
+                                        height          : 28,
+                                        progressId      : 'progressBar',
+
+                                ]"/>
+                  </section>
+
+              </div>
+          </g:if>
       </div>
 
   </content>
@@ -430,107 +470,291 @@
       <div>
 
               <div class="row">
-          <div class="${isAdhoc ? 'col-sm-12' : 'col-sm-8'}">
-                    <div class="card execution_ko">
-                      <div class="card-content">
+                  <div class="col-sm-12">
+                      <div class="card card-plain  execution_ko">
+                          <div class="btn-group ">
+                              <button class="btn btn-default btn-sm dropdown-toggle "
+                                      data-target="#"
+                                      data-toggle="dropdown">
+                                  View:
+                                  <span data-bind="if: activeTab()!=='output'"><g:message code="Nodes"/></span>
+                                  <span data-bind="if: activeTab()==='output'"><g:message
+                                          code="execution.show.mode.Log.title"/></span>
+                                  <i class="caret"></i>
+                              </button>
+                              <ul class="dropdown-menu pull-left" role="menu">
+                                  <li id="tab_link_flow">
+                                      <a href="#state" data-bind="click: function(){activeTab('flow')}">
+                                          <g:message code="Nodes"/>
+                                      </a>
+                                  </li>
+
+                                  <li id="tab_link_output">
+                                      <a href="#output" data-bind="click: function(){activeTab('output')}">
+                                          <g:message code="execution.show.mode.Log.title"/>
+                                      </a>
+                                  </li>
+
+                              </ul>
+                          </div>
+
+                          <span data-bind="visible: activeTab()==='output'">
+
+                              <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                  <g:message code="execution.page.view.options.title"/>
+                                  <i class="glyphicon glyphicon-cog"></i>
+                              </a>
+
+                              <span data-bind="visible: completed()" class="execution-action-links pull-right">
+
+                                  <g:link class=""
+                                          title="${message(
+                                                  code: 'execution.show.log.text.button.description',
+                                                  default: 'View text output'
+                                          )}"
+                                          controller="execution" action="downloadOutput" id="${execution.id}"
+                                          params="[view     : 'inline', formatted: false, project: execution.project,
+                                                   stripansi: true]" target="_blank">
+                                      <g:message code="execution.show.log.text.button.title"/>
+                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
+                                  </g:link>
+                                  <g:link class=""
+                                          title="${message(
+                                                  code: 'execution.show.log.html.button.description',
+                                                  default: 'View rendered output'
+                                          )}"
+                                          controller="execution" action="renderOutput" id="${execution.id}"
+                                          params="[project: execution.project, ansicolor: 'on', loglevels: 'on', convertContent: 'on']"
+                                          target="_blank">
+                                      <g:message code="execution.show.log.html.button.title"/>
+                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
+                                  </g:link>
+                                  <g:link class="btn btn-default btn-xs"
+                                          title="${message(
+                                                  code: 'execution.show.log.download.button.description',
+                                                  default: 'Download {0} bytes',
+                                                  args: [filesize > 0 ? filesize : '?']
+                                          )}"
+                                          controller="execution" action="downloadOutput" id="${execution.id}"
+                                          params="[project: execution.project]" target="_blank">
+                                      <b class="glyphicon glyphicon-file"></b>
+                                      <g:message code="execution.show.log.download.button.title"/>
+                                  </g:link>
+
+                              </span>
+
+                              <g:render template="/common/modal"
+                                        model="[modalid   : 'view-options-modal',
+                                                titleCode : 'execution.page.view.options.title',
+                                                cancelCode: 'close']">
+                                  <div class="container form-horizontal">
+
+                                      <div class="form-group">
+                                          <label class="col-sm-2 control-label" for="view-option-style-mode">
+                                              Style
+                                          </label>
+
+                                          <div class="col-sm-10">
+
+                                              <select data-bind="options: logoutput().options.styleModesAvailable, value:logoutput().options.styleMode"
+                                                      class="form-control"
+                                                      id="view-option-style-mode">
+
+                                              </select>
+
+                                          </div>
+                                      </div>
+
+
+                                      <div class="form-group">
+
+                                          <label class="col-sm-2 control-label">
+                                              Text
+                                          </label>
+                                          <div class="col-sm-10">
+                                              <div class="checkbox">
+                                                  <input type="checkbox"
+                                                         data-bind="checked: logoutput().options.showAnsicolor"
+                                                         id="view-option-ansi-color"/>
+                                                  <label for="view-option-ansi-color">
+                                                      <g:message code="execution.show.mode.ansicolor.title"
+                                                                 default="Ansi Color"/>
+                                                  </label>
+                                              </div>
+                                          </div>
+%{--                                      </div>--}%
+
+%{--                                      <div class="form-group">--}%
+                                          <div class="col-sm-offset-2 col-sm-10">
+                                              <div class="checkbox">
+                                                  <input type="checkbox"
+                                                         data-bind="checked: logoutput().options.wrapLines"
+                                                         id="view-option-wrap-lines"/>
+                                                  <label for="view-option-wrap-lines">
+                                                      <g:message code="execution.show.mode.wrapmode.title"
+                                                                 default="Wrap Long Lines"/>
+                                                  </label>
+                                              </div>
+                                          </div>
+%{--                                      </div>--}%
+
+
+%{--                                      <div class="form-group">--}%
+                                          <div class="col-sm-offset-2 col-sm-10">
+                                              <div class="checkbox">
+                                                  <input type="checkbox"
+                                                         data-bind="checked: logoutput().options.followmodeNode"
+                                                         id="view-option-node-view"/>
+                                                  <label for="view-option-node-view">
+                                                      <g:message code="execution.show.mode.Compact.title"
+                                                                 default="Compact"/>
+                                                  </label>
+                                              </div>
+                                          </div>
+
+                                      </div>
+
+                                      <div class="form-group" xdata-bind="if: !logoutput().options.followmodeNode()">
+
+                                          <label class="col-sm-2 control-label">Columns</label>
+
+                                          <div class="col-sm-10">
+
+                                              <div>
+
+                                                  <div class="checkbox-inline">
+                                                      <input type="checkbox"
+                                                             value="true"
+                                                             data-bind="checked: logoutput().options.showTime"
+                                                             id="view-option-show-time"/>
+                                                      <label for="view-option-show-time">
+                                                          <g:message code="execution.show.mode.column.time" />
+                                                      </label>
+                                                  </div>
+
+                                                  <div class="checkbox-inline">
+                                                      <input type="checkbox"
+                                                             value="true"
+                                                             data-bind="checked: logoutput().options.showNodeCol"
+                                                             id="view-option-show-node"/>
+                                                      <label for="view-option-show-node">
+                                                          <g:message code="execution.show.mode.column.node" />
+                                                      </label>
+                                                  </div>
+
+                                                  <div class="checkbox-inline">
+                                                      <input type="checkbox"
+                                                             value="true"
+                                                             data-bind="checked: logoutput().options.showStep"
+                                                             id="view-option-show-step"/>
+                                                      <label for="view-option-show-step">
+                                                          <g:message code="execution.show.mode.column.step" />
+                                                      </label>
+                                                  </div>
+                                              </div>
+
+                                          </div>
+                                      </div>
+
+
+                                      <div class="form-group">
+                                          <label class="col-sm-2 control-label">
+                                              <g:message code="execution.show.mode.inset.label" />
+                                          </label>
+                                          <div class="col-sm-10">
+                                              <div class="checkbox">
+                                                  <input type="checkbox"
+                                                         data-bind="checked: logoutput().options.showNodeInset"
+                                                         id="view-option-node-inset"/>
+                                                  <label for="view-option-node-inset">
+                                                      <g:message code="execution.show.mode.inset.node" />
+                                                  </label>
+                                              </div>
+                                          </div>
+
+                                      </div>
+
+                                  </div>
+
+                              </g:render>
+
+                          </span>
+
+                      </div>
+
+                      <div class="card execution_ko exec-output-bg exec-output " data-mode="normal"
+                           data-bind="attr: {'data-mode': logoutput().options.styleMode}">
+                          <div class="card-content ">
                         <g:render template="/common/messages"/>
-                        <g:if test="${isAdhoc}">
-                            <section class="section-space-lg section-space-bottom-lg">
-                                <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
-                            </section>
-                        </g:if>
-                        <ul class="nav nav-tabs">
 
-                            <li id="tab_link_flow active">
-                                <a href="#state" data-toggle="tab" data-bind="text: completed()?'${enc(attr:g.message(code: "report"))}':'${enc(attr:g.message(code: "monitor"))}' ">
-                                    <g:if test="${execution.dateCompleted==null}">
-                                        <g:message code="monitor" />
-                                    </g:if>
-                                    <g:else>
-                                        <g:message code="report" />
-                                    </g:else>
-                                </a>
-                            </li>
-
-                            <!-- <li id="tab_link_summary">
-                                <a href="#summary" data-toggle="tab"><g:message code="execution.page.show.tab.Summary.title" /></a>
-                            </li> -->
-                            <li id="tab_link_output">
-                                <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
-                            </li>
-                            <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
-                                <li id="tab_link_definition">
-                                    <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
-                                </li>
-                            </g:if>
-                        </ul>
 
                         <div class="tab-content">
 
-                          <div class="tab-pane active" id="state">
+                            <div class="tab-pane " id="state" data-bind="css: {active: activeTab()==='flow'}">
                               <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
                                  <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
                               </div>
                           </div>
-                            <div class="tab-pane " id="output">
+
+                            <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
                                 <g:render template="/execution/showFragment"
                                           model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                             </div>
-                            <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
-                                <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
-                                    <div class="presentation" >
-                                        <g:render template="execDetails"
-                                                  model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
-                                    </div>
-                                </div>
-                            </g:if>
+
                         </div>
-                      </div>
+                          </div>
+
+                          <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                              <g:render template="/common/modal"
+                                        model="[
+                                                modalid   : 'details_modal',
+                                                modalsize : 'modal-lg',
+                                                title     : message(code: 'definition'),
+                                                cancelCode: 'close',
+                                                links     : isAdhoc ? [
+                                                        [
+                                                                messageCode: 'execution.action.saveAsJob.ellipsis',
+                                                                href       : createLink(
+                                                                        controller: 'scheduledExecution',
+                                                                        action: 'createFromExecution',
+                                                                        params: [executionId: execution.id, project: execution.project]
+                                                                ),
+                                                                bind       : 'visible: completed()',
+                                                                css        : 'btn-success'
+                                                        ]
+                                                ] : []
+                                        ]">
+
+                                  <div>
+                                      <g:render template="execDetails"
+                                                model="[execdata: execution, showArgString: false, hideAdhoc: false]"/>
+                                  </div>
+
+                              </g:render>
+
+                          </g:if>
                     </div>
                   </div>
           <g:if test="${scheduledExecution}">
-              <div class="col-sm-4">
-                  <div class="executionshow_wrap execution_ko">
-                      <div class="executionshow">
-                          <div class="row">
-                              %{--job or adhoc title--}%
-                              <div class="col-sm-12">
-                                  <div class="card">
 
-                                      <div class="card-footer">
-                                          <g:render template="wfstateSummaryDisplay" bean="${workflowState}" var="workflowState"/>
+              <div class="col-sm-12" id="activity_section">
 
-                                      </div>
-                                  </div>
-                              </div>
-                              %{--permalink--}%
-
-                          </div> <!-- end div -->
-
+                  <div class="card card-plain">
+                      <div class="card-header">
+                          <h3 class="card-title">
+                              <g:message code="page.section.Activity.for.this.job"/>
+                          </h3>
                       </div>
                   </div>
 
-                  <div class="row" id="activity_section">
-                      <div class="col-sm-12">
-
-                          <div class="card card-plain">
-                              <div class="card-header">
-                                  <h3 class="card-title">
-                                      <g:message code="page.section.Activity.for.this.job"/>
-                                  </h3>
-                              </div>
-                          </div>
-
-                          <div class="card">
-                              <div class="card-content">
-                                  <g:render template="/reports/activityLinks" model="[hideNowRunning:!execution.dateCompleted, execution:execution, scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
-                              </div>
-                          </div>
+                  <div class="card">
+                      <div class="card-content">
+                          <g:render template="/reports/activityLinks"
+                                    model="[hideNowRunning: !execution.dateCompleted, execution: execution, scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
                       </div>
                   </div>
+              </div>
 
-              </div>
-              </div>
           </g:if>
     </div>
 
@@ -659,6 +883,7 @@
     var followControl=null;
     var flowState=null;
     var nodeflowvm=null;
+    var logoutput=null;
     function followOutput(){
         followControl.beginFollowingOutput('${enc(js:execution?.id)}');
     }
@@ -669,9 +894,6 @@
             nodeflowvm.errorMessage('Could not load flow state: '+e);
             nodeflowvm.stateLoaded(false);
         }
-    }
-    function showTab(id){
-        jQuery('#'+id+' a').tab('show');
     }
 
     var activity;
@@ -719,26 +941,41 @@
           killjobhtml: "",
       </g:if>
         totalDuration : '${enc(js:scheduledExecution?.getTotalTimeStats()?: -1)}',
-        totalCount: '${enc(js:scheduledExecution?.getExecCountStats()?: -1)}'
+        totalCount: '${enc(js: scheduledExecution?.getExecCountStats() ?: -1)}',
+        colStep:{value:${enc(js: !isAdhoc)} },
+        colNode:{value:false}
       });
       nodeflowvm=new NodeFlowViewModel(
         workflow,
         "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
         multiworkflow,
-        {followControl:followControl,executionId:'${enc(js:execution.id)}'}
-      );
-      flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
+        {
+            followControl:followControl,
+            executionId:'${enc(js: execution.id)}',
+            logoutput: new LogOutput({
+                followControl:followControl,
+                bindFollowControl:true,
+                options:{
+                    followmode:"${enc(js: followmode)}",
+                    showStep:${enc(js: !isAdhoc)},
+                    showNodeCol:false,
+                }
+            } )
+        }
+        );
+        flowState = new FlowState('${enc(js: execution?.id)}','flowstate',{
         workflow:workflow,
         loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
         reloadInterval:1500
      });
+
       nodeflowvm.followFlowState(flowState,true);
 
         ko.mapping.fromJS({
-            completed:'${execution.dateCompleted!=null}',
+            completed:'${execution.dateCompleted != null}',
             startTime:'${enc(js:execution.dateStarted)}',
             endTime:'${enc(js:execution.dateCompleted)}',
             executionState:'${enc(js:execution.executionState)}',
@@ -754,32 +991,18 @@
                 flowState.loadUrlParams=flowState.loadUrlParamsBase;
             }
         });
-        //link flow and output tabs to initialize following
-        //by default show state
-        followState();
-        jQuery('#tab_link_summary').on('show.bs.tab',function(e){
-            nodeflowvm.activeTab("summary");
+
+        //knockout activeTab change listener to begin output or state listener
+        nodeflowvm.activeTab.subscribe(function(val){
+           if(val==='flow'){
             followState();
-        });
-        jQuery('#tab_link_flow').on('show.bs.tab',function(e){
-            nodeflowvm.activeTab("flow");
-            followState();
-        });
-        jQuery('#tab_link_output').on('show.bs.tab',function(e){
-            nodeflowvm.activeTab("output");
+           }else if(val==='output'){
             followOutput();
+
+           }
         });
-        jQuery('.toggle-card-collapse').on('click', function(e){
-          e.preventDefault()
-          var card = jQuery(e.target).data().card;
-          jQuery('#' + card).toggle()
-        })
-        jQuery('.toggle-card-collapse i').on('click', function(e){
-          // same function as above, just for the icon, and climbing the parent to get the card
-          e.preventDefault()
-          var card = jQuery(e.target).parent().data().card;
-          jQuery('#' + card).toggle()
-        })
+
+
         if(document.getElementById('activity_section')){
             activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
             activity.nowRunningEnabled(${null != execution?.dateCompleted});
@@ -792,7 +1015,6 @@
         jQuery('.apply_ace').each(function () {
             _applyAce(this);
         });
-        followControl.bindActions('outputappendform');
 
         PageActionHandlers.registerHandler('copy_other_project',function(el){
             jQuery('#jobid').val(el.data('jobId'));
@@ -802,14 +1024,11 @@
         if(outDetails === '#output'){
             nodeflowvm.activeTab("output");
             followOutput();
-            showTab('tab_link_output');
         }else if(outDetails === '#monitor'){
             nodeflowvm.activeTab("flow");
-            showTab('tab_link_flow');
-        }else if(outDetails === '#definition'){
-            showTab('tab_link_definition');
+        }else{
+            nodeflowvm.activeTab("flow");
         }
-        jQuery('.running_link').click()
     }
     jQuery(init);
   </g:javascript>

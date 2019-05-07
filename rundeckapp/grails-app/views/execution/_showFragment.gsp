@@ -136,83 +136,91 @@
 </div>
 </g:if>
 <div class="${inlineView?'card-content inlineexecution':''}">
+  <g:if test="${showDownloadOptions||showViewOptions}">
   <div id="commandFlow" class="outputcontrols" style="margin-top: 1em; margin-bottom:1em;">
-    <form action="#" id="outputappendform">
+
       <div class="row" style="border-bottom:1px solid #e8e8e8;">
         <div class="col-sm-8" style="margin-bottom: 10px">
-          <a href="#" class="collapser btn btn-xs" data-toggle="collapse" data-target="#viewoptions" title="Log Output View Options">
-            View Options
-          </a>
-          <div class="collapse" id="viewoptions" style="padding-top:1em;">
-            <div style="${wdgt.styleVisible(unless: followmode == 'node')}" class="obs_node_false ">
-              <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                <span class="text-primary">Log view:</span>
-                <label class="action  join" title="Click to change" id="colTimeShowLabel">
-                  <g:checkBox name="coltime" id="colTimeShow" value="true" checked="true" class="opt_display_col_time"/>
-                  Time
-                </label>
-                <label class="action  join" title="Click to change" id="colNodeShowLabel">
-                  <g:checkBox name="coltime" id="colNodeShow" value="true" checked="true" class="opt_display_col_node"/>
-                  Node
-                </label>
-                <label class="action" title="Click to change" id="colStepShowLabel">
-                  <g:checkBox name="coltime" id="colStepShow" value="true" checked="${!inlineView}" class="opt_display_col_step"/>
-                  Step
-                </label>
-               </span>
-            </div>
-            <div>
-              <span class="text-primary">Node view:</span>
-              <label class="out_setmode_toggle out_setmode">
+          <g:if test="${showViewOptions}">
+            <a href="#" class="collapser btn btn-xs" data-toggle="collapse" data-target="#viewoptions" title="Log Output View Options">
+              View Options
+            </a>
+
+            <div class="collapse" id="viewoptions">
+              <div style="${wdgt.styleVisible(unless: followmode == 'node')}" class="obs_node_false ">
+                <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
+                  <span class="text-primary">Log view:</span>
+                  <label class="action  join" title="Click to change" id="colTimeShowLabel">
+                    <g:checkBox name="coltime" id="colTimeShow" value="true" checked="true" class="opt_display_col_time"/>
+                    Time
+                  </label>
+                  <label class="action  join" title="Click to change" id="colNodeShowLabel">
+                    <g:checkBox name="coltime" id="colNodeShow" value="true" checked="true" class="opt_display_col_node"/>
+                    Node
+                  </label>
+                  <label class="action" title="Click to change" id="colStepShowLabel">
+                    <g:checkBox name="coltime" id="colStepShow" value="true" checked="${!inlineView}" class="opt_display_col_step"/>
+                    Step
+                  </label>
+                  <label class="ansi-color-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
+                  </label>
+                  <label class="log-wrap-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
+                  </label>
+                </span>
+              </div>
+
+              <div>
+                <span class="text-primary">Node view:</span>
+                <label class="out_setmode_toggle out_setmode">
                   <input type="checkbox" ${followmode == 'node' ? 'checked' : ''}/>
                   <g:message code="execution.show.mode.Compact.title" default="Compact"/>
-              </label>
-              <label class="ansi-color-toggle">
-                  <input type="checkbox" checked/>
-                  <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
-              </label>
-              <label class="log-wrap-toggle">
-                  <input type="checkbox" checked/>
-                  <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
-              </label>
+                </label>
+              </div>
             </div>
-          </div>
+          </g:if>
         </div>
         <div class="col-sm-4">
-          <div class="pull-right">
-            <span class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
-              <span>
-                <g:link class="btn btn-default btn-xs"
-                        title="${message(code:'execution.show.log.text.button.description',default:'View text output')}"
-                        controller="execution" action="downloadOutput" id="${execution.id}"
-                        params="[view: 'inline', formatted: false, project: execution.project,
-                                stripansi:true]" target="_blank">
-                  <g:message code="execution.show.log.text.button.title" />
-                </g:link>
+          <g:if test="${showDownloadOptions}">
+            <div class="pull-right">
+              <span class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
+                <span>
+                  <g:link class="btn btn-default btn-xs"
+                          title="${message(code:'execution.show.log.text.button.description', default:'View text output')}"
+                          controller="execution" action="downloadOutput" id="${execution.id}"
+                          params="[view     : 'inline', formatted: false, project: execution.project,
+                                   stripansi:true]" target="_blank">
+                    <g:message code="execution.show.log.text.button.title" />
+                  </g:link>
+                </span>
+                <span>
+                  <g:link class="btn btn-default btn-xs"
+                          title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
+                          controller="execution" action="renderOutput" id="${execution.id}"
+                          params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']" target="_blank">
+                    <g:message code="execution.show.log.html.button.title" />
+                  </g:link>
+                </span>
+                <span class="sepL">
+                  <g:link class="btn btn-default btn-xs"
+                          title="${message(code:'execution.show.log.download.button.description', default:'Download {0} bytes', args:[filesize> 0 ? filesize : '?'])}"
+                          controller="execution" action="downloadOutput" id="${execution.id}"
+                          params="[project: execution.project]" target="_blank">
+                    <b class="glyphicon glyphicon-file"></b>
+                    <g:message code="execution.show.log.download.button.title" />
+                  </g:link>
+                </span>
               </span>
-              <span>
-                <g:link class="btn btn-default btn-xs"
-                        title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
-                        controller="execution" action="renderOutput" id="${execution.id}"
-                        params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']" target="_blank">
-                  <g:message code="execution.show.log.html.button.title" />
-                </g:link>
-              </span>
-              <span class="sepL">
-                <g:link class="btn btn-default btn-xs"
-                      title="${message(code:'execution.show.log.download.button.description',default:'Download {0} bytes',args:[filesize>0?filesize:'?'])}"
-                      controller="execution" action="downloadOutput" id="${execution.id}"
-                      params="[project: execution.project]" target="_blank">
-                  <b class="glyphicon glyphicon-file"></b>
-                  <g:message code="execution.show.log.download.button.title" />
-                </g:link>
-              </span>
-            </span>
-          </div>
+            </div>
+          </g:if>
         </div>
       </div>
-    </form>
+
   </div>
+  </g:if>
   <div id="fileload" style="display:none; border-bottom:1px solid #b7b7b7;" class=" row">
     <div class="col-sm-12">
       <div class=" progress " id="fileloadprogress" style="width:100%">
@@ -223,7 +231,10 @@
       </div>
     </div>
   </div>
-  <div id="commandPerform" class="commandcontent ansicolor ansicolor-on" style="display:none; overflow-x: auto;"></div>
+
+  <div id="commandPerform" class="card-content-full-width ansicolor ansicolor-on"
+    data-bind="css: {'-view-opt--node-inset-disabled': !logoutput().options.showNodeInset() }"
+       style="display:none; overflow-x: auto;"></div>
   <div id="log"></div>
   <div id="commandPerform_empty" style="display: none">
     <div class="row">
