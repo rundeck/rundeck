@@ -15,7 +15,7 @@
   --}%
 
 <div class="row jobstats">
-    <div class="col-xs-12 col-sm-6 job-stats-item">
+    <div class="col-xs-6 col-sm-3  job-stats-item">
         <span class="text-table-header has_tooltip"
               title="${enc(attr: g.message(code: 'workflowState.summary.nodes.complete.description'))}"
               data-container="body"
@@ -24,18 +24,18 @@
 
         </span>
 
-        <div class="job-stats-value">
+        <span class="job-stats-value">
             <span
                   data-bind="text: percentageFixed(completedNodes().length,activeNodes().length) + '%'"></span>
 
             <span class="text-primary"
                   data-bind="text: completedNodes().length+'/'+activeNodes().length"></span>
 
-        </div>
+        </span>
 
     </div>
 
-    <div class="col-xs-12 col-sm-6 job-stats-item">
+    <div class="col-xs-6 col-sm-3  job-stats-item">
         <span class="text-table-header"
               title="${message(code: 'workflowState.summary.nodes.failed.description')}"
               data-container="body"
@@ -43,15 +43,15 @@
             <g:message code="status.label.failed"/>
         </span>
 
-        <div class="job-stats-value">
+        <span class="job-stats-value">
             <span
                     data-bind="css: {'text-danger': failedNodes().length > 0 , 'text-secondary': failedNodes().length < 1 } ">
                 <span data-bind="text: failedNodes().length"></span>
             </span>
-        </div>
+        </span>
     </div>
 
-    <div class="col-xs-12 col-sm-6 job-stats-item">
+    <div class="col-xs-6 col-sm-3  job-stats-item">
         <span class="text-table-header"
               title="${message(code: 'workflowState.summary.nodes.incomplete.description')}"
               data-container="body"
@@ -59,14 +59,14 @@
             <g:message code="incomplete"/>
         </span>
 
-        <div class="job-stats-value">
+        <span class="job-stats-value">
             <span data-bind="css: {'text-warning': partialNodes().length > 0 , 'text-secondary': partialNodes().length < 1 } ">
                 <span class="" data-bind="text: partialNodes().length"></span>
             </span>
-        </div>
+        </span>
     </div>
 
-    <div class="col-xs-12 col-sm-6 job-stats-item">
+    <div class="col-xs-6 col-sm-3  job-stats-item">
         <span class="text-table-header"
               title="${message(code: 'workflowState.summary.nodes.notstarted.description')}"
               data-container="body"
@@ -74,10 +74,10 @@
             <g:message code="not.started"/>
         </span>
 
-        <div class="job-stats-value">
+        <span class="job-stats-value">
             <span data-bind="css: {'text-warning': notstartedNodes().length > 0 , 'text-secondary': notstartedNodes().length < 1 } ">
                 <span class="" data-bind="text: notstartedNodes().length"></span>
             </span>
-        </div>
+        </span>
     </div>
 </div>
