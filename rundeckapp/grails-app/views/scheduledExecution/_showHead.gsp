@@ -76,7 +76,7 @@
         <g:if test="${jobActionButtons}">
             <div class="job-action-button">
                 <g:render template="/scheduledExecution/jobActionButton"
-                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-sm']"/>
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm']"/>
           </div>
         </g:if>
       </span>
