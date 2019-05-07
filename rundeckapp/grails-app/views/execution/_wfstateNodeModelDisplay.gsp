@@ -49,8 +49,8 @@
     </div>
 </div>
 <div data-bind="if: stateLoaded()">
-  <div data-bind="if: activeTab()=='flow'">
-    <div class="row row-space" data-bind="if: completed()">
+  <div >
+    <div class="row row-space" >
       <div class="col-sm-12">
         <tmpl:wfstateSummaryScore/>
       </div>
