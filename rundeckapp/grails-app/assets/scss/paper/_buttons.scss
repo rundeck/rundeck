@@ -5,7 +5,7 @@
     border-width: $border-thin;
     background-color: $transparent-bg;
     font-size: $font-size-base;
-    font-weight: $font-weight-bold;
+    font-weight: $font-weight-normal;
 
     padding: $padding-base-vertical $padding-base-horizontal;
 
@@ -55,6 +55,7 @@
 
 .btn.btn-primary {
     border-width: $border-thick;
+    font-weight: $font-weight-bold;
 }
 
 .btn-neutral {
@@ -174,4 +175,13 @@
     .btn {
         margin-bottom: 5px;
     }
+}
+
+.btn-muted {
+    border-color: $light-gray;
+    color: $dark-gray;
+}
+.btn-secondary {
+    border-color: $medium-gray;
+    color: $dark-gray;
 }
