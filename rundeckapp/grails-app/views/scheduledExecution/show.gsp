@@ -20,6 +20,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
+    <meta name="skipMotd" content="true"/>
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/joboptions.js"/>

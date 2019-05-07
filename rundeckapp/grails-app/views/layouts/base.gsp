@@ -229,9 +229,17 @@
             </nav>
         </g:ifPageProperty>
       <div class="content">
-        <div class="container-fluid">
-          <div id=project-motd-vue></div>
-        </div>
+          <g:set var="includePageMotd" value="${true}" scope="page"/>
+
+          <g:ifPageProperty name="meta.skipMotd">
+              <g:set var="includePageMotd" value="${false}" scope="page"/>
+          </g:ifPageProperty>
+
+          <g:if test="${includePageMotd}">
+              <div class="container-fluid">
+                  <div id=project-motd-vue></div>
+              </div>
+          </g:if>
         <div id="layoutBody">
             <g:layoutBody/>
         </div>
