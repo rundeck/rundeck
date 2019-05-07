@@ -23,6 +23,7 @@
 //= require nodeFiltersKO
 //= require adhocCommandKO
 //= require executionStateKO
+//= require executionLogOutputKO
 
 /*
  Manifest for "framework/adhoc.gsp" page
@@ -162,7 +163,7 @@ function continueRunFollow(data) {
         execData: {},
         appLinks: appLinks,
         onComplete: onRunComplete,
-        dobind: true
+        // dobind: true
     });
     var nodeflowvm=new NodeFlowViewModel(
         workflow,

@@ -244,6 +244,10 @@ var FollowControl = Class.create({
         this.refresh=this.tailmode;
         this.readyMode();
     },
+    resetMode: function (mode) {
+        this.setMode(mode)
+        this.reload()
+    },
     setLogWrap: function (wrapped) {
         "use strict";
         if ($(this.cmdoutputtbl)) {
