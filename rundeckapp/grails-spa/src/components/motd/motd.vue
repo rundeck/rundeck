@@ -1,5 +1,5 @@
 <template>
-  <div class="row" v-if="message">
+  <div class="row" v-if="message && showMessage">
     <div class="col-xs-12">
       <div class="alert alert-info">
         <button type="button" class="close" @click="dismissMessage">×</button>
@@ -27,7 +27,8 @@ export default {
   data () {
     return {
       message: '',
-      showFullMOTD: false
+      showFullMOTD: true,
+      showMessage: false,
     }
   },
   methods: {
@@ -36,7 +37,7 @@ export default {
       let midnight = new Date()
       midnight.setHours(23, 59, 59, 0)
       this.$cookies.set(cookieKey, 'true', midnight)
-      this.message = false
+      this.showMessage = false
     },
     hashMessage (messageToHash) {
       let hash = 0
@@ -60,11 +61,9 @@ export default {
     }
   },
   mounted () {
-    let message = this.checkMessage()
+    this.showMessage = this.checkMessage()
 
-    if (message) {
-      this.message = this.project.readme.motdHTML
-    }
+    this.message = this.project.readme.motdHTML
   }
 }
 </script>
