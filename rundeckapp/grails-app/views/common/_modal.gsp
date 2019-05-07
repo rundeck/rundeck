@@ -23,7 +23,7 @@
                             aria-hidden="true">&times;</button>
                 </g:if>
 
-                <h4 class="modal-title" id="${modalid}_title">${title}</h4>
+                <h4 class="modal-title" id="${modalid}_title">${title ?: titleCode ? message(code: titleCode) : ''}</h4>
             </div>
 
             <div class="modal-body" id="${modalid}_content">
@@ -34,7 +34,7 @@
 
                 <g:if test="${!nocancel}">
                     <button type="submit" class="btn btn-default" data-dismiss="modal">
-                        <g:message code="cancel"/>
+                        <g:message code="${cancelCode ?: 'cancel'}"/>
                     </button>
                 </g:if>
                 <span id="${modalid}_buttons">
@@ -44,6 +44,15 @@
                             ${button.message}
                         </button>
                     </g:each>
+                    <g:if test="${links}">
+                        <g:each in="${links}" var="link">
+                            <a class="btn ${link.css ?: 'btn-default'} " data-bind="${link.bind ?: ''}"
+                               onclick="${link.js ?: ''}"
+                               href="${link.href ?: '#'}">
+                                ${link.message ?: link.messageCode ? message(code: link.messageCode) : 'link'}
+                            </a>
+                        </g:each>
+                    </g:if>
                 </span>
             </div>
         </div>
