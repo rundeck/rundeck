@@ -969,6 +969,9 @@ function _initCollapseExpander() {
 
 function _toggleAnsiColor(e) {
   var test = jQuery(this).find('input')[0].checked;
+  _setAnsiColor(test)
+}
+function _setAnsiColor(test){
   var ansicolor = jQuery('.ansicolor');
   if (!test) {
     ansicolor.removeClass('ansicolor-on');
