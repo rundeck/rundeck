@@ -36,6 +36,9 @@
               >
                 <i class="fas fa-file-alt"></i>
               </a>
+              <a v-if="result.docsLink" :href="docsLink" target="_blank">
+                <i class="fas fa-file-alt"></i>
+              </a>
             </div>
           </div>
           <div class="col-xs-12 col-sm-6">

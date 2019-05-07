@@ -3,15 +3,18 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
 import VueScrollTo from 'vue-scrollto'
+import VueFuse from 'vue-fuse'
+
 import store from './store'
+import App from './App'
 
 Vue.config.productionTip = false
 
-Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 Vue.use(VueScrollTo)
+Vue.use(VueFuse)
+Vue.use(Vue2Filters)
 
 /* eslint-disable no-new */
 new Vue({
