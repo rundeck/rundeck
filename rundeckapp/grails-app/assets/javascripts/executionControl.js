@@ -1388,13 +1388,13 @@ var FollowControl = Class.create({
         if (null != result) {
             if (this.updatepagetitle) {
                 var prefix = (
-                    result == 'succeeded' ?
+                    result === 'succeeded' ?
                         '✅ [OK] ' :
-                        result == 'aborted' ?
+                        result === 'aborted' ?
                             '✖︎ [KILLED] ' :
-                            result == 'timedout' ?
+                            result === 'timedout' ?
                                 '⏱︎ [TIMEOUT] ' :
-                                result == 'failed' ?
+                                result === 'failed' ?
                                     '⛔︎ [FAILED] ' :
                                     ('✴️ [' + (result) + '] ')//🔶
                 );
