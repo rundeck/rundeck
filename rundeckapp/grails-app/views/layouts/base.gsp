@@ -60,6 +60,7 @@
     <asset:javascript src="prototype-bundle.js"/>
     </g:if>
     <asset:javascript src="application.js"/>
+    <asset:javascript src="details-element-polyfill.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
