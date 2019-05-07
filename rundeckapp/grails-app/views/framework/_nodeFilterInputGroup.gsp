@@ -38,7 +38,10 @@
     <g:render template="/common/selectFilter" model="[className: 'nodefilterlink',filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? message(code:'all.nodes.menu.item') : null]"/>
   </ul>
 </div>
-<input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
+<input type='search'
+       name="${filterFieldName?enc(attr:filterFieldName):'filter'}"
+       class="schedJobNodeFilter form-control"
+       autofocus
        data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
