@@ -148,10 +148,14 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     void "uninstall artifact no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
+        def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
 
         when:
+        params.artifactId = installedPluginId
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.getArtifact(_,_, null) >> new RundeckRepositoryArtifact()
+        1 * client.getArtifact("private",installedPluginId, "1.0") >> new RundeckRepositoryArtifact()
         1 * controller.repositoryPluginService.uninstallArtifact(_)
         controller.uninstallArtifact()
 
