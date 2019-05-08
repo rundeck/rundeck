@@ -27,6 +27,8 @@ import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
 import org.rundeck.storage.api.Tree
 import org.rundeck.storage.impl.DelegateTree
 
+import java.util.concurrent.TimeUnit
+
 @Plugin(name = 'object', service = ServiceNameConstants.Storage)
 @PluginDescription(title = 'Object Storage', description = 'Use an Amazon S3 compatible object store as storage layer.')
 class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlugin {
@@ -44,6 +46,8 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
                                                                     have coordinated access to the objects managed by the plugins. NOTE: The cached object directory does
                                                                     not share the cache between servers, so it is not best to use it when operating a Rundeck cluster.""")
     boolean uncachedObjectLookup = false;
+    @PluginProperty(title = "Connection Timeout", description = "Timeout in seconds for the http connection to the server (0 means no timeout)",defaultValue = "180")
+    Long connectionTimeout
 
     Tree<ResourceMeta> delegateTree
 
@@ -64,6 +68,8 @@ class ObjectStorePlugin extends DelegateTree<ResourceMeta> implements StoragePlu
         }
 
         MinioClient mClient = new MinioClient(objectStoreUrl, accessKey, secretKey)
+        if(!connectionTimeout) connectionTimeout = 180L
+        mClient.setTimeout(TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout),TimeUnit.SECONDS.toMillis(connectionTimeout))
         if(uncachedObjectLookup) {
             delegateTree = new ObjectStoreTree(mClient,bucket,new ObjectStoreDirectAccessDirectorySource(mClient,bucket))
         } else {

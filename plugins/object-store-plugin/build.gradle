@@ -18,10 +18,11 @@ configurations{
 dependencies {
     // Use the latest Groovy version for building this library
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    pluginLibs("io.minio:minio:5.0.1")
+    pluginLibs("io.minio:minio:6.0.7")
 
     // Use the awesome Spock testing and specification framework
     testCompile 'org.spockframework:spock-core:1.0-groovy-2.4'
+    testCompile "com.squareup.okhttp3:mockwebserver:3.9.1"
 }
 
 repositories {
