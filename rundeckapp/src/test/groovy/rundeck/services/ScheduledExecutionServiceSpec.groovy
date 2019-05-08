@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -1149,6 +1150,11 @@ class ScheduledExecutionServiceSpec extends Specification {
                 }
             }
             getFrameworkProject(_) >> projectMock
+        }
+        service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+            determineExecNode(*_)>>{args->
+                return enabled?uuid:null
+            }
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false

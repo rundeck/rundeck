@@ -67,4 +67,6 @@ public interface JobScheduleManager {
      * @return true if the scheduleOWner should change to current node.
      */
     boolean updateScheduleOwner(String name, String group, Map data);
+
+    String determineExecNode(String name, String group, Map data, String project);
 }

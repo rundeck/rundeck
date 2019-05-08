@@ -79,6 +79,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
+    def JobScheduleManager rundeckJobScheduleManager
+
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
                 integer 'groupExpandLevel'
@@ -636,6 +638,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
+            newsched.serverNodeUUID = nextExecNode(scheduledExecution)
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -1496,6 +1499,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
         return trigger.getFireTimeAfter(new Date())
+    }
+
+    def String nextExecNode(ScheduledExecution se){
+        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
     }
 
     /**
@@ -2530,6 +2537,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    scheduledExecution.serverNodeUUID = nextExecNode(scheduledExecution)
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
@@ -3115,6 +3123,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    scheduledExecution.serverNodeUUID = nextExecNode(scheduledExecution)
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
