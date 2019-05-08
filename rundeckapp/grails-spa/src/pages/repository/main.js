@@ -7,6 +7,7 @@ import VueScrollTo from 'vue-scrollto'
 import VueFuse from 'vue-fuse'
 
 import store from './store'
+import router from './router'
 import App from './App'
 
 Vue.config.productionTip = false
@@ -20,6 +21,7 @@ Vue.use(Vue2Filters)
 new Vue({
   el: '#repository-vue',
   store,
+  router,
   components: {
     App
   },

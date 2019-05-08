@@ -38,6 +38,19 @@
         context: 'application'
 )}"/>
 
+<style>
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+  top: 0;
+  right: 100%;
+  margin-top: -1px;
+  display: none;
+}
+</style>
+
 <ul class="dropdown-menu">
   <li class="dropdown-header">System</li>
   <li>
@@ -69,6 +82,14 @@
   </g:if>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
 <g:if test="${pluginRead && repoEnabled == 'true'}">
+<li class="dropdown-submenu">
+        <a href="#">New dropdown <span class="caret"></span></a>
+        <ul class="dropdown-menu">
+          <li><a tabindex="-1" href="#">2nd level dropdown</a></li>
+          <li><a tabindex="-1" href="#">2nd level dropdown</a></li>
+        </ul>
+
+</li>
   <li>
     <g:link controller="artifact" action="index">
       <g:message code="gui.menu.FindPlugins"/>
@@ -112,3 +133,13 @@
     </g:forMenuItems>
   <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
 </ul>
+<script>
+jQuery(document).ready(function($){
+  $('.dropdown-submenu > a').on("click", function(e){
+    alert('hello')
+    $(this).next('ul').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+  });
+});
+</script>
