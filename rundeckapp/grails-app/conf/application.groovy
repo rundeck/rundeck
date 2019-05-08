@@ -50,6 +50,7 @@ environments {
         }
     }
     production {
+        rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

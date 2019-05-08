@@ -16,9 +16,13 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.api.project.sources.Source
+import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.project.sources.Resources
+import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -32,11 +36,16 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
@@ -776,6 +785,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def resourcesUrl
         def projectNameError
         def projectDescriptionError
+        def cleanerHistoryConfigError
         def Properties projProps = new Properties()
         if(params.description) {
             projProps['project.description'] = params.description
@@ -783,10 +793,27 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.label) {
             projProps['project.label'] = params.label
         }
+
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
+            projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
+            projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
+            projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
+            projProps['project.clean.executions.schedule'] = params.crontabString
+        }else{
+            projProps['project.clean.executions.maxdaystokeep'] = ''
+            projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
+            projProps['project.clean.executions.maximumDeletionSize'] = ''
+            projProps['project.clean.executions.schedule'] = ''
+        }
         def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
+
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
+            cleanerHistoryConfigError = "Execution history parameters is required if enabled"
+            errors << cleanerHistoryConfigError
+        }
 
         if (params.defaultNodeExec) {
             def ndx = params.defaultNodeExec
@@ -867,6 +894,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                    frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
+                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
+                            params.crontabString)
+                }
                 frameworkService.refreshSessionProjects(authContext, session)
                 flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
                 return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: proj.name])
@@ -1187,6 +1220,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         def prefixKey= 'plugin'
+        def cleanerHistoryConfigError
 
         def project=params.project
         if (!project) {
@@ -1231,6 +1265,22 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.label']=''
             }
 
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
+                cleanerHistoryConfigError = "All execution history parameters is required if enabled"
+                errors << cleanerHistoryConfigError
+            }
+
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
+                projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
+                projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
+                projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
+                projProps['project.clean.executions.schedule'] = params.crontabString
+            }else{
+                projProps['project.clean.executions.maxdaystokeep'] = ''
+                projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
+                projProps['project.clean.executions.maximumDeletionSize'] = ''
+                projProps['project.clean.executions.schedule'] = ''
+            }
 
             def Set<String> removePrefixes=[]
             if (params.defaultNodeExec) {
@@ -1310,6 +1360,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                    frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
+                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
+                            params.crontabString)
+                }
                 frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
@@ -2213,6 +2269,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep") ?: 0,
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize") ?: 500,
+            enableCleanHistory:!!fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
+            cronExression:fwkProject.getProjectProperties().get("project.clean.executions.schedule") ?: "0 0 0 1/1 * ? *",
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,
