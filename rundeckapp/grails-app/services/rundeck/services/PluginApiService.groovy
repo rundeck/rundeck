@@ -6,9 +6,11 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
@@ -67,7 +69,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-
+        pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
         //TODO: use pluginService.listPlugins for these services/plugintypes
         [
                 framework.getResourceFormatParserService(),
@@ -77,6 +81,7 @@ class PluginApiService {
 
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
         }
+
         if(featureService.featurePresent("option-values-plugin")) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
                 it.value.description
