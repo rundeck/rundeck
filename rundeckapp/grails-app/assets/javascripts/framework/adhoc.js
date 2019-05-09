@@ -24,6 +24,9 @@
 //= require adhocCommandKO
 //= require executionStateKO
 //= require executionLogOutputKO
+//= require adhocPageKO
+//= require koBind
+
 
 /*
  Manifest for "framework/adhoc.gsp" page
@@ -40,17 +43,7 @@ function showError(message) {
  * START run execution code
  */
 
-    function disableRunBar(runnning) {
-        var runbox = jQuery('#runbox');
-        if (runnning) {
-            runbox.find('button.runbutton').button('loading');
-        }
-    }
-function enableRunBar() {
-    var runbox = jQuery('#runbox');
-    runbox.find('button.runbutton')
-        .button('reset');
-}
+
 var running = false;
 function runStarted() {
     running = true;
@@ -83,7 +76,6 @@ function runFormSubmit(elem) {
     }
     var data = jQuery('#' + elem + " :input").serialize();
     adhocCommand.running(true);
-    disableRunBar(true);
     runStarted();
     $('runcontent').loading('Starting Execution…');
     jQuery.ajax({
@@ -152,6 +144,7 @@ function continueRunFollow(data) {
         killjobauth: pageParams.adhocKillAllowed,
         //showFinalLine: {value: false, changed: false},
         colStep: {value: false},
+        colNode: {value: false},
         collapseCtx: {value: false, changed: false},
         groupOutput:{value:false},
         tailmode: true,
@@ -170,7 +163,19 @@ function continueRunFollow(data) {
         null,
         null,
         null,
-        {followControl:followControl,executionId:data.id}
+        {
+            followControl: followControl,
+            executionId: data.id,
+            logoutput: new LogOutput({
+                followControl: followControl,
+                bindFollowControl: true,
+                options: {
+                    followmode: "tail",
+                    showStep: false,
+                    showNodeCol: false
+                }
+            })
+        }
     );
     var flowState = new FlowState(data.id,null,{
         workflow:workflow,
@@ -180,7 +185,7 @@ function continueRunFollow(data) {
         reloadInterval:1500
     });
     nodeflowvm.followFlowState(flowState);
-    followControl.beginFollowingOutput(data.id);
+    nodeflowvm.logoutput().beginFollowingOutput(data.id);
     flowState.beginFollowing();
     var oldControl=adhocCommand.followControl;
     adhocCommand.followControl=followControl;
@@ -191,7 +196,6 @@ function continueRunFollow(data) {
 }
 function onRunComplete() {
     adhocCommand.running(false);
-    enableRunBar();
     afterRun();
 }
 
@@ -203,10 +207,8 @@ var adhocCommand;
  */
 function _updateBoxInfo(name, data) {
     if (data.total && data.total != "0" && !running) {
-        enableRunBar();
         adhocCommand.canRun(true);
     } else if (!running) {
-        disableRunBar(false);
         adhocCommand.canRun(false);
     }
     if (null != data.total && typeof(nodeFilter) != 'undefined') {
@@ -261,7 +263,7 @@ function init() {
 
     //history tabs binding
     var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-    ko.applyBindings(history, document.getElementById('activity_section'));
+    // ko.applyBindings(history, document.getElementById('activity_section'));
     setupActivityLinks('activity_section', history);
     //if empty query, automatically load first activity_link
     if (pageParams.emptyQuery == 'true') {
@@ -278,18 +280,15 @@ function init() {
         jQuery.extend(filterParams, {
             nodeSummary:nodeSummary,
             view: 'embed',
-            maxShown: 100,
+            maxShown: 50,
             emptyMode: 'blank',
             project: pageParams.project,
             nodesTitleSingular: message('Node'),
             nodesTitlePlural: message('Node.plural')
         }));
 
-    ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-    ko.applyBindings(nodeFilter, document.getElementById('nodefiltersHidden'));
 
     adhocCommand = new AdhocCommand({commandString:pageParams.runCommand}, nodeFilter);
-    ko.applyBindings(adhocCommand, document.getElementById('adhocInput'));
 
     //show selected named filter
     nodeFilter.filterName.subscribe(function (val) {
@@ -300,10 +299,9 @@ function init() {
     });
     nodeFilter.total.subscribe(function(val){
         if (val && val != "0" && !running) {
-            enableRunBar();
             adhocCommand.canRun(true);
         } else if (!running) {
-            disableRunBar(false);
+
             adhocCommand.canRun(false);
         }
     });
@@ -312,5 +310,8 @@ function init() {
     jQuery('.act_adhoc_history_dropdown').click(function () {
         adhocCommand.loadRecentCommands();
     });
+    var adhocPage = new AdhocPage({nodeFilter: nodeFilter, adhocCommand: adhocCommand})
+
+    initKoBind(null, {nodeFilter: nodeFilter, history: history, adhocCommand: adhocCommand, page: adhocPage})
 }
 jQuery(document).ready(init);
