@@ -45,7 +45,7 @@
         <div class="col-xs-12 subtitle-head">
             <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
                 <g:render template="nodeFilterInputGroup"
-                          model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true]"/>
+                          model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
             </div>
         </div>
     </div>
