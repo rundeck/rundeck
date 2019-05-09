@@ -49,6 +49,7 @@
       </tr>
       <tr>
           %{--OS details--}%
+          <!-- ko if: $root.nodeSet().hasOsData(attributes) -->
           <td class="key">
               <g:message code="node.metadata.os"/>
           </td>
@@ -66,6 +67,7 @@
               </span>
 
           </td>
+          <!-- /ko -->
 
           <!-- ko if: $root.useDefaultColumns -->
           <td class="key"><g:message code="node.metadata.username-at-hostname"/></td>
@@ -95,10 +97,9 @@
 
       </tr>
       %{-- unless exclude tags --}%
-      <tr>
+      <tr data-bind="if: tags().size()>0">
           <td class="key">
             <g:message code="node.metadata.tags"/>
-              <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
           </td>
           <td class="" colspan="3">
               <span data-bind="if: tags">

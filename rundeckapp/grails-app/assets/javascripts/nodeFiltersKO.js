@@ -196,6 +196,9 @@ function NodeSet(data) {
 
         return badges;
     };
+    self.hasOsData = function (attributes) {
+        return ['osName', 'osFamily', 'osVersion', 'osArch'].findIndex((val) => attributes[val]) >= 0
+    }
     self.isAnsiFg=function(str){
         return str!=null && typeof(str)=='string' && str.match(/^ansi-fg-(light-)?(black|green|red|yellow|blue|magenta|cyan|white)$/);
     };
