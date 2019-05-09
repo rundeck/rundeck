@@ -4,6 +4,14 @@
     display: inline-block;
     cursor: pointer;
   }
+
+  a.embedded_node + .detailpopup > .nodedetail {
+    display: none;
+  }
+
+  a.embedded_node:focus + .detailpopup > .nodedetail {
+    display: block;
+  }
 }
 
 .node_unselected {
