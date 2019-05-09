@@ -121,11 +121,12 @@
         </p>
       </g:link>
     </li>
-    <g:ifMenuItems type="PROJECT" project="${params.project}">
+    <g:if test="${params.project ?: request.project}">
+        <g:ifMenuItems type="PROJECT" project="${params.project ?: request.project}">
         <li role="separator" class="divider"></li>
-        <g:forMenuItems type="PROJECT" var="item" project="${params.project}">
+            <g:forMenuItems type="PROJECT" var="item" project="${params.project ?: request.project}">
             <li>
-                <a href="${enc(attr: item.getProjectHref(params.project))}"
+                <a href="${enc(attr: item.getProjectHref(params.project ?: request.project))}"
                    class=" toptab "
                    title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
                     <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
@@ -134,6 +135,7 @@
             </li>
         </g:forMenuItems>
     </g:ifMenuItems>
+    </g:if>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
