@@ -41,7 +41,7 @@
 <input type='search'
        name="${filterFieldName?enc(attr:filterFieldName):'filter'}"
        class="schedJobNodeFilter form-control"
-       autofocus
+       ${autofocus?'autofocus':''}
        data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'
