@@ -23,7 +23,9 @@ export async function getProjectNodeSources(): Promise<NodeSource[]> {
 
   const rundeckContext = getRundeckContext()
   const resp = await client.sendRequest({
-    url: `/api/${rundeckContext.apiVersion}/project/${rundeckContext.projectName}/sources`,
+    pathTemplate: '/api/{apiVersion}/project/{projectName}/sources',
+    pathParameters: rundeckContext,
+    baseUrl: rundeckContext.rdBase,
     method: 'GET'
   })
   if (!resp.parsedBody) {
