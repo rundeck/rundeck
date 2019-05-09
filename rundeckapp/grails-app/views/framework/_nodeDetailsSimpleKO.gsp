@@ -105,7 +105,7 @@
                   <span class="nodetags">
                       <span data-bind="foreach: tags">
 
-                          <span class="label label-default">
+                          <span class="label label-muted">
                               <span data-bind="text: $data"></span>
 
                               <node-filter-link params="

@@ -25,11 +25,20 @@
 ko.bindingHandlers.bootstrapPopover = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         if(allBindings.get('bootstrapPopoverContentRef')){
-            _initPopoverContentRef(null,{element:element,contentRef:ko.unwrap(allBindings.get('bootstrapPopoverContentRef')),
-                onShown:function(){_initPopoverMousedownCatch('body','._mousedown_popup_allowed',function (e) {
-                    jQuery(element).popover("hide")
-                })}}
-                );
+            const opts = ko.unwrap(allBindings.get('bootstrapPopoverOptions')) || {}
+            _initPopoverContentRef(null, jQuery.extend(
+                opts,
+                {
+                    element: element,
+                    contentRef: ko.unwrap(allBindings.get('bootstrapPopoverContentRef')),
+                    onShown: function () {
+                        _initPopoverMousedownCatch('body', '._mousedown_popup_allowed', function (e) {
+                            jQuery(element).popover("hide")
+                        })
+                    }
+                }
+                )
+            )
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
                 jQuery(element).popover("destroy")
             })

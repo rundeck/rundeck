@@ -21,6 +21,7 @@
 //= require knockout-node-filter-link
 //= require ko/binding-popover
 //= require ko/binding-message-template
+//= require ko/binding-css2
 
 var NODE_FILTER_ALL='.*';
 function NodeSummary(data){
@@ -265,7 +266,7 @@ function NodeSet(data) {
         }
         return null
     };
-    self.nodeCss=function(attrs){
+    self.nodeCss = function (attrs, other) {
         var classnames=[];
         var uiColor = self.nodeFgCss(attrs);
         if(uiColor){
@@ -275,7 +276,11 @@ function NodeSet(data) {
         if(uiBgcolor){
             classnames.push(uiBgcolor);
         }
-        return classnames.join(' ');
+        const cnames = classnames.join(' ')
+        if (other) {
+            return jQuery.extend({}, other, {[cnames]: true})
+        }
+        return cnames
     };
     self.iconStyle=function(attrs){
         var styles={};

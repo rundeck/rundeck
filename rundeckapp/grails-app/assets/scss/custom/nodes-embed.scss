@@ -3,6 +3,11 @@
   .embedded_node {
     display: inline-block;
     cursor: pointer;
+
+    &.tight {
+      white-space: nowrap;
+      overflow-x: hidden;
+    }
   }
 
   a.embedded_node + .detailpopup > .nodedetail {
