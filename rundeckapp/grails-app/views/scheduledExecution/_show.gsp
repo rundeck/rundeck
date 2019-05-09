@@ -26,7 +26,7 @@
 <content tag="subtitlecss">job-page</content>
 <content tag="subtitlesection">
 
-    <div class="  subtitle-head flex-container ">
+    <div class="  subtitle-head flex-container flex-align-items-stretch">
         <div class="subtitle-head-item  flex-item-2 flex-item flex-shrink-1">
             <g:render template="/scheduledExecution/showHead"
                       model="[scheduledExecution: scheduledExecution,
@@ -48,6 +48,28 @@
                           model="${[scheduledExecution: scheduledExecution]}"/>
             </div>
 
+            <g:if test="${readAccess}">
+                <section class="section-space">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm pull-right">
+                        <g:message code="definition"/>
+                        <i class="glyphicon glyphicon-info-sign"></i>
+                    </a>
+                </section>
+
+                <g:render template="/common/modal"
+                          model="[modalid   : 'job-definition-modal',
+                                  modalsize : 'modal-lg',
+//                                  titleCode: 'definition',
+                                  title     : scheduledExecution.jobName,
+                                  cancelCode: 'close'
+                          ]">
+                    <g:render template="/execution/execDetails"
+                              model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                </g:render>
+            </g:if>
+            <section class="section-space">
+                <span class="uuid">${scheduledExecution.extid}</span>
+            </section>
         </div>
     </div>
 </content>
@@ -78,11 +100,6 @@
                                           </a>
                                       </li>
                                   </g:else>
-                                  <g:if test="${readAccess}">
-                                      <li class="${canRunJob ? '' : 'active'}"><a href="#definition"
-                                                                                  data-toggle="tab"><g:message
-                                                  code="definition"/></a></li>
-                                  </g:if>
                                   <g:if test="${rundoctext}">
                                       <li class="${(canRunJob || readAccess) ? '' : 'active'}">
                                           <a href="#runbook" data-toggle="tab"><g:message code="runbook"/></a>
@@ -102,12 +119,7 @@
                                           defaultFollow="${true}"/>
                               </div>
                           </g:if>
-                          <g:if test="${readAccess}">
-                              <div id="definition" class="tab-pane ${canRunJob ? '' : 'active'}">
-                                  <g:render template="/execution/execDetails"
-                                            model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
-                              </div>
-                          </g:if>
+
                           <g:if test="${rundoctext}">
                               <div id="runbook" class="tab-pane  ${(canRunJob || readAccess) ? '' : 'active'}">
                                   <div class="markdeep">${rundoctext}</div>
