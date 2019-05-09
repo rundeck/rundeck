@@ -131,7 +131,22 @@ class PluginController extends ControllerBase {
     }
 
     def listPlugins() {
-        render(pluginApiService.listPlugins() as JSON)
+        def providers = []
+        pluginApiService.listPlugins().each { svc ->
+            svc.providers.each { p ->
+                 def provider = [:]
+                provider.service = svc.service
+                provider.artifactName = p.pluginName
+                provider.name = p.name
+                provider.id = p.pluginId
+                provider.builtin = p.builtin
+                provider.pluginVersion = p.pluginVersion
+                provider.title = p.title
+                provider.description = p.description
+                providers.add(provider)
+            }
+        }
+        render(providers as JSON)
     }
 
     /**
