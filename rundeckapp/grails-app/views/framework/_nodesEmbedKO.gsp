@@ -18,13 +18,13 @@
 <g:set var="xkey" value="${g.rkey()}"/>
 <div  class="nodes-embed ansicolor-on matchednodes embed embed_clean" data-bind="">
     <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
-        <!-- tabindex="0"
-           data-trigger="focus"
-            role="button"
-      -->
         <a
            class="col-sm-3 node_ident embedded_node"
            data-toggle="popover"
+           tabindex="0"
+           role="button"
+           data-trigger="click"
+           data-viewport="#main-panel"
            data-placement="auto"
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
@@ -63,22 +63,23 @@
              style="display:none;"
              class="detailpopup node_entry tooltipcontent node_filter_link_holder"
              data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
+            <div class="_mousedown_popup_allowed">
+                <span>
+                    <i class="fas fa-hdd"></i>
+                    <span data-bind="text: nodename"></span>
+                </span>
 
-            <span>
-                <i class="fas fa-hdd"></i>
-                <span data-bind="text: nodename"></span>
-            </span>
+                <node-filter-link params="
+                    filterkey: 'name',
+                    filterval: nodename,
+                    linkicon: 'glyphicon glyphicon-circle-arrow-right'
+                    "></node-filter-link>
 
-            <node-filter-link params="
-                filterkey: 'name',
-                filterval: nodename,
-                linkicon: 'glyphicon glyphicon-circle-arrow-right'
-                "></node-filter-link>
+                <span class="nodedesc"></span>
 
-            <span class="nodedesc"></span>
-
-            <div class="nodedetail" style="overflow-x: scroll;">
-                <g:render template="/framework/nodeDetailsSimpleKO" model="[useNamespace:true]"/>
+                <div class="nodedetail" style="overflow-x: scroll;">
+                    <g:render template="/framework/nodeDetailsSimpleKO" model="[useNamespace: true, crefText:'$CREF$']"/>
+                </div>
             </div>
         </div>
 
