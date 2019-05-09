@@ -886,14 +886,14 @@ function _initPopoverContentFor(parent, options) {
 function _initAffix() {
   //affixed elements
   jQuery("a[href='#top']").click(function () {
-    jQuery("html, body").animate({
+    jQuery("#main-panel").animate({
       scrollTop: 0
     }, "slow");
     return false;
   });
   jQuery("a[href='#bottom']").click(function () {
     //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
-    var body = jQuery("html, body");
+    var body = jQuery("#main-panel")
     body.animate({
       scrollTop: body[0].scrollHeight
     }, "fast");
