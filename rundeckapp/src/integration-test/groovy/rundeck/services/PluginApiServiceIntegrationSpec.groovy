@@ -25,7 +25,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
         def pluginList = pluginApiService.listPluginsDetailed()
 
         then:
-        pluginList.descriptions.size() == 21
+        pluginList.descriptions.size() == 22
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7
         pluginList.embeddedFilenames != null
@@ -41,9 +41,9 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
         when:
         def pluginList = pluginApiService.listPluginsDetailed()
-
+        println pluginList.bundledPlugins.size()
         then:
-        pluginList.descriptions.size() == 22
+        pluginList.descriptions.size() == 23
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7
         pluginList.embeddedFilenames != null

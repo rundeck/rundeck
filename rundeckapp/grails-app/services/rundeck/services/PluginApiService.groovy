@@ -42,6 +42,7 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
+    JobLifeCyclePluginService jobLifeCyclePluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -84,6 +85,9 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
+        pluginDescs[jobLifeCyclePluginService.jobLifeCyclePluginProviderService.name]=jobLifeCyclePluginService.listJobLifeCyclePlugins().collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
