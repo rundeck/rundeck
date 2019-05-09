@@ -114,7 +114,7 @@ class SetUserInterceptor {
 
         //find AuthorizationRoleSource instances
         Map<String,AuthorizationRoleSource> type = applicationContext.getBeansOfType(AuthorizationRoleSource)
-        def roleset = new HashSet<String>()
+        def roleset = new HashSet<String>(userService.getUserGroupSourcePluginRoles(principal.name))
         type.each {name,AuthorizationRoleSource source->
             if(source.enabled) {
                 def roles = source.getUserRoles(principal.name, request)

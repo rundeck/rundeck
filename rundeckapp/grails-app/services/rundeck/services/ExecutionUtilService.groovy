@@ -70,7 +70,7 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
         if(exportJobDef){
             //creating xml file
             String parentFolder = loghandler.filepath.getParent()
@@ -274,7 +274,8 @@ class ExecutionUtilService {
                     tmpProj,
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions,
-                    jobcmditem.uuid
+                    jobcmditem.uuid,
+                    jobcmditem.useName
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -336,7 +337,7 @@ class ExecutionUtilService {
     File getExecutionXmlFileForExecution(Execution execution, String path = null) {
         File executionXmlfile
         if(path){
-            executionXmlfile  = new File(path, "execution-${execution.id}.xml")
+            executionXmlfile  = new File(path, "${execution.id}.execution.xml")
         }else{
             executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
         }
@@ -376,7 +377,7 @@ class ExecutionUtilService {
             map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
-        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
         if(exportJobDef && exec.scheduledExecution){
             map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
         }

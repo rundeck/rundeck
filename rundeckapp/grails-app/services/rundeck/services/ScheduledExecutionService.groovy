@@ -31,15 +31,14 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
-import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
-import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.gorm.transactions.Transactional
+import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -60,10 +59,10 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
+import rundeck.quartzjobs.ExecutionsCleanerJob
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 
-import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -111,6 +110,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
+    public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -829,7 +829,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             if(step instanceof JobExec) {
                 ScheduledExecution refjob
-                if(step.uuid){
+                if(!step.useName && step.uuid){
                     refjob = ScheduledExecution.findByUuid(step.uuid)
                     if(refjob) {
                         map.jobref.name = refjob.jobName
@@ -859,7 +859,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if(eh instanceof JobExec) {
                 ScheduledExecution refjob
-                if(eh.uuid){
+                if(!eh.useName && eh.uuid){
                     refjob = ScheduledExecution.findByUuid(eh.uuid)
                 }else{
                     refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
@@ -1043,6 +1043,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobSchedulerService.deleteJobSchedule(jobname, groupname)
     }
 
+    def deleteCleanerExecutionsJob(String projectName){
+        jobSchedulerService.deleteJobSchedule(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME)
+    }
+
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
         return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
@@ -1169,6 +1173,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
+    }
+
+    def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
+        def Date nextTime
+        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
+        JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
+
+        if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
+            log.info("rescheduling existing cleaner execution job in project ${projectName}")
+
+            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME), trigger)
+        } else {
+            log.info("scheduling new cleaner execution job in project ${projectName}")
+            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        }
+
+        log.info("scheduled cleaner executions job next run: " + nextTime.toString())
+        return nextTime
     }
 
     /**
@@ -1405,6 +1427,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return jobDetailBuilder.build()
     }
 
+    def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
+        String description = "Cleaner executions job"
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanerJob)
+                                         .withIdentity(jobname, jobgroup)
+                                         .withDescription(description)
+                                         .usingJobData(new JobDataMap(config))
+
+
+        return jobDetailBuilder.build()
+    }
+
+    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
+        def Trigger trigger
+        try {
+            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withPriority(priority)
+                    .build()
+
+        } catch (java.text.ParseException ex) {
+            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
+        }
+        return trigger
+    }
+
     def Trigger createTrigger(ScheduledExecution se) {
         def Trigger trigger
         def cronExpression = se.generateCrontabExression()
@@ -1426,6 +1473,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def boolean hasJobScheduled(ScheduledExecution se) {
         return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
+    }
+
+    def boolean hasJobScheduled(String jobName, String jobGroup) {
+        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
     /**
@@ -1587,7 +1638,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String option,
             String uuidOption,
             Map changeinfo = [:],
-            UserAndRolesAuthContext authContext
+            UserAndRolesAuthContext authContext,
+            Boolean validateJobref = false
     ){
         def jobs = []
         def jobsi = []
@@ -1656,7 +1708,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     errmsg = "Unauthorized: Update Job ${scheduledExecution.id}"
                 } else {
                     try {
-                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange)
+                        def result = _doupdateJob(scheduledExecution.id, jobdata, projectAuthContext, jobchange, validateJobref)
                         success = result.success
                         scheduledExecution = result.scheduledExecution
                         if(success && result.jobChangeEvent){
@@ -1693,7 +1745,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 } else {
                     try {
                         jobchange.change = 'create'
-                        def result = _dosave(jobdata, projectAuthContext, jobchange)
+                        def result = _dosave(jobdata, projectAuthContext, jobchange, validateJobref)
                         scheduledExecution = result.scheduledExecution
                         if (!result.success && scheduledExecution && scheduledExecution.hasErrors()) {
                             errmsg = "Validation errors: " + scheduledExecution.errors.allErrors.collect { lookupMessageError(it) }.join("; ")
@@ -1965,6 +2017,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if(!scheduledExecution.scheduled){
 
                 return [success: false, scheduledExecution: scheduledExecution,
+                         message  : lookupMessage(
+                                'api.error.job.toggleSchedule.notScheduled',
+                                ['Job ID', scheduledExecution.extid]
+                        ),
+                        status: 409,
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
             if(frameworkService.isClusterModeEnabled()) {
@@ -2028,8 +2085,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateWorkflowStep(WorkflowStep step, List projects = []) {
-        WorkflowController._validateCommandExec(step, null, projects)
+    def validateWorkflowStep(WorkflowStep step, List projects = [], Boolean validateJobref = false, String currentProj = null) {
+        WorkflowController._validateCommandExec(step, null, projects, validateJobref, currentProj)
         if (step.errors.hasErrors()) {
             return false
         } else if (step instanceof PluginStep) {
@@ -2384,7 +2441,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             def optfailed = false
             optsmap.values().each {Option opt ->
-                EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
+                EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
                 fileUploadService.validateFileOptConfig(opt)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
@@ -2813,7 +2870,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         return [failed:failed,modified:addedNotifications]
     }
-    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
+    public Map _doupdateJob(id, ScheduledExecution params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
         log.debug("ScheduledExecutionController: update : attempting to update: " + id +
                   ". params: " + params)
         if (params.groupPath) {
@@ -2950,7 +3007,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each { WorkflowStep cexec ->
-                if (!validateWorkflowStep(cexec, fprojects)) {
+                if (!validateWorkflowStep(cexec, fprojects, validateJobref, scheduledExecution.project)) {
                     wfitemfailed = true
                     failedlist <<  "$i: " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -2958,7 +3015,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cexec.errorHandler) {
-                    if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
+                    if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, scheduledExecution.project)) {
                         wfitemfailed = true
                         failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
@@ -3145,7 +3202,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param changeinfo
      * @return
      */
-    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:]) {
+    public Map _dosave(params, UserAndRolesAuthContext authContext, changeinfo = [:], validateJobref = false) {
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         if (params.groupPath) {
@@ -3168,7 +3225,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else{
             map=params
         }
-        def result = _dovalidate(map, authContext)
+        def result = _dovalidate(map, authContext, validateJobref)
         def scheduledExecution = result.scheduledExecution
         failed = result.failed
         //try to save workflow
@@ -3307,7 +3364,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return valid
     }
 
-    def _dovalidate (Map params, UserAndRoles userAndRoles ){
+    def _dovalidate (Map params, UserAndRoles userAndRoles, boolean validateJobref = false ){
         log.debug("ScheduledExecutionController: save : params: " + params)
         boolean failed = false;
         def scheduledExecution = new ScheduledExecution()
@@ -3421,7 +3478,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each {WorkflowStep cexec ->
-                if (!validateWorkflowStep(cexec, fprojects)) {
+                if (!validateWorkflowStep(cexec, fprojects, validateJobref, params.project)) {
                     wfitemfailed = true
                     failedlist << "$i: " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -3429,7 +3486,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cexec.errorHandler) {
-                    if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
+                    if (!validateWorkflowStep(cexec.errorHandler, fprojects, validateJobref, params.project)) {
                         wfitemfailed = true
                         failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)

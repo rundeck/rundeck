@@ -26,11 +26,25 @@ import java.util.Map;
 @Builder
 @RequiredArgsConstructor
 public class SimplePluginConfiguration
-    implements PluginConfiguration
+        implements ExtPluginConfiguration
 {
     final String service;
     final String provider;
     final Map<String, Object> configuration;
+    Map<String, Object> extra;
+
+    public SimplePluginConfiguration(
+            final String service,
+            final String provider,
+            final Map<String, Object> configuration,
+            final Map<String, Object> extra
+    )
+    {
+        this.service = service;
+        this.provider = provider;
+        this.configuration = configuration;
+        this.extra = extra;
+    }
 
     @Override
     public String toString() {

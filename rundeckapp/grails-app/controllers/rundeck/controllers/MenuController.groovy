@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
+import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
@@ -2709,6 +2710,126 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
                 [formats: ['xml', 'json']]
         )
+    }
+
+
+    def apiJobForecast() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (!frameworkService.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+        )) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : 'api.error.item.unauthorized',
+                            args  : ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!(response.format in ['all', 'xml', 'json'])) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+
+        def extra = [:]
+
+        //future scheduled executions forecast
+        def time = params.time? params.time : '1d'
+
+        Date futureDate = futureRelativeDate(time)
+
+        def max = null
+        if (params.max) {
+            max = params.int('max')
+            if (max <= 0) {
+                max = null
+            }
+        }
+
+        if (scheduledExecution.shouldScheduleExecution()) {
+            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate)
+            if (max
+                    && extra.futureScheduledExecutions
+                    && extra.futureScheduledExecutions.size() > max) {
+                extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
+            }
+        }
+
+
+        respond(
+
+                JobInfo.from(
+                        scheduledExecution,
+                        apiService.apiHrefForJob(scheduledExecution),
+                        apiService.guiHrefForJob(scheduledExecution),
+                        extra
+                ),
+
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    private Date futureRelativeDate(String recentFilter){
+        Calendar n = GregorianCalendar.getInstance()
+        n.setTime(new Date())
+        def matcher = recentFilter =~ /^(\d+)([hdwmyns])$/
+        if (matcher.matches()) {
+            def i = matcher.group(1).toInteger()
+            def ndx
+            switch (matcher.group(2)) {
+                case 'h':
+                    ndx = Calendar.HOUR_OF_DAY
+                    break
+                case 'n':
+                    ndx = Calendar.MINUTE
+                    break
+                case 's':
+                    ndx = Calendar.SECOND
+                    break
+                case 'd':
+                    ndx = Calendar.DAY_OF_YEAR
+                    break
+                case 'w':
+                    ndx = Calendar.WEEK_OF_YEAR
+                    break
+                case 'm':
+                    ndx = Calendar.MONTH
+                    break
+                case 'y':
+                    ndx = Calendar.YEAR
+                    break
+            }
+            n.add(ndx, i)
+
+            return n.getTime()
+        }
+        null
     }
 
     private void respondApiJobsList(List<ScheduledExecution> results) {

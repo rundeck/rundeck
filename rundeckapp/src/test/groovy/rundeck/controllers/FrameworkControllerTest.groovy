@@ -18,12 +18,12 @@ package rundeck.controllers
 
 import groovy.mock.interceptor.MockFor
 import rundeck.services.PluginService
+import rundeck.services.feature.FeatureService
 
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
-import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -31,8 +31,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.grails.web.json.JSONElement
-import org.grails.web.json.JSONObject
+import groovy.mock.interceptor.MockFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
@@ -287,7 +286,7 @@ class FrameworkControllerTest {
         }
         fwk.demand.listWriteableResourceModelSources { project -> [] }
 
-        proj.demand.getProjectProperties(1..3){-> [:]}
+        proj.demand.getProjectProperties(1..8){-> [:]}
 
         fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
 
@@ -386,6 +385,7 @@ class FrameworkControllerTest {
 
     public void testSaveProjectNominal() {
         def fwk = new MockFor(FrameworkService, true)
+        def featureServiceMock = new MockFor(FeatureService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
@@ -407,10 +407,14 @@ class FrameworkControllerTest {
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
+        fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
+
+        featureServiceMock.demand.featurePresent(1..3){a,b->true}
 
 
         controller.frameworkService = fwk.proxyInstance()
+        controller.featureService = featureServiceMock.proxyInstance()
 
         def execPFmck = new MockFor(PasswordFieldsService)
         def fcopyPFmck = new MockFor(PasswordFieldsService)
@@ -638,6 +642,7 @@ class FrameworkControllerTest {
 
     public void testSaveProjectLabel() {
         def fwk = new MockFor(FrameworkService, true)
+        def featureServiceMock = new MockFor(FeatureService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
@@ -658,9 +663,13 @@ class FrameworkControllerTest {
             assertEquals('Label----',props.getProperty('project.label'))
             ["success":props.size() != 0]
         }
+        fwk.demand.scheduleCleanerExecutions{project, b, c, d, crontab->null}
         fwk.demand.refreshSessionProjects{auth,session->['TestSaveProject']}
 
+        featureServiceMock.demand.featurePresent(1..3){a,b->true}
+
         controller.frameworkService = fwk.proxyInstance()
+        controller.featureService = featureServiceMock.proxyInstance()
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
             untrack{a, b -> return null}
@@ -715,7 +724,7 @@ class FrameworkControllerTest {
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         def proj = new MockFor(IRundeckProject)
-        proj.demand.getProjectProperties(1..3){-> ["project.label":label]}
+        proj.demand.getProjectProperties(1..8){-> ["project.label":label]}
 
         fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
         fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }

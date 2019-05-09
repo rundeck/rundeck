@@ -101,6 +101,7 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
                         .required(false)
                         .defaultValue("false")
                 )
+                .metadata("glyphicon", "file")
 
         );
     }

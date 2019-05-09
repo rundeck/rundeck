@@ -51,6 +51,7 @@ class UrlMappings {
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
+        "/api/$api_version/job/$id/forecast"(controller: 'menu', action: 'apiJobForecast')
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']
@@ -314,6 +315,8 @@ class UrlMappings {
         "/community-news/register"(controller:'communityNews') {
             action = [POST: 'register']
         }
+
+        "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "404"(view: '/404')
         "500"(view: '/error')

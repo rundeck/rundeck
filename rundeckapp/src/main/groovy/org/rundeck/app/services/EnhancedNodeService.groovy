@@ -22,15 +22,14 @@ import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
 import groovy.transform.CompileStatic
+import org.rundeck.core.projects.ProjectPluginListConfigurable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
-import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.NodeService
 import rundeck.services.PluginService
@@ -41,7 +40,7 @@ import rundeck.services.feature.FeatureService
  */
 @CompileStatic
 class EnhancedNodeService
-        implements IProjectNodesFactory, ProjectNodeService, InitializingBean {
+        implements IProjectNodesFactory, ProjectNodeService, InitializingBean, ProjectPluginListConfigurable {
     private static final Logger LOG = LoggerFactory.getLogger(EnhancedNodeService)
     @Autowired NodeService nodeService
     @Autowired FrameworkService frameworkService
@@ -55,6 +54,9 @@ class EnhancedNodeService
     void afterPropertiesSet() throws Exception {
         enabled = featureService.featurePresent('enhanced-nodes', false)
     }
+
+    String serviceName = ServiceNameConstants.NodeEnhancer
+    String propertyPrefix = ProjectNodeSupport.NODE_ENHANCER_PROP_PREFIX
 
     @Override
     IProjectNodes getNodes(final String name) {
@@ -72,8 +74,8 @@ class EnhancedNodeService
         def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def plugins = ProjectNodeSupport.listPluginConfigurations(
                 rdprojectconfig.projectProperties,
-                "nodes.plugin",
-                "NodeEnhancer"
+                propertyPrefix,
+                serviceName
         )
 
         def cacheItem = new ProjectNodesEnhancer(project: project)

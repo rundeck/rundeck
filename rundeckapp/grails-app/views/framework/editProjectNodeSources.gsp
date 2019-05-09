@@ -77,6 +77,7 @@
               <div class="list-group">
                 <g:hiddenField name="project" value="${project}"/>
                   <%--Render project configuration settings for 'resourceModelSource'--%>
+                  <div class="list-group-item">
                   <g:render template="projectConfigurableForm"
                             model="${[extraConfigSet: extraConfig?.values(),
                                       category      : 'resourceModelSource',
@@ -84,6 +85,7 @@
                                       titleCode     : 'project.configuration.extra.category.resourceModelSource.title',
                                       helpCode      : 'project.configuration.extra.category.resourceModelSource.description'
                             ]}"/>
+                    </div>
                   <g:if test="${resourceModelConfigDescriptions}">
                     <div class="list-group-item">
                       <div class="help-block">

@@ -80,8 +80,8 @@ class ProjectController extends ControllerBase{
 
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                                                                 frameworkService.authResourceForProject(project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
         }
@@ -423,15 +423,17 @@ class ProjectController extends ControllerBase{
                 flash.error=message(code:"failed.to.import.some.jobs")
                 flash.joberrors=result.joberrors
             }
+            def warning = []
             if(result.execerrors){
-                flash.execerrors=result.execerrors
+                warning.add(result.execerrors)
             }
             if(result.aclerrors){
-                flash.aclerrors=result.aclerrors
+                warning.add(result.aclerrors)
             }
             if(result.scmerrors){
-                flash.scmerrors=result.scmerrors
+                warning.add(result.scmerrors)
             }
+            flash.warn=warning.join(",")
             return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
         }
         }.invalidToken {
@@ -927,7 +929,7 @@ class ProjectController extends ControllerBase{
                 response.setContentType("text/plain")
                 def props=proj.getProjectProperties() as Properties
                 props.store(response.outputStream,request.forwardURI)
-                response.outputStream.close()
+                flush(response)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
@@ -1065,7 +1067,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
             project.loadFileResource(projectFilePath,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
             def baos=new ByteArrayOutputStream()
             project.loadFileResource(projectFilePath,baos)
@@ -1104,7 +1106,7 @@ class ProjectController extends ControllerBase{
                 //write directly
                 response.setContentType(respFormat=='yaml'?"application/yaml":'text/plain')
                 project.loadFileResource(projectFilePath,response.outputStream)
-                response.outputStream.close()
+                flush(response)
             }else if(respFormat in ['json','xml','all'] ){
                 //render as json/xml with contents as string
                 def baos=new ByteArrayOutputStream()
@@ -1255,7 +1257,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
 
             def baos=new ByteArrayOutputStream()
@@ -1313,7 +1315,7 @@ class ProjectController extends ControllerBase{
             //write directly
             response.setContentType("text/plain")
             project.loadFileResource(params.filename,response.outputStream)
-            response.outputStream.close()
+            flush(response)
         }else{
 
             def baos=new ByteArrayOutputStream()
@@ -1404,7 +1406,7 @@ class ProjectController extends ControllerBase{
                 response.setContentType("text/plain")
                 def props=project.getProjectProperties() as Properties
                 props.store(response.outputStream,request.forwardURI)
-                response.outputStream.close()
+                flush(response)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {

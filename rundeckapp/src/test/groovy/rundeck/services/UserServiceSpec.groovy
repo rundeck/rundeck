@@ -15,6 +15,11 @@
  */
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
+import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
 import rundeck.User
@@ -41,5 +46,42 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user.firstName == "The"
         user.lastName == "User"
         user.email == "the@user.com"
+    }
+
+    def "Get User Group Source Plugin Roles"() {
+        when:
+        TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin(groups)
+        RundeckPluginRegistry rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        PluginService pluginService = Mock(PluginService) {
+            listPlugins(UserGroupSourcePlugin) >> { [testPlugin:testPlugin] }
+            configurePlugin(_,_,_,_) >> { new ConfiguredPlugin<UserGroupSourcePlugin>(testPlugin,[:]) }
+        }
+        FrameworkService fwkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+            getPluginService() >> pluginService
+        }
+        service.frameworkService = fwkService
+        def roles = service.getUserGroupSourcePluginRoles(user)
+
+        then:
+        roles == groups
+
+        where:
+        user  | groups
+        "any" | ["one","two"]
+        "any" | []
+    }
+
+    @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)
+    class TestUserGroupSourcePlugin implements UserGroupSourcePlugin {
+
+        List<String> groups
+
+        TestUserGroupSourcePlugin(List<String> groups = []) { this.groups = groups }
+
+        @Override
+        List<String> getGroups(final String username, final Map<String, Object> config) {
+            return groups
+        }
     }
 }

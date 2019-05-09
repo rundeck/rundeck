@@ -4,10 +4,10 @@ set -eou pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 
 main() {
-    S3_BASE="projects/rundeck/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/selenium-images"
+    S3_BASE="projects/rundeck/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/selenium-images/"
 
     echo -e "Image output available at:\n"
-    echo -e "http://ci.rundeck.org/$S3_BASE\n"
+    echo -e "http://test.rundeck.org/$S3_BASE\n"
 
     RET=0
     docker-compose run \
@@ -18,7 +18,7 @@ main() {
     local DIFF_DIR=__image_snapshots__/__diff_output__
 
     if [[ -d "${DIFF_DIR}" ]] ; then
-        aws s3 sync $DIFF_DIR s3://ci.rundeck.org/$S3_BASE/diff
+        aws s3 sync $DIFF_DIR s3://test.rundeck.org/$S3_BASE/diff
     fi
 
     sleep 1 # Give Travis a shot at capturing the log output

@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration;
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.WriteableModelSource;
 
@@ -83,12 +85,12 @@ public interface IProjectNodes {
     /**
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    ArrayList<Exception> getResourceModelSourceExceptions();
+    ArrayList<Throwable> getResourceModelSourceExceptions();
 
     /**
      * @return the set of exceptions produced by source name
      */
-    Map<String,Exception> getResourceModelSourceExceptionsMap();
+    Map<String,Throwable> getResourceModelSourceExceptionsMap();
 
     /**
      * list the configurations of resource model providers.
@@ -97,9 +99,24 @@ public interface IProjectNodes {
      * <ul>
      * <li>type - provider type name</li>
      * <li>props - configuration properties</li>
-     * </ul>
+     * </ul>@deprecated use {@link #listResourceModelPluginConfigurations()}
      */
+    @Deprecated
     List<Map<String, Object>> listResourceModelConfigurations();
 
+    List<ExtPluginConfiguration> listResourceModelPluginConfigurations();
+
+    List<ExtPluginConfiguration> listNodeEnhancerConfigurations();
+
+    List<ExtPluginConfiguration> listPluginConfigurations(
+            final String keyprefix,
+            final String serviceName
+    );
+
+    List<ExtPluginConfiguration> listPluginConfigurations(
+            final String keyprefix,
+            final String serviceName,
+            final boolean extra
+    );
 
 }

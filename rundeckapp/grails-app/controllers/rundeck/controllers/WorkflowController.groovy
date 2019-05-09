@@ -1134,8 +1134,19 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
+    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
         if (exec instanceof JobExec) {
+            if(strict){
+                def refSe
+                if(exec.useName){
+                    refSe = ScheduledExecution.findScheduledExecution(exec.jobGroup?exec.jobGroup:null,exec.jobName,exec.jobProject?exec.jobProject:project)
+                }else{
+                    refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
+                }
+                if(!refSe){
+                    exec.errors.rejectValue('jobName', 'commandExec.jobName.strict.validation.message')
+                }
+            }
             if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }

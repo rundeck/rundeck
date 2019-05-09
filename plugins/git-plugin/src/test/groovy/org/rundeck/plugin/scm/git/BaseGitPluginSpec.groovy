@@ -16,6 +16,9 @@
 
 package org.rundeck.plugin.scm.git
 
+import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.ResourceMetaBuilder
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
 import com.dtolabs.rundeck.plugins.scm.JobScmReference
@@ -24,6 +27,20 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmUserInfo
 import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.GitCommand
+import org.eclipse.jgit.api.TransportCommand
+import org.eclipse.jgit.api.TransportConfigCallback
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.errors.NotSupportedException
+import org.eclipse.jgit.errors.TransportException
+import org.eclipse.jgit.lib.BaseRepositoryBuilder
+import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.transport.FetchConnection
+import org.eclipse.jgit.transport.OpenSshConfig
+import org.eclipse.jgit.transport.PushConnection
+import org.eclipse.jgit.transport.SshSessionFactory
+import org.eclipse.jgit.transport.SshTransport
+import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Common
 import org.rundeck.plugin.scm.git.config.Export
@@ -484,4 +501,96 @@ class BaseGitPluginSpec extends Specification {
         'Bob ${user.firstName} x ${user.lastName} y ${user.email} H ${user.userName} I' | 'Bob  x  y  H  I'
     }
 
+    def "ensure StrictHostKeyChecking config is applied for username/password git repo"() {
+        when:
+        Common initCfg = new Common()
+        initCfg.gitPasswordPath = "keys/scm/pwd"
+        initCfg.rawInput = [:]
+        BaseGitPlugin git = new BaseGitPlugin(initCfg)
+        def resourceMeta = Mock(ResourceMeta)
+        def mockResource = Mock(org.rundeck.storage.api.Resource) {
+            getContents() >> resourceMeta
+        }
+        def mockTree = Mock(StorageTree) {
+            hasResource(_) >> true
+            getResource(_) >> mockResource
+        }
+        def userInfo = Mock(ScmUserInfo) {
+            getUserName() >> "test"
+        }
+        def ctx = Mock(ScmOperationContext) {
+            getUserInfo() >> userInfo
+            getStorageTree() >> mockTree
+        }
+
+        def mockRepo = Mock(RepositoryMock)
+        def command = new TransportCommandMock(mockRepo)
+        def transport = new SshTransportMock(new URIish(url))
+        def host = Mock(OpenSshHostMock)
+        def session = Mock(com.jcraft.jsch.Session)
+        git.setupTransportAuthentication(config,ctx,command,url)
+        command.callback.configure(transport)
+        transport.factory.configure(host,session)
+
+        then:
+        config.each { k, v ->
+            session.getConfig(k) == v
+        }
+
+
+        where:
+        url                       | config
+        "test@host:/git/repo.git" | ["ConfigProp":"Value"]
+        "test@host:/git/repo.git" | ["ConfigProp":"Value", "StrictHostKeyChecking":"true"]
+    }
+
+    //Signed Jar classes cannot be directly mocked. Hence.....
+    static abstract class RepositoryMock extends Repository {
+        protected RepositoryMock(final BaseRepositoryBuilder options) {
+            super(options)
+        }
+    }
+    static class TransportCommandMock extends TransportCommand {
+        TransportConfigCallback callback
+        protected TransportCommandMock(final Repository repo) {
+            super(repo)
+        }
+
+        @Override
+        Object call() throws GitAPIException {
+            return null
+        }
+
+        @Override
+        GitCommand setTransportConfigCallback(final TransportConfigCallback transportConfigCallback) {
+            callback = transportConfigCallback
+            return super.setTransportConfigCallback(transportConfigCallback)
+        }
+    }
+    static class SshTransportMock extends SshTransport {
+        SshSessionFactory factory
+
+        protected SshTransportMock(final URIish uri) {
+            super(uri)
+        }
+
+        @Override
+        void setSshSessionFactory(final SshSessionFactory factory) {
+            this.factory = factory
+            super.setSshSessionFactory(factory)
+        }
+
+        @Override
+        FetchConnection openFetch() throws NotSupportedException, TransportException {
+            return null
+        }
+
+        @Override
+        PushConnection openPush() throws NotSupportedException, TransportException {
+            return null
+        }
+    }
+    static class OpenSshHostMock extends OpenSshConfig.Host {
+
+    }
 }

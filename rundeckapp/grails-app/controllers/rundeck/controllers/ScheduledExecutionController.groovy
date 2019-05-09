@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -64,12 +65,15 @@ import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
 import rundeck.services.optionvalues.OptionValuesService
+import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
+    static Logger logger = Logger.getLogger(ScheduledExecutionController)
+
     public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
     public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'
     public static final String NOTIFY_ONSTART_EMAIL = 'notifyOnstartEmail'
@@ -708,7 +712,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 //load expand variables in URL source
 
                 def realUrl = opt.realValuesUrl.toExternalForm()
-                String srcUrl = expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
+                String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
                 String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
                 def remoteResult=[:]
                 def result=null
@@ -955,77 +959,6 @@ class ScheduledExecutionController  extends ControllerBase{
         name:'name',
 
     ]
-    /**
-     * Expand the URL string's embedded property references of the form
-     * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
-     * limited
-     */
-    protected String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true) {
-        def invalid = []
-        def rundeckProps=[
-                'nodename':frameworkService.getFrameworkNodeName(),
-                'serverUUID':frameworkService.serverUUID?:''
-        ]
-        if(!isHttp) {
-            rundeckProps.basedir= frameworkService.getRundeckBase()
-        }
-        def extraJobProps=[
-                'user.name': (session?.user?: "anonymous"),
-        ]
-        extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
-        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
-
-        def replacement= { Object[] group ->
-            if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
-                scheduledExecution.properties.get(jobprops[group[3]]).toString()
-            } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
-                def value = extraJobProps[group[3]]
-                value.toString()
-            }else if (group[2] == 'globals' && null != globals[group[3]]) {
-                def value = globals[group[3]]
-                value.toString()
-            }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
-                def value = rundeckProps[group[3]]
-                value.toString()
-            } else if (group[2] == 'option' && optprops[group[3]] && opt.properties.containsKey(optprops[group[3]])) {
-                opt.properties.get(optprops[group[3]]).toString()
-            } else if (group[2] == 'option' && group[4] == '.value') {
-                def optname = group[3].substring(0, group[3].length() - '.value'.length())
-                def value = selectedoptsmap && selectedoptsmap instanceof Map ? selectedoptsmap[optname] : null
-                //find option with name
-                def Option expopt = scheduledExecution.options.find { it.name == optname }
-                if (value && expopt?.multivalued && (value instanceof Collection || value instanceof String[])) {
-                    value = value.join(expopt.delimiter)
-                }
-                (value ?: '')
-            } else {
-                null
-            }
-        }
-        //replace variables in the URL, using appropriate encoding before/after the URL parameter '?' separator
-        def arr=url.split(/\?/,2)
-        def codecs=['URIComponent','URL']
-        def result=[]
-        arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option|rundeck|globals)\.([^}]+?(\.value)?)\})/) { Object[] group ->
-                def val = replacement(group)
-                 if (null != val) {
-                     if(!isHttp){
-                         return val
-                     }
-                     val."encodeAs${codecs[i]}"()
-                 } else {
-                     invalid << group[0]
-                     group[0]
-                 }
-             }
-        }
-        String srcUrl = result.join('?')
-        if (invalid) {
-            log.error("invalid expansion: " + invalid);
-        }
-        return srcUrl
-    }
 
     /**
      * Make a remote URL request and return the parsed JSON data and statistics for http requests in a map.
@@ -1047,8 +980,8 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
-        log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+    static Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
+        logger.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
@@ -1376,7 +1309,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         } else {
-            return apiService.renderErrorFormat(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response);
+            return apiService.renderErrorFormat(response, [status: result.status?:400, code: result.errorCode] + result);
         }
     }
 
@@ -1801,7 +1734,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid = params.id
         def changeinfo = [user: session.user, method: 'apiJobCreateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'create', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -1874,7 +1808,8 @@ class ScheduledExecutionController  extends ControllerBase{
         jobset*.uuid=params.id
         def changeinfo = [user: session.user, method: 'apiJobUpdateSingle']
         String roleList = request.subject.getPrincipals(Group.class).collect { it.name }.join(",")
-        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset, 'update', 'preserve', changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs
@@ -2663,7 +2598,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def changeinfo = [user: session.user,method:'upload']
         String roleList = request.subject.getPrincipals(Group.class).collect {it.name}.join(",")
         def loadresults = scheduledExecutionService.loadJobs(jobset, params.dupeOption, params.uuidOption,
-                 changeinfo,authContext)
+                 changeinfo,authContext, (params?.validateJobref=='true'))
             scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
 
@@ -2711,6 +2646,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if (varfound) {
                 model.nodesetvariables = true
             }
+            def failedNodes = null
             if (params.retryFailedExecId) {
                 Execution e = Execution.get(params.retryFailedExecId)
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
@@ -2719,6 +2655,13 @@ class ScheduledExecutionController  extends ControllerBase{
                         nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
                     }
                     model.nodesetvariables = false
+
+                    def failedSet = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
+                    failedNodes = frameworkService.filterAuthorizedNodes(
+                            scheduledExecution.project,
+                            new HashSet<String>(["read", "run"]),
+                            frameworkService.filterNodeSet(failedSet, scheduledExecution.project),
+                            authContext).nodes;
                 }
             }
             def nodes = frameworkService.filterAuthorizedNodes(
@@ -2738,6 +2681,19 @@ class ScheduledExecutionController  extends ControllerBase{
 
                 if(unselectedNodesFilter){
                     unselectedNodes = unselectedNodesFilter.nodes
+                }
+            }
+
+            if(failedNodes && failedNodes.size()>0){
+                //if failed nodes are not part of original node filter, it will be added
+                def failedNodeNotInNodes = failedNodes.findAll{ !nodes.contains( it ) }
+                if(failedNodeNotInNodes && failedNodeNotInNodes.size()>0){
+                    def nodeImp = new NodeSetImpl()
+                    if(nodes){
+                        nodeImp.putNodes(nodes)
+                    }
+                    nodeImp.putNodes(failedNodeNotInNodes)
+                    nodes=nodeImp.getNodes()
                 }
             }
 
@@ -3508,7 +3464,8 @@ class ScheduledExecutionController  extends ControllerBase{
         if (request.api_version < ApiVersions.V9) {
             option = null
         }
-        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext)
+        def loadresults = scheduledExecutionService.loadJobs(jobset,params.dupeOption, option, changeinfo, authContext,
+                (params?.validateJobref=='true'))
         scheduledExecutionService.issueJobChangeEvents(loadresults.jobChangeEvents)
 
         def jobs = loadresults.jobs

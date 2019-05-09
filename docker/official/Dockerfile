@@ -1,4 +1,4 @@
-FROM rundeck/ubuntu-base@sha256:18c1cc7f9a50e4cbd651268eca4de659d0c522bdf12a1b2b0f67aabf9da8400b
+FROM rundeck/ubuntu-base@sha256:591a682e8028226e2eabff328c516189b39af85e1a5cb457f23a672cbc47982e
 
 COPY --chown=rundeck:rundeck .build .
 RUN java -jar rundeck.war --installonly
@@ -10,4 +10,4 @@ COPY --chown=rundeck:rundeck etc etc
 VOLUME ["/home/rundeck/server/data"]
 
 EXPOSE 4440
-ENTRYPOINT [ "docker-lib/entry.sh" ]
+ENTRYPOINT [ "/tini", "--", "docker-lib/entry.sh" ]

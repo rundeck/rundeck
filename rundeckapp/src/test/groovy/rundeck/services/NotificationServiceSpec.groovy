@@ -16,10 +16,15 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LogUtil
+import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.RuntimePropertyResolver
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -35,6 +40,8 @@ import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
+import rundeck.services.logging.ExecutionLogReader
+import rundeck.services.logging.ExecutionLogState
 import spock.lang.Specification
 
 /**
@@ -325,5 +332,109 @@ class NotificationServiceSpec extends Specification {
         }
         ret
 
+    }
+
+
+    def "email notification default attaching"() {
+        given:
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onsuccess',
+                        type: 'email',
+                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true}'
+                )
+        ]
+        job.save()
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+        service.mailService = Mock(MailService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                [
+                        new DefaultLogEvent(
+                                eventType: LogUtil.EVENT_TYPE_LOG,
+                                datetime: new Date(),
+                                message: "log",
+                                metadata: [:],
+                                loglevel: LogLevel.NORMAL
+                        ),
+                ]
+        )
+        service.loggingService=Mock(LoggingService)
+
+        when:
+        def result = service.triggerJobNotification('success', job, content)
+
+        then:
+        1 * service.loggingService.getLogReader(_) >> reader
+        1 * service.mailService.sendMail(_)
+        result
+    }
+
+
+    class TestReader implements StreamingLogReader {
+        List<LogEvent> logs;
+        int index = -1;
+
+        @Override
+        void openStream(Long offset) throws IOException {
+            index = offset;
+        }
+
+        @Override
+        long getTotalSize() {
+            return logs.size()
+        }
+
+        @Override
+        Date getLastModified() {
+            return null
+        }
+
+        @Override
+        void close() throws IOException {
+            index = -1
+        }
+
+        @Override
+        boolean isComplete() {
+            return index > logs.size()
+        }
+
+        @Override
+        long getOffset() {
+            return index
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < logs.size()
+        }
+
+        @Override
+        LogEvent next() {
+            return logs[index++]
+        }
+
+        @Override
+        void remove() {
+
+        }
     }
 }

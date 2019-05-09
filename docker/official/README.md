@@ -1,14 +1,8 @@
 # Supported tags
 
 - `SNAPSHOT` (latest master build)
-- `3.0.12`
-- `3.0.11`
-- `3.0.9`
-- `3.0.8`
-- `3.0.7`
-- `3.0.6`
-- `3.0.5`
-- `3.0.3`
+- `3.0.20`
+- `3.0.19` , `3.0.18` , `3.0.17` , `3.0.16` , `3.0.15` , `3.0.14` , `3.0.13` , `3.0.12` , `3.0.11` , `3.0.9` , `3.0.8` , `3.0.7` , `3.0.6` , `3.0.5` , `3.0.3`
 
 # What is Rundeck?
 
@@ -79,6 +73,17 @@ RUNDECK_JAAS_FILE_*
 
 By convention the module name matches the name in the docs, and the config keys match
 the config options listed in the docs uppercase, and all one word.
+
+## Extending Configuration
+[Remco](https://github.com/HeavyHorst/remco) is used to generate configuration files
+from templates. It supports different key/value sources such as vault, etcd, and dynamodb.
+The default configuration uses environment variables.
+
+Extending the configuration involves building a derived image
+with additional template files.
+
+See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/config) for a complete example.
+
 
 ## Environment Variables
 
@@ -163,3 +168,17 @@ Specify location of a static tokens file. See [configuration file reference](htt
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_INCLUDEXWKCSPHEADER=false`
 ### `RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_CONFIG_POLICY`
 Controls for CSP headers.
+
+
+### `RUNDECK_MAIL_SMTP_HOST`
+### `RUNDECK_MAIL_SMTP_PORT`
+### `RUNDECK_MAIL_SMTP_USERNAME`
+### `RUNDECK_MAIL_SMTP_PASSWORD`
+### `RUNDECK_MAIL_FROM`
+Default from address.
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_SUBJECT`
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_FILE`
+### `RUNDECK_MAIL_DEFAULT_TEMPLATE_LOG_FORMATTED`
+
+### `RUNDECK_MAIL_PROPS`
+Mail properties that get passed through to Grails. For example, to use StartTLS(required by many servers including AWS SES), `["mail.smtp.starttls.enable":"true","mail.smtp.port":"587"]`.
