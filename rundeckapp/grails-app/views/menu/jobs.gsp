@@ -715,6 +715,9 @@
     </style>
 </head>
 <body>
+<content tag="subtitle">
+<g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
+</content>
 <div id="page_jobs" class="container-fluid">
   <g:if test="${flash.bulkJobResult?.errors}">
       <div class="alert alert-warning">
@@ -744,11 +747,6 @@
   <div class="row">
     <div class="col-xs-12">
 
-      <div class="card card-plain">
-          <div class="card-header">
-            <h3 class="card-title"><g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)</h3>
-          </div>
-      </div>
       <div class="card">
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">

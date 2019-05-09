@@ -358,6 +358,10 @@
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
 </head>
 <body>
+
+<content tag="subtitle">
+    <g:message code="gui.menu.Events"/>
+</content>
 <div>
 
 
