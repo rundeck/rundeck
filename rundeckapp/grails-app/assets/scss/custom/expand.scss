@@ -1,17 +1,17 @@
 .expandComponentHolder{
   .expandComponentControl{
-    .more-indicator-verbiage{
+    > .more-indicator-verbiage{
       display: inline-block;
     }
-    .less-indicator-verbiage{
+    > .less-indicator-verbiage{
       display: none;
     }
   }
   &.expanded{
-    .more-indicator-verbiage{
+    > .more-indicator-verbiage{
       display: none;
     }
-    .less-indicator-verbiage{
+    > .less-indicator-verbiage{
       display: inline-block;
     }
   }
@@ -19,7 +19,7 @@
 
 details.more-info {
   > summary {
-    .less-indicator-verbiage {
+    > .less-indicator-verbiage {
       display: none
     }
 
@@ -29,11 +29,11 @@ details.more-info {
   }
 
   &[open] > summary {
-    .more-indicator-verbiage {
+    > .more-indicator-verbiage {
       display: none
     }
 
-    .less-indicator-verbiage {
+    > .less-indicator-verbiage {
       display: inline-block;
     }
   }
