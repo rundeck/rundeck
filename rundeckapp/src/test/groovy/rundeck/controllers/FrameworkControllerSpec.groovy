@@ -617,6 +617,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -650,6 +651,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -985,6 +987,7 @@ class FrameworkControllerSpec extends Specification {
     @Unroll
     def "save project updating passive mode"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         defineBeans {
             testConfigurableBean(TestConfigurableBean) {
                 projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
@@ -1071,6 +1074,7 @@ class FrameworkControllerSpec extends Specification {
     def "create project invalid name"(){
         setup:
         controller.metricService = Mock(MetricService)
+        controller.featureService = Mock(FeatureService)
         def rdframework=Mock(Framework){
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -1100,6 +1104,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description empty"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = ''
@@ -1119,6 +1124,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name with invalid characters"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         controller.metricService = Mock(MetricService)
         def rdframework=Mock(Framework){
         }
@@ -1149,6 +1155,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with space"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = ' Project Desc'
@@ -1168,6 +1175,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with numbers"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = '1 Project Desc'
@@ -1188,6 +1196,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with parenthesis"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
 

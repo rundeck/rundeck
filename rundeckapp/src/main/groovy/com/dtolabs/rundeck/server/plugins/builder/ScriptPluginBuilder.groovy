@@ -237,6 +237,11 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
     }
 
     @Override
+    String getPluginDocsLink() {
+        return pluginAttributes['docsLink']
+    }
+
+    @Override
     String getPluginType() {
         return "groovy"
     }

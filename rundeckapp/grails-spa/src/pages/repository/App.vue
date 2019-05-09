@@ -1,163 +1,200 @@
 <template>
   <div id="app">
+    <Overlay/>
     <div class="row">
-      <div class="col-xs-12">
-        <div class="card">
-          <div class="card-content">
-            <div>
-              <div class="repo-header">
-                <h3 class="card-title flex-left">
-                  Repository <span style="font-size: smaller">/ Plugins</span>
-                </h3>
-                <div class="card-title flex-right">
-                    <form v-on:submit.prevent>
-                      <label>Search:</label>
-                      <input type="text" v-model="searchTerm" @keyup.enter="search" class="search-box">
-                      <span @click="search" class="search-btn">&#x25b6;</span>
-                    </form>
-                </div>
-              </div>
-              <hr>
-              <div v-if="errors" class="warnings">
-                <div v-for="error in errors" :key="error">{{error.msg}}</div>
-              </div>
-            <div v-if="searchWarnings" class="warnings">
-              <div v-for="warn in searchWarnings" :key="warn">{{warn}}</div>
-            </div>
-        <div v-for="repo in repositories" :key="repo.repositoryName">
-          <div class="repo-name" v-if="repositories.length > 1">Repository: {{repo.repositoryName}}</div>
-          <div class="artifact-grid">
-              <div class="artifact" v-for="result in repo.results" :key="result.id">
-                <div class="em">{{result.display || result.name}}</div>
-                <hr>
-                <div><label>Description:</label>{{result.description}}</div>
-                <div><label>Plugin Type:</label>{{result.artifactType}}</div>
-                <div><label>Plugin Version:</label>{{result.currentVersion}}</div>
-                <div><label>Rundeck Compatibility:</label>{{result.rundeckCompatibility}}</div>
-                <div><label>Support:</label>{{result.support}}</div>
-                <div><label>Author:</label>{{result.author}}</div>
-                <div class="provides"><label>Provides:</label><span v-for="svc in unqSortedSvcs(result.providesServices)">{{svc}}</span></div>
-                <div><label>Tags:</label><span class="tag" v-for="tag in result.tags" :key="tag">{{tag}}</span></div>
-                <div><span class="install" v-if="!result.installed && canInstall" @click="install(repo.repositoryName,result.id)">Install</span></div>
-                <div><span class="installed" v-if="result.installed">Installed</span></div>
-              </div>
-          </div>
+      <div class="col-xs-12 col-sm-4">
+        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
+          <button
+            @click="showWhichPlugins = true"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === true}"
+            :disabled="searchResults.length > 0"
+          >Installed</button>
+          <button
+            @click="showWhichPlugins = null"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === null}"
+            :disabled="searchResults.length > 0"
+          >All</button>
+          <button
+            @click="showWhichPlugins = false"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === false}"
+            :disabled="searchResults.length > 0"
+          >Not Installed</button>
         </div>
+      </div>
+      <div class="col-xs-12 col-sm-8">
+        <form @submit.prevent="search">
+          <div class="input-group input-group-lg">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Search for..."
+              v-model="searchString"
+            >
+            <span class="input-group-btn" v-if="searchResults.length > 0">
+              <button @click="clearSearch" class="btn btn-default btn-fill" type="button">
+                <i class="fas fa-times"></i>
+              </button>
+            </span>
+            <span class="input-group-btn" v-else>
+              <button @click="search" class="btn btn-default btn-fill" type="button">
+                <i class="fas fa-search"></i>
+              </button>
+            </span>
           </div>
-        </div>
+        </form>
+      </div>
+    </div>
+    <div class="row" v-show="searchResults.length > 0">
+      <h3
+        class="col-xs-12"
+        style="margin: 1em 0 0; font-weight: bold; text-transform:uppercase;"
+      >Search Results</h3>
+      <div v-for="repo in searchResults" :key="repo.repositoryName" class="col-xs-12">
+        <RepositoryRow :repo="repo" type="search"/>
+      </div>
+    </div>
+    <div class="row" v-if="searchResults.length === 0">
+      <div v-for="repo in repositories" :key="repo.repositoryName" class="col-xs-12">
+        <RepositoryRow :repo="repo"/>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
+import axios from "axios";
+import fuse from "fuse.js";
+import Overlay from "./Overlay";
+import PluginCard from "./PluginCard";
+import RepositoryRow from "./Repository.vue";
+import { mapState, mapActions } from "vuex";
+
+const FuseSearchOptions = {
+  shouldSort: true,
+  threshold: 0.2,
+  location: 0,
+  // distance: 100,
+  // maxPatternLength: 32,
+  minMatchCharLength: 1,
+  keys: ["display", "name"]
+};
 
 export default {
-  name: 'App',
+  name: "PluginSearch",
   components: {
+    PluginCard,
+    RepositoryRow,
+    Overlay
   },
-  data () {
+  computed: {
+    ...mapState(["repositories", "overlay", "loadingMessage", "loadingSpinner"])
+  },
+  data() {
     return {
-      repositories: null,
-      searchTerm: null,
-      searchWarnings: null,
-      errors: null,
-      rdBase: null,
-      canInstall: window.repocaninstall
+      showWhichPlugins: null,
+      searchString: "",
+      searchIndex: [],
+      searchResults: []
+    };
+  },
+  watch: {
+    showWhichPlugins: function(newVal, oldVal) {
+      this.setInstallStatusOfPluginsVisbility(newVal);
     }
   },
   methods: {
-    unqSortedSvcs: function(serviceList) {
-      if(!serviceList) return []
-      var unq = []
-      serviceList.forEach((svc) => {
-        if(unq.indexOf(svc) === -1) unq.push(svc)
-      })
-      return unq.sort()
+    ...mapActions(["initData", "setInstallStatusOfPluginsVisbility"]),
+    clearSearch() {
+      this.searchResults = [];
     },
-    search () {
-      this.errors = null
-      this.searchWarnings = null
-      this.rdBase = window._rundeck.rdBase
-      axios({
-        method: 'post',
-        headers: {'x-rundeck-ajax': true},
-        url: `${this.rdBase}repository/artifacts/search`,
-        params: {searchTerm: this.searchTerm},
-        withCredentials: true
-      }).then((response) => {
-        if (response.data) {
-          this.repositories = response.data.artifacts
-          if (response.data.warnings.length > 0) {
-            this.searchWarnings = response.data.warnings
+    search() {
+      this.clearSearch();
+      // console.log(
+      //   `Searching for ....${this.searchString}`,
+      //   this.repositories[0].results
+      // );
+      this.showWhichPlugins = null;
+      if (this.searchString === "") {
+        this.searchResults = [];
+        return;
+      }
+      for (let index = 0; index < this.repositories.length; index++) {
+        let theRepo = this.repositories[index].results;
+        this.$search(this.searchString, theRepo, FuseSearchOptions).then(
+          results => {
+            this.searchResults.push({
+              repositoryName: this.repositories[index].repositoryName,
+              results: results
+            });
           }
-        }
-      }).catch((error) => {
-        console.log(JSON.stringify(error))
-      })
-    },
-    install (repoName, pluginId) {
-      this.errors = null
-      this.rdBase = window._rundeck.rdBase
-      axios({
-        method: 'post',
-        headers: {'x-rundeck-ajax': true},
-        url: `${this.rdBase}repository/${repoName}/install/${pluginId}`,
-        withCredentials: true
-      }).then((response) => {
-        let repo = this.repositories.find(r => r.repositoryName === repoName)
-        let plugin = repo.results.find(r => r.id === pluginId)
-        plugin.installed = true
-      }).catch((error) => {
-        this.errors = error.response.data
-      })
+        );
+      }
     }
   },
-  mounted () {
-    if (window._rundeck && window._rundeck.rdBase) {
-      this.rdBase = window._rundeck.rdBase
-      axios({
-        method: 'get',
-        headers: { 'x-rundeck-ajax': true },
-        url: `${this.rdBase}repository/artifacts/list`,
-        withCredentials: true
-      }).then((response) => {
-        if (response.data) {
-          this.repositories = response.data
-        }
-      })
+  mounted() {
+    this.initData().then(() => {
+      // Search work will happen here
+    });
+  }
+};
+</script>
+<style lang="scss" scoped>
+// Search Input
+.input-group .form-control {
+  border: 3px solid #66615b;
+}
+// .input-group-btn .btn-default:not(.btn-fill) {
+// }
+</style>
+
+<style lang="scss" scoped>
+.btn-group.squareish-buttons
+  > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+.btn-group.squareish-buttons > .btn:last-child:not(:first-child),
+.btn-group > .dropdown-toggle:not(:first-child) {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+}
+.btn-group.squareish-buttons > .btn:active,
+.btn-group.squareish-buttons > .btn:visited,
+.btn-group.squareish-buttons > .btn:hover,
+.btn-group.squareish-buttons > .btn:focus,
+.btn-group.squareish-buttons > .btn:focus-within,
+.btn-group.squareish-buttons > .btn.active:disabled {
+  background-color: #66615b;
+  color: rgba(255, 255, 255, 0.85);
+  border-color: #66615b;
+}
+.support-filters {
+  background: black;
+  color: white;
+  padding: 2em 1em;
+  font-size: 20px;
+  .title {
+    color: #cdcdcd;
+    display: flex;
+    // align-items: center;
+    font-size: 1.8rem;
+    padding: 1em 2em;
+    text-transform: uppercase;
+    letter-spacing: 3.44px;
+  }
+  label {
+    border: 1px solid blue;
+    padding: 1em 2em;
+    input[type="checkbox"] {
+      display: none;
     }
   }
+  :checked + label {
+    font-weight: bold;
+    border: 1px solid red;
+  }
 }
-</script>
-
-<style lang="scss">
-.artifact-grid {
-  display: flex;
-  flex-wrap: wrap;
-}
-.em { font-weight: bold; font-size: 1.2em;}
-.artifact label { font-weight: bold; }
-.artifact {
-  margin: 7px;
-  padding: 7px;
-  background-color: #fff;
-  border: 1px solid #999;
-  border-radius: 2px;
-  flex: 0 0 275px;
-  box-shadow: 3px 6px 10px -4px rgba(0, 0, 0, 0.15);
-}
-.search-btn { color: #555; cursor: pointer; }
-.search-box { width: 300px; }
-  .tag { margin: 0 2px; padding: 0 2px; background-color: #f0f0f0; }
-  .install { color: #fff; background-color: #dc143c; padding: 2px 4px; cursor: pointer; }
-  .installed { color: #fff; background-color: #00008b; padding: 2px 4px; }
-  .warnings > div { background-color: #f5f5dc; color: #ff8c00; padding: 5px; border-radius: 3px; }
-.repo-name { font-size: 1.4em; font-weight: bold; border-bottom: 1px solid #ddd; padding: 2px;}
-.repo-header { display: flex; }
-.flex-left { flex: 0 50% }
-.flex-right { flex: 0 50%; text-align: right; }
-.provides { width: 250px; display: flex; flex-wrap: wrap; }
-.provides > span { flex: 0 0 auto; background-color: #deeffd; padding: 0 2px; margin: 2px; }
 </style>

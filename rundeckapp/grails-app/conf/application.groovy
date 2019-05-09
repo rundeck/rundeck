@@ -48,6 +48,7 @@ environments {
 
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
+        rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         dataSource {
             dbCreate = "update"
             url = "jdbc:h2:file:/rundeck/grailsh2"

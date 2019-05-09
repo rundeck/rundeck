@@ -1,17 +1,74 @@
-.flex-grid{
-  box-sizing: border-box;
+// .flex-grid {
+//   box-sizing: border-box;
+//   display: flex;
+//   flex: 0 1 auto;
+//   flex-direction: row;
+//   flex-wrap: wrap;
+
+//   &.reverse {
+//     flex-direction: row-reverse;
+//   }
+
+//   .col {
+//     // flex:1;
+//     flex: 0 0 auto;
+
+//     &.reverse {
+//       flex-direction: column-reverse;
+//     }
+//   }
+// }
+
+.row-flex,
+.row-flex>div[class*='col-'] {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
   display: flex;
-  flex: 0 1 auto;
-  flex-direction: row;
-  flex-wrap: wrap;
-  &.reverse {
-    flex-direction: row-reverse;
-  }
-  .col{
-    // flex:1;
-    flex: 0 0 auto;
-    &.reverse {
-      flex-direction: column-reverse;
-    }
-  }
+  flex: 1 1 auto;
 }
+
+.row-flex-wrap {
+  -webkit-flex-flow: row wrap;
+  flex-flow: row wrap;
+  align-content: flex-start;
+  flex: 0;
+}
+
+.row-flex>div[class*='col-'],
+.container-flex>div[class*='col-'] {
+  margin: -.2px;
+  /* hack adjust for wrapping */
+}
+
+.container-flex>div[class*='col-'] div.flexible,
+.row-flex>div[class*='col-'] div.flexible {
+  width: 100%;
+  display: inline-block; // jesse: I had to add this because the width was causing issues but it's needed to give the element full width
+}
+
+
+.flex-col {
+  display: flex;
+  display: -webkit-flex;
+  flex: 1 100%;
+  flex-flow: column nowrap;
+}
+
+.flex-grow {
+  display: flex;
+  -webkit-flex: 2;
+  flex: 2;
+}
+
+
+
+////// EXAMPLE MARKUP FOR FLEX BOX USAGE IN BOOTSTRAP 3
+// <div class="container"><h3>.row-flex (make columns equal heights in each row)</h3></div><div class="container"><div class="row row-flex row-flex-wrap"><div class="col-md-3"><div class="panel panel-default flex-col"><div class="panel-heading">Title flex-col</div><div class="panel-body flex-grow">Content here -- div with .flex-grow</div><div class="panel-footer">Footer</div></div></div><div class="col-md-3"><div class="well">Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium,
+// totam rem aperiam,
+// eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit. </div></div><div class="col-md-3"><div class="well">Duis pharetra varius quam sit amet vulputate. </div></div><div class="col-md-3"><div class="well">Lorem ipsum dolor sit amet,
+// consectetur adipiscing elit. Duis pharetra varius quam sit amet vulputate. Quisque mauris augue,
+// molestie tincidunt condimentum vitae,
+// gravida a libero. Aenean sit amet felis dolor,
+// in sagittis nisi. </div></div></div>< !--/row--></div>< !--/container--><hr>
