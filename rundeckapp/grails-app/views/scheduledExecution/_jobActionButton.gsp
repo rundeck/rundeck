@@ -42,7 +42,7 @@
         </g:if>
         <span class="caret"></span>
     </a>
-    <ul class="dropdown-menu dropdown-menu-right" role="menu">
+    <ul class="dropdown-menu " role="menu">
         <g:render template="/scheduledExecution/jobActionButtonMenuContent" model="[scheduledExecution:scheduledExecution]"/>
     </ul>
 </div>
