@@ -6,6 +6,9 @@
   justify-content: center;
   align-items: flex-start;
 
+  &.flex-justify-start {
+    justify-content: start;
+  }
   &.column {
     flex-direction: column;
 
@@ -64,6 +67,10 @@
 
   .flex-item-3 {
     flex: 3 3 0;
+  }
+
+  .flex-item-auto {
+    flex: 1 1 auto;
   }
 
   &.col {

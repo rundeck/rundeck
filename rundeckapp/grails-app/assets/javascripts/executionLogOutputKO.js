@@ -43,6 +43,46 @@ function LogOutput (data) {
     const self = this
     self.execFollowingControl = data.followControl
     self.options = new LogViewOptions(data.options || {})
+    self.running = ko.observable(false)
+    self.loadingFile = ko.observable(false)
+    self.paused = ko.observable(false)
+    self.fileLoadMessage = ko.observable()
+    self.fileLoadPercentage = ko.observable(0)
+    self.fileLoadText = ko.pureComputed(function () {
+        const msg = self.fileLoadMessage()
+        const pct = self.fileLoadPercentage()
+        return (msg ? msg : '') + (pct ? `${pct}%` : '')
+    })
+    self.fileLoadPercentWidth = ko.pureComputed(function () {
+        const pct = self.fileLoadPercentage() || 0
+        return `${pct}%`
+    })
+
+    self.pauseLoading = function () {
+        self.fileLoadMessage("Stopping... ")
+        self.paused(true);
+        self.execFollowingControl.pauseLoading(function () {
+            self.running(false)
+            self.fileLoadMessage("Loading Stopped. ")
+        })
+    }
+    self.resumeLoading = function () {
+        self.fileLoadMessage("Resuming... ")
+        self.paused(false);
+        self.running(true)
+        self.execFollowingControl.resumeLoading()
+    }
+    self.beginFollowingOutput = function (id) {
+
+        if (!self.loadingFile() && !self.running() && !self.execFollowingControl.isCompleted(id)) {
+            self.running(true)
+            self.execFollowingControl.onLoadComplete = function () {
+                self.running(false)
+                self.paused(false);
+            }
+            self.execFollowingControl.beginFollowingOutput(id)
+        }
+    }
 
     /**
      * TODO: directly control dom view with observable values
@@ -54,5 +94,8 @@ function LogOutput (data) {
         self.options.showAnsicolor.subscribe((value) => _setAnsiColor(value))
         self.options.wrapLines.subscribe((value) => self.execFollowingControl.setLogWrap(value))
         self.options.followmode.subscribe((value) => self.execFollowingControl.resetMode(value))
+        self.execFollowingControl.onLoadingFile = self.loadingFile
+        self.execFollowingControl.onFileloadMessage = self.fileLoadMessage
+        self.execFollowingControl.onFileloadPercentage = self.fileLoadPercentage
     }
 }

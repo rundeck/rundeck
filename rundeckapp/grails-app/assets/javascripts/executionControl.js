@@ -68,6 +68,8 @@ var FollowControl = Class.create({
     nodemode:false,
     browsemode:false,
     tailmode:false,
+    cancelload: false,
+    partialload: false,
     refresh:false,
     truncateToTail:false,
     lastlines:20,
@@ -79,6 +81,10 @@ var FollowControl = Class.create({
     multiworkflow:null,
     clusterExec: null,
     showClusterExecWarning: true,
+    onLoadComplete: null,
+    onLoadingFile: null,
+    onFileloadMessage: null,
+    onFileloadPercentage: null,
 
     initialize: function(eid,elem,params){
         this.executionId=eid;
@@ -623,22 +629,29 @@ var FollowControl = Class.create({
         $(this.parentElement).show();
         return tbl;
     },
+    pauseLoading: function (callback) {
+        this._onStopCallback = callback
+        this.cancelload = true
+    },
+    resumeLoading: function () {
+        this.cancelload = false
+        this.loadMoreOutput(this.runningcmd.id, this.runningcmd.offset)
+    },
     showLoading:function(message,percent){
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).show();
-            setText($(this.fileloadPctId), (message!=null ? message : ''));
-            if(percent!=null && $(this.fileloadProgressId)){
-                $(this.fileloadProgressId).show();
-                $(this.fileloadProgressId).down('.progress-bar').style.width=percent+'%';
-            }
-            if(percent){
-                setText($(this.fileloadPctId),(message != null ? message : '')+percent+'%');
-            }
+        if (typeof (this.onLoadingFile) === 'function') {
+            this.onLoadingFile(true)
         }
+        if (typeof (this.onFileloadMessage) === 'function') {
+            this.onFileloadMessage(message)
+        }
+        if (percent != null && typeof (this.onFileloadPercentage) === 'function') {
+            this.onFileloadPercentage(percent)
+        }
+
     },
     hideLoading:function(){
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).hide();
+        if (typeof (this.onLoadingFile) === 'function') {
+            this.onLoadingFile(false)
         }
     },
     appendCmdOutput: function(data) {
@@ -752,9 +765,12 @@ var FollowControl = Class.create({
             if (data.retryBackoff) {
                 time = Math.max(data.retryBackoff,time);
             }
-            setTimeout(function() {
-                obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset);
-            }, time);
+            if (!this.cancelload) {
+                setTimeout(function () {
+                    obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset)
+                }, time)
+
+            }
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
@@ -784,7 +800,13 @@ var FollowControl = Class.create({
                 $(this.viewoptionsCompleteId).show();
             }
         }
-
+        if (this.cancelload) {
+            if (typeof (this._onStopCallback) == 'function') {
+                var cb = this._onStopCallback
+                this._onStopCallback = null
+                cb()
+            }
+        }
     },
     finishDataOutput: function() {
 
@@ -1366,12 +1388,8 @@ var FollowControl = Class.create({
         this.clearCmdOutput();
         $(this.parentElement).show();
 
-//        this.setOutputAppendTop($F('outputappendtop') == "top");
-//        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
-//        this.setGroupOutput($F('ctxshowgroup') == 'true');
-//        this.setCollapseCtx($F('ctxcollapse') == "true");
-//        this.setShowFinalLine($F('ctxshowlastline') == "true");
         this.isrunning = true;
+        this.cancelload = false
     },
 
     finishedExecution: function(result,statusString) {
@@ -1383,13 +1401,11 @@ var FollowControl = Class.create({
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).hide();
-        }
+        this.hideLoading()
 
         this.jobFinishStatus(result,statusString);
         if (typeof(this.onComplete) == 'function') {
-            this.onComplete();
+            this.onComplete(result, statusString)
         }
     },
     jobFinishStatus: function(result,statusString) {
@@ -1412,10 +1428,14 @@ var FollowControl = Class.create({
             }
         }
     },
+    isCompleted: function (id) {
+        return this.runningcmd && this.runningcmd.completed && this.runningcmd.id === id
+    },
     beginFollowingOutput: function(id) {
         if (this.isrunning || this.runningcmd && this.runningcmd.completed) {
             return false;
         }
+
         this.beginExecution();
         this.starttime = new Date().getTime();
         this.lineCount=0;

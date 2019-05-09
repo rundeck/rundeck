@@ -71,9 +71,6 @@
         #log{
             margin-bottom:20px;
         }
-        .inline_only {
-            display: none;
-        }
         .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
             background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
             padding-right: 16px;
@@ -582,9 +579,7 @@
                                                   </label>
                                               </div>
                                           </div>
-%{--                                      </div>--}%
 
-%{--                                      <div class="form-group">--}%
                                           <div class="col-sm-offset-2 col-sm-10">
                                               <div class="checkbox">
                                                   <input type="checkbox"
@@ -596,10 +591,7 @@
                                                   </label>
                                               </div>
                                           </div>
-%{--                                      </div>--}%
 
-
-%{--                                      <div class="form-group">--}%
                                           <div class="col-sm-offset-2 col-sm-10">
                                               <div class="checkbox">
                                                   <input type="checkbox"
@@ -614,7 +606,7 @@
 
                                       </div>
 
-                                      <div class="form-group" xdata-bind="if: !logoutput().options.followmodeNode()">
+                                      <div class="form-group">
 
                                           <label class="col-sm-2 control-label">Columns</label>
 
@@ -684,7 +676,7 @@
 
                       <div class="card execution_ko exec-output-bg exec-output " data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode}">
-                          <div class="card-content ">
+                          <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
                         <g:render template="/common/messages"/>
 
 
@@ -885,7 +877,7 @@
     var nodeflowvm=null;
     var logoutput=null;
     function followOutput(){
-        followControl.beginFollowingOutput('${enc(js:execution?.id)}');
+        nodeflowvm.logoutput().beginFollowingOutput('${enc(js: execution?.id)}');
     }
     function followState(){
         try{
@@ -995,10 +987,11 @@
         //knockout activeTab change listener to begin output or state listener
         nodeflowvm.activeTab.subscribe(function(val){
            if(val==='flow'){
-            followState();
+                followState();
+                window.location.hash='#monitor'
            }else if(val==='output'){
-            followOutput();
-
+                followOutput();
+                window.location.hash='#output'
            }
         });
 
@@ -1020,10 +1013,10 @@
             jQuery('#jobid').val(el.data('jobId'));
             jQuery('#selectProject').modal();
         });
+        followState();
         var outDetails = window.location.hash;
         if(outDetails === '#output'){
             nodeflowvm.activeTab("output");
-            followOutput();
         }else if(outDetails === '#monitor'){
             nodeflowvm.activeTab("flow");
         }else{

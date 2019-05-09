@@ -23,95 +23,25 @@
 <g:if test="${inlineView}">
   <div class="card-header">
     <div class="executionshow panel-heading-affix" data-affix="top" data-affix-padding-top="8" id="jobInfo_${execution.id}" >
+
       <div class="row">
-        <div class="col-xs-12 col-sm-2">
-          <div>
-            <a class="has_tooltip arrow-button" data-placement="bottom" title="<g:message code="scroll.to.top" />" href="#top">
-              <i class="fas fa-chevron-circle-up fa-2x"></i>
-            </a>
-            <a class="has_tooltip arrow-button" data-placement="bottom" title="<g:message code="scroll.to.bottom" />" href="#bottom">
-              <i class="fas fa-chevron-circle-down fa-2x"></i>
-            </a>
-          </div>
-        </div>
-        <div class="col-sm-8 text-center">
-          <span class="inline_only">
-            <g:link class="primary" title="Show execution #${execution.id}" controller="execution" action="show" id="${execution.id}" params="[project:execution.project]">
-              <i class="exec-status icon ${!execution.dateCompleted ? 'running' : execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}"></i>
-              <g:message code="execution.identity" args="[execution.id]"/>
-            </g:link>
-          </span>
-          <g:if test="${execution.status == 'scheduled' && execution.dateCompleted == null}">
-            <span class="label label-success succeed">
-              Scheduled
-            </span>
-          </g:if>
-          <g:elseif test="${null != execution.dateCompleted}">
-            <span class="label label-${execution.status == 'true' ? 'success' : 'danger'}">
-              <g:if test="${execution.status == 'true'}">
-                Succeeded
-              </g:if>
-              <g:elseif test="${execution.cancelled}">
-                Killed
-              </g:elseif>
-              <g:else>
-                Failed
-              </g:else>
-            </span>
-          </g:elseif>
-          <g:else>
-            <span>
-              <!-- ko if: executionState()=='RUNNING' -->
-              <g:img class="loading-spinner" file="spinner-gray.gif" width="12px" height="12px"/>
-              <!-- /ko -->
-              <span class=" execstate execstatedisplay overall" data-execstate="${enc(attr:execState)}" data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
-              </span>
-            </span>
-            <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-              <span data-bind="if: canKillExec()" style="margin-left: 10px">
-                <span data-bind="visible: !completed() ">
-                  <!-- ko if: !killRequested() || killStatusFailed() -->
-                  <span class="btn btn-danger btn-xs" data-bind="click: killExecAction">
-                    <g:message code="button.action.kill.job" />
-                    <i class="glyphicon glyphicon-remove"></i>
-                  </span>
-                  <!-- /ko -->
-                  <!-- ko if: killRequested() -->
-                  <!-- ko if: killStatusPending() -->
-                  <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
-                  <!-- /ko -->
-                  <span class="loading" data-bind="text: killStatusText"></span>
-                  <!-- /ko -->
-                </span>
-              </span>
-            </g:if>
-          </g:else>
+        <div class="col-xs-12 col-sm-6">
+          <i class="exec-status icon "
+             data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
+          </i>
+          <g:render template="wfItemView" model="[item: execution.workflow.commands[0], icon: 'icon-small']"/>
       </div>
-      <div class="col-sm-2">
-          <a class="close closeoutput">
-            <i class="fas fa-times-circle" style="font-size:28px;"></i>
-          </a>
-      </div>
-    </div>
-    <div class="row" style="margin-top:20px;">
-      <div class="col-xs-12 col-sm-10">
-        <g:render template="wfItemView" model="[
-                  item: execution.workflow.commands[0],
-                  icon: 'icon-med',
-                  iwidth: '24px',
-                  iheight: '24px',
-          ]"/>
-      </div>
-      <div class="col-xs-12 col-sm-2 text-right">
-        <span class=" " data-bind="visible: completed() ">
+
+        <div class="col-xs-12 col-sm-6 text-right execution-action-links">
           <g:if test="${scheduledExecution}">
             <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
               <g:link controller="scheduledExecution"
-                        action="execute"
-                        id="${scheduledExecution.extid}"
-                        params="${[retryExecId: execution.id,project:execution.project]}"
-                        class="btn btn-default btn-xs"
-                        title="${g.message(code: 'execution.job.action.runAgain')}">
+                      action="execute"
+                      id="${scheduledExecution.extid}"
+                      params="${[retryExecId: execution.id, project: execution.project]}"
+                      class="btn btn-default btn-xs"
+                      data-bind="visible: completed() "
+                      title="${g.message(code: 'execution.job.action.runAgain')}">
                 <i class="glyphicon glyphicon-play"></i>
                 <g:message code="execution.action.runAgain"/>
               </g:link>
@@ -124,18 +54,56 @@
                       action="createFromExecution"
                       params="${[executionId: execution.id, project: execution.project]}"
                       class="btn btn-default btn-xs"
+                      data-bind="visible: completed() "
                       title="${g.message(code: 'execution.action.saveAsJob', default: 'Save as Job')}">
-                  <g:message code="execution.action.saveAsJob" default="Save as Job"/>
+                <g:message code="execution.action.saveAsJob" default="Save as Job"/>
               </g:link>
             </g:if>
           </g:else>
-        </span>
+
+
+          <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+            <!-- ko if: canKillExec() -->
+
+              <span data-bind="visible: !completed() " class="spacer">
+                <!-- ko if: !killRequested() || killStatusFailed() -->
+                <span class="btn btn-danger btn-xs" data-bind="click: killExecAction">
+                  <g:message code="button.action.kill.job"/>
+                  <i class="glyphicon glyphicon-remove"></i>
+                </span>
+                <!-- /ko -->
+                <!-- ko if: killRequested() -->
+                <!-- ko if: killStatusPending() -->
+                <g:img class="loading-spinner" file="spinner-gray.gif" width="16px" height="16px"/>
+                <!-- /ko -->
+                <span class="loading" data-bind="text: killStatusText"></span>
+                <!-- /ko -->
+              </span>
+            <!-- /ko -->
+          </g:if>
+
+          <g:render template="/scheduledExecution/showExecutionLink"
+                    model="[execution: execution, hideExecStatus: true]"/>
+
+          <span class="spacer">
+            <!-- ko if: executionState()=='RUNNING' -->
+            <g:img class="loading-spinner" file="spinner-gray.gif" width="12px" height="12px"/>
+            <!-- /ko -->
+            <span class=" execstate execstatedisplay overall" data-execstate="${enc(attr: execState)}"
+                  data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
+            </span>
+          </span>
+
+
+          <a class="close closeoutput " data-bind="bootstrapTooltip: true" title="Close output">
+            <i class="fas fa-times-circle"></i>
+          </a>
       </div>
     </div>
   </div>
 </div>
 </g:if>
-<div class="${inlineView?'card-content inlineexecution':''}">
+<div class="${inlineView ? 'card-content tight inlineexecution' : ''}">
   <g:if test="${showDownloadOptions||showViewOptions}">
   <div id="commandFlow" class="outputcontrols" style="margin-top: 1em; margin-bottom:1em;">
 
@@ -221,12 +189,45 @@
 
   </div>
   </g:if>
-  <div id="fileload" style="display:none; border-bottom:1px solid #b7b7b7;" class=" row">
-    <div class="col-sm-12">
-      <div class=" progress " id="fileloadprogress" style="width:100%">
-        <div class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" style="width: 10%;">
+  <div data-bind="if: logoutput().loadingFile">
+    <div class="card-content-full-width ">
+      <div class=" progress progress-embed progress-square flex-container flex-justify-start" >
+        <div class="progress-bar progress-bar-info flex-basis-auto "
+             role="progressbar"
+             aria-valuenow="10"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             style="width: 10%;"
+          data-bind="style: {width: logoutput().fileLoadPercentWidth}, attr: {'aria-valuenow': logoutput().fileLoadPercentage }">
+          <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner" data-bind="visible: logoutput().running()"/>
+            <span data-bind="text: logoutput().fileLoadText"></span>
+
+        </div>
+        <span class="flex-item-auto"></span>
+
+          <span class="btn-xs btn btn-simple btn-default pull-right" data-bind="click: logoutput().pauseLoading, if: logoutput().running() && !logoutput().paused()">
+            Stop Loading
+            <i class="glyphicon glyphicon-pause"></i>
+          </span>
+          <span class="btn-xs btn btn-simple btn-default pull-right" data-bind="click: logoutput().resumeLoading, if: !logoutput().running() && logoutput().paused()">
+            Resume Loading
+            <i class="glyphicon glyphicon-download-alt"></i>
+          </span>
+
+      </div>
+    </div>
+  </div>
+  <div data-bind="if: logoutput().running() && !logoutput().loadingFile()">
+    <div class="card-content-full-width">
+      <div class=" progress progress-embed progress-square progress-striped active" >
+        <div class="progress-bar progress-bar-default "
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             style="width: 10%;">
           <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-            <span id="fileloadpercent"></span>
+            Loading
         </div>
       </div>
     </div>

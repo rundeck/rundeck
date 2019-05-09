@@ -39,7 +39,22 @@
     text-decoration: none;
   }
 
-  a + a {
-    margin-left: 10px;
+  a {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
   }
+
+  .btn {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
+  }
+
+  .spacer {
+    + a, + .btn, + .spacer {
+      margin-left: 10px;
+    }
+  }
+
 }
