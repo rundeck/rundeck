@@ -74,7 +74,7 @@ export default {
   name: "PluginCard",
   props: ["result", "repo"],
   computed: {
-    ...mapState([
+    ...mapState("repositories", [
       "canInstall",
       "rdBase",
       "filterSupportType",
@@ -107,7 +107,7 @@ export default {
     return {};
   },
   methods: {
-    ...mapActions(["installPlugin", "uninstallPlugin"]),
+    ...mapActions("repositories", ["installPlugin", "uninstallPlugin"]),
     unqSortedSvcs: function(serviceList) {
       if (!serviceList) return [];
       var unq = [];

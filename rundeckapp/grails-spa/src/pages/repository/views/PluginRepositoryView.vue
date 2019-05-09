@@ -64,7 +64,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import fuse from "fuse.js";
 import RepositoryRow from "../components/Repository";
 import { mapState, mapActions } from "vuex";
@@ -85,7 +84,7 @@ export default {
     RepositoryRow
   },
   computed: {
-    ...mapState(["repositories"])
+    ...mapState("repositories", ["repositories"])
   },
   data() {
     return {
@@ -101,7 +100,10 @@ export default {
     }
   },
   methods: {
-    ...mapActions(["initData", "setInstallStatusOfPluginsVisbility"]),
+    ...mapActions("repositories", [
+      "initData",
+      "setInstallStatusOfPluginsVisbility"
+    ]),
     clearSearch() {
       this.searchResults = [];
     },

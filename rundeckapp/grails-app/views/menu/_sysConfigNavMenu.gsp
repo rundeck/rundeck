@@ -82,30 +82,32 @@
   </g:if>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
 <g:if test="${pluginRead && repoEnabled == 'true'}">
-<li class="dropdown-submenu">
-        <a href="#">New dropdown <span class="caret"></span></a>
-        <ul class="dropdown-menu">
-          <li><a tabindex="-1" href="#">2nd level dropdown</a></li>
-          <li><a tabindex="-1" href="#">2nd level dropdown</a></li>
-        </ul>
-
-</li>
-  <li>
-    <g:link controller="artifact" action="index">
-      <g:message code="gui.menu.FindPlugins"/>
-    </g:link>
-  </li>
-  <li>
-    <g:link controller="menu" action="plugins">
-      <g:message code="gui.menu.InstalledPlugins"/>
-    </g:link>
+  <li class="dropdown-submenu">
+    <a href="#">Plugins <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li>
+          <g:link controller="artifact" action="index">
+            <g:message code="gui.menu.FindPlugins"/>
+          </g:link>
+      </li>
+      <li>
+        <a href="${g.createLink(uri:'/artifact/index/configurations')}">
+          <g:message code="gui.menu.InstalledPlugins"/>
+        </a>
+      </li>
+      <li>
+        <a href="${g.createLink(uri:'/menu/plugins')}">
+          Old Installed Plugins
+        </a>
+      </li>
+    </ul>
   </li>
 </g:if>
 <g:if test="${pluginRead && repoEnabled != 'true'}">
   <li>
-    <g:link controller="menu" action="plugins">
+    <a href="${g.createLink(uri:'/artifact/index/configurations')}">
       <g:message code="gui.menu.ListPlugins"/>
-    </g:link>
+    </a>
   </li>
 </g:if>
   <li>
@@ -136,7 +138,6 @@
 <script>
 jQuery(document).ready(function($){
   $('.dropdown-submenu > a').on("click", function(e){
-    alert('hello')
     $(this).next('ul').toggle();
     e.stopPropagation();
     e.preventDefault();
