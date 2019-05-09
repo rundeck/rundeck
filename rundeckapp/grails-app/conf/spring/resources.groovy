@@ -237,6 +237,13 @@ beans={
     }
 
     /**
+     * the JobLifeCycle plugin provider service
+     */
+    jobLifeCyclePluginProviderService(JobLifeCyclePluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+
+    /**
      * the Notification plugin provider service
      */
     notificationPluginProviderService(NotificationPluginProviderService){
