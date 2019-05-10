@@ -16,12 +16,14 @@
 
 package rundeck
 
+import grails.test.mixin.Mock
 import spock.lang.Specification
 
 /**
  * @author greg
  * @since 6/26/17
  */
+@Mock([JobExec, ScheduledExecution, Workflow, CommandExec])
 class JobExecSpec extends Specification {
     def "to map with node filter"() {
         when:
@@ -241,6 +243,99 @@ class JobExecSpec extends Specification {
         'true'          | _
         'false'         | _
         null            | _
+
+    }
+
+    static uuid1 = UUID.randomUUID().toString()
+    static uuid2 = UUID.randomUUID().toString()
+    static uuid3 = UUID.randomUUID().toString()
+
+    def "find job"() {
+        given:
+            def job1 = new ScheduledExecution(
+                    jobName: 'jobname1',
+                    groupPath: 'group1',
+                    project: 'projectA',
+                    uuid: uuid1,
+                    workflow: new Workflow(
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'asdf').save()
+                            ]
+                    ).save()
+            ).save()
+            def job2 = new ScheduledExecution(
+                    jobName: 'jobname2',
+                    groupPath: 'group2',
+                    project: 'projectB',
+                    uuid: uuid2,
+                    workflow: new Workflow(
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'asdf').save()
+                            ]
+                    ).save()
+            ).save()
+            def job3 = new ScheduledExecution(
+                    jobName: 'jobname2',
+                    groupPath: 'group2',
+                    project: 'projectC',
+                    uuid: uuid3,
+                    workflow: new Workflow(
+                            commands: [
+                                    new CommandExec(adhocRemoteString: 'asdf').save()
+                            ]
+                    ).save()
+            ).save()
+            def je = new JobExec(
+                    jobGroup: jobGroup,
+                    jobName: jobName,
+                    jobProject: jobProject,
+                    useName: useName,
+                    uuid: uuid
+
+            )
+        when:
+            def result = je.findJob(project)
+        then:
+            if (expect) {
+                result != null
+                result.uuid == expect
+            } else {
+                result == null
+            }
+            job1.id
+            job2.id
+            job3.id
+
+        where:
+            //useName defaults true when uuid is null
+            useName | uuid  | jobName    | jobGroup | jobProject | project    | expect
+            true    | null  | 'jobname1' | 'group1' | null       | 'projectA' | uuid1
+            true    | uuid2 | 'jobname1' | 'group1' | null       | 'projectA' | uuid1
+            false   | null  | 'jobname1' | 'group1' | null       | 'projectA' | uuid1
+            true    | null  | 'jobname1' | 'group1' | null       | 'projectB' | null
+            true    | uuid2 | 'jobname1' | 'group1' | null       | 'projectB' | null
+            false   | null  | 'jobname1' | 'group1' | null       | 'projectB' | null
+            true    | null  | 'jobname1' | 'group1' | 'projectA' | 'projectB' | uuid1
+            true    | uuid2 | 'jobname1' | 'group1' | 'projectA' | 'projectB' | uuid1
+            false   | null  | 'jobname1' | 'group1' | 'projectA' | 'projectB' | uuid1
+            true    | null  | 'jobname1' | 'group1' | 'projectA' | null       | uuid1
+            true    | uuid2 | 'jobname1' | 'group1' | 'projectA' | null       | uuid1
+            false   | null  | 'jobname1' | 'group1' | 'projectA' | null       | uuid1
+
+            //same jobname/group, different projects
+            true    | null  | 'jobname2' | 'group2' | 'projectB' | null       | uuid2
+            true    | null  | 'jobname2' | 'group2' | 'projectB' | 'projectC' | uuid2
+            true    | null  | 'jobname2' | 'group2' | null       | 'projectB' | uuid2
+
+            true    | null  | 'jobname2' | 'group2' | 'projectC' | null       | uuid3
+            true    | null  | 'jobname2' | 'group2' | 'projectC' | 'projectB' | uuid3
+            true    | null  | 'jobname2' | 'group2' | null       | 'projectC' | uuid3
+
+            //search by uuid
+            false   | uuid1 | null       | null     | null       | 'projectA' | uuid1
+            false   | uuid1 | null       | null     | null       | 'projectB' | uuid1
+            false   | uuid1 | null       | null     | null       | 'projectC' | uuid1
+
 
     }
 }
