@@ -821,7 +821,9 @@ function _initPopoverContentRef(parent, options) {
     var opts = {
       html: true,
       content: function () {
-        return jQuery(ref).html();
+        const id = generateId()
+        const html = jQuery(ref).html()
+        return html.replace(/\$CREF\$/g, id)
       },
       trigger: jQuery(e).data('trigger') || options.trigger || 'click'
     };
@@ -834,8 +836,14 @@ function _initPopoverContentRef(parent, options) {
     }
     jQuery(e).popover(opts).on('shown.bs.popover', function () {
       jQuery(e).toggleClass('active');
+      if (typeof (options.onShown) === 'function') {
+        options.onShown(e)
+      }
     }).on('hidden.bs.popover', function () {
       jQuery(e).toggleClass('active');
+      if (typeof (options.onHidden) === 'function') {
+        options.onHidden(e)
+      }
     });
     jQuery(e).data('popover-content-ref-inited', 'true');
   });
@@ -1124,6 +1132,18 @@ function _initMarkdeep() {
       _applyMarkdeep(el);
     });
   }
+}
+
+function _initPopoverMousedownCatch (sel, allowed, callback) {
+  jQuery(sel || 'body').on('mousedown', function (e) {
+    if (jQuery(e.target).closest(allowed).length < 1) {
+
+      jQuery(sel || 'body').off('mousedown')
+      if (typeof (callback) === 'function') {
+        callback(e)
+      }
+    }
+  })
 }
 (function () {
   window.markdeepOptions = {
