@@ -2391,6 +2391,48 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
+
+
+        def "reschedule adhoc executions method"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
+
+        when:
+        def result = service.rescheduleAdHocJobs(Arrays.asList(exec1))
+
+        then:
+        result.failedExecutions.size() == 0
+        result.executions.size() == 1
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
+    }
+
     def "reschedule adhoc execution getAuthContext error"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
@@ -2430,12 +2472,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         setupDoValidate(true)
         def uuid = setupDoUpdate(true)
-        
+
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService=Mock(JobSchedulerService)
         when:
         def params = baseJobParams()+[
-                
+
         ]
         //def results = service._dovalidate(params, Mock(UserAndRoles))
         def results = service._doUpdateExecutionFlags(
@@ -2868,9 +2910,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         null |  _
 
     }
-      
-              
-      
+
+
+
     @Unroll
     def "do update job on cluster"(){
         given:
