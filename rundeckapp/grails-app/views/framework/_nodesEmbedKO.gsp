@@ -42,7 +42,8 @@
                   bootstrapPopover: true,
                   bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index(),
                   bootstrapPopoverOptions:{trigger:'click'},
-                  bootstrapTooltip: nodename
+                  bootstrapTooltip: nodename,
+                  bootstrapPopoverHideTooltip: true
                   ">
             <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                 <!-- ko if: attributes['ui:icon:name'] -->

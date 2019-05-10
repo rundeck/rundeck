@@ -25,6 +25,7 @@
 ko.bindingHandlers.bootstrapPopover = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
         if(allBindings.get('bootstrapPopoverContentRef')){
+            const doHideTooltip = ko.unwrap(allBindings.get('bootstrapPopoverHideTooltip'))||false
             const opts = ko.unwrap(allBindings.get('bootstrapPopoverOptions')) || {}
             _initPopoverContentRef(null, jQuery.extend(
                 opts,
@@ -35,6 +36,9 @@ ko.bindingHandlers.bootstrapPopover = {
                         _initPopoverMousedownCatch('body', '._mousedown_popup_allowed', function (e) {
                             jQuery(element).popover("hide")
                         })
+                        if(doHideTooltip){
+                            jQuery(element).tooltip("hide")
+                        }
                     }
                 }
                 )
