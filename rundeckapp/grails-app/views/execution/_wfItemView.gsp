@@ -22,7 +22,7 @@
     Created: Jul 26, 2010 5:12:38 PM
     $Id$
  --%>
-            <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+            <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
