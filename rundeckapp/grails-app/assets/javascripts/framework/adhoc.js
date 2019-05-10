@@ -24,7 +24,6 @@
 //= require adhocCommandKO
 //= require executionStateKO
 //= require executionLogOutputKO
-//= require adhocPageKO
 //= require koBind
 
 
@@ -310,8 +309,7 @@ function init() {
     jQuery('.act_adhoc_history_dropdown').click(function () {
         adhocCommand.loadRecentCommands();
     });
-    var adhocPage = new AdhocPage({nodeFilter: nodeFilter, adhocCommand: adhocCommand})
 
-    initKoBind(null, {nodeFilter: nodeFilter, history: history, adhocCommand: adhocCommand, page: adhocPage})
+    initKoBind(null, {nodeFilter: nodeFilter, history: history, adhocCommand: adhocCommand})
 }
 jQuery(document).ready(init);
