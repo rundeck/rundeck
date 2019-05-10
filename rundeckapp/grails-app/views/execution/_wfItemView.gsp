@@ -27,7 +27,7 @@
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%
-                <g:set var="foundjob" value="${edit?null:(item.useName?ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project):ScheduledExecution.findScheduledExecution(null,null,null,item.uuid))}"/>
+                <g:set var="foundjob" value="${edit?null:(item.findJob(project))}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs }">
