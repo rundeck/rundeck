@@ -40,7 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
-import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
