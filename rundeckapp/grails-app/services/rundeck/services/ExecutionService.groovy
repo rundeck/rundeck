@@ -3440,7 +3440,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                   throw new StepException(msg, JobReferenceFailureReason.NotFound)
                 }
             }
-                                 
+
             if (!schedlist || 1 != schedlist.size()) {
                 def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
                 executionContext.getExecutionListener().log(0, msg)
@@ -3694,43 +3694,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return [result:result,total:total]
     }
 
-    /**
-     * Query executions
-     * @param query query
-     * @param offset paging offset
-     * @param max paging max
-     * @return result map [total: int, result: List<Execution>]
-     */
-    def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
+  /**
+   * Query executions
+   * @param query query
+   * @param offset paging offset
+   * @param max paging max
+   * @return result map [total: int, result: List<Execution>]
+   */
+  def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
+    def criteriaClos = { isCount ->
 
-        def criteriaClos = { isCount ->
+      // Run main query criteria
+      def queryCriteria = query.createCriteria(delegate)
+      queryCriteria()
 
-            // Run main query criteria
-            def queryCriteria =  query.createCriteria(delegate)
-            queryCriteria()
-
-            if (!isCount) {
-                if (offset) {
-                    firstResult(offset)
-                }
-                if (max && max>0) {
-                    maxResults(max)
-                }
-                and {
-                    order('dateCompleted', 'desc')
-                    order('dateStarted', 'desc')
-                }
-            }
+      if (!isCount) {
+        if (offset) {
+          firstResult(offset)
         }
-        def result = Execution.createCriteria().list(criteriaClos.curry(false))
-        def total = Execution.createCriteria().count(criteriaClos.curry(true))
-        return [result:result,total:total]
+        if (max && max > 0) {
+          maxResults(max)
+        }
+        and {
+          order('dateCompleted', 'desc')
+          order('dateStarted', 'desc')
+        }
+      }
     }
+    def result = Execution.createCriteria().list(criteriaClos.curry(false))
+    def total = Execution.createCriteria().count(criteriaClos.curry(true))
+    return [result: result, total: total]
+  }
 
 
-
-
-    /**
+  /**
      * Return statistics over a Query resultset.
      * @param query query
      * @return result map [total: long, duration: Map[average: double, max: long, min: long]]

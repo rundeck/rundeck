@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
@@ -2181,20 +2182,37 @@ setTimeout(function(){
                 grailsApplication.config.rundeck?.pagination?.default?.max ?
                         grailsApplication.config.rundeck.pagination.default.max.toInteger() :
                         20
-        def results = executionService.queryExecutions(query, resOffset, resMax)
-        def result=results.result
-        def total=results.total
-        //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
-        withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+        def results
+        try {
+            results = executionService.queryExecutions(query, resOffset, resMax)
+        }
+        catch (ExecutionQueryException e) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.error',
+                    args  : [message(code: e.getErrorMessageCode())]
+                ]
+            )
+        }
+
+        def result = results.result
+        def total = results.total
+        //filter query results to READ authorized executions
+        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
+
+        withFormat {
+            xml {
+                return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
             }
-            json{
-                return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            json {
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
             }
         }
+
+
     }
 
 
@@ -2371,14 +2389,27 @@ setTimeout(function(){
         }
 
 
-        // Get metric data
-        def metrics = executionService.queryExecutionMetrics(query)
+        def metrics
+        try {
+            // Get metric data
+            metrics = executionService.queryExecutionMetrics(query)
+        }
+        catch (ExecutionQueryException e) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.error',
+                    args  : [message(code: e.getErrorMessageCode())]
+                ]
+            )
+        }
 
         // Format times to be human readable.
         metricsOutputFormatTimeNumberAsString(metrics.duration, [
-                "average",
-                "min",
-                "max"
+            "average",
+            "min",
+            "max"
         ])
 
 
@@ -2389,16 +2420,15 @@ setTimeout(function(){
             xml {
                 render(contentType: "application/xml") {
                     delegate.'result' {
-                        metrics.each {key, value ->
-                            if(value instanceof Map){
-                                Map sub=value
-                                delegate."${key}"{
-                                    sub.each{k1,v1->
+                        metrics.each { key, value ->
+                            if (value instanceof Map) {
+                                Map sub = value
+                                delegate."${key}" {
+                                    sub.each { k1, v1 ->
                                         delegate."${k1}"(v1)
                                     }
                                 }
-                            }
-                            else {
+                            } else {
                                 delegate."${key}"(value)
                             }
                         }
@@ -2406,6 +2436,8 @@ setTimeout(function(){
                 }
             }
         }
+
+
     }
 
     /**

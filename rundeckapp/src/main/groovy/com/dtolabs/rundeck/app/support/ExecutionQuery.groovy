@@ -175,9 +175,7 @@ class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
       def hasJobFilters = jobqueryfilters.any { query[it] }
       if (hasJobFilters && query.adhoc) {
-        flash.errorCode = "api.error.parameter.error"
-        flash.errorArgs = [message(code: 'api.executions.jobfilter.adhoc.conflict')]
-        return chain(controller: 'api', action: 'renderError')
+        throw new ExecutionQueryException('api.executions.jobfilter.adhoc.conflict');
       }
       def criteriaClos = { //isCount ->
         if (query.adhoc) {
