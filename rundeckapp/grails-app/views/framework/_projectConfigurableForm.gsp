@@ -14,7 +14,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<div class="list-group-item">
+
     <span class="h4 ">
         <g:message code="${titleCode}"/>
     </span>
@@ -42,4 +42,3 @@
 
         </g:each>
     </div>
-</div>

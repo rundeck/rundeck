@@ -96,126 +96,6 @@ class ScheduledExecutionControllerTests  {
         }
     }
 
-    public void testExpandUrlOptionValueSimple() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'monkey', controller.expandUrl(option, '${option.test1.value}', se,[test1:'monkey'])
-    }
-    public void testExpandUrlOptionValueUrl() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'http://some.host/path/a%20monkey', controller.expandUrl(option, 'http://some.host/path/${option.test1.value}', se,[test1:'a monkey'])
-    }
-    public void testExpandUrlOptionValueParam() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'http://some.host/path/?a+monkey', controller.expandUrl(option, 'http://some.host/path/?${option.test1.value}', se,[test1:'a monkey'])
-    }
-    public void testExpandUrlOptionName() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'test1', controller.expandUrl(option, '${option.name}', se)
-    }
-
-    public void testExpandUrlJobName() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'blue', controller.expandUrl(option, '${job.name}', se)
-    }
-
-    public void testExpandUrlJobGroup() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'some%2Fwhere', controller.expandUrl(option, '${job.group}', se)
-    }
-
-    public void testExpandUrlJobDesc() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'a%20job', controller.expandUrl(option, '${job.description}', se)
-    }
-
-    public void testExpandUrlJobDescParam() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals '?a+job', controller.expandUrl(option, '?${job.description}', se)
-    }
-
-    public void testExpandUrlJobProject() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'AProject', controller.expandUrl(option, '${job.project}', se)
-    }
-
-    public void testExpandUrlJobProp_nonexistent() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals '${job.noexist}', controller.expandUrl(option, '${job.noexist}', se)
-    }
-
-    public void testExpandUrlJobMultipleValues() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'http://test/action?name=blue&option=test1&project=AProject',
-            controller.expandUrl(option, 'http://test/action?name=${job.name}&option=${option.name}&project=${job.project}', se)
-
-    }
-
-    public void testExpandUrlJobUsernameAnonymous() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'anonymous', controller.expandUrl(option, '${job.user.name}', se)
-    }
-
-    public void testExpandUrlJobUsername() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        controller.session.user='bob'
-        assertEquals 'bob', controller.expandUrl(option, '${job.user.name}', se)
-    }
-
-    public void testExpandUrlJobRundeckNodename() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'server1', controller.expandUrl(option, '${job.rundeck.nodename}', se)
-    }
-    public void testExpandUrlJobRundeckNodename2() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'server1', controller.expandUrl(option, '${rundeck.nodename}', se)
-    }
-
-    public void testExpandUrlJobRundeckServerUUID() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'xyz', controller.expandUrl(option, '${job.rundeck.serverUUID}', se)
-    }
-
-    public void testExpandUrlJobRundeckServerUUID2() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
-        assertEquals 'xyz', controller.expandUrl(option, '${rundeck.serverUUID}', se)
-    }
-    public void testExpandUrlJobRundeckBasedir() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
-        assertEquals '/a/path', controller.expandUrl(option, '${job.rundeck.basedir}', se,[:],false)
-    }
-
-    public void testExpandUrlJobRundeckBasedir2() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
-        assertEquals '/a/path', controller.expandUrl(option, '${rundeck.basedir}', se,[:],false)
-    }
-
-    protected List setupExpandUrlJob(def controller,boolean ishttp=true) {
-        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where',
-                description: 'a job', project: 'AProject', argString: '-a b -c d')
-
-        final Option option = new Option(name: 'test1', enforced: false)
-        se.addToOptions(option)
-        se.save()
-        assertNotNull(option.properties)
-        controller.frameworkService = mockWith(FrameworkService) {
-            getFrameworkNodeName() {->
-                'server1'
-            }
-            getServerUUID(1..1) {->
-                'xyz'
-            }
-            if(!ishttp) {
-                getRundeckBase(1..2) { ->
-                    '/a/path'
-                }
-            }
-            getProjectGlobals(1..1){String x->
-                [:]
-            }
-        }
-        [option, se]
-    }
-
     public void testSaveBasic() {
         def sec = controller
             def se = new ScheduledExecution(
@@ -2863,7 +2743,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -2953,7 +2833,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             assert jobset==[expectedJob]
             [
                     jobs: [expectedJob],
@@ -3028,7 +2908,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             assertEquals('BProject', jobset[0].project)
             [
                     jobs: [expectedJob],
@@ -3113,7 +2993,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3208,7 +3088,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],
@@ -3304,7 +3184,7 @@ class ScheduledExecutionControllerTests  {
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
-        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx ->
+        mock2.demand.loadJobs { jobset, dupeOption, uuidOption, changeinfo, authctx, validateJobref ->
             [
                     jobs: [expectedJob],
                     jobsi: [scheduledExecution: expectedJob, entrynum: 0],

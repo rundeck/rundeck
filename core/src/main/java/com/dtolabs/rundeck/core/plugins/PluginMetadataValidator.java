@@ -63,12 +63,15 @@ public class PluginMetadataValidator {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
             return PluginValidation.State.INCOMPATIBLE;
         }
-        boolean ignorePatch = compatVer.minString.matches("x|\\d\\+");
+        if(compatVer.minString.equals("x")) return PluginValidation.State.VALID;
+        Integer cmin = new Integer(compatVer.minString.replaceAll("\\+",""));
+        if(rundeckVer.min > cmin) return PluginValidation.State.VALID;
         if(!checkVer(rundeckVer.min,compatVer.minString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
             return PluginValidation.State.INCOMPATIBLE;
         }
-        if(!ignorePatch && !checkVer(rundeckVer.patch,compatVer.patchString)) {
+        if(compatVer.patchString == null) return PluginValidation.State.VALID;
+        if(!checkVer(rundeckVer.patch,compatVer.patchString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
             return PluginValidation.State.INCOMPATIBLE;
         }
@@ -84,7 +87,7 @@ public class PluginMetadataValidator {
     }
 
     static boolean compare(Integer rd, Integer compat, boolean greater) {
-        if(greater && rd > compat) return true;
+        if(greater && rd >= compat) return true;
         return compat.equals(rd);
     }
 }

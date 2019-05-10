@@ -35,24 +35,35 @@
             <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
         </g:if>
     %{--Job Reference item--}%
-        <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
+        <g:if test="${'job'==newitemtype || item instanceof JobExec }">
             <section >
                 <div class="form-group">
+                    <label class="col-sm-2 control-label"><g:message code="Workflow.Step.jobreference.title" /></label>
+                    <div class="col-sm-10">
+                        <g:set var="isUseName" value="${ item?.useName || false }"/>
+                        <div class="radio">
+                            <g:radio id="useNameTrue"  name="useName" value="true"
+                                     onclick="_enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
+                                     checked="${!!isUseName}"/>
+                            <label for="useNameTrue">
+                                <g:message code="Workflow.Step.jobreference.name.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.name.description"/></span>
+                        </div>
+                        <div class="radio">
+                            <g:radio id="useNameFalse"  name="useName" value="false"
+                                     onclick="_enableNameJobRefFields(false,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
+                                     checked="${!isUseName}"/>
+                            <label for="useNameFalse">
+                                <g:message code="Workflow.Step.jobreference.uuid.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.uuid.description"/></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="col-sm-2 control-label" for="jobNameField${rkey}"><g:message code="Workflow.Step.jobreference.name-group.label" /></label>
-                    <div class="col-sm-3">
-
-                        <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
-                               placeholder="${message(code:"scheduledExecution.jobName.label")}"
-                               class="form-control"
-                               size="100" autofocus/>
-                    </div>
-                    <div class="col-sm-3">
-                        <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
-                               placeholder="${message(code:"scheduledExecution.groupPath.label")}"
-                               class="form-control"
-                        />
-                    </div>
-                    <div class="col-sm-2">
+                    <div class="col-sm-6">
                         <g:select name="jobProject" from="${fprojects}" id="jobProjectField${rkey}" value="${enc(attr:item?.jobProject)}" noSelection="${['':message(code:'step.type.jobreference.project.label',args:[project])]}"
                                   class="form-control "/>
                     </div>
@@ -60,6 +71,7 @@
                     <div class="col-sm-2">
                         <g:javascript>
                         fireWhenReady('jobProjectField${rkey}',function(){
+                            _enableNameJobRefFields(${isUseName},'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                             _initJobPickerAutocomplete('jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                         });
                         </g:javascript>
@@ -74,18 +86,41 @@
                         <span id="jobChooseSpinner"></span>
                         <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
                     </div>
+                    <div class="col-sm-10 col-sm-offset-2" style="maring-top:1em;">
+                      <p class="help-block">
+                        <g:message code="Workflow.Step.jobreference.jobName.help" />
+                      </p>
+                    </div>
                 </div>
+                <div class="form-group">
+                  <label class="col-sm-2 control-label"></label>
+                  <div class="col-sm-5">
+
+                      <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
+                              placeholder="${message(code:"scheduledExecution.jobName.label")}"
+                              class="form-control"
+                              size="100" autofocus/>
+                  </div>
+                  <div class="col-sm-5">
+                      <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
+                              placeholder="${message(code:"scheduledExecution.groupPath.label")}"
+                              class="form-control"
+                      />
+                  </div>
+                </div>
+
                 <div class="form-group" >
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.uuid.label" /></label>
                     <div class="col-sm-10">
                         <input type='text' name="uuid" value="${enc(attr:item?.uuid)}" size="100"
+                            ${!isUseName?"":"readonly='true'"}
                                placeholder="${message(code:"Workflow.Step.jobreference.uuid.placeholder")}"
                                id="jobUuidField${rkey}"
                                class="form-control context_var_autocomplete"/>
                     </div>
                 </div>
                 <div class="form-group" style="margin-top:1em;">
-                    <div class="col-sm-12 ">
+                    <div class="col-sm-10 col-sm-offset-2">
                         <div class="text-info">
                             <g:message code="Workflow.Step.jobreference.uuid.help" />
                         </div>

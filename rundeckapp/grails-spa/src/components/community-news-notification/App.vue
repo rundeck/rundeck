@@ -33,7 +33,7 @@ export default {
         if (mostRecentPost && result.blogs.length) {
           let lastBlogPublished = parseInt(mostRecentPost);
 
-          if (results.blogs[0].publish_date > lastBlogPublished) {
+          if (result.blogs[0].publish_date > lastBlogPublished) {
             this.setCookie(result.count);
           }
         } else {

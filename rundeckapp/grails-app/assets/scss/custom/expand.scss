@@ -1,18 +1,46 @@
 .expandComponentHolder{
   .expandComponentControl{
-    .more-indicator-verbiage{
+    > .more-indicator-verbiage{
       display: inline-block;
     }
-    .less-indicator-verbiage{
+    > .less-indicator-verbiage{
       display: none;
     }
   }
   &.expanded{
-    .more-indicator-verbiage{
+    > .more-indicator-verbiage{
       display: none;
     }
-    .less-indicator-verbiage{
+    > .less-indicator-verbiage{
       display: inline-block;
     }
+  }
+}
+
+details.more-info {
+  > summary {
+    > .less-indicator-verbiage {
+      display: none
+    }
+
+    .more-indicator-verbiage, .less-indicator-verbiage {
+      cursor: pointer;
+    }
+  }
+
+  &[open] > summary {
+    > .more-indicator-verbiage {
+      display: none
+    }
+
+    > .less-indicator-verbiage {
+      display: inline-block;
+    }
+  }
+
+  .more-info-content {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    padding-left: 0.5em;
   }
 }

@@ -50,6 +50,7 @@ public class PluginMeta {
     private List<String> tags;
     private String thirdPartyDependencies;
     private String sourceLink;
+    private String docsLink;
     private String targetHostCompatibility;
 
     public List<ProviderDef> getPluginDefs() {
@@ -201,6 +202,10 @@ public class PluginMeta {
     public void setSourceLink(final String sourceLink) {
         this.sourceLink = sourceLink;
     }
+
+    public String getDocsLink() { return docsLink; }
+
+    public void setDocsLink(final String docsLink) { this.docsLink = docsLink; }
 
     public String getTargetHostCompatibility() {
         return targetHostCompatibility;

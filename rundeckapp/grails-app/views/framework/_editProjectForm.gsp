@@ -20,8 +20,53 @@
    Created: 8/1/11 11:38 AM
 --%>
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
+<%@ page import="rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <g:render template="/common/messages" model="[notDismissable:true]"/>
+<script type="text/javascript">
+    function changeCronExpression(elem){
+        clearHtml($('crontooltip'));
+        var params={crontabString:$F(elem)};
+        new Ajax.Updater('cronstrinfo',
+            '${createLink(controller:'scheduledExecution',action:'checkCrontab')}',{
+                parameters:params,
+                evalScripts:true
+            }
+        );
+    }
+    var cronSects=['Second','Minute','Hour','Day of Month','Month','Day of Week','Year'];
+    function tkeyup(el){
+        clearHtml('cronstrinfo');
+        var pos=getCaretPos(el);
+        var f =$F(el);
+        //find # of space chars prior to pos
+        var sub=f.substring(0,pos);
+        var c = sub.split(' ').size();
+        if(c>=1&&c<=7){
+            setText($('crontooltip'),cronSects[c-1]);
+        }else{
+            clearHtml('crontooltip');
+        }
+    }
+    function getCaretPos(el) {
+        var rng, ii = -1;
+        if (typeof el.selectionStart == "number") {
+            ii = el.selectionStart;
+        } else if (document.selection && el.createTextRange) {
+            rng = document.selection.createRange();
+            rng.collapse(true);
+            rng.moveStart("character", -el.value.length);
+            ii = rng.text.length;
+        }
+        return ii;
+    }
+    function cleanerchkbox(el) {
+        if(el.checked){
+            $('cleaner_config').show()
+        } else {
+            $('cleaner_config').hide()
+        }
+    }
+</script>
 <div class="list-group">
   <g:if test="${editOnly}">
     <g:hiddenField name="project" value="${project}"/>
@@ -56,8 +101,98 @@
         </g:if>
     </div>
   </div>
+<feature:enabled name="cleanExecutionsHistoryJob">
+  <div class="list-group-item">
+      <label class=" control-label"><g:message code="execution.history.clean.label"/>:</label>
+      <div class="row">
+          <div class="col-sm-4">
+              <g:set var="isSelected" value="${enableCleanHistory}"/>
+              <div class="checkbox">
+                  <g:checkBox
+                          name="cleanerHistory"
+                          value="${enableCleanHistory}"
+                          class="fcopy"
+                          id="${nkey+'enable_cleaner_input'}"
+                          onchange='cleanerchkbox(this)'
+                          checked="${isSelected}"/>
+                  <label>
+                      <b><g:enc>Enable</g:enc></b>
+                  </label>
+                  <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
+              </div>
+          </div>
+      </div>
+    <div id="cleaner_config" style="display: ${isSelected ? 'block' : 'none' }">
+        <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
+            <label for="cleanperiod">
+                <g:message code="domain.Project.days.to.clean.execution" default="Days to keep executions"/>
+            </label>
+            <g:field name="cleanperiod" type="number" size="50"  value="${cleanerHistoryPeriod}" class="form-control"/>
+            <g:if test="${cleanerHistoryConfigError}">
+                <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+            </g:if>
+        </div>
+        <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
+            <label for="cleanperiod">
+                <g:message code="domain.Project.minimum.to.keep.execution" default="Minimum executions to keep"/>
+            </label>
+            <g:field name="minimumtokeep" type="number" size="50"  value="${minimumExecutionToKeep}" class="form-control"/>
+            <g:if test="${cleanerHistoryConfigError}">
+                <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+            </g:if>
+        </div>
+        <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
+            <label for="cleanperiod">
+                <g:message code="domain.Project.maximum.size.deletion.execution" default="Maximum size of the deletion"/>
+            </label>
+            <g:field name="maximumdeletionsize" type="number" size="50"  value="${maximumDeletionSize}" class="form-control"/>
+            <g:if test="${cleanerHistoryConfigError}">
+                <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+            </g:if>
+        </div>
+        <div class="form-group">
+            %{--<div class="panel panel-default panel-tab-content crontab tabtarget"  >--}%
+            <div class="${labelColSize}  control-label text-form-label">
+                <g:message code="domain.Project.schedule.clean.execution" default="Schedule clean history job (Cron expression)"/>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div  class="form-group">
+                        <g:textField name="crontabString"
+                                     value="${cronExression}"
+                                     onchange="changeCronExpression(this);"
+                                     onblur="changeCronExpression(this);"
+                                     onkeyup='tkeyup(this);'
+                                     onclick='tkeyup(this);'
+                                     class="form-control input-sm"
+                                     size="50"/>
+                        <g:if test="${cleanerHistoryConfigError}">
+                            <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+                        </g:if>
+
+                    </div>
+                </div>
+                <div class="col-sm-4">
+                    <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>
+                </div>
+                <span id="cronstrinfo"></span>
+
+            </div>
+            <div class="row">
+                <div class="text-primary col-sm-12">
+                    <div>
+                        Ranges: <code>1-3</code>.  Lists: <code>1,4,6</code>. Increments: <code>0/15</code> "every 15 units starting at 0".
+                    </div>
+                    See: <a href="${g.message(code:'documentation.reference.cron.url')}" class="external" target="_blank">Cron reference</a> for formatting help
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+</feature:enabled>
   <g:set var="categories" value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
   <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
+    <div class="list-group-item">
     <g:render template="projectConfigurableForm"
               model="${[extraConfigSet: extraConfig?.values(),
                           category      : category,
@@ -65,6 +200,7 @@
                           titleCode     : 'project.configuration.extra.category.' + category + '.title',
                           helpCode      : 'project.configuration.extra.category.' + category + '.description'
               ]}"/>
+    </div>
   </g:each>
   <g:if test="${nodeExecDescriptions}">
     <div class="list-group-item">

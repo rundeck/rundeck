@@ -80,8 +80,8 @@ class ProjectController extends ControllerBase{
 
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
-                        frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
+                                                                 frameworkService.authResourceForProject(project),
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
                 AuthConstants.ACTION_EXPORT, 'Project',project)) {
             return
         }

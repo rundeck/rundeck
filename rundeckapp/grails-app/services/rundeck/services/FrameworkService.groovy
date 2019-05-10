@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
+import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
@@ -47,6 +48,7 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.ExecutionServiceException
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -57,6 +59,7 @@ import java.util.function.Predicate
 class FrameworkService implements ApplicationContextAware, AuthContextProcessor, ClusterInfoService {
     static transactional = false
     public static final String REMOTE_CHARSET = 'remote.charset.default'
+    public static final String FIRST_LOGIN_FILE = ".firstLogin"
 
     boolean initialized = false
     private String serverUUID
@@ -70,6 +73,9 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def rundeckPluginRegistry
     def PluginService pluginService
     def PluginControlService pluginControlService
+    def scheduledExecutionService
+    def logFileStorageService
+    def fileUploadService
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
 
@@ -205,6 +211,36 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         }
         projectMap
     }
+    def projectCleanerExecutionsScheduled () {
+        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
+        def projectMap = [:]
+        projectNames.each { project ->
+            def projectConfig = [:]
+            def fwkProject = getFrameworkProject(project)
+            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep")
+            def cronExpression = fwkProject.getProjectProperties().get("project.clean.executions.schedule")
+            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep")
+            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize")
+            if(maxDaysToKeep){
+                projectConfig.put("maxDaysToKeep",maxDaysToKeep)
+                projectConfig.put("cronExpression",cronExpression)
+                projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
+                projectConfig.put("maximumDeletionSize",maximumDeletionSize)
+                projectMap.put(project,projectConfig)
+            }
+        }
+        projectMap
+    }
+    def rescheduleAllCleanerExecutionsJob(){
+        def projectsConfigs = projectCleanerExecutionsScheduled()
+        projectsConfigs.each { project, config ->
+            scheduleCleanerExecutions(project,
+                    config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
+                    StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
+                    StringUtils.isNotEmpty(config.maximumDeletionSize) ? Integer.parseInt(config.maximumDeletionSize) : 500,
+                    config.cronExpression)
+        }
+    }
     /**
      * Refresh the session.frameworkProjects and session.frameworkLabels
      * @param authContext
@@ -216,6 +252,29 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         session.frameworkProjects = fprojects
         session.frameworkLabels = flabels
         fprojects
+    }
+
+    def scheduleCleanerExecutions(String project,
+                                  Integer cleanerHistoryPeriod,
+                                  Integer minimumExecutionToKeep,
+                                  Integer maximumDeletionSize,
+                                  String cronExression){
+        log.info("removing cleaner executions job scheduled for ${project}")
+        scheduledExecutionService.deleteCleanerExecutionsJob(project)
+
+        if(cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
+            log.info("scheduling cleaner executions job for ${project}")
+            scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
+                    [
+                            maxDaysToKeep: cleanerHistoryPeriod,
+                            minimumExecutionToKeep: minimumExecutionToKeep,
+                            maximumDeletionSize: maximumDeletionSize,
+                            project: project,
+                            logFileStorageService: logFileStorageService,
+                            fileUploadService: fileUploadService,
+                            frameworkService: this
+                    ])
+        }
     }
 
     def existsFrameworkProject(String project) {
@@ -614,10 +673,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     def PluginControlService getPluginControlService(String project) {
-        if(!pluginControlService){
-            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
-        }
-        return pluginControlService
+        PluginControlServiceImpl.forProject(getRundeckFramework(), project)
     }
 
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
@@ -734,7 +790,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
-        described.description
+        described?.description
     }
     /**
      * Return step plugin description of a certain type
@@ -744,7 +800,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getStepPluginDescription(String type) throws MissingProviderException{
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
-        described.description
+        described?.description
     }
 
     /**
@@ -953,6 +1009,77 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     public def listResourceModelConfigurations(Properties properties) {
         ProjectNodeSupport.listResourceModelConfigurations(properties)
     }
+
+    /**
+     * Return a map of ServiceName to list of set of Descriptions, where a property was found matching the pattern [prefix]
+     * .[service].[provider].[pluginPropertyName]=value
+     * @param properties
+     * @param prefix
+     * @return
+     */
+    public Map<String, Set<Description>> listScopedServiceProviders(
+            Properties properties,
+            String prefix
+    ) {
+        Map<String, Set<Description>> services = new HashMap<>()
+        Map<String, List<Description>> providers = new HashMap<>()
+        properties.stringPropertyNames().each { key ->
+            if (key.startsWith(prefix + '.')) {
+                def substring = key.substring(prefix.length() + 1)
+                String[] parts = substring.split(/\./, 2)
+                if (parts.length < 2) {
+                    return
+                }
+                def svcName = parts[0]
+                if (!providers.containsKey(svcName) && pluginService.hasPluginService(svcName)) {
+                    providers[svcName] = pluginService.listPluginDescriptions(svcName)
+                }
+                if (providers.containsKey(svcName)) {
+                    def provPrefix = parts[1]
+                    //find applicable provider
+                    def found = providers[svcName].find { Description plugin ->
+                        provPrefix.startsWith(plugin.name + '.')
+                    }
+                    if (found) {
+                        services.computeIfAbsent(svcName, { new HashSet<Description>() }).add(found)
+                    }
+                }
+            }
+        }
+        return services
+    }
+
+    /**
+     * Return a map of ServiceName to Provider name to config map, where a property was found matching the pattern [prefix]
+     * .[service].[provider].[pluginPropertyName]=value
+     * @param properties
+     * @param prefix
+     * @return
+     */
+    public Map<String, Map<String, Map<String, String>>> discoverScopedConfiguration(
+            Properties properties,
+            String prefix
+    ) {
+        Map<String, Map<String, Map<String, String>>> providers = new HashMap<>()
+        def providers1 = listScopedServiceProviders(properties, prefix)
+        providers1.each { svcName, providerSet ->
+            providerSet.each { Description provider ->
+                String provpref = "${prefix}.${svcName}.${provider.name}"
+                def providerConf = providers
+                        .computeIfAbsent(svcName, { new HashMap<String, Map<String, String>>() })
+                        .computeIfAbsent(provider.name, { new HashMap<String, String>() })
+                provider.properties.each { pprop ->
+                    String key = "${provpref}.${pprop.name}"
+                    String val = properties[key]
+                    if (val) {
+                        providerConf.put(pprop.name, val)
+                    }
+                }
+            }
+        }
+        providers
+    }
+
 
     /**
      * Return all the Node Exec plugin type descriptions for the Rundeck Framework, in the order:
@@ -1310,5 +1437,15 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
 
     public <T> PluggableProviderService<T> getStorageProviderPluginService() {
         return (PluggableProviderService<T>)storagePluginProviderService
+    }
+
+    public File getFirstLoginFile() {
+        String vardir
+        if(rundeckFramework.hasProperty('framework.var.dir')) {
+            vardir = rundeckFramework.getProperty('framework.var.dir')
+        } else {
+            vardir = getRundeckBase()+"/var"
+        }
+        return new File(vardir, FIRST_LOGIN_FILE)
     }
 }

@@ -1,5 +1,6 @@
 package rundeck.codecs
 
+import groovy.xml.MarkupBuilder
 import rundeck.codecs.JobsXMLCodec
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -1524,5 +1525,158 @@ inside]]></aproperty>
         retry  | delay
         '2'    | '1h'
         '2'    | null
+    }
+
+
+    @Unroll
+    def "encode strip uuid from jobref"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new JobExec(jobName: 'asdf', jobGroup: 'blee', uuid:'xxxxxxxxx')],
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        def xmlstr = writer.toString()
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        xmlstr.contains("group='blee' name='asdf'")
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence.command.size()== 1
+        doc.job[0].sequence.command[0].jobref.useName=='true'
+
+    }
+
+
+    @Unroll
+    def "encode strip name from jobref"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new JobExec(jobName: 'asdf', jobGroup: 'blee', uuid:'xxxxxxxxx')],
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        def xmlstr = writer.toString()
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        !xmlstr.contains("group='blee' name='asdf'")
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence.command.size()== 1
+        doc.job[0].sequence.command[0].jobref.useName=='false'
+        doc.job[0].sequence.command[0].jobref.uuid=='xxxxxxxxx'
+
+    }
+
+    @Unroll
+    def "encode strip name from jobref without uuid available"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new JobExec(jobName: 'asdf', jobGroup: 'blee')],
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'name')
+        def xmlstr = writer.toString()
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        xmlstr.contains("group='blee' name='asdf'")
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence.command.size()== 1
+    }
+
+    @Unroll
+    def "encode strip uuid from jobref without name available"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new JobExec(uuid:'xxxxxxxxx')],
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(jobs1, xml, true, [:], 'uuid')
+        def xmlstr = writer.toString()
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence.command.size()== 1
+        doc.job[0].sequence.command[0].jobref.useName!='true'
+        doc.job[0].sequence.command[0].jobref.uuid=='xxxxxxxxx'
+
     }
 }

@@ -51,6 +51,7 @@ class UrlMappings {
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
+        "/api/$api_version/job/$id/forecast"(controller: 'menu', action: 'apiJobForecast')
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']
@@ -266,7 +267,6 @@ class UrlMappings {
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')
         "/project/$project/nodes/sources"(controller: 'framework', action: 'projectNodeSources')
-        "/project/$project/nodes/plugins"(controller: 'framework', action: 'projectNodePlugins')
         "/project/$project/nodes/sources/edit"(controller: 'framework', action: 'editProjectNodeSources')
         "/project/$project/nodes/source/$index/edit"(controller: 'framework', action: 'editProjectNodeSourceFile')
         "/project/$project/nodes/source/$index/save"(controller: 'framework', action: 'saveProjectNodeSourceFile')
@@ -315,6 +315,8 @@ class UrlMappings {
         "/community-news/register"(controller:'communityNews') {
             action = [POST: 'register']
         }
+
+        "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "404"(view: '/404')
         "500"(view: '/error')

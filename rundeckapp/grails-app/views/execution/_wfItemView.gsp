@@ -22,18 +22,18 @@
     Created: Jul 26, 2010 5:12:38 PM
     $Id$
  --%>
-            <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+            <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%
-                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project,item.uuid)}"/>
+                <g:set var="foundjob" value="${edit?null:(item.findJob(project))}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+(item.jobName?:item.uuid) + (item.jobProject?' (' + item.jobProject+') ':'') }</g:enc></g:link>
+                    <g:enc>${foundjob.generateFullName()}${(item.jobProject?' (' + item.jobProject+') ':'') }</g:enc></g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs }">

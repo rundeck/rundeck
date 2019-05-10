@@ -1415,8 +1415,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
+            def filterExclude = DataContextUtils.replaceDataReferencesInString(execMap.asExcludeFilter(),datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
+                    filterExclude: filterExclude,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
                     nodeKeepgoing: execMap.nodeKeepgoing
@@ -1842,6 +1844,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       user:params.user, loglevel:params.loglevel,
                                       doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
                                       filter: params.filter,
+                                      filterExclude: params.filterExclude,
                                       nodeExcludePrecedence:params.nodeExcludePrecedence,
                                       nodeThreadcount:params.nodeThreadcount,
                                       nodeKeepgoing:params.nodeKeepgoing,
@@ -2183,6 +2186,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'loglevel',
                 'doNodedispatch',
                 'filter',
+                'filterExclude',
                 'nodeExcludePrecedence',
                 'nodeThreadcount',
                 'nodeThreadcountDynamic',
@@ -2219,11 +2223,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
                 def nset = filtersAsNodeSet(filterprops)
                 input.filter = NodeSet.generateFilter(nset)
+                input.filterExclude=""
                 input.doNodedispatch=true
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -3387,6 +3392,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         def failOnDisable = false
         def uuid
+
         def schedlist
 
         def StepExecutionContext newContext
@@ -3396,16 +3402,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def props = frameworkService.getFrameworkProperties()
         def disableRefStats = (props?.getProperty('rundeck.disable.ref.stats') == 'true')
-
+        def useName = false
         if (jitem instanceof JobRefCommand) {
             project = jitem.project
             failOnDisable = jitem.failOnDisable
             uuid = jitem.uuid
+            useName = jitem.useName
         }
 
         ScheduledExecution.withTransaction {
-            if (uuid) {
+            if(!useName && uuid){
                 schedlist = ScheduledExecution.findAllScheduledExecutions(uuid)
+                if (!schedlist || 1 != schedlist.size()) {
+                  def msg = "Job [${uuid}] not found by uuid, project: ${project}"
+                  executionContext.getExecutionListener().log(0, msg)
+                  throw new StepException(msg, JobReferenceFailureReason.NotFound)
+                }
             } else {
                 def group = null
                 def name = null
@@ -3418,9 +3430,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
                 project = project ? project : executionContext.getFrameworkProject()
                 schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
+                if (!schedlist || 1 != schedlist.size()) {
+                  def msg = "Job [${jitem.jobIdentifier}] not found by name, project: ${project}"
+                  executionContext.getExecutionListener().log(0, msg)
+                  throw new StepException(msg, JobReferenceFailureReason.NotFound)
+                }
             }
-
-
+                                 
             if (!schedlist || 1 != schedlist.size()) {
                 def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
                 executionContext.getExecutionListener().log(0, msg)
@@ -3659,6 +3675,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         query.statusFilter=state
         query.projFilter=scheduledExecution.project
         return queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Query executions
+     * @param criteriaClosure criteriaClos
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map [total: int, result: List<Execution>]
+     */
+    def queryExecutions(Closure criteriaClos){
+        def result = Execution.createCriteria().list(criteriaClos.curry(false))
+        def total = Execution.createCriteria().count(criteriaClos.curry(true))
+        return [result:result,total:total]
     }
 
     /**

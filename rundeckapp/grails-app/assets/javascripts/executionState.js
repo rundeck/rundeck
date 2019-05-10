@@ -224,7 +224,7 @@ var FlowState = Class.create({
             this.retry--;
         }else if(data.error){
             this.retry=-1;
-            this.shouldUpdate=false;
+            this.shouldUpdate=!json.completed;
         }
         if(!data.error){
             this.updateState(json);

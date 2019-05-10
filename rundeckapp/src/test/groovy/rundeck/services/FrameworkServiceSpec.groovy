@@ -20,11 +20,15 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -34,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.PluginStep
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -328,5 +333,158 @@ class FrameworkServiceSpec extends Specification {
 
         where:
             method << ['addProjectNodeExecutorPropertiesForType', 'addProjectFileCopierPropertiesForType']
+    }
+
+
+    def "getFirstLoginFile"() {
+        when:
+        File tmpVar = File.createTempDir()
+        service.rundeckFramework = Mock(Framework) {
+            hasProperty('framework.var.dir') >> { true }
+            getProperty('framework.var.dir') >> { tmpVar }
+        }
+        File firstLoginMarker = service.getFirstLoginFile()
+
+        then:
+        !firstLoginMarker.exists()
+        firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/"+FrameworkService.FIRST_LOGIN_FILE
+
+    }
+
+    def "getFirstLoginFile no framework var dir"() {
+        when:
+        File tmpVar = File.createTempDir()
+        service.rundeckFramework = Mock(Framework) {
+            hasProperty('framework.var.dir') >> { false }
+            getBaseDir() >> { tmpVar }
+        }
+        File firstLoginMarker = service.getFirstLoginFile()
+
+        then:
+        !firstLoginMarker.exists()
+        firstLoginMarker.name == FrameworkService.FIRST_LOGIN_FILE
+        firstLoginMarker.absolutePath == tmpVar.absolutePath+"/var/"+FrameworkService.FIRST_LOGIN_FILE
+
+    }
+  
+    @Unroll
+    def "discoverScopedConfiguration"() {
+        given:
+            service.pluginService = Mock(PluginService)
+        when:
+            def result = service.discoverScopedConfiguration(props as Properties, prefix)
+
+        then:
+            count * service.pluginService.hasPluginService(_) >> {
+                types.contains(it[0])
+            }
+            service.pluginService.listPluginDescriptions('svc')>>[
+                    DescriptionBuilder.builder().name('type1').property(PropertyBuilder.builder().string('p1')).build(),
+                    DescriptionBuilder.builder().name('type2').property(PropertyBuilder.builder().string('p2')).build(),
+            ]
+            service.pluginService.listPluginDescriptions('svc2')>>[
+                    DescriptionBuilder.builder().name('typeA').property(PropertyBuilder.builder().string('pA')).build(),
+                    DescriptionBuilder.builder().name('typeB').property(PropertyBuilder.builder().string('pB')).build(),
+            ]
+            result == expect
+
+        where:
+            props                         | prefix | count | expect           | types
+            [:]                           | 'a'    | 0     | [:]              | []
+            ['a.svc.type1.p1': 'v'] | 'a'    | 1     | [svc: [type1:[p1:'v']]] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc.type2.p2': 'd'] | 'a'    | 1     | [svc: [type1:[p1:'v'],type2:[p2:'d']]] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: [type1:[p1:'v']],svc2:[typeA:[pA:'q']]] | ['svc','svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:[typeA:[pA:'q']]] | ['svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: [type1:[p1:'v']]] | ['svc']
+    }
+    @Unroll
+    def "list scoped service providers"() {
+        given:
+            service.pluginService = Mock(PluginService)
+        when:
+            def result = service.listScopedServiceProviders(props as Properties, prefix)
+
+        then:
+            count * service.pluginService.hasPluginService(_) >> {
+                types.contains(it[0])
+            }
+            service.pluginService.listPluginDescriptions('svc')>>[
+                    DescriptionBuilder.builder().name('type1').property(PropertyBuilder.builder().string('p1')).build(),
+                    DescriptionBuilder.builder().name('type2').property(PropertyBuilder.builder().string('p2')).build(),
+            ]
+            service.pluginService.listPluginDescriptions('svc2')>>[
+                    DescriptionBuilder.builder().name('typeA').property(PropertyBuilder.builder().string('pA')).build(),
+                    DescriptionBuilder.builder().name('typeB').property(PropertyBuilder.builder().string('pB')).build(),
+            ]
+            result.keySet() == expect.keySet()
+            expect['svc']?.toSet() == (result['svc']*.name)?.toSet()
+            expect['svc2']?.toSet() == (result['svc2']*.name)?.toSet()
+
+        where:
+            props                         | prefix | count | expect           | types
+            [:]                           | 'a'    | 0     | [:]              | []
+            ['a.svc.type1.p1': 'v'] | 'a'    | 1     | [svc: ['type1']] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc.type2.p2': 'd'] | 'a'    | 1     | [svc: ['type1','type2']] | ['svc']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1'],svc2:['typeA']] | ['svc','svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc2:['typeA']] | ['svc2']
+            ['a.svc.type1.p1': 'v','a.svc2.typeA.pA': 'q'] | 'a'    | 2     | [svc: ['type1']] | ['svc']
+    }
+
+    def "get plugin control service"() {
+        given:
+            service.rundeckFramework = Mock(Framework)
+
+            def ctrla = service.getPluginControlService('projectA')
+            def ctrlb = service.getPluginControlService('projectB')
+        when:
+            def pluga = ctrla.listDisabledPlugins()
+            def plugb = ctrlb.listDisabledPlugins()
+        then:
+            ctrla != ctrlb
+            pluga != plugb
+            2 * service.rundeckFramework.getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                1 * getFrameworkProject('projectA') >> Mock(IRundeckProject) {
+                    1 * hasProperty('disabled.plugins') >> true
+                    1 * getProperty('disabled.plugins') >> 'a,b,c'
+                }
+                1 * getFrameworkProject('projectB') >> Mock(IRundeckProject) {
+                    hasProperty('disabled.plugins') >> false
+
+                }
+            }
+            pluga == ['a', 'b', 'c']
+            plugb == []
+    }
+
+    @Unroll
+    def "get plugin description for step item nodeStep #nodeStep description #descriptor"() {
+        given:
+            service.rundeckFramework = Mock(Framework)
+            service.pluginService = Mock(PluginService)
+            def step = new PluginStep(type: 'atype', nodeStep: nodeStep)
+            def nodeStepService = Mock(NodeStepExecutionService)
+            def wfStepService = Mock(StepExecutionService)
+            def desc = DescriptionBuilder.builder().name('atype').build()
+        when:
+            def result = service.getPluginDescriptionForItem(step)
+        then:
+            if (nodeStep) {
+                1 * service.rundeckFramework.getNodeStepExecutorService() >> nodeStepService
+                1 * service.pluginService.getPluginDescriptor('atype', nodeStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            } else {
+                1 * service.rundeckFramework.getStepExecutionService() >> wfStepService
+                1 * service.pluginService.getPluginDescriptor('atype', wfStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            }
+            result == (descriptor ? desc : null)
+
+        where:
+            nodeStep | descriptor
+            true     | true
+            true     | false
+            false    | true
+            false    | false
     }
 }

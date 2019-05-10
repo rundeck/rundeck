@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.api.ApiInfo
@@ -54,8 +55,9 @@ import org.rundeck.app.cluster.ClusterInfo
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
-import org.rundeck.security.RundeckAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthenticationProvider
+import org.rundeck.security.RundeckAuthSuccessEventListener
+import org.rundeck.security.RundeckJaasAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
@@ -71,6 +73,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.authentication.session.CompositeSessionAuthenticationStrategy
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy
@@ -79,6 +82,7 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
+import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -422,8 +426,10 @@ beans={
     /**
      * Track passwords on these plugins
      */
+    obscurePasswordFieldsService(PasswordFieldsService)
     resourcesPasswordFieldsService(PasswordFieldsService)
     execPasswordFieldsService(PasswordFieldsService)
+    pluginsPasswordFieldsService(PasswordFieldsService)
     fcopyPasswordFieldsService(PasswordFieldsService)
 
 
@@ -434,6 +440,12 @@ beans={
     rundeckUserDetailsService(RundeckUserDetailsService)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter){
         rolePrefix=grailsApplication.config.rundeck.security.jaasRolePrefix?.toString()?:''
+    }
+
+    if(!grailsApplication.config.rundeck.logout.expire.cookies.isEmpty()) {
+        cookieClearingLogoutHandler(CookieClearingLogoutHandler,grailsApplication.config.rundeck.logout.expire.cookies.split(","))
+        SpringSecurityUtils.registerLogoutHandler("cookieClearingLogoutHandler")
+
     }
 
     if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
@@ -509,8 +521,12 @@ beans={
         }
     }
 
+    rundeckAuthSuccessEventListener(RundeckAuthSuccessEventListener) {
+        frameworkService = ref('frameworkService')
+    }
+
     if(grailsApplication.config.rundeck.security.syncLdapUser in [true,'true']) {
-        rundeckAuthenticationSuccessEventListener(RundeckAuthenticationSuccessEventListener) {
+        rundeckJaasAuthenticationSuccessEventListener(RundeckJaasAuthenticationSuccessEventListener) {
             userService = ref("userService")
             grailsApplication = grailsApplication
         }
