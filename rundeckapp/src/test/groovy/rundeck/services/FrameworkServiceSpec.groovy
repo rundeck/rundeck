@@ -25,7 +25,10 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -35,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.PluginStep
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -451,5 +455,36 @@ class FrameworkServiceSpec extends Specification {
             }
             pluga == ['a', 'b', 'c']
             plugb == []
+    }
+
+    @Unroll
+    def "get plugin description for step item nodeStep #nodeStep description #descriptor"() {
+        given:
+            service.rundeckFramework = Mock(Framework)
+            service.pluginService = Mock(PluginService)
+            def step = new PluginStep(type: 'atype', nodeStep: nodeStep)
+            def nodeStepService = Mock(NodeStepExecutionService)
+            def wfStepService = Mock(StepExecutionService)
+            def desc = DescriptionBuilder.builder().name('atype').build()
+        when:
+            def result = service.getPluginDescriptionForItem(step)
+        then:
+            if (nodeStep) {
+                1 * service.rundeckFramework.getNodeStepExecutorService() >> nodeStepService
+                1 * service.pluginService.getPluginDescriptor('atype', nodeStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            } else {
+                1 * service.rundeckFramework.getStepExecutionService() >> wfStepService
+                1 * service.pluginService.getPluginDescriptor('atype', wfStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            }
+            result == (descriptor ? desc : null)
+
+        where:
+            nodeStep | descriptor
+            true     | true
+            true     | false
+            false    | true
+            false    | false
     }
 }
