@@ -23,7 +23,7 @@
 
  --%>
 
-<g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+<g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
 <div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
