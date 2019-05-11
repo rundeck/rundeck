@@ -119,6 +119,8 @@
             });
         }
         function loadedFormSuccess(doShow,id){
+            jQuery('#execDivContent .exec-options-body').addClass('modal-body')
+            jQuery('#execDivContent .exec-options-footer').addClass('modal-footer')
             if ($('execFormCancelButton')) {
                 Event.observe($('execFormCancelButton'),'click',function(evt) {
                     Event.stop(evt);

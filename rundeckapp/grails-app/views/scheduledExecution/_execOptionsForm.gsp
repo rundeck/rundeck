@@ -14,8 +14,7 @@
   - limitations under the License.
   --}%
 <%@ page import="rundeck.User;" %>
-<div class="row">
-<div class="col-sm-12 ">
+
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
@@ -29,17 +28,18 @@
     });
     </g:javascript>
     <!-- END: firefox hack -->
+<div class="exec-options-body container-fluid">
 
 <input id='runAtTime' type='hidden' name='runAtTime' value='' />
 
-<div>
 <g:if test="${!hideHead}">
-    <div class="panel-heading">
-        <div class="row">
+    <div class="row exec-options-header">
+        <div class="col-sm-12">
             <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
                            runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>
+
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
@@ -521,8 +521,10 @@
 </div>
 </div>
 </div>
+</div>
+
 <g:if test="${!hideHead}">
-<div class="panel-footer">
+<div class=" exec-options-footer container-fluid">
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">
 
@@ -531,21 +533,16 @@
               <g:if test="${!hideCancel}">
                   <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
               </g:if>
-              <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
-                    class="form-group has_tooltip"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-              >%{--Extra div because attr disabled will cancel tooltip from showing --}%
-                  <button type="submit"
-                          style="margin-bottom:10px;"
-                          name="_action_runJobNow"
-                          id="execFormRunButton"
-                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                          class=" btn btn-success btn-sm">
-                      <i class="glyphicon glyphicon-play"></i>
-                      <g:message code="run.job.now" />
-                  </button>
-              </div>
+              <button type="submit"
+
+                      name="_action_runJobNow"
+                      id="execFormRunButton"
+                      title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                      ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                      class=" btn btn-success btn-sm has_tooltip">
+                  <i class="glyphicon glyphicon-play"></i>
+                  <g:message code="run.job.now" />
+              </button>
               <div class="checkbox checkbox-inline" style="margin-top:0;">
                   <g:checkBox id="followoutputcheck"
                                 name="follow"
@@ -604,10 +601,9 @@
     </div>
 </div>
 </g:if>
-</div>%{--/.panel--}%
+
 </g:uploadForm>
-</div> %{--/.col--}%
-</div> %{--/.row--}%
+
 <script lang="text/javascript">
     function init() {
         var pageParams = loadJsonData('pageParams');
