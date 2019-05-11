@@ -384,20 +384,3 @@ function BulkEditor(data){
 
 }
 
-function initJobNodeFilters(filterParams){
-    var pageParams = loadJsonData('pageParams');
-    var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-    return new NodeFilters(
-        appLinks.frameworkAdhoc,
-        appLinks.scheduledExecutionCreate,
-        appLinks.frameworkNodes,
-        jQuery.extend(filterParams,{
-            project: pageParams.project,
-            paging:false,
-            emptyMode: 'localnode',
-            maxShown:50,
-            nodesTitleSingular:message('Node'),
-            nodesTitlePlural:message('Node.plural'),
-            nodeSummary:nodeSummary
-        }));
-}

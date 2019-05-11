@@ -24,7 +24,7 @@
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/joboptions.js"/>
-    <asset:javascript src="menu/jobs.js"/>
+    <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
     <asset:javascript src="util/tab-router.js"/>
