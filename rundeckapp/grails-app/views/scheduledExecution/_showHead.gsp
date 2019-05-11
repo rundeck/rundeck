@@ -19,27 +19,7 @@
 <div class="jobInfoSection">
     <g:if test="${scheduledExecution.groupPath}">
         <section class="text-secondary">
-            <g:set var="parts" value="${scheduledExecution.groupPath.split('/')}"/>
-            <g:each in="${parts}" var="part" status="i">
-                <g:if test="${i != 0}">/</g:if>
-                <g:set var="subgroup" value="${parts[0..i].join('/')}"/>
-                <g:if test="${groupBreadcrumbMode != 'static'}">
-                    <g:link controller="menu"
-                            action="jobs"
-                            class="text-secondary"
-                            params="${[groupPath: subgroup, project: scheduledExecution.project]}"
-                            title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
-                            absolute="${absolute ? 'true' : 'false'}">
-                        <g:if test="${i == 0}"><g:if test="${!noimgs}"><b
-                                class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
-                        <g:enc>${part}</g:enc></g:link>
-                </g:if>
-                <g:if test="${groupBreadcrumbMode == 'static'}">
-                    <g:if test="${i == 0}"><g:if test="${!noimgs}"><b
-                            class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
-                    <g:enc>${part}</g:enc>
-                </g:if>
-            </g:each>
+            <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:scheduledExecution.groupPath,project:scheduledExecution.project, linkCss:'text-secondary']"/>
         </section>
     </g:if>
   <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
