@@ -24,27 +24,7 @@
 <%-- //TODO review timerEnd for removal from this template --%>
 <g:timerStart key="gtx"/>
 <div class="job-display-tree jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
-<g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
-    <div style="margin-bottom:1em; margin-top:1em;">
-        <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
-            <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>
-            <g:set var="newparams" value="${paginateParams}"/>
-            %{
-                newparams['groupPath']=uplevel
-            }%
-            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Previous level" params="${newparams+[project:params.project]}">
-                <i class="glyphicon glyphicon-arrow-up"></i>
-                Up
-            </g:link>
-        </g:if>
-        <g:else>
-            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Top level" params="[project: params.project]">
-                <i class="glyphicon glyphicon-arrow-up"></i>
-                Top
-            </g:link>
-        </g:else>
-    </div>
-</g:if>
+
 <g:set var="gkeys" value="${g.sortGroupKeys(groups: jobgroups.grep {it.key != ''})}"/>
 <g:timerEnd key="gtx"/>
 <g:set var="prevkey" value="${null}"/>

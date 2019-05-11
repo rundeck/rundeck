@@ -23,6 +23,9 @@
   &.flex-align-items-stretch {
     align-items: stretch;
   }
+  &.flex-align-items-baseline {
+    align-items: baseline;
+  }
 
   .flex-item {
     &.flex-grow-1 {

@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment" %>
+<%@ page import="rundeck.User; grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -220,9 +220,6 @@
         }
 
 
-         function filterToggle(evt) {
-            ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
-        }
         function filterToggleSave(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
             ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
@@ -253,9 +250,6 @@
 
 
 
-            $$('.obs_filtertoggle').each(function(e) {
-                Event.observe(e, 'click', filterToggle);
-            });
             $$('.obs_filtersave').each(function(e) {
                 Event.observe(e, 'click', filterToggleSave);
             });
@@ -341,8 +335,150 @@
     </style>
 </head>
 <body>
-<content tag="subtitle">
-<g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
+
+    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
+
+<g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
+    <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
+</g:if>
+<content tag="subtitlecss">plain</content>
+<content tag="subtitlesection">
+
+  <div class="subtitle-head">
+    <div class="subtitle-head-item flex-container flex-align-items-baseline">
+    <div class="flex-item-auto text-h3">
+
+    <g:if test="${ wasfiltered && paginateParams.groupPath && !filterName   }">
+
+            <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
+                <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>
+                <g:set var="newparams" value="${new HashMap(paginateParams)}"/>
+                %{
+                    newparams['groupPath']=uplevel
+                }%
+                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="Parent" params="${newparams+[project:params.project]}">
+                    <i class="glyphicon glyphicon-chevron-left"></i>
+
+                </g:link>
+            </g:if>
+            <g:else>
+                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="View All Jobs" params="[project: params.project]">
+                    <i class="glyphicon glyphicon-chevron-left"></i>
+                    All
+                </g:link>
+            </g:else>
+
+    </g:if>
+     <span class="label label-secondary"><g:enc>${totalauthorized}</g:enc></span>
+
+      <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
+        <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
+
+      </g:if>
+     <a href="#" title="${wasfiltered?filterName?'Filter: '+filterName:'Search Results':''}">
+
+        <g:if test="${wasfiltered}">
+            <g:if test="${filterName}">
+                <i class="glyphicon glyphicon-filter"></i>
+                <g:enc>${filterName}</g:enc>
+            </g:if>
+            <g:else>
+
+              <g:if test="${wasfiltered.contains('groupPath') && wasfiltered.size()>1 || wasfiltered.size()>0 }">
+
+                                    <span class="query-section">
+                <g:each in="${wasfiltered.sort()}" var="qparam">
+                      <g:if test="${qparam!='groupPath'}">
+
+                        <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
+
+                          <span class="text-info">
+                              ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
+                          </span>
+                      </g:if>
+                  </g:each>
+                  </span>
+
+                </g:if>
+              </g:else>
+        </g:if>
+        <g:else>
+            All Jobs
+        </g:else>
+
+     </a>
+      <g:if test="${filterName}">
+                    <div class="btn-group ">
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm dropdown-toggle "
+                                            title="Saved Filter Actions"
+
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li role="presentation" class="dropdown-header">Saved Filter: ${filterName}</li>
+                                        <li >
+                                          <a data-toggle="modal"
+                                                href="#deleteFilterModal" title="${message(code:"job.filter.delete.button.title")}">
+                                            <b class="glyphicon glyphicon-remove"></b>
+                                            <g:message code="job.filter.delete.button" />
+
+                                          </a>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                  </g:if>
+                  <g:else>
+
+
+                    <div class="btn-group ">
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm dropdown-toggle "
+                                            title="Query Actions"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu" role="menu">
+
+                                        <li >
+                                          <a data-toggle="modal" href="#saveFilterModal" title="${message(code:"job.filter.save.button.title")}" >
+                                          <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
+                                        </a>
+                                        </li>
+                                    </ul>
+                                </div>
+              </g:else>
+     <g:if test="${wasfiltered}">
+         <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
+         Edit Query...
+         <i class="glyphicon glyphicon-edit"></i>
+         </span>
+    </g:if>
+
+      </div>
+        <g:if test="${filterset}">
+            <span class="form-inline">
+                <g:if test="${!wasfiltered}">
+                  <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
+
+
+            Search...
+
+                  </span>
+                  </g:if>
+
+
+
+                <label >Saved Filters</label>
+                <g:render template="/common/selectFilter" model="[noSelection:'-All Jobs-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
+            </span>
+        </g:if>
+        </div>
+        </div>
 </content>
 <div id="page_jobs" class="container-fluid">
   <g:if test="${flash.bulkJobResult?.errors}">
@@ -376,7 +512,6 @@
       <div class="card">
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
-            <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
             <g:render template="workflowsFull"
                       model="${[
                           jobExpandLevel    : jobExpandLevel,
