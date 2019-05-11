@@ -220,15 +220,6 @@
         }
 
 
-        function initJobIdLinks(){
-            jQuery('.act_job_action_dropdown').click(function(){
-                var id=jQuery(this).data('jobId');
-                var el=jQuery(this).parent().find('.dropdown-menu');
-                el.load(
-                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
-                );
-            });
-        }
          function filterToggle(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
         }
@@ -237,9 +228,7 @@
             ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
         }
         function init(){
-            <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
-            initJobIdLinks();
-            </g:if>
+
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
                 bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
