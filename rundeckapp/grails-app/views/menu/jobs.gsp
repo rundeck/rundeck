@@ -277,7 +277,6 @@
             init();
             if (jQuery('#activity_section')) {
                 pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                ko.applyBindings(pageActivity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', pageActivity);
             }
             jQuery(document).on('click','.act_execute_job',function(evt){
@@ -290,13 +289,6 @@
                 }
             });
             bulkeditor=new BulkEditor({messages:window.Messages});
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_group_tree'));
-            ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
-            ko.applyBindings(bulkeditor,document.getElementById('scm_message'));
-            ko.applyBindings(bulkeditor,document.getElementById('scmStatusPopoverOK'));
 
 
 
@@ -339,6 +331,7 @@
                     bulkeditor.scmImportActions(data.scmImportActions);
                 }
             });
+            initKoBind(null,{history:pageActivity,bulkeditor:bulkeditor})
         });
 
 
@@ -436,7 +429,7 @@
             <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
           </div>
       </div>
-      <div class="card"  id="activity_section">
+      <div class="card"  id="activity_section" data-ko-bind="history">
         <div class="card-content">
           <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
         </div>
