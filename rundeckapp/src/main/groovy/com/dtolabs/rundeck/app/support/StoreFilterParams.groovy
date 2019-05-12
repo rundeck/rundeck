@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,12 @@ package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
 
-/**
- * StoreFilterCommand is ...
- * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
- * @since 2014-08-18
- */
-class StoreFilterCommand implements StoreFilterParams, Validateable {
-
+trait StoreFilterParams implements Validateable {
+    String newFilterName
+    String existsFilterName
+    static constraints = {
+        newFilterName(matches: /^[^<>&'"\/]+$/)
+        existsFilterName(nullable: true, matches: /^[^<>&'"\/]+$/)
+    }
 }
+
