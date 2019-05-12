@@ -12,7 +12,7 @@ stages:
   if: fork = false
 - name: test
   # Run tests on non-forked PR and master builds
-  if: fork = false AND (branch = master OR tag IS present)
+  if: fork = false AND (branch = master OR branch =~ ^maint-3 OR tag IS present)
 - name: snapshot release
   if: fork = false AND type = push AND (branch = master OR env(RUNDECK_RELEASE) IS present) AND tag IS blank
 - name: tag release
