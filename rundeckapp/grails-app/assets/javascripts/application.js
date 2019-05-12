@@ -1436,3 +1436,53 @@ jQuery.fn.scrollTo = function (speed) {
     }, speed || 1000);
   });
 };
+
+/**
+ * Extract form data
+ * @param selected
+ * @param rmprefixes Array of form field name prefixes to remove
+ * @param reqprefixes Array of form field name prefixes to require (only fields with these prefixes will be serialized)
+ * @returns {{}}
+ */
+function jQueryFormData(selected, rmprefixes,reqprefixes, rmkeyprefixes) {
+  const data = {};
+  selected.find('input, textarea, select').each(function (n, el) {
+    let name = jQuery(el).attr('name');
+    const attr = jQuery(el).attr('type');
+    if ((attr === 'checkbox' || attr === 'radio') && !el.checked) {
+      return;
+    }
+    if(name) {
+      if(reqprefixes){
+        if (!ko.utils.arrayFirst(reqprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmkeyprefixes){
+        if (ko.utils.arrayFirst(rmkeyprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmprefixes) {
+        rmprefixes.forEach(function (val) {
+          if (name.startsWith(val)) {
+            name = name.substring(val.length);
+          }
+        });
+      }
+      if (data[name] && typeof(data[name]) === 'string') {
+        data[name] = [data[name], jQuery(el).val()];
+      } else if (data[name] && jQuery.isArray(data[name])) {
+        data[name].push(jQuery(el).val());
+      } else {
+        data[name] = jQuery(el).val();
+      }
+    }
+
+  });
+  return data
+}
