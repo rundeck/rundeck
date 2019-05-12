@@ -45,6 +45,8 @@ function initKoBind (sel, mapping) {
             typeof (mapping[controller]) === 'object' ||
             typeof (window[controller]) === 'object') {
             ko.applyBindings(mapping && mapping[controller] || window[controller], el)
+        } else {
+            console.log("warning: ko-bind for " + controller + " on " + el + ": controller not found.", el)
         }
     })
 }
