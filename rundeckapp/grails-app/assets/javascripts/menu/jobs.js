@@ -21,6 +21,7 @@
 //= require historyKO
 //= require nodeFiltersKO
 //= require executionOptions
+//= require jobFiltersKO
 //= require koBind
 
 /*
