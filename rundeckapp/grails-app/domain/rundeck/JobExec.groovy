@@ -101,6 +101,23 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         //noop
     }
 
+    /**
+     * Find the referenced Job, using the uuid if uuid is specified and useName is false, otherwise using job name/group
+     * @param project current project, required when reference does not specify project
+     * @return found job, or null
+     */
+    public ScheduledExecution findJob(String project) {
+        if (!useName && uuid) {
+            return ScheduledExecution.findByUuid(uuid)
+        } else {
+            return ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                    jobProject ?: project,
+                    jobName,
+                    jobGroup ?: null
+            )
+        }
+    }
+
     public JobExec createClone(){
         Map properties = new HashMap(this.properties)
         properties.remove('errorHandler')

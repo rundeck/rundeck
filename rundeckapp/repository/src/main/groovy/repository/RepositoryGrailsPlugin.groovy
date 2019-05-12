@@ -88,16 +88,13 @@ Brief summary/description of the plugin.
                 File pluginDir = new File(serverLibextDir)
 
                 //Repository
-                repoArtifactInstaller(StorageTreeArtifactInstaller, ref('repoPluginStorageTree'))
+                repoArtifactInstaller(StorageTreeArtifactInstaller, ref('repoPluginStorageTree'),"/")
                 repositoryPluginService(RepositoryPluginService) {
                     localFilesystemPluginDir = pluginDir
                     installedPluginTree = ref('repoPluginStorageTree')
                 }
-                storageTreeRepositoryProvider(NamedTreeProvider) {
-                    treeRegistry = ["private": ref('repositoryStorageTree')]
-                }
                 repositoryFactory(RundeckRepositoryFactory) {
-                    treeProvider = ref("storageTreeRepositoryProvider")
+                    repositoryStorageTree = ref('repositoryStorageTree')
                 }
                 String repoDefnUrl = grailsApplication.config.rundeck.repository.repositoryDefinitionUrl ?:
                                      "file:" + System.getProperty("rundeck.server.configDir") + "/artifact-repositories.yaml"

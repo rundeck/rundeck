@@ -1,25 +1,24 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.PluginResourceReq
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.plugins.PluginManagerService
-import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.plugins.PluginValidator
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.transform.CompileStatic
-import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.FrameworkService
 import rundeck.services.PluginApiService
 import rundeck.services.PluginService
 import rundeck.services.UiPluginService
-
-import java.io.InputStream
 import java.text.SimpleDateFormat
-import javax.servlet.http.HttpServletResponse
 
 import static org.springframework.http.HttpStatus.NOT_FOUND
 
 class PluginController extends ControllerBase {
+    private static final String RELATIVE_PLUGIN_UPLOAD_DIR = "var/tmp/pluginUpload"
+    private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
     UiPluginService uiPluginService
     PluginService pluginService
     PluginApiService pluginApiService
@@ -305,14 +304,105 @@ class PluginController extends ControllerBase {
             response.contentType = contentType
             response.outputStream << stream.bytes
             response.flushBuffer()
-        }finally{
+        } finally {
             stream.close()
+        }
+    }
+
+    def uploadPlugin() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+                                                          "system",
+                                                          AuthConstants.ACTION_ADMIN)
+        if (!authorized) {
+            flash.errors = ["request.error.unauthorized.title"]
+            redirectToPluginMenu()
+            return
+        }
+        if(!params.pluginFile || params.pluginFile.isEmpty()) {
+            flash.errors = ["plugin.error.missing.upload.file"]
+            redirectToPluginMenu()
+            return
+        }
+        ensureUploadLocation()
+        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+params.pluginFile.originalFilename)
+        if(tmpFile.exists()) tmpFile.delete()
+        tmpFile << ((MultipartFile)params.pluginFile).inputStream
+        flash.errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
+        tmpFile.delete()
+        redirectToPluginMenu()
+    }
+
+    def installPlugin() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        boolean authorized = frameworkService.authorizeApplicationResourceType(authContext,
+                                                                               "system",
+                                                                               AuthConstants.ACTION_ADMIN)
+        if (!authorized) {
+            flash.errors = ["request.error.unauthorized.title"]
+            redirectToPluginMenu()
+            return
+        }
+        if(!params.pluginUrl) {
+            flash.errors = ["plugin.error.missing.url"]
+            redirectToPluginMenu()
+            return
+        }
+        if(!params.pluginUrl.contains("/")) {
+            flash.errors = ["plugin.error.invalid.url"]
+            redirectToPluginMenu()
+            return
+        }
+        def parts = params.pluginUrl.split("/")
+        String urlString = params.pluginUrl.startsWith("/") ? "file:"+params.pluginUrl : params.pluginUrl
+
+        ensureUploadLocation()
+        File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+parts.last())
+        if(tmpFile.exists()) tmpFile.delete()
+        try {
+            URI.create(urlString).toURL().withInputStream { inputStream ->
+                tmpFile << inputStream
+            }
+        } catch(Exception ex) {
+            flash.errors = ["Failed to fetch plugin from URL. Error: ${ex.message}"]
+            redirectToPluginMenu()
+            return
+        }
+        flash.errors = validateAndCopyPlugin(parts.last(),tmpFile)
+        tmpFile.delete()
+        redirectToPluginMenu()
+    }
+
+    private def validateAndCopyPlugin(String pluginName, File tmpPluginFile) {
+        def errors = []
+        File newPlugin = new File(frameworkService.getRundeckFramework().libextDir,pluginName)
+        if(newPlugin.exists()) {
+            errors.add("The plugin ${params.pluginFile.originalFilename} already exists")
+            return errors
+        }
+        if(!PluginValidator.validate(tmpPluginFile)) {
+            errors.add("plugin.error.invalid.plugin")
+        } else {
+            tmpPluginFile.withInputStream { inStream ->
+                newPlugin << inStream
+            }
+            flash.installSuccess = true
+        }
+        return errors
+    }
+
+    private redirectToPluginMenu() {
+        redirect controller:"menu",action:"plugins"
+    }
+
+    private def ensureUploadLocation() {
+        File uploadDir = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR)
+        if(!uploadDir.exists()) {
+            uploadDir.mkdirs()
         }
     }
 
     private long toEpoch(String dateString) {
         PLUGIN_DATE_FMT.parse(dateString).time
     }
-
-    private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")
 }

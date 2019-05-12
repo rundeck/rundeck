@@ -4221,8 +4221,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val.frameworkProject == "testproj"
     }
 
-
-
     def "get Global Plugin Configurations"() {
 
         given:
@@ -4260,5 +4258,44 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                            'framework.globalfilter.2.config.regex':'test',
                            'framework.globalfilter.2.config.bgcolor': 'yellow']
 
+    }
+  
+    void "runnow execution with exclude filter"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                description: 'a job',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                )
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['_replaceNodeFilters': 'true', 'nodeIncludeName':'SelectedNode', executionType: 'user','nodeoverride':'cherrypick']
+        )
+
+        then:
+        e2 != null
+        e2.filter == "name: SelectedNode"
+        e2.filterExclude == null
     }
 }

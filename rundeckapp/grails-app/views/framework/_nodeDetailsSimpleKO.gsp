@@ -173,7 +173,7 @@
       <tr class="">
           <td class="key namespace">
               <a href="#"
-                 data-bind="attr: { href: '#ns_'+$index()+'_'+$parentContext.$index()}"
+                 data-bind="attr: { href: '#ns_${crefText}_'+$index()+'_'+$parentContext.$index()}"
                   data-toggle="collapse"
                     class="textbtn textbtn-muted textbtn-saturated ">
                   <span data-bind="text: namespace.ns"></span>
@@ -184,7 +184,7 @@
               <span data-bind="text: namespace.values.size()"></span>
           </td>
       </tr>
-          <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_'+$index()+'_'+$parentContext.$index()}" >
+          <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_${crefText}_'+$index()+'_'+$parentContext.$index()}" >
           <!-- ko foreach: { data: $data.values , as: 'nsattr' } -->
                 <tr  class="hover-action-holder">
 

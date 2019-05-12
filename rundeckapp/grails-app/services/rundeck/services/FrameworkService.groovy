@@ -40,7 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
-import org.apache.commons.lang3.StringUtils
+import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
@@ -790,7 +790,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
-        described.description
+        described?.description
     }
     /**
      * Return step plugin description of a certain type
@@ -800,7 +800,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getStepPluginDescription(String type) throws MissingProviderException{
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
-        described.description
+        described?.description
     }
 
     /**
