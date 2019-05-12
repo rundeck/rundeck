@@ -713,7 +713,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test allow using notBy username"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotByUsername())
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
         when:
         def result = eval.evaluate(
                 [
@@ -732,7 +732,7 @@ class RuleEvaluatorSpec extends Specification {
 
     def "test reject using notBy username"(){
         given:
-        Authorization eval = new RuleEvaluator(basicRulesNotByUsername())
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
         when:
         def result = eval.evaluate(
                 [
@@ -746,6 +746,48 @@ class RuleEvaluatorSpec extends Specification {
         then:
         result!=null
         !result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "test reject using notBy username regex"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob|dan'))
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        def result2 = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("dan","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+
+        def result3 = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("jhon","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        result2!= null
+        result3!= null
+        !result.isAuthorized()
+        !result2.isAuthorized()
+        result3.isAuthorized()
         "EXECUTE"==result.action
     }
 
@@ -913,7 +955,7 @@ class RuleEvaluatorSpec extends Specification {
         ] as Set
         new AclRuleSetImpl(rules)
     }
-    AclRuleSet basicRulesNotByUsername() {
+    AclRuleSet basicRulesNotByUsername(String username) {
         def rules = [
                 new Rule(
                         sourceIdentity: "test1",
@@ -925,7 +967,7 @@ class RuleEvaluatorSpec extends Specification {
                         regexMatch: false,
                         containsMatch: false,
                         equalsMatch: true,
-                        username: 'bob',
+                        username: username,
                         group: null,
                         allowActions: ['EXECUTE'] as Set,
                         denyActions: ['DELETE'] as Set,
