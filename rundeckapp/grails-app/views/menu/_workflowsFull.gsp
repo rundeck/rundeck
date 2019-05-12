@@ -58,15 +58,11 @@
 <div id="wffilterform">
     <g:render template="/common/messages"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
-    <g:if test="${params.createFilters}">
-      <span class="note help">
-          <g:message code="job.filter.create.help" />
-      </span>
-    </g:if>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
     <div>
       <div>
         <!-- filter -->
+
 
 <div class="modal" id="jobs_filters" tabindex="-1" role="dialog"
      aria-labelledby="jobs_filters_title" aria-hidden="true">
@@ -155,15 +151,16 @@
                         <g:message code="cancel"/>
                     </button>
 
-
-                  <g:actionSubmit value="${message(code:'job.filter.clear.button.title')}" controller='menu' action='clearJobsFilter' class="btn btn-default "/>
-
                   <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
 
-              <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
-                      filterset:filterset,update:'wffilterform',
-                      deleteActionSubmit:'deleteJobfilter',
-                      storeActionSubmit:'storeJobfilter']}"/>
+                     <a
+                     class="btn btn-success pull-right"
+                     data-dismiss="modal"
+                     data-toggle="modal"
+                     href="#saveJobFilterKOModal"
+                     title="${message(code:"job.filter.save.button.title")}" >
+                      <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
+                    </a>
 
                 </div>
         </div>
