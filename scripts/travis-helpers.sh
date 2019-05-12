@@ -253,11 +253,15 @@ pull_rundeck() {
 
 # If this is a snapshot build we will trigger pro
 trigger_downstream_snapshots() {
-    if [[ -z "${RUNDECK_TAG}" && "${RUNDECK_BRANCH}" == "master" && "${TRAVIS_EVENT_TYPE}" == "push" ]] ; then
+    if [[
+            -z "${RUNDECK_TAG}" &&
+            ("${RUNDECK_BRANCH}" == "master" || "${RUNDECK_BRANCH}" =~ maint-3\..*) &&
+            "${TRAVIS_EVENT_TYPE}" == "push"
+        ]] ; then
         echo "Triggering downstream snapshot build..."
         seal_artifacts
-        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro master
-        trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core master
+        trigger_travis_build "${TRAVIS_RDPRO_TOKEN}" com rundeckpro rundeckpro "${RUNDECK_BRANCH}"
+        #trigger_travis_build "${TRAVIS_OSS_TOKEN}" org rundeck packaging-core master
     else
         echo "Skippping downstream snapshot build for non-master/snapshot build..."
     fi

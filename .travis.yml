@@ -203,6 +203,7 @@ branches:
     - master
     - release-2.11
     - prerelease-2.12.0
+    - maint-3.0.x
     - /^v.*/
     - /^feature\/.*/
     - /^issue\/.*/
