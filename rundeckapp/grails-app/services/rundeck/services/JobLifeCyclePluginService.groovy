@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.logging.LoggingManager
@@ -25,45 +26,61 @@ import org.springframework.context.ApplicationContextAware
 public class JobLifeCyclePluginService implements ApplicationContextAware, ProjectConfigurable {
 
     ApplicationContext applicationContext
-    def pluginService
-    def JobLifeCyclePluginProviderService jobLifeCyclePluginProviderService
-    def FrameworkService frameworkService
+    PluginService pluginService
+    JobLifeCyclePluginProviderService jobLifeCyclePluginProviderService
+    FrameworkService frameworkService
     public static final String CONF_PROJECT_ENABLE_JOB_ON_BEFORE = 'project.enable.jobLifeCycle.on.before.'
 
-    def LinkedHashMap<String, String> configPropertiesMapping = []
-    def LinkedHashMap<String, String> configProperties = []
+    LinkedHashMap<String, String> configPropertiesMapping
+    LinkedHashMap<String, String> configProperties
+    List<Property> projectConfigProperties
+
+    def loadProperties(){
+        List<Property> projectConfigProperties = new ArrayList<Property>()
+        LinkedHashMap<String, String> configPropertiesMapping = []
+        LinkedHashMap<String, String> configProperties = []
+        listJobLifeCyclePlugins().each { String name, DescribedPlugin describedPlugin ->
+            projectConfigProperties.add(
+                    PropertyBuilder.builder().with {
+                        booleanType 'jobLifeCycle'+ name
+                        title 'Enable '+ name + ' before job starts'
+                        description describedPlugin.getDescription().getDescription()
+                        required(false)
+                        defaultValue null
+                        renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                    }.build()
+            )
+            configPropertiesMapping.put('jobLifeCycle' + name, CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name)
+            configProperties.put('jobLifeCycle' + name, 'jobLifeCycle')
+        }
+        this.configPropertiesMapping = configPropertiesMapping
+        this.configProperties = configProperties
+        this.projectConfigProperties = projectConfigProperties
+    }
 
     @Override
-    Map<String, String> getCategories() { configProperties }
+    Map<String, String> getCategories() {
+        loadProperties()
+        configProperties
+    }
 
     @Override
-    Map<String, String> getPropertiesMapping() { configPropertiesMapping }
+    Map<String, String> getPropertiesMapping() {
+        loadProperties()
+        configPropertiesMapping
+    }
 
     @Override
     List<Property> getProjectConfigProperties() {
-        List<Property> properties = new ArrayList<Property>()
-        listJobLifeCyclePlugins().each { String name, DescribedPlugin describedPlugin ->
-            properties.add(
-                PropertyBuilder.builder().with {
-                    booleanType 'enableExecution'+ name
-                    title 'Enable '+ name + ' before job starts'
-                    description 'Description from the plugin jlcp'
-                    required(false)
-                    defaultValue null
-                    renderingOption('booleanTrueDisplayValueClass', 'text-warning')
-                }.build()
-            )
-            configPropertiesMapping.put('enableExecution' + name, CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name)
-            configProperties.put('enableExecution' + name, 'executionMode')
-        }
-        properties
+        loadProperties()
+        projectConfigProperties
     }
 
-    def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
+    ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, jobLifeCyclePluginProviderService,
                 frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
     }
-    def ValidatedPlugin validatePluginConfig(String name, Map projectProps, Map config) {
+    ValidatedPlugin validatePluginConfig(String name, Map projectProps, Map config) {
         return pluginService.validatePlugin(name, jobLifeCyclePluginProviderService,
                 frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
     }
@@ -73,17 +90,17 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
      * @param name
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
      */
-    def DescribedPlugin getJobLifeCycleDescriptor(String name) {
+    DescribedPlugin getJobLifeCycleDescriptor(String name) {
         return pluginService.getPluginDescriptor(name, jobLifeCyclePluginProviderService)
     }
 
-    def Map listJobLifeCyclePlugins(){
+    Map listJobLifeCyclePlugins(){
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
     //TODO: change exception message (and probably exception type
     //needs some talk about what to do if one or many of the calls are false
-    def boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+    boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
                                  LoggingManager workflowLogManager){
 
         String projectName = executionContext.getFrameworkProject()
@@ -92,11 +109,18 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         jlcps.each{ String name, DescribedPlugin describedPlugin ->
             if (rundeckProject.hasProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) &&
                     rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
-                JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
-                boolean result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
-                if(!result){
-                    throw new Exception ("Job not allowed to be executed")
+                try{
+                    JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
+                    boolean result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
+                    if(!result){
+                        throw new Exception ("Job not allowed to be executed")
+                    }
+                }catch(JobLifeCycleException e){
+                    //TODO: define what to do next, should do anything different?
+                }catch (Exception e){
+                    //TODO: define what to do next
                 }
+
             }
         }
         return true;
