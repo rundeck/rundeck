@@ -837,16 +837,19 @@ class ExecutionControllerSpec extends Specification {
         null         | null
     }
 
+    @Unroll
     def "checkAllowUnsanitized"() {
 
         when:
         def prjCfg = Mock(IRundeckProjectConfig) {
+            hasProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> projectHasProp
             getProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
         }
         def prjMgr = Mock(ProjectManager) {
             loadProjectConfig("proj1") >> prjCfg
         }
         def fwk = Mock(Framework) {
+            hasProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> frameworkHasProp
             getProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
             getProjectManager() >> prjMgr
         }
@@ -859,11 +862,13 @@ class ExecutionControllerSpec extends Specification {
         val == expected
 
         where:
-        framework   | project | expected
-        "true"      | "true"  | true
-        "false"     | "true"  | false
-        "false"     | "false" | false
-        "true"      | "false" | false
+        frameworkHasProp | framework   | projectHasProp | project | expected
+            false        | null        |  true          | "true"  | false
+            true         | "true"      |  true          | "true"  | true
+            true         | "false"     |  true          | "true"  | false
+            true         | "false"     |  true          | "false" | false
+            true         | "true"      |  true          | "false" | false
+            true         | "true"      |  false         | null    | false
 
     }
 }

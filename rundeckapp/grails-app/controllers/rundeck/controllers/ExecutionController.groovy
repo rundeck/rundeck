@@ -939,9 +939,16 @@ setTimeout(function(){
     }
 
     boolean checkAllowUnsanitized(String project) {
-        if("true" != frameworkService.getRundeckFramework().getProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
-        def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
-        "true" == projectConfig.getProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+        if(frameworkService.getRundeckFramework().hasProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
+            if ("true" != frameworkService.getRundeckFramework().
+                    getProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
+            def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
+            if(projectConfig.hasProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
+                return "true" == projectConfig.getProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+            }
+            return false
+        }
+        return false
     }
 
     /**
