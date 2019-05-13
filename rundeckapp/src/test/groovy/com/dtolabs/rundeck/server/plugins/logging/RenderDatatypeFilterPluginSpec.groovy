@@ -183,4 +183,35 @@ class RenderDatatypeFilterPluginSpec extends Specification {
         'MD'            | 'text/x-markdown'
         'anything/else' | 'anything/else'
     }
+
+    def "Test sanitize html property"() {
+        given:
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+
+        when:
+
+        def event = Mock(LogEventControl) {
+            getMessage() >> 'msg'
+            getEventType() >> 'log'
+            getLoglevel() >> LogLevel.NORMAL
+        }
+        RenderDatatypeFilterPlugin plugin = new RenderDatatypeFilterPlugin()
+        plugin.sanitizeHtml = sanitize
+        plugin.datatype = "text/html"
+        plugin.init(context)
+        plugin.handleEvent(context,event)
+        plugin.complete(context)
+
+        then:
+        1 * context.log(2, 'msg\n', meta)
+
+
+        where:
+        sanitize | meta
+        true     | ['content-data-type': "text/html"]
+        false    | ['content-data-type': "text/html","content-meta:no-strip":"true"]
+    }
 }

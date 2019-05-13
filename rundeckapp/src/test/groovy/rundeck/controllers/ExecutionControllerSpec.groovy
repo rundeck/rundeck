@@ -20,6 +20,9 @@ import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -288,6 +291,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
+        controller.metaClass.checkAllowUnsanitized = { final String project -> false }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
@@ -339,6 +343,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
+        controller.metaClass.checkAllowUnsanitized = { final String project -> true }
         controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService) {
@@ -830,5 +835,35 @@ class ExecutionControllerSpec extends Specification {
         acceptHeader | resultHeader
         'gzip'       | 'gzip'
         null         | null
+    }
+
+    def "checkAllowUnsanitized"() {
+
+        when:
+        def prjCfg = Mock(IRundeckProjectConfig) {
+            getProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
+        }
+        def prjMgr = Mock(ProjectManager) {
+            loadProjectConfig("proj1") >> prjCfg
+        }
+        def fwk = Mock(Framework) {
+            getProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
+            getProjectManager() >> prjMgr
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> fwk
+        }
+        boolean val = controller.checkAllowUnsanitized("proj1")
+
+        then:
+        val == expected
+
+        where:
+        framework   | project | expected
+        "true"      | "true"  | true
+        "false"     | "true"  | false
+        "false"     | "false" | false
+        "true"      | "false" | false
+
     }
 }
