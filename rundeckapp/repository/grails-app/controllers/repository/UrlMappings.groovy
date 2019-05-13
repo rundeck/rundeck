@@ -9,7 +9,6 @@ class UrlMappings {
             }
         }
 
-        // if(getGrailsApplication().config.rundeck.features.repository.enabled == "true") {
             "/api/$api_version/repository/list"(controller: "repository", action: "listRepositories")
             "/api/$api_version/repository/artifacts/list"(controller: "repository", action: "listArtifacts")
             "/api/$api_version/repository/artifacts/search"(controller: "repository", action: "searchArtifacts")
@@ -82,7 +81,7 @@ class UrlMappings {
                     controller: "repository",
                     action: "uninstallArtifact"
             )
-        // }
+
         "/artifact/index/configurations"(controller: "repository", action: "index")
         "/"(view:"/index")
         "500"(view:'/error')

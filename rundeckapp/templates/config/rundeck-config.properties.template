@@ -23,4 +23,4 @@ rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
 
 rundeck.log4j.config.file=${rundeck.server.configDir}/log4j.properties
 
-rundeck.features.repository.enabled=true
+rundeck.feature.repository.enabled=true
