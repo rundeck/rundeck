@@ -20,6 +20,7 @@
 //= require knockout-foreachprop
 //= require historyKO
 //= require executionStateKO
+//= require executionLogOutputKO
 
 /*
  Manifest: include executionStateKO and historyKO

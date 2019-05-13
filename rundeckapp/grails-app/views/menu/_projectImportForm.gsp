@@ -21,9 +21,6 @@
   <div class="col-xs-12">
     <g:form controller="project" action="importArchive" params="[project: params.project ?: request.project]" useToken="true" enctype="multipart/form-data" class="form">
       <div class="card" id="importform">
-        <div class="card-header">
-          <h3 class="card-title"><g:message code="import.archive"/></h3>
-        </div>
         <div class="card-content">
           <div class="list-group list-group-tab-content">
             <div class="list-group-item">

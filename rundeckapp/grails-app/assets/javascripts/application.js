@@ -22,7 +22,11 @@
 // methods for modifying inner html or text content
 
 function clearHtml(elem) {
-  $(elem).innerHTML = '';
+  if (typeof (jQuery) !== 'undefined') {
+    jQuery(elem).html('')
+  } else if (typeof ($) !== 'undefined') {
+    $(elem).innerHTML = ''
+  }
 }
 
 function setHtml(elem, html) {
@@ -882,14 +886,14 @@ function _initPopoverContentFor(parent, options) {
 function _initAffix() {
   //affixed elements
   jQuery("a[href='#top']").click(function () {
-    jQuery("html, body").animate({
+    jQuery("#main-panel").animate({
       scrollTop: 0
     }, "slow");
     return false;
   });
   jQuery("a[href='#bottom']").click(function () {
     //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
-    var body = jQuery("html, body");
+    var body = jQuery("#main-panel")
     body.animate({
       scrollTop: body[0].scrollHeight
     }, "fast");
@@ -965,6 +969,9 @@ function _initCollapseExpander() {
 
 function _toggleAnsiColor(e) {
   var test = jQuery(this).find('input')[0].checked;
+  _setAnsiColor(test)
+}
+function _setAnsiColor(test){
   var ansicolor = jQuery('.ansicolor');
   if (!test) {
     ansicolor.removeClass('ansicolor-on');
@@ -977,6 +984,20 @@ function _initAnsiToggle() {
   jQuery('.ansi-color-toggle').on('change', _toggleAnsiColor);
   jQuery('.nodes_run_content').on('change', '.ansi-color-toggle', _toggleAnsiColor);
 }
+/**
+ * Create a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
+ * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
+ * embedded int the body of the element.
+ * @param id id of embedded token json script element
+ * @returns {boolean}
+ * @private
+ */
+function _createAjaxSendTokensHandler (id) {
+  return function (jqxhr, settings) {
+    return _ajaxSendTokens(id, jqxhr, settings)
+  }
+}
+
 /**
  * Use as a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
  * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
@@ -1012,6 +1033,17 @@ function _ajaxSendTokens(id, jqxhr, settings) {
   }
 
 }
+/**
+ * Create a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
+ * @param id
+ * @private
+ */
+function _createAjaxReceiveTokensHandler (id) {
+  return function (data, status, jqxhr) {
+    return _ajaxReceiveTokens(id, data, status, jqxhr);
+  }
+}
+
 /**
  * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
  * @param id
@@ -1271,7 +1303,7 @@ function setFilter(name, value, callback) {
     url: _genUrl(appLinks.userAddFilterPref, {
       filterpref: str
     }),
-    beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
+    beforeSend: _createAjaxSendTokensHandler('filter_select_tokens'),
     success: function (data, status, jqxhr) {
       if (typeof (callback) === 'function') {
         callback(data, name);
@@ -1281,7 +1313,7 @@ function setFilter(name, value, callback) {
         } catch (e) {}
       }
     }
-  }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
+  }).success(_createAjaxReceiveTokensHandler('filter_select_tokens'));
 }
 var generateId = (function () {
   var counter = 0;
@@ -1404,3 +1436,53 @@ jQuery.fn.scrollTo = function (speed) {
     }, speed || 1000);
   });
 };
+
+/**
+ * Extract form data
+ * @param selected
+ * @param rmprefixes Array of form field name prefixes to remove
+ * @param reqprefixes Array of form field name prefixes to require (only fields with these prefixes will be serialized)
+ * @returns {{}}
+ */
+function jQueryFormData(selected, rmprefixes,reqprefixes, rmkeyprefixes) {
+  const data = {};
+  selected.find('input, textarea, select').each(function (n, el) {
+    let name = jQuery(el).attr('name');
+    const attr = jQuery(el).attr('type');
+    if ((attr === 'checkbox' || attr === 'radio') && !el.checked) {
+      return;
+    }
+    if(name) {
+      if(reqprefixes){
+        if (!ko.utils.arrayFirst(reqprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmkeyprefixes){
+        if (ko.utils.arrayFirst(rmkeyprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmprefixes) {
+        rmprefixes.forEach(function (val) {
+          if (name.startsWith(val)) {
+            name = name.substring(val.length);
+          }
+        });
+      }
+      if (data[name] && typeof(data[name]) === 'string') {
+        data[name] = [data[name], jQuery(el).val()];
+      } else if (data[name] && jQuery.isArray(data[name])) {
+        data[name].push(jQuery(el).val());
+      } else {
+        data[name] = jQuery(el).val();
+      }
+    }
+
+  });
+  return data
+}

@@ -36,10 +36,20 @@
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
+<content tag="subtitlecss">plain</content>
+<content tag="subtitlesection">
+    <div class="row">
+        <div class="col-xs-12 subtitle-head">
+            <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
+                <g:render template="nodeFilterInputGroup"
+                          model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
+            </div>
+        </div>
+    </div>
+</content>
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
@@ -55,26 +65,6 @@
   </div>
 
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="card">
-          <!-- <div class="card-header">
-            <h4 class="card-title">
-              <g:message code="browse" />
-            </h4>
-          </div> -->
-          <div class="card-content">
-            <div class="row">
-              <div class="col-xs-12">
-                <div class="input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
-                  <g:render template="nodeFilterInputGroup" model="[filterset: filterset, filtvalue:filtvalue,filterName:filterName, showInputTitle:true]"/>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="row">
       <div class="col-xs-12">
         <div class="card">
@@ -221,7 +211,8 @@
                         </h5>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li style="display:inline;">
-                                <node-filter-link class="label label-default" params="
+                                <node-filter-link  params="
+                                    classnames: 'label label-muted',
                                     filterkey: 'tags',
                                     filterval: tag,
                                     tag: tag,

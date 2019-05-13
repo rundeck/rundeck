@@ -28,6 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'import.archive')}"/>
+    <meta name="projconfigselected" content="import-archive"/>
     <title><g:message code="import.archive"/></title>
 </head>
 

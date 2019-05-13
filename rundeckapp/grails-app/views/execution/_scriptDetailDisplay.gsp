@@ -20,12 +20,26 @@
     Created: Jun 14, 2010 10:54:02 AM
     $Id$
  --%>
-<g:set var="rkey" value="${rkey?:g.rkey()}"/>
 <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 <g:if test="${edit}">
-    <span class=""><g:enc>${label ? label : ''}</g:enc>[${split.size()} lines]</span>
+    <g:if test="${!noimgs}">
+        <i class="rdicon script ${enc(attr:icon?:'icon-small')}"></i>
+    </g:if>
+    <span class=""><g:enc>${label ? label : ''}</g:enc>${split.size()} lines</span>
 </g:if>
 <g:else>
-    <g:expander key="${rkey}"><g:enc>${label ? label : ''}</g:enc>[${split.size()} lines]</g:expander>
-    <div class="scriptContent expanded apply_ace" id="${enc(attr:rkey)}" style="display: none;"><g:enc>${script}</g:enc></div>
+    <details class="more-info details-reset">
+        <summary>
+            <g:if test="${!noimgs}">
+                <i class="rdicon script ${enc(attr:icon?:'icon-small')}"></i>
+            </g:if>
+            <g:enc>${label ? label : ''}</g:enc>${split.size()} lines
+
+            <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
+            <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
+        </summary>
+
+        <div class="scriptContent apply_ace"><g:enc>${script}</g:enc></div>
+    </details>
+
 </g:else>
