@@ -32,6 +32,23 @@
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+        <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+    <g:javascript>
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete
+        }
+    })
+    </g:javascript>
     <asset:javascript src="menu/projectHome.js"/>
 </head>
 
@@ -43,9 +60,10 @@
         </div>
     </div>
 
-    <div id="projectHome-content">
-      <div id=project-dashboard-vue></div>
+    <div id="projectHome-content" class="project-dashboard-vue">
+      <App :event-bus="EventBus"/>
     </div>
+
   </div>
   <asset:javascript src="static/pages/project-dashboard.js"/>
 </body>

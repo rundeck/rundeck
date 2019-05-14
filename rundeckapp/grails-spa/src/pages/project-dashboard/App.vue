@@ -1,27 +1,28 @@
 <template>
   <div id="app" v-if="project">
-    <!-- <motd v-if="project && project.readme && project.readme.motd" :project="project"></motd> -->
-    <project-description v-if="project && project.description" :project="project"></project-description>
-    <project-activity v-if="project" :project="project" :rdBase="rdBase"></project-activity>
     <project-readme v-if="project" :project="project"></project-readme>
-    <!-- <pre>{{project}}</pre> -->
+    <project-description v-if="project && project.description" :project="project"></project-description>
+    <!-- <activity-summary v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-summary> -->
+    <activity-list v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-list>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
-// import motd from '@/components/motd'
 import projectDescription from './components/description'
 import projectReadme from './components/projectReadme'
-import projectActivity from './components/activity'
+import activitySummary from './components/activitySummary'
+import activityList from '../../components/activity/activityList'
 
 export default {
   name: 'App',
+  props:['eventBus'],
   components: {
     // motd,
     projectDescription,
     projectReadme,
-    projectActivity
+    activitySummary,
+    activityList
   },
   data () {
     return {
