@@ -28,7 +28,7 @@
     "vuex": "^3.1.0"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#d87d28134c03cbe28f47160cc67f2f6b20a1a1f9",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#69f412b59541e0bb27e60cde3a96cfa1354c0fe4",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",

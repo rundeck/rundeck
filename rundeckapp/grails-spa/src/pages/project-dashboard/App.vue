@@ -2,17 +2,20 @@
   <div id="app" v-if="project">
     <project-readme v-if="project" :project="project"></project-readme>
     <project-description v-if="project && project.description" :project="project"></project-description>
-    <!-- <activity-summary v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-summary> -->
     <activity-list v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-list>
   </div>
 </template>
 
 <script>
-import axios from 'axios'
 import projectDescription from './components/description'
 import projectReadme from './components/projectReadme'
 import activitySummary from './components/activitySummary'
 import activityList from '../../components/activity/activityList'
+
+import {
+  getRundeckContext,
+  RundeckContext
+} from "@rundeck/ui-trellis"
 
 export default {
   name: 'App',
@@ -30,22 +33,21 @@ export default {
       rdBase: null
     }
   },
-  mounted () {
+  async mounted () {
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
       this.rdBase = window._rundeck.rdBase
-      axios({
+      const response = await getRundeckContext().rundeckClient.sendRequest({
         method: 'get',
-        headers: {'x-rundeck-ajax': true},
-        url: `${this.rdBase}menu/homeAjax`,
+        pathTemplate:"/menu/homeAjax",
+        baseUrl: this.rdBase,
         params: {
-          projects: `${window._rundeck.projectName}`
-        },
-        withCredentials: true
-      }).then((response) => {
-        if (response.data.projects[0]) {
-          this.project = response.data.projects[0]
+          projects: window._rundeck.projectName
         }
       })
+      if (response.parsedBody.projects) {
+        this.project = response.parsedBody.projects[0]
+      }
+
     }
   }
 }

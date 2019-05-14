@@ -3,52 +3,61 @@
     <div class="col-xs-12">
       <div class="card">
         <div class="card-content">
-          <!-- <ul v-for="rpt in reports" :key="rpt.execution.id">
-            <li>{{rpt.execution.id}}</li>
-          </ul> -->
 
-          <div >
           <section class="section-space-bottom">
 
-            <span  >
+            <span>
 
-                <span v-if="pagination.total>0" class="text-muted">
-                {{reports.length}} of
+                <span v-if="pagination.total > 0 && pagination.total > pagination.max" class="text-muted">
+                  {{pagination.offset+1}}
+                  -
+                  <span v-if="!loading">
+                  {{pagination.offset+reports.length}}
+                  </span>
+                  <span v-else class="text-muted">
+                    <i class="fas fa-spinner fa-pulse" ></i>
+                  </span>
+                of
                 </span>
-                <a href="#">
-                <span class="summary-count" :class="{ 'text-primary': pagination.total < 1, 'text-info': pagination.total > 0 }">
-                  {{pagination.total}}
-                </span>
-                {{$tc('execution',pagination.total)}}
+
+                <a :href="activityHref">
+                  <span class="summary-count" :class="{ 'text-primary': pagination.total < 1, 'text-info': pagination.total > 0 }" v-if="pagination.total>=0">
+                    {{pagination.total}}
+                  </span>
+                  <span v-else class="text-muted">
+                    <i class="fas fa-spinner fa-pulse" ></i>
+                  </span>
+                  {{$tc('execution',pagination.total>0?pagination.total:0)}}
                 </a>
             </span>
-            In the last
 
             <dropdown >
               <span class="dropdown-toggle text-info">
-                {{period}}
+                <i18n :path="'period.label.'+period.name"/>
                 <span class="caret"></span>
               </span>
               <template slot="dropdown">
-                <li v-for="(val,pval) in periods" :key="pval">
-                  <a role="button" @click="changePeriod(pval)">
-                  {{pval}}
-                  <span v-if="period===pval">√</span>
+                <li v-for="perobj in periods" :key="perobj.name">
+                  <a role="button" @click="changePeriod(perobj)">
+                  <i18n :path="'period.label.'+perobj.name"/>
+                  <span v-if="period.name===perobj.name">√</span>
                   </a>
                 </li>
               </template>
             </dropdown>
 
+
           <!-- bulk edit controls -->
           <div class="pull-right" v-if="auth.deleteExec && pagination.total>0">
-              <span v-if="bulkEditMode" class="history_bulk_edit">
-                <strong>{{bulkSelectedIds.length}}</strong> selected
-                <span class="btn btn-default btn-xs act_bulk_edit_selectall  " @click="bulkEditSelectAll">
+              <span v-if="bulkEditMode" >
+                <i18n path="bulk.selected.count">
+                  <strong>{{bulkSelectedIds.length}}</strong>
+                </i18n>
+                <span class="btn btn-default btn-xs   " @click="bulkEditSelectAll">
                     <i18n path="select.all"/>
                 </span>
-                <span class="btn btn-default btn-xs act_bulk_edit_deselectall  "
-                      data-toggle="modal"
-                      data-target="#cleanselections">
+                <span class="btn btn-default btn-xs   "
+                      @click="showBulkEditCleanSelections=true">
                     <i18n path="select.none"/>
                 </span>
 
@@ -65,64 +74,51 @@
             </span>
 
 
-            <button class="btn btn-xs btn-warning"
-            v-if="auth.deleteExec && !bulkEditMode"
-              @click="bulkEditMode=true"
-              >
+            <btn size="xs" type="warning" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
                 {{$t('bulk.edit')}}
-            </button>
-            <!-- TODO modals -->
+            </btn>
         </div>
 
       <div v-if="reports.length < 1 " class="help-block">
-          <span class="text-secondary" >
-            No results for the query
+          <span class="text-secondary" v-if="!loading">
+            {{$t('results.empty.text')}}
           </span>
+          <div class="empty-loading" v-if="loading && lastDate<0">
+            <i class="fas fa-spinner fa-pulse" ></i>
+            {{$t('Loading...')}}
+          </div>
       </div>
 
     </section>
 
       <!-- Bulk edit modals -->
+      <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')">
 
-      <div class="modal" id="cleanselections" tabindex="-1" role="dialog"
-                 aria-labelledby="cleanselectionstitle" aria-hidden="true">
-          <div class="modal-dialog">
-              <div class="modal-content">
-                  <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal"
-                              aria-hidden="true">&times;</button>
-                      <h4 class="modal-title" id="cleanselectionstitle">Clean bulk selection</h4>
-                  </div>
+        <i18n tag="p" path="clearselected.confirm.text">
+          <strong>{{bulkSelectedIds.length}}</strong>
+        </i18n>
 
-                  <div class="modal-body">
+        <div slot="footer">
+          <btn data-dismiss="modal">{{$t('cancel')}}</btn>
+          <button type="submit"
+                  class="btn btn-default  "
+                  data-dismiss="modal"
+                  @click="bulkEditDeselectAll">
+              {{$t('Only shown executions')}}
+          </button>
+          <button class="btn btn-danger "
+                  data-dismiss="modal"
+                  @click="bulkEditDeselectAllPages">
+              {{$t('all')}}
+          </button>
+        </div>
+      </modal>
 
-                      <p>Clear all <strong>{{bulkSelectedIds.length}}</strong>
-                          executions or only executions shown on this page?
-                      </p>
-                  </div>
-
-                  <div class="modal-footer">
-
-                          <button type="submit"
-                                  class="btn btn-default  "
-                                  data-dismiss="modal"
-                                  @click="bulkEditDeselectAll">
-                              Only shown executions
-                          </button>
-                          <button class="btn btn-danger "
-                                  data-dismiss="modal"
-                                  @click="bulkEditDeselectAllPages">
-                              All
-                          </button>
-                  </div>
-              </div>
-          </div>
-      </div>
       <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')">
-        <p>Really delete <strong >{{bulkSelectedIds.length}}</strong>
-            {{$tc('execution',bulkSelectedIds.length)}}
-            ?
-        </p>
+        <i18n tag="p" path="delete.confirm.text">
+          <strong>{{bulkSelectedIds.length}}</strong>
+          <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
+        </i18n>
 
         <div slot="footer">
             <btn @click="showBulkEditConfirm=false">
@@ -135,41 +131,7 @@
             </btn>
         </div>
       </modal>
-       <div class="modal" id="bulkexecdeletex" tabindex="-1" role="dialog"
-                 aria-labelledby="bulkexecdeletetitle" aria-hidden="true">
-          <div class="modal-dialog">
-              <div class="modal-content">
-                  <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal"
-                              aria-hidden="true">&times;</button>
-                      <h4 class="modal-title" id="bulkexecdeletetitle">
-                        {{$t('Bulk Delete Executions')}}
-                        </h4>
-                  </div>
 
-                  <div class="modal-body">
-
-                      <p>Really delete <strong >{{bulkSelectedIds.length}}</strong>
-                          {{$tc('execution',bulkSelectedIds.length)}}
-                          ?
-                      </p>
-                  </div>
-
-                  <div class="modal-footer">
-
-                          <button type="submit" class="btn btn-default  " data-dismiss="modal">
-                              {{$t('cancel')}}
-                          </button>
-                          <button class="btn btn-danger "
-                                  @click="performBulkDelete"
-                                  data-dismiss="modal"
-                                  >
-                              {{$t('Delete Selected')}}
-                          </button>
-                  </div>
-              </div>
-          </div>
-      </div>
       <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
                   <div  v-if="bulkEditProgress">
                       <em>
@@ -221,9 +183,7 @@
                 </div>
       </modal>
 
-    <table class=" table table-hover table-condensed events-table events-table-embed"
-
-           v-if="reports.length > 0">
+    <table class=" table table-hover table-condensed " v-if="reports.length > 0">
         <tbody class="no-border-on-first-tr"  v-for="rpt in reports" :key="rpt.execution.id">
         <tr class="link activity_row autoclick"
         @click="autoBulkEdit(rpt)"
@@ -332,8 +292,10 @@
     <offset-pagination
           :pagination="pagination"
           @change="changePageOffset($event)"
-          :disabled="loadingEvents"
-        />
+          :disabled="loading"
+          :showPrefix="false"
+        >
+        </offset-pagination>
             </div>
         </div>
     </div>
@@ -345,7 +307,6 @@
 import axios from 'axios'
 import Vue from 'vue'
 import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
-// import { client } from '../../services/rundeckClient'
 
 import {
   getRundeckContext,
@@ -353,6 +314,24 @@ import {
 } from "@rundeck/ui-trellis"
 import { ExecutionBulkDeleteResponse } from 'ts-rundeck/dist/lib/models';
 
+/**
+ * Generate a URL
+ * @param url
+ * @param params
+ * @returns {string}
+ * @private
+ */
+function _genUrl(url:string, params:any) {
+  var urlparams = [];
+  if (typeof (params) == 'string') {
+    urlparams = [params];
+  } else if (typeof (params) == 'object') {
+    for (var e in params) {
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
+    }
+  }
+  return url + (urlparams.length ? ((url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
+}
 
 
 const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
@@ -370,16 +349,13 @@ export default Vue.extend({
   ],
   data () {
     return {
-      href:'#',
+      activityPageHref:'',
       reports:[],
       lastDate:-1,
       pagination:{
         offset:0,
-        max:20,
-        total:0
-      },
-      internalquery:{
-        recentFilter: '1d'
+        max:10,
+        total:-1
       },
       loading: false,
       momentJobFormat:'M/DD/YY h:mm a',
@@ -391,6 +367,7 @@ export default Vue.extend({
       bulkEditError:'',
       showBulkEditResults:false,
       showBulkEditConfirm:false,
+      showBulkEditCleanSelections:false,
       highlightExecutionId:null,
       activityUrl:'',
       bulkDeleteUrl:'',
@@ -399,13 +376,14 @@ export default Vue.extend({
         deleteExec:false
       },
 
-      period:'Day',
-      periods: {
-        Hour:'1h',
-        Day:'1d',
-        Week:'1w',
-        Month:'1m'
-      } as {[name:string]:string}
+      period:{name:'All',params:{}},
+      periods: [
+        {name:'All',params:{}},
+        {name:'Hour',params:{recentFilter:'1h'}},
+        {name:'Day',params:{recentFilter:'1d'}},
+        {name:'Week',params:{recentFilter:'1w'}},
+        {name:'Month',params:{recentFilter:'1m'}},
+       ] as {[name:string]:any}[]
     }
   },
   methods: {
@@ -478,9 +456,10 @@ export default Vue.extend({
         }
         return 'other';
     },
-    changePeriod(val: string){
-      this.period=val
-      this.internalquery.recentFilter=this.periods[val]
+    changePeriod(period: any){
+      this.period=period
+      this.reports=[]
+      this.pagination.total=-1
       this.loadActivity(0)
     },
     async bulkDeleteExecutions(ids:string[]){
@@ -507,9 +486,10 @@ export default Vue.extend({
     },
     async loadActivity(offset:number){
       this.loading = true
+      this.pagination.offset=offset
       const response = await axios.get(this.activityUrl,{
         headers: {'x-rundeck-ajax': true},
-        params: Object.assign({offset: offset, max: this.pagination.max},this.internalquery),
+        params: Object.assign({offset: offset, max: this.pagination.max},this.period.params),
         withCredentials: true
       })
       this.loading=false
@@ -530,25 +510,40 @@ export default Vue.extend({
     },
 
   },
-
+  computed:{
+    activityHref():string {
+      return _genUrl(this.activityPageHref , this.period.params)
+    }
+  },
   mounted () {
     if(window._rundeck.data.jobslistDateFormatMoment){
       this.momentJobFormat=window._rundeck.data.jobslistDateFormatMoment
     }
     if(this.queryParams){
-      this.internalquery=this.queryParams
+      // this.internalquery=this.queryParams
     }
-     this.eventBus&&this.eventBus.$on('change-query-period', (data:string) => {
-      this.internalquery.recentFilter=data
-      this.loadActivity(0)
-    })
+
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
       this.auth.projectAdmin=window._rundeck.data['projectAdminAuth']
       this.auth.deleteExec=window._rundeck.data['deleteExecAuth']
       this.activityUrl = window._rundeck.data['activityUrl']
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
+      this.activityPageHref=window._rundeck.data['activityPageHref']
       this.loadActivity(0)
     }
   }
 })
 </script>
+<style lang="scss" >
+.empty-loading{
+  padding: 50px;
+  font-style:italic;
+  color: #bbbbbb;
+  background: #efefefef;
+  font-size: 14px;
+  text-align: center;
+}
+td.eventtitle.adhoc {
+    font-style: italic;
+}
+</style>

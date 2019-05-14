@@ -32,7 +32,7 @@
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
-    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
                 context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
         <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
@@ -45,7 +45,8 @@
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:params.project]))}"
         }
     })
     </g:javascript>
