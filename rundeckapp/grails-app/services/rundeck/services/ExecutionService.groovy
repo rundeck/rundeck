@@ -2223,11 +2223,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
                 def nset = filtersAsNodeSet(filterprops)
                 input.filter = NodeSet.generateFilter(nset)
+                input.filterExclude=""
                 input.doNodedispatch=true
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -3674,6 +3675,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         query.statusFilter=state
         query.projFilter=scheduledExecution.project
         return queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Query executions
+     * @param criteriaClosure criteriaClos
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map [total: int, result: List<Execution>]
+     */
+    def queryExecutions(Closure criteriaClos){
+        def result = Execution.createCriteria().list(criteriaClos.curry(false))
+        def total = Execution.createCriteria().count(criteriaClos.curry(true))
+        return [result:result,total:total]
     }
 
     /**

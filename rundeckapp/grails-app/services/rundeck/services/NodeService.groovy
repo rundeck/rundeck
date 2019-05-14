@@ -24,8 +24,10 @@ import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -224,12 +226,17 @@ class NodeService implements InitializingBean, ProjectConfigurable, IProjectNode
             resourceModelSourceService,
             { String type, Properties config ->
                 //load via pluginService to enable app-level plugins
-                pluginService.retainPlugin(
-                    type,
-                    resourceModelSourceService
-                ).convert(
-                    ResourceModelSourceService.factoryConverter(config)
+                def retained = pluginService.retainPlugin(
+                        type,
+                        resourceModelSourceService
                 )
+                if (null != retained) {
+                    return retained.convert(
+                            ResourceModelSourceService.factoryConverter(config)
+                    )
+                } else {
+                    return null
+                }
             }
         )
 

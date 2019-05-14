@@ -17,25 +17,33 @@
 %{--random string for uniqueness--}%
 <g:set var="xkey" value="${g.rkey()}"/>
 <div  class="nodes-embed ansicolor-on matchednodes embed embed_clean" data-bind="">
-    <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
-        <!-- tabindex="0"
-           data-trigger="focus"
-            role="button"
-      -->
+
+    <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} " class="row">
+
         <a
-           class="col-sm-3 node_ident embedded_node"
-           data-toggle="popover"
+           class=" col-xs-6 node_ident embedded_node tight"
+           tabindex="0"
+           role="button"
+           data-viewport="#main-panel"
            data-placement="auto"
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
-
-           data-bind="css: {server: islocal},
+           data-bind="
                   css: $root.nodeSet().nodeCss(attributes),
+                  css2: {
+                      server: islocal,
+                      'col-lg-2': $root.nodeSet().nodes().length>20,
+                      'col-md-3': $root.nodeSet().nodes().length>12,
+                      'col-sm-4': $root.nodeSet().nodes().length>8 && $root.nodeSet().nodes().length<13,
+                  },
                   style: $root.nodeSet().nodeStyle(attributes),
-                  attr: { 'data-node': nodename },
+                  attr: { 'data-node': nodename, title: nodename},
                   bootstrapPopover: true,
-                  bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index()
+                  bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index(),
+                  bootstrapPopoverOptions:{trigger:'click'},
+                  bootstrapTooltip: nodename,
+                  bootstrapPopoverHideTooltip: true
                   ">
             <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                 <!-- ko if: attributes['ui:icon:name'] -->
@@ -59,26 +67,28 @@
             </span>
         </a>
 
+
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
              style="display:none;"
              class="detailpopup node_entry tooltipcontent node_filter_link_holder"
              data-node-filter-link-id="${enc(attr: nodefilterLinkId ?: '')}">
+            <div class="_mousedown_popup_allowed">
+                <span>
+                    <i class="fas fa-hdd"></i>
+                    <span data-bind="text: nodename"></span>
+                </span>
 
-            <span>
-                <i class="fas fa-hdd"></i>
-                <span data-bind="text: nodename"></span>
-            </span>
+                <node-filter-link params="
+                    filterkey: 'name',
+                    filterval: nodename,
+                    linkicon: 'glyphicon glyphicon-circle-arrow-right'
+                    "></node-filter-link>
 
-            <node-filter-link params="
-                filterkey: 'name',
-                filterval: nodename,
-                linkicon: 'glyphicon glyphicon-circle-arrow-right'
-                "></node-filter-link>
+                <span class="nodedesc"></span>
 
-            <span class="nodedesc"></span>
-
-            <div class="nodedetail" style="overflow-x: scroll;">
-                <g:render template="/framework/nodeDetailsSimpleKO" model="[useNamespace:true]"/>
+                <div class="nodedetail" style="overflow-x: scroll;">
+                    <g:render template="/framework/nodeDetailsSimpleKO" model="[useNamespace: true, crefText:'$CREF$']"/>
+                </div>
             </div>
         </div>
 

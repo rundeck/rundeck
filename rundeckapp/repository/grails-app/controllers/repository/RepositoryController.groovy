@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.rundeck.repository.artifact.RepositoryArtifact
+import com.rundeck.repository.client.exceptions.ArtifactNotFoundException
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
 import com.rundeck.repository.definition.RepositoryDefinition
 import com.rundeck.repository.manifest.search.ManifestSearch
@@ -181,7 +182,9 @@ class RepositoryController {
             try {
                 RepositoryArtifact artifact = null
                 for(RepositoryDefinition repoDef : repoClient.listRepositories()) {
-                    artifact = repoClient.getArtifact(repoDef.repositoryName, params.artifactId, installedVersion)
+                    try {
+                        artifact = repoClient.getArtifact(repoDef.repositoryName, params.artifactId, installedVersion)
+                    } catch(ArtifactNotFoundException anfe) {} //the repository does not have the artifact. That could be normal.
                     if(artifact) break;
                 }
                 if(!artifact) throw new Exception("Could not find artifact information for: ${params.artifactId}. Please check that the supplied artifact id is correct.")

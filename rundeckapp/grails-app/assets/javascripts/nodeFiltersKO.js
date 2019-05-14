@@ -21,6 +21,7 @@
 //= require knockout-node-filter-link
 //= require ko/binding-popover
 //= require ko/binding-message-template
+//= require ko/binding-css2
 
 var NODE_FILTER_ALL='.*';
 function NodeSummary(data){
@@ -110,11 +111,11 @@ function NodeSummary(data){
         jQuery('#deleteFilterKOModal').modal('hide');
         jQuery.ajax({
             url:_genUrl(appLinks.frameworkDeleteNodeFilterAjax,{filtername:filter.name()}),
-            beforeSend: _ajaxSendTokens.curry('ajaxDeleteFilterTokens')
+            beforeSend: _createAjaxSendTokensHandler('ajaxDeleteFilterTokens')
         }).success(function (resp, status, jqxhr) {
             self.filterToDelete(null);
             self.filters.remove(filter);
-        }).success(_ajaxReceiveTokens.curry('ajaxDeleteFilterTokens'));
+        }).success(_createAjaxReceiveTokensHandler('ajaxDeleteFilterTokens'));
     };
     if(data) {
         ko.mapping.fromJS(data, {}, self);
@@ -195,6 +196,9 @@ function NodeSet(data) {
 
         return badges;
     };
+    self.hasOsData = function (attributes) {
+        return ['osName', 'osFamily', 'osVersion', 'osArch'].findIndex((val) => attributes[val]) >= 0
+    }
     self.isAnsiFg=function(str){
         return str!=null && typeof(str)=='string' && str.match(/^ansi-fg-(light-)?(black|green|red|yellow|blue|magenta|cyan|white)$/);
     };
@@ -265,7 +269,7 @@ function NodeSet(data) {
         }
         return null
     };
-    self.nodeCss=function(attrs){
+    self.nodeCss = function (attrs, other) {
         var classnames=[];
         var uiColor = self.nodeFgCss(attrs);
         if(uiColor){
@@ -275,7 +279,11 @@ function NodeSet(data) {
         if(uiBgcolor){
             classnames.push(uiBgcolor);
         }
-        return classnames.join(' ');
+        const cnames = classnames.join(' ')
+        if (other) {
+            return jQuery.extend({}, other, {[cnames]: true})
+        }
+        return cnames
     };
     self.iconStyle=function(attrs){
         var styles={};

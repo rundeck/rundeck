@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.core.GrailsApplication
+import org.apache.commons.lang.StringUtils
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
@@ -47,6 +48,7 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.ExecutionServiceException
 
 import javax.security.auth.Subject
 import java.util.function.Predicate
@@ -70,6 +72,10 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def Framework rundeckFramework
     def rundeckPluginRegistry
     def PluginService pluginService
+    def PluginControlService pluginControlService
+    def scheduledExecutionService
+    def logFileStorageService
+    def fileUploadService
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
 
@@ -205,6 +211,36 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         }
         projectMap
     }
+    def projectCleanerExecutionsScheduled () {
+        def projectNames = rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()
+        def projectMap = [:]
+        projectNames.each { project ->
+            def projectConfig = [:]
+            def fwkProject = getFrameworkProject(project)
+            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep")
+            def cronExpression = fwkProject.getProjectProperties().get("project.clean.executions.schedule")
+            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep")
+            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize")
+            if(maxDaysToKeep){
+                projectConfig.put("maxDaysToKeep",maxDaysToKeep)
+                projectConfig.put("cronExpression",cronExpression)
+                projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
+                projectConfig.put("maximumDeletionSize",maximumDeletionSize)
+                projectMap.put(project,projectConfig)
+            }
+        }
+        projectMap
+    }
+    def rescheduleAllCleanerExecutionsJob(){
+        def projectsConfigs = projectCleanerExecutionsScheduled()
+        projectsConfigs.each { project, config ->
+            scheduleCleanerExecutions(project,
+                    config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
+                    StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
+                    StringUtils.isNotEmpty(config.maximumDeletionSize) ? Integer.parseInt(config.maximumDeletionSize) : 500,
+                    config.cronExpression)
+        }
+    }
     /**
      * Refresh the session.frameworkProjects and session.frameworkLabels
      * @param authContext
@@ -216,6 +252,29 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         session.frameworkProjects = fprojects
         session.frameworkLabels = flabels
         fprojects
+    }
+
+    def scheduleCleanerExecutions(String project,
+                                  Integer cleanerHistoryPeriod,
+                                  Integer minimumExecutionToKeep,
+                                  Integer maximumDeletionSize,
+                                  String cronExression){
+        log.info("removing cleaner executions job scheduled for ${project}")
+        scheduledExecutionService.deleteCleanerExecutionsJob(project)
+
+        if(cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
+            log.info("scheduling cleaner executions job for ${project}")
+            scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
+                    [
+                            maxDaysToKeep: cleanerHistoryPeriod,
+                            minimumExecutionToKeep: minimumExecutionToKeep,
+                            maximumDeletionSize: maximumDeletionSize,
+                            project: project,
+                            logFileStorageService: logFileStorageService,
+                            fileUploadService: fileUploadService,
+                            frameworkService: this
+                    ])
+        }
     }
 
     def existsFrameworkProject(String project) {
@@ -731,7 +790,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getNodeStepExecutorService())
-        described.description
+        described?.description
     }
     /**
      * Return step plugin description of a certain type
@@ -741,7 +800,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
      */
     def Description getStepPluginDescription(String type) throws MissingProviderException{
         final described = pluginService.getPluginDescriptor(type, rundeckFramework.getStepExecutionService())
-        described.description
+        described?.description
     }
 
     /**

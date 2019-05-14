@@ -916,6 +916,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
+    self.logoutput = ko.observable(data.logoutput);
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
     });
