@@ -98,8 +98,7 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
-    //TODO: change exception message (and probably exception type
-    //needs some talk about what to do if one or many of the calls are false
+    //TODO: exception handling and result needs some more definition
     boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
                                  LoggingManager workflowLogManager){
 
@@ -113,12 +112,14 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
                     boolean result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
                     if(!result){
-                        throw new Exception ("Job not allowed to be executed")
+                        log.info("Result from plugin is false an exception will be thrown")
+                        throw new JobLifeCycleException ("Result from plugin is false")
                     }
                 }catch(JobLifeCycleException e){
-                    //TODO: define what to do next, should do anything different?
+                    throw e
                 }catch (Exception e){
-                    //TODO: define what to do next
+                    log.error(e.getMessage(), e)
+                    throw e
                 }
 
             }
