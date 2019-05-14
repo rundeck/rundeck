@@ -3,11 +3,24 @@
     <div class="card result flex-col" @click="openInfo">
       <div class="card-header">
         <span class="current-version-number label label-default">{{provider.pluginVersion}}</span>
-        <h3 class="card-title">{{provider.title}}</h3>
+        <span v-if="provider.builtin">
+          <i class="fa fa-briefcase" aria-hidden="true"></i>
+        </span>
+        <span v-else>
+          <i class="fa fa-file" aria-hidden="true"></i>
+        </span>
+        <h3 class="card-title">
+          <span v-if="provider.title">{{provider.title}}</span>
+          <span v-else>{{provider.name}}</span>
+        </h3>
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
           <div class="plugin-description" v-html="provider.description"></div>
+
+          <ul class="provides">
+            <li>{{provider.service | splitAtCapitalLetter}}</li>
+          </ul>
         </div>
       </div>
     </div>
@@ -19,14 +32,21 @@ import { mapActions } from "vuex";
 
 export default {
   name: "ProviderCard",
-  props: ["provider", "serviceName"],
+  props: ["provider"],
   methods: {
     ...mapActions("plugins", ["getProviderInfo"]),
     openInfo() {
       this.getProviderInfo({
-        serviceName: this.serviceName,
+        serviceName: this.provider.service,
         providerName: this.provider.name
       });
+    }
+  },
+  filters: {
+    splitAtCapitalLetter: function(value) {
+      if (!value) return "";
+      value = value.toString();
+      return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
     }
   }
 };

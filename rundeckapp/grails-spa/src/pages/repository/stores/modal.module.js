@@ -1,12 +1,12 @@
 const state = {
-  isModalOpen: false
+  modalOpen: false
 }
 const mutations = {
   SET_MODAL(state, properties) {
     if (!properties) {
-      state.isModalOpen = false
+      state.modalOpen = false
     } else {
-      state.isModalOpen = true
+      state.modalOpen = true
     }
   }
 }
@@ -14,7 +14,11 @@ const actions = {
   closeModal({
     commit
   }) {
-    commit('SET_MODAL', false)
+    return new Promise(function (resolve) {
+      commit('SET_MODAL', false)
+      resolve()
+    });
+
   },
   openModal({
     commit
