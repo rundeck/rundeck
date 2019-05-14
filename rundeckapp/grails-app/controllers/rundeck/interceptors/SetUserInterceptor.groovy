@@ -2,9 +2,11 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import grails.plugin.springsecurity.SpringSecurityUtils
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
+import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
@@ -18,7 +20,7 @@ class SetUserInterceptor {
     ApplicationContext applicationContext
 
     UserService userService
-
+    def messageSource
     int order = HIGHEST_PRECEDENCE + 30
 
     SetUserInterceptor() {
@@ -97,6 +99,18 @@ class SetUserInterceptor {
             request.errorCode = 'request.authentication.required'
             render view: '/common/error.gsp'
             return false
+        }
+        def requiredRole = grailsApplication.config.rundeck.security.requiredRole
+        if(!requiredRole.isEmpty()) {
+            if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
+                log.error("User must have role: ${requiredRole} to log in.")
+                SecurityContextHolder.clearContext()
+                request.logout()
+                response.status = 403
+                flash.loginerror = messageSource.getMessage("user.not.allowed",null,null)
+                render view: '/user/login.gsp'
+                return false
+            }
         }
         return true
     }
