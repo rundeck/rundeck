@@ -943,6 +943,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      */
     def createProject(){
         def prefixKey= 'plugin'
+        Map propSelectValues = [
+                "0 0 0 1/1 * ? *": "Dayly at 00:00",
+                "0 0 23 ? * FRI *": "Weekly (Every Fridays 11PM)",
+                "0 0 12 1 1/1 ? *": "Monthly (All first day of month)"
+        ]
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
@@ -971,7 +976,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
-            extraConfig:extraConfig
+            extraConfig:extraConfig,
+            cronModelValues: propSelectValues,
+            cronValues: [:]
         ]
     }
 
