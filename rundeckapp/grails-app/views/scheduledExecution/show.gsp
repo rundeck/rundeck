@@ -20,12 +20,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
+    <meta name="skipMotd" content="true"/>
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/joboptions.js"/>
-    <asset:javascript src="menu/jobs.js"/>
+    <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
+    <asset:javascript src="util/tab-router.js"/>
     <g:embedJSON id="jobParams"
                  data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
                          ?:
@@ -40,15 +42,7 @@
         var pagehistory;
         var joboptions;
         var remotecontroller;
-        function loadTab(anchor) {
-            "use strict";
-            var tabs = jQuery('#jobtabs').find('a[data-toggle="tab"]').map(function (i, e) {
-                return jQuery(e).attr('href');
-            }).get();
-            if (tabs.indexOf(anchor)>=0) {
-                jQuery('a[href="' + anchor + '"]').tab('show');
-            }
-        }
+
         function init() {
             "use strict";
             var params = loadJsonData('jobParams');
@@ -87,16 +81,7 @@
                 return noenter(evt);
             });
 
-            loadTab(document.location.hash);
-            jQuery(window).on('hashchange', function () {
-                loadTab(document.location.hash);
-            });
-            jQuery(window).on('show.bs.tab', function (e) {
-                var t = jQuery(e.target);
-                if (t.attr('href').startsWith('#')) {
-                    document.location.hash = t.attr('href');
-                }
-            });
+            setupTabRouter('#jobtabs');
 
             PageActionHandlers.registerHandler('copy_other_project',function(el){
                 jQuery('#jobid').val(el.data('jobId'));

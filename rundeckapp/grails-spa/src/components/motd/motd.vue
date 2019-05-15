@@ -1,15 +1,11 @@
 <template>
-  <div class="row" v-if="message">
+  <div class="row" v-if="message && showMessage">
     <div class="col-xs-12">
-      <div class="alert alert-info">
-        <button type="button" class="close" @click="dismissMessage">×</button>
-        <h4>Message of The Day</h4>
+      <div :class="'alert '+alertStyle">
+        <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button>
+        <h4 v-if="noTitle">Message of The Day</h4>
         <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
           <span v-html="message"></span>
-        </div>
-        <div style="margin-top:1em;">
-          <a v-show="!showFullMOTD" class="btn btn-sm btn-default text-center" @click="showFullMOTD = !showFullMOTD">show more</a>
-          <a v-show="showFullMOTD" class="btn btn-sm btn-default text-center" @click="showFullMOTD = !showFullMOTD">show less</a>
         </div>
       </div>
     </div>
@@ -27,7 +23,8 @@ export default {
   data () {
     return {
       message: '',
-      showFullMOTD: false
+      showFullMOTD: true,
+      showMessage: false,
     }
   },
   methods: {
@@ -36,7 +33,7 @@ export default {
       let midnight = new Date()
       midnight.setHours(23, 59, 59, 0)
       this.$cookies.set(cookieKey, 'true', midnight)
-      this.message = false
+      this.showMessage = false
     },
     hashMessage (messageToHash) {
       let hash = 0
@@ -51,20 +48,35 @@ export default {
     },
     checkMessage () {
       let messageToCheck = this.hashMessage(this.project.readme.motd)
-      if (this.$cookies.get(messageToCheck)) {
-        // the message has been previously dismissed
-        return false
-      } else {
-        return true
+      return !this.$cookies.get(messageToCheck)
+    }
+  },
+  computed: {
+    /**
+     * Return true if the html does not start with a <h1/2/3/4/5> tag
+     * @returns {boolean}
+     */
+    noTitle () {
+      return this.message.indexOf("<article class=\"markdown-body\"><h") < 0
+    },
+    /**
+     * Return 'alert-*' variant if the motd text contains a html comment starting with <!-- style:variant
+     * for the danger, warning, primary, info, success styles
+     * @returns {string}
+     */
+    alertStyle () {
+      let style = ['danger', 'warning', 'primary', 'info', 'success']
+              .find((val) => this.project.readme.motd.indexOf('<!-- style:' + val) >= 0)
+      if (style) {
+        return `alert-${style}`
       }
+      return 'alert-default'
     }
   },
   mounted () {
-    let message = this.checkMessage()
+    this.showMessage = this.checkMessage()
 
-    if (message) {
-      this.message = this.project.readme.motdHTML
-    }
+    this.message = this.project.readme.motdHTML
   }
 }
 </script>

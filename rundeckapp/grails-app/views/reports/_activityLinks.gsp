@@ -292,7 +292,7 @@
                 <span data-bind="if: execution().jobArguments">
                     <span data-bind="foreachprop: execution().jobArguments">
                         <span data-bind="text: key"></span>:
-                        <span data-bind="text: value" class="optvalue"></span>
+                        <code data-bind="text: value" class="optvalue"></code>
                     </span>
                 </span>
                 <!-- ko if: !execution().jobArguments -->

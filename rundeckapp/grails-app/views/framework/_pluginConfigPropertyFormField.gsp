@@ -160,10 +160,10 @@
         <div class="${valueColType} ">
         <div class=" grid">
 
-            <g:each in="${propSelectValues}" var="propval">
+            <g:each in="${propSelectValues}" var="propval" status="n">
                 <div class="optionvaluemulti checkbox">
-                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}"/>
-                  <label class="grid-row optionvaluemulti">
+                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}" id="f_${fieldid}_p_${n}"/>
+                  <label class="grid-row optionvaluemulti" for="f_${fieldid}_p_${n}">
                     ${propval.label}
                   </label>
                 </div>

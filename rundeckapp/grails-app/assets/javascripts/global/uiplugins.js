@@ -48,14 +48,14 @@ function RundeckPage(data) {
         // return jQuery.ajax({
         //     url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + val}),
         //     method: 'POST',
-        //     beforeSend: _ajaxSendTokens.curry('uiplugin_tokens'),
+        //     beforeSend: _createAjaxSendTokensHandler('uiplugin_tokens'),
         //     success: function () {
         //         console.log("saved successful for project " );
         //     },
         //     error: function () {
         //         console.log("save failed for project " );
         //     }
-        // }).success(_ajaxReceiveTokens.curry('uiplugin_tokens'));
+        // }).success(_createAjaxReceiveTokensHandler('uiplugin_tokens'));
     };
     self.removeUserSetting = function (key) {
         if (supports_html5_storage()) {

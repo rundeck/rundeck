@@ -129,10 +129,9 @@
       margin-left: 0;
     }
     > li > a {
-      border: 2px solid $default-color;
+      border: 1px solid $default-color;
       border-radius: 0;
       color: $default-color;
-      font-weight: $font-weight-bold;
       margin-left: -1px;
       padding: 10px 20px;
 
@@ -170,7 +169,7 @@
 .pagination > li > a,
 .pagination > li > span{
     background-color: transparent;
-    border: 2px solid $default-color;
+    border: $border-thin solid $default-color;
     border-radius: 20px;
     color: $default-color;
     height: $line-height;

@@ -18,7 +18,7 @@
     <div id="nodes_tags" data-bind="if: nodeSet().tagsummary">
             <span data-bind="foreach: nodeSet().tagsummary">
                 <span class="summary nodetags">
-                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-default', tag: tag"></node-filter-link>
+                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-muted', tag: tag"></node-filter-link>
                 </span>
             </span>
     </div>
@@ -96,7 +96,8 @@
                                     <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
-                                        <node-filter-link class="label label-default" params="
+                                        <node-filter-link params="
+                                                    classnames: 'label label-muted',
                                                     filterkey: 'tags',
                                                     filterval: $data,
                                                     tag: $data

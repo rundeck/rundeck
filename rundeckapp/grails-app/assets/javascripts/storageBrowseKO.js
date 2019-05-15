@@ -370,7 +370,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
             dataType: "json",
             method: 'post',
             url: _genUrl(appLinks.storageKeysDelete, {relativePath: self.relativePath(self.selectedPath()) } ),
-            beforeSend: _ajaxSendTokens.curry('storage_browser_token'),
+            beforeSend: _createAjaxSendTokensHandler('storage_browser_token'),
             data: {},
             success: function (data, status, jqXHR) {
                 self.selectedPath(null);
@@ -388,7 +388,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
                     }
                 }
             }
-        }).success(_ajaxReceiveTokens.curry('storage_browser_token'));
+        }).success(_createAjaxReceiveTokensHandler('storage_browser_token'));
     };
     self.browseToInputPath = function(){
         self.path(self.absolutePath(self.inputPath()));
