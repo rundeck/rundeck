@@ -785,7 +785,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def resourcesUrl
         def projectNameError
         def projectDescriptionError
-        def cleanerHistoryConfigError
+        def cleanerHistoryPeriodError
         def Properties projProps = new Properties()
         if(params.description) {
             projProps['project.description'] = params.description
@@ -794,25 +794,29 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps['project.label'] = params.label
         }
 
-        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
-            projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
-            projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
-            projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
-            projProps['project.clean.executions.schedule'] = params.crontabString
+        boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
+        projProps['project.clean.executions.enabled'] = cleanerHistoryEnabled.toString()
+
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+            projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod ?: "60"
+            projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep ?: "50"
+            projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize ?: "500"
+            projProps['project.clean.executions.schedule'] = params.crontabString ?: '0 0 0 1/1 * ? *'
         }else{
-            projProps['project.clean.executions.maxdaystokeep'] = ''
-            projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
-            projProps['project.clean.executions.maximumDeletionSize'] = ''
-            projProps['project.clean.executions.schedule'] = ''
+            projProps['project.clean.executions.maxdaystokeep'] = "60"
+            projProps['project.clean.executions.minimumExecutionToKeep'] = "50"
+            projProps['project.clean.executions.maximumDeletionSize'] = "500"
+            projProps['project.clean.executions.schedule'] = '0 0 0 1/1 * ? *'
         }
         def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
-        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
-            cleanerHistoryConfigError = "Execution history parameters is required if enabled"
-            errors << cleanerHistoryConfigError
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled
+                && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
+            cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+            errors << cleanerHistoryPeriodError
         }
 
         if (params.defaultNodeExec) {
@@ -895,7 +899,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
                 if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
-                    frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
+                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : -1,
                             params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
                             params.crontabString)
@@ -1220,8 +1224,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         def prefixKey= 'plugin'
-        def cleanerHistoryConfigError
-
+        def cleanerHistoryPeriodError
         def project=params.project
         if (!project) {
             return renderErrorView("Project parameter is required")
@@ -1265,21 +1268,25 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.label']=''
             }
 
-            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on' && (!params.cleanperiod || !params.crontabString)) {
-                cleanerHistoryConfigError = "All execution history parameters is required if enabled"
-                errors << cleanerHistoryConfigError
+            boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
+            projProps['project.clean.executions.enabled'] = cleanerHistoryEnabled.toString()
+
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true)
+                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0){
+                cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+                errors << cleanerHistoryPeriodError
             }
 
-            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && params.cleanerHistory == 'on') {
-                projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod
-                projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep
-                projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize
-                projProps['project.clean.executions.schedule'] = params.crontabString
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+                projProps['project.clean.executions.maxdaystokeep'] = params.cleanperiod ?: "60"
+                projProps['project.clean.executions.minimumExecutionToKeep'] = params.minimumtokeep ?: "50"
+                projProps['project.clean.executions.maximumDeletionSize'] = params.maximumdeletionsize ?: "500"
+                projProps['project.clean.executions.schedule'] = params.crontabString ?: '0 0 0 1/1 * ? *'
             }else{
-                projProps['project.clean.executions.maxdaystokeep'] = ''
-                projProps['project.clean.executions.minimumExecutionToKeep'] = '0'
-                projProps['project.clean.executions.maximumDeletionSize'] = ''
-                projProps['project.clean.executions.schedule'] = ''
+                projProps['project.clean.executions.maxdaystokeep'] = "60"
+                projProps['project.clean.executions.minimumExecutionToKeep'] = "50"
+                projProps['project.clean.executions.maximumDeletionSize'] = "500"
+                projProps['project.clean.executions.schedule'] = '0 0 0 1/1 * ? *'
             }
 
             def Set<String> removePrefixes=[]
@@ -1361,10 +1368,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
                 if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
-                    frameworkService.scheduleCleanerExecutions(project, params.cleanerHistory == 'on' ? Integer.parseInt(params.cleanperiod) : -1,
-                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : 60,
+                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 50,
                             params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
-                            params.crontabString)
+                            params.crontabString ?: '0 0 0 1/1 * ? *')
                 }
                 frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
@@ -2221,6 +2228,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return renderErrorView("Project parameter is required")
         }
 
+        Map propSelectValues = [
+                "0 0 0 1/1 * ? *": "Dayly at 00:00",
+                "0 0 23 ? * FRI *": "Weekly (Every Fridays 11PM)",
+                "0 0 12 1 1/1 ? *": "Monthly (All first day of month)"
+        ]
+
         def project = params.project
 
         if (unauthorizedResponse(
@@ -2269,10 +2282,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
-            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
-            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep") ?: 0,
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep") ?: 60,
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep") ?: 50,
             maximumDeletionSize:fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize") ?: 500,
-            enableCleanHistory:!!fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep"),
+            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.clean.executions.enabled")),
             cronExression:fwkProject.getProjectProperties().get("project.clean.executions.schedule") ?: "0 0 0 1/1 * ? *",
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
@@ -2281,7 +2294,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeExecDescriptions: execDesc,
             fileCopyDescriptions: filecopyDesc,
             prefixKey: 'plugin',
-            extraConfig:extraConfig
+            extraConfig:extraConfig,
+            cronModelValues: propSelectValues,
+            cronValues: [:]
         ]
     }
     def editProjectFile (){

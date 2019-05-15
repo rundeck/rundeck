@@ -123,18 +123,18 @@
           </div>
       </div>
     <div id="cleaner_config" style="display: ${isSelected ? 'block' : 'none' }">
-        <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
+        <div class="form-group ${cleanerHistoryPeriodError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.days.to.clean.execution" default="Days to keep executions"/>
+                <g:message code="domain.Project.days.to.clean.execution" default="Days to keep executions. Default: 60"/>
             </label>
             <g:field name="cleanperiod" type="number" size="50"  value="${cleanerHistoryPeriod}" class="form-control"/>
-            <g:if test="${cleanerHistoryConfigError}">
-                <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
+            <g:if test="${cleanerHistoryPeriodError}">
+                <div class="text-warning"><g:enc>${cleanerHistoryPeriodError}</g:enc></div>
             </g:if>
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.minimum.to.keep.execution" default="Minimum executions to keep"/>
+                <g:message code="domain.Project.minimum.to.keep.execution" default="Minimum executions to keep. Default: 50"/>
             </label>
             <g:field name="minimumtokeep" type="number" size="50"  value="${minimumExecutionToKeep}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -143,7 +143,7 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.maximum.size.deletion.execution" default="Maximum size of the deletion"/>
+                <g:message code="domain.Project.maximum.size.deletion.execution" default="Maximum size of the deletion. Default: 500"/>
             </label>
             <g:field name="maximumdeletionsize" type="number" size="50"  value="${maximumDeletionSize}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -153,12 +153,13 @@
         <div class="form-group">
             %{--<div class="panel panel-default panel-tab-content crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
-                <g:message code="domain.Project.schedule.clean.execution" default="Schedule clean history job (Cron expression)"/>
+                <g:message code="domain.Project.schedule.clean.execution" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>
             <div class="row">
-                <div class="col-sm-12">
+                <div class="col-sm-8">
                     <div  class="form-group">
-                        <g:textField name="crontabString"
+                        <g:textField id="cronTextField"
+                                     name="crontabString"
                                      value="${cronExression}"
                                      onchange="changeCronExpression(this);"
                                      onblur="changeCronExpression(this);"
@@ -169,8 +170,18 @@
                         <g:if test="${cleanerHistoryConfigError}">
                             <div class="text-warning"><g:enc>${cleanerHistoryConfigError}</g:enc></div>
                         </g:if>
-
                     </div>
+                </div>
+                <div class="col-sm-4">
+                    <g:set var="propSelectValues" value="${cronModelValues.collect {k, v ->
+                        [key: k, value: (cronModelValues[k] ?: it)]
+                    }}"/>
+                    <g:select name="${'example_cron_period_sel'}" from="${propSelectValues}" id="example_cron_period"
+                              optionKey="key" optionValue="value"
+                              noSelection="['':'-choose an example-']"
+                              onchange="if(this.value){\$('cronTextField').value=this.value;}"
+                              class="${formControlType}"
+                    />
                 </div>
                 <div class="col-sm-4">
                     <span id="crontooltip" class="label label-info form-control-static" style="padding-top:10px;"></span>

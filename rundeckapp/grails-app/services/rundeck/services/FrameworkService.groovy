@@ -217,11 +217,13 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         projectNames.each { project ->
             def projectConfig = [:]
             def fwkProject = getFrameworkProject(project)
+            def enabled = ["true", true].contains(fwkProject.getProjectProperties().get("project.clean.executions.enabled"))
             def maxDaysToKeep = fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep")
             def cronExpression = fwkProject.getProjectProperties().get("project.clean.executions.schedule")
             def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep")
             def maximumDeletionSize = fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize")
-            if(maxDaysToKeep){
+            if(enabled){
+                projectConfig.put("enabled",enabled)
                 projectConfig.put("maxDaysToKeep",maxDaysToKeep)
                 projectConfig.put("cronExpression",cronExpression)
                 projectConfig.put("minimumExecutionToKeep",minimumExecutionToKeep)
@@ -234,7 +236,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def rescheduleAllCleanerExecutionsJob(){
         def projectsConfigs = projectCleanerExecutionsScheduled()
         projectsConfigs.each { project, config ->
-            scheduleCleanerExecutions(project,
+            scheduleCleanerExecutions(project, config.enabled,
                     config.maxDaysToKeep ? Integer.parseInt(config.maxDaysToKeep) : -1,
                     StringUtils.isNotEmpty(config.minimumExecutionToKeep) ? Integer.parseInt(config.minimumExecutionToKeep) : 0,
                     StringUtils.isNotEmpty(config.maximumDeletionSize) ? Integer.parseInt(config.maximumDeletionSize) : 500,
@@ -255,6 +257,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     }
 
     def scheduleCleanerExecutions(String project,
+                                  boolean enabled,
                                   Integer cleanerHistoryPeriod,
                                   Integer minimumExecutionToKeep,
                                   Integer maximumDeletionSize,
@@ -262,7 +265,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         log.info("removing cleaner executions job scheduled for ${project}")
         scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
+        if(enabled && cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
             log.info("scheduling cleaner executions job for ${project}")
             scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
                     [
