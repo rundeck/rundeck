@@ -5,4 +5,3 @@ repositories:
     owner: RUNDECK
 -   repositoryName: private
     type: STORAGE_TREE
-    owner: PRIVATE
