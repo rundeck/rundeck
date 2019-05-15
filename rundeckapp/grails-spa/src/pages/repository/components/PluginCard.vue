@@ -5,13 +5,17 @@
         <span class="current-version-number label label-default">{{result.currentVersion}}</span>
         <h5 class="support-type">{{result.support}}</h5>
         <h3 class="card-title">{{result.display || result.name}}</h3>
-        <h5 class="requires-rundeck-version">
-          <span v-if="result.support === 'Enterprise Exclusive'">Requires Enterprise</span>
-          <span v-if="result.rundeckCompatibility">Requires Rundeck {{result.rundeckCompatibility}}</span>
-        </h5>
+        <h5
+          class="enterprise-required"
+          v-if="result.support === 'Enterprise Exclusive'"
+        >Requires Enterprise</h5>
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
+          <div
+            class="requires-rundeck-version"
+            v-if="result.rundeckCompatibility"
+          >Requires Rundeck {{result.rundeckCompatibility}}</div>
           <div class="plugin-description" v-html="result.description"></div>
           <div v-if="result.artifactType">
             <label>Plugin Type:</label>
@@ -74,7 +78,7 @@ export default {
   name: "PluginCard",
   props: ["result", "repo"],
   computed: {
-    ...mapState([
+    ...mapState("repositories", [
       "canInstall",
       "rdBase",
       "filterSupportType",
@@ -107,7 +111,7 @@ export default {
     return {};
   },
   methods: {
-    ...mapActions(["installPlugin", "uninstallPlugin"]),
+    ...mapActions("repositories", ["installPlugin", "uninstallPlugin"]),
     unqSortedSvcs: function(serviceList) {
       if (!serviceList) return [];
       var unq = [];
@@ -161,7 +165,7 @@ export default {
       font-size: 18px;
       border-radius: 20px;
     }
-    .requires-rundeck-version {
+    .enterprise-required {
       color: #f7403a;
       // text-transform: capitalize;
       // font-weight: bold;
@@ -172,6 +176,13 @@ export default {
   .card-content {
     padding: 2em 2em 1em;
     // min-height: 250px;
+    .requires-rundeck-version {
+      color: #f7403a;
+      text-transform: uppercase;
+      // font-weight: bold;
+      margin: 0 0 0.7em;
+      // height: 20px;
+    }
     .provides {
       list-style: none;
       margin: 2em 0 0;

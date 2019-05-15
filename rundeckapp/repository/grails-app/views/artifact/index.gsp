@@ -35,6 +35,9 @@
     window.repocaninstall = ${pluginInstall}
 </script>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+<script type="text/javascript">
+  window.repoEnabled = ${repoEnabled}
+</script>
 <g:if test="${repoEnabled == 'true'}">
 <div class="container-fluid">
     <div id="repository-artifact-content">
@@ -44,7 +47,13 @@
 <asset:javascript src="static/pages/repository.js"/>
 </g:if>
 <g:else>
-    <h3>This feature is not enabled</h3>
+    <h3>This thing is not enabled</h3>
+<div class="container-fluid">
+    <div id="repository-artifact-content">
+        <div id=repository-vue></div>
+    </div>
+</div>
+<asset:javascript src="static/pages/repository.js"/>
 </g:else>
 </body>
 </html>
