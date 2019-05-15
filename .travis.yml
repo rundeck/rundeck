@@ -86,16 +86,16 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 7-jre8'
 
-  - stage: test
-    env: JOB='Test deb install'
-    script:
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+  # - stage: test
+  #   env: JOB='Test deb install'
+  #   script:
+  #   - script_block 'sync-artifacts' fetch_common_artifacts
+  #   - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
   
-  - env: JOB='Test rpm install'
-    script:
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
+  # - env: JOB='Test rpm install'
+  #   script:
+  #   - script_block 'sync-artifacts' fetch_common_artifacts
+  #   - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
 
   - env: JOB='Docker tests'
     script:
