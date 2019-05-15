@@ -21,7 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
-    <meta name="skipMotd" content="true"/>
+
     <title><g:appTitle/> -
       <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
       <g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if>

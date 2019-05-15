@@ -97,7 +97,13 @@
                   <i class="glyphicon glyphicon-ban-circle"></i>
               </p>
           </g:ifScheduleMode>
-      </g:if>
+
+            <p class="navbar-text vue-project-motd motd-indicator">
+              <motd-indicator :event-bus="EventBus"></motd-indicator>
+            </p>
+
+          </g:if>
+
         <ul id="navbar-menu" class="nav navbar-nav navbar-right">
           <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
           <g:if test="${userDefinedInstanceName}">
