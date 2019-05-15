@@ -5,8 +5,14 @@ const state = {
   provider: null,
   rdBase: null,
   services: [],
-  serviceName: null
+  serviceName: null,
+  selectedServiceFacet: null
 }
+
+const getters = {
+  getServices: state => state.services
+}
+
 const mutations = {
   SET_PLUGINS(state, plugins) {
     state.plugins = plugins
@@ -17,11 +23,14 @@ const mutations = {
   SET_RDBASE(state, rdBase) {
     state.rdBase = rdBase
   },
-  // SET_SERVICES(state, services) {
-  //   state.services = services
-  // },
+  SET_SERVICES(state, services) {
+    state.services = services
+  },
   SET_SERVICE_NAME(state, name) {
     state.serviceName = name
+  },
+  SET_SERVICE_FACET(state, name) {
+    state.selectedServiceFacet = name
   }
 }
 const actions = {
@@ -30,6 +39,11 @@ const actions = {
     dispatch
   }) {
     // dispatch('SET_OVERLAY', false)
+  },
+  setServiceFacet({
+    commit
+  }, serviceName) {
+    commit("SET_SERVICE_FACET", serviceName)
   },
   getProviderInfo({
     commit,
@@ -49,7 +63,6 @@ const actions = {
       url: `${state.rdBase}plugin/detail/${properties.serviceName}/${properties.providerName}`,
       withCredentials: true
     }).then(response => {
-      console.log('response', response)
       commit("SET_PROVIDER_INFO", response.data)
       commit("SET_SERVICE_NAME", properties.serviceName)
       setTimeout(() => {
@@ -60,6 +73,27 @@ const actions = {
           root: true
         })
       }, 500)
+    });
+  },
+  getServices({
+    commit
+  }) {
+    return new Promise(resolve => {
+      if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
+        const rdBase = window._rundeck.rdBase;
+        const apiVersion = window._rundeck.apiVersion
+        axios({
+          method: "get",
+          headers: {
+            "x-rundeck-ajax": true
+          },
+          url: `${rdBase}api/${apiVersion}/plugins/types`,
+          withCredentials: true
+        }).then(response => {
+          commit("SET_SERVICES", response.data)
+          resolve(response.data)
+        })
+      }
     });
   },
   initData({
@@ -83,7 +117,6 @@ const actions = {
           url: `${rdBase}plugin/list`,
           withCredentials: true
         }).then(response => {
-          console.log('test', response)
           commit('SET_RDBASE', rdBase)
           commit('SET_PLUGINS', response.data)
           setTimeout(() => {
@@ -102,5 +135,6 @@ export const plugins = {
   namespaced: true,
   state,
   actions,
-  mutations
+  mutations,
+  getters
 };

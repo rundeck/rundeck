@@ -1,29 +1,20 @@
 <template>
   <div>
     <div class="row">
-      <!-- <div class="col-xs-12 col-sm-4">
-        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
-          <button
-            @click="showWhichPlugins = true"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === true}"
-            :disabled="searchResults.length > 0"
-          >Installed</button>
-          <button
-            @click="showWhichPlugins = null"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === null}"
-            :disabled="searchResults.length > 0"
-          >All</button>
-          <button
-            @click="showWhichPlugins = false"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === false}"
-            :disabled="searchResults.length > 0"
-          >Not Installed</button>
-        </div>
-      </div>-->
-      <div class="col-xs-12 col-sm-8">
+      <div class="col-xs-12 col-sm-4">
+        <h2 style="margin:0">Installed Plugins</h2>
+      </div>
+      <div class="col-xs-12 col-sm-4">
+        <select class="form-control" @change="changeServiceFacet">
+          <option value>View All</option>
+          <option
+            v-for="(service, index) in services"
+            :key="index"
+            :value="service.name"
+          >{{service.value}}</option>
+        </select>
+      </div>
+      <div class="col-xs-12 col-sm-4">
         <form @submit.prevent="search">
           <div class="input-group input-group-lg">
             <input
@@ -81,22 +72,21 @@ const FuseSearchOptions = {
 };
 
 import axios from "axios";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapGetters } from "vuex";
 import ProviderCard from "../components/Provider";
 export default {
   name: "PluginConfigurationView",
   components: { ProviderCard },
   methods: {
-    ...mapActions("plugins", ["initData"]),
+    ...mapActions("plugins", ["initData", "setServiceFacet", "getServices"]),
+    changeServiceFacet(event) {
+      this.setServiceFacet(event.target.value);
+    },
     clearSearch() {
       this.searchResults = [];
     },
     search() {
       this.clearSearch();
-      // console.log(
-      //   `Searching for ....${this.searchString}`,
-      //   this.repositories[0].results
-      // );
       this.showWhichPlugins = null;
       if (this.searchString === "") {
         this.searchResults = [];
@@ -113,17 +103,27 @@ export default {
   computed: {
     ...mapState("plugins", ["plugins"])
   },
-  mounted() {
+  created() {
     this.initData();
+    this.getServices().then(result => {
+      this.services = result;
+    });
   },
   data() {
     return {
       showWhichPlugins: null,
       searchString: "",
       searchIndex: [],
-      searchResults: []
+      searchResults: [],
+      selectedService: null,
+      services: []
     };
   }
+  // watch: {
+  //   selectedService: (newVal, oldVal) => {
+  //     console.log("selectedService", newVal, oldVal);
+  //   }
+  // }
 };
 </script>
 

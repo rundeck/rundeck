@@ -2,6 +2,9 @@
   <div>
     <div class="row">
       <div class="col-xs-12 col-sm-4">
+        <h2 style="margin:0;line-height:45px;">Plugin Repositories</h2>
+      </div>
+      <div class="col-xs-12 col-sm-4">
         <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
           <button
             @click="showWhichPlugins = true"
@@ -23,7 +26,7 @@
           >Not Installed</button>
         </div>
       </div>
-      <div class="col-xs-12 col-sm-8">
+      <div class="col-xs-12 col-sm-4">
         <form @submit.prevent="search">
           <div class="input-group input-group-lg">
             <input

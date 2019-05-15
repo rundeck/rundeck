@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div class="card result flex-col" @click="openInfo">
+  <div v-if="displayCard">
+    <div class="card result flex-col">
       <div class="card-header">
         <span class="current-version-number label label-default">{{provider.pluginVersion}}</span>
         <span v-if="provider.builtin">
@@ -23,12 +23,17 @@
           </ul>
         </div>
       </div>
+      <div class="card-footer">
+        <a @click="openInfo">
+          <i class="fas fa-cog fa-2x"></i>
+        </a>
+      </div>
     </div>
   </div>
 </template>
 <script>
 import axios from "axios";
-import { mapActions } from "vuex";
+import { mapActions, mapState } from "vuex";
 
 export default {
   name: "ProviderCard",
@@ -40,6 +45,19 @@ export default {
         serviceName: this.provider.service,
         providerName: this.provider.name
       });
+    }
+  },
+  computed: {
+    ...mapState("plugins", ["selectedServiceFacet"]),
+    displayCard() {
+      if (
+        this.selectedServiceFacet === null ||
+        this.selectedServiceFacet === ""
+      ) {
+        return true;
+      } else {
+        return this.selectedServiceFacet === this.provider.service;
+      }
     }
   },
   filters: {

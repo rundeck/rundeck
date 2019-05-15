@@ -95,11 +95,11 @@
           <g:message code="gui.menu.InstalledPlugins"/>
         </a>
       </li>
-      <li>
+      <%-- <li>
         <a href="${g.createLink(uri:'/menu/plugins')}">
           Old Installed Plugins
         </a>
-      </li>
+      </li> --%>
     </ul>
   </li>
 </g:if>
