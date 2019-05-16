@@ -7,6 +7,7 @@
           style="border: 1px solid #d6d7d6;background: #fff; border-right:0; padding-left:1em;"
           type="text"
           class="form-control"
+          placeholder="https://someurl.com/some-path/some-plugin.jar"
           v-model="pluginURL"
         >
         <span class="input-group-btn">

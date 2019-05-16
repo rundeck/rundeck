@@ -71,7 +71,7 @@ export default {
         } else {
           this.$alert({
             title: "Plugin Installed",
-            content: reponse.data.msg
+            content: response.data.msg
           });
         }
       });
