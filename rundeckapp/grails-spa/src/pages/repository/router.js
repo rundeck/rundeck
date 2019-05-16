@@ -27,7 +27,7 @@ export default new Router({
     },
     {
       path: '*',
-      redirect: '/artifact/index/repositories'
+      redirect: '/artifact/index/configurations'
     }
   ]
 });

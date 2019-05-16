@@ -161,9 +161,20 @@ export default {
     }
   },
   mounted() {
-    this.initData().then(() => {
-      // Search work will happen here
-    });
+    this.initData().then(
+      () => {
+        // don't do anything. everything is good!
+      },
+      error => {
+        console.log("error", error);
+        this.$alert({
+          title: "Error Accessing Plugins",
+          content:
+            "Plugins may not be an active feature in your Rundeck install."
+        });
+        this.$store.dispatch("overlay/openOverlay", false);
+      }
+    );
   }
 };
 </script>

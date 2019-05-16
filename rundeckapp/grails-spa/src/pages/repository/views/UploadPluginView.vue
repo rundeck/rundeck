@@ -11,7 +11,6 @@
     <div class="row">
       <PluginURLUploadForm/>
     </div>
-    <span>form.groovyNote</span>
   </div>
 </template>
 <script>
