@@ -9,6 +9,7 @@ class UrlMappings {
             }
         }
 
+        if(getGrailsApplication().config.rundeck.feature.repository.enabled == "true") {
             "/api/$api_version/repository/list"(controller: "repository", action: "listRepositories")
             "/api/$api_version/repository/artifacts/list"(controller: "repository", action: "listArtifacts")
             "/api/$api_version/repository/artifacts/search"(controller: "repository", action: "searchArtifacts")
@@ -57,13 +58,31 @@ class UrlMappings {
             "/api/$api_version/plugins/search"(controller: "repository", action: "searchArtifacts")
             post "/api/$api_version/plugins/upload"(controller: "repository", action: "uploadArtifact")
             post "/api/$api_version/plugins/$repoName/upload"(controller: "repository", action: "uploadArtifact")
-            post "/api/$api_version/plugins/install/$artifactId/$artifactVersion?"(controller: "repository", action: "installArtifact")
-            post "/api/$api_version/plugins/$repoName/install/$artifactId/$artifactVersion?"(controller: "repository", action: "installArtifact")
-            post "/api/$api_version/plugins/uninstall/$artifactId"(controller: "repository", action: "uninstallArtifact")
-            post "/api/$api_version/plugins/$repoName/uninstall/$artifactId"(controller: "repository", action: "uninstallArtifact")
+            post "/api/$api_version/plugins/install/$artifactId/$artifactVersion?"(
+                    controller: "repository",
+                    action: "installArtifact"
+            )
+            post "/api/$api_version/plugins/$repoName/install/$artifactId/$artifactVersion?"(
+                    controller: "repository",
+                    action: "installArtifact"
+            )
+            post "/api/$api_version/plugins/uninstall/$artifactId"(
+                    controller: "repository",
+                    action: "uninstallArtifact"
+            )
+            post "/api/$api_version/plugins/$repoName/uninstall/$artifactId"(
+                    controller: "repository",
+                    action: "uninstallArtifact"
+            )
             post "/api/$api_version/plugins/regenerateManifest"(controller: "repository", action: "regenerateManifest")
-            post "/api/$api_version/plugins/resyncInstalledPlugins"(controller: "repository",action: "syncInstalledArtifactsToRundeck")
-            "/api/$api_version/plugins/listInstalledArtifacts"(controller: "repository", action: "listInstalledArtifacts")
+            post "/api/$api_version/plugins/resyncInstalledPlugins"(
+                    controller: "repository",
+                    action: "syncInstalledArtifactsToRundeck"
+            )
+            "/api/$api_version/plugins/listInstalledArtifacts"(
+                    controller: "repository",
+                    action: "listInstalledArtifacts"
+            )
 
             // API endpoints used by UI
             "/repository/plugins/types"(controller: "repository", action: "listPluginTypes")
@@ -81,6 +100,7 @@ class UrlMappings {
                     controller: "repository",
                     action: "uninstallArtifact"
             )
+        }
 
         "/artifact/index/configurations"(controller: "repository", action: "index")
         "/"(view:"/index")
