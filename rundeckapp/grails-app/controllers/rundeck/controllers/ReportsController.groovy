@@ -54,7 +54,10 @@ class ReportsController extends ControllerBase{
             storeFilter:'POST'
     ]
 
-    public def index (ExecQuery query) {
+    public def index(){
+
+    }
+    public def index_old (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
         if (params.max != null && params.max != query.max.toString()) {
             query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
@@ -296,7 +299,7 @@ class ReportsController extends ControllerBase{
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
-        def results = index(query)
+        def results = index_old(query)
         results.params=params
         return results
     }
@@ -314,7 +317,7 @@ class ReportsController extends ControllerBase{
             response.status=400
             return render(contentType: 'application/json', text:  [errors: query.errors] as JSON)
         }
-        def results = index(query)
+        def results = index_old(query)
         results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time

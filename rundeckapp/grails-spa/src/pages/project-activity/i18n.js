@@ -18,6 +18,8 @@ const translationStrings = {
     'results.empty.text': 'No results for the query',
     'Only shown executions': 'Only shown executions',
     'Clear bulk selection': 'Clear Bulk Selection',
+    'Click to edit Search Query': 'Click to edit Search Query',
+    'error.message.0': 'An Error Occurred: {0}',
 
     period: {
       label: {

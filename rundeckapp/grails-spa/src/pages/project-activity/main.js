@@ -3,9 +3,9 @@
 import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
-import App from './App'
+import ActivityList from '../../components/activity/activityList.vue'
 import * as uiv from 'uiv'
-import international from '../project-activity/i18n'
+import international from './i18n'
 import VueI18n from 'vue-i18n'
 import VueMoment from 'vue-moment'
 import {
@@ -31,7 +31,7 @@ if (!messages[language]) {
 // include any i18n injected in the page by the app
 messages = { [language]: Object.assign({}, window.Messages, messages[language] || {}) }
 
-const els = document.body.getElementsByClassName('project-dashboard-vue')
+const els = document.body.getElementsByClassName('vue-project-activity')
 
 for (var i = 0; i < els.length; i++) {
   const e = els[i]
@@ -51,10 +51,7 @@ for (var i = 0; i < els.length; i++) {
         EventBus: EventBus
       }
     },
-    components: { App },
-    template: '<App :eventBus="EventBus"/>',
+    components: { ActivityList },
     i18n
   })
-
-
 }

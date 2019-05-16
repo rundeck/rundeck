@@ -24,7 +24,7 @@
                   <span class="summary-count" :class="{ 'text-primary': pagination.total < 1, 'text-info': pagination.total > 0 }" v-if="pagination.total>=0">
                     {{pagination.total}}
                   </span>
-                  <span v-else class="text-muted">
+                  <span v-else-if="!loadError" class="text-muted">
                     <i class="fas fa-spinner fa-pulse" ></i>
                   </span>
                   {{$tc('execution',pagination.total>0?pagination.total:0)}}
@@ -46,7 +46,7 @@
               </template>
             </dropdown>
 
-
+          <activity-filter  v-model="query"></activity-filter>
           <!-- bulk edit controls -->
           <div class="pull-right" v-if="auth.deleteExec && pagination.total>0">
               <span v-if="bulkEditMode" >
@@ -74,18 +74,23 @@
             </span>
 
 
-            <btn size="xs" type="warning" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
-                {{$t('bulk.edit')}}
+            <btn size="xs" type="secondary" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
+                {{$t('bulk.delete')}}
             </btn>
         </div>
 
-      <div v-if="reports.length < 1 " class="help-block">
-          <span class="text-secondary" v-if="!loading">
+      <div v-if="reports.length < 1 " class="loading-area">
+          <span class="text-secondary" v-if="!loading && !loadError">
             {{$t('results.empty.text')}}
           </span>
-          <div class="empty-loading" v-if="loading && lastDate<0">
+          <div class="loading-text" v-if="loading && lastDate<0">
             <i class="fas fa-spinner fa-pulse" ></i>
             {{$t('Loading...')}}
+          </div>
+          <div class="text-warning" v-if="loadError">
+            <i class="fas fa-error" ></i>
+            {{$t('error.message.0',[loadError])}}
+
           </div>
       </div>
 
@@ -307,6 +312,7 @@
 import axios from 'axios'
 import Vue from 'vue'
 import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
+import ActivityFilter from './activityFilter.vue'
 
 import {
   getRundeckContext,
@@ -340,15 +346,17 @@ const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
 export default Vue.extend({
   name: 'ActivityList',
   components:{
-    OffsetPagination
+    OffsetPagination,
+    ActivityFilter
   },
   props: [
-    'project',
     'queryParams',
-    'eventBus'
+    'eventBus',
+    'displayMode'
   ],
   data () {
     return {
+      projectName:'',
       activityPageHref:'',
       reports:[],
       lastDate:-1,
@@ -358,6 +366,7 @@ export default Vue.extend({
         total:-1
       },
       loading: false,
+      loadError:null,
       momentJobFormat:'M/DD/YY h:mm a',
       momentRunFormat:'h:mm a',
       bulkEditMode:false,
@@ -375,10 +384,18 @@ export default Vue.extend({
         projectAdmin:false,
         deleteExec:false
       },
-
+      query: {
+        jobFilter:'',
+        jobIdFilter:'',
+        userFilter:'',
+        execNodeFilter:'',
+        titleFilter:'',
+        statFilter:'',
+        recentFilter:''
+      },
       period:{name:'All',params:{}},
       periods: [
-        {name:'All',params:{}},
+        {name:'All',params:{recentFilter:''}},
         {name:'Hour',params:{recentFilter:'1h'}},
         {name:'Day',params:{recentFilter:'1d'}},
         {name:'Week',params:{recentFilter:'1w'}},
@@ -456,11 +473,16 @@ export default Vue.extend({
         }
         return 'other';
     },
-    changePeriod(period: any){
-      this.period=period
+    reload(){
       this.reports=[]
       this.pagination.total=-1
+      this.lastDate=-1
       this.loadActivity(0)
+    },
+    changePeriod(period: any){
+      this.period=period
+      this.query.recentFilter=period.params.recentFilter
+      this.reload()
     },
     async bulkDeleteExecutions(ids:string[]){
       const rundeckContext = getRundeckContext()
@@ -487,20 +509,24 @@ export default Vue.extend({
     async loadActivity(offset:number){
       this.loading = true
       this.pagination.offset=offset
-      const response = await axios.get(this.activityUrl,{
-        headers: {'x-rundeck-ajax': true},
-        params: Object.assign({offset: offset, max: this.pagination.max},this.period.params),
-        withCredentials: true
-      })
-      this.loading=false
-      if (response.data) {
-        this.pagination.offset=response.data.offset
-        this.pagination.total=response.data.total
-        this.lastDate=response.data.lastDate
-        this.reports = response.data.reports
-        this.eventBus&&this.eventBus.$emit('activity-query-result',response.data)
+      try{
+        const response = await axios.get(this.activityUrl,{
+          headers: {'x-rundeck-ajax': true},
+          params: Object.assign({offset: offset, max: this.pagination.max},this.query),
+          withCredentials: true
+        })
+        this.loading=false
+        if (response.data) {
+          this.pagination.offset=response.data.offset
+          this.pagination.total=response.data.total
+          this.lastDate=response.data.lastDate
+          this.reports = response.data.reports
+          this.eventBus&&this.eventBus.$emit('activity-query-result',response.data)
+        }
+      }catch(error){
+        this.loading=false
+        this.loadError=error.message
       }
-
     },
     changePageOffset(offset:number){
       if (this.loading) {
@@ -509,6 +535,15 @@ export default Vue.extend({
       this.loadActivity(offset)
     },
 
+  },
+  watch:{
+    query:{
+      handler(newValue,oldValue){
+        console.log("changed query",newValue)
+        this.reload()
+      },
+      deep:true
+    }
   },
   computed:{
     activityHref():string {
@@ -523,25 +558,31 @@ export default Vue.extend({
       // this.internalquery=this.queryParams
     }
 
-    if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
+    this.projectName=window._rundeck.projectName
+    if (window._rundeck && window._rundeck.data) {
       this.auth.projectAdmin=window._rundeck.data['projectAdminAuth']
       this.auth.deleteExec=window._rundeck.data['deleteExecAuth']
       this.activityUrl = window._rundeck.data['activityUrl']
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
       this.activityPageHref=window._rundeck.data['activityPageHref']
+      if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
+        this.pagination.max=window._rundeck.data['pagination'].max
+      }
       this.loadActivity(0)
     }
   }
 })
 </script>
 <style lang="scss" >
-.empty-loading{
+.loading-area{
   padding: 50px;
-  font-style:italic;
-  color: #bbbbbb;
   background: #efefefef;
   font-size: 14px;
   text-align: center;
+  .loading-text{
+    font-style:italic;
+    color: #bbbbbb;
+  }
 }
 td.eventtitle.adhoc {
     font-style: italic;

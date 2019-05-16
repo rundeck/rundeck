@@ -1032,15 +1032,21 @@ class UtilityTagLib{
     }
     /**
      * Embed i18n messages available to javascript in the Messages object
-     * @attr code a i18n message code, or comma separated list
+     * @attr code a i18n message code, or comma or whitespace separated list
+     * @attr codes a list of message codes
      * @attr id element id to use (optional)
      */
     def jsMessages = { attrs, body ->
-        def id = attrs.id ?: 'i18nmessages'
+        def id = attrs.id ?: ('i18nmessages_'+rkey())
         def msgs = [:]
         if (attrs.code) {
-            attrs.code.split(',').each {
-                msgs[it] = g.message(code: it, default: it)
+            attrs.code.split(/(?s)([,\s\r\n]+)/).each {
+                msgs[it] = g.message(code: it.trim(), default: it.trim())
+            }
+        }
+        if(attrs.codes){
+            attrs.codes.each{
+                msgs[it] = g.message(code: it.trim(), default: it.trim())
             }
         }
         embedJSON.call([id: id, data: msgs],null)
