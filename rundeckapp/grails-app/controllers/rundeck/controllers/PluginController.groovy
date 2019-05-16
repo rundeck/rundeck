@@ -344,11 +344,11 @@ class PluginController extends ControllerBase {
         tmpFile << ((MultipartFile)params.pluginFile).inputStream
         def errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
         tmpFile.delete()
-        def msg = []
+        def msg = [:]
         if(!errors.isEmpty()) {
-            msg = [err:errors.join(", ")]
+            msg.err = errors.join(", ")
         } else {
-            msg = [msg:"done"]
+            msg.msg = "done"
         }
 
         render msg as JSON
@@ -388,11 +388,11 @@ class PluginController extends ControllerBase {
         }
         def errors = validateAndCopyPlugin(parts.last(),tmpFile)
         tmpFile.delete()
-        def msg = []
+        def msg = [:]
         if(!errors.isEmpty()) {
-            msg = [err:errors.join(", ")]
+            msg.err = errors.join(", ")
         } else {
-            msg = [msg:"done"]
+            msg.msg = "done"
         }
         render msg as JSON
     }
@@ -413,10 +413,6 @@ class PluginController extends ControllerBase {
             flash.installSuccess = true
         }
         return errors
-    }
-
-    private redirectToPluginMenu() {
-        redirect controller:"menu",action:"plugins"
     }
 
     private String renderErrorCodeAsJson(String errCode) {

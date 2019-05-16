@@ -37,7 +37,7 @@ export default {
           "x-rundeck-ajax": true
         },
         url: `${window._rundeck.rdBase}plugin/installPlugin?pluginUrl=${
-          this.pluginUrl
+          this.pluginURL
         }`,
         withCredentials: true
       }).then(response => {
