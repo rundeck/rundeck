@@ -5,8 +5,6 @@ const translationStrings = {
     'in.of': 'in',
     'execution': 'Execution | Executions',
     'execution.count': '1 Execution | {0} Executions',
-    'uiv.modal.ok': 'OK',
-    'uiv.modal.cancel': 'Cancel',
     'Bulk Delete Executions: Results': 'Bulk Delete Executions: Results',
     'Requesting bulk delete, please wait.': 'Requesting bulk delete, please wait.',
     'bulkresult.attempted.text': '{0} Executions were attempted.',

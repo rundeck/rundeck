@@ -12,6 +12,8 @@ import {
   EventBus
 } from '../../utilities/vueEventBus.js'
 
+import uivLang from '../../utilities/uiv18n'
+
 
 Vue.config.productionTip = false
 
@@ -29,7 +31,8 @@ if (!messages[language]) {
 }
 
 // include any i18n injected in the page by the app
-messages = { [language]: Object.assign({}, window.Messages, messages[language] || {}) }
+messages = { [language]: Object.assign({}, uivLang[language] || {}, window.Messages, messages[language] || {}) }
+
 
 const els = document.body.getElementsByClassName('vue-project-activity')
 
