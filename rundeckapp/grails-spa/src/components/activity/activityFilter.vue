@@ -1,10 +1,14 @@
 <template>
   <span>
-
-    <btn @click="filterOpen=true"  size="xs" :class="hasQuery?'btn-queried btn-info':'btn-secondary'" v-tooltip="hasQuery?$t('Click to edit Search Query'):''">
+    <btn
+      @click="filterOpen=true"
+      size="xs"
+      :class="hasQuery?'btn-queried btn-info':'btn-secondary'"
+      v-tooltip="hasQuery?$t('Click to edit Search Query'):''"
+    >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
-          <li v-for="qname in queryParamsList" :key=qname>
+          <li v-for="qname in queryParamsList" :key="qname">
             <i18n :path="'jobquery.title.'+qname"/>:
             <code class="queryval">{{query[qname]}}</code>
           </li>
@@ -13,7 +17,7 @@
       <span v-else>{{$t('search.ellipsis')}}</span>
     </btn>
 
-    <modal id="activityFilter" v-model="filterOpen" :title="$t('Search Activity')" size="lg">
+    <modal id="activityFilter" v-model="filterOpen" :title="$t('Search Activity')" size="lg" @hide="closing">
       <div>
         <div class="base-filters">
           <div class="row">
@@ -123,7 +127,15 @@
               </div>
             </div>
           </div>
-          <div class="date-filters" v-if="query.recentFilter==='-'">Date Filters...</div>
+        </div>
+        <div class="date-filters panel panel-default" v-if="query.recentFilter==='-'">
+          <div class="panel-body  form-horizontal">
+            <div v-for="df in DateFilters" :key=df.name class="container-fluid">
+                <date-filter v-model="df.filter">
+                  {{$t('jobquery.title.'+df.name)}}
+                </date-filter>
+            </div>
+          </div>
         </div>
       </div>
       <template slot="footer">
@@ -135,18 +147,60 @@
   </span>
 </template>
 <script>
+import DateTimePicker from './dateTimePicker.vue'
+import DateFilter from './dateFilter.vue'
+
 export default {
+  components:{
+    DateTimePicker,
+    DateFilter
+  },
   props: ["eventBus", "value"],
   data() {
     return {
       filterOpen: false,
-      QueryNames:[
+      QueryNames: [
         "jobFilter",
         "jobIdFilter",
         "userFilter",
         "execNodeFilter",
         "titleFilter",
         "statFilter",
+        "startafterFilter",
+        "startbeforeFilter",
+        "endafterFilter",
+        "endbeforeFilter"
+      ],
+      DateFilters:[
+        {
+          name:'startafterFilter',
+          filter:{
+            enabled:false,
+            datetime:''
+          }
+        },
+
+        {
+          name:'startbeforeFilter',
+          filter:{
+            enabled:false,
+            datetime:''
+          }
+        },
+        {
+          name:'endafterFilter',
+          filter:{
+            enabled:false,
+            datetime:''
+          }
+        },
+        {
+          name:'endbeforeFilter',
+          filter:{
+            enabled:false,
+            datetime:''
+          }
+        },
       ],
       query: {
         jobFilter: "",
@@ -155,7 +209,11 @@ export default {
         execNodeFilter: "",
         titleFilter: "",
         statFilter: "",
-        recentFilter: ""
+        recentFilter: "",
+        startafterFilter:"",
+        startbeforeFilter:"",
+        endafterFilter:"",
+        endbeforeFilter:"",
       },
       hasQuery: false,
       showDateFilters: false,
@@ -163,54 +221,82 @@ export default {
         "1d": "1 Day",
         "1w": "1 Week",
         "1m": "1 Month"
-      }
+      },
+      didSearch: false
     }
   },
   methods: {
     search() {
-      this.filterOpen = false
       let isquery = false
       for (let filt in this.QueryNames) {
-        if (this.query[filt]!=='') {
-           isquery=true
-           break
+        if (this.query[filt] !== "") {
+          isquery = true
+          break
         }
       }
       this.hasQuery = isquery
       this.$emit("input", this.query)
-    },
-    cancel(){
+      this.didSearch=true
       this.filterOpen = false
+    },
+    cancel() {
+      this.reset()
+      this.filterOpen = false
+    },
+    reset(){
       this.query = Object.assign({}, this.value)
+      this.DateFilters.forEach(element => {
+        element.filter.datetime=this.query[element.name]
+        element.filter.enabled=!!element.filter.datetime
+      });
+    },
+    closing(){
+      if(this.didSearch){
+        this.didSearch=false
+      }else{
+        this.reset()
+      }
     },
     saveFilter() {}
   },
   watch: {
     value: {
       handler(newValue, oldValue) {
-        this.query = Object.assign({}, newValue)
+        this.reset()
       },
       deep: true
+    },
+    DateFilters:{
+      handler(newValue,oldVale){
+        newValue.forEach(element => {
+          if(element.filter.enabled){
+            this.query[element.name]=element.filter.datetime
+          }else{
+            this.query[element.name]=''
+          }
+        });
+      },
+      deep:true
     }
   },
-  computed:{
-    queryParamsList(){
-      return this.QueryNames.filter((s)=>this.query[s]!=='')
+  computed: {
+    queryParamsList() {
+      return this.QueryNames.filter(s => !!this.query[s])
     }
   },
   mounted() {
-    this.query = Object.assign({}, this.value)
+    this.reset()
   }
 }
 </script>
 <style lang="scss" scoped>
-.query-params-summary{
-  ul.list-inline{
+.query-params-summary {
+  ul.list-inline {
     display: inline-block;
-    margin:0;
+    margin: 0;
   }
 }
-.btn-queried{
-  border-style:dotted;
+.btn-queried {
+  border-style: dotted;
 }
 </style>

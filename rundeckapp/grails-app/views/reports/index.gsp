@@ -49,7 +49,12 @@ jobquery.title.jobIdFilter
 jobquery.title.userFilter
 jobquery.title.statFilter
 jobquery.title.filter
-jobquery.title.recentFilter"/>
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+"/>
     <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
             context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
     <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:

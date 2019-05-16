@@ -31,7 +31,7 @@
                 </a>
             </span>
 
-            <dropdown >
+            <dropdown v-if="query.recentFilter!=='-'">
               <span class="dropdown-toggle text-info">
                 <i18n :path="'period.label.'+period.name"/>
                 <span class="caret"></span>
