@@ -52,30 +52,29 @@ export default {
         loadingMessage: "Installing",
         loadingSpinner: true
       });
-      axios
-        .post(`${window._rundeck.rdBase}plugin/installPlugin`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        })
-        .then(response => {
-          console.log("SUCCESS!!", response);
-          this.$store.dispatch("overlay/openOverlay");
+      axios({
+        method: "post",
+        headers: {
+          "x-rundeck-ajax": true,
+          "Content-Type": "multipart/form-data"
+        },
+        data: formData,
+        url: `${window._rundeck.rdBase}plugin/uploadPlugin`,
+        withCredentials: true
+      }).then(response => {
+        this.$store.dispatch("overlay/openOverlay");
+        if (response.data.err) {
+          this.$alert({
+            title: "Error Uploading",
+            content: response.data.err
+          });
+        } else {
           this.$alert({
             title: "Plugin Installed",
-            content:
-              "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Necessitatibus eaque ipsam aliquam rem inventore animi debitis eos, consectetur quos voluptatum dolor architecto possimus, iure voluptates repudiandae facere? Eos, ut praesentium?"
+            content: reponse.data.msg
           });
-        })
-        .catch(function() {
-          this.$store.dispatch("overlay/openOverlay");
-          console.log("FAILURE!!");
-          this.$alert({
-            title: "Error installing",
-            content:
-              "Lorem ipsum, dolor sit amet consectetur adipisicing elit. Necessitatibus eaque ipsam aliquam rem inventore animi debitis eos, consectetur quos voluptatum dolor architecto possimus, iure voluptates repudiandae facere? Eos, ut praesentium?"
-          });
-        });
+        }
+      });
     },
     handleFilesUploads() {
       this.files = this.$refs.files.files;

@@ -17,6 +17,7 @@
   </div>
 </template>
 <script>
+import axios from "axios";
 export default {
   name: "PluginUrlUploadForm",
   data() {
@@ -31,7 +32,7 @@ export default {
         loadingSpinner: true
       });
       axios({
-        method: "get",
+        method: "post",
         headers: {
           "x-rundeck-ajax": true
         },
@@ -39,15 +40,20 @@ export default {
           this.pluginUrl
         }`,
         withCredentials: true
-      })
-        .then(response => {
-          console.log("SUCCESS!!", response);
-          this.$store.dispatch("overlay/openOverlay");
-        })
-        .catch(function() {
-          this.$store.dispatch("overlay/openOverlay");
-          console.log("FAILURE!!");
-        });
+      }).then(response => {
+        this.$store.dispatch("overlay/openOverlay");
+        if (response.data.err) {
+          this.$alert({
+            title: "Error Uploading",
+            content: response.data.err
+          });
+        } else {
+          this.$alert({
+            title: "Plugin Installed",
+            content: reponse.data.msg
+          });
+        }
+      });
     }
   }
 };
