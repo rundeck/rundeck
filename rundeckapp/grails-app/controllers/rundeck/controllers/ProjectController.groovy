@@ -770,10 +770,10 @@ class ProjectController extends ControllerBase{
             String propsPrefix = "project.clean.executions"
             if(config && ["true", true].contains(config["${propsPrefix}.enabled"])){
                 frameworkService.scheduleCleanerExecutions(project, ["true", true].contains(config["${propsPrefix}.enabled"]),
-                        config["${propsPrefix}.maxDaysToKeep"] ? Integer.parseInt(config["${propsPrefix}.maxDaysToKeep"]) : -1,
+                        config["${propsPrefix}.maxdaystokeep"] ? Integer.parseInt(config["${propsPrefix}.maxdaystokeep"]) : -1,
                         StringUtils.isNotEmpty(config["${propsPrefix}.minimumExecutionToKeep"]) ? Integer.parseInt(config["${propsPrefix}.minimumExecutionToKeep"]) : 0,
                         StringUtils.isNotEmpty(config["${propsPrefix}.maximumDeletionSize"]) ? Integer.parseInt(config["${propsPrefix}.maximumDeletionSize"]) : 500,
-                        config["${propsPrefix}.cronExpression"])
+                        config["${propsPrefix}.schedule"])
             }
         }
         switch(respFormat) {
