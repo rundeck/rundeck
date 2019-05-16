@@ -178,8 +178,8 @@ jobs:
   - stage: fork
     script:
     - script_block 'build' 'bash scripts/travis-build.sh buildFork'
-    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
-    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
+    # - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+    # - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
     - script_block 'docker-test' 'bash test/run-docker-tests.sh'
     - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'
