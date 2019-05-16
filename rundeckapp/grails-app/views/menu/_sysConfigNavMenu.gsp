@@ -80,7 +80,7 @@
       </g:link>
     </li>
   </g:if>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
 <g:if test="${pluginRead && repoEnabled == 'true'}">
   <li class="dropdown-submenu">
     <a href="#">Plugins <span class="caret"></span></a>

@@ -130,6 +130,9 @@
         </div>
       </g:each>
     </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
       <div class="card">
         <div class="card-header">
           <h4 class="card-title" style="text-transform: uppercase;">Repositories</h4>
@@ -137,19 +140,22 @@
         <div class="card-content">
           <div>
             <span class="h6">ACTIVE:</span>
-            <span class=" ">true</span>
+            <span class=" ">${repoEnabled in [true,'true'] ? "true" : "false" }</span>
           </div>
           <div>
+            <g:if test="${repoEnabled}">
             <span class="h6">Repos:</span>
             <span class="">
               <ul>
-                <li>Lorem ipsum dolor sit amet</li>
-                <li>Ex odio, eius ipsum at</li>
+                <g:listRepos />
               </ul>
             </span>
+            </g:if>
           </div>
         </div>
       </div>
+      </div>
+    </div>
   </div>
 </body>
 </html>
