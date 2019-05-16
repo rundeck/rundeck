@@ -84,6 +84,7 @@ class UrlMappings {
             )
         // }
         "/artifact/index/configurations"(controller: "repository", action: "index")
+        "/artifact/index/upload"(controller: "repository", action: "index")
         "/"(view:"/index")
         "500"(view:'/error')
         "404"(view:'/notFound')

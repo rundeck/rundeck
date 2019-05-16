@@ -91,6 +91,19 @@
                 <code><g:enc>${loginmodule}</g:enc></code>
               </div>
             </div>
+            <hr>
+            <h4>Repositories</h4>
+            <div>
+              <p>Some text describing this area. blah blah blah blah blah.</p>
+              <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+              <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.features.repository.enabled']]"/>
+            </div>
+
+            <div style="margin-top:1em;">
+              <p>Utilizing remote search tools some text describing this thing.</p>
+               <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+                 <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.features.repository.localSearchOnly']]"/>
+               </div>
           </div>
           <div class="card-footer">
             <hr>

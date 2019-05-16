@@ -24,8 +24,8 @@
         </div>
       </div>
       <div class="card-footer">
-        <a @click="openInfo">
-          <i class="fas fa-cog fa-2x"></i>
+        <a @click="openInfo" style="cursor:pointer;">
+          <i class="fas fa-file-code fa-2x"></i>
         </a>
       </div>
     </div>

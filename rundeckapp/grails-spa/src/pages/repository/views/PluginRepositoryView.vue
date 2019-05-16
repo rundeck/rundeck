@@ -71,6 +71,12 @@ import fuse from "fuse.js";
 import RepositoryRow from "../components/Repository";
 import { mapState, mapActions } from "vuex";
 
+// import Trellis, {
+//   getRundeckContext,
+//   getSynchronizerToken,
+//   RundeckBrowser
+// } from "@rundeck/ui-trellis";
+
 const FuseSearchOptions = {
   shouldSort: true,
   threshold: 0.2,
@@ -94,7 +100,8 @@ export default {
       showWhichPlugins: null,
       searchString: "",
       searchIndex: [],
-      searchResults: []
+      searchResults: [],
+      loggingPermissionCheck: false
     };
   },
   watch: {
@@ -116,6 +123,25 @@ export default {
       //   `Searching for ....${this.searchString}`,
       //   this.repositories[0].results
       // );
+
+      // Trellis.FilterPrefs.getAvailableFilterPrefs().then(response => {
+      //   console.log("response", response);
+      //   if (
+      //     response.data &&
+      //     !response.data.permissionTrackPluginRepositorySearch
+      //   ) {
+      //     alert("hello");
+      //   }
+      // });
+
+      // Trellis.FilterPrefs.setFilterPref(
+      //   "permissionTrackPluginRepositorySearch",
+      //   this.currentReleaseVersion.stringVersion
+      // ).then(() => {
+      //   this.showNotificationModal = false;
+      //   this.showVersionNotification = false;
+      // });
+
       this.showWhichPlugins = null;
       if (this.searchString === "") {
         this.searchResults = [];
@@ -144,13 +170,18 @@ export default {
 <style lang="scss" scoped>
 // Search Input
 .input-group .form-control {
-  border: 3px solid #66615b;
+  border: 2px solid #66615b;
 }
 // .input-group-btn .btn-default:not(.btn-fill) {
 // }
 </style>
 
 <style lang="scss" scoped>
+.btn-group.btn-group.squareish-buttons {
+  .btn {
+    border-width: 2px;
+  }
+}
 .btn-group.squareish-buttons
   > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
   border-top-left-radius: 6px;

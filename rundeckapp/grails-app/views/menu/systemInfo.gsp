@@ -130,6 +130,26 @@
         </div>
       </g:each>
     </div>
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title" style="text-transform: uppercase;">Repositories</h4>
+        </div>
+        <div class="card-content">
+          <div>
+            <span class="h6">ACTIVE:</span>
+            <span class=" ">true</span>
+          </div>
+          <div>
+            <span class="h6">Repos:</span>
+            <span class="">
+              <ul>
+                <li>Lorem ipsum dolor sit amet</li>
+                <li>Ex odio, eius ipsum at</li>
+              </ul>
+            </span>
+          </div>
+        </div>
+      </div>
   </div>
 </body>
 </html>

@@ -31,7 +31,7 @@
           <div class="col-xs-12 col-sm-6">
             <div class="links fa-2x">
               <a v-if="result.sourceLink" :href="result.sourceLink" target="_blank">
-                <i class="fas fa-file-code"></i>
+                <i class="fas fa-code-branch"></i>
               </a>
               <a
                 v-if="result.record && result.record.post_slug "
