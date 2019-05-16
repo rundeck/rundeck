@@ -125,7 +125,7 @@
     <div id="cleaner_config" style="display: ${isSelected ? 'block' : 'none' }">
         <div class="form-group ${cleanerHistoryPeriodError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.days.to.clean.execution" default="Days to keep executions. Default: 60"/>
+                <g:message code="execution.history.cleanup.retention.days" default="Days to keep executions. Default: 60"/>
             </label>
             <g:field name="cleanperiod" type="number" size="50" min="1" value="${cleanerHistoryPeriod}" class="form-control"/>
             <g:if test="${cleanerHistoryPeriodError}">
@@ -134,7 +134,7 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.minimum.to.keep.execution" default="Minimum executions to keep. Default: 50"/>
+                <g:message code="execution.history.cleanup.retention.minimum" default="Minimum executions to keep. Default: 50"/>
             </label>
             <g:field name="minimumtokeep" type="number" size="50" min="0" value="${minimumExecutionToKeep}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -143,7 +143,7 @@
         </div>
         <div class="form-group ${cleanerHistoryConfigError?'has-error':''}">
             <label for="cleanperiod">
-                <g:message code="domain.Project.maximum.size.deletion.execution" default="Maximum size of the deletion. Default: 500"/>
+                <g:message code="execution.history.cleanup.batch" default="Maximum size of the deletion. Default: 500"/>
             </label>
             <g:field name="maximumdeletionsize" type="number" size="50" min="0" value="${maximumDeletionSize}" class="form-control"/>
             <g:if test="${cleanerHistoryConfigError}">
@@ -153,7 +153,7 @@
         <div class="form-group">
             %{--<div class="panel panel-default panel-tab-content crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
-                <g:message code="domain.Project.schedule.clean.execution" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
+                <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>
             <div class="row">
                 <div class="col-sm-8">
