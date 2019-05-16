@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.converters.JSON
+import org.apache.commons.lang.StringUtils
 import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
@@ -765,6 +766,15 @@ class ProjectController extends ControllerBase{
         if(errors){
             return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: errors.join('; '),format: respFormat])
+        } else {
+            String propsPrefix = "project.execution.history.cleanup"
+            if(config && ["true", true].contains(config["${propsPrefix}.enabled"])){
+                frameworkService.scheduleCleanerExecutions(project, ["true", true].contains(config["${propsPrefix}.enabled"]),
+                        config["${propsPrefix}.retention.days"] ? Integer.parseInt(config["${propsPrefix}.retention.days"]) : -1,
+                        StringUtils.isNotEmpty(config["${propsPrefix}.retention.minimum"]) ? Integer.parseInt(config["${propsPrefix}.retention.minimum"]) : 0,
+                        StringUtils.isNotEmpty(config["${propsPrefix}.batch"]) ? Integer.parseInt(config["${propsPrefix}.batch"]) : 500,
+                        config["${propsPrefix}.schedule"])
+            }
         }
         switch(respFormat) {
             case 'xml':
