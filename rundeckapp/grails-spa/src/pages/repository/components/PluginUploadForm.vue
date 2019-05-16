@@ -46,7 +46,7 @@ export default {
       for (var i = 0; i < this.files.length; i++) {
         let file = this.files[i];
 
-        formData.append("files[" + i + "]", file);
+        formData.append("pluginFile", file);
       }
       this.$store.dispatch("overlay/openOverlay", {
         loadingMessage: "Installing",
