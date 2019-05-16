@@ -36,7 +36,7 @@
 </script>
 <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
 <script type="text/javascript">
-  window.repoEnabled = ${repoEnabled ?: false};
+  window.repoEnabled = ${repoEnabled ?: false}
 </script>
 <div class="container-fluid">
     <div id="repository-artifact-content">
