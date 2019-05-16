@@ -90,7 +90,6 @@ Brief summary/description of the plugin.
                 String installedPluginStorageTreePath = "/"
                 if(!application.config.rundeck.feature.repository.installedPlugins.storageTreePath.isEmpty()) {
                     installedPluginStorageTreePath = application.config.rundeck.feature.repository.installedPlugins.storageTreePath
-                    println "setting installed plugin storage tree path to: ${installedPluginStorageTreePath}"
                 }
                 //Repository
                 repoArtifactInstaller(StorageTreeArtifactInstaller, ref('repoPluginStorageTree'),installedPluginStorageTreePath)
