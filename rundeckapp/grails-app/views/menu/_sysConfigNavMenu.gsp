@@ -37,6 +37,14 @@
         any: true,
         context: 'application'
 )}"/>
+<g:set var="pluginInstall" value="${auth.resourceAllowedTest(
+        type: 'resource',
+        kind: 'plugin',
+        action: ["install","admin"],
+        any: true,
+        context: 'application'
+)}"/>
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
 
 <style>
 .dropdown-submenu {
@@ -80,7 +88,6 @@
       </g:link>
     </li>
   </g:if>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
 <g:if test="${pluginRead && repoEnabled == 'true'}">
   <li class="dropdown-submenu">
     <a href="#">Plugins <span class="caret"></span></a>
@@ -111,7 +118,14 @@
 <g:if test="${pluginRead && repoEnabled != 'true'}">
   <li>
     <a href="${g.createLink(uri:'/artifact/index/configurations')}">
-      <g:message code="gui.menu.ListPlugins"/>
+      <g:message code="gui.menu.InstalledPlugins"/>
+    </a>
+  </li>
+</g:if>
+<g:if test="${pluginInstall && repoEnabled != 'true'}">
+  <li>
+    <a href="${g.createLink(uri:'/artifact/index/upload')}">
+      <g:message code="gui.menu.UploadPlugin"/>
     </a>
   </li>
 </g:if>
