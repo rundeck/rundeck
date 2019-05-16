@@ -767,12 +767,12 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response,[status:HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     message: errors.join('; '),format: respFormat])
         } else {
-            String propsPrefix = "project.clean.executions"
+            String propsPrefix = "project.execution.history.cleanup"
             if(config && ["true", true].contains(config["${propsPrefix}.enabled"])){
                 frameworkService.scheduleCleanerExecutions(project, ["true", true].contains(config["${propsPrefix}.enabled"]),
-                        config["${propsPrefix}.maxdaystokeep"] ? Integer.parseInt(config["${propsPrefix}.maxdaystokeep"]) : -1,
-                        StringUtils.isNotEmpty(config["${propsPrefix}.minimumExecutionToKeep"]) ? Integer.parseInt(config["${propsPrefix}.minimumExecutionToKeep"]) : 0,
-                        StringUtils.isNotEmpty(config["${propsPrefix}.maximumDeletionSize"]) ? Integer.parseInt(config["${propsPrefix}.maximumDeletionSize"]) : 500,
+                        config["${propsPrefix}.retention.days"] ? Integer.parseInt(config["${propsPrefix}.retention.days"]) : -1,
+                        StringUtils.isNotEmpty(config["${propsPrefix}.retention.minimum"]) ? Integer.parseInt(config["${propsPrefix}.retention.minimum"]) : 0,
+                        StringUtils.isNotEmpty(config["${propsPrefix}.batch"]) ? Integer.parseInt(config["${propsPrefix}.batch"]) : 500,
                         config["${propsPrefix}.schedule"])
             }
         }

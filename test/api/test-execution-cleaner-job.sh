@@ -26,11 +26,11 @@ create_proj(){
     <description>test1</description>
     <config>
         <property key="test.property" value="test value"/>
-        <property key="project.clean.executions.enabled" value="true"/>
-        <property key="project.clean.executions.maxdaystokeep" value="1"/>
-        <property key="project.clean.executions.maximumDeletionSize" value="500"/>
-        <property key="project.clean.executions.minimumExecutionToKeep" value="0"/>
-        <property key="project.clean.executions.schedule" value="0 0/1 * 1/1 * ? *"/>
+        <property key="project.execution.history.cleanup.enabled" value="true"/>
+        <property key="project.execution.history.cleanup.retention.days" value="1"/>
+        <property key="project.execution.history.cleanup.batch" value="500"/>
+        <property key="project.execution.history.cleanup.retention.minimum" value="0"/>
+        <property key="project.execution.history.cleanup.schedule" value="0 0/1 * 1/1 * ? *"/>
     </config>
 </project>
 END

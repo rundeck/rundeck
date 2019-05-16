@@ -103,7 +103,7 @@
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
   <div class="list-group-item">
-      <label class=" control-label"><g:message code="execution.history.clean.label" default="Execution History Clean:"/>:</label>
+      <label class=" control-label"><g:message code="execution.history.cleanup.label" default="Execution History Clean"/>:</label>
       <div class="row">
           <div class="col-sm-4">
               <g:set var="isSelected" value="${enableCleanHistory}"/>

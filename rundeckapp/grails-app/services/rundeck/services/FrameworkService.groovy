@@ -217,11 +217,11 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         projectNames.each { project ->
             def projectConfig = [:]
             def fwkProject = getFrameworkProject(project)
-            def enabled = ["true", true].contains(fwkProject.getProjectProperties().get("project.clean.executions.enabled"))
-            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.clean.executions.maxdaystokeep")
-            def cronExpression = fwkProject.getProjectProperties().get("project.clean.executions.schedule")
-            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.clean.executions.minimumExecutionToKeep")
-            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.clean.executions.maximumDeletionSize")
+            def enabled = ["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled"))
+            def maxDaysToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days")
+            def cronExpression = fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule")
+            def minimumExecutionToKeep = fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum")
+            def maximumDeletionSize = fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch")
             if(enabled){
                 projectConfig.put("enabled",enabled)
                 projectConfig.put("maxDaysToKeep",maxDaysToKeep)
