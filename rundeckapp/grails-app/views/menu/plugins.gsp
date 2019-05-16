@@ -60,7 +60,7 @@ To change this template use File | Settings | File Templates.
           <div class="card-header">
             <h3 class="card-title">
               <g:message code="page.Plugins.title"/>
-              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
               <g:if test="${repoEnabled == 'true'}">
                 <div class="btn-toolbar">
                   <g:link controller="artifact" action="index" class="btn btn-success pull-right">
