@@ -345,7 +345,8 @@ class PluginController extends ControllerBase {
         tmpFile << ((MultipartFile)params.pluginFile).inputStream
         flash.errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
         tmpFile.delete()
-        redirectToPluginMenu()
+        def msg = [msg:"done"]
+        render msg as JSON
     }
 
     def installPlugin() {
@@ -385,7 +386,8 @@ class PluginController extends ControllerBase {
         }
         flash.errors = validateAndCopyPlugin(parts.last(),tmpFile)
         tmpFile.delete()
-        redirectToPluginMenu()
+        def msg = [msg:"done"]
+        render msg as JSON
     }
 
     private def validateAndCopyPlugin(String pluginName, File tmpPluginFile) {
