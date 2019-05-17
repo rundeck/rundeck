@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 
@@ -44,18 +45,21 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     private StepExecutionContext context;
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
+    private JobLifeCycleService jobLifeCycleService;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
-            LoggingManager loggingManager
+            LoggingManager loggingManager,
+            JobLifeCycleService jobLifeCycleService
     )
     {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
         this.loggingManager = loggingManager;
+        this.jobLifeCycleService = jobLifeCycleService;
     }
 
     public void run() {
@@ -79,6 +83,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
+            jobLifeCycleService.onBeforeJobStart(weitem, context, loggingManager);
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(context, weitem));
             success = getResult().isSuccess();
