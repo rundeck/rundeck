@@ -28,6 +28,13 @@ const translationStrings = {
     'In the last Day': 'In the last Day',
     'Referenced': 'Referenced',
     'job.has.been.deleted.0': '(Job {0} has been deleted)',
+    'Filters': 'Filters',
+    'filter.delete.named.text': 'Delete Filter "{0}"...',
+    'Delete Saved Filter': 'Delete Saved Filter',
+    'filter.delete.confirm.text': 'Are you sure you want to delete the Saved Filter named "{0}"?',
+    'filter.save.name.prompt': 'Name:',
+    'filter.save.validation.name.blank': 'Name Cannot be blank',
+    'filter.save.button': 'Save Filter...',
 
     period: {
       label: {

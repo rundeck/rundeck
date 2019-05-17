@@ -1,5 +1,21 @@
 <template>
   <span>
+
+    <dropdown v-if="query.recentFilter!=='-'">
+      <span class="dropdown-toggle text-info">
+        <i18n :path="'period.label.'+period.name"/>
+        <span class="caret"></span>
+      </span>
+      <template slot="dropdown">
+        <li v-for="perobj in periods" :key="perobj.name">
+          <a role="button" @click="changePeriod(perobj)">
+          <i18n :path="'period.label.'+perobj.name"/>
+          <span v-if="period.name===perobj.name">√</span>
+          </a>
+        </li>
+      </template>
+    </dropdown>
+
     <btn
       @click="filterOpen=true"
       size="xs"
@@ -16,6 +32,8 @@
       </span>
       <span v-else>{{$t('search.ellipsis')}}</span>
     </btn>
+
+    <saved-filters :query="value" :has-query="hasQuery" @select_filter="selectFilter($event)" v-if="value" :event-bus="eventBus"></saved-filters>
 
     <modal id="activityFilter" v-model="filterOpen" :title="$t('Search Activity')" size="lg" @hide="closing">
       <div>
@@ -139,9 +157,12 @@
         </div>
       </div>
       <template slot="footer">
-        <btn @click="filterOpen=false">Cancel</btn>
-        <btn @click="search">Search</btn>
-        <btn @click="saveFilter">Save as a Filter</btn>
+        <btn @click="filterOpen=false">{{$t('cancel')}}</btn>
+        <btn @click="search" type="primary">{{$t('search')}}</btn>
+        <btn @click="saveFilter" type="success" class="pull-right">
+          <i class="glyphicon glyphicon-plus"></i>
+          {{$t('Save as a Filter...')}}
+        </btn>
       </template>
     </modal>
   </span>
@@ -149,21 +170,29 @@
 <script>
 import DateTimePicker from './dateTimePicker.vue'
 import DateFilter from './dateFilter.vue'
+import SavedFilters from './savedFilters.vue'
 
 export default {
   components:{
     DateTimePicker,
-    DateFilter
+    DateFilter,
+    SavedFilters
   },
-  props: ["eventBus", "value"],
+  props: ["eventBus", "value","eventBus"],
   data() {
     return {
       filterOpen: false,
+      DateQueryNames: [
+        "startafterFilter",
+        "startbeforeFilter",
+        "endafterFilter",
+        "endbeforeFilter"
+      ],
       QueryNames: [
         "jobFilter",
         "jobIdFilter",
         "userFilter",
-        "execNodeFilter",
+        "execnodeFilter",
         "titleFilter",
         "statFilter",
         "startafterFilter",
@@ -206,7 +235,7 @@ export default {
         jobFilter: "",
         jobIdFilter: "",
         userFilter: "",
-        execNodeFilter: "",
+        execnodeFilter: "",
         titleFilter: "",
         statFilter: "",
         recentFilter: "",
@@ -218,29 +247,55 @@ export default {
       hasQuery: false,
       showDateFilters: false,
       recentDateFilters: {
+        "1h": "1 Hour",
         "1d": "1 Day",
         "1w": "1 Week",
         "1m": "1 Month"
       },
-      didSearch: false
+      didSearch: false,
+
+      period:{name:'All',params:{}},
+      periods: [
+        {name:'All',params:{recentFilter:''}},
+        {name:'Hour',params:{recentFilter:'1h'}},
+        {name:'Day',params:{recentFilter:'1d'}},
+        {name:'Week',params:{recentFilter:'1w'}},
+        {name:'Month',params:{recentFilter:'1m'}},
+       ] ,
     }
   },
   methods: {
     checkQueryIsPresent(){
-      let isquery = false
-      for (let filt in this.QueryNames) {
-        if (this.query[filt]) {
-          isquery = true
-          break
-        }
-      }
+      let isquery = this.QueryNames.findIndex((q)=>this.query[q])>=0
+      
       this.hasQuery = isquery
+    },
+    updated(){
+
+      this.$emit("input", this.query)
     },
     search() {
       this.checkQueryIsPresent()
-      this.$emit("input", this.query)
+      this.query.filterName=''
       this.didSearch=true
       this.filterOpen = false
+      this.updated()
+    },
+    selectFilter(filter){
+      this.QueryNames.forEach((v)=>this.query[v]=filter[v])
+      this.DateQueryNames.forEach((v)=>{
+        if(filter[v]){
+          this.query['do'+v]='true'
+        }
+      })
+      if(filter.recentFilter){
+        this.query.recentFilter=filter.recentFilter
+      }
+      
+      this.query.filterName=filter.name
+      this.checkQueryIsPresent()
+      this.updateSelectedPeriod()
+      this.updated()
     },
     cancel() {
       this.reset()
@@ -261,9 +316,31 @@ export default {
         this.reset()
       }
     },
-    saveFilter() {}
+    saveFilter(){
+      this.eventBus.$emit('invoke-save-filter')
+      this.didSearch=true
+      this.filterOpen=false
+    },
+    changePeriod(period){
+      this.period=period
+      this.query.recentFilter=period.params.recentFilter
+      this.updated()
+    },
+    updateSelectedPeriod(){
+      if(this.query.recentFilter && this.period && this.query.recentFilter!=this.period.params.recentFilter){
+        const p=this.periods.find(v=>v.params.recentFilter===this.query.recentFilter)
+        if(p && p!==this.period){
+          this.period=p
+        }
+      }
+    }
   },
   watch: {
+    query:{
+      handler(newValue,oldValue){
+        this.updateSelectedPeriod()
+      },
+    },
     value: {
       handler(newValue, oldValue) {
         this.reset()

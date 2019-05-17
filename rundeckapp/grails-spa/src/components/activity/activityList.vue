@@ -31,22 +31,9 @@
                 </a>
             </span>
 
-            <dropdown v-if="query.recentFilter!=='-'">
-              <span class="dropdown-toggle text-info">
-                <i18n :path="'period.label.'+period.name"/>
-                <span class="caret"></span>
-              </span>
-              <template slot="dropdown">
-                <li v-for="perobj in periods" :key="perobj.name">
-                  <a role="button" @click="changePeriod(perobj)">
-                  <i18n :path="'period.label.'+perobj.name"/>
-                  <span v-if="period.name===perobj.name">√</span>
-                  </a>
-                </li>
-              </template>
-            </dropdown>
 
-          <activity-filter v-model="query"></activity-filter>
+          <activity-filter v-model="query" :event-bus="eventBus"></activity-filter>
+          
           <div class="pull-right">
             <span >
               <input type=checkbox id=auto-refresh v-model=autorefresh />
@@ -263,7 +250,7 @@
             <td class="eventicon " :title="executionState(rpt.execution.status)" >
                 <i class="exec-status icon" :data-execstate="executionStateCss(rpt.execution.status)" :data-statusstring="rpt.execution.status"></i>
             </td>
-            <td class="right date " v-tooltip="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
                     <span class="timeabs">
                         {{rpt.dateCompleted | moment('from','now')}}
@@ -397,7 +384,6 @@ export default Vue.extend({
     ActivityFilter
   },
   props: [
-    'queryParams',
     'eventBus',
     'displayMode'
   ],
@@ -443,20 +429,13 @@ export default Vue.extend({
         jobFilter:'',
         jobIdFilter:'',
         userFilter:'',
-        execNodeFilter:'',
+        execnodeFilter:'',
         titleFilter:'',
         statFilter:'',
-        recentFilter:''
-      },
-      period:{name:'All',params:{}},
-      periods: [
-        {name:'All',params:{recentFilter:''}},
-        {name:'Hour',params:{recentFilter:'1h'}},
-        {name:'Day',params:{recentFilter:'1d'}},
-        {name:'Week',params:{recentFilter:'1w'}},
-        {name:'Month',params:{recentFilter:'1m'}},
-       ] as {[name:string]:any}[],
-       indefinite:80,
+        recentFilter:'',
+        filterName:''
+      } as {[key:string]:string},
+      currentFilter:'',
     }
   },
   methods: {
@@ -581,11 +560,6 @@ export default Vue.extend({
       this.sincecount=0
       this.loadActivity(0)
     },
-    changePeriod(period: any){
-      this.period=period
-      this.query.recentFilter=period.params.recentFilter
-      this.reload()
-    },
     async bulkDeleteExecutions(ids:string[]){
       const rundeckContext = getRundeckContext()
       this.bulkEditProgress=true
@@ -646,10 +620,15 @@ export default Vue.extend({
       if(this.query.jobIdFilter){
         xquery['includeJobRef']='true'
       }
+      if(this.query.filterName){
+        xquery['filterName']=this.query.filterName
+      }else{
+        Object.assign(xquery,this.query)
+      }
       try{
         const response = await axios.get(this.activityUrl,{
           headers: {'x-rundeck-ajax': true},
-          params: Object.assign({offset: offset, max: this.pagination.max},this.query,xquery),
+          params: Object.assign({offset: offset, max: this.pagination.max},xquery),
           withCredentials: true
         })
         this.loading=false
@@ -689,7 +668,19 @@ export default Vue.extend({
         clearTimeout(this.autorefreshtimeout)
         this.autorefreshtimeout=null
       }
-    }
+    },
+    fullQueryParams():any{
+      if(this.query.filterName){
+        return {filterName:this.query.filterName}
+      }
+      let params={} as {[key:string]:string}
+      for(let v in this.query){
+        if(this.query[v]){
+          params[v]=this.query[v]
+        }
+      }
+      return params
+    },
   },
   watch:{
     query:{
@@ -708,11 +699,11 @@ export default Vue.extend({
           this.stopAutorefresh()
         }
       }
-    }
+    },
   },
   computed:{
     activityHref():string {
-      return _genUrl(this.activityPageHref , this.period.params)
+      return _genUrl(this.activityPageHref , this.fullQueryParams())
     }
   },
   mounted () {
@@ -736,9 +727,10 @@ export default Vue.extend({
       }
       if(window._rundeck.data['query'] ){
         this.query = Object.assign({},this.query,window._rundeck.data['query'] )
+      }else{
+        this.loadActivity(0)
       }
       
-      this.loadActivity(0)
       this.loadRunning()
     }
   }
