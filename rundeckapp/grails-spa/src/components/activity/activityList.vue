@@ -283,14 +283,17 @@
                 <!-- <g:if test="${includeJobRef}">
                     <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
                 </g:if> -->
-
-
                       <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="(rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: '')">
                         {{rpt.jobName}}
                       </span>
                       <span v-else>
                         {{rpt.executionString}}
                       </span>
+                      <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
+                        <i class="fas fa-arrow-circle-right-alt"></i>
+                        (Referenced)
+                      </span>
+
 
                     <span v-if="rpt.jobDeleted" class="text-primary">
                         (<i18n path="domain.ScheduledExecution.title"/>
@@ -644,10 +647,14 @@ export default Vue.extend({
     async loadActivity(offset:number){
       this.loading = true
       this.pagination.offset=offset
+      let xquery:{[key:string]:string}={}
+      if(this.query.jobIdFilter){
+        xquery['includeJobRef']='true'
+      }
       try{
         const response = await axios.get(this.activityUrl,{
           headers: {'x-rundeck-ajax': true},
-          params: Object.assign({offset: offset, max: this.pagination.max},this.query),
+          params: Object.assign({offset: offset, max: this.pagination.max},this.query,xquery),
           withCredentials: true
         })
         this.loading=false
