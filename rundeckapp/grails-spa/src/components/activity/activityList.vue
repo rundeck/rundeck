@@ -291,14 +291,12 @@
                       </span>
                       <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
                         <i class="fas fa-arrow-circle-right-alt"></i>
-                        (Referenced)
+                        {{$t('Referenced')}}
                       </span>
 
 
                     <span v-if="rpt.jobDeleted" class="text-primary">
-                        (<i18n path="domain.ScheduledExecution.title"/>
-                        {{rpt.jobName}}
-                        has been deleted)
+                          {{$t('job.has.been.deleted.0',[rpt.jobName])}}
                     </span>
 
                 <span v-if="isCustomStatus(rpt.execution.status)">

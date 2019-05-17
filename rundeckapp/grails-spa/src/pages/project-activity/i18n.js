@@ -26,7 +26,9 @@ const translationStrings = {
     'job.execution.starting.0': 'Starting {0}',
     'info.newexecutions.since.0': '1 New Result. Click to load. | {0} New Results. Click to load.',
     'In the last Day': 'In the last Day',
-    
+    'Referenced': 'Referenced',
+    'job.has.been.deleted.0': '(Job {0} has been deleted)',
+
     period: {
       label: {
         All: 'any time',
