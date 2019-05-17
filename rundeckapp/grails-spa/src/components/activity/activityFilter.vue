@@ -229,7 +229,7 @@ export default {
     checkQueryIsPresent(){
       let isquery = false
       for (let filt in this.QueryNames) {
-        if (this.query[filt] !== "") {
+        if (this.query[filt]) {
           isquery = true
           break
         }
