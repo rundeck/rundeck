@@ -16,8 +16,8 @@ appender('STDOUT', TrueConsoleAppender) {
 
         pattern =
                 '[%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint}] ' + // Date
-                        '%clr(%-40.40logger{39}){cyan}' + // Logger
                         '%clr(%5p) ' + // Log level
+                        '%clr(%logger{0}){cyan} ' + // Logger
                         '%clr(---){faint} %clr([%15.15t]){faint} ' + // Thread
                         '%m%n%wex' // Message
     }
