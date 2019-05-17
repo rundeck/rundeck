@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div class="row activity-list">
     <div class="col-xs-12">
       <div class="card">
         <div class="card-content">
@@ -180,7 +180,7 @@
     </modal>
     <div class="card-content-full-width">
     <table class=" table table-hover table-condensed " >
-      <tbody  v-if="running && running.executions" class="running-executions">
+      <tbody  v-if="running && running.executions.length>0" class="running-executions">
         <tr
             v-for="exec in running.executions"
             :key="exec.id"
@@ -280,24 +280,21 @@
                 {{rpt.user}}
             </td>
             <td class="eventtitle " :class="{job:rpt.jobId,adhoc:!rpt.jobId}" >
-                <!-- <g:if test="${includeJobRef}">
-                    <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
-                </g:if> -->
-                      <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="(rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: '')">
-                        {{rpt.jobName}}
-                      </span>
-                      <span v-else>
-                        {{rpt.executionString}}
-                      </span>
-                      <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
-                        <i class="fas fa-arrow-circle-right-alt"></i>
-                        {{$t('Referenced')}}
-                      </span>
+                  <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="(rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: '')">
+                    {{rpt.jobName}}
+                  </span>
+                  <span v-else>
+                    {{rpt.executionString}}
+                  </span>
+                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
+                    <i class="fas fa-arrow-circle-right-alt"></i>
+                    {{$t('Referenced')}}
+                  </span>
 
 
-                    <span v-if="rpt.jobDeleted" class="text-primary">
-                          {{$t('job.has.been.deleted.0',[rpt.jobName])}}
-                    </span>
+                <span v-if="rpt.jobDeleted" class="text-primary">
+                      {{$t('job.has.been.deleted.0',[rpt.jobName])}}
+                </span>
 
                 <span v-if="isCustomStatus(rpt.execution.status)">
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
@@ -748,6 +745,9 @@ export default Vue.extend({
 })
 </script>
 <style lang="scss" >
+.activity-list .table{
+  margin-bottom:0;
+}
 .loading-area{
   padding: 50px;
   background: #efefefef;
