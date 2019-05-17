@@ -412,7 +412,10 @@ class ReportService  {
         ]
 
         if(query?.jobIdFilter && query.jobIdFilter.toString().length() == 36) {
-            query.jobIdFilter = ScheduledExecution.findByUuid(query.jobIdFilter).id.toString()
+            def found = ScheduledExecution.findByUuid(query.jobIdFilter)
+            if(found) {
+                query.jobIdFilter = found.id.toString()
+            }
         }
 
         def filters = [:]
