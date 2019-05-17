@@ -41,7 +41,7 @@ export default {
         method: 'get',
         pathTemplate:"/menu/homeAjax",
         baseUrl: this.rdBase,
-        params: {
+        queryParameters: {
           projects: window._rundeck.projectName
         }
       })

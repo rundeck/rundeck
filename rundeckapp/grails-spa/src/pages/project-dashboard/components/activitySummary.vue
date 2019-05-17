@@ -10,21 +10,10 @@
             {{$tc('execution',count)}}
           </a>
 
-            In the last
-
-            <dropdown menu-right>
-            <btn class="dropdown-toggle">
-              {{period}}
-              <span class="caret"></span>
-            </btn>
-            <template slot="dropdown">
-
-              <li v-for="(val,period) in periods" :key="period"><a role="button" @click="changePeriod(period)">{{period}}</a></li>
-            </template>
-          </dropdown>
+          {{$t('In the last Day')}}
 
           <span :if="project.failedCount > 0">
-            <a class="text-warning" :href="`${rdBase}project/${project.name}/activity?statFilter=fail`">
+            <a :class="{'text-warning':project.failedCount>0,'text-muted':project.failedCount<1}" :href="`${rdBase}project/${project.name}/activity?statFilter=fail`">
               ({{project.failedCount}} Failed)
             </a>
           </span>
@@ -48,33 +37,16 @@ export default {
   name: 'Activity',
   props: [
     'project',
-    'eventBus'
+    'rdBase'
   ],
   data () {
     return {
-      count:0,
-      period:'Day',
-      periods: {
-        Hour:'1h',
-        Day:'1d',
-        Week:'1w',
-        Month:'1m'
-      }
+      count:0
     }
   },
-  methods:{
-    changePeriod(val){
-      if(this.periods[val]){
-        this.period=val
-        this.eventBus&&this.eventBus.$emit('change-query-period',this.periods[val])
-      }
-    }
-  },
+ 
   mounted(){
     this.count=this.project.execCount
-     this.eventBus&&this.eventBus.$on('activity-query-result', (data) => {
-      this.count=data.total
-    })
   }
 }
 </script>

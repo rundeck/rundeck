@@ -25,7 +25,8 @@ const translationStrings = {
     'info.scheduled.0': 'Scheduled; starting {0}',
     'job.execution.starting.0': 'Starting {0}',
     'info.newexecutions.since.0': '1 New Result. Click to load. | {0} New Results. Click to load.',
-
+    'In the last Day': 'In the last Day',
+    
     period: {
       label: {
         All: 'any time',

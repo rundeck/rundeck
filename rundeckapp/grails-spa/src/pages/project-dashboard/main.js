@@ -52,7 +52,6 @@ for (var i = 0; i < els.length; i++) {
       }
     },
     components: { App },
-    template: '<App :eventBus="EventBus"/>',
     i18n
   })
 
