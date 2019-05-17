@@ -121,7 +121,6 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                     log.error(e.getMessage(), e)
                     throw e
                 }
-
             }
         }
         return true;
