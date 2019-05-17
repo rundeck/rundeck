@@ -22,6 +22,7 @@
     "vue-i18n": "^8.8.0",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "^7.3.0",
+    "vue-router": "^3.0.6",
     "vue-scrollto": "^2.15.0",
     "vue2-ace-editor": "0.0.11",
     "vue2-filters": "^0.3.0",

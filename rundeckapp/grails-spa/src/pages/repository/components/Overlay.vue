@@ -25,10 +25,15 @@ import { mapState, mapActions } from "vuex";
 export default {
   name: "Overlay",
   computed: {
-    ...mapState(["overlay", "errors", "loadingMessage", "loadingSpinner"])
+    ...mapState("overlay", [
+      "overlay",
+      "errors",
+      "loadingMessage",
+      "loadingSpinner"
+    ])
   },
   methods: {
-    ...mapActions(["closeOverlay"])
+    ...mapActions("overlay", ["closeOverlay"])
   }
 };
 </script>

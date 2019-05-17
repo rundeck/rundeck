@@ -39,9 +39,6 @@ export default {
   components: {
     PluginCard
   },
-  computed: {
-    ...mapState(["repositories"])
-  },
   data() {
     return {
       visible: true

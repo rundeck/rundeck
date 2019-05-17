@@ -22,12 +22,12 @@
     Created: Jul 26, 2010 5:12:38 PM
     $Id$
  --%>
-            <g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+            <g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
                 %{--Display job icon and name--}%
-                <g:set var="foundjob" value="${edit?null:(item.useName?ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project):ScheduledExecution.findScheduledExecution(null,null,null,item.uuid))}"/>
+                <g:set var="foundjob" value="${edit?null:(item.findJob(project))}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs }">
