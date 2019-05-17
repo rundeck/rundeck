@@ -93,9 +93,9 @@
     <a href="#">Plugins <span class="caret"></span></a>
     <ul class="dropdown-menu">
       <li>
-          <g:link controller="artifact" action="index">
+        <a href="${g.createLink(uri:'/artifact/index/repositories')}">
             <g:message code="gui.menu.FindPlugins"/>
-          </g:link>
+        </a>
       </li>
       <li>
         <a href="${g.createLink(uri:'/artifact/index/configurations')}">
