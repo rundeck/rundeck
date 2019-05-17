@@ -2,6 +2,7 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
@@ -13,6 +14,7 @@ import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
 class ExecutionsCleanerJob  implements InterruptableJob {
+    static Logger logger = Logger.getLogger(ExecutionsCleanerJob)
     def boolean wasInterrupted
 
     void interrupt() throws UnableToInterruptJobException {
@@ -21,17 +23,17 @@ class ExecutionsCleanerJob  implements InterruptableJob {
 
 
     void execute(JobExecutionContext context) throws JobExecutionException {
-        log.info("Initializing cleaner execution history job")
+        logger.info("Initializing cleaner execution history job")
 
         String project = context.jobDetail.jobDataMap.get('project')
         String maxDaysToKeep = context.jobDetail.jobDataMap.get('maxDaysToKeep')
         String minimumExecutionToKeep = context.jobDetail.jobDataMap.get('minimumExecutionToKeep')
         String maximumDeletionSize = context.jobDetail.jobDataMap.get('maximumDeletionSize')
 
-        log.info("Cleaner parameters: Project name: ${project}")
-        log.info("Max days to keep: ${maxDaysToKeep}")
-        log.info("Minimum executions to keep: ${minimumExecutionToKeep}")
-        log.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
+        logger.info("Cleaner parameters: Project name: ${project}")
+        logger.info("Max days to keep: ${maxDaysToKeep}")
+        logger.info("Minimum executions to keep: ${minimumExecutionToKeep}")
+        logger.info("Maximum size of deletions: ${maximumDeletionSize ?: '500 (default)'}")
 
         FrameworkService frameworkService = fetchFrameworkService(context.jobDetail.jobDataMap)
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
@@ -43,7 +45,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
                     maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                     maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
-            log.info("Executions to delete: ${execIdsToExclude.toListString()}")
+            logger.info("Executions to delete: ${execIdsToExclude.toListString()}")
             deleteByExecutionList(execIdsToExclude,fileUploadService, logFileStorageService)
         }
     }
@@ -111,7 +113,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
             //delete all job file records
             fileUploadService.deleteRecordsForExecution(e)
 
-            log.debug("${files.size()} files from execution will be deleted")
+            logger.debug("${files.size()} files from execution will be deleted")
             //delete execution
             //find an execution that this is a retry for
             Execution.findAllByRetryExecution(e).each{e2->
@@ -122,16 +124,16 @@ class ExecutionsCleanerJob  implements InterruptableJob {
             def deletedfiles = 0
             files.each { file ->
                 if (!FileUtils.deleteQuietly(file)) {
-                    log.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
+                    logger.warn("Failed to delete file while deleting execution ${e.id}: ${file.absolutePath}")
                 } else {
                     deletedfiles++
                 }
             }
-            log.debug("${deletedfiles} files removed")
-            log.info("Execution with ID ${e.id} were deleted")
+            logger.debug("${deletedfiles} files removed")
+            logger.info("Execution with ID ${e.id} were deleted")
             result = [success: true]
         } catch (Exception ex) {
-            log.error("Failed to delete execution ${e.id}", ex)
+            logger.error("Failed to delete execution ${e.id}", ex)
             result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
         }
         return result
@@ -142,7 +144,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
         List collectedExecutions= []
 
         if(frameworkService.isClusterModeEnabled()){
-            log.info("searching executions of node ID: ${frameworkService.getServerUUID()}")
+            logger.info("searching executions of node ID: ${frameworkService.getServerUUID()}")
         }
 
         Map jobList = executionService.queryExecutions(createCriteria(
@@ -153,33 +155,33 @@ class ExecutionsCleanerJob  implements InterruptableJob {
 
         if(null != jobList && null != jobList.get("total")) {
             Integer totalToExclude = (Integer) jobList.get("total")
-            log.info("found ${totalToExclude} executions")
+            logger.info("found ${totalToExclude} executions")
             if(totalToExclude >0) {
                 List<Execution> result = ((List<Execution>)jobList.get("result")).sort{a,b -> b.dateCompleted <=> a.dateCompleted}
                 if(minimumExecutionToKeep > 0){
                     int totalExecutions = this.totalAllExecutions(executionService, project)
                     int sub = totalExecutions - totalToExclude
-                    log.info("minimum executions to keep: ${minimumExecutionToKeep}")
-                    log.info("total exections of project ${project}: ${totalExecutions}")
-                    log.info("total to exclude: ${totalToExclude}")
+                    logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
+                    logger.info("total exections of project ${project}: ${totalExecutions}")
+                    logger.info("total to exclude: ${totalToExclude}")
                     if(sub < minimumExecutionToKeep) {
                         int jump = minimumExecutionToKeep - sub
-                        log.info("${jump} executions can not be removed")
+                        logger.info("${jump} executions can not be removed")
                         result = jump < result.size() ? result[jump..totalToExclude - 1] : []
-                        log.info("${result.size()} executions will be removed")
+                        logger.info("${result.size()} executions will be removed")
                     }
                 }
                 for (Execution exec: result) {
                     if(exec.getStatus() != null) { //exclude running executions
                         collectedExecutions.add(exec)
-                        log.info(exec.toString())
+                        logger.info(exec.toString())
                     }else{
-                        log.info("Running execution: ${exec.toString()}")
+                        logger.info("Running execution: ${exec.toString()}")
                     }                }
             }
         }
         if(collectedExecutions.size()==0){
-            log.info("No executions to delete")
+            logger.info("No executions to delete")
         }
         return collectedExecutions
     }
@@ -213,7 +215,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
     }
 
     private int deleteByExecutionList(List<Execution> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {
-        log.info("Start to delete ${collectedExecutions.size()} executions")
+        logger.info("Start to delete ${collectedExecutions.size()} executions")
         if(collectedExecutions.size()>0) {
             Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService)
             if (result != null) {
@@ -223,14 +225,14 @@ class ExecutionsCleanerJob  implements InterruptableJob {
                     for (Map res : resultList) {
                         if (!(Boolean) result.get("success")) {
                             failureList.add((String) res.get("message"))
-                            log.info(res.get("message"))
+                            logger.info(res.get("message"))
                         }
                     }
                 }
                 Integer successTotal = (Integer) result.get("successTotal")
-                log.info("Deleted ${successTotal} of ${collectedExecutions.size()} executions")
+                logger.info("Deleted ${successTotal} of ${collectedExecutions.size()} executions")
                 if(successTotal<collectedExecutions.size()){
-                    log.error("Some executions weren't deleted")
+                    logger.error("Some executions weren't deleted")
                 }
                 return successTotal
             }
