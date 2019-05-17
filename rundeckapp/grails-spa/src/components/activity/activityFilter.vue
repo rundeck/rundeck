@@ -226,7 +226,7 @@ export default {
     }
   },
   methods: {
-    search() {
+    checkQueryIsPresent(){
       let isquery = false
       for (let filt in this.QueryNames) {
         if (this.query[filt] !== "") {
@@ -235,6 +235,9 @@ export default {
         }
       }
       this.hasQuery = isquery
+    },
+    search() {
+      this.checkQueryIsPresent()
       this.$emit("input", this.query)
       this.didSearch=true
       this.filterOpen = false
@@ -249,6 +252,7 @@ export default {
         element.filter.datetime=this.query[element.name]
         element.filter.enabled=!!element.filter.datetime
       });
+      this.checkQueryIsPresent()
     },
     closing(){
       if(this.didSearch){

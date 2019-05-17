@@ -46,7 +46,7 @@
               </template>
             </dropdown>
 
-          <activity-filter  v-model="query"></activity-filter>
+          <activity-filter v-model="query"></activity-filter>
           <div class="pull-right">
             <span >
               <input type=checkbox id=auto-refresh v-model=autorefresh />
@@ -717,9 +717,6 @@ export default Vue.extend({
     if(window._rundeck.data.jobslistDateFormatMoment){
       this.momentJobFormat=window._rundeck.data.jobslistDateFormatMoment
     }
-    if(this.queryParams){
-      // this.internalquery=this.queryParams
-    }
 
     this.projectName=window._rundeck.projectName
     if (window._rundeck && window._rundeck.data) {
@@ -731,9 +728,14 @@ export default Vue.extend({
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
       this.autorefreshms = window._rundeck.data['autorefreshms']
+      
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
+      if(window._rundeck.data['query'] ){
+        this.query = Object.assign({},this.query,window._rundeck.data['query'] )
+      }
+      
       this.loadActivity(0)
       this.loadRunning()
     }

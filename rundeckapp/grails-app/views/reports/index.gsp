@@ -37,7 +37,19 @@
     <title><g:message code="gui.menu.Events"/> - <g:enc>${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}</g:enc></title>
 
     <g:set var="pageparams" value="${[offset:params.offset,max:params.max]}"/>
-    <g:set var="eventsparams" value="${paginateParams}"/>
+    <g:set var="eventsparams" value="${params.subMap([
+            'titleFilter',
+            'jobFilter',
+            'jobIdFilter',
+            'userFilter',
+            'statFilter',
+            'filter',
+            'recentFilter',
+            'startbeforeFilter',
+            'startafterFilter',
+            'endbeforeFilter',
+            'endafterFilter',
+    ])}"/>
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
@@ -73,7 +85,8 @@ jobquery.title.endafterFilter
             sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
             pagination:{
                 max: ${enc(js:params.max?params.int('max',30):30)}
-            }
+            },
+            query:loadJsonData('eventsparamsJSON')
         }
     })
     </g:javascript>
