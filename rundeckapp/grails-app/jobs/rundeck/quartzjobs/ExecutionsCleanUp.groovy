@@ -13,8 +13,8 @@ import rundeck.ReferencedExecution
 import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
-class ExecutionsCleanerJob  implements InterruptableJob {
-    static Logger logger = Logger.getLogger(ExecutionsCleanerJob)
+class ExecutionsCleanUp implements InterruptableJob {
+    static Logger logger = Logger.getLogger(ExecutionsCleanUp)
     def boolean wasInterrupted
 
     void interrupt() throws UnableToInterruptJobException {
@@ -130,7 +130,7 @@ class ExecutionsCleanerJob  implements InterruptableJob {
                 }
             }
             logger.debug("${deletedfiles} files removed")
-            logger.info("Execution with ID ${e.id} were deleted")
+            logger.info("Deleted execution: ${e.id}")
             result = [success: true]
         } catch (Exception ex) {
             logger.error("Failed to delete execution ${e.id}", ex)

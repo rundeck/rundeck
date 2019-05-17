@@ -32,7 +32,7 @@ import spock.lang.Specification
  * Created by greg on 4/12/16.
  */
 @Mock([Execution, ScheduledExecution, ReferencedExecution, ExecReport])
-class ExecutionsCleanerJobSpec extends Specification {
+class ExecutionsCleanUpSpec extends Specification {
 
     def "execute cleaner job"() {
         def jobName = 'abc'
@@ -91,7 +91,7 @@ class ExecutionsCleanerJobSpec extends Specification {
                 logFileStorageService: logFileStorageService
         ])
 
-        ExecutionsCleanerJob job = new ExecutionsCleanerJob()
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
         def context = Mock(JobExecutionContext) {
             getJobDetail() >> Mock(JobDetail) {
                 getJobDataMap() >> datamap
