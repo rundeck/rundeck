@@ -14,11 +14,6 @@
 - limitations under the License.
 --}%
 
-<div class="list-group-item">
-    <span class="h4 ">
-        <g:message code="${titleCode}"/>
-    </span>
-
     <g:if test="${helpCode}"><div class="help-block"><g:message code="${helpCode}"/></div></g:if>
 
     <div class="inpageconfig">
@@ -39,4 +34,3 @@
 
         </g:each>
     </div>
-</div>

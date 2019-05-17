@@ -20,16 +20,18 @@ import java.util.Map;
 public class ExportVarWorkflowStep implements StepPlugin {
     public static final String PROVIDER_NAME = "export-var";
     @PluginProperty(title = "Value",
-            description = "Value of the variable, to uplift a existing variable, use a reference to it, like ${data.var1} or ${data.var1@node1}.",
+            description = "Value of the variable, to uplift a existing variable, use a reference to it, like ${data.var1@node1} or ${data.var1*}.\n" +
+                    "Also you can use ${data.var1*} within a workflow step, which collates all node values for ${data.var1} as a comma-separated string.\n" +
+                    "Or ${data.var1*-} to use - as the delimiter instead of comma",
             required = true)
     private String value;
     @PluginProperty(title = "Group",
             description = "Group of the new variable. Variables on the export group are exported to the parent Job",
+            defaultValue = "export",
             required = true)
     private String group;
     @PluginProperty(title = "Name",
             description = "Name of the new variable.",
-            defaultValue = "export",
             required = true)
     private String export;
 

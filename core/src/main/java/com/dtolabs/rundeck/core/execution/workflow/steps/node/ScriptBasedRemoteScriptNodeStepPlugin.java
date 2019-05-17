@@ -28,11 +28,10 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.data.MutableDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
-import com.dtolabs.rundeck.core.plugins.PluginException;
-import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.plugins.step.GeneratedScript;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
@@ -62,6 +61,8 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         return true;
     }
 
+
+
     static void validateScriptPlugin(final ScriptPluginProvider plugin) throws PluginException {
         try {
             createDescription(plugin, true, DescriptionBuilder.builder());
@@ -80,7 +81,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         final ScriptPluginProvider provider = getProvider();
         Description description = getDescription();
 
-        Map<String, String> configData = toStringStringMap(configuration);
+        Map<String, String> configData = MapData.toStringStringMap(configuration);
         try {
             loadContentConversionPropertyValues(
                     configData,
@@ -129,6 +130,16 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
                 provider.getInterpreterArgsQuoted(),
                 configData
         );
+    }
+
+    @Override
+    public boolean hasAdditionalConfigVarGroupName() {
+        VersionCompare pluginVersionObject = VersionCompare.forString(getProvider().getPluginMeta().getRundeckPluginVersion());
+        if(pluginVersionObject.atLeast(VersionCompare.forString(ScriptPluginProviderLoader.VERSION_2_0))){
+            return true;
+        }
+
+        return false;
     }
 
     static String getFileExtension(final String name) {
@@ -202,5 +213,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
             }
         };
     }
+
+
 
 }

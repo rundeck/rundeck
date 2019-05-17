@@ -16,7 +16,6 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 
@@ -95,7 +94,7 @@ class ExecutionUtilServiceTests {
         }
         def loghandler=logcontrol.proxyInstance()
 
-
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 
@@ -165,6 +164,7 @@ class ExecutionUtilServiceTests {
         logcontrol.demand.close(1..1){->
         }
         def loghandler=logcontrol.proxyInstance()
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
 
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
@@ -192,6 +192,7 @@ class ExecutionUtilServiceTests {
         logcontrol.demand.close(1..1){->
         }
         def loghandler=logcontrol.proxyInstance()
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 
@@ -218,7 +219,7 @@ class ExecutionUtilServiceTests {
         }
         logcontrol.demand.close(1..1){-> }
         def loghandler=logcontrol.proxyInstance()
-
+        executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
         executionUtilService.sysThreadBoundOut=new MockForThreadOutputStream(null)
         executionUtilService.sysThreadBoundErr=new MockForThreadOutputStream(null)
 

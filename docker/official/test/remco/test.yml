@@ -1,4 +1,8 @@
 rundeck:
+  projectsStorageType: file
+  grails:
+    upload:
+      maxsize: '50000000'
   server:
     name: superserver
   config:
@@ -11,3 +15,33 @@ rundeck:
     provider:
       '2':
         type: 'file'
+  features:
+    repository:
+      enabled: "true"
+  mail:
+    smtp:
+      host: foo.bar
+      port: '1234'
+      username: foo
+      password: bar
+    props: 'asdfasdfs'
+    default:
+      from: 'foo@foo.bar'
+      template:
+        file: /tmp/foo.md
+        # subject: "\"You've got mail\""
+        log:
+          formatted: 'true'
+  security:
+    httpheaders:
+      enabled: "false"
+      provider:
+        xcto: {enabled: "false"}
+        xxssp: {enabled: "false"}
+        xfo: {enabled: "false"}
+        csp:
+          enabled: "false"
+          config:
+            includexcspheader: "false"
+            includexwkcspheader: "false"
+            imgsrc: self blah

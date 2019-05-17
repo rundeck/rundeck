@@ -23,7 +23,7 @@
 
  --%>
 
-<g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+<g:set var="jobitem" value="${item.instanceOf(JobExec)}"/>
 <div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
@@ -151,7 +151,16 @@
                       <!-- ko if: iconSrc -->
                       <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                       <!-- /ko -->
-                      <!-- ko if: !iconSrc() -->
+                      <!-- ko if: glyphicon -->
+                      <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                      <!-- /ko -->
+                      <!-- ko if: faicon -->
+                      <i data-bind="css: 'fas fa-'+faicon()"></i>
+                      <!-- /ko -->
+                      <!-- ko if: fabicon -->
+                      <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                      <!-- /ko -->
+                      <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                       <i class="rdicon icon-small plugin"></i>
                       <!-- /ko -->
                       <!-- /ko -->

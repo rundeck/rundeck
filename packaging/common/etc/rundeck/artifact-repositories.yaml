@@ -1,0 +1,7 @@
+repositories:
+-   repositoryName: Official
+    enabled: true
+    type: HTTP
+    owner: RUNDECK
+-   repositoryName: private
+    type: STORAGE_TREE

@@ -50,6 +50,13 @@ public interface Description {
     public List<Property> getProperties();
 
     /**
+     * @return additional metadata about the provider, may include style or icon information such as 'glyphicon' for
+     *         glyphicon icon name, 'faicon' for font-awesome icon name
+     */
+    public default Map<String, String> getMetadata() {
+        return null;
+    }
+    /**
      * @return a map of config prop keys to external project property names, allowing input values to be in properties files
      */
     public Map<String, String> getPropertiesMapping();

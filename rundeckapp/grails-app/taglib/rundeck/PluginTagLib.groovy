@@ -25,7 +25,7 @@ class PluginTagLib {
     def static namespace = "stepplugin"
     def FrameworkService frameworkService
     def UiPluginService uiPluginService
-    static returnObjectForTags = ['messageText','pluginIconSrc']
+    static returnObjectForTags = ['messageText','pluginIconSrc','pluginProviderMeta']
 
     def display={attrs,body->
         def step=attrs.step
@@ -46,9 +46,18 @@ class PluginTagLib {
     }
 
     def pluginIcon = { attrs, body ->
-        def iconSrc = pluginIconSrc(attrs, body)
-        if (iconSrc) {
-            attrs.src = iconSrc
+        def service = attrs.get('service')
+        def name = attrs.get('name')
+        if(!service || !name){
+            throw new Exception("service and name attributes required")
+        }
+        def profile = uiPluginService.getProfileFor(service, name)
+        if (profile.icon) {
+            attrs.src = createLink(
+                    controller: 'plugin',
+                    action: 'pluginIcon',
+                    params: [service: service, name: name]
+            )
             out << '<img '
             attrs.each { k, v ->
                 if (v) {
@@ -56,6 +65,16 @@ class PluginTagLib {
                 }
             }
             out << "/>"
+        } else if (profile.providerMetadata?.glyphicon) {
+            out << g.icon(name: profile.providerMetadata?.glyphicon)
+        } else if (profile.providerMetadata?.faicon) {
+            out << '<i class="'
+            out << enc(attr: 'fas fa-' + profile.providerMetadata?.faicon)
+            out << '"></i>'
+        } else if (profile.providerMetadata?.fabicon) {
+            out << '<i class="'
+            out << enc(attr: 'fab fa-' + profile.providerMetadata?.fabicon)
+            out << '"></i>'
         } else {
             out << body()
         }
@@ -74,6 +93,19 @@ class PluginTagLib {
                     action: 'pluginIcon',
                     params: [service: service, name: name]
             )
+        }
+        return null
+    }
+    def pluginProviderMeta = { attrs, body ->
+        def service = attrs.remove('service')
+        def name = attrs.remove('name')
+
+        if (!service || !name) {
+            return null
+        }
+        def profile = uiPluginService.getProfileFor(service, name)
+        if (profile.providerMetadata) {
+            return profile.providerMetadata
         }
         return null
     }
@@ -106,15 +138,9 @@ class PluginTagLib {
         def messages = [:]
         if (!messagesType || messagesType in ['plugin']) {
             if (service && plugin) {
-                messages = uiPluginService.getMessagesFor(service, plugin, RequestContextUtils.getLocale(request))
+                return uiPluginService.getPluginMessage(service, plugin, code, defaultmsg, RequestContextUtils.getLocale(request))
             }
-            def foundcode = [
-                service + '.' + plugin + '.' + code,
-                plugin + '.' + code,
-                service + '.' + code,
-                code,
-            ].find { messages[it] }
-            return (foundcode != null ? messages[foundcode] : defaultmsg)
+            return defaultmsg
         } else if (messagesType) {
             def testCodes = [messagesType + '.' + code, code]
             for (def c : testCodes) {

@@ -181,7 +181,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToOutputStream(_,_,_,_,_,{ ArchiveOptions opts ->
             opts.executionsOnly==true && opts.executionIds==(expectedset)
-        })
+        },_)
 
         where:
         eidparam       | expectedset
@@ -219,7 +219,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == configs &&
                     opts.readmes == readmes &&
                     opts.acls == acls
-        }
+        },_
         )
 
         where:
@@ -282,7 +282,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == (configs ?: false) &&
                     opts.readmes == (readmes ?: false) &&
                     opts.acls == (acls ?: false)
-        }
+        }, _
         ) >> 'dummytoken'
         response.redirectedUrl ==  '/project/aproject/exportWait/dummytoken'
 
@@ -419,7 +419,7 @@ class ProjectControllerSpec extends Specification{
         1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
         1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
             opts.executionsOnly == true && opts.executionIds == (expectedset)
-        }
+        },_
         ) >> 'atoken'
         1 * controller.projectService.promiseReady(_, 'atoken') >> null
         1 * controller.projectService.promiseSummary(_, 'atoken') >> Mock(ProgressSummary)
@@ -1741,7 +1741,7 @@ class ProjectControllerSpec extends Specification{
                     opts.configs == true &&
                     opts.readmes == true &&
                     opts.acls == true
-        },_,_,_,preserveuuid?:false
+        },_,_,_,preserveuuid?:false,_
         ) >> 'dummytoken'
         response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
 
@@ -1793,6 +1793,53 @@ class ProjectControllerSpec extends Specification{
         null     | '123'  | 'proj1'     | null
         'url1'   | null   | 'proj2'     | true
         'url2'   | '456'  | null        | true
+
+    }
+
+
+    def "export Instance with scm config"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.exportScm = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true &&
+                    opts.scm == true
+        },_,_,_,preserveuuid?:false,_
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/aproject/exportWait/dummytoken?instance=' + url + '&iproject=' + target
+
+        where:
+        url      | token  | target      | preserveuuid
+        'url1'   | '123'  | 'proj1'     | null
+        'url2'   | '456'  | 'proj2'     | true
 
     }
 }

@@ -126,7 +126,16 @@ jQuery(function(){
                               <!-- ko if: iconSrc -->
                               <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
                               <!-- /ko -->
-                              <!-- ko if: !iconSrc() -->
+                              <!-- ko if: glyphicon -->
+                              <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                              <!-- /ko -->
+                              <!-- ko if: faicon -->
+                              <i data-bind="css: 'fas fa-'+faicon()"></i>
+                              <!-- /ko -->
+                              <!-- ko if: fabicon -->
+                              <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                              <!-- /ko -->
+                              <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
                               <i class="rdicon icon-small plugin"></i>
                               <!-- /ko -->
                               <!-- /ko -->
@@ -248,6 +257,7 @@ jQuery(function(){
                          data="${workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy)}"/>
             <g:render template="/framework/renderPluginConfig"
                       model="[showPluginIcon: true,
+                              serviceName   : 'WorkflowStrategy',
                               type          : workflow?.strategy,
                               values        : workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy),
                               description   : strategyPlugins.find { it.name == workflow?.strategy }
@@ -269,6 +279,7 @@ jQuery(function(){
 
                         <g:render template="/framework/renderPluginConfig"
                                   model="[showPluginIcon: true,
+                                          serviceName   : 'LogFilter',
                                           type          : config.type,
                                           values        : config.config,
                                           description   : logFilterPlugins?.values()?.

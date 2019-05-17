@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -30,12 +31,17 @@ import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import groovy.transform.ToString
+import groovy.xml.MarkupBuilder
 import rundeck.CommandExec
+import rundeck.Execution
 import rundeck.JobExec
 import rundeck.PluginStep
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.codecs.JobsXMLCodec
 import rundeck.services.logging.ExecutionLogWriter
+
+import java.text.SimpleDateFormat
 
 import static org.apache.tools.ant.util.StringUtils.getStackTrace
 
@@ -45,6 +51,7 @@ import static org.apache.tools.ant.util.StringUtils.getStackTrace
 class ExecutionUtilService {
     static transactional = false
     def metricService
+    def grailsApplication
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
 
@@ -63,7 +70,12 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
+        if(exportJobDef){
+            //creating xml file
+            String parentFolder = loghandler.filepath.getParent()
+            getExecutionXmlFileForExecution(execMap.execution, parentFolder)
+        }
         try {
             WorkflowExecutionResult object = thread.resultObject
             if (!thread.isSuccessful()) {
@@ -262,7 +274,8 @@ class ExecutionUtilService {
                     tmpProj,
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions,
-                    jobcmditem.uuid
+                    jobcmditem.uuid,
+                    jobcmditem.useName
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -313,6 +326,63 @@ class ExecutionUtilService {
 
     public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
         new SimplePluginConfiguration(ServiceNameConstants.LogFilter, name, pluginconfig)
+    }
+
+    /**
+     * Write execution.xml file to a temp file and return
+     * @param exec execution
+     * @param path path to store the file on filesystem. If null a temporary file will be created and deleted.
+     * @return file containing execution.xml
+     */
+    File getExecutionXmlFileForExecution(Execution execution, String path = null) {
+        File executionXmlfile
+        if(path){
+            executionXmlfile  = new File(path, "${execution.id}.execution.xml")
+        }else{
+            executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
+        }
+        executionXmlfile.withWriter("UTF-8") { Writer writer ->
+            exportExecutionXml(
+                    execution,
+                    writer,
+                    "output-${execution.id}.rdlog"
+            )
+        }
+        if(!path){
+            executionXmlfile.deleteOnExit()
+        }
+        executionXmlfile
+    }
+
+
+    /**
+     * Write execution.xml file to the writer
+     * @param exec execution
+     * @param writer writer
+     * @param logfilepath optional new outputfilepath to set for the xml
+     * @return
+     */
+    def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        def dateConvert = {
+            sdf.format(it)
+        }
+        BuilderUtil builder = new BuilderUtil()
+        builder.converters = [(Date): dateConvert, (java.sql.Timestamp): dateConvert]
+        def map = exec.toMap()
+        BuilderUtil.makeAttribute(map, 'id')
+        if (logfilepath) {
+            //change entry to point to local file
+            map.outputfilepath = logfilepath
+        }
+        JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
+        if(exportJobDef && exec.scheduledExecution){
+            map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
+        }
+        def xml = new MarkupBuilder(writer)
+        builder.objToDom("executions", [execution: map], xml)
     }
 
 }

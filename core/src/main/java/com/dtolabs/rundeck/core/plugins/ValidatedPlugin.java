@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.plugins.configuration.Validator;
+import lombok.Data;
 
 /**
  * ValidatedPlugin holds a validation report and a validity result
@@ -24,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator;
  * @since 2014-02-19
  */
 
+@Data
 public class ValidatedPlugin {
     Validator.Report report;
     boolean valid;

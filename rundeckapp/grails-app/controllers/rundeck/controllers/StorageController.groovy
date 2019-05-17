@@ -22,8 +22,9 @@ import com.dtolabs.rundeck.core.storage.AuthStorageUsernameMeta
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -184,14 +185,12 @@ class StorageController extends ControllerBase{
             def baos = new ByteArrayOutputStream()
             try{
                 def len=contents.writeContent(baos)
-                baos.writeTo(response.outputStream)
-                response.outputStream.close()
+                writeOutputStream(baos)
             }catch (IOException e){
                 //problem reading storage contents
                 log.error("Failed reading storage content: "+e.message,e)
                 response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-                response.outputStream<<"Failed reading storage content: "+e.message
-                response.outputStream.close()
+                appendOutput(response, "Failed reading storage content: "+e.message)
             }
 
             return
@@ -209,6 +208,12 @@ class StorageController extends ControllerBase{
             default:
                 render jsonRenderResource(resource) as JSON
         }
+    }
+
+    @CompileStatic
+    private void writeOutputStream(ByteArrayOutputStream out) {
+        out.writeTo(response.outputStream)
+        response.outputStream.flush()
     }
 
     private Object renderError(String message) {
@@ -402,7 +407,10 @@ class StorageController extends ControllerBase{
         }
         Map<String, String> map = [
                 (StorageUtil.RES_META_RUNDECK_CONTENT_TYPE): contentType,
-                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength,
+                (StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH): contentLength.toString() //if the value of content length is not cast to a string here,
+                                                                                        // Groovy allows the value into the map as an int or long
+                                                                                        // which will cause a type cast exception later if the contentLength
+                                                                                        // is accessed later in the storage chain
         ]
         try {
             if(hasResource){
@@ -633,6 +641,7 @@ class StorageController extends ControllerBase{
         }
         return getResource(storageParams)
     }
+
     private def getResource(StorageParams storageParams,boolean forceDownload=false) {
         if (storageParams.hasErrors()) {
             apiService.renderErrorFormat(response, [

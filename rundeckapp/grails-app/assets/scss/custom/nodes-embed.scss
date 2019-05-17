@@ -1,5 +1,39 @@
 .nodes-embed{
 
+  .embedded_node {
+    display: inline-block;
+    cursor: pointer;
+
+    &.tight {
+      white-space: nowrap;
+      overflow-x: hidden;
+    }
+  }
+
+  a.embedded_node + .detailpopup > .nodedetail {
+    display: none;
+  }
+
+  a.embedded_node:focus + .detailpopup > .nodedetail {
+    display: block;
+  }
+}
+
+.node_unselected {
+  color: red;
+  text-decoration: line-through;
+}
+
+.node_select_checkbox {
+  display: inline-block;
+  margin-right: 10px;
+}
+.node-details-simple {
+  .subattrs {
+    td {
+      background: #f8f8f8;
+    }
+  }
 }
 
 //node detail
@@ -51,11 +85,7 @@
 
   .nodetags {
     max-width: 20em;
-    .label{
-      a{
-        color:white;
-      }
-    }
+
   }
 }
 

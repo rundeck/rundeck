@@ -272,7 +272,7 @@ function WorkflowStepLogFilterEditor(data) {
         return jQuery.ajax({
             type: 'post',
             url: _genUrl(appLinks.workflowRemoveStepFilter, params),
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
             success: function (data, status, xhr) {
                 if (data.valid) {
                     self.step.deleteFilter(stepfilter);
@@ -290,7 +290,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
             ;
     };
 
@@ -311,7 +311,7 @@ function WorkflowStepLogFilterEditor(data) {
             type: 'post',
             data: formdata,
             dataType: 'json',
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
             success: function (data, status, xhr) {
                 if (data.valid) {
                     if (!stepfilter) {
@@ -330,7 +330,7 @@ function WorkflowStepLogFilterEditor(data) {
                 callback(err);
             }
         })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            .success(_createAjaxReceiveTokensHandler('job_edit_tokens'))
             ;
     };
 
@@ -388,7 +388,7 @@ function ScriptStep(data) {
     self.argStringAsQuotedWithScriptfile = ko.computed(function () {
         var isq = self.argsQuoted() ? '"' : '';
         return isq
-            + '<em>' + self.scriptfileText() +'</em> '
+            + self.scriptfileText() + ' '
             + self.args()
             + isq;
     });
@@ -410,7 +410,7 @@ function ScriptStep(data) {
     self.invocationPreviewHtml = ko.computed(function () {
         var text = '';
         if (self.invocationString() && self.invocationString().indexOf('${scriptfile}') >= 0) {
-            text += self.invocationString().split('\$\{scriptfile\}').join('<em>' + self.scriptfileText() +'</em>') + ' ' + self.argStringAsQuoted();
+            text += self.invocationString().split('\$\{scriptfile\}').join(  self.scriptfileText() ) + ' ' + self.argStringAsQuoted();
         } else if (self.invocationString()) {
             text += self.invocationString() + ' ' + self.argStringAsQuotedWithScriptfile();
         } else {
@@ -434,7 +434,17 @@ function StepFilterPlugin(data) {
     self.title = ko.observable(data.title);
     self.description = ko.observable(data.description);
     self.iconSrc = ko.observable(data.iconSrc);
+    self.providerMeta = ko.observable(data.providerMeta)
     self.selected = ko.observable(false);
+    self.glyphicon  = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().glyphicon
+    })
+    self.faicon = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().faicon
+    })
+    self.fabicon = ko.computed(function () {
+        return self.providerMeta() && self.providerMeta().fabicon
+    })
     self.descriptionFirstLine = ko.computed(function () {
         var desc = self.description();
         if (desc) {

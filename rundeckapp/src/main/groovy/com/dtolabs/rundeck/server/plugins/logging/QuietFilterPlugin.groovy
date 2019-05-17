@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -35,6 +36,7 @@ import java.util.regex.Pattern
 @Plugin(name = QuietFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Quiet Output',
         description = '''Quiets all output which does or does not match a certain pattern by changing its log level.''')
+@PluginMetadata(key = 'faicon', value = 'volume-off')
 class QuietFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'quiet-output'
 

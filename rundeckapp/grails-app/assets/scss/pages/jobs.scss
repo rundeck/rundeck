@@ -1,28 +1,47 @@
 #page_jobs{
-  .expandComponentHolder{
-    // margin-top: 15px;
-  }
+//   .expandComponentHolder{
+//     // margin-top: 15px;
+//   }
   .panel-group{
     .panel{
-      .subjobs{
-      }
-      .sub_group{
-        .expandComponentHolder{
-          margin-top: 0;
-        }
-        .panel{
-          background-color: white;
-          border-radius: 0;
-          border: none;
-          .panel-heading{
-            border-top: 1px solid black;
-            background-color: white;
-            border: none;
-          }
-        }
-      }
+    //   .subjobs{
+    //   }
     }
   }
+}
+
+.job-display-tree {
+
+    .sub_group {
+
+        padding-left: 15px;
+
+        > .list-group > .jobslist > .list-group-item {
+            padding-left: 35px
+        }
+
+        .expandComponentHolder {
+            margin-top: 0;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            -webkit-box-shadow: none;
+
+            &.panel-default, .panel-heading {
+                border: none;
+            }
+            .panel-heading {
+                background-color: white;
+                border-left: 1px solid #efefef;
+                border-bottom: 1px solid #efefef;
+                border-bottom-left-radius: 3px;
+            }
+        }
+    }
 }
 #page_job_edit{
   i{
@@ -46,16 +65,17 @@
   }
 
   .droppableitem.hoverActiveAll {
-      border: 3px solid #0000ff88;
+      border: 3px solid rgba(0,0,255,0.53);
   }
 
   .droppableitem.hoverActiveUp {
-      border-top: 3px solid #0000ff88;
+      border-top: 3px solid rgba(0,0,255,0.53);
   }
 
   .droppableitem.hoverActiveDown {
-      border-bottom: 3px solid #0000ff88;
+      border-bottom: 3px solid rgba(0,0,255,0.53);
   }
+
   .dragdropfinal{
       height: 25px;
       background: #ddd;
@@ -95,17 +115,17 @@
       position:relative;
       padding-right:40px;
   }
-  .optctrl{
-      // margin-left:10px;
-      // position:absolute;
-      // right:0;
-      // top:0;
-      // /* width:120px; */
-      // text-align:right;
-  }
-  .optview{
-      /*position:relative;*/
-  }
+//   .optctrl{
+//       // margin-left:10px;
+//       // position:absolute;
+//       // right:0;
+//       // top:0;
+//       // /* width:120px; */
+//       // text-align:right;
+//   }
+//   .optview{
+//       /*position:relative;*/
+//   }
   .optdetail{
       /*float:left;*/
       width:540px;
@@ -193,8 +213,8 @@
       padding:5px;
       margin:0;
   }
-  .add_step_buttons li.action:hover{
-  }
+//   .add_step_buttons li.action:hover{
+//   }
 
   /**
   job edit form table

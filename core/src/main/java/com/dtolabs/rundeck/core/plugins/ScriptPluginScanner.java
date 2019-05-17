@@ -77,14 +77,21 @@ public class ScriptPluginScanner extends DirPluginScanner {
             final ZipInputStream zipinput = new ZipInputStream(new FileInputStream(file));
             final PluginMeta metadata = ScriptPluginProviderLoader.loadMeta(file, zipinput);
             zipinput.close();
-            boolean valid = false;
-            if(null!=metadata) {
-                valid = ScriptPluginProviderLoader.validatePluginMeta(metadata, file);
+            PluginValidation validation = ScriptPluginProviderLoader.validatePluginMeta(metadata, file);
+            if (validation.getState() == PluginValidation.State.INVALID) {
+                log.error(String.format(
+                    "Skipping plugin file: metadata was invalid: %s: %s",
+                    file.getAbsolutePath(),
+                    validation.getMessages()
+                ));
+            } else if (validation.getState() == PluginValidation.State.INCOMPATIBLE) {
+                log.info(String.format(
+                    "Skipping plugin file: plugin is incompatible: %s: %s",
+                    file.getAbsolutePath(),
+                    validation.getMessages()
+                ));
             }
-            if (!valid) {
-                log.error("Skipping plugin file: metadata was invalid: " + file.getAbsolutePath());
-            }
-            return valid;
+            return validation.getState().isValid();
         } catch (IOException e) {
             e.printStackTrace();
         }

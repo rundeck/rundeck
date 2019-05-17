@@ -26,11 +26,15 @@
     <asset:javascript src="jobEditPage_bundle.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="util/yellowfade.js"/>
+    <asset:javascript src="util/tab-router.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
         var workflowEditor = new WorkflowEditor();
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         _onJobEdit(confirm.setNeedsConfirm);
+        jQuery(function () {
+            setupTabRouter('#job_edit_tabs', 'tab_');
+        })
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>

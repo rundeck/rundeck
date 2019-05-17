@@ -51,6 +51,7 @@ class UrlMappings {
         }
         "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
 
+        "/api/$api_version/job/$id/forecast"(controller: 'menu', action: 'apiJobForecast')
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']
@@ -101,7 +102,9 @@ class UrlMappings {
         }
         "/api/$api_version/jobs/file/$id"(controller: 'scheduledExecution',action: 'apiJobFileInfo')
 
-
+        // execution metrics
+        "/api/$api_version/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
+        "/api/$api_version/project/$project/executions/metrics"(controller: 'execution', action: 'apiExecutionMetrics')
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')
         "/api/$api_version/project/$project/executions"(controller: 'execution', action: 'apiExecutionsQueryv14')
@@ -226,6 +229,7 @@ class UrlMappings {
         }
         "/api/$api_version/user/info/$username?"(controller: 'user', action: 'apiUserData')
         "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
+        "/api/$api_version/user/roles"(controller: 'user', action: 'apiListRoles')
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
@@ -299,7 +303,20 @@ class UrlMappings {
         "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
         "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
+        "/plugin/providers/$service"(controller: 'plugin', action: 'pluginServiceDescriptions')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
+        "/plugin/validate/$service/$name"(controller: 'plugin', action: 'pluginPropertiesValidateAjax')
+
+        "/tour/listAll"(controller:'tour',action:'listAllTourManifests')
+        "/tour/list/$loaderName"(controller:'tour',action:'list')
+        "/tour/get/$loaderName/$tour"(controller:'tour',action:'getTour')
+
+        "/community-news"(controller:'communityNews',action:'index')
+        "/community-news/register"(controller:'communityNews') {
+            action = [POST: 'register']
+        }
+
+        "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "404"(view: '/404')
         "500"(view: '/error')

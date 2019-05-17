@@ -28,6 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'delete.project')}"/>
+    <meta name="projconfigselected" content="delete-project"/>
     <title><g:message code="delete.project"/></title>
 </head>
 

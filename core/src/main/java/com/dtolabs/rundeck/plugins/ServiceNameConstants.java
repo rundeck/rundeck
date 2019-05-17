@@ -63,4 +63,9 @@ public class ServiceNameConstants {
     public static final String UI                      = "UI";
     public static final String LogFilter               = "LogFilter";
     public static final String ContentConverter        = "ContentConverter";
+    public static final String TourLoader              = "TourLoader";
+    public static final String FileUpload              = "FileUpload";
+    public static final String OptionValues            = "OptionValues";
+    public static final String NodeEnhancer            = "NodeEnhancer";
+    public static final String UserGroupSource         = "UserGroupSource";
 }

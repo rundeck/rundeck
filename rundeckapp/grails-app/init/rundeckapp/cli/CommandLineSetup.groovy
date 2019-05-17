@@ -38,6 +38,7 @@ class CommandLineSetup {
     public static final String FLAG_INSTALLONLY = "installonly";
     public static final String FLAG_SKIPINSTALL = "skipinstall";
     public static final String FLAG_ENCRYPT_PWD = "encryptpwd";
+    public static final String FLAG_TEST_AUTH   = "testauth";
 
     private static final Map<String,PasswordUtilityEncrypter> encrypters = getEncrypters()
 
@@ -101,6 +102,10 @@ class CommandLineSetup {
                                           .withDescription("Perform installation only and do not start the server.")
                                           .create();
 
+        Option testauth = OptionBuilder.withLongOpt(FLAG_TEST_AUTH)
+                                          .withDescription("Test Jaas authentication configuration.")
+                                          .create();
+
         Option encryptpwd = OptionBuilder.withLongOpt(FLAG_ENCRYPT_PWD)
                                          .withArgName("ENCRYPTION-SERVICE")
                                          .hasArg()
@@ -117,6 +122,7 @@ class CommandLineSetup {
         options.addOption(debugFlag);
         options.addOption(skipInstall);
         options.addOption(installonly);
+        options.addOption(testauth);
         options.addOption(projectDir);
         options.addOption(encryptpwd);
     }
@@ -125,7 +131,6 @@ class CommandLineSetup {
         RundeckCliOptions cliOptions = new RundeckCliOptions()
         cliOptions.debug = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_DEBUG);
         cliOptions.rewrite = Boolean.getBoolean(SYS_PROP_RUNDECK_LAUNCHER_REWRITE);
-
         final CommandLineParser parser = new GnuParser();
 
         final CommandLine cl;
@@ -151,7 +156,7 @@ class CommandLineSetup {
             System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
             System.exit(1);
         }
-        cliOptions.debug = cl.hasOption('d');
+        if(!cliOptions.debug) cliOptions.debug = cl.hasOption('d');
 
         cliOptions.baseDir = cl.getOptionValue('b', System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, getLaunchLocationParentDir()))
         cliOptions.serverBaseDir = cl.getOptionValue("serverdir", System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_SERVER_DIR, cliOptions.baseDir+ "/server"))
@@ -162,6 +167,7 @@ class CommandLineSetup {
         cliOptions.projectDir = cl.getOptionValue('p')
         cliOptions.skipInstall = cl.hasOption(FLAG_SKIPINSTALL)
         cliOptions.installOnly = cl.hasOption(FLAG_INSTALLONLY)
+        cliOptions.testAuth = cl.hasOption(FLAG_TEST_AUTH)
 
         if(!System.getProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR) && cliOptions.baseDir) {
             System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_BASE_DIR, cliOptions.baseDir)

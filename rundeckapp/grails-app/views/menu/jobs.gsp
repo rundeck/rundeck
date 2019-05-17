@@ -14,13 +14,14 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment" %>
+<%@ page import="rundeck.User; grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
+    <meta name="skipprototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
@@ -39,6 +40,11 @@
     <g:embedJSON data="${nextSchedListIds ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
+    <g:jsMessages
+        id="bulkEditMessages"
+        code="scm.export.status.EXPORT_NEEDED.description,scm.export.status.CREATE_NEEDED.description,scm.export.status.CLEAN.description,scm.import.status.IMPORT_NEEDED.description,scm.import.status.DELETE_NEEDED.description,scm.import.status.CLEAN.description,scm.import.status.REFRESH_NEEDED.description,scm.import.status.UNKNOWN.description,scm.export.status.EXPORT_NEEDED.display.text,scm.export.status.CREATE_NEEDED.display.text,scm.export.status.REFRESH_NEEDED.display.text,scm.export.status.DELETED.display.text,scm.export.status.CLEAN.display.text,scm.import.status.IMPORT_NEEDED.display.text,scm.import.status.REFRESH_NEEDED.display.text,scm.import.status.UNKNOWN.display.text,scm.import.status.CLEAN.display.text"/>
+    <g:jsMessages id="queryformmessages"
+    code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
@@ -116,6 +122,8 @@
             });
         }
         function loadedFormSuccess(doShow,id){
+            jQuery('#execDivContent .exec-options-body').addClass('modal-body')
+            jQuery('#execDivContent .exec-options-footer').addClass('modal-footer')
             if ($('execFormCancelButton')) {
                 Event.observe($('execFormCancelButton'),'click',function(evt) {
                     Event.stop(evt);
@@ -189,13 +197,6 @@
 
         //set box filterselections
 
-        function _setFilterSuccess(data,name){
-            if(data){
-                var bfilters=data.filterpref;
-                //reload page
-                document.location=_genUrl(appLinks.menuJobs , bfilters[name] ? {filterName:bfilters[name]} : {});
-            }
-        }
 
 
         /** now running section update */
@@ -215,26 +216,12 @@
         }
 
 
-        function initJobIdLinks(){
-            jQuery('.act_job_action_dropdown').click(function(){
-                var id=jQuery(this).data('jobId');
-                var el=jQuery(this).parent().find('.dropdown-menu');
-                el.load(
-                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
-                );
-            });
-        }
-         function filterToggle(evt) {
-            ['${enc(js:rkey)}filter','${enc(js:rkey)}filter-toggle'].each(Element.toggle);
-        }
         function filterToggleSave(evt) {
             ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
             ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
         }
         function init(){
-            <g:if test="${!(grailsApplication.config.rundeck?.gui?.enableJobHoverInfo in ['false',false])}">
-            initJobIdLinks();
-            </g:if>
+
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
                 bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
@@ -259,381 +246,16 @@
 
 
 
-            $$('.obs_filtertoggle').each(function(e) {
-                Event.observe(e, 'click', filterToggle);
-            });
             $$('.obs_filtersave').each(function(e) {
                 Event.observe(e, 'click', filterToggleSave);
             });
         }
-        /**
-         * Possible actions for bulk edit jobs, to present in modal dialog
-         * @constructor
-         */
-        function BulkEditor(){
-            var self=this;
-            self.DISABLE_SCHEDULE = 'disable_schedule';
-            self.ENABLE_SCHEDULE = 'enable_schedule';
-            self.ENABLE_EXECUTION= 'enable_execution';
-            self.DISABLE_EXECUTION= 'disable_execution';
-            self.DELETE= 'delete';
-            self.action=ko.observable(null);
-            self.enabled=ko.observable(false);
-            self.beginEdit=function(){
-                self.expandAllComponents();
-                self.enabled(true);
-            };
-            self.cancelEdit=function(){
-                self.enabled(false);
-                self.selectNone();
-            };
-            self.disableSchedule=function(){
-
-                self.action(self.DISABLE_SCHEDULE);
-            };
-            self.isDisableSchedule=ko.pureComputed(function(){
-                return self.action()===self.DISABLE_SCHEDULE;
-            });
-            self.enableSchedule=function(){
-                self.action(self.ENABLE_SCHEDULE);
-            };
-            self.isEnableSchedule=ko.pureComputed(function(){
-                return self.action()===self.ENABLE_SCHEDULE;
-            });
-            self.enableExecution=function(){
-                self.action(self.ENABLE_EXECUTION);
-            };
-            self.isEnableExecution=ko.pureComputed(function(){
-                return self.action()===self.ENABLE_EXECUTION;
-            });
-            self.disableExecution=function(){
-                self.action(self.DISABLE_EXECUTION);
-            };
-            self.isDisableExecution=ko.pureComputed(function(){
-                return self.action()===self.DISABLE_EXECUTION;
-            });
-            self.actionDelete=function(){
-                self.action(self.DELETE);
-            };
-            self.isDelete=ko.pureComputed(function(){
-                return self.action()===self.DELETE;
-            });
-            self.cancel=function(){
-                self.action(null);
-            };
-
-            self.setCheckboxValues=function(ids){
-                //check only the checkbox with this job id by passing an array
-                jQuery('.jobbulkeditfield :input[name=ids]').val(ids);
-            };
-            self.checkboxesForGroup=function(group){
-                return jQuery('.jobbulkeditfield input[type=checkbox][data-job-group="'+group+'"]');
-            };
-            self.allCheckboxes=function(group){
-                return jQuery('.jobbulkeditfield input[type=checkbox]');
-            };
-            self.jobGroupSelectAll=function(e){
-                var jgroup=jQuery(e).data('job-group');
-                if(jgroup){
-                    self.checkboxesForGroup(jgroup).prop('checked', true);
-                }
-            };
-
-            self.jobGroupSelectNone=function(e){
-                var jgroup=jQuery(e).data('job-group');
-                if(jgroup){
-                    self.checkboxesForGroup(jgroup).prop('checked', false);
-                }
-            };
-            self.expandAllComponents=function(){
-                jQuery('.expandComponent').show();
-            };
-            self.collapseAllComponents=function(){
-                jQuery('.topgroup .expandComponent').hide();
-            };
-            self.selectAll=function(){
-                self.expandAllComponents();
-                self.allCheckboxes().prop('checked', true);
-            };
-            self.selectNone=function(){
-                self.expandAllComponents();
-                self.allCheckboxes().prop('checked', false);
-            };
-            self.toggleModal=function(){
-                jQuery('#bulk_del_confirm').modal('toggle');
-            };
-            self.activateActionForJob=function(action,jobid){
-                self.setCheckboxValues([jobid]);
-                self.beginEdit();
-                self.action(action);
-                self.toggleModal();
-            };
-
-            self.scmExportEnabled = ko.observable(false);
-            self.scmImportEnabled = ko.observable(false);
-            self.scmStatus = ko.observable(null);
-            self.scmImportJobStatus = ko.observable(null);
-            self.scmExportStatus = ko.observable(null);
-            self.scmImportStatus = ko.observable(null);
-            self.scmExportActions = ko.observable(null);
-            self.scmImportActions = ko.observable(null);
-            self.scmExportRenamed = ko.observable(null);
-            self.isExportEnabled=ko.pureComputed(function(){
-                return self.scmExportEnabled();
-            });
-
-            self.jobSynchState = function(jobid){
-                var exportStatus = null;
-                var importStatus = null;
-                if(self.scmStatus() && self.scmStatus()[jobid]){
-                    exportStatus = self.scmStatus()[jobid].synchState.name;
-                }
-                if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-                    importStatus = self.scmImportJobStatus()[jobid].synchState.name;
-                }
-                if(!exportStatus || exportStatus == "CLEAN"){
-                    return importStatus;
-                }else{
-                    return exportStatus
-                }
-            };
-
-            self.displayBadge = function(jobid){
-                var displayExport = false;
-                var displayImport = false;
-                if(self.scmExportEnabled() || self.scmImportEnabled()){
-                    if(self.scmStatus() && self.scmStatus()[jobid]){
-                        displayExport = self.scmStatus()[jobid].synchState.name != "CLEAN";
-                    }
-                    if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-                        displayImport = self.scmImportJobStatus()[jobid].synchState.name != "CLEAN";
-                    }
-                }
-                return (displayExport || displayImport);
-            };
-
-            self.jobText = function(jobid){
-                var exportStatus = null;
-                var importStatus = null;
-                var text = null;
-                if(self.scmStatus() && self.scmStatus()[jobid]){
-                    exportStatus = self.scmStatus()[jobid].synchState.name;
-                    switch(exportStatus) {
-                        case "EXPORT_NEEDED":
-                            text = "${message(code: "scm.export.status.EXPORT_NEEDED.description")}";
-                            break;
-                        case "CREATE_NEEDED":
-                            text = "${message(code: "scm.export.status.CREATE_NEEDED.description")}";
-                            break;
-                        case "CLEAN":
-                            text = "${message(code: "scm.export.status.CLEAN.description")}";
-                            break;
-                        default:
-                            text = exportStatus;
-                    }
-                }
-                if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
-                    if(text){
-                        text +=', ';
-                    }else{
-                        text = '';
-                    }
-                    importStatus = self.scmImportJobStatus()[jobid].synchState.name;
-                    switch(importStatus) {
-                        case "IMPORT_NEEDED":
-                            text += "${message(code: "scm.import.status.IMPORT_NEEDED.description")}";
-                            break;
-                        case "DELETE_NEEDED":
-                            text += "${message(code: "scm.import.status.DELETE_NEEDED.description")}";
-                            break;
-                        case "CLEAN":
-                            text += "${message(code: "scm.import.status.CLEAN.description")}";
-                            break;
-                        case "REFRESH_NEEDED":
-                            text += "${message(code: "scm.import.status.REFRESH_NEEDED.description")}";
-                            break;
-                        case "UNKNOWN":
-                            text += "${message(code: "scm.import.status.UNKNOWN.description")}";
-                            break;
-                        default:
-                            text += importStatus;
-                    }
-
-                }
-                return text;
-            };
-
-            self.jobClass = function(jobid){
-                switch(self.jobSynchState(jobid)) {
-                    case "EXPORT_NEEDED":
-                        return "text-info";
-                        break;
-                    case "CREATE_NEEDED":
-                        return "text-success";
-                        break;
-                    case "UNKNOWN":
-                        return "text-primary";
-                        break;
-                    case "IMPORT_NEEDED":
-                        return "text-warning";
-                        break;
-                    case "REFRESH_NEEDED":
-                        return "text-warning";
-                        break;
-                    case "DELETED":
-                        return "text-danger";
-                        break;
-                    case "CLEAN":
-                        return "text-primary";
-                        break;
-                }
-                return 'text-primary';
-            };
-
-            self.jobIcon = function(jobid){
-                switch(self.jobSynchState(jobid)) {
-                    case "EXPORT_NEEDED":
-                        return "glyphicon-exclamation-sign";
-                        break;
-                    case "CREATE_NEEDED":
-                        return "glyphicon-exclamation-sign";
-                        break;
-                    case "UNKNOWN":
-                        return "glyphicon-question-sign";
-                        break;
-                    case "IMPORT_NEEDED":
-                        return "glyphicon-exclamation-sign";
-                        break;
-                    case "REFRESH_NEEDED":
-                        return "glyphicon-exclamation-sign";
-                        break;
-                    case "DELETED":
-                        return "glyphicon-minus-sign";
-                        break;
-                    case "CLEAN":
-                        return "glyphicon-ok";
-                        break;
-                }
-                return 'glyphicon-plus';
-            };
-
-            self.exportMessage = function(){
-                if(self.scmExportStatus()){
-                    return self.scmExportStatus().message;
-                }
-                return null;
-            };
-            self.importMessage = function(){
-                if(self.scmImportStatus()){
-                    return self.scmImportStatus().message;
-                }
-                return null;
-            };
-
-            self.exportState = function(){
-                if(self.scmExportStatus()){
-                    return self.scmExportStatus().state.name;
-                }
-                return null;
-            };
-            self.importState = function(){
-                if(self.scmImportStatus()){
-                    return self.scmImportStatus().state.name;
-                }
-                return null;
-            };
-
-            self.jobCommit = function(jobid){
-                return self.scmExportEnabled();
-            };
-
-            self.defaultExportText = function(){
-                if(self.exportState()) {
-                    var text = null;
-                    switch(self.exportState()) {
-                        case "EXPORT_NEEDED":
-                            text = "${message(code: "scm.export.status.EXPORT_NEEDED.display.text")}";
-                            break;
-                        case "CREATE_NEEDED":
-                            text = "${message(code: "scm.export.status.CREATE_NEEDED.display.text")}";
-                            break;
-                        case "REFRESH_NEEDED":
-                            text = "${message(code: "scm.export.status.REFRESH_NEEDED.display.text")}";
-                            break;
-                        case "DELETED":
-                            text = "${message(code: "scm.export.status.DELETED.display.text")}";
-                            break;
-                        case "CLEAN":
-                            text = "${message(code: "scm.export.status.CLEAN.display.text")}";
-                            break;
-                    }
-                    if(!text){
-                        text = self.exportState();
-                    }
-                    return text;
-                }
-                return null;
-            };
-
-            self.defaultImportText = function(){
-                if(self.importState()) {
-                    var text = null;
-                    switch(self.importState()) {
-                        case "IMPORT_NEEDED":
-                            text = "${message(code: "scm.import.status.IMPORT_NEEDED.display.text")}";
-                            break;
-                        case "REFRESH_NEEDED":
-                            text = "${message(code: "scm.import.status.REFRESH_NEEDED.display.text")}";
-                            break;
-                        case "UNKNOWN":
-                            text = "${message(code: "scm.import.status.UNKNOWN.display.text")}";
-                            break;
-                        case "CLEAN":
-                            text = "${message(code: "scm.import.status.CLEAN.display.text")}";
-                            break;
-                    }
-                    if(!text){
-                        text = self.importState();
-                    }
-                    return text;
-                }
-                return null;
-            };
-
-            self.defaultDisplayText = function(){
-                if(self.exportState() != 'CLEAN'){
-                    return self.defaultExportText();
-                }else{
-                    return self.defaultImportText();
-                }
-            };
-
-
-            self.displayExport = function(){
-                return (self.exportState() && self.exportState() != 'CLEAN');
-            };
-
-            self.displayImport = function(){
-                return (self.importState() && self.importState() != 'CLEAN');
-            };
-
-            self.displaySCMMEssage = function(){
-                return (self.displayExport() || self.displayImport());
-            };
-
-        }
-
-
-
-
-
 
         var bulkeditor;
         jQuery(document).ready(function () {
             init();
             if (jQuery('#activity_section')) {
                 pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                ko.applyBindings(pageActivity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', pageActivity);
             }
             jQuery(document).on('click','.act_execute_job',function(evt){
@@ -645,14 +267,7 @@
                     elem.observe('keypress',noenter);
                 }
             });
-            bulkeditor=new BulkEditor();
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_group_tree'));
-            ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
-            ko.applyBindings(bulkeditor,document.getElementById('scm_message'));
-            ko.applyBindings(bulkeditor,document.getElementById('scmStatusPopoverOK'));
+            bulkeditor=new BulkEditor({messages:window.Messages});
 
 
 
@@ -695,6 +310,13 @@
                     bulkeditor.scmImportActions(data.scmImportActions);
                 }
             });
+            const filtersData=loadJsonData('jobFiltersJson')
+            const jobFilters = new JobFilters({
+                redirectUrl:"${createLink(action:'jobs',controller: 'menu',params:[project:params.project])}",
+                filters:filtersData.filters,
+                currentFilter:filtersData.currentFilter
+            })
+            initKoBind(null,{history:pageActivity,bulkeditor:bulkeditor,jobFilters:jobFilters})
         });
 
 
@@ -713,8 +335,221 @@
         .gsp-pager .step { padding: 0 2px; }
         .gsp-pager .currentStep { padding: 0 2px; }
     </style>
+    <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
+        <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
+    </g:if>
+
+    <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
 </head>
 <body>
+
+    <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
+
+<content tag="subtitlecss">plain</content>
+<content tag="subtitlesection">
+
+  <div class="subtitle-head">
+    <div class="subtitle-head-item flex-container flex-align-items-baseline">
+    <div class="flex-item-auto text-h3">
+
+     <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
+
+%{--    <g:if test="${ wasfiltered && paginateParams.groupPath && !filterName   }">--}%
+
+%{--            <g:if test="${paginateParams.groupPath.indexOf('/')>0}">--}%
+%{--                <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>--}%
+%{--                <g:set var="newparams" value="${new HashMap(paginateParams)}"/>--}%
+%{--                %{--}%
+%{--                    newparams['groupPath']=uplevel--}%
+%{--                }%--}%
+%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="Parent" params="${newparams+[project:params.project]}">--}%
+%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
+
+%{--                </g:link>--}%
+%{--            </g:if>--}%
+%{--            <g:else>--}%
+%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="View All Jobs" params="[project: params.project]">--}%
+%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
+%{--                    All--}%
+%{--                </g:link>--}%
+%{--            </g:else>--}%
+
+%{--    </g:if>--}%
+
+      <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
+        <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
+
+      </g:if>
+     <a href="#">
+
+        <g:if test="${wasfiltered}">
+            <g:if test="${filterName}">
+                <i class="glyphicon glyphicon-filter"></i>
+                <g:enc>${filterName}</g:enc>
+            </g:if>
+            <g:else>
+
+              <g:if test="${wasfiltered.contains('groupPath') && wasfiltered.size()>1 || wasfiltered.size()>0 }">
+
+                                    <span class="query-section">
+                <g:each in="${wasfiltered.sort()}" var="qparam">
+                      <g:if test="${qparam!='groupPath'}">
+
+                        <span class="text-secondary"><g:message code="jobquery.title.${qparam}"/>:</span>
+
+                          <span class="text-info">
+                              ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
+                          </span>
+                      </g:if>
+                  </g:each>
+                  </span>
+
+                </g:if>
+              </g:else>
+        </g:if>
+        <g:else>
+            All Jobs
+        </g:else>
+
+     </a>
+
+<g:if test="${wasfiltered || filterName || filterset}">
+                    <div class="btn-group " data-ko-bind="jobFilters">
+                                    <button type="button"
+                                            class="btn btn-secondary btn-sm dropdown-toggle "
+                                            title="Saved Filters"
+                                            data-toggle="dropdown"
+                                            aria-expanded="false">
+                                            Filters
+                                        <span class="caret"></span>
+                                    </button>
+                                    <ul class="dropdown-menu " role="menu">
+                                        <g:if test="${wasfiltered && !filterName}">
+                                        <li >
+                                          <a data-toggle="modal" href="#saveJobFilterKOModal" title="${message(code:"job.filter.save.button.title")}" >
+                                          <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
+                                        </a>
+                                        </li>
+                                        <li role="separator" class="divider"></li>
+                                        </g:if>
+                                        <g:elseif test="${filterName}">
+                                          <li >
+                                              <a data-bind="click: deleteCurrentFilterConfirm" title="${message(code:"job.filter.delete.button.title")}">
+                                                <b class="glyphicon glyphicon-trash"></b>
+                                                <g:message code="job.filter.delete.named.button" args="[filterName]"/>
+
+                                              </a>
+                                            </li>
+                                        <li role="separator" class="divider"></li>
+                                        </g:elseif>
+                                        <!-- ko if: filters().length > 0 -->
+                                        <li class="dropdown-header">
+                                        <i class="glyphicon glyphicon-filter"></i>
+                                        Saved Filters
+                                        </li>
+                                        <li data-bind="foreach: { data: filters, as: 'filter' } ">
+                                          <a href="#" data-bind="click: $root.redirectFilter, attr: {href: filter.url }" title="Select Filter">
+                                                <span data-bind="if: filter.name()==$root.currentFilter()">
+                                                    <i class="glyphicon glyphicon-check"></i>
+                                                </span>
+                                                <span data-bind="text: filter.name()"></span>
+                                          </a>
+                                        </li>
+                                        <!-- /ko -->
+                                    </ul>
+                                </div>
+
+</g:if>
+
+
+
+      </div>
+
+          <span title="Click to modify filter" class="btn btn-secondary btn-sm query " data-toggle="modal" data-target="#jobs_filters">
+               <g:message code="search.ellipsis" />
+          </span>
+
+        </div>
+        </div>
+</content>
+<g:jsonToken id="ajaxFilterTokens" />
+<div class="modal fade" id="deleteJobFilterKOModal" role="dialog" aria-labelledby="deleteJobFilterKOModalLabel" aria-hidden="true" data-ko-bind="jobFilters">
+    <div class="modal-dialog ">
+        <div class="modal-content form-horizontal" data-bind="with: filterToDelete()">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="deleteJobFilterKOModalLabel">Delete Saved Filter</h4>
+            </div>
+
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="control-label col-sm-2">Name </label>
+                    <div class="col-sm-10">
+                        <p class="form-control-static" data-bind="text: name"></p>
+                    </div>
+                </div>
+                <div class="form-group ">
+                    <label class="control-label col-sm-2">
+                        Filter
+                    </label>
+
+                    <div class="col-sm-10 ">
+                        <p class="form-control-static">
+                            <span data-bind="foreachprop: $data">
+                                <!-- ko if: value() && key!=='name' && key!=='url' -->
+                                <span class="text-secondary" data-bind="text: $parent.filterKeyLabel(key)"></span>
+                                <span class="text-info" data-bind="text: value"></span>
+                                <!-- /ko -->
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <span class="text-danger">Really delete this filter?</span>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" data-bind="click: $root.deleteFilter">Yes</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div class="modal fade" id="saveJobFilterKOModal" role="dialog" aria-labelledby="saveFilterModalLabel" aria-hidden="true" data-ko-bind="jobFilters">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="saveFilterModalLabel">Save Filter</h4>
+            </div>
+            <div class="modal-body form-horizontal">
+                <div class="container">
+                  <div class="form-group">
+                      <label for="newJobFilterName" class="control-label col-sm-2">Name:</label>
+                      <div class="col-sm-10">
+                         <input id="newJobFilterName" name="newFilterName" class="form-control input-sm" data-bind="value: newFilterName"/>
+                      </div>
+                  </div>
+                  <div class="help-block" data-bind="if: newFilterError">
+                    <span data-bind="text: newFilterError" class="text-warning"></span>
+                  </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" value="Save Filter"  data-bind="click: saveFilter" class="btn btn-primary">Save Filter</button>
+
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
 <div id="page_jobs" class="container-fluid">
   <g:if test="${flash.bulkJobResult?.errors}">
       <div class="alert alert-warning">
@@ -743,15 +578,10 @@
   </g:if>
   <div class="row">
     <div class="col-xs-12">
+
       <div class="card">
-        <div class="card-header">
-          <h3 class="card-title">
-            <g:message code="Job.plural" /> (<g:enc>${totalauthorized}</g:enc>)
-          </h3>
-        </div>
         <div class="card-content">
           <div class="runbox primary jobs" id="indexMain">
-            <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
             <g:render template="workflowsFull"
                       model="${[
                           jobExpandLevel    : jobExpandLevel,
@@ -788,10 +618,12 @@
   </div>
   <div class="row">
     <div class="col-xs-12">
-      <div class="card"  id="activity_section">
-        <div class="card-header">
-          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
-        </div>
+      <div class="card card-plain">
+          <div class="card-header">
+            <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
+          </div>
+      </div>
+      <div class="card"  id="activity_section" data-ko-bind="history">
         <div class="card-content">
           <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
         </div>
@@ -813,6 +645,5 @@
 </div>
 
 <g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
-
 </body>
 </html>

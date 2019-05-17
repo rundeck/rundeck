@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.log4j.Logger;
+import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -53,6 +54,8 @@ import java.util.Map;
  */
 class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicProperties {
     protected static Logger log = Logger.getLogger(NodeStepPluginAdapter.class.getName());
+    private String serviceName;
+    private boolean blankIfUnexpanded;
 
     @Override
     public Description getDescription() {
@@ -65,9 +68,9 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     }
 
     @Override
-    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues){
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues, Services services){
         if(plugin instanceof DynamicProperties){
-            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues, services);
         }
 
         return null;
@@ -76,21 +79,54 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
     private NodeStepPlugin plugin;
 
     public NodeStepPluginAdapter(final NodeStepPlugin plugin) {
+        this(ServiceNameConstants.WorkflowNodeStep, plugin, true);
+    }
+
+    public NodeStepPluginAdapter(
+            final String serviceName,
+            final NodeStepPlugin plugin,
+            final boolean blankIfUnexpanded
+    )
+    {
+        this.serviceName = serviceName;
         this.plugin = plugin;
+        this.blankIfUnexpanded = blankIfUnexpanded;
     }
 
     public static boolean canAdaptType(Class<?> testType){
         return NodeStepPlugin.class.isAssignableFrom(testType);
     }
 
+    public String getServiceName() {
+        return serviceName;
+    }
 
-    static class Convert implements Converter<NodeStepPlugin, NodeStepExecutor> {
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
+
+    public static class ConvertToNodeStepExecutor
+            implements Converter<NodeStepPlugin, NodeStepExecutor>
+    {
+        String serviceName;
+        boolean blankIfUnexpanded ;
+
+        public ConvertToNodeStepExecutor(final String serviceName, boolean blankIfUnexpanded) {
+            this.serviceName = serviceName;
+            this.blankIfUnexpanded = blankIfUnexpanded;
+        }
+
+        public ConvertToNodeStepExecutor() {
+            this(ServiceNameConstants.WorkflowNodeStep, true);
+        }
+
         public NodeStepExecutor convert(final NodeStepPlugin plugin) {
-            return new NodeStepPluginAdapter(plugin);
+            return new NodeStepPluginAdapter(serviceName, plugin, blankIfUnexpanded);
         }
     }
 
-    public static final Convert CONVERTER = new Convert();
+    public static final ConvertToNodeStepExecutor CONVERT_TO_NODE_STEP_EXECUTOR = new ConvertToNodeStepExecutor();
 
     @Override
     public NodeStepResult executeNodeStep(final StepExecutionContext context,
@@ -106,14 +142,14 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                     null,
                     context.getSharedDataContext(),
                     false,
-                    true
+                    blankIfUnexpanded
             );
         }
         final String providerName = item.getNodeStepType();
 
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
                                                                                                   instanceConfiguration,
-                                                                                                  ServiceNameConstants.WorkflowNodeStep,
+                                                                                                  getServiceName(),
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);

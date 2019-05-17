@@ -20,6 +20,7 @@ import grails.testing.mixin.integration.Integration
 import org.junit.Test
 import rundeck.ExecReport
 import rundeck.BaseReport
+import rundeck.ScheduledExecution
 import rundeck.services.ReportService
 
 /*
@@ -195,6 +196,32 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([excludeJobListFilter: ['group/name', 'group/name2']], [r3])
         assertQueryResult([excludeJobListFilter: ['group/name', 'group/name3']], [r2])
         assertQueryResult([excludeJobListFilter: ['group/name', 'group/name2', 'group/name3']], [])
+    }
+
+    @Test
+    void testConvertUUIDJobIdFilterToInternalId(){
+        String seUUID = UUID.randomUUID().toString()
+        String seUUID2 = UUID.randomUUID().toString()
+        def se = new ScheduledExecution(project:"one",jobName: "TestJob",uuid: seUUID)
+        def se2 = new ScheduledExecution(project:"one",jobName: "TestJob2",uuid: seUUID2)
+        assert null != se.save(flush: true)
+        assert null != se2.save(flush: true)
+
+        def r1 = proto(reportId: 'group/name', jcJobId: se.id,ctxProject: 'one')
+        assert null != r1.save(flush: true)
+        def r2 = proto(reportId: 'group/name2', jcJobId: se2.id,ctxProject: 'one')
+        assert null != r2.save(flush: true)
+        sessionFactory.currentSession.flush()
+
+        def pquery = new ExecQuery(projFilter: 'one')
+        def pres =reportService.getExecutionReports(pquery,true)
+        assert pres.total == 2
+
+        def query = new ExecQuery(projFilter: 'one',jobIdFilter: seUUID)
+        def result=reportService.getExecutionReports(query,true)
+
+        assert result.total == 1
+        result.reports.containsAll([r1])
     }
 
     private assertQueryResult(Map props, Collection<BaseReport> results,Integer total=null) {

@@ -157,12 +157,12 @@ public class FrameworkBase implements IFramework{
     }
 
     @Override
-    public NodeExecutorService getNodeExecutorService() throws ExecutionServiceException {
+    public NodeExecutorService getNodeExecutorService()  {
         return frameworkServices.getNodeExecutorService();
     }
 
     @Override
-    public NodeStepExecutionService getNodeStepExecutorService() throws ExecutionServiceException {
+    public NodeStepExecutionService getNodeStepExecutorService()  {
         return frameworkServices.getNodeStepExecutorService();
     }
 
@@ -217,12 +217,6 @@ public class FrameworkBase implements IFramework{
         return lookup.getProperty(name);
     }
 
-    /**
-     * @return a PropertyRetriever interface for framework-scoped properties
-     */
-    public PropertyRetriever getPropertyRetriever() {
-        return PropertyLookup.safePropertyRetriever(lookup);
-    }
 
     /**
      * @return true if the property exists

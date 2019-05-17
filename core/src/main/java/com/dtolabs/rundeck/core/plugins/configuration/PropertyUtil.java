@@ -951,6 +951,9 @@ public class PropertyUtil {
         }
 
         public boolean isValid(final String value) throws ValidationException {
+            if (selectValues == null) {
+                return true;
+            }
             Set<String> propvalset = new HashSet<>();
             if (value.indexOf(',') > 0) {
                 Stream<String> stream = Arrays.stream(value.split(", *"));

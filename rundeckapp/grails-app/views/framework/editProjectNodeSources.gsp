@@ -77,6 +77,7 @@
               <div class="list-group">
                 <g:hiddenField name="project" value="${project}"/>
                   <%--Render project configuration settings for 'resourceModelSource'--%>
+                  <div class="list-group-item">
                   <g:render template="projectConfigurableForm"
                             model="${[extraConfigSet: extraConfig?.values(),
                                       category      : 'resourceModelSource',
@@ -84,6 +85,7 @@
                                       titleCode     : 'project.configuration.extra.category.resourceModelSource.title',
                                       helpCode      : 'project.configuration.extra.category.resourceModelSource.description'
                             ]}"/>
+                    </div>
                   <g:if test="${resourceModelConfigDescriptions}">
                     <div class="list-group-item">
                       <div class="help-block">
@@ -106,37 +108,45 @@
                           </g:each>
                         </g:if>
                       </ol>
-                      <div id="sourcebutton" >
-                        <button class="btn btn-success btn-sm">
+
+                        <div>
+                            <a class="btn btn-success btn-sm" data-toggle="modal" href="#sourcepickermodal">
                           <g:message code="project.resource.model.add.source.button.title" />
                           <i class="glyphicon glyphicon-plus"></i>
-                        </button>
+                            </a>
                       </div>
-                      <div id="sourcepicker" class="panel card-success sourcechrome" style="display:none;">
-                        <div class="panel-heading">
-                          <g:message code="framework.service.ResourceModelSource.add.title"/>
-                              </div>
+                        <g:render template="/common/modal" model="${[modalid  : 'sourcepickermodal',
+                                                                     modalsize: 'modal-lg',
+                                                                     title    : message(code: "framework.service.ResourceModelSource.add.title"),
+                                                                     buttons  : []]}">
+                            <div>
+                                <div class="help-block">
+                                    <g:message code="framework.service.ResourceModelSource.add.modal.description" />
+                                </div>
                               <div class="list-group">
                                   <g:each in="${resourceModelConfigDescriptions}" var="description">
                                       <a onclick="configControl.addConfig('${enc(js: description.name)}');
                                       return false;"
+                                         data-dismiss="modal"
                                          href="#"
                                          class="list-group-item">
+                                          <i class="glyphicon glyphicon-plus text-muted"></i>
                                           <strong>
-                                              <i class="glyphicon glyphicon-plus"></i>
-                                              <g:enc>${description.title}</g:enc>
+
+                                              <g:render template="/framework/renderPluginDesc" model="${[
+                                                      serviceName    : 'ResourceModelSource',
+                                                      description    : description,
+                                                      showPluginIcon : true,
+                                                      hideDescription: true
+                                              ]}"/>
                                           </strong>
                                           <span class="help-block"><g:enc>${description.description}</g:enc></span>
                                       </a>
                                   </g:each>
                               </div>
-
-                              <div id="sourcecancel" class="card-footer" style="margin-top:1em;">
-                                  <button class="btn btn-default btn-sm"><g:message code="button.action.Cancel"/></button>
-                              </div>
-
                           </div>
-                      </div>
+                        </g:render>
+                    </div>
 
                   </g:if>
               </div>

@@ -134,7 +134,7 @@ class ReportsController extends ControllerBase{
         }
         if(params.includeJobRef && params.jobIdFilter){
             ScheduledExecution.withTransaction {
-                ScheduledExecution sched = ScheduledExecution.get(params.jobIdFilter)
+                ScheduledExecution sched = params.jobIdFilter.toString().length() == 36 ? ScheduledExecution.findByUuid(params.jobIdFilter) : ScheduledExecution.get(params.jobIdFilter)
                 def list = ReferencedExecution.findAllByScheduledExecution(sched)
                 def include = []
                 list.each {refex ->

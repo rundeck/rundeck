@@ -3,7 +3,7 @@
   <g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
   </g:if>
-  <nav class="navbar navbar-default mainbar">
+  <nav id="mainbar" class="navbar navbar-default mainbar">
     <div class="container-fluid">
       <!-- <div class="navbar-minimize">
         <button class="btn btn-fill btn-icon">
@@ -55,11 +55,18 @@
                     <g:set var="projectName" value="${project ?: params.project ?: request.project}"/>
                     <g:set var="projectLabel" value="${session.frameworkLabels?.getAt(projectName)?: projectName}"/>
 
-                    <li id="projectHomeLink">
+                    <li id="projectHomeLink" class="primarylink">
                         <g:link controller="menu" action="projectHome" params="[project: projectName]">
                             <g:enc>${projectLabel}</g:enc>
                         </g:link>
                     </li>
+                  <g:ifPageProperty name='meta.projtabtitle'>
+                    <li class="primarylink">
+                      <a href="#">
+                        <g:pageProperty name="meta.projtabtitle"/>
+                      </a>
+                    </li>
+                  </g:ifPageProperty>
                 </g:if>
               <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
                 <g:ifPageProperty name='meta.tabpage'>
@@ -91,8 +98,7 @@
               </p>
           </g:ifScheduleMode>
       </g:if>
-        <ul class="nav navbar-nav navbar-right">
-
+        <ul id="navbar-menu" class="nav navbar-nav navbar-right">
           <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
           <g:if test="${userDefinedInstanceName}">
             <li>

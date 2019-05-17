@@ -1,63 +1,140 @@
-.mainbar{
+.mainbar {
   min-height: 59px;
   height: 59px;
+  background: $bg-mainheader;
+
+  &.navbar{
+    border-bottom: 1px solid darken($bg-mainheader, 10%);
+  }
+
   .navbar-minimize .btn,
-  li#projectSelect a.dropdown-toggle.btn  {
+  li#projectSelect a.dropdown-toggle.btn {
     margin: 10px 3px 0;
     height: 38px;
     width: 38px;
   }
-  .navbar-toggle{
-    z-index: 1;
+
+
+  // Cog
+  .fa-cog,
+  .fa-user {
+    color: #65605a;
   }
-  .nav.navbar-nav{
-    li{
-      a{
+
+  #projectHomeLink {
+    font-size: 32px;
+    margin: 5px 0 0;
+  }
+
+  #appAdmin {
+    margin: 10px 0 0;
+  }
+
+  #appUser {
+    margin: 5px 0 0 20px;
+    font-size: 32px;
+    font-weight: lighter;
+  }
+}
+
+.subtitlebar, .mainbar {
+  min-height: 59px;
+}
+
+.mainbar, .subtitlebar.standard {
+  height: 59px;
+}
+
+.subtitlebar.has-content {
+  .navbar-header {
+    padding: 5px 5px 5px 0;
+  }
+}
+
+.subtitlebar, .mainbar {
+  .primarylink {
+    font-size: 32px;
+    margin: 5px 10px 0 0;
+  }
+
+  .nav.navbar-nav {
+    li {
+      a {
         padding: 0;
         margin: 0;
-        &.dropdown-toggle{
+
+        &.dropdown-toggle {
           cursor: pointer;
         }
       }
+
+      &.primarylink {
+        a {
+          margin: 0 10px 0 0;
+        }
+      }
     }
-    .dropdown-menu{
-      li{
-        a{
+
+    li.primarylink + li.primarylink {
+      border-left: 1px solid darken($bg-subheader, 10%);
+
+      a {
+        margin-left: 10px;
+      }
+    }
+
+    .dropdown-menu {
+      li {
+        a {
           padding: 10px 15px;
         }
       }
     }
   }
+
+  .navbar-toggle {
+    z-index: 1;
+  }
+
   // sidebar open
-  i.fas.fa-ellipsis-v{
+  i.fas.fa-ellipsis-v {
     display: block;
   }
-  i.fas.fa-ellipsis-h{
+
+  i.fas.fa-ellipsis-h {
     display: none;
   }
+
   // sidebar closed
-  .sidebar-mini &{
-    i.fas.fa-ellipsis-v{
+  .sidebar-mini & {
+    i.fas.fa-ellipsis-v {
       display: none;
     }
-    i.fas.fa-ellipsis-h{
+
+    i.fas.fa-ellipsis-h {
       display: block;
     }
   }
-  // Cog
-  .fa-cog, .fa-user{
-    color: #65605a;
+
+}
+
+.subtitlebar {
+  background: $bg-subheader;
+
+  &.navbar {
+    border-bottom: 1px solid darken($bg-subheader, 10%);
   }
-  #projectHomeLink{
-    font-size: 32px;
-    margin: 5px 0 0;
+
+  &.plain {
+    background: none;
   }
-  #appAdmin{
-    margin: 10px 0 0;
-  }
-  #appUser{
-    margin: 5px 0 0 20px;
-    font-size: 32px;
-    font-weight: lighter;
+}
+
+.subtitlebar{
+
+  .subtitle-head {
+    .subtitle-head-item {
+      padding: 15px;
+    }
   }
 }

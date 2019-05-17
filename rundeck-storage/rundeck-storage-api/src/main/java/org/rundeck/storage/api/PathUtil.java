@@ -16,7 +16,6 @@
 
 package org.rundeck.storage.api;
 
-import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -102,6 +101,22 @@ public class PathUtil {
         return cleanPath(join(components, SEPARATOR));
     }
 
+    /**
+     * @param path path
+     * @return path components
+     */
+    public static String[] componentsFromPath(final Path path) {
+        return componentsFromPathString(path.getPath());
+    }
+
+    /**
+     * @param path path string
+     * @return path components
+     */
+    public static String[] componentsFromPathString(final String path) {
+        return cleanPath(path).split(SEPARATOR);
+    }
+
     private static String join(String[] components, String sep) {
         StringBuilder sb = new StringBuilder();
         for (String component : components) {
@@ -159,12 +174,21 @@ public class PathUtil {
     }
 
     /**
+     * @param patha path A
+     * @param pathb path B
+     * @return true if the paths are equal
+     */
+    public static boolean equals(Path patha, Path pathb) {
+        return cleanPath(patha.getPath()).equals(cleanPath(pathb.getPath()));
+    }
+
+    /**
      * Return the string representing the parent of the given path
      * @param path path string
      * @return parent path string
      */
     public static String parentPathString(String path) {
-        String[] split = cleanPath(path).split(SEPARATOR);
+        String[] split = componentsFromPathString(path);
         if (split.length > 1) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int i = 0; i < split.length - 1; i++) {
@@ -194,7 +218,7 @@ public class PathUtil {
     }
 
     public static String pathName(String path) {
-        String[] split = cleanPath(path).split(SEPARATOR);
+        String[] split = componentsFromPathString(path);
         if (split.length > 0) {
             return split[split.length - 1];
         }

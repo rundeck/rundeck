@@ -145,6 +145,6 @@ public class ContextManager extends NoopWorkflowExecutionListener implements Con
 
     @Override
     public void finishWorkflowItemErrorHandler(int step, StepExecutionItem item, StepExecutionResult result) {
-        stepContext.finishStepContext();
+        stepContext.beginStepContext(StateUtils.stepContextId(step, false));
     }
 }

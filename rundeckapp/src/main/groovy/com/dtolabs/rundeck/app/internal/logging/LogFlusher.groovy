@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.utils.ThreadBoundLogOutputStream
 
 /**
  * Manages cleanup for buffered log events, flushes the thread bound log output streams of any buffered events when a

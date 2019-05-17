@@ -9,8 +9,12 @@ Vue.config.productionTip = false
 Vue.use(VueCookies)
 
 /* eslint-disable no-new */
-new Vue({
-  el: '#project-motd-vue',
-  components: { App },
-  template: '<App/>'
-})
+if (document.getElementById('project-motd-vue')) {
+  new Vue({
+    el: '#project-motd-vue',
+    components: {
+      App
+    },
+    template: '<App/>'
+  })
+}

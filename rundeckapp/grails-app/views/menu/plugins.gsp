@@ -22,7 +22,7 @@ Time: 3:13 PM
 To change this template use File | Settings | File Templates.
 --%>
 
-<%@ page import="java.util.regex.Pattern; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.regex.Pattern; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -31,7 +31,28 @@ To change this template use File | Settings | File Templates.
   <meta name="tabtitle" content="${g.message(code:'page.Plugins.title')}"/>
   <title><g:message code="page.Plugins.title"/></title>
 </head>
+<g:set var="authAdmin" value="${auth.resourceAllowedTest(
+        type: 'resource',
+        kind: 'system',
+        action: [AuthConstants.ACTION_ADMIN],
+        any: true,
+        context: 'application'
+)}"/>
 <body>
+  <g:if test="${flash.errors}">
+      <div class="alert alert-warning">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <g:each in="${flash.errors}" var="message">
+             <g:message code="${message}" default="${message}" />
+          </g:each>
+      </div>
+  </g:if>
+  <g:if test="${flash.installSuccess}">
+      <div class="alert alert-info">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <g:message code="plugin.install.success" default="Plugin Installed Successfully" />
+      </div>
+  </g:if>
   <div class="container-fluid">
     <div class="row">
       <div class="col-xs-12">
@@ -39,14 +60,35 @@ To change this template use File | Settings | File Templates.
           <div class="card-header">
             <h3 class="card-title">
               <g:message code="page.Plugins.title"/>
-              <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
-              <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
-              <g:set var="pluginLinkUrl"
-              value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-              <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success pull-right">
-                <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
-                <i class="glyphicon glyphicon-arrow-right"></i>
-              </a>
+              <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
+              <g:if test="${repoEnabled == 'true'}">
+                <div class="btn-toolbar">
+                  <g:link controller="artifact" action="index" class="btn btn-success pull-right">
+                    <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                    <i class="glyphicon glyphicon-arrow-right"></i>
+                  </g:link>
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
+                  </a>
+                </div>
+              </g:if>
+              <g:else>
+                <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
+                <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
+                <g:set var="pluginLinkUrl"
+                value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
+                <div class="btn-toolbar">
+                  <a href="${enc(attr:pluginLinkUrl)}" class="btn-group btn btn-success pull-right">
+                    <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
+                    <i class="glyphicon glyphicon-arrow-right"></i>
+                  </a>
+                  <a href="#installplugin" onclick="jQuery('#installplugin').modal('show');" class="btn-group btn btn-success pull-right">
+                    <i class="glyphicon glyphicon-plus"></i>
+                    <g:message code="gui.admin.InstallPlugin" default="Install Plugin"/>
+                  </a>
+                </div>
+              </g:else>
             </h3>
           </div>
           <div class="card-content">
@@ -252,5 +294,6 @@ To change this template use File | Settings | File Templates.
     </div>
   </div>
 </div>
+<g:render template="pluginInstallForm" />
 </body>
 </html>

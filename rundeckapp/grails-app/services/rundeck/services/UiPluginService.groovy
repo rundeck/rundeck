@@ -1,7 +1,8 @@
 package rundeck.services
 
+import java.io.InputStream
+
 import com.dtolabs.rundeck.core.plugins.PluginException
-import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
@@ -9,7 +10,6 @@ import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.cache.RemovalNotification
 import org.springframework.beans.factory.InitializingBean
 
 class UiPluginService implements InitializingBean {
@@ -68,22 +68,26 @@ class UiPluginService implements InitializingBean {
     }
 
     /**
-     * Get ui profile for plugin
+     * Get ui profile for plugin, returns [fileMetadata: metadata for file, icon: icon resource path, providerMetadata: provider metadata map]
      * @param service service
      * @param name provider
      * @param lang if lang specified, include i18n for the given lang
      * @return
      */
-    def getProfileFor(String service, String name) {
-        def meta = metadataForPlugin(service, name)
+    Map getProfileFor(String service, String name) {
+        def fileMetadata = fileMetadataForPlugin(service, name)
         def key = new PluginKey(service: service, name: name)
         CachedPluginMeta cachedMetadata = metadataCache.get(key)
-        if (meta?.dateLoaded > cachedMetadata?.date) {
+        if (fileMetadata?.dateLoaded > cachedMetadata?.date) {
             metadataCache.invalidate(key)
         }
         cachedMetadata = metadataCache.get(key)
 
-        [metadata: meta, icon: cachedMetadata.iconResource]
+        [
+                fileMetadata    : fileMetadata,
+                icon            : cachedMetadata.iconResource,
+                providerMetadata: cachedMetadata.providerMetadata
+        ]
     }
 
     /**
@@ -105,11 +109,18 @@ class UiPluginService implements InitializingBean {
             }
             iconResourcePath = testlist.find { reslist?.contains(it.toString()) }
         }
-        def metadata = metadataForPlugin(key.service, key.name)
+        def metadata = fileMetadataForPlugin(key.service, key.name)
         if (!metadata) {
             log.debug("No metadata for ${key}")
         }
-        new CachedPluginMeta(date: metadata?.dateLoaded, iconResource: iconResourcePath)
+        def described = pluginService.getPluginDescriptor(key.name, key.service)
+        def describedMeta = described?.description?.metadata
+
+        new CachedPluginMeta(
+                date: metadata?.dateLoaded,
+                iconResource: iconResourcePath,
+                providerMetadata: describedMeta
+        )
     }
     /**
      * Get ui profile for plugin
@@ -119,13 +130,34 @@ class UiPluginService implements InitializingBean {
      * @return
      */
     Properties getMessagesFor(String service, String name, Locale locale = null) {
-        def meta = metadataForPlugin(service, name)
+        def meta = fileMetadataForPlugin(service, name)
         def key = new PluginLocaleKey(service: service, name: name, locale: locale ?: Locale.getDefault())
         def cachedMessages = messagesCache.get(key)
         if (meta?.dateLoaded > cachedMessages?.date) {
             messagesCache.invalidate(key)
         }
         messagesCache.get(key).messages
+    }
+
+    /**
+     * Get message code for a plugin, searches the found locale using a sequence of keys in order:
+     *  service.provider.code, provider.code, service.code, code
+     * @param service service
+     * @param name provider
+     * @param code code
+     * @param defaultmsg default
+     * @param locale locale
+     * @return code value found, or defaultmsg
+     */
+    String getPluginMessage(String service, String name, String code, String defaultmsg, Locale locale = null) {
+        def messages = getMessagesFor(service, name, locale)
+        def foundcode = [
+            service + '.' + name + '.' + code,
+            name + '.' + code,
+            service + '.' + code,
+            code,
+        ].find { messages[it] }
+        return (foundcode != null ? messages[foundcode] : defaultmsg)
     }
 
     static class PluginKey {
@@ -170,6 +202,7 @@ class UiPluginService implements InitializingBean {
 
     static class CachedPluginMeta {
         String iconResource
+        Map<String, String> providerMetadata
         Date date
     }
 
@@ -236,7 +269,7 @@ class UiPluginService implements InitializingBean {
         Locale locale = key.locale
         Properties messages = new Properties()
         def reslist = resourcesForPlugin(service, name)
-        def meta = metadataForPlugin(service, name)
+        def meta = fileMetadataForPlugin(service, name)
         if (reslist) {
             def testlangs = [locale.toLanguageTag(), locale.language].collect {
                 '_' + it.replaceAll('-', '_')
@@ -279,7 +312,7 @@ class UiPluginService implements InitializingBean {
         rundeckPluginRegistry.getResourceLoader(service, name)?.listResources()
     }
 
-    def metadataForPlugin(String service, String name) {
+    def fileMetadataForPlugin(String service, String name) {
         rundeckPluginRegistry.getPluginMetadata(service, name)
     }
     /**
@@ -289,7 +322,7 @@ class UiPluginService implements InitializingBean {
      * @param path
      * @return
      */
-    def openResourceForPlugin(String service, String name, String path) {
+    def InputStream openResourceForPlugin(String service, String name, String path) {
         try {
             return rundeckPluginRegistry.getResourceLoader(service, name)?.openResourceStreamFor(path)
         } catch (IOException | PluginException e) {

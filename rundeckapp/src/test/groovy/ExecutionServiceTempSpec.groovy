@@ -35,7 +35,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.test.mixin.Mock
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Assert
@@ -107,15 +107,19 @@ class ExecutionServiceTempSpec extends Specification{
 
         then:
         service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass') >> true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }
+            hasPassword('keys/dev/pass') >> true
             readPassword('keys/dev/pass') >> {
                 return 'pass2'.bytes
             }
+            hasPassword('keys/op/pass') >> true
             readPassword('keys/op/pass') >> {
                 return 'pass3'.bytes
             }
+            hasPassword(_) >> true
             readPassword(_) >> {
                 return ''.bytes
             }

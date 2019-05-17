@@ -100,6 +100,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
                           .defaultValue("false")
                           .build()
             )
+            .metadata("faicon", "file-alt")
             .build();
     }
 

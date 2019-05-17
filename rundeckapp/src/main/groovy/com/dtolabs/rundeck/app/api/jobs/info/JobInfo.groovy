@@ -81,7 +81,6 @@ class JobInfo {
 
     @ApiVersion(20)
     @Ignore(onlyIfNull = true)
-    @XmlAttribute
     List<Date> futureScheduledExecutions
 
 //    Map blah=[

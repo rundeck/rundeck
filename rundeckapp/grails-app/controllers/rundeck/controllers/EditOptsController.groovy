@@ -16,16 +16,23 @@
 
 package rundeck.controllers
 
-import java.util.regex.Pattern
-import java.util.regex.PatternSyntaxException
+import org.apache.log4j.Logger
 import rundeck.Option
 import rundeck.ScheduledExecution
+import rundeck.services.FrameworkService
+import rundeck.utils.OptionsUtil
+
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController {
+    static Logger logger = Logger.getLogger(EditOptsController)
+    def FrameworkService frameworkService
     def fileUploadService
+    def optionValuesService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -51,13 +58,13 @@ class EditOptsController {
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         if (params.name && !editopts[params.name]) {
             log.error("no option with name ${params.name} found")
             flash.error = "no option with name ${params.name} found"
-            return error.call()
+            return error()
         }
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
@@ -73,7 +80,8 @@ class EditOptsController {
                 scheduledExecutionId       : params.scheduledExecutionId,
                 newoption                  : params['newoption'],
                 edit                       : true,
-                fileUploadPluginDescription: fileUploadService.pluginDescription
+                fileUploadPluginDescription: fileUploadService.pluginDescription,
+                optionValuesPlugins        : optionValuesService.listOptionValuesPlugins()
         ]
         return render(template: "/scheduledExecution/optEdit", model: model + outparams)
     }
@@ -83,17 +91,17 @@ class EditOptsController {
      */
     def renderOpt() {
         if (!params.name) {
-            log.error("name parameter is required")
-            flash.error = "name parameter is required"
-            return error.call()
+            log.error("name parameter required")
+            flash.error = "name parameter required"
+            return error()
         }
         def name = params.name
 
         def Map editopts = _getSessionOptions()
         if (!editopts[name]) {
-            log.error("name parameter is invalid: ${name}")
-            flash.error = "name parameter is invalid: ${name}"
-            return error.call()
+            log.error("no option with name ${params.name} found")
+            flash.error = "no option with name ${params.name} found"
+            return error()
         }
         def optIndex=editopts.values()*.name.indexOf(name)
 
@@ -142,7 +150,7 @@ class EditOptsController {
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -184,7 +192,8 @@ class EditOptsController {
         )
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -196,7 +205,7 @@ class EditOptsController {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -216,7 +225,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
     /**
@@ -233,12 +243,12 @@ class EditOptsController {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
-            return error.call()
+            return error()
         }
         if (!params.relativePosition && !params.last && !params.before) {
             log.error("relativePosition, last, or before parameter is required")
             flash.error = "relativePosition, last, or before parameter is required"
-            return error.call()
+            return error()
         }
         def editopts = _getSessionOptions()
         def name = params.name
@@ -258,7 +268,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, name: name, scheduledExecutionId: params.scheduledExecutionId, edit: true])
         }.invalidToken{
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -293,7 +304,8 @@ class EditOptsController {
             if (result.error) {
                 log.error(result.error)
                 flash.error = result.error
-                return error.call()
+                response.status = 400
+                return error()
             }
             if (null != action.name) {
                 name = action.name
@@ -305,7 +317,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -325,7 +338,8 @@ class EditOptsController {
             if (result.error) {
                 log.error(result.error)
                 flash.error = result.error
-                return error.call()
+                response.status = 400
+                return error()
             }
             if (null != action.name) {
                 name = action.name
@@ -338,7 +352,8 @@ class EditOptsController {
         return render(template: "/scheduledExecution/optlistContent", model: [options: options, scheduledExecutionId: params.scheduledExecutionId, edit: params.edit, highlight: name])
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -354,7 +369,8 @@ class EditOptsController {
         return renderAll.call()
         }.invalidToken {
             request.error = g.message(code: 'request.error.invalidtoken.message')
-            return error.call()
+            response.status=400
+            return error()
         }
     }
 
@@ -488,6 +504,11 @@ class EditOptsController {
             opt.errors.rejectValue('required', 'option.file.required.message')
             return result
         }
+
+        if (opt.hidden && !opt.defaultValue && !opt.defaultStoragePath) {
+            opt.errors.rejectValue('hidden', 'option.hidden.notallowed.message')
+            return result
+        }
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
             opt.convertValuesList()
             if(!opt.multivalued && !opt.values.contains(opt.defaultValue)) {
@@ -537,12 +558,30 @@ class EditOptsController {
             opt.errors.rejectValue('multivalued', 'option.multivalued.secure-conflict.message')
         }
         if(jobWasScheduled && opt.required && !(opt.defaultValue||opt.defaultStoragePath)){
-            opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
+            boolean hasSelectedOnRemoteValue = false
+            if(opt.realValuesUrl){
+                try{
+                    def realUrl = opt.realValuesUrl.toExternalForm()
+                    ScheduledExecution se = opt.scheduledExecution
+                    def urlExpanded = OptionsUtil.expandUrl(opt, realUrl, se, [:], realUrl.matches(/(?i)^https?:.*$/))
+                    def remoteResult=ScheduledExecutionController.getRemoteJSON(urlExpanded, 10, 0, 5)
+                    if(remoteResult){
+                        def remoteJson = remoteResult.json
+                        if(remoteJson && remoteJson instanceof List && ((List<Map>)remoteJson).any {Map item -> return item.selected}){
+                            hasSelectedOnRemoteValue = true
+                        }
+                    }
+                } catch (Exception e){
+                    logger.error("getRemoteJSON error: ${e.message}")
+                    e.printStackTrace()
+                }
+            }
+            if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
         return result
     }
 
-    /**
+        /**
      * Use input parameters to configure an Option object.
      * Special properties "valuesType" and "enforcedType" configure
      * the option when mutually exclusive properties are in the input parameters.
@@ -558,6 +597,7 @@ class EditOptsController {
             params.valuesList = null
             valuesUrl = params.valuesUrl
         }
+
         if (params.enforcedType == 'none') {
             params.regex = null
             params.enforced = false
@@ -614,7 +654,10 @@ class EditOptsController {
             }else{
                 opt.realValuesUrl = null
             }
+        } else {
+            opt.optionValuesPluginType = params.valuesType
         }
+
         opt.convertValuesList()
         return opt
     }

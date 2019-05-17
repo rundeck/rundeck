@@ -13,9 +13,6 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<g:if test="${session[org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME]?.language=='de'}">
-    <g:set var="customCss" value=".navbar-brand,.navbar-default{border-radius: 0 0 10px 10px; }"/>
-</g:if>
 
 <g:set var="sidebarColor" value="${grailsApplication.config.rundeck.gui.sidebarColor}"/>
 <g:set var="sidebarTextColor" value="${grailsApplication.config.rundeck.gui.sidebarTextColor}"/>
@@ -59,37 +56,4 @@
       color: ${instanceNameLabelTextColor} !important;
     }
   </g:if>
-</style>
-<style type="text/css">
-
-
-
-    /*
-    If I turn this off, will it break things? ~ Jesse
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc{
-
-          width: ${enc(rawtext:appLogoW)};
-          height: ${enc(rawtext:appLogoH)};
-        vertical-align: baseline;
-    }
-
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-        background-image: url("${logoResource}");
-        background-repeat: no-repeat;
-    }
-
-    @media
-    only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (   min--moz-device-pixel-ratio: 2),
-    only screen and (     -o-min-device-pixel-ratio: 2/1),
-    only screen and (        min-device-pixel-ratio: 2),
-    only screen and (                min-resolution: 192dpi),
-    only screen and (                min-resolution: 2dppx) {
-    .nodedetail.server .nodedesc, .node_entry.server .nodedesc {
-        background-image: url("${logoResourceHires}");
-        background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
-    }
-    } */
-
-    ${enc(rawtext:customCss)}
 </style>

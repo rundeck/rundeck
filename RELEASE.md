@@ -1,62 +1,84 @@
-Release 3.0.6
+Release 3.0.21
 ===========
 
-Date: 2018-09-17
+Date: 2019-04-24
 
-Name: <span style="color: deeppink"><span class="glyphicon glyphicon-cutlery"></span> "jalapeño popper deeppink cutlery"</span>
+Name: <span style="color: pink"><span class="glyphicon glyphicon-plane"></span> "jalapeño popper pink plane"</span>
 
 ## Notes
 
-This release contains bug fixes, including some UI changes to improve the sidebar behavior, and one enhancement to allow admins to list the User summary information.
+Bug fixes
 
 ## Contributors
 
-* Alex Honor (ahonor)
+* Carlos Eduardo Roriz Franco
 * Greg Schueler (gschueler)
 * Greg Zapp (ProTip)
 * Jaime Tobar (jtobard)
 * Jesse Marple (jessemarple)
+* Luis Toledo (ltamaster)
+* Stefan Kirrmann (kirrmann)
 * Stephen Joyner (sjrd218)
+* carlos (carlosrfranco)
 
 ## Bug Reporters
 
-* Antoine-Auffret
-* Daryes
-* ahonor
-* damageboy
-* docbyte86
-* gaetanquentin
+* G3NSVRV
+* JesusRo
+* ProTip
+* benruset
+* carlosrfranco
+* ckaiser79
+* dabest1
+* fgutierrezz
 * gschueler
+* hs-hub-world
 * jessemarple
+* jplassnibatt
 * jtobard
-* mazzella-c
+* kirrmann
+* ltamaster
+* marcoc610
+* sebastianbello
 * sjrd218
 
 ## Issues
 
-[Milestone 3.0.6](https://github.com/rundeck/rundeck/milestone/86)
+[Milestone 3.0.21](https://github.com/rundeck/rundeck/milestone/106)
 
-* [#4029 - sets ui_token, uses token to save sidebar status](https://github.com/rundeck/rundeck/pull/4030)
-* [Save Sidebar Open/Close status.](https://github.com/rundeck/rundeck/issues/4029)
-* [Add @DirtyCheck annotation to ScheduledExecution superclasses](https://github.com/rundeck/rundeck/pull/4008)
-* [user filterPref to session](https://github.com/rundeck/rundeck/pull/4005)
-* [Bug/3992/responsive ui navbar toggle](https://github.com/rundeck/rundeck/pull/4004)
-* [optimization execution count query](https://github.com/rundeck/rundeck/pull/4001)
-* [Bug/3982/ui scheduled job progress bar](https://github.com/rundeck/rundeck/pull/4000)
-* [Rundeck 3 bug : navbar-toggle button isn't working when the window is under 993 px wide](https://github.com/rundeck/rundeck/issues/3992)
-* [Bug/3911/sidebar animation issue](https://github.com/rundeck/rundeck/pull/3988)
-* [UI issue when viewing a scheduled job in the future in activity tab](https://github.com/rundeck/rundeck/issues/3982)
-* [rundeckd.conf contains an error preventing proper startup](https://github.com/rundeck/rundeck/issues/3974)
-* [Fixes class not found issue when LDAP is configured in a non-jetty container](https://github.com/rundeck/rundeck/pull/3966)
-* [Issue while using LDAP authentification](https://github.com/rundeck/rundeck/issues/3965)
-* [Fix locale not persisting via cookie correctly](https://github.com/rundeck/rundeck/pull/3964)
-* [Fix config storage tree errors using file provider](https://github.com/rundeck/rundeck/pull/3962)
-* [Using file storage for config storage tree causes some problems](https://github.com/rundeck/rundeck/issues/3960)
-* [#3913, #3645, fixes missing adhoc execution controls, info button not…](https://github.com/rundeck/rundeck/pull/3958)
-* [Issue/3956 multi storage tree file](https://github.com/rundeck/rundeck/pull/3957)
-* [StorageTreeFactory configuration of file system plugin overwrites previous baseDir](https://github.com/rundeck/rundeck/issues/3956)
-* [RD 3.0.1: Cannot modify node filter ](https://github.com/rundeck/rundeck/issues/3920)
-* [rd3: Adhoc execution view does not have controls or command string](https://github.com/rundeck/rundeck/issues/3913)
-* [Users summary page](https://github.com/rundeck/rundeck/pull/3906)
-* [RD 3 : no cookie for locale persistence](https://github.com/rundeck/rundeck/issues/3860)
-* [rd ui: job "info" button execution show page sometimes doesn't work](https://github.com/rundeck/rundeck/issues/3645)
+* [Add docker configuration extension information](https://github.com/rundeck/rundeck/pull/4751)
+* [Fix: job exclude filter doesn't work for scheduled jobs](https://github.com/rundeck/rundeck/pull/4750)
+* [Fix new project / edit node source flow](https://github.com/rundeck/rundeck/pull/4746)
+* [Fixes StaticHostKeyChecking when using password for git plugin via ssh](https://github.com/rundeck/rundeck/pull/4745)
+* [Logout enhancements.](https://github.com/rundeck/rundeck/pull/4743)
+* [new project flow: after creation, should go to updated nodes config page](https://github.com/rundeck/rundeck/issues/4741)
+* [Fix: project does not exist error](https://github.com/rundeck/rundeck/pull/4735)
+* [Fix style on job form for Notification plugins, and webhook field](https://github.com/rundeck/rundeck/pull/4733)
+* [Fix: mask plugin password properties in project config](https://github.com/rundeck/rundeck/pull/4724)
+* [new version of python winrm plugin](https://github.com/rundeck/rundeck/pull/4722)
+* [Default java plugin metadata](https://github.com/rundeck/rundeck/pull/4719)
+* [node Config UI updates](https://github.com/rundeck/rundeck/pull/4714)
+* [Add server.session.timeout to docker remco template](https://github.com/rundeck/rundeck/pull/4712)
+* [Bug/3514/help popover not showing all content](https://github.com/rundeck/rundeck/pull/4709)
+* [Task/update location of job name group button](https://github.com/rundeck/rundeck/pull/4708)
+* [User group plugin type](https://github.com/rundeck/rundeck/pull/4701)
+* [Flow Control fail flag right behavior](https://github.com/rundeck/rundeck/pull/4700)
+* [Exclude Filter Ignored for Scheduled Job but not Adhoc Run](https://github.com/rundeck/rundeck/issues/4699)
+* [Add configuration for hiding the user/password login fields when SSO ](https://github.com/rundeck/rundeck/pull/4697)
+* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/pull/4689)
+* [compatibility for old versions of email notification (issue #4643)](https://github.com/rundeck/rundeck/pull/4688)
+* [Api endpoint for job forecast](https://github.com/rundeck/rundeck/pull/4682)
+* [Allow multi-page selections on job exections history report #4416](https://github.com/rundeck/rundeck/pull/4673)
+* [Fix problem deleting SCM configured project.](https://github.com/rundeck/rundeck/pull/4670)
+* [Use Password field type for password encryptor input](https://github.com/rundeck/rundeck/pull/4669)
+* ["Attached as file to Email" should be default when upgrading Rundeck](https://github.com/rundeck/rundeck/issues/4643)
+* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/issues/4639)
+* [Make password utilitlity field Value To Encrypt to type password](https://github.com/rundeck/rundeck/issues/4624)
+* [Cannot delete SCM configured project after upgrade to Rundeck ver 3.0.17](https://github.com/rundeck/rundeck/issues/4623)
+* [Job with Flow Control with Halt option enabled doesn't work when called by another job.  ](https://github.com/rundeck/rundeck/issues/4605)
+* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/pull/4583)
+* [Old look&feel on notification plugins](https://github.com/rundeck/rundeck/issues/4530)
+* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/issues/4527)
+* [UI Error: "Project does not exist" when working on another project](https://github.com/rundeck/rundeck/issues/3905)
+* ["help balloon" is not showing all its content](https://github.com/rundeck/rundeck/issues/3514)
+* [Enable API endpoint for Schedule Forecast](https://github.com/rundeck/rundeck/issues/3469)

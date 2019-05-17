@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.storage.ResourceMeta;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import com.dtolabs.rundeck.core.utils.MapData;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.rundeck.storage.api.PathUtil;
@@ -87,6 +88,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         this.framework = framework;
     }
 
+    public AbstractDescribableScriptPlugin(final ScriptPluginProvider provider) {
+        this.provider = provider;
+        this.framework = null;
+    }
+
     /**
      * @return data with exported plugin details
      */
@@ -105,18 +111,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      * @return
      */
     boolean isMergeEnvVars(){
-        return metaBooleanProp(SETTING_MERGE_ENVIRONMENT, provider.getDefaultMergeEnvVars());
-    }
-
-    private boolean metaBooleanProp(final String prop, boolean defVal) {
-        Object o = provider.getMetadata().get(prop);
-        if (o == null) {
-            return defVal;
-        }
-        if (o == Boolean.TRUE) {
-            return true;
-        }
-        return "true".equals(o);
+        return MapData.metaBooleanProp(provider.getMetadata(),
+                                       SETTING_MERGE_ENVIRONMENT,
+                                       provider.getDefaultMergeEnvVars()
+        );
     }
 
 
@@ -134,18 +132,18 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 if (citem instanceof Map) {
                     final PropertyBuilder pbuild = PropertyBuilder.builder();
                     final Map<String, Object> itemmeta = (Map<String, Object>) citem;
-                    final String typestr = metaStringProp(itemmeta, CONFIG_TYPE);
+                    final String typestr = MapData.metaStringProp(itemmeta, CONFIG_TYPE);
                     try {
                         pbuild.type(Property.Type.valueOf(typestr));
                     } catch (IllegalArgumentException e) {
                         throw new ConfigurationException("Invalid property type: " + typestr);
                     }
 
-                    String propName = metaStringProp(itemmeta, CONFIG_NAME);
+                    String propName = MapData.metaStringProp(itemmeta, CONFIG_NAME);
                     pbuild
                         .name(propName)
-                        .title(metaStringProp(itemmeta, CONFIG_TITLE))
-                        .description(metaStringProp(itemmeta, CONFIG_DESCRIPTION));
+                        .title(MapData.metaStringProp(itemmeta, CONFIG_TITLE))
+                        .description(MapData.metaStringProp(itemmeta, CONFIG_DESCRIPTION));
 
                     final Object reqValue = itemmeta.get(CONFIG_REQUIRED);
                     final boolean required;
@@ -164,7 +162,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
 
                     final List<String> valueList;
 
-                    final String valuesstr = metaStringProp(itemmeta, CONFIG_VALUES);
+                    final String valuesstr = MapData.metaStringProp(itemmeta, CONFIG_VALUES);
                     if (null != valuesstr) {
                         final String[] split = null != valuesstr ? valuesstr.split(",") : null;
                         valueList = Arrays.asList(split);
@@ -192,7 +190,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         pbuild.labels((Map) labelmap);
                     }
 
-                    final String scopeString = metaStringProp(itemmeta, CONFIG_SCOPE);
+                    final String scopeString = MapData.metaStringProp(itemmeta, CONFIG_SCOPE);
                     if(null!=scopeString) {
                         try {
                             pbuild.scope(PropertyScope.valueOf(scopeString.trim()));
@@ -242,16 +240,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
         }
     }
 
-    private static String metaStringProp(final Map<String, Object> metadata, final String prop) {
-        return metaStringProp(metadata, prop, null);
-    }
-    private static String metaStringProp(final Map<String, Object> metadata, final String prop, final String defString){
-        final Object titleobj = metadata.get(prop);
-        return null != titleobj && titleobj instanceof String ? (String) titleobj : defString;
-    }
     protected static void createDescription(final ScriptPluginProvider provider,
-                                                   final boolean allowCustomProperties,
-                                                   final DescriptionBuilder builder) throws ConfigurationException {
+                                            final boolean allowCustomProperties,
+                                            final DescriptionBuilder builder
+    ) throws ConfigurationException
+    {
         createDescription(provider, allowCustomProperties, false, builder);
     }
     protected static void createDescription(final ScriptPluginProvider provider,
@@ -260,9 +253,11 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                                                    final DescriptionBuilder builder) throws ConfigurationException {
         builder
             .name(provider.getName())
-            .title(metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
-            .description(metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
-
+            .title(MapData.metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
+            .description(MapData.metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
+        if (provider.getProviderMeta() != null) {
+            builder.metadata(MapData.toStringStringMap(provider.getProviderMeta()));
+        }
         if(allowCustomProperties) {
             createProperties(provider, useConventionalPropertiesMapping, builder);
         }
@@ -284,7 +279,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             final Description description
     )
     {
-        HashMap<String, Object> config = new HashMap<String, Object>();
+        HashMap<String, Object> config = new HashMap<>();
 
         for (Property property : description.getProperties()) {
 
@@ -358,7 +353,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         localDataContext
                 );
 
-        Map<String, String> data = toStringStringMap(expanded);
+        Map<String, String> data = MapData.toStringStringMap(expanded);
 
         loadContentConversionPropertyValues(
                 data,
@@ -366,8 +361,16 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 description.getProperties()
         );
 
+        Map<String, Map<String, String>> newLocalDataContext = localDataContext;
 
-        return DataContextUtils.addContext("config", data, localDataContext);
+        VersionCompare pluginVersion = VersionCompare.forString(provider.getPluginMeta().getRundeckPluginVersion());
+        if(pluginVersion.atLeast(VersionCompare.forString(ScriptPluginProviderLoader.VERSION_2_0))){
+            //new context variable name
+            newLocalDataContext = DataContextUtils.addContext(serviceName.toLowerCase(), data, localDataContext);
+        }
+
+                //using "config" name to old plugins
+        return DataContextUtils.addContext("config", data, newLocalDataContext);
     }
 
     /**
@@ -511,14 +514,6 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         StringRenderingConstants.VALUE_CONVERSION_FAILURE_KEY
                 )
         );
-    }
-
-    protected static Map<String, String> toStringStringMap(Map input) {
-        Map<String, String> map = new HashMap<String, String>();
-        for (Object o : input.keySet()) {
-            map.put(o.toString(), input.get(o) != null ? input.get(o).toString() : "");
-        }
-        return map;
     }
 
 

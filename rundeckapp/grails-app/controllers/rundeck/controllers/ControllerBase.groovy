@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import groovy.transform.CompileStatic
 import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
 import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
 import org.grails.web.servlet.mvc.GrailsWebRequest
@@ -241,5 +242,42 @@ class ControllerBase {
             redirect(params)
         }
         invalid
+    }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParam(String name) {
+        if (!params[name]) {
+            renderErrorView("parameter $name is required")
+            return true
+        }
+        return false
+    }
+    /**
+     * Require the params to contain an entry
+     * @param name name of parameter
+     * @return true if response was sent
+     */
+    protected boolean requireParams(List<String> names) {
+        def missing=names.findAll{!params[it]}
+        if (missing) {
+            renderErrorView("parameters required: $missing")
+            return true
+        }
+        return false
+    }
+
+    /** Flush response in a static compiled method to avoid Tomcat 7 introspection errors */
+    @CompileStatic
+    static void flush(HttpServletResponse response) {
+        response.outputStream.flush()
+    }
+
+    /** Append to response output in a static compiled method to avoid Tomcat 7 introspection errors */
+    @CompileStatic
+    static void appendOutput(HttpServletResponse response, String output) {
+        response.outputStream << output
     }
 }

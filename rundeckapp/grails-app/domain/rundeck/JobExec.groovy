@@ -43,6 +43,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeIntersect
     Boolean failOnDisable
     Boolean importOptions
+    Boolean useName
     static transients = ['jobIdentifier']
 
     static constraints = {
@@ -60,6 +61,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         failOnDisable(nullable: true)
         importOptions(nullable: true)
         uuid(nullable: true)
+        useName(nullable:true)
     }
 
     static mapping = {
@@ -90,13 +92,30 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
 
     public String getJobIdentifier() {
-        if(uuid){
+        if(!useName && uuid){
             return uuid
         }
         return (null==jobGroup?'':jobGroup+"/")+jobName;
     }
     public void setJobIdentifier(){
         //noop
+    }
+
+    /**
+     * Find the referenced Job, using the uuid if uuid is specified and useName is false, otherwise using job name/group
+     * @param project current project, required when reference does not specify project
+     * @return found job, or null
+     */
+    public ScheduledExecution findJob(String project) {
+        if (!useName && uuid) {
+            return ScheduledExecution.findByUuid(uuid)
+        } else {
+            return ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                    jobProject ?: project,
+                    jobName,
+                    jobGroup ?: null
+            )
+        }
     }
 
     public JobExec createClone(){
@@ -160,6 +179,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         } else if (null != nodeIntersect) {
             map.jobref.nodefilters = [dispatch: [nodeIntersect: nodeIntersect]]
         }
+        if(useName){
+            map.jobref.useName="true"
+        }
         return map
     }
     /**
@@ -181,6 +203,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         if (description) {
             map.description = description
+        }
+        if(useName){
+            map.jobref.useName="true"
         }
         return map
     }
@@ -246,6 +271,11 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                     exec.nodeIntersect=false
                 }
             }
+        }
+        if(map.jobref.useName in ['true',true]){
+            exec.useName=true
+        }else{
+            exec.useName=false
         }
         //nb: error handler is created inside Workflow.fromMap
         return exec

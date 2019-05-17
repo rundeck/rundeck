@@ -33,23 +33,17 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils;
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility;
+import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.PluginStepContextImpl;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript;
-import com.dtolabs.rundeck.plugins.step.GeneratedScript;
-import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
+import com.dtolabs.rundeck.plugins.step.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 
 /**
@@ -57,7 +51,9 @@ import java.util.Map;
  * remote script to execute.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @deprecated use {@link RemoteScriptNodeStepPluginAdapter_Ext}
  */
+@Deprecated()
 class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable {
 
     private ScriptFileNodeStepUtils scriptUtils = new DefaultScriptFileNodeStepUtils();
@@ -83,10 +79,6 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
     public void setScriptUtils(ScriptFileNodeStepUtils scriptUtils) {
         this.scriptUtils = scriptUtils;
-    }
-
-    public static boolean canAdaptType(Class<?> testType){
-        return RemoteScriptNodeStepPlugin.class.isAssignableFrom(testType);
     }
 
     static class Convert implements Converter<RemoteScriptNodeStepPlugin, NodeStepExecutor> {
@@ -141,11 +133,23 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             stringconfig.put(objectEntry.getKey(), objectEntry.getValue().toString());
         }
 
+        ExecutionContextImpl newContext = ExecutionContextImpl
+                .builder(context)
+                .setContext("config", stringconfig)
+                .build();
+
+        if(plugin.hasAdditionalConfigVarGroupName()){
+            //new context variable name
+            newContext = ExecutionContextImpl
+                    .builder(context)
+                    .setContext("config", stringconfig)
+                    .setContext("nodestep", stringconfig)
+                    .build();
+        }
+
+
         return executeRemoteScript(
-                ExecutionContextImpl
-                        .builder(context)
-                        .setContext("config", stringconfig)
-                        .build(),
+                newContext,
                 node,
                 script,
                 context.getDataContextObject().resolve("job", "execid"),

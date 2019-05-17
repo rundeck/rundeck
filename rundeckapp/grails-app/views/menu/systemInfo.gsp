@@ -32,6 +32,11 @@
 
 <body>
   <div class="container-fluid">
+  <div class="row">
+        <div class="col-sm-12">
+            <g:render template="/common/messages"/>
+        </div>
+    </div>
     <div class="row">
       <div class="col-xs-12">
         <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">
@@ -45,7 +50,7 @@
               <g:message code="jobs.and.ad.hoc.executions.will.be.queued.until.previous.executions.complete" />
             </p>
             <p>
-              <a href="${g.helpLinkUrl(path:'/administration/tuning-rundeck.html#quartz-job-threadcount')}">
+              <a href="${g.helpLinkUrl(path:'/administration/maintenance/tuning-rundeck.html#quartz-job-threadcount')}">
                 <g:icon name="question-sign"/>
                 <g:message code="more.information" />
               </a>
@@ -124,6 +129,32 @@
           </g:each>
         </div>
       </g:each>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title" style="text-transform: uppercase;">Repositories</h4>
+        </div>
+        <div class="card-content">
+          <div>
+            <span class="h6">ACTIVE:</span>
+            <span class=" ">${repoEnabled in [true,'true'] ? "true" : "false" }</span>
+          </div>
+          <div>
+            <g:if test="${repoEnabled}">
+            <span class="h6">Repos:</span>
+            <span class="">
+              <ul>
+                <g:listRepos />
+              </ul>
+            </span>
+            </g:if>
+          </div>
+        </div>
+      </div>
+      </div>
     </div>
   </div>
 </body>

@@ -10,11 +10,10 @@ body {
 }
 
 a {
-  color: $info-color;
+  color: $primary-color;
 
   &:hover, &:focus {
-    color: $info-states-color;
-    text-decoration: none;
+    color: $primary-highlight-color;
   }
 }
 

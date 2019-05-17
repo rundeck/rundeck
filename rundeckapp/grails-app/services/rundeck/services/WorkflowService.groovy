@@ -51,6 +51,7 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
 import java.nio.file.Files
+import java.util.concurrent.ConcurrentHashMap
 
 class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     public static final String STATE_FILE_FILETYPE = "state.json"
@@ -70,7 +71,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     /**
      * in-memory states of executions while executions are running
      */
-    Map<Long, WorkflowState> activeStates = new HashMap<Long, WorkflowState>()
+    Map<Long, WorkflowState> activeStates = new ConcurrentHashMap<>()
     /**
      * initialized in bootstrap
      */

@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.plugins.descriptions.PluginMeta
+import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
@@ -75,6 +77,9 @@ class PluginAdapterUtilitySpec extends Specification {
         @SelectLabels(values = ["A", "B", "C"])
         String testSelect10;
 
+        @PluginProperty(description = 'String List multioption')
+        List<String> testSelect11;
+
         @PluginProperty
         Boolean testbool1;
         @PluginProperty
@@ -103,7 +108,7 @@ class PluginAdapterUtilitySpec extends Specification {
     }
 
 
-    def "configure options value string"() {
+    def "configure options field string"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -122,7 +127,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b,c' | _
     }
 
-    def "configure options value set"() {
+    def "configure options field set"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -142,7 +147,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,c'   | ['a', 'c']
     }
 
-    def "configure options value array"() {
+    def "configure options field array"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -161,7 +166,8 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b,c' | ['a', 'b', 'c']
         'a,c'   | ['a', 'c']
     }
-    def "configure options value list"() {
+
+    def "configure options field list"() {
         given:
         Configuretest1 test = new Configuretest1();
         when:
@@ -179,6 +185,66 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b'   | ['a', 'b']
         'a,b,c' | ['a', 'b', 'c']
         'a,c'   | ['a', 'c']
+    }
+
+    def "configure options value list"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", value);
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value           | expect
+            ['a']           | ['a']
+            ['a', 'b']      | ['a', 'b']
+            ['a', 'b', 'c'] | ['a', 'b', 'c']
+            ['a', 'c']      | ['a', 'c']
+    }
+
+    def "configure options value array"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", value);
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value                                  | expect
+            ['a'].toArray(new String[1])           | ['a']
+            ['a', 'b'].toArray(new String[2])      | ['a', 'b']
+            ['a', 'b', 'c'].toArray(new String[3]) | ['a', 'b', 'c']
+            ['a', 'c'].toArray(new String[2])      | ['a', 'c']
+    }
+
+    def "configure options value set"() {
+        given:
+            Configuretest1 test = new Configuretest1();
+        when:
+
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect11", new HashSet<String>(value));
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+            test.testSelect11 == expect
+
+        where:
+            value           | expect
+            ['a']           | ['a']
+            ['a', 'b']      | ['a', 'b']
+            ['a', 'b', 'c'] | ['a', 'b', 'c']
+            ['a', 'c']      | ['a', 'c']
     }
 
     def "build String select property with value labels"() {
@@ -258,5 +324,56 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,z'   | _
         'a,z,c' | _
         'qasdf'   | _
+    }
+
+
+    /**
+     * test metadata annotation
+     */
+    @PluginMetadata(key = "asdf", value = "xyz")
+    @Plugin(name = "typeTest2", service = "x")
+    static class TestPluginMetadataAnnotation1 {
+
+    }
+
+    /**
+     * container metadata annotation
+     */
+    @PluginMeta(
+            [
+                    @PluginMetadata(key = "asdf", value = "xyz"),
+                    @PluginMetadata(key = "1234", value = "908")
+            ]
+    )
+    @Plugin(name = "typeTest3", service = "x")
+    static class TestPluginMetadataAnnotation2 {
+
+    }
+
+    def "describe provider metadata single"() {
+        given:
+            TestPluginMetadataAnnotation1 test = new TestPluginMetadataAnnotation1();
+        when:
+
+            Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder())
+
+        then:
+            desc.metadata
+            desc.metadata.size() == 1
+            desc.metadata['asdf'] == 'xyz'
+    }
+
+    def "describe provider metadata repeated"() {
+        given:
+            def test = new TestPluginMetadataAnnotation2()
+        when:
+
+            Description desc = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder())
+
+        then:
+            desc.metadata
+            desc.metadata.size() == 2
+            desc.metadata['asdf'] == 'xyz'
+            desc.metadata['1234'] == '908'
     }
 }

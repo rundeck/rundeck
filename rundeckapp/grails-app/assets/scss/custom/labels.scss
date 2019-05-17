@@ -1,3 +1,5 @@
+@import '../paper/_variables';
+
 .label{
   &.label-default{
     a{
@@ -8,4 +10,30 @@
     background-color: white;
     color: black;
   }
+
+  &.label-muted {
+    color: $dark-gray;
+    background-color: $very-light-gray;
+  }
+
+  &.label-secondary {
+    color: $dark-gray;
+    background-color: $light-gray;
+  }
+}
+
+a:hover.label {
+  &.label-muted {
+    background-color: $light-gray;
+
+  }
+
+  &.label-secondary {
+
+    background-color: $medium-gray;
+  }
+}
+
+a.label, a.label:focus, a.label:hover {
+  color: inherit;
 }

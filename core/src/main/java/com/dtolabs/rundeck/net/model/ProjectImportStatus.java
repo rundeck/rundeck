@@ -16,6 +16,8 @@ public class ProjectImportStatus {
     public List<String> executionErrors;
     @JsonProperty("acl_errors")
     public List<String> aclErrors;
+    @JsonProperty("scm_errors")
+    public List<String> scmErrors;
 
     public boolean getResultSuccess() {
         return null != successful ? successful : null != importStatus && "successful".equals(importStatus);

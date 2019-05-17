@@ -303,7 +303,7 @@ div.progressContainer div.progressContent{
             </table>
 
                     </td>
-                    <g:if test="${scheduledExecution}">
+                    <g:if test="${scheduledExecution && renderJobStats}">
                         <td style="vertical-align:top;" class="toolbar small">
                             <g:render template="/scheduledExecution/renderJobStats"
                                       model="${[scheduledExecution: scheduledExecution]}"/>
@@ -358,6 +358,13 @@ div.progressContainer div.progressContent{
             </div>
         </g:if>
     </div>
+</div>
+
+<div class="content">
+    <g:if test="${logOutput}">
+        <h3>Log OUTPUT</h3>
+        ${enc(sanitize:logOutput)}
+    </g:if>
 </div>
 <div class="foot">
     <g:appTitle/> :

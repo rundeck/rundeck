@@ -61,6 +61,7 @@ class UtilityTagLib{
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     def configurationService
     def scheduledExecutionService
+    FrameworkService frameworkService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -836,7 +837,8 @@ class UtilityTagLib{
             }
         }
         def rdversion = grailsApplication.metadata.getProperty('info.app.version', String)
-        def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversion)
+        def rdversionShort = rdversion.split('-')[0]
+        def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversionShort )
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
             helpBase= grailsApplication.config.rundeck?.gui?.helpLink
@@ -1429,6 +1431,10 @@ menu-up''')
     static final String UI_ICON_COLOR = 'ui:icon:color'
     static final String UI_ICON_BGCOLOR = 'ui:icon:bgcolor'
     static final String UI_ICON_NAME = 'ui:icon:name'
+    static final String UI_NODE_STATUS_COLOR = 'ui:status:color'
+    static final String UI_NODE_STATUS_BGCOLOR = 'ui:status:bgcolor'
+    static final String UI_NODE_STATUS_ICON = 'ui:status:icon'
+    static final String UI_NODE_STATUS_TEXT = 'ui:status:text'
     static final String UI_BADGES_GLYPHICON = 'ui:badges'
     static final String glyphiconName(String name){
         if(name && name.startsWith('glyphicon-')) {
@@ -1447,10 +1453,16 @@ menu-up''')
             }
         }
     }
-    def nodeStatusIcon={attrs,body->
-        def found=glyphiconName( attrs.node?.attributes[UI_ICON_NAME])
-        if(found){
-            out<<"<i class='glyphicon glyphicon-${found}'></i>"
+    def nodeIcon ={ attrs, body->
+        if(attrs.node?.attributes[UI_ICON_NAME]){
+            out<<icon([name:attrs.node?.attributes[UI_ICON_NAME]],body)
+        }else{
+            out<<body()
+        }
+    }
+    def nodeStatusIcon ={ attrs, body->
+        if(attrs.node?.attributes[UI_NODE_STATUS_ICON]){
+            out<<icon([name:attrs.node?.attributes[UI_NODE_STATUS_ICON]],body)
         }else{
             out<<body()
         }
@@ -1638,42 +1650,28 @@ ansi-bg-default'''))
         cssColors.contains(bgcol?.toLowerCase()) || bgcol =~ /^#[0-9a-fA-F]{3,6}$/
     }
     static final Map nodeColors(def node){
+        nodeColors(node, [UI_ICON_COLOR, UI_COLOR, UI_ICON_BGCOLOR, UI_BGCOLOR])
+    }
+
+    static final Map nodeStatusColors(def node) {
+        nodeColors(node, [UI_NODE_STATUS_COLOR, UI_NODE_STATUS_BGCOLOR])
+    }
+
+    static final Map nodeColors(def node, List keys) {
         def map=[:]
-        def iconColor=node?.attributes[UI_ICON_COLOR]
-        def uiColor=node?.attributes[UI_COLOR]
-        def iconBgColor=node?.attributes[UI_ICON_BGCOLOR]
-        def uiBgcolor=node?.attributes[UI_BGCOLOR]
-        if(iconColor) {
-            if (testAnsiFg(iconColor)) {
-                map[UI_ICON_COLOR] = [className: iconColor]
-            } else if (cssColor(iconColor)) {
-                map[UI_ICON_COLOR] = [style: iconColor]
-            }
-        }
-        if(uiColor) {
-            if (testAnsiFg(uiColor)) {
-                map[UI_COLOR] = [className: uiColor]
-            } else if (cssColor(uiColor)) {
-                map[UI_COLOR] = [style: uiColor]
-            }
-        }
-        if(iconBgColor) {
-            if (testAnsiBg(iconBgColor)) {
-                map[UI_ICON_BGCOLOR] = [className: iconBgColor]
-            } else if (cssColor(iconBgColor)) {
-                map[UI_ICON_BGCOLOR] = [style: iconBgColor]
-            }
-        }
-        if(uiBgcolor) {
-            if (testAnsiBg(uiBgcolor)) {
-                map[UI_BGCOLOR] = [className: uiBgcolor]
-            } else if (cssColor(uiBgcolor)) {
-                map[UI_BGCOLOR] = [style: uiBgcolor]
+        keys.each { attr ->
+            def attrVal = node?.attributes[attr]
+            if (attrVal) {
+                if (testAnsiFg(attrVal)) {
+                    map[attr] = [className: attrVal]
+                } else if (cssColor(attrVal)) {
+                    map[attr] = [style: attrVal]
+                }
             }
         }
         map
     }
-    def nodeStatusColor={attrs,body->
+    def nodeIconStatusColor ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
@@ -1698,7 +1696,34 @@ ansi-bg-default'''))
         }
         out<<body()
     }
-    def nodeStatusColorCss={attrs,body->
+    def nodeHealthStatusColor ={ attrs, body->
+        def colors=nodeColors(attrs.node, [UI_NODE_STATUS_COLOR, UI_NODE_STATUS_BGCOLOR])
+        def found=colors[UI_NODE_STATUS_COLOR]
+        def bgcol=colors[UI_NODE_STATUS_BGCOLOR]
+        def dbg=''
+        if(found || bgcol){
+            def text=[
+                    (found?.style?'color: '+found.style:''),
+                    (bgcol?.style?'background-color: '+bgcol.style:''),
+            ].findAll{it}.join('; ')
+            def classcol=([found,bgcol].findAll{it}*.className).join(' ')
+            if(classcol||text) {
+                out << "<span class='${classcol}' style='${text}'"
+                if(attrs.title){
+                    out<<" title=\"${enc(attr:attrs.title)}\""
+                }
+                out << ">"
+                out << body()
+                out << "</span>"
+                return
+            }
+
+        }else{
+            dbg+=' zilch found: '+found+"/"+bgcol + " "+colors
+        }
+        out<<body()
+    }
+    def nodeIconStatusColorCss ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
@@ -1709,10 +1734,9 @@ ansi-bg-default'''))
             if(classcol){
                 return classcol
             }
-
         }
     }
-    def nodeStatusColorStyle={attrs,body->
+    def nodeIconStatusColorStyle ={ attrs, body->
         def colors=nodeColors(attrs.node)
         boolean isicon=attrs.icon=='true'
         def found=isicon?(colors[UI_ICON_COLOR]?:colors[UI_COLOR]):colors[UI_COLOR]
@@ -1731,11 +1755,17 @@ ansi-bg-default'''))
     }
     /**
      * @emptyTag
-     * @attr name REQUIRED glyphicon name
+     * @attr name REQUIRED glyphicon name (default) or prefixed with glyphicon-, or font-awesome icon like "fa-name" or "fab-name"
      */
     def icon= { attrs, body ->
         if (attrs.name.startsWith('glyphicon-')) {
             attrs.name=attrs.name.substring('glyphicon-'.length())
+        }else if(attrs.name.startsWith('fa-')){
+            out << "<i class=\"fas ${attrs.name} ${attrs.css?:''}\"></i>"
+            return
+        }else if(attrs.name.startsWith('fab-')){
+            out << "<i class=\"fab fa-${attrs.name.substring(4)} ${attrs.css?:''}\"></i>"
+            return
         }
         if (glyphiconSet.contains(attrs.name)) {
             out << "<i class=\"glyphicon glyphicon-${attrs.name} ${attrs.css?:''}\"></i>"
@@ -1743,6 +1773,7 @@ ansi-bg-default'''))
             if(Environment.current==Environment.DEVELOPMENT) {
                 throw new Exception("icon name not recognized: ${attrs.name}, suggestions: "+(glyphiconSet.findAll{it.contains(attrs.name)||it=~attrs.name})+"?")
             }
+            out<<body()
         }
     }
     /**
@@ -1754,7 +1785,7 @@ ansi-bg-default'''))
      * @attr data required list of data points in order
      */
     def basicTable = { attrs, body ->
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         out << "<tr>"
         attrs.columns.each {
@@ -1782,7 +1813,7 @@ ansi-bg-default'''))
      */
     def basicData = { attrs, body ->
         def data = attrs.data
-        out << "<table class=\"table ${attrs.classes}\">"
+        out << "<table class=\"table ${attrs.classes ?: ''}\">"
 
         attrs.fields.each {
             out << "<tr>"
@@ -1804,22 +1835,45 @@ ansi-bg-default'''))
     def forMenuItems = { attrs, body ->
         String type = attrs.type
         String var = attrs.var
+        String project = attrs.project
+        def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
+        if (menuType.projectType && !project) {
+            throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
+        }
         applicationContext.getBeansOfType(MenuItem).
-            findAll { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }.
+                findAll { it.value.type == menuType }.
+                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
             each { name, MenuItem item ->
                 out << body((var): item)
             }
     }
+
     /**
      * Render the contents if menu items of the specified type exist
      * @attr type REQUIRED menu type PROJECT, PROJECT_CONFIG, SYSTEM_CONFIG or USER_MENU
      */
     def ifMenuItems = { attrs, body ->
         String type = attrs.type
+        String project = attrs.project
+        def menuType = MenuItem.MenuType.valueOf(type.toUpperCase())
+        if (menuType.projectType && !project) {
+            throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
+        }
         if (applicationContext.getBeansOfType(MenuItem).
+                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
             any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
             out << body()
         }
 
+    }
+
+    def showLocalLogin = { attrs, body ->
+        boolean shouldShowLocalLogin = configurationService.getBoolean("login.localLogin.enabled", true)
+        if(configurationService.getBoolean("login.showLocalLoginAfterFirstSSOLogin",false)) {
+            shouldShowLocalLogin = frameworkService.getFirstLoginFile().exists()
+        }
+        if(shouldShowLocalLogin) {
+            out << body()
+        }
     }
 }

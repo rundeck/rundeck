@@ -39,7 +39,8 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
     public static final String PROP_FILENAME = "project.properties";
     public static final String ETC_DIR_NAME = "etc";
     public static final String NODES_XML = "resources.xml";
-    public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
+    public static final String RESOURCES_SOURCE_PROP_PREFIX = ProjectNodeSupport.RESOURCES_SOURCE_PROP_PREFIX;
+
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
 
     /**
@@ -418,7 +419,7 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
     /**
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */
-    public ArrayList<Exception> getResourceModelSourceExceptions() {
+    public ArrayList<Throwable> getResourceModelSourceExceptions() {
         return getProjectNodes().getResourceModelSourceExceptions();
     }
 

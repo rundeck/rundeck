@@ -68,6 +68,8 @@ var FollowControl = Class.create({
     nodemode:false,
     browsemode:false,
     tailmode:false,
+    cancelload: false,
+    partialload: false,
     refresh:false,
     truncateToTail:false,
     lastlines:20,
@@ -79,11 +81,15 @@ var FollowControl = Class.create({
     multiworkflow:null,
     clusterExec: null,
     showClusterExecWarning: true,
+    onLoadComplete: null,
+    onLoadingFile: null,
+    onFileloadMessage: null,
+    onFileloadPercentage: null,
 
     initialize: function(eid,elem,params){
         this.executionId=eid;
         this.targetElement=elem;
-        Object.extend(this,{
+        jQuery.extend(this,{
             appendtop: {value: false, changed: false},
             collapseCtx: {value: true, changed: false},
             showFinalLine: {value: true, changed: false},
@@ -100,7 +106,7 @@ var FollowControl = Class.create({
             execData: {},
             appLinks: {}
         });
-        Object.extend(this,params);
+        jQuery.extend(this,params);
         this.refresh= this.tailmode;
         this._init();
         if(this.dobind){
@@ -243,6 +249,10 @@ var FollowControl = Class.create({
         this.tailmode=this.tailmode||!(this.browsemode||this.nodemode);
         this.refresh=this.tailmode;
         this.readyMode();
+    },
+    resetMode: function (mode) {
+        this.setMode(mode)
+        this.reload()
     },
     setLogWrap: function (wrapped) {
         "use strict";
@@ -619,22 +629,29 @@ var FollowControl = Class.create({
         $(this.parentElement).show();
         return tbl;
     },
+    pauseLoading: function (callback) {
+        this._onStopCallback = callback
+        this.cancelload = true
+    },
+    resumeLoading: function () {
+        this.cancelload = false
+        this.loadMoreOutput(this.runningcmd.id, this.runningcmd.offset)
+    },
     showLoading:function(message,percent){
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).show();
-            setText($(this.fileloadPctId), (message!=null ? message : ''));
-            if(percent!=null && $(this.fileloadProgressId)){
-                $(this.fileloadProgressId).show();
-                $(this.fileloadProgressId).down('.progress-bar').style.width=percent+'%';
-            }
-            if(percent){
-                setText($(this.fileloadPctId),(message != null ? message : '')+percent+'%');
-            }
+        if (typeof (this.onLoadingFile) === 'function') {
+            this.onLoadingFile(true)
         }
+        if (typeof (this.onFileloadMessage) === 'function') {
+            this.onFileloadMessage(message)
+        }
+        if (percent != null && typeof (this.onFileloadPercentage) === 'function') {
+            this.onFileloadPercentage(percent)
+        }
+
     },
     hideLoading:function(){
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).hide();
+        if (typeof (this.onLoadingFile) === 'function') {
+            this.onLoadingFile(false)
         }
     },
     appendCmdOutput: function(data) {
@@ -748,9 +765,12 @@ var FollowControl = Class.create({
             if (data.retryBackoff) {
                 time = Math.max(data.retryBackoff,time);
             }
-            setTimeout(function() {
-                obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset);
-            }, time);
+            if (!this.cancelload) {
+                setTimeout(function () {
+                    obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset)
+                }, time)
+
+            }
         }
         if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
             this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
@@ -780,7 +800,13 @@ var FollowControl = Class.create({
                 $(this.viewoptionsCompleteId).show();
             }
         }
-
+        if (this.cancelload) {
+            if (typeof (this._onStopCallback) == 'function') {
+                var cb = this._onStopCallback
+                this._onStopCallback = null
+                cb()
+            }
+        }
     },
     finishDataOutput: function() {
 
@@ -1335,6 +1361,14 @@ var FollowControl = Class.create({
             setText(tddata,txt);
             tddata.addClassName('log_'+data.level.toLowerCase());
         }
+        //append node
+        if (shownode && data.node) {
+            let nodeCss = '';
+            if(!data['stepctx']){
+                nodeCss = 'console';
+            }
+            jQuery(tddata).prepend(jQuery('<span class="inset-node '+nodeCss+'"></span>').text(' '+data.node).prepend(jQuery('<i class="fas fa-hdd"></i>')))
+        }
     },
     clearCmdOutput: function() {
         clearHtml($(this.parentElement));
@@ -1354,12 +1388,8 @@ var FollowControl = Class.create({
         this.clearCmdOutput();
         $(this.parentElement).show();
 
-//        this.setOutputAppendTop($F('outputappendtop') == "top");
-//        this.setOutputAutoscroll($F('outputautoscrolltrue') == "true");
-//        this.setGroupOutput($F('ctxshowgroup') == 'true');
-//        this.setCollapseCtx($F('ctxcollapse') == "true");
-//        this.setShowFinalLine($F('ctxshowlastline') == "true");
         this.isrunning = true;
+        this.cancelload = false
     },
 
     finishedExecution: function(result,statusString) {
@@ -1371,51 +1401,24 @@ var FollowControl = Class.create({
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
-        if (this.fileloadId && $(this.fileloadId)) {
-            $(this.fileloadId).hide();
-        }
+        this.hideLoading()
 
         this.jobFinishStatus(result,statusString);
         if (typeof(this.onComplete) == 'function') {
-            this.onComplete();
+            this.onComplete(result, statusString)
         }
     },
     jobFinishStatus: function(result,statusString) {
         if (null != result) {
-            if($('runstatus')){
-                setHtml($('runstatus'), result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                    : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
-                    : '<span class="exec-status fail">Failed</span>'));
-            }
-            $$('.execstatus').each(function(e){
-                setHtml(e, result == 'succeeded' ? '<span class="exec-status succeed">Succeeded</span>'
-                : (result == 'aborted' ? '<span class="exec-status warn">Killed</span>'
-                    : '<span class="exec-status fail">Failed</span>'));
-            });
-            if ($('jobInfo_' + this.executionId)) {
-                var icon = $('jobInfo_' + this.executionId).down('.exec-status.icon');
-                if (icon) {
-                    var status = result == 'succeeded' ? 'succeed' :
-                        result == 'aborted' ? 'warn' :
-                        result == 'timedout' ? 'timedout' :
-                        result == 'failed-with-retry' ? 'retry' :
-                        result == 'failed' ? 'fail' :
-                            'other';
-                    ['succeed', 'fail', 'warn', 'running','retry','timedout','other'].each(function (s) {
-                        $(icon).removeClassName(s);
-                    });
-                    $(icon).addClassName(status);
-                }
-            }
             if (this.updatepagetitle) {
                 var prefix = (
-                    result == 'succeeded' ?
+                    result === 'succeeded' ?
                         '✅ [OK] ' :
-                        result == 'aborted' ?
+                        result === 'aborted' ?
                             '✖︎ [KILLED] ' :
-                            result == 'timedout' ?
+                            result === 'timedout' ?
                                 '⏱︎ [TIMEOUT] ' :
-                                result == 'failed' ?
+                                result === 'failed' ?
                                     '⛔︎ [FAILED] ' :
                                     ('✴️ [' + (result) + '] ')//🔶
                 );
@@ -1423,15 +1426,16 @@ var FollowControl = Class.create({
                     document.title = prefix + document.title;
                 }
             }
-            if($('cancelresult')){
-                $('cancelresult').hide();
-            }
         }
+    },
+    isCompleted: function (id) {
+        return this.runningcmd && this.runningcmd.completed && this.runningcmd.id === id
     },
     beginFollowingOutput: function(id) {
         if (this.isrunning || this.runningcmd && this.runningcmd.completed) {
             return false;
         }
+
         this.beginExecution();
         this.starttime = new Date().getTime();
         this.lineCount=0;
@@ -1464,14 +1468,14 @@ var FollowControl = Class.create({
             url: this.appLinks.executionCancelExecution,
             dataType:'json',
             data: {id: this.executionId},
-            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            beforeSend: _createAjaxSendTokensHandler('exec_cancel_token'),
             success: function (data,status,jqxhr) {
                 obj.updatecancel(data);
             },
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
+        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
 
     doincomplete: function() {
@@ -1481,13 +1485,13 @@ var FollowControl = Class.create({
             url: this.appLinks.executionMarkExecutionIncomplete,
             dataType:'json',
             data: {id: this.executionId},
-            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            beforeSend: _createAjaxSendTokensHandler('exec_cancel_token'),
             success: function (data,status,jqxhr) {
                 obj.updatecancel(data);
             },
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to mark Job as incomplete: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
+        }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
 });

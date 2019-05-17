@@ -51,10 +51,19 @@ public interface EnvironmentalContext {
     /**
      * the rundeck app environment for authorization
      */
-    public static final Set<Attribute> RUNDECK_APP_ENV = Collections.singleton(RUNDECK_APP_CONTEXT);
+    Set<Attribute> RUNDECK_APP_ENV = Collections.unmodifiableSet(Collections.singleton(RUNDECK_APP_CONTEXT));
     public static final URI PROJECT_BASE_URI = URI.create(
             EnvironmentalContext.URI_BASE + "project"
     );
+
+    /**
+     * Create environment for a project
+     *
+     * @param project project name
+     */
+    static Set<Attribute> forProject(String project) {
+        return Collections.unmodifiableSet(Collections.singleton(new Attribute(PROJECT_BASE_URI, project)));
+    }
 
     /**
      * @param environment environment

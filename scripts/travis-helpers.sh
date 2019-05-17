@@ -24,8 +24,8 @@ source scripts/helpers.sh
 # RUNDECK_BUILD_NUMBER="4093"
 # RUNDECK_TAG="v3.0.0-alpha4"
 
-export ECR_REPO=055798170027.dkr.ecr.us-east-2.amazonaws.com/rundeck/rundeck
-export ECR_REGISTRY=055798170027.dkr.ecr.us-east-2.amazonaws.com
+export ECR_REPO=481311893001.dkr.ecr.us-west-2.amazonaws.com/rundeck/rundeck
+export ECR_REGISTRY=481311893001.dkr.ecr.us-west-2.amazonaws.com
 
 
 export RUNDECK_BUILD_NUMBER="${RUNDECK_BUILD_NUMBER:-$TRAVIS_BUILD_NUMBER}"
@@ -40,11 +40,11 @@ else
 fi
 
 # Location of CI resources such as private keys
-S3_CI_RESOURCES="s3://rundeck-ci/shared/resources"
+S3_CI_RESOURCES="s3://rundeck-ci-resources/shared/resources"
 
 # Locations we could push build artifacts to depending on release type (snapshot, alpha, ga, etc).
 # The directory layout is designed to make browsing via the AWS console, and fetching from other projects easier.
-S3_ARTIFACT_BASE="s3://rundeck-travis-artifacts/oss/rundeck"
+S3_ARTIFACT_BASE="s3://rundeck-ci-artifacts/oss/rundeck"
 
 S3_BUILD_ARTIFACT_PATH="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build/${RUNDECK_BUILD_NUMBER}/artifacts"
 S3_BUILD_ARTIFACT_SEAL="${S3_ARTIFACT_BASE}/branch/${RUNDECK_BRANCH}/build-seal/${RUNDECK_BUILD_NUMBER}"
@@ -125,13 +125,14 @@ sync_commit_to_s3() {
 copy_artifacts() {
     if [[ ! -d artifacts ]]; then mkdir artifacts; fi
     (
-        find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+        # find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
         cp -r --parents core/build/libs artifacts/
         cp -r --parents core/build/poms artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
         cp -r --parents rundeckapp/**/build/poms artifacts/
         cp -r --parents rundeck-storage/**/build/libs artifacts/
         cp -r --parents rundeck-storage/**/build/poms artifacts/
+        tar -czf artifacts/m2.tgz -C ~/.m2/repository/ org/rundeck metricsweb
     )
 }
 
@@ -178,12 +179,13 @@ trigger_travis_build() {
             "message": "Rundeck OSS triggered build.",
             "config": {
                 "merge_mode": "deep_merge",
-                "env": {
+                "env": { "global": {
+                    "DRY_RUN": "false",
                     "UPSTREAM_PROJECT": "rundeck",
                     "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
                     "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}",
                     "UPSTREAM_TAG": "${RUNDECK_TAG}"
-                }
+                }}
             }
         }
     }
@@ -201,7 +203,7 @@ EOF
 
 docker_login() {
     docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-    $(aws ecr get-login --no-include-email --region us-east-2)
+    $(aws ecr get-login --no-include-email --region us-west-2)
 }
 
 build_rdtest() {

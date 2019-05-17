@@ -27,17 +27,14 @@
 <g:set var="selectedclass" value="active"/>
 
 <g:set var="wfselected" value=""/>
-<ul class="nav">
-  <!-- <li>
-    <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
-       title="Home">
-       <i class="fas fa-home"></i>
-       <p>
-         Home
-       </p>
-    </a>
-  </li> -->
+<ul id="sidebar-nav" class="nav">
+
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
+    <g:ifPageProperty name='meta.tabpage'>
+        <g:ifPageProperty name='meta.tabpage' equals='projectHome'>
+            <g:set var="homeselected" value="${selectedclass}"/>
+        </g:ifPageProperty>
+    </g:ifPageProperty>
     <g:ifPageProperty name='meta.tabpage'>
         <g:ifPageProperty name='meta.tabpage' equals='jobs'>
             <g:set var="wfselected" value="${selectedclass}"/>
@@ -65,7 +62,7 @@
 <g:if test="${session?.user && request.subject }">
 <g:if test="${session.frameworkProjects}">
     <li id="projectSelect">
-      <a href="#" data-toggle="collapse" href="javascript:void(0)">
+      <a href="#" data-toggle="collapse">
         <i class="fas fa-suitcase"></i>
         <p>
           <g:message code="gui.menu.Projects"/>
@@ -82,21 +79,11 @@
     </li>
 </g:if>
 <g:if test="${params.project ?: request.project}">
-    <li>
+    <li id="nav-project-dashboard-link" class="${enc(attr: homeselected)}">
       <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
       <i class="fas fa-clipboard-list"></i>
         <p>
           <g:message code="gui.menu.Dashboard"/>
-          <!--
-          <br>
-          <g:if test="${session.frameworkLabels}">
-              <small>
-                <g:enc>${project ?session.frameworkLabels[project]: params.project ?
-                      session.frameworkLabels[params.project]: request.project ?
-                      session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
-              </small>
-          </g:if>
-          -->
         </p>
       </g:link>
     </li>
@@ -134,17 +121,21 @@
         </p>
       </g:link>
     </li>
-    <g:ifMenuItems type="PROJECT">
+    <g:if test="${params.project ?: request.project}">
+        <g:ifMenuItems type="PROJECT" project="${params.project ?: request.project}">
         <li role="separator" class="divider"></li>
+            <g:forMenuItems type="PROJECT" var="item" project="${params.project ?: request.project}">
+            <li>
+                <a href="${enc(attr: item.getProjectHref(params.project ?: request.project))}"
+                   class=" toptab "
+                   title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
+                    <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
+                    <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
+                </a>
+            </li>
+        </g:forMenuItems>
     </g:ifMenuItems>
-    <g:forMenuItems type="PROJECT" var="item">
-        <li>
-            <a href="${item.getProjectHref(params.project)}"  class=" toptab ">
-                <i class="fas fa-plug"></i>
-                <p><g:message code="${item.titleCode}" default="${item.title}"/></p>
-            </a>
-        </li>
-    </g:forMenuItems>
+    </g:if>
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
@@ -168,31 +159,31 @@
            )}"/>
 
     <g:if test="${projConfigAuth||projACLAuth}">
-        <li class="${enc(attr: projconfigselected)}" id="projectAdmin">
-          <a href="#" data-toggle="collapse" href="javascript:void(0)">
+
+        <g:ifPageProperty name='meta.projconfigselected'>
+            <script type="text/javascript">
+                jQuery(function () {
+                    jQuery('#nav-project-settings-${enc(js:g.pageProperty(name:"meta.projconfigselected"))}').addClass(
+                        'active');
+                })
+            </script>
+            <g:set var="projConfigOpen" value="${true}"/>
+        </g:ifPageProperty>
+
+        <li id="nav-project-settings">
+            <a href="#" data-toggle="collapse" class="${wdgt.css(if: projConfigOpen, then: 'subnav-open')}">
             <i class="fas fa-cogs"></i>
             <p>
-              <!-- <g:message code="Project"/> -->
               <g:message code="gui.menu.ProjectSettings"/>
               <b class="caret"></b>
             </p>
           </a>
-          <g:render template="/menu/sidebarProjectMenu"/>
+            <g:render template="/menu/sidebarProjectMenu" model="[projConfigOpen: projConfigOpen]"/>
         </li>
     </g:if>
 </g:if>
 </g:if>
-  <!-- <li class="snapshot-version">
-    <span class="rundeck-version-identity"
-          data-version-string="${enc(attr: buildIdent)}"
-          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-          data-app-id="${enc(attr: appId)}"></span>
-    <g:link controller="menu" action="welcome" class="version link-bare">
-        <g:appTitle/> ${buildIdent}
-    </g:link>
-  </li> -->
 </ul>
-
 <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
     <g:ifPageProperty name='meta.tabtitle'>
         <ul class="nav">
@@ -207,42 +198,35 @@
         </ul>
     </g:ifPageProperty>
 </g:if>
-%{--
-<g:if test="${session?.user && request.subject }">
-    <g:ifExecutionMode passive="true">
-        <p class="navbar-text has_tooltip navbar-text-warning"
-           title="${g.message(code:'system.executionMode.description.passive')}"
-           data-toggle="tooltip"
-           data-placement="bottom"
-        >
-            <i class="glyphicon glyphicon-exclamation-sign"></i>
-            <g:message code="passive.mode" />
-        </p>
-        <auth:resourceAllowed action="${[AuthConstants.ACTION_ENABLE_EXECUTIONS,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
-            <g:form class="navbar-form navbar-left" controller="execution" action="executionMode" method="POST" useToken="true">
-                <g:hiddenField name="mode" value="active"/>
-                <g:hiddenField name="project" value="${params.project}"/>
-                <g:link action="executionMode"
-                        controller="menu"
-                        class="btn btn-default "
-                        title="${message(code:"action.executionMode.set.active.help")}"
-                >
-                    Change
-                </g:link>
-            </g:form>
-        </auth:resourceAllowed>
-    </g:ifExecutionMode>
-</g:if>
---}%
-<div id="snapshot-version" class="snapshot-version">
-  <span class="rundeck-version-identity"
-        data-version-string="${enc(attr: buildIdent)}"
-        data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-        data-app-id="${enc(attr: appId)}"
-        style="display:block;"></span>
-  <g:link controller="menu" action="welcome" class="version link-bare">
-      <g:appTitle/> ${buildIdent}
-  </g:link>
+<div id="sidebar-bottom" style="border-top: 1px solid #3c3c3c;">
+  <div id="community-news-notification">
+    <div class="sidebar-footer-line-item">
+      <g:if test="${grailsApplication.config.rundeck.communityNews.disabled in [true,'true']}">
+        <a href="https://www.rundeck.com/community-updates" target="_blank">
+          <div>
+            <i class="far fa-newspaper" style="margin-right:5px;"></i>
+            <span>Community News</span>
+          </div>
+        </a>
+      </g:if>
+      <g:else>
+        <g:link controller="communityNews" action="index">
+          <span id="community-news-notification-vue"></span>
+        </g:link>
+      </g:else>
+    </div>
+  </div>
+  <div id="version-notification-vue"></div>
+  <div id="snapshot-version" class="snapshot-version">
+    <span class="rundeck-version-identity"
+          data-version-string="${enc(attr: buildIdent)}"
+          data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
+          data-app-id="${enc(attr: appId)}"
+          style="display:block;"></span>
+    <g:link controller="menu" action="welcome" class="version link-bare">
+        <g:appTitle/> ${buildIdent}
+    </g:link>
+  </div>
 </div>
 
 <g:javascript>
@@ -260,15 +244,15 @@
        jQuery.ajax({
             url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + sidebarClosed}),
             method: 'POST',
-            beforeSend: _ajaxSendTokens.curry('ui_token'),
+            beforeSend: _createAjaxSendTokensHandler('ui_token'),
             success: function () {
-                console.log("saved sidebar position" );
+                // console.log("saved sidebar position" );
             },
-            error: function () {
-                console.log("saving sidebar position failed" );
+            error: function (e) {
+               console.log("saving sidebar position failed: " + e);
             }
         })
-        .success(_ajaxReceiveTokens.curry('ui_token'));
+        .success(_createAjaxReceiveTokensHandler('ui_token'));
     })
     // Mobile Sidebar
     jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
@@ -280,4 +264,10 @@
   const ps = new PerfectScrollbar('.sidebar-wrapper', {
     suppressScrollX: true
   });
+
+  setTimeout(function(){
+    var announcementHeight = document.getElementById("sidebar-bottom").offsetHeight;
+    document.getElementById("sidebar-nav").style['marginBottom'] = announcementHeight.toString() + "px";
+  }, 500)
+
 </g:javascript>

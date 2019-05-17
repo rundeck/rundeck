@@ -306,6 +306,30 @@ public class ScheduledExecutionServiceTests {
                 ]
         )
     }
+    public void testParseParamEmailNotificationsAttachedFile() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                  type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: true, attachLogInFile: true, attachLogInline: false]]],
+                [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE):'file'
+                ]
+        )
+    }
+    public void testParseParamEmailNotificationsAttachedInline() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                  type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                  configuration:[recipients: 'c@example.com,d@example.com', attachLog: true, attachLogInFile: false, attachLogInline: true]]],
+                [(ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL): 'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS): 'c@example.com,d@example.com',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH):'true',
+                 (ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE):'inline'
+                ]
+        )
+    }
 
     public void testGetGroups(){
         def schedlist=[new ScheduledExecution(jobName:'test1',groupPath:'group1'),new ScheduledExecution(jobName:'test2',groupPath:null)]

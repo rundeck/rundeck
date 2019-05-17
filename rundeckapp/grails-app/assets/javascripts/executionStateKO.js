@@ -916,6 +916,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
+    self.logoutput = ko.observable(data.logoutput);
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
     });
@@ -1119,7 +1120,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         targetElement=targetElement[0];
         var params = {nodename: node};
         if (stepctx) {
-            Object.extend(params, {stepctx: stepctx});
+            jQuery.extend(params, {stepctx: stepctx});
         }
         var ctrl = new FollowControl(null, null, {
             parentElement: targetElement,

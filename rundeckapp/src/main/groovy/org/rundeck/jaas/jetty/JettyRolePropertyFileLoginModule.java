@@ -16,9 +16,12 @@
 
 package org.rundeck.jaas.jetty;
 
+import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.rundeck.jaas.AbstractSharedLoginModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
@@ -29,8 +32,6 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Extends Jetty property file login module {@link PropertyFileLoginModule}, to ignore authentication via property file
@@ -39,10 +40,10 @@ import java.util.logging.Logger;
  * property file.
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
-    public static final Logger logger = Logger.getLogger(JettyRolePropertyFileLoginModule.class.getName());
-    PropertyFileLoginModule module;
-    UserInfo userInfo;
-    boolean caseInsensitive = true;
+    public static final Logger logger = LoggerFactory.getLogger(JettyRolePropertyFileLoginModule.class.getName());
+    AbstractLoginModule module;
+    UserInfo            userInfo;
+    boolean             caseInsensitive = true;
 
     @Override
     public void initialize(
@@ -63,7 +64,12 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         if (null != caseInsensitiveStr) {
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
-        module = new PropertyFileLoginModule();
+        if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
+            logger.debug("using reloadable realm property file reader");
+            module = new ReloadablePropertyFileLoginModule();
+        } else {
+            module = new PropertyFileLoginModule();
+        }
         module.initialize(subject, callbackHandler, shared, options);
     }
 
@@ -130,7 +136,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
      * @param message message
      */
     protected void debug(String message) {
-        logger.log(Level.INFO, message);
+        logger.debug(message);
     }
 
     @Override

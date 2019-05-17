@@ -23,4 +23,12 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:render template="/framework/renderPluginConfig" model="${[serviceName:'ResourceModelSource',project:project,prefix:prefix,includeFormFields:includeFormFields,values:values,description:description,type:type]}"/>
+<g:render template="/framework/renderPluginConfig"
+          model="${[serviceName: 'ResourceModelSource',
+                    showPluginIcon: true,
+                    project: project,
+                    prefix: prefix,
+                    includeFormFields: includeFormFields,
+                    values: values,
+                    description: description,
+                    type: type]}"/>

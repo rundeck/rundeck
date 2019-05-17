@@ -109,6 +109,7 @@ public class URLResourceModelSource implements ResourceModelSource, Configurable
                       .defaultValue("true")
                       .build()
         )
+        .metadata("faicon", "globe")
         .build();
 
 

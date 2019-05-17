@@ -44,11 +44,6 @@
 <div class="col-xs-12">
   <g:form style="display: inline;" controller="project" action="exportPrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
     <div class="card" id="exportform">
-      <div class="card-header">
-        <h3 class="card-title">
-          <g:message code="export.archive"/>
-        </h3>
-      </div>
       <div class="card-content">
         <div class="list-group">
           <div class="list-group-item">
@@ -100,16 +95,54 @@
                     <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+                <div class="checkbox">
+                  <g:checkBox name="exportScm" value="true"/>
+                  <label for="exportScm">SCM configuration</label>
+                </div>
+                </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" has="false" name="${params.project}">
+                  <div class="checkbox disabled text-primary">
+                    <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
+                  </div>
+                </auth:resourceAllowed>
               </div>
             </div>
+
+
+
+            <div class="form-group">
+              <label class="control-label col-sm-2">Referenced Jobs:</label>
+              <div class="col-sm-10">
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="no" id="dontStrip" checked="checked" />
+                    <label for="dontStrip">
+                    <g:message code="export.jobref.strip.none"/>
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="name" id="stripName"/>
+                    <label for="stripName">
+                    <g:message code="export.jobref.strip.name"/>
+                    </label>
+                  </div>
+                  <div class="radio">
+                    <g:radio name="stripJobRef" value="uuid" id="stripUuid"/>
+                    <label for="stripUuid">
+                    <g:message code="export.jobref.strip.uuid"/>
+                    </label>
+                  </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
       <div class="card-footer">
         <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-        <button type="submit" class="btn btn-success"><g:message code="export.archive"/></button>
+        <button type="submit" class="btn btn-primary"><g:message code="export.archive"/> <g:icon name="download"/></button>
         <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
-          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
+          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>
     </div>
@@ -176,7 +209,7 @@
             </div>
           </div>
           <div class="modal-footer">
-              <g:actionSubmit action="exportInstancePrepare" class="small btn btn-success" value="${message(code:'export.another.instance.go')}" />
+              <g:actionSubmit action="exportInstancePrepare" class="small btn btn-primary" value="${message(code:'export.another.instance.go')}" />
           </div>
         </div><!-- /.modal-content -->
       </div><!-- /.modal-dialog -->

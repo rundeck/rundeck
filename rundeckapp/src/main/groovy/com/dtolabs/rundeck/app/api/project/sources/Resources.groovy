@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.api.project.sources
 
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
+import com.dtolabs.rundeck.app.api.marshall.ApiVersion
 import com.dtolabs.rundeck.app.api.marshall.Ignore
 import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 
@@ -35,4 +36,14 @@ class Resources {
     Boolean writeable
     @XmlAttribute
     String href
+
+    @ApiVersion(31)
+    @XmlAttribute
+    @Ignore(onlyIfNull = true)
+    String editPermalink
+
+    @ApiVersion(31)
+    @XmlAttribute
+    @Ignore(onlyIfNull = true)
+    String syntaxMimeType
 }

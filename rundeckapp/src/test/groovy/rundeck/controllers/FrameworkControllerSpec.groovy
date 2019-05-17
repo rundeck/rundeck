@@ -18,15 +18,13 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
-import com.dtolabs.rundeck.core.common.IProjectNodes
-import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
@@ -34,34 +32,29 @@ import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerato
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.GroovyPageUnitTestMixin
 import org.grails.plugins.metricsweb.MetricService
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.NodeFilter
+import rundeck.Project
 import rundeck.User
-import rundeck.services.ApiService
-import rundeck.services.AuthorizationService
-import rundeck.services.FrameworkService
-import rundeck.services.PasswordFieldsService
-import rundeck.services.PluginService
-import rundeck.services.ScheduledExecutionService
-import rundeck.services.StorageManager
-import rundeck.services.UserService
+import rundeck.UtilityTagLib
+import rundeck.services.*
 import rundeck.services.authorization.PoliciesValidation
-import rundeck.services.framework.RundeckProjectConfigurable
+import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
+import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
  */
 @TestFor(FrameworkController)
 @Mock([NodeFilter, User])
+@TestMixin(GroovyPageUnitTestMixin)
 class FrameworkControllerSpec extends Specification {
     def "system acls require api_version 14"(){
         setup:
@@ -624,6 +617,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -657,6 +651,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -980,7 +975,7 @@ class FrameworkControllerSpec extends Specification {
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
 
-    static class TestConfigurableBean implements RundeckProjectConfigurable {
+    static class TestConfigurableBean implements ProjectConfigurable {
 
         Map<String, String> categories = [:]
 
@@ -992,6 +987,7 @@ class FrameworkControllerSpec extends Specification {
     @Unroll
     def "save project updating passive mode"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         defineBeans {
             testConfigurableBean(TestConfigurableBean) {
                 projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
@@ -1078,6 +1074,7 @@ class FrameworkControllerSpec extends Specification {
     def "create project invalid name"(){
         setup:
         controller.metricService = Mock(MetricService)
+        controller.featureService = Mock(FeatureService)
         def rdframework=Mock(Framework){
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -1102,6 +1099,120 @@ class FrameworkControllerSpec extends Specification {
         response.status==200
         request.errors == ['project.name.can.only.contain.these.characters']
         model.projectDescription == description
+
+    }
+
+    def "create project description empty"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ''
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+    }
+
+    def "create project description name with invalid characters"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        controller.metricService = Mock(MetricService)
+        def rdframework=Mock(Framework){
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+
+
+        def description = '<b>Project Desc</b>'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==200
+        request.errors == ['project.description.can.only.contain.these.characters']
+        model.projectDescription == description
+
+    }
+
+    def "create project description name starting with space"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = ' Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+    }
+
+    def "create project description name starting with numbers"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+        def description = '1 Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+
+    }
+
+    def "create project description name starting with parenthesis"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+
+        def description = '(1) Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
 
     }
 
@@ -1136,7 +1247,7 @@ class FrameworkControllerSpec extends Specification {
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
-        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
 
         setupFormTokens(params)
         def project = 'testProj'
@@ -1149,15 +1260,418 @@ class FrameworkControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubject(*_)
         1 * controller.frameworkService.authResourceForProject(project)
         1 * controller.frameworkService.getRundeckFramework()
-        1 * controller.frameworkService.listResourceModelSourceDescriptions()
+//        1 * controller.frameworkService.listResourceModelSourceDescriptions()
         1 * controller.frameworkService.authorizeApplicationResourceAny(*_) >> true
         1 * controller.frameworkService.validateProjectConfigurableInput(*_) >> [props: [:], remove: []]
         1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, _) >> [success: true]
         0 * controller.frameworkService._(*_)
-        1 * controller.resourcesPasswordFieldsService.reset()
+//        1 * controller.resourcesPasswordFieldsService.reset()
 
         response.redirectedUrl == "/project/$project/nodes/sources"
         flash.message == "Project ${project} Node Sources saved"
         result == null
+    }
+
+
+    def setupNewProjectWithDescriptionOkTest(){
+        controller.metricService = Mock(MetricService)
+        def project = Mock(Project){
+            getName()>>"projName"
+        }
+        def projectManager = Mock(ProjectManager){
+            existsFrameworkProject( )>>false
+        }
+        def rdframework=Mock(Framework){
+            1 * getFrameworkProjectMgr()>>projectManager
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+            1 * createFrameworkProject(_,_)>>[project, null]
+            1 * refreshSessionProjects(_,_)>>null
+            listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
+        }
+    }
+  
+    def "projectPluginsAjax"() {
+        given:
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+        when:
+            controller.projectPluginsAjax(project, serviceName, configPrefix)
+        then:
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.frameworkService.getRundeckFramework() >> Mock(IFramework) {
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    loadProjectConfig(project) >> Mock(IRundeckProjectConfig) {
+                        getProjectProperties() >> [
+                                'xyz.1.type'          : 'atype1',
+                                'xyz.1.config.blah'   : 'blahval',
+                                'xyz.1.mongo'         : 'extramongo',
+                                'xyz.2.type'          : 'atype2',
+                                'xyz.2.config.zeeblah': 'zblahval',
+                                'xyz.2.blango'        : 'extrablango',
+                        ]
+                    }
+                }
+            }
+
+
+            response.status == 200
+            response.json == [
+                    project: project,
+                    plugins: [
+                            [
+                                    type   : 'atype1',
+                                    service: serviceName,
+                                    config : [blah: 'blahval'],
+                                    extra  : [mongo: 'extramongo']
+                            ],
+                            [
+                                    type   : 'atype2',
+                                    service: serviceName,
+                                    config : [zeeblah: 'zblahval'],
+                                    extra  : [blango: 'extrablango']
+                            ]
+                    ]
+            ]
+    }
+
+    def "save project plugins ajax ok"() {
+        given:
+
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            controller.featureService = Mock(FeatureService)
+            def expectData = [
+                    plugins: [
+                            [type   : '1type',
+                             config : [bongo: 'asdf'],
+                             extra  : [:],
+                             service: 'SomeService'
+                            ],
+
+                            [type   : '2type',
+                             config : [zingo: 'azsdf'],
+                             extra  : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             service: 'SomeService'
+                            ]
+                    ]
+            ]
+            def inputData = [
+                    plugins: [
+                            [type     : '1type',
+                             config   : [bongo: 'asdf'],
+                             origIndex: 1
+                            ],
+
+                            [type     : '2type',
+                             config   : [zingo: 'azsdf'],
+                             extra    : [asdf: 'jfkdjkf', zjiji: 'dkdkd'],
+                             origIndex: 2
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 200
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.obscurePasswordFieldsService.untrack('aProject/SomeService/xyz', {
+                it.size()==2 &&
+                        it[0].type=='1type' &&
+                        it[0].index==1 &&
+                        (it[0].props==[bongo:'asdf']) &&
+                        it[1].type=='2type' &&
+                        it[1].index==2 &&
+                        it[1].props==[zingo:'azsdf']
+            }, _)
+            1 * controller.obscurePasswordFieldsService.resetTrack('aProject/SomeService/xyz', _, _)
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == ([project: project] + expectData)
+    }
+
+    def "save project plugins ajax error  type name"() {
+        given:
+
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : type,
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            0 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            type        | msg
+            null        | '[0]: missing type'
+            'asdf asdf' | '[0]: Invalid provider type name'
+    }
+
+    def "save project plugins ajax error missing plugin"() {
+        given:
+
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >> null
+            0 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf'])
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            msg = '[0]: SomeService provider was not found: 1type'
+    }
+
+    def "save project plugins ajax error plugin validation"() {
+        given:
+
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
+
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: false, report: report)
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            0 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: true]
+
+            response.json == [
+                    reports: ['0': [bongo: 'Invalid value']],
+                    errors : [
+                            msg
+                    ]
+            ]
+
+        where:
+            msg = '[0]: configuration was invalid: Property validation FAILED. errors={bongo=Invalid value}'
+    }
+
+    def "save project plugins ajax error saving config"() {
+        given:
+
+            grailsApplication.config.clear()
+            grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+            def utilTagLib = mockTagLib(UtilityTagLib)
+            def project = "aProject"
+            def serviceName = "SomeService"
+            def configPrefix = "xyz"
+            controller.frameworkService = Mock(FrameworkService)
+            controller.pluginService = Mock(PluginService)
+            controller.obscurePasswordFieldsService = Mock(PasswordFieldsService)
+            def inputData = [
+                    plugins: [
+                            [
+                                    type  : '1type',
+                                    config: [bongo: 'asdf']
+                            ],
+
+                            [type  : '2type',
+                             config: [zingo: 'azsdf'],
+                             extra : [asdf: 'jfkdjkf', zjiji: 'dkdkd']
+                            ]
+                    ]
+            ]
+            request.json = inputData
+            request.method = 'POST'
+            def report = new Validator.Report()
+            report.errors['bongo'] = 'Invalid value'
+
+
+            setupFormTokens(params)
+        when:
+            controller.saveProjectPluginsAjax(project, serviceName, configPrefix)
+
+        then:
+            response.status == 422
+            1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, ['configure', 'admin']) >> true
+            1 * controller.frameworkService.getAuthContextForSubject(_)
+            1 * controller.frameworkService.authResourceForProject(project)
+
+            1 * controller.pluginService.getPluginDescriptor('1type', serviceName) >>
+            new DescribedPlugin(null, null, '1type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '1type', [bongo: 'asdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.pluginService.getPluginDescriptor('2type', serviceName) >>
+            new DescribedPlugin(null, null, '2type')
+            1 * controller.pluginService.validatePluginConfig(serviceName, '2type', [zingo: 'azsdf']) >>
+            new ValidatedPlugin(valid: true)
+
+            1 * controller.frameworkService.updateFrameworkProjectConfig(project, _, ['xyz.'].toSet()) >>
+            [success: false, error: 'Project does not exist']
+
+            response.json == [
+                    reports: [:],
+                    errors : [
+                            'Project does not exist'
+                    ]
+            ]
+
     }
 }

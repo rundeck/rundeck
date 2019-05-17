@@ -51,7 +51,7 @@
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
-    <div class="${fullWidthCol}">
+    <div class="${offsetColType}">
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
           <g:checkBox name="${fieldname}" value="true"
@@ -87,6 +87,12 @@
         <div class="${valueColTypeSplitB}">
             <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
             <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+            <g:if test="${dynamicProperties instanceof java.util.Map}">
+                <g:set var="propSelectLabels" value="${dynamicProperties}"/>
+                <g:set var="selectValues" value="${dynamicProperties.collect {
+                    it.key
+                }}"/>
+            </g:if>
             <g:set var="propSelectValues" value="${selectValues.collect {
                 [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
             }}"/>
@@ -102,6 +108,12 @@
     <g:else>
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
         <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+        <g:if test="${dynamicProperties instanceof java.util.Map}">
+            <g:set var="propSelectLabels" value="${dynamicProperties}"/>
+            <g:set var="selectValues" value="${dynamicProperties.collect {
+                it.key
+            }}"/>
+        </g:if>
         <g:set var="propSelectValues"
                value="${selectValues.collect { [key: it, value: stepplugin.messageText(
                    service: service,
@@ -148,10 +160,10 @@
         <div class="${valueColType} ">
         <div class=" grid">
 
-            <g:each in="${propSelectValues}" var="propval">
+            <g:each in="${propSelectValues}" var="propval" status="n">
                 <div class="optionvaluemulti checkbox">
-                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}"/>
-                  <label class="grid-row optionvaluemulti">
+                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}" id="f_${fieldid}_p_${n}"/>
+                  <label class="grid-row optionvaluemulti" for="f_${fieldid}_p_${n}">
                     ${propval.label}
                   </label>
                 </div>

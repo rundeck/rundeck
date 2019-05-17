@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginRegistry
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.TestFor
 import spock.lang.Specification
 
@@ -48,7 +49,7 @@ class UiPluginServiceSpec extends Specification {
         'menu/x'         | ['b']      | _
     }
 
-    void "getProfileFor"() {
+    void "getProfileFor finds icon"() {
         given:
         service.initCaches()
         service.pluginService = Mock(PluginService)
@@ -58,7 +59,7 @@ class UiPluginServiceSpec extends Specification {
         def result = service.getProfileFor('svc', 'plug')
 
         then:
-        result.metadata != null
+            result.fileMetadata != null
         result.icon == icon
         2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
         1 * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
@@ -74,6 +75,30 @@ class UiPluginServiceSpec extends Specification {
         ['svc.plug.icon.png', 'icon.png'] | 'svc.plug.icon.png'
         ['svc.icon.png', 'icon.png']      | 'svc.icon.png'
         ['plug.icon.png', 'icon.png']     | 'plug.icon.png'
+    }
+
+    void "getProfileFor returns provider metadata"() {
+        given:
+            service.initCaches()
+            service.pluginService = Mock(PluginService)
+            service.rundeckPluginRegistry = Mock(PluginRegistry)
+
+        when:
+            def result = service.getProfileFor('svc', 'plug')
+
+        then:
+            result.fileMetadata != null
+            2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
+            1 * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
+                listResources() >> []
+            }
+            1 * service.pluginService.getPluginDescriptor('plug', 'svc') >> new DescribedPlugin<Object>(
+                    null,
+                    DescriptionBuilder.builder().name('plug').metadata([a: 'b', c: 'd']).build(),
+                    'plug'
+            )
+            result.providerMetadata
+            result.providerMetadata == [a: 'b', c: 'd']
     }
 
     void "getMessagesFor"() {
@@ -123,4 +148,37 @@ class UiPluginServiceSpec extends Specification {
                 [a: 'b']                                                                       |
                 'i18n/svc.plug.messages_fr.properties'
     }
+
+    void "get plugin message"() {
+        given:
+            service.initCaches()
+            service.pluginService = Mock(PluginService)
+            service.rundeckPluginRegistry = Mock(PluginRegistry)
+
+        when:
+            def result = service.getPluginMessage('svc', 'plug', 'a', 'somemsg', locale)
+        then:
+            2 * service.rundeckPluginRegistry.getPluginMetadata('svc', 'plug') >> Mock(PluginMetadata)
+            _ * service.rundeckPluginRegistry.getResourceLoader('svc', 'plug') >> Mock(PluginResourceLoader) {
+                listResources() >> reslist
+                if (expectpath) {
+                    openResourceStreamFor(expectpath) >> {
+                        return new ByteArrayInputStream(data.bytes)
+                    }
+                }
+            }
+            result == expected
+
+        where:
+            locale | data                                     | expected
+            null   | 'b=b\n'                                  | 'somemsg'
+            null   | 'a=b\n'                                  | 'b'
+            null   | 'svc.a=c\na=b\n'                         | 'c'
+            null   | 'plug.a=d\nsvc.a=c\na=b\n'               | 'd'
+            null   | 'svc.plug.a=e\nplug.a=d\nsvc.a=c\na=b\n' | 'e'
+
+            reslist = ['i18n/messages.properties']
+            expectpath = 'i18n/messages.properties'
+    }
 }
+
