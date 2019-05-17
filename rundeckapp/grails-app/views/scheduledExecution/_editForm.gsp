@@ -51,7 +51,8 @@
     </div>
 
     <div class="card-content">
-        <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
+        <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
+                       command="${command}"/>
     </div>
 
     <div class="card-footer">

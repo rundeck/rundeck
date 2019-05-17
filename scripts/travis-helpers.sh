@@ -125,7 +125,7 @@ sync_commit_to_s3() {
 copy_artifacts() {
     if [[ ! -d artifacts ]]; then mkdir artifacts; fi
     (
-        find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
+        # find ./packaging -regex '.*\.\(deb\|rpm\)' -exec cp --parents {} artifacts \;
         cp -r --parents core/build/libs artifacts/
         cp -r --parents core/build/poms artifacts/
         cp -r --parents rundeckapp/**/build/libs artifacts/
@@ -180,6 +180,7 @@ trigger_travis_build() {
             "config": {
                 "merge_mode": "deep_merge",
                 "env": { "global": {
+                    "DRY_RUN": "false",
                     "UPSTREAM_PROJECT": "rundeck",
                     "UPSTREAM_BUILD_NUMBER": "${RUNDECK_BUILD_NUMBER}",
                     "UPSTREAM_BRANCH": "${RUNDECK_BRANCH}",

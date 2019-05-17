@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -116,6 +117,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter                : 'POST',
             storeJobfilter                 : 'POST',
+            deleteJobFilterAjax            : 'POST',
+            saveJobFilterAjax              : 'POST',
             apiJobDetail                   : 'GET',
             apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
@@ -819,6 +822,105 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         redirect(controller:'menu',action:'jobs',params:[project: params.project])
         }.invalidToken{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
+        }
+    }
+
+    def deleteJobFilterAjax(String project, String filtername) {
+        withForm {
+            g.refreshFormTokensHeader()
+            def User u = userService.findOrCreateUser(session.user)
+            final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
+            if (ffilter) {
+                ffilter.delete(flush: true)
+            }
+            render(contentType: 'application/json') {
+                success true
+            }
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
+    def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
+        withForm {
+            g.refreshFormTokensHeader()
+            if (query.hasErrors()) {
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            def User u = userService.findOrCreateUser(session.user)
+            def ScheduledExecutionFilter filter
+            def boolean saveuser = false
+            if (query.newFilterName && !query.existsFilterName) {
+                if (ScheduledExecutionFilter.findByNameAndUser(query.newFilterName, u)) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'request.error.conflict.already-exists.message',
+                            args  : ["Job Filter", query.newFilterName]
+                    ]
+                    )
+                }
+                filter = ScheduledExecutionFilter.fromQuery(query)
+                filter.name = query.newFilterName
+                filter.user = u
+                if (!filter.validate()) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.invalid.request',
+                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                    ]
+                    )
+                }
+                u.addToJobfilters(filter)
+                saveuser = true
+            } else if (query.existsFilterName) {
+                filter = ScheduledExecutionFilter.findByNameAndUser(query.existsFilterName, u)
+                if (filter) {
+                    filter.properties = query.properties
+                    filter.fix()
+                }
+            }
+            if (!filter.save(flush: true)) {
+                flash.errors = filter.errors
+//                params.saveFilter = true
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            if (saveuser) {
+                if (!u.save(flush: true)) {
+                    return renderErrorView([beanErrors: filter.errors])
+                }
+            }
+
+            render(contentType: 'application/json') {
+                success true
+                filterName query.newFilterName
+            }
+        }.invalidToken {
+
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
         }
     }
 

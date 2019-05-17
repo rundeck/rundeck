@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<span class="h5" style="border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 10px 0; margin: 10px 0; display: block;">
+<span >
   <span class=" execstate execstatedisplay overall"
         data-execstate="${enc(attr:execState)}"
         data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
@@ -62,7 +62,7 @@
   <g:message code="by" />
   <g:username user="${execution.user}"/>
   <span data-bind="if: execDurationSimple() != '' && (completed() || jobAverageDuration() <= 0)">
-      <span class="text-primary">
+      <span class="text-secondary">
           <i class="glyphicon glyphicon-time"></i>
           %{--<g:message code="elapsed.time.prompt" />--}%
       </span>
@@ -75,7 +75,7 @@
           <span data-bind="text: '#'+retryExecutionId()"></span>
       </a>
 
-      <span class="text-primary"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
+      <span class="text-secondary"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
   </div>
 
   <g:if test="${clusterModeEnabled && execution.serverNodeUUID}">
@@ -83,7 +83,7 @@
           <g:message code="on" />
           <span data-server-uuid="${execution.serverNodeUUID}"
                 data-server-name="${execution.serverNodeUUID}"
-                class="rundeck-server-uuid text-primary">
+                class="rundeck-server-uuid text-secondary">
           </span>
       </span>
   </g:if>

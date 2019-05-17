@@ -20,13 +20,13 @@ main() {
 build() {
     ./gradlew -Penvironment="${ENV}" -x check install
     groovy testbuild.groovy --buildType="${ENV}"
-    make ENV="${ENV}" rpm deb
+    # make ENV="${ENV}" rpm deb
 }
 
 buildFork() {
     ./gradlew -Penvironment="${ENV}" install
     groovy testbuild.groovy --buildType="${ENV}"
-    make ENV="${ENV}" rpm deb
+    # make ENV="${ENV}" rpm deb
 }
 
 buildDocker() {

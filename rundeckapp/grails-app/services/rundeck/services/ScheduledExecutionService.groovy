@@ -31,15 +31,14 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
-import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
-import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.gorm.transactions.Transactional
+import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
@@ -60,10 +59,10 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
+import rundeck.quartzjobs.ExecutionsCleanerJob
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 
-import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -113,6 +112,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
+    public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -831,19 +831,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 map.remove('configuration')
             }
             if(step instanceof JobExec) {
-                ScheduledExecution refjob
+                ScheduledExecution refjob = step.findJob(project)
                 if(!step.useName && step.uuid){
-                    refjob = ScheduledExecution.findByUuid(step.uuid)
                     if(refjob) {
                         map.jobref.name = refjob.jobName
                         map.jobref.group = refjob.groupPath
                     }
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            step.jobProject?step.jobProject:project,
-                            step.jobName,
-                            step.jobGroup
-                    )
                 }
 
                 if(refjob){
@@ -861,16 +854,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def eh = step.errorHandler
 
             if(eh instanceof JobExec) {
-                ScheduledExecution refjob
-                if(!eh.useName && eh.uuid){
-                    refjob = ScheduledExecution.findByUuid(eh.uuid)
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            eh.jobProject?eh.jobProject:project,
-                            eh.jobName,
-                            eh.jobGroup
-                    )
-                }
+                ScheduledExecution refjob = eh.findJob(project)
                 if(refjob){
                     map.ehJobId=refjob.extid
                     boolean doload=(null==jobids[map.ehJobId])
@@ -1046,6 +1030,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobSchedulerService.deleteJobSchedule(jobname, groupname)
     }
 
+    def deleteCleanerExecutionsJob(String projectName){
+        jobSchedulerService.deleteJobSchedule(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME)
+    }
+
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
         return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
@@ -1172,6 +1160,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
+    }
+
+    def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
+        def Date nextTime
+        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
+        JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
+
+        if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
+            log.info("rescheduling existing cleaner execution job in project ${projectName}")
+
+            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME), trigger)
+        } else {
+            log.info("scheduling new cleaner execution job in project ${projectName}")
+            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        }
+
+        log.info("scheduled cleaner executions job next run: " + nextTime.toString())
+        return nextTime
     }
 
     /**
@@ -1408,6 +1414,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return jobDetailBuilder.build()
     }
 
+    def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
+        String description = "Cleaner executions job"
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanerJob)
+                                         .withIdentity(jobname, jobgroup)
+                                         .withDescription(description)
+                                         .usingJobData(new JobDataMap(config))
+
+
+        return jobDetailBuilder.build()
+    }
+
+    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
+        def Trigger trigger
+        try {
+            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withPriority(priority)
+                    .build()
+
+        } catch (java.text.ParseException ex) {
+            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
+        }
+        return trigger
+    }
+
     def Trigger createTrigger(ScheduledExecution se) {
         def Trigger trigger
         def cronExpression = se.generateCrontabExression()
@@ -1429,6 +1460,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def boolean hasJobScheduled(ScheduledExecution se) {
         return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
+    }
+
+    def boolean hasJobScheduled(String jobName, String jobGroup) {
+        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
     /**

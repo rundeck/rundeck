@@ -59,7 +59,7 @@
 
   &.aborted,
   &[data-execstate=ABORTED] {
-    color: $light-gray;
+    color: $dark-gray;
     &.icon{
       &:before {
         content: "\f056";

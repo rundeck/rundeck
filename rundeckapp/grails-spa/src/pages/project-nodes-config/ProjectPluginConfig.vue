@@ -315,7 +315,8 @@ export default Vue.extend({
         const serializedData=data.map(this.serializeConfigEntry)
 
         const resp = await this.rundeckContext.rundeckClient.sendRequest({
-          url: `/framework/saveProjectPluginsAjax`,
+          pathTemplate: `/framework/saveProjectPluginsAjax`,
+          baseUrl:this.rdBase,
           method: 'POST',
           queryParameters: {
                 project: `${window._rundeck.projectName}`,

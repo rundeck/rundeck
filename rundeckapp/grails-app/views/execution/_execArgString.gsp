@@ -56,11 +56,11 @@
                 </span>
             </g:if>
             <g:else>
-                <span class="optvalue"><g:enc>${entry.value}</g:enc></span>
+                <code class="optvalue"><g:enc>${entry.value}</g:enc></code>
             </g:else>
         </g:if>
     </g:each>
 </g:if>
 <g:else>
-    <span class="optvalue"><g:enc>${argString}</g:enc></span>
+    <code class="optvalue"><g:enc>${argString}</g:enc></code>
 </g:else>

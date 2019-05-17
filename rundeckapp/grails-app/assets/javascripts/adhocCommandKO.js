@@ -66,6 +66,7 @@ function AdhocCommand(data,nodefilter) {
         .extend({ rateLimit: { method: "notifyWhenChangesStop", timeout: 1000 } });
     self.running=ko.observable(false);
     self.canRun=ko.observable(false);
+    self.error=ko.observable();
     self.allowInput = ko.pureComputed(function(){
        return !self.running() && self.canRun();
     });
@@ -87,7 +88,7 @@ function AdhocCommand(data,nodefilter) {
             url:requrl,
 
             error:function(data,jqxhr,err){
-                runError('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
+                self.error('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
             }
         });
     };
@@ -98,6 +99,7 @@ function AdhocCommand(data,nodefilter) {
                 ko.mapping.fromJS({recentCommands:data.executions},mapping,self);
             } catch (e) {
                 console.log('Recent commands list: error receiving data',e);
+                self.error('Recent commands list: error receiving data: '+e);
                 runError('Recent commands list: error receiving data: '+e);
             }
         });

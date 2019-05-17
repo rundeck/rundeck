@@ -1,8 +1,7 @@
 repositories:
--
-    repositoryName: private
+-   repositoryName: Official
+    enabled: true
+    type: HTTP
+    owner: RUNDECK
+-   repositoryName: private
     type: STORAGE_TREE
-    owner: PRIVATE
-    configProperties:
-        treeName: private
-        manifestPath: manifest.json

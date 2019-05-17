@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ContextView
@@ -4218,5 +4219,83 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         val.nodeSelector != null
         val.nodeSelector.excludes.name == "nodea"
         val.frameworkProject == "testproj"
+    }
+
+    def "get Global Plugin Configurations"() {
+
+        given:
+        def project = "asdf"
+        service.frameworkService = Stub(FrameworkService) {
+            getProjectProperties(project) >> props
+        }
+        when:
+
+        //def result = ProjectNodeSupport.listPluginConfigurations(props, prefix, svc, true)
+        def result = service.getGlobalPluginConfigurations(project)
+        then:
+
+        result.size() == expectedSize
+
+        where:
+        expectedSize    | props
+        1               | ['framework.globalfilter.1.type':'mask-passwords',
+                           'framework.globalfilter.1.config.replacement':'[SECURE]',
+                           'framework.globalfilter.1.config.color': 'blue']
+        1               | ['project.globalfilter.1.type':'highlight-output',
+                           'project.globalfilter.1.config.regex':'test',
+                           'project.globalfilter.1.config.bgcolor': 'yellow']
+        0               | [:]
+        2               | ['framework.globalfilter.1.type':'mask-passwords',
+                           'framework.globalfilter.1.config.replacement':'[SECURE]',
+                           'framework.globalfilter.1.config.color': 'blue',
+                           'project.globalfilter.1.type':'highlight-output',
+                           'project.globalfilter.1.config.regex':'test',
+                           'project.globalfilter.1.config.bgcolor': 'yellow']
+        2               | ['framework.globalfilter.1.type':'mask-passwords',
+                           'framework.globalfilter.1.config.replacement':'[SECURE]',
+                           'framework.globalfilter.1.config.color': 'blue',
+                           'framework.globalfilter.2.type':'highlight-output',
+                           'framework.globalfilter.2.config.regex':'test',
+                           'framework.globalfilter.2.config.bgcolor': 'yellow']
+
+    }
+  
+    void "runnow execution with exclude filter"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                description: 'a job',
+                doNodedispatch: true,
+                filter:'tags: running',
+                filterExclude:'name: nodea',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                )
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['_replaceNodeFilters': 'true', 'nodeIncludeName':'SelectedNode', executionType: 'user','nodeoverride':'cherrypick']
+        )
+
+        then:
+        e2 != null
+        e2.filter == "name: SelectedNode"
+        e2.filterExclude == null
     }
 }

@@ -38,6 +38,19 @@
         context: 'application'
 )}"/>
 
+<style>
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-menu {
+  top: 0;
+  right: 100%;
+  margin-top: -1px;
+  display: none;
+}
+</style>
+
 <ul class="dropdown-menu">
   <li class="dropdown-header">System</li>
   <li>
@@ -67,24 +80,34 @@
       </g:link>
     </li>
   </g:if>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
 <g:if test="${pluginRead && repoEnabled == 'true'}">
-  <li>
-    <g:link controller="artifact" action="index">
-      <g:message code="gui.menu.FindPlugins"/>
-    </g:link>
-  </li>
-  <li>
-    <g:link controller="menu" action="plugins">
-      <g:message code="gui.menu.InstalledPlugins"/>
-    </g:link>
+  <li class="dropdown-submenu">
+    <a href="#">Plugins <span class="caret"></span></a>
+    <ul class="dropdown-menu">
+      <li>
+          <g:link controller="artifact" action="index">
+            <g:message code="gui.menu.FindPlugins"/>
+          </g:link>
+      </li>
+      <li>
+        <a href="${g.createLink(uri:'/artifact/index/configurations')}">
+          <g:message code="gui.menu.InstalledPlugins"/>
+        </a>
+      </li>
+      <%-- <li>
+        <a href="${g.createLink(uri:'/menu/plugins')}">
+          Old Installed Plugins
+        </a>
+      </li> --%>
+    </ul>
   </li>
 </g:if>
 <g:if test="${pluginRead && repoEnabled != 'true'}">
   <li>
-    <g:link controller="menu" action="plugins">
+    <a href="${g.createLink(uri:'/artifact/index/configurations')}">
       <g:message code="gui.menu.ListPlugins"/>
-    </g:link>
+    </a>
   </li>
 </g:if>
   <li>
@@ -112,3 +135,12 @@
     </g:forMenuItems>
   <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
 </ul>
+<script>
+jQuery(document).ready(function($){
+  $('.dropdown-submenu > a').on("click", function(e){
+    $(this).next('ul').toggle();
+    e.stopPropagation();
+    e.preventDefault();
+  });
+});
+</script>

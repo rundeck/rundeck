@@ -76,7 +76,7 @@ class PluginMetadataValidatorTest extends Specification {
         "3.0.0"         |    "2.0"          | "incompatible"
         "3.0.0"         |    "2.11.x"       | "incompatible"
         "2.11.0"        |    "3.0.x"        | "incompatible"
-        "3.1.0"         |    "3.0.0+"       | "incompatible"
+        "3.1.0"         |    "3.0.0+"       | "compatible"
         "3.0.5"         |    "3.1.0+"       | "incompatible"
         "3.0.0"         |    "3.0.5+"       | "incompatible"
         "4.0.0"         |    "3.0+"         | "incompatible"
@@ -87,5 +87,8 @@ class PluginMetadataValidatorTest extends Specification {
         "3.0.5"         |    "3.0+"         | "compatible"
         "3.1.2"         |    "3.0+"         | "compatible"
         "3.9.6"         |    "3.0+"         | "compatible"
+        "3.1.0"         |    "3.0.14+"      | "compatible"
+        "3.1.0"         |    "3.x"          | "compatible"
+        "3.0.13"        |    "3.0+.14+"     | "incompatible"
     }
 }

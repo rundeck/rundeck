@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -1002,13 +1003,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // debug output)
             def rootoverride = new OverridableStreamingLogWriter(loghandler)
 
+            def globalConfig = getGlobalPluginConfigurations(execution.project)
+
             def rootLogManager = new LoggingManagerImpl(
                     rootoverride,
                     directLogger,
                     logFilterPluginLoader,
-                    //TODO:  global/project filter plugins
-                    [
-                    ]
+                    globalConfig
             )
 
 
@@ -1027,8 +1028,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
                                     execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
-                            ) :
-                            []
+                            ) + globalConfig :
+                            globalConfig
             )
 
 
@@ -2223,11 +2224,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
                 def nset = filtersAsNodeSet(filterprops)
                 input.filter = NodeSet.generateFilter(nset)
+                input.filterExclude=""
                 input.doNodedispatch=true
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -3679,6 +3681,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Query executions
+     * @param criteriaClosure criteriaClos
+     * @param offset paging offset
+     * @param max paging max
+     * @return result map [total: int, result: List<Execution>]
+     */
+    def queryExecutions(Closure criteriaClos){
+        def result = Execution.createCriteria().list(criteriaClos.curry(false))
+        def total = Execution.createCriteria().count(criteriaClos.curry(true))
+        return [result:result,total:total]
+    }
+
+    /**
+     * Query executions
      * @param query query
      * @param offset paging offset
      * @param max paging max
@@ -4006,5 +4021,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     boolean avgDurationExceeded(schedId, Map content){
         notificationService.triggerJobNotification('avgduration',schedId, content)
+    }
+
+    List<PluginConfiguration> getGlobalPluginConfigurations(String project){
+        def list = []
+
+        def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'framework.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+
+        def projPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'project.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+        list = list + projPlugins
+        list = list + fwPlugins
+
+        return list
     }
 }
