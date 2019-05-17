@@ -20,7 +20,7 @@
 <g:set var="linkParams" value="${filter?filter+projParams:projParams}"/>
 <g:set var="runningParams" value="${filter ? filter + projParams : projParams}"/>
 <g:if test="${scheduledExecution}">
-    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, includeJobRef: includeJobRef]+projParams}"/>
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.extid, includeJobRef: includeJobRef]+projParams}"/>
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <div class="vue-tabs">
