@@ -41,7 +41,7 @@
     <g:embedJSON id="eventsparamsJSON" data="${eventsparams}"/>
     <g:embedJSON id="pageparamsJSON" data="${pageparams}"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
-    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
     <g:jsMessages code="search.ellipsis
 jobquery.title.titleFilter
 jobquery.title.jobFilter
@@ -70,8 +70,9 @@ jobquery.title.endafterFilter
             nowrunningUrl: appLinks.menuNowrunningAjax,
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
             pagination:{
-                max:50
+                max: ${enc(js:params.max?params.int('max',30):30)}
             }
         }
     })

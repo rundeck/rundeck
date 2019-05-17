@@ -17,7 +17,14 @@ const translationStrings = {
     'Only shown executions': 'Only shown executions',
     'Clear bulk selection': 'Clear Bulk Selection',
     'Click to edit Search Query': 'Click to edit Search Query',
+    'Auto refresh': 'Auto refresh',
     'error.message.0': 'An Error Occurred: {0}',
+    'info.completed.0': 'Completed: {0}',
+    'info.started.0': 'Started: {0}',
+    'info.started.expected.0.1': 'Started: {0}, Estimated Finish: {1}',
+    'info.scheduled.0': 'Scheduled; starting {0}',
+    'job.execution.starting.0': 'Starting {0}',
+    'info.newexecutions.since.0': '1 New Result. Click to load. | {0} New Results. Click to load.',
 
     period: {
       label: {

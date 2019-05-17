@@ -47,152 +47,211 @@
             </dropdown>
 
           <activity-filter  v-model="query"></activity-filter>
-          <!-- bulk edit controls -->
-          <div class="pull-right" v-if="auth.deleteExec && pagination.total>0">
-              <span v-if="bulkEditMode" >
-                <i18n path="bulk.selected.count">
-                  <strong>{{bulkSelectedIds.length}}</strong>
-                </i18n>
-                <span class="btn btn-default btn-xs   " @click="bulkEditSelectAll">
-                    <i18n path="select.all"/>
-                </span>
-                <span class="btn btn-default btn-xs   "
-                      @click="showBulkEditCleanSelections=true">
-                    <i18n path="select.none"/>
-                </span>
-
-                <btn size="xs" type="danger" class="btn-fill"
-                      :disabled="bulkSelectedIds.length<1"
-                      @click="showBulkEditConfirm=true">
-                    <i18n path="delete.selected.executions"/>
-                </btn>
-                <span class="btn btn-default btn-xs"
-                      @click="bulkEditMode=false"
-                      >
-                    <i18n path="cancel.bulk.delete"/>
-                </span>
+          <div class="pull-right">
+            <span >
+              <input type=checkbox id=auto-refresh v-model=autorefresh />
+              <label for="auto-refresh">{{$t('Auto refresh')}}</label>
             </span>
+            <!-- bulk edit controls -->
+            <span  v-if="auth.deleteExec && pagination.total>0">
+                <span v-if="bulkEditMode" >
+                  <i18n path="bulk.selected.count">
+                    <strong>{{bulkSelectedIds.length}}</strong>
+                  </i18n>
+                  <span class="btn btn-default btn-xs   " @click="bulkEditSelectAll">
+                      <i18n path="select.all"/>
+                  </span>
+                  <span class="btn btn-default btn-xs   "
+                        @click="showBulkEditCleanSelections=true">
+                      <i18n path="select.none"/>
+                  </span>
+
+                  <btn size="xs" type="danger" class="btn-fill"
+                        :disabled="bulkSelectedIds.length<1"
+                        @click="showBulkEditConfirm=true">
+                      <i18n path="delete.selected.executions"/>
+                  </btn>
+                  <span class="btn btn-default btn-xs"
+                        @click="bulkEditMode=false"
+                        >
+                      <i18n path="cancel.bulk.delete"/>
+                  </span>
+              </span>
 
 
-            <btn size="xs" type="secondary" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
-                {{$t('bulk.delete')}}
-            </btn>
-        </div>
-
-      <div v-if="reports.length < 1 " class="loading-area">
-          <span class="text-secondary" v-if="!loading && !loadError">
-            {{$t('results.empty.text')}}
-          </span>
-          <div class="loading-text" v-if="loading && lastDate<0">
-            <i class="fas fa-spinner fa-pulse" ></i>
-            {{$t('Loading...')}}
+              <btn size="xs" type="secondary" v-if="auth.deleteExec && !bulkEditMode" @click="bulkEditMode=true">
+                  {{$t('bulk.delete')}}
+              </btn>
+            </span>
           </div>
-          <div class="text-warning" v-if="loadError">
-            <i class="fas fa-error" ></i>
-            {{$t('error.message.0',[loadError])}}
-
-          </div>
-      </div>
 
     </section>
 
-      <!-- Bulk edit modals -->
-      <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')">
+    <!-- Bulk edit modals -->
+    <modal  v-model="showBulkEditCleanSelections" id="cleanselections" :title="$t('Clear bulk selection')">
 
-        <i18n tag="p" path="clearselected.confirm.text">
-          <strong>{{bulkSelectedIds.length}}</strong>
-        </i18n>
+      <i18n tag="p" path="clearselected.confirm.text">
+        <strong>{{bulkSelectedIds.length}}</strong>
+      </i18n>
 
-        <div slot="footer">
-          <btn data-dismiss="modal">{{$t('cancel')}}</btn>
-          <button type="submit"
-                  class="btn btn-default  "
-                  data-dismiss="modal"
-                  @click="bulkEditDeselectAll">
-              {{$t('Only shown executions')}}
-          </button>
-          <button class="btn btn-danger "
-                  data-dismiss="modal"
-                  @click="bulkEditDeselectAllPages">
-              {{$t('all')}}
-          </button>
-        </div>
-      </modal>
+      <div slot="footer">
+        <btn data-dismiss="modal">{{$t('cancel')}}</btn>
+        <button type="submit"
+                class="btn btn-default  "
+                data-dismiss="modal"
+                @click="bulkEditDeselectAll">
+            {{$t('Only shown executions')}}
+        </button>
+        <button class="btn btn-danger "
+                data-dismiss="modal"
+                @click="bulkEditDeselectAllPages">
+            {{$t('all')}}
+        </button>
+      </div>
+    </modal>
 
-      <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')">
-        <i18n tag="p" path="delete.confirm.text">
-          <strong>{{bulkSelectedIds.length}}</strong>
-          <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
-        </i18n>
+    <modal v-model="showBulkEditConfirm" id="bulkexecdelete" :title="$t('Bulk Delete Executions')">
+      <i18n tag="p" path="delete.confirm.text">
+        <strong>{{bulkSelectedIds.length}}</strong>
+        <span>{{$tc('execution',bulkSelectedIds.length)}}</span>
+      </i18n>
 
-        <div slot="footer">
-            <btn @click="showBulkEditConfirm=false">
-                {{$t('cancel')}}
-            </btn>
-            <btn type="danger"
-                  @click="performBulkDelete"
-                  data-dismiss="modal">
-                {{$t('Delete Selected')}}
-            </btn>
-        </div>
-      </modal>
+      <div slot="footer">
+          <btn @click="showBulkEditConfirm=false">
+              {{$t('cancel')}}
+          </btn>
+          <btn type="danger"
+                @click="performBulkDelete"
+                data-dismiss="modal">
+              {{$t('Delete Selected')}}
+          </btn>
+      </div>
+    </modal>
 
-      <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
-                  <div  v-if="bulkEditProgress">
-                      <em>
-                          <i class="glyphicon glyphicon-time text-info"></i>
-                          {{$t('Requesting bulk delete, please wait.')}}
-                      </em>
-                  </div>
-                  <div v-if="!bulkEditProgress">
-
-                      <p
-                      v-if="bulkEditResults && bulkEditResults.requestCount > 0"
-                          class="text-info">
-
-                          <i18n path="bulkresult.attempted.text" tag="p" >
-                            <strong >{{bulkEditResults.requestCount}}</strong>
-                          </i18n>
-
-                      </p>
-                      <p
-                      v-if="bulkEditResults && bulkEditResults.successCount > 0"
-                          class="text-success">
-
-
-                          <i18n path="bulkresult.success.text" tag="p" >
-                            <strong >{{bulkEditResults.successCount}}</strong>
-                          </i18n>
-                      </p>
-                      <p
-                       v-if="bulkEditResults && bulkEditResults.failedCount > 0"
-                              class="text-warning">
-
-                          <i18n path="bulkresult.failed.text" tag="p" >
-                            <strong >{{bulkEditResults.failedCount}}</strong>
-                          </i18n>
-                      </p>
-                      <div v-if="bulkEditResults && bulkEditResults.failures && bulkEditResults.failures.length > 0">
-                          <ul v-for="(message,ndx) in bulkEditResults.failures" :key="ndx">
-                              <li>{{message}}</li>
-                          </ul>
-                      </div>
-
-                      <div  v-if="bulkEditError">
-                            <p class="text-danger" >{{bulkEditError}}</p>
-                      </div>
-
-                  </div>
-                <div slot="footer">
-                  <btn @click="showBulkEditResults=false">{{$t('close')}}</btn>
+    <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
+                <div  v-if="bulkEditProgress">
+                    <em>
+                        <i class="glyphicon glyphicon-time text-info"></i>
+                        {{$t('Requesting bulk delete, please wait.')}}
+                    </em>
                 </div>
-      </modal>
+                <div v-if="!bulkEditProgress">
 
-    <table class=" table table-hover table-condensed " v-if="reports.length > 0">
-        <tbody class="no-border-on-first-tr"  v-for="rpt in reports" :key="rpt.execution.id">
-        <tr class="link activity_row autoclick"
-        @click="autoBulkEdit(rpt)"
-          :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}">
+                    <p
+                    v-if="bulkEditResults && bulkEditResults.requestCount > 0"
+                        class="text-info">
+
+                        <i18n path="bulkresult.attempted.text" tag="p" >
+                          <strong >{{bulkEditResults.requestCount}}</strong>
+                        </i18n>
+
+                    </p>
+                    <p
+                    v-if="bulkEditResults && bulkEditResults.successCount > 0"
+                        class="text-success">
+
+
+                        <i18n path="bulkresult.success.text" tag="p" >
+                          <strong >{{bulkEditResults.successCount}}</strong>
+                        </i18n>
+                    </p>
+                    <p
+                      v-if="bulkEditResults && bulkEditResults.failedCount > 0"
+                            class="text-warning">
+
+                        <i18n path="bulkresult.failed.text" tag="p" >
+                          <strong >{{bulkEditResults.failedCount}}</strong>
+                        </i18n>
+                    </p>
+                    <div v-if="bulkEditResults && bulkEditResults.failures && bulkEditResults.failures.length > 0">
+                        <ul v-for="(message,ndx) in bulkEditResults.failures" :key="ndx">
+                            <li>{{message}}</li>
+                        </ul>
+                    </div>
+
+                    <div  v-if="bulkEditError">
+                          <p class="text-danger" >{{bulkEditError}}</p>
+                    </div>
+
+                </div>
+              <div slot="footer">
+                <btn @click="showBulkEditResults=false">{{$t('close')}}</btn>
+              </div>
+    </modal>
+    <div class="card-content-full-width">
+    <table class=" table table-hover table-condensed " >
+      <tbody  v-if="running && running.executions" class="running-executions">
+        <tr
+            v-for="exec in running.executions"
+            :key="exec.id"
+            class="execution link activity_row autoclickable"
+            :class="{nowrunning:!exec.dateCompleted,[exec.status]:true}"
+            @click="autoBulkEdit(exec)"
+            >
+          <!-- #{{exec.id}} -->
+
+            <td class="eventicon" v-if="bulkEditMode">
+                <input
+                type="checkbox"
+                name="bulk_edit"
+                :value="exec.id"
+                v-model="bulkSelectedIds"
+                class="_defaultInput"/>
+            </td>
+                 <td class="eventicon " :title="executionState(exec.status)" >
+                    <i class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
+                    <i class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></i>
+                    <i class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></i>
+                </td>
+
+                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)">
+                      <progress-bar v-if="exec.status == 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" />
+                      <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width/>
+                      <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" />
+                </td>
+
+                <td class="  user text-right " style="white-space: nowrap;">
+                    <em><i18n path="by" default="by"/></em>
+                    {{exec.user}}
+                </td>
+
+                <td class=" eventtitle job" v-if="exec.job" v-tooltip="(exec.job.group ? exec.job.group + '/' +exec.job.name : '')">
+                    {{exec.job.name}}
+                </td>
+
+                <td class="eventargs" v-if="exec.job">
+                  <span v-if="exec.job.options">
+                      <span v-for="(value,key) in exec.job.options" :key="key">
+                          {{key}}:
+                          <code  class="optvalue">{{value}}</code>
+                      </span>
+                  </span>
+                </td>
+
+
+                <td class="eventtitle adhoc " v-if="!exec.job" colspan="2">
+                    {{exec.description}}
+                </td>
+
+                <td class="text-right">
+                    <a title="View execution output" :href=exec.permalink>#{{exec.id}}</a>
+                </td>
+            </tr>
+        </tbody>
+        <tbody class="since-count-data autoclickable"  @click="reload" v-if="sincecount>0">
+          <tr>
+            <td colspan=6 class=text-center>
+                {{ $tc('info.newexecutions.since.0', sincecount) }}
+            </td>
+          </tr>
+        </tbody>
+        <tbody class="history-executions" v-if="reports.length > 0">
+        <tr class="link activity_row autoclickable"
+            @click="autoBulkEdit(rpt)"
+            :class="{succeed:rpt.status==='succeed',fail:rpt.status==='fail',highlight:highlightExecutionId==rpt.executionId,job:rpt.jobId,adhoc:!rpt.jobId}"
+            v-for="rpt in reports"
+            :key="rpt.execution.id"
+          >
             <td class="eventicon" v-if="bulkEditMode">
                 <input
                 type="checkbox"
@@ -201,20 +260,32 @@
                 v-model="bulkSelectedIds"
                 class="_defaultInput"/>
             </td>
-            <td class="eventicon autoclickable" :title="executionState(rpt.execution.status)">
+            <td class="eventicon " :title="executionState(rpt.execution.status)" >
                 <i class="exec-status icon" :data-execstate="executionStateCss(rpt.execution.status)" :data-statusstring="rpt.execution.status"></i>
             </td>
-            <td class="eventtitle autoclickable" :class="{job:rpt.jobId,adhoc:!rpt.jobId}" >
-                <a  :href="rpt.executionHref" class="_defaultAction">
-                #{{rpt.executionId}}
-                </a>
+            <td class="right date " v-tooltip="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
+                <span v-if="rpt.dateCompleted">
+                    <span class="timeabs">
+                        {{rpt.dateCompleted | moment('from','now')}}
+                    </span>
+                    <span title="">
+                        <span class="text-primary"><i18n path="in.of" default="in"/></span>
+                        <span class="duration" data-bind="text: durationHumanize()">{{rpt.duration | duration('humanize')}}</span>
+                    </span>
+                </span>
+            </td>
+
+            <td class="  user text-right " style="white-space: nowrap;">
+                <em><i18n path="by" default="by"/></em>
+                {{rpt.user}}
+            </td>
+            <td class="eventtitle " :class="{job:rpt.jobId,adhoc:!rpt.jobId}" >
                 <!-- <g:if test="${includeJobRef}">
                     <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
                 </g:if> -->
 
 
-                      <span v-if="!rpt.jobDeleted && rpt.jobId">
-                        {{rpt.groupPath}}
+                      <span v-if="!rpt.jobDeleted && rpt.jobId" v-tooltip="(rpt.jobGroup ? rpt.jobGroup + '/' +rpt.jobName: '')">
                         {{rpt.jobName}}
                       </span>
                       <span v-else>
@@ -231,7 +302,7 @@
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
                 </span>
             </td>
-            <td class="eventargs autoclickable" >
+            <td class="eventargs " >
                 <div class="argstring-scrollable">
                 <span v-if="rpt.execution.jobArguments">
                     <span v-for="(value,key) in rpt.execution.jobArguments" :key="key">
@@ -244,56 +315,32 @@
 
                 </div>
             </td>
-            <td class="right date autoclickable">
-                <span v-if="rpt.dateCompleted">
-                    <span class="timeabs">
-                        {{rpt.dateCompleted | moment(momentJobFormat)}}
-                    </span>
-                    <span title="">
-                        <span class="text-primary"><i18n path="in.of" default="in"/></span>
-                        <span class="duration" data-bind="text: durationHumanize()">{{rpt.duration | duration('humanize')}}</span>
-                    </span>
-                </span>
-                <span v-if="!rpt.dateCompleted && rpt.status == 'scheduled'">
-                    Scheduled; starting <span data-bind="text: timeToStart()"></span>
-                </span>
-                <span v-if="!rpt.dateCompleted && rpt.jobPercentageFixed >= 0 && rpt.status != 'scheduled'">
-                    <div v-if="!rpt.job || rpt.jobAverageDuration==0">
-                    <!-- <g:render template="/common/progressBar" model="${[
-                            indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
-                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
-                            progressBarClass: 'progress-bar-info',
-                    ]}"/> -->
-                    striped-progress
-                    </div>
-                    <div v-if="rpt.job && rpt.jobAverageDuration>0">
-                      progress-bar
-                        <!-- <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/> -->
-                        <!-- <g:render template="/common/progressBar"
-        model="[completePercent: 0,
-                                          progressClass: 'rd-progress-exec progress-embed',
-                                          progressBarClass: '',
-                                          containerId: 'progressContainer2',
-                                          innerContent: '',
-                                          showpercent: true,
-                                          progressId: 'progressBar',
-                                          bind: 'jobPercentageFixed()',
-                                          progressBind: progressBind,
-                                  ]"/> -->
-                                  <!-- <progress-bar v-model="jobPercentageFixed"></progress-bar> -->
-                    </div>
-                </span>
+
+            <td class="text-right">
+                <a  :href="rpt.executionHref">
+                #{{rpt.executionId}}
+                </a>
             </td>
-
-            <td class="  user text-right autoclickable" style="white-space: nowrap;">
-                <em><i18n path="by" default="by"/></em>
-                {{rpt.user}}
-            </td>
-
-
         </tr>
         </tbody>
     </table>
+    </div>
+
+    <div v-if="reports.length < 1 " class="loading-area">
+        <span class="text-secondary" v-if="!loading && !loadError">
+          {{$t('results.empty.text')}}
+        </span>
+        <div class="loading-text" v-if="loading && lastDate<0">
+          <i class="fas fa-spinner fa-pulse" ></i>
+          {{$t('Loading...')}}
+        </div>
+        <div class="text-warning" v-if="loadError">
+          <i class="fas fa-error" ></i>
+          {{$t('error.message.0',[loadError])}}
+
+        </div>
+    </div>
+
     <offset-pagination
           :pagination="pagination"
           @change="changePageOffset($event)"
@@ -311,6 +358,7 @@
 <script lang="ts">
 import axios from 'axios'
 import Vue from 'vue'
+import moment from 'moment'
 import OffsetPagination from '@rundeck/ui-trellis/src/components/utils/OffsetPagination.vue'
 import ActivityFilter from './activityFilter.vue'
 
@@ -318,7 +366,8 @@ import {
   getRundeckContext,
   RundeckContext
 } from "@rundeck/ui-trellis"
-import { ExecutionBulkDeleteResponse } from 'ts-rundeck/dist/lib/models';
+import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from 'ts-rundeck/dist/lib/models';
+import { setTimeout, clearTimeout } from 'timers';
 
 /**
  * Generate a URL
@@ -354,18 +403,25 @@ export default Vue.extend({
     'eventBus',
     'displayMode'
   ],
-  data () {
+  data() {
     return {
       projectName:'',
       activityPageHref:'',
+      sinceUpdatedUrl:'',
       reports:[],
+      running: null as null|ExecutionListRunningResponse,
       lastDate:-1,
       pagination:{
         offset:0,
         max:10,
         total:-1
       },
+      autorefresh:false,
+      autorefreshms:5000,
+      autorefreshtimeout:null as null | any,
+      sincecount:0,
       loading: false,
+      loadingRunning: false,
       loadError:null,
       momentJobFormat:'M/DD/YY h:mm a',
       momentRunFormat:'h:mm a',
@@ -379,6 +435,7 @@ export default Vue.extend({
       showBulkEditCleanSelections:false,
       highlightExecutionId:null,
       activityUrl:'',
+      nowrunningUrl:'',
       bulkDeleteUrl:'',
       auth:{
         projectAdmin:false,
@@ -400,10 +457,50 @@ export default Vue.extend({
         {name:'Day',params:{recentFilter:'1d'}},
         {name:'Week',params:{recentFilter:'1w'}},
         {name:'Month',params:{recentFilter:'1m'}},
-       ] as {[name:string]:any}[]
+       ] as {[name:string]:any}[],
+       indefinite:80,
     }
   },
   methods: {
+    jobDurationPercentage(exec:Execution){
+      if(exec.job && exec.job.averageDuration && exec.dateStarted && exec.dateStarted.date){
+        const diff=moment().diff(moment(exec.dateStarted.date))
+        return Math.floor(100 * ( diff / exec.job.averageDuration ))
+      }
+      return 0
+    },
+    runningStartedDisplay(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).fromNow()
+    },
+    executionScheduledDisplay(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).toNow()
+    },
+    jobCompletedFormat(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).format(this.momentJobFormat)
+    },
+    runningStatusTooltip(exec:Execution){
+      if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
+        return (this as any).$t('job.execution.starting.0',[this.runningStartedDisplay(exec.dateStarted.date)])
+      }else if(exec.dateStarted && exec.dateStarted.date){
+        const startmo=moment(exec.dateStarted.date)
+        if(exec.job && exec.job.averageDuration){
+          const expected = startmo.clone()
+          expected.add(exec.job.averageDuration,'ms')
+          return (this as any).$t('info.started.expected.0.1',[startmo.fromNow(), expected.fromNow()])    
+        }
+        return (this as any).$t('info.started.0',[startmo.fromNow()])
+      }
+      return ''
+    },
     toggleSelectId(id:string){
       const ndx=this.bulkSelectedIds.indexOf( id )
       if(ndx>=0){
@@ -430,9 +527,15 @@ export default Vue.extend({
       if(!this.bulkEditMode){
         if(rpt.executionHref){
           window.location=rpt.executionHref
+        }else if(rpt.permalink){
+          window.location=rpt.permalink
         }
       }
-      this.toggleSelectId(rpt.executionId)
+      if(rpt.executionId){
+        this.toggleSelectId(rpt.executionId)
+      }else if(rpt.id){
+        this.toggleSelectId(rpt.id)
+      }
     },
     bulkEditSelectAll(){
       this.reports.forEach((val:any)=>this.selectId(val.executionId))
@@ -477,6 +580,7 @@ export default Vue.extend({
       this.reports=[]
       this.pagination.total=-1
       this.lastDate=-1
+      this.sincecount=0
       this.loadActivity(0)
     },
     changePeriod(period: any){
@@ -496,7 +600,7 @@ export default Vue.extend({
           this.bulkEditMode = false
         }
         this.loadActivity(this.pagination.offset)
-        console.log("response: ",this.bulkEditResults)
+        
       }catch(error){
         this.bulkEditProgress=false
         this.bulkEditError=error
@@ -505,6 +609,37 @@ export default Vue.extend({
     performBulkDelete(){
       this.showBulkEditConfirm=false
       this.bulkDeleteExecutions(this.bulkSelectedIds)
+    },
+    async loadSince(){
+      const rundeckContext = getRundeckContext()
+      if(this.lastDate<0){
+        return
+      }
+      try{
+        const response = await axios.get(this.sinceUpdatedUrl,{
+          headers: {'x-rundeck-ajax': true},
+          params: Object.assign({offset: this.pagination.offset, max: this.pagination.max},this.query,{since:this.lastDate}),
+          withCredentials: true
+        })
+        
+        if(this.lastDate>0  && response.data.since && response.data.since.count ){
+            this.sincecount=response.data.since.count
+        }
+      }catch(error){
+        this.loadError = error.message
+      }
+    },
+    async loadRunning(){
+      const rundeckContext = getRundeckContext()
+      this.loadingRunning=true
+      try{
+        this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
+        this.loadingRunning=false
+        this.checkrefresh()
+      }catch(error){
+        this.loadingRunning=false
+        this.loadError = error.message
+      }
     },
     async loadActivity(offset:number){
       this.loading = true
@@ -534,15 +669,43 @@ export default Vue.extend({
       }
       this.loadActivity(offset)
     },
-
+    checkrefresh(){
+      if(!this.loadingRunning && this.autorefresh){
+        this.autorefreshtimeout = setTimeout(()=>{
+          // this.reload();
+          // this.loadActivity(this.pagination.offset)
+          this.loadRunning()
+          this.loadSince()
+        }, this.loadError?(this.autorefreshms*10):this.autorefreshms);
+      }
+    },
+    startAutorefresh(){
+      this.checkrefresh()
+    },
+    stopAutorefresh(){
+      if(this.autorefreshtimeout){
+        clearTimeout(this.autorefreshtimeout)
+        this.autorefreshtimeout=null
+      }
+    }
   },
   watch:{
     query:{
       handler(newValue,oldValue){
-        console.log("changed query",newValue)
         this.reload()
       },
       deep:true
+    },
+    autorefresh:{
+      handler(newValue,oldValue){
+        if(newValue){
+          //turn on
+          this.startAutorefresh()
+        }else{
+          //turn off
+          this.stopAutorefresh()
+        }
+      }
     }
   },
   computed:{
@@ -563,12 +726,16 @@ export default Vue.extend({
       this.auth.projectAdmin=window._rundeck.data['projectAdminAuth']
       this.auth.deleteExec=window._rundeck.data['deleteExecAuth']
       this.activityUrl = window._rundeck.data['activityUrl']
+      this.nowrunningUrl = window._rundeck.data['nowrunningUrl']
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
-      this.activityPageHref=window._rundeck.data['activityPageHref']
+      this.activityPageHref = window._rundeck.data['activityPageHref']
+      this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
+      this.autorefreshms = window._rundeck.data['autorefreshms']
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
       this.loadActivity(0)
+      this.loadRunning()
     }
   }
 })
@@ -586,5 +753,30 @@ export default Vue.extend({
 }
 td.eventtitle.adhoc {
     font-style: italic;
+}
+.table > tbody > tr > td.eventicon{
+  padding:0 0 0 10px;
+}
+$since-bg: #ccf;
+.table tbody.since-count-data{
+  background: $since-bg;
+  color: white;
+  > tr > td{
+    padding: 2px;
+  }
+  > tr:hover{
+    background: darken($color: $since-bg, $amount: 20%)
+  }
+}
+.running-executions + .history-executions,
+.running-executions + .since-count-data,
+.since-count-data + .history-executions {
+  > tr:first-child > td{
+    border-top: 2px solid $since-bg;
+  }
+}
+.progress{
+  height: 20px;
+  margin:0;
 }
 </style>
