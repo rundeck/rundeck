@@ -84,6 +84,7 @@ var FollowControl = Class.create({
     onLoadComplete: null,
     onLoadingFile: null,
     onFileloadMessage: null,
+    onFileloadError: null,
     onFileloadPercentage: null,
 
     initialize: function(eid,elem,params){
@@ -358,6 +359,9 @@ var FollowControl = Class.create({
         if ($(this.cmdOutputErrorId)) {
             appendText($(this.cmdOutputErrorId),message);
             $(this.cmdOutputErrorId).show();
+        }
+        if (typeof (this.onFileloadError) === 'function') {
+            this.onFileloadError(message)
         }
     },
     _log: function(message) {
@@ -685,7 +689,6 @@ var FollowControl = Class.create({
                 //hide table header
                 $(this.cmdoutputtbl).hide();
             }
-            $(this.viewoptionsCompleteId).hide();
             return;
         }
         this.clusterExec = data.clusterExec && data.serverNodeUUID || null;
@@ -1375,14 +1378,6 @@ var FollowControl = Class.create({
         this.cmdoutputtbl = null;
         this.cmdoutspinner = null;
         this.runningcmd = null;
-
-        var d2 = new Element("div");
-        $(d2).addClassName("commandFlowError");
-        $(d2).setAttribute("style", "display: none;");
-        $(d2).setAttribute("id", "cmdoutputerror");
-        $(d2).hide();
-
-        $(this.parentElement).appendChild(d2);
     },
     beginExecution: function() {
         this.clearCmdOutput();

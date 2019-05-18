@@ -71,11 +71,8 @@
         #log{
             margin-bottom:20px;
         }
-        .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
-            background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
-            padding-right: 16px;
-            background-repeat: no-repeat;
-            background-position: right 2px;
+        .padded{
+            padding: 10px;
         }
         .errmsg {
             color: gray;
@@ -726,6 +723,10 @@
 
                           </g:if>
                     </div>
+
+                      <div data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'" class="execution_ko alert alert-warning" style="display:none">
+                          <span data-bind="text: logoutput().fileLoadError" ></span>
+                      </div>
                   </div>
           <g:if test="${scheduledExecution}">
 

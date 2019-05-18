@@ -215,13 +215,18 @@
             }
         }
 
-
-        function filterToggleSave(evt) {
-            ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
-            ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
+        function initJobActionMenus(){
+            jQuery('.act_job_action_dropdown').click(function(){
+                var id=jQuery(this).data('jobId');
+                var el=jQuery(this).parent().find('.dropdown-menu');
+                el.load(
+                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
+                );
+            });
         }
-        function init(){
 
+        function init(){
+            initJobActionMenus();
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
                 bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
@@ -245,10 +250,6 @@
             });
 
 
-
-            $$('.obs_filtersave').each(function(e) {
-                Event.observe(e, 'click', filterToggleSave);
-            });
         }
 
         var bulkeditor;
@@ -354,27 +355,6 @@
 
      <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
 
-%{--    <g:if test="${ wasfiltered && paginateParams.groupPath && !filterName   }">--}%
-
-%{--            <g:if test="${paginateParams.groupPath.indexOf('/')>0}">--}%
-%{--                <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>--}%
-%{--                <g:set var="newparams" value="${new HashMap(paginateParams)}"/>--}%
-%{--                %{--}%
-%{--                    newparams['groupPath']=uplevel--}%
-%{--                }%--}%
-%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="Parent" params="${newparams+[project:params.project]}">--}%
-%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
-
-%{--                </g:link>--}%
-%{--            </g:if>--}%
-%{--            <g:else>--}%
-%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="View All Jobs" params="[project: params.project]">--}%
-%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
-%{--                    All--}%
-%{--                </g:link>--}%
-%{--            </g:else>--}%
-
-%{--    </g:if>--}%
 
       <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
         <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
