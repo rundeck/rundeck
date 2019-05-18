@@ -215,9 +215,18 @@
             }
         }
 
+        function initJobActionMenus(){
+            jQuery('.act_job_action_dropdown').click(function(){
+                var id=jQuery(this).data('jobId');
+                var el=jQuery(this).parent().find('.dropdown-menu');
+                el.load(
+                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
+                );
+            });
+        }
 
         function init(){
-
+            initJobActionMenus();
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
                 bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
