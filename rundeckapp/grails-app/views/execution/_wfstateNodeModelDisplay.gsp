@@ -21,7 +21,7 @@
             <div class="col-sm-12">
 
                 <div data-bind="if: errorMessage()">
-                    <div class="well well-lg" data-bind="visible: errorMessage()" style="display: none">
+                    <div class="" data-bind="visible: errorMessage()" style="display: none">
                         <div class="text-warning" data-bind="text: errorMessage()">
                         </div>
 
@@ -34,14 +34,14 @@
                 </div>
 
                 <div data-bind="if: !errorMessage() && !statusMessage()">
-                    <div class="well well-lg text-primary">
+                    <div class=" text-primary">
                         Loading…
                     </div>
                 </div>
 
 
                 <div data-bind="if: statusMessage()">
-                    <div class="well well-lg text-primary" data-bind="text: statusMessage()">
+                    <div class=" text-primary" data-bind="text: statusMessage()">
                     </div>
                 </div>
 
@@ -175,21 +175,21 @@
                   </div>
                   <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
                       <div class="col-sm-12">
-                          <div class="well well-sm well-nobg inline">
-                          <p class="text-primary">
-                              <i class="fas fa-spinner fa-pulse"></i>
-                              <em><g:message code="loading" /></em>
-                          </p>
+                          <div class="padded">
+                              <span class="text-secondary">
+                                  <i class="fas fa-spinner fa-pulse"></i>
+                                  <em><g:message code="loading" /></em>
+                              </span>
                           </div>
                       </div>
                   </div>
                   <div data-bind="visible: followingOutput() && outputLineCount() == 0 " class="row row-space ">
                       <div class="col-sm-12">
-                          <div class="well well-sm well-nobg inline">
-                          <p class="text-primary">
-                              <i class="glyphicon glyphicon-info-sign"></i>
-                              <em><g:message code="no.output" /></em>
-                          </p>
+                          <div class="padded">
+                              <span class="text-secondary">
+                                  <i class="glyphicon glyphicon-info-sign"></i>
+                                  <em><g:message code="no.output" /></em>
+                              </span>
                           </div>
                       </div>
                   </div>

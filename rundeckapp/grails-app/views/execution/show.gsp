@@ -71,7 +71,8 @@
         #log{
             margin-bottom:20px;
         }
-        .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
+        .padded{
+            padding: 10px;
         }
         .errmsg {
             color: gray;
