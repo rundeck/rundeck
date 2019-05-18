@@ -193,11 +193,6 @@ export default {
       services: []
     };
   }
-  // watch: {
-  //   selectedService: (newVal, oldVal) => {
-  //     console.log("selectedService", newVal, oldVal);
-  //   }
-  // }
 };
 </script>
 

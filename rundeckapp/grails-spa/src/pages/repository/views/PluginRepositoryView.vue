@@ -67,15 +67,11 @@
 </template>
 
 <script>
+import _ from "lodash";
+import axios from "axios";
 import fuse from "fuse.js";
 import RepositoryRow from "../components/Repository";
 import { mapState, mapActions } from "vuex";
-
-// import Trellis, {
-//   getRundeckContext,
-//   getSynchronizerToken,
-//   RundeckBrowser
-// } from "@rundeck/ui-trellis";
 
 const FuseSearchOptions = {
   shouldSort: true,
@@ -119,29 +115,6 @@ export default {
     },
     search() {
       this.clearSearch();
-      // console.log(
-      //   `Searching for ....${this.searchString}`,
-      //   this.repositories[0].results
-      // );
-
-      // Trellis.FilterPrefs.getAvailableFilterPrefs().then(response => {
-      //   console.log("response", response);
-      //   if (
-      //     response.data &&
-      //     !response.data.permissionTrackPluginRepositorySearch
-      //   ) {
-      //     alert("hello");
-      //   }
-      // });
-
-      // Trellis.FilterPrefs.setFilterPref(
-      //   "permissionTrackPluginRepositorySearch",
-      //   this.currentReleaseVersion.stringVersion
-      // ).then(() => {
-      //   this.showNotificationModal = false;
-      //   this.showVersionNotification = false;
-      // });
-
       this.showWhichPlugins = null;
       if (this.searchString === "") {
         this.searchResults = [];
@@ -151,6 +124,35 @@ export default {
         let theRepo = this.repositories[index].results;
         this.$search(this.searchString, theRepo, FuseSearchOptions).then(
           results => {
+            if (
+              !window.repositoryLocalSearchOnly &&
+              this.repositories[index].repositoryName === "official"
+            ) {
+              let versionNumber = null;
+              let mappedResults = _.map(results, "id");
+              let rundeckVersionNumberContainer = document.getElementsByClassName(
+                "rundeck-version-identity"
+              );
+              if (
+                rundeckVersionNumberContainer[0] &&
+                rundeckVersionNumberContainer[0].dataset &&
+                rundeckVersionNumberContainer[0].dataset.versionString
+              ) {
+                versionNumber =
+                  rundeckVersionNumberContainer[0].dataset.versionString;
+              }
+              let payload = {
+                searchString: this.searchString,
+                results: mappedResults,
+                rundeckVer: versionNumber
+              };
+              axios({
+                method: "post",
+                url: `https://api.rundeck.com/repo/v1/oss/search/save`,
+                data: payload
+              });
+            }
+
             this.searchResults.push({
               repositoryName: this.repositories[index].repositoryName,
               results: results
@@ -166,7 +168,6 @@ export default {
         // don't do anything. everything is good!
       },
       error => {
-        console.log("error", error);
         this.$alert({
           title: "Error Accessing Plugins",
           content:

@@ -107,11 +107,11 @@
           <g:message code="gui.menu.UploadPlugin"/>
         </a>
       </li>
-      <li>
+      <%-- <li>
         <a href="${g.createLink(uri:'/menu/plugins')}">
           Old Installed Plugins
         </a>
-      </li>
+      </li> --%>
     </ul>
   </li>
 </g:if>
