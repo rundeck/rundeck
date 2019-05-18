@@ -46,7 +46,7 @@ export default {
     hashMessage (messageToHash) {
       let hash = 0
       let chr
-      if (messageToHash.length === 0) return hash
+      if (!messageToHash || messageToHash.length === 0) return hash
       for (let i = 0; i < messageToHash.length; i++) {
         chr = messageToHash.charCodeAt(i)
         hash = ((hash << 5) - hash) + chr
@@ -72,6 +72,9 @@ export default {
      * @returns {boolean}
      */
     noTitle () {
+      if(!this.message){
+        return true
+      }
       return this.message.indexOf("<article class=\"markdown-body\"><h") < 0
     },
     /**
@@ -79,6 +82,9 @@ export default {
      * @returns {boolean}
      */
     motdTitle () {
+      if(!this.message){
+        return null
+      }
       const index= this.message.indexOf("<article class=\"markdown-body\"><h")
       if(index>=0 ){
         const match=this.message.match(/<article class="markdown-body"><h(\d)>([^<]+)<\/h\1>/)
@@ -94,6 +100,9 @@ export default {
      * @returns {string}
      */
     motdStyle () {
+      if(!this.project.readme.motd){
+        return ''
+      }
       let style = ['danger', 'warning', 'primary', 'info', 'success']
               .find((val) => this.project.readme.motd.indexOf('<!-- style:' + val) >= 0)
       if (style) {
