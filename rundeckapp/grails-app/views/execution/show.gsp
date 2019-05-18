@@ -72,10 +72,6 @@
             margin-bottom:20px;
         }
         .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
-            background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
-            padding-right: 16px;
-            background-repeat: no-repeat;
-            background-position: right 2px;
         }
         .errmsg {
             color: gray;

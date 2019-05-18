@@ -83,6 +83,7 @@
           <div class="col-sm-3 " data-bind-action="stepoutput" data-bind-attr="data-node:nodename,data-stepctx:stepctx">
                   <span class="execstate " data-bind="attr: {'data-execstate': summaryState } ">
                       <span data-bind="text: summary"></span>
+                      <i class="fas fa-circle-notch fa-spin text-muted" data-bind="visible: summaryState()==='RUNNING'" style="display:none"></i>
                   </span>
           </div>
 
