@@ -726,6 +726,10 @@
 
                           </g:if>
                     </div>
+
+                      <div data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'" class="execution_ko alert alert-warning" style="display:none">
+                          <span data-bind="text: logoutput().fileLoadError" ></span>
+                      </div>
                   </div>
           <g:if test="${scheduledExecution}">
 

@@ -47,6 +47,7 @@ function LogOutput (data) {
     self.loadingFile = ko.observable(false)
     self.paused = ko.observable(false)
     self.fileLoadMessage = ko.observable()
+    self.fileLoadError = ko.observable()
     self.fileLoadPercentage = ko.observable(0)
     self.fileLoadText = ko.pureComputed(function () {
         const msg = self.fileLoadMessage()
@@ -97,5 +98,6 @@ function LogOutput (data) {
         self.execFollowingControl.onLoadingFile = self.loadingFile
         self.execFollowingControl.onFileloadMessage = self.fileLoadMessage
         self.execFollowingControl.onFileloadPercentage = self.fileLoadPercentage
+        self.execFollowingControl.onFileloadError= self.fileLoadError
     }
 }
