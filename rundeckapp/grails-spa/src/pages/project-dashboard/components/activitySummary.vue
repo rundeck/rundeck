@@ -4,13 +4,16 @@
       <div class="card">
         <div class="card-content">
           <a class="h4" :href="`${rdBase}project/${project.name}/activity`">
-            <span class="summary-count" :class="{ 'text-primary': project.execCount < 1, 'text-info': project.execCount > 0 }">
-              {{project.execCount}}
+            <span class="summary-count" :class="{ 'text-primary': count < 1, 'text-info': count > 0 }">
+              {{count}}
             </span>
-            <span>{{project.execCount | pluralize('Execution')}} In the last day</span>
+            {{$tc('execution',count)}}
           </a>
+
+          {{$t('In the last Day')}}
+
           <span :if="project.failedCount > 0">
-            <a class="text-warning" :href="`${rdBase}project/${project.name}/activity?statFilter=fail`">
+            <a :class="{'text-warning':project.failedCount>0,'text-muted':project.failedCount<1}" :href="`${rdBase}project/${project.name}/activity?statFilter=fail`">
               ({{project.failedCount}} Failed)
             </a>
           </span>
@@ -29,6 +32,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'Activity',
   props: [
@@ -36,7 +40,13 @@ export default {
     'rdBase'
   ],
   data () {
-    return {}
+    return {
+      count:0
+    }
+  },
+ 
+  mounted(){
+    this.count=this.project.execCount
   }
 }
 </script>
