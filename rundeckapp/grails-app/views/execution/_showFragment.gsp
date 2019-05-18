@@ -114,7 +114,7 @@
              aria-valuemax="100"
              style="width: 10%;"
           data-bind="style: {width: logoutput().fileLoadPercentWidth}, attr: {'aria-valuenow': logoutput().fileLoadPercentage }">
-          <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner" data-bind="visible: logoutput().running()"/>
+            <i class="fas fa-spinner fa-pulse" data-bind="visible: logoutput().running()"></i>
             <span data-bind="text: logoutput().fileLoadText"></span>
 
         </div>
@@ -141,7 +141,7 @@
              aria-valuemin="0"
              aria-valuemax="100"
              style="width: 10%;">
-          <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
+            <i class="fas fa-spinner fa-pulse"></i>
             Loading
         </div>
       </div>

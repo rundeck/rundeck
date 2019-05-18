@@ -1237,8 +1237,8 @@ var _setLoading = function (element, text) {
   } else {
     var sp = new Element('span');
     sp.addClassName('loading');
-    var img = new Element('img');
-    img.src = appLinks.iconSpinner;
+    var img = new Element('i');
+    img.addClassName('fas fa-spinner fa-pulse')
     $(sp).appendChild(img);
     appendText(sp, ' ' + text);
     clearHtml(element);

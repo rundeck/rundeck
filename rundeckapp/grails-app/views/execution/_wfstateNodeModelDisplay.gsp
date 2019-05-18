@@ -175,8 +175,7 @@
                       <div class="col-sm-12">
                           <div class="well well-sm well-nobg inline">
                           <p class="text-primary">
-                              <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
-                                   alt="Spinner"/>
+                              <i class="fas fa-spinner fa-pulse"></i>
                               <em><g:message code="loading" /></em>
                           </p>
                           </div>
