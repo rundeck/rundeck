@@ -103,7 +103,7 @@
   </div>
 </div>
 
-  <div data-bind="visible: logoutput().fileLoadError" class="alert alert-warning">
+  <div data-bind="visible: logoutput().fileLoadError" class="executionshow alert alert-warning" style="display: none">
     <span data-bind="text: logoutput().fileLoadError" ></span>
   </div>
 
