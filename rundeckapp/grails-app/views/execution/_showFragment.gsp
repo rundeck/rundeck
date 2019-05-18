@@ -134,7 +134,7 @@
   </div>
   <div data-bind="if: logoutput().running() && !logoutput().loadingFile()">
     <div class="card-content-full-width">
-      <div class=" progress progress-embed progress-square progress-striped active" >
+      <div class=" progress progress-embed progress-square progress-striped active" style="height: 20px">
         <div class="progress-bar progress-bar-default "
              role="progressbar"
              aria-valuenow="0"
