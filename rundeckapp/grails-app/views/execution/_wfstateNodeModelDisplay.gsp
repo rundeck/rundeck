@@ -74,7 +74,7 @@
           <div class="col-sm-3  nodectx"
                data-bind="attr: { title: name }, css: { 'auto-caret-container': expanded() } ">
               <div class="execstate nodename action isnode" data-bind="attr: { 'data-execstate': summaryState }, css: { active: expanded() }">
-                  <i class="auto-caret"></i>
+                  <i class="auto-caret text-muted"></i>
                   <i class="fas fa-hdd"></i>
                   <span data-bind="text: name"></span>
               </div>
@@ -127,7 +127,7 @@
                                 attr: { 'data-execstate': executionState },
                                 css: { 'auto-caret-container': followingOutput(), active: followingOutput() }
                                 ">
-                              <i class="auto-caret"></i>
+                              <i class="auto-caret text-muted"></i>
 
                               <feature:disabled name="workflowDynamicStepSummaryGUI">
                                   <i class="rdicon icon-small" data-bind="css: stepinfo().type"></i>
