@@ -114,7 +114,9 @@ function startRunFollow(data) {
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);
-                ko.applyBindings(nodeflowvm,jQuery('#runcontent .executionshow')[0]);
+                jQuery('#runcontent .executionshow').each(function(index,el){
+                    ko.applyBindings(nodeflowvm,el);
+                })
             } else {
                 requestFailure(jqxhr);
             }
