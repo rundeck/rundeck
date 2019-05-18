@@ -169,7 +169,7 @@
 
                   <div data-bind="if: followingOutput">
                   <div class="row " data-bind="visible: followingOutput">
-                      <div class="col-sm-12 wfnodeoutput" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
+                      <div class="col-sm-12 wfnodeoutput exec-output -view-opt--node-inset-disabled" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
 
                       </div>
                   </div>
