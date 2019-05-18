@@ -117,7 +117,7 @@
              aria-valuenow="10"
              aria-valuemin="0"
              aria-valuemax="100"
-             style="width: 10%;"
+             style="width: 30%;"
           data-bind="style: {width: logoutput().fileLoadPercentWidth}, attr: {'aria-valuenow': logoutput().fileLoadPercentage }">
             <i class="fas fa-spinner fa-pulse" data-bind="visible: logoutput().running()"></i>
             <span data-bind="text: logoutput().fileLoadText"></span>
@@ -145,7 +145,7 @@
              aria-valuenow="0"
              aria-valuemin="0"
              aria-valuemax="100"
-             style="width: 10%;">
+             style="width: 100%;">
             <i class="fas fa-spinner fa-pulse"></i>
             Loading
         </div>
