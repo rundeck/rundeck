@@ -70,7 +70,6 @@
     <g:render template="/common/css"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/manifest.js"/>
     <asset:javascript src="static/vendor.js"/>
     <!-- /VUE JS REQUIREMENTS -->
 
