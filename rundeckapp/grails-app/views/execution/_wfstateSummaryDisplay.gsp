@@ -26,7 +26,7 @@
 
                 <div>
                     <a class="btn btn-default btn-sm" href="#output"
-                       data-bind="click: showTab.curry('tab_link_output') "><g:message
+                       data-bind="click: activeTab('output')"><g:message
                             code="button.action.view.log.output"/></a>
                 </div>
             </div>
