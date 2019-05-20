@@ -64,7 +64,6 @@
     <g:render template="/common/css"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/manifest.js"/>
     <asset:javascript src="static/vendor.js"/>
     <!-- /VUE JS REQUIREMENTS -->
 
@@ -229,17 +228,11 @@
             </nav>
         </g:ifPageProperty>
       <div class="content">
-          <g:set var="includePageMotd" value="${true}" scope="page"/>
 
-          <g:ifPageProperty name="meta.skipMotd">
-              <g:set var="includePageMotd" value="${false}" scope="page"/>
-          </g:ifPageProperty>
+        <div class="vue-project-motd">
+          <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}"></motd>
+        </div>
 
-          <g:if test="${includePageMotd}">
-              <div class="container-fluid">
-                  <div id=project-motd-vue></div>
-              </div>
-          </g:if>
         <div id="layoutBody">
             <g:layoutBody/>
         </div>

@@ -53,7 +53,7 @@ class UrlMappings {
             "/api/$api_version/listInstalledArtifacts"(controller: "repository", action: "listInstalledArtifacts")
 
             //Use plugin terminology and implicitly support 1 repo
-            "/api/$api_version/plugins/types"(controller: "repository", action: "listPluginTypes")
+
             "/api/$api_version/plugins/list"(controller: "repository", action: "listArtifacts")
             "/api/$api_version/plugins/search"(controller: "repository", action: "searchArtifacts")
             post "/api/$api_version/plugins/upload"(controller: "repository", action: "uploadArtifact")
@@ -85,7 +85,6 @@ class UrlMappings {
             )
 
             // API endpoints used by UI
-            "/repository/plugins/types"(controller: "repository", action: "listPluginTypes")
             "/repository/artifacts/list"(controller: "repository", action: "listArtifacts")
             "/repository/artifacts/search"(controller: "repository", action: "searchArtifacts")
             post "/repository/install/$artifactId/$artifactVersion?"(
@@ -102,7 +101,10 @@ class UrlMappings {
             )
         }
 
+        "/repository/plugins/types"(controller: "repository", action: "listPluginTypes")
+        "/api/$api_version/plugins/types"(controller: "repository", action: "listPluginTypes")
         "/artifact/index/configurations"(controller: "repository", action: "index")
+        "/artifact/index/upload"(controller: "repository", action: "index")
         "/"(view:"/index")
         "500"(view:'/error')
         "404"(view:'/notFound')

@@ -48,7 +48,7 @@ const actions = {
     commit,
     dispatch
   }) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       dispatch('overlay/openOverlay', {
         loadingSpinner: true,
         loadingMessage: 'loading plugins'
@@ -77,6 +77,9 @@ const actions = {
             })
             resolve();
           }, 500)
+        }, (error) => {
+          console.log('err', error)
+          reject(error)
         });
       }
     });
