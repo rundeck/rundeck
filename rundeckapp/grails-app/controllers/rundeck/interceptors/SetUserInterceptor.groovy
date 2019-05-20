@@ -103,7 +103,7 @@ class SetUserInterceptor {
         def requiredRole = grailsApplication.config.rundeck.security.requiredRole
         if(!requiredRole.isEmpty()) {
             if(!request?.subject?.principals?.findAll { it instanceof Group }?.any { it.name == requiredRole }) {
-                log.error("User must have role: ${requiredRole} to log in.")
+                log.error("User ${request.remoteUser} must have role: ${requiredRole} to log in.")
                 SecurityContextHolder.clearContext()
                 request.logout()
                 response.status = 403
