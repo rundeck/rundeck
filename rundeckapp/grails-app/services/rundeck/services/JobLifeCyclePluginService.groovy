@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobStatus
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -15,6 +16,7 @@ import com.dtolabs.rundeck.server.plugins.services.JobLifeCyclePluginProviderSer
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import rundeck.services.jobs.JobLifeCycleStatus
 
 /**
  * Provides capability to execute certain task based on job life cycle
@@ -98,10 +100,10 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
-    //TODO: exception handling and result needs some more definition
-    boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+    JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
                                  LoggingManager workflowLogManager){
 
+        JobStatus result = new JobLifeCycleStatus()
         String projectName = executionContext.getFrameworkProject()
         IRundeckProject rundeckProject = executionContext.getFramework().getProjectManager().getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
@@ -110,10 +112,14 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                     rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
-                    boolean result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
-                    if(!result){
+                    result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
+                    if(!result.isSuccessful()){
                         log.info("Result from plugin is false an exception will be thrown")
-                        throw new JobLifeCycleException ("Result from plugin is false")
+                        if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
+                            throw new JobLifeCycleException (result.getDescription())
+                        }else{
+                            throw new JobLifeCycleException ('Response from ' + name + ' is false, but no description was provided by the plugin')
+                        }
                     }
                 }catch(JobLifeCycleException e){
                     throw e
@@ -123,7 +129,7 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                 }
             }
         }
-        return true;
+        result
     }
 
 }
