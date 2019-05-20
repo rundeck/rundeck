@@ -1,5 +1,5 @@
 <template>
-  <div class="row row-space">
+  <div class="row row-space" v-if="project.readme.readmeHTML">
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header">

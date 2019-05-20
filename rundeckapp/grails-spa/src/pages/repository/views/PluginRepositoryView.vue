@@ -67,6 +67,8 @@
 </template>
 
 <script>
+import _ from "lodash";
+import axios from "axios";
 import fuse from "fuse.js";
 import RepositoryRow from "../components/Repository";
 import { mapState, mapActions } from "vuex";
@@ -94,7 +96,8 @@ export default {
       showWhichPlugins: null,
       searchString: "",
       searchIndex: [],
-      searchResults: []
+      searchResults: [],
+      loggingPermissionCheck: false
     };
   },
   watch: {
@@ -112,10 +115,6 @@ export default {
     },
     search() {
       this.clearSearch();
-      // console.log(
-      //   `Searching for ....${this.searchString}`,
-      //   this.repositories[0].results
-      // );
       this.showWhichPlugins = null;
       if (this.searchString === "") {
         this.searchResults = [];
@@ -125,6 +124,35 @@ export default {
         let theRepo = this.repositories[index].results;
         this.$search(this.searchString, theRepo, FuseSearchOptions).then(
           results => {
+            if (
+              !window.repositoryLocalSearchOnly &&
+              this.repositories[index].repositoryName === "official"
+            ) {
+              let versionNumber = null;
+              let mappedResults = _.map(results, "id");
+              let rundeckVersionNumberContainer = document.getElementsByClassName(
+                "rundeck-version-identity"
+              );
+              if (
+                rundeckVersionNumberContainer[0] &&
+                rundeckVersionNumberContainer[0].dataset &&
+                rundeckVersionNumberContainer[0].dataset.versionString
+              ) {
+                versionNumber =
+                  rundeckVersionNumberContainer[0].dataset.versionString;
+              }
+              let payload = {
+                searchString: this.searchString,
+                results: mappedResults,
+                rundeckVer: versionNumber
+              };
+              axios({
+                method: "post",
+                url: `https://api.rundeck.com/repo/v1/oss/search/save`,
+                data: payload
+              });
+            }
+
             this.searchResults.push({
               repositoryName: this.repositories[index].repositoryName,
               results: results
@@ -135,22 +163,37 @@ export default {
     }
   },
   mounted() {
-    this.initData().then(() => {
-      // Search work will happen here
-    });
+    this.initData().then(
+      () => {
+        // don't do anything. everything is good!
+      },
+      error => {
+        this.$alert({
+          title: "Error Accessing Plugins",
+          content:
+            "Plugins may not be an active feature in your Rundeck install."
+        });
+        this.$store.dispatch("overlay/openOverlay", false);
+      }
+    );
   }
 };
 </script>
 <style lang="scss" scoped>
 // Search Input
 .input-group .form-control {
-  border: 3px solid #66615b;
+  border: 2px solid #66615b;
 }
 // .input-group-btn .btn-default:not(.btn-fill) {
 // }
 </style>
 
 <style lang="scss" scoped>
+.btn-group.btn-group.squareish-buttons {
+  .btn {
+    border-width: 2px;
+  }
+}
 .btn-group.squareish-buttons
   > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
   border-top-left-radius: 6px;

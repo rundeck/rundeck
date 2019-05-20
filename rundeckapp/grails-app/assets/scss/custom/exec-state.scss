@@ -27,7 +27,7 @@
   }
 
   &[data-execstate=RUNNING],
-  .execstate[data-execstate=RUNNING_HANDLER] {
+  &[data-execstate=RUNNING_HANDLER] {
     color: $info-color;
     // color: darken($info-color, 10%);
   }
@@ -56,6 +56,11 @@
 
   &.isnode[data-execstate] {
     color: inherit;
+
+    &[data-execstate=RUNNING],
+    &[data-execstate=RUNNING_HANDLER] {
+      color: $info-color;
+    }
   }
 
   &.step {
