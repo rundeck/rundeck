@@ -4,7 +4,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.jobs.JobStatus
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -16,7 +16,6 @@ import com.dtolabs.rundeck.server.plugins.services.JobLifeCyclePluginProviderSer
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.services.jobs.JobLifeCycleStatus
 
 /**
  * Provides capability to execute certain task based on job life cycle
@@ -100,10 +99,10 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
-    JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+    JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
                                  LoggingManager workflowLogManager){
 
-        JobStatus result = new JobLifeCycleStatus()
+        JobLifeCycleStatus result = new JobLifeCycleStatus()
         String projectName = executionContext.getFrameworkProject()
         IRundeckProject rundeckProject = executionContext.getFramework().getProjectManager().getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
@@ -113,7 +112,7 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
                     result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
-                    if(!result.isSuccessful()){
+                    if(!result.isSuccessFul()){
                         log.info("Result from plugin is false an exception will be thrown")
                         if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
                             throw new JobLifeCycleException (result.getDescription())
