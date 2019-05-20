@@ -78,7 +78,6 @@ public class Setup implements CLIToolLogger {
      */
     static String[] templates={
         "admin.aclpolicy",
-        "apitoken.aclpolicy",
         "system-job_reader.aclpolicy_template",
         "system-job_runner.aclpolicy_template",
         "system-job_writer.aclpolicy_template",
