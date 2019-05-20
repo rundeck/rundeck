@@ -6,14 +6,12 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
-import com.dtolabs.rundeck.core.jobs.JobStatus
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
 import com.dtolabs.rundeck.core.logging.LoggingManager
-import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobLifeCyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.JobLifeCyclePluginProviderService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import grails.testing.services.ServiceUnitTest
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -21,7 +19,6 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.JobLifeCyclePluginService
-import rundeck.services.PluginService
 import spock.lang.Specification
 
 @TestFor(JobLifeCycleServiceImplService)
@@ -50,8 +47,8 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
     static class JobLifeCyclePluginImpl implements JobLifeCyclePlugin {
 
         @Override
-        public JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
-                                          LoggingManager workflowLogManager)throws JobLifeCycleException{
+        public JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+                                                   LoggingManager workflowLogManager)throws JobLifeCycleException{
             return new JobLifeCycleStatus(true, "Example description");
         }
     }
@@ -59,15 +56,15 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
     def "custom plugin successful answer"() {
         given:
         service.jobLifeCyclePluginService = Mock(JobLifeCyclePluginService){
-            onBeforeJobStart(_,_,_) >> Mock(JobStatus){
-                isSuccessful() >> true
+            onBeforeJobStart(_,_,_) >> Mock(JobLifeCycleStatus){
+                isSuccessFul() >> true
             }
         }
 
         when:
-        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        result.isSuccessful()
+        result.isSuccessFul()
     }
 
     def "exception thrown"() {
@@ -79,7 +76,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         }
 
         when:
-        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
         thrown(JobLifeCycleException)
     }
@@ -87,16 +84,16 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
     def "returns false with message"() {
         given:
         service.jobLifeCyclePluginService = Mock(JobLifeCyclePluginService){
-            onBeforeJobStart(_,_,_) >> Mock(JobStatus){
-                isSuccessful() >> false
+            onBeforeJobStart(_,_,_) >> Mock(JobLifeCycleStatus){
+                isSuccessFul() >> false
                 getDescription() >> "It has description because it is also false"
             }
         }
 
         when:
-        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        !result.isSuccessful()
+        !result.isSuccessFul()
         result.getDescription() == "It has description because it is also false"
     }
 
