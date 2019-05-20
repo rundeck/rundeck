@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobStatus
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
@@ -52,45 +53,49 @@ class JobLifeCyclePluginServiceSpec extends Specification {
     static class JobLifeCyclePluginImpl implements JobLifeCyclePlugin {
 
         @Override
-        public boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
-                                        LoggingManager workflowLogManager)throws JobLifeCycleException{
+        public JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+                                          LoggingManager workflowLogManager)throws JobLifeCycleException{
             throw new JobLifeCycleException("Test job life cycle exception")
         }
     }
 
-    def "custom plugin succesful answer"() {
+    def "custom plugin successful answer"() {
         given:
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
-            onBeforeJobStart(item, executionContext, null) >> true
+            onBeforeJobStart(item, executionContext, null) >> Mock(JobStatus){
+                isSuccessful() >> true
+            }
         }
         def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
         service.pluginService = Mock(PluginService){
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        def result = service.onBeforeJobStart(item, executionContext, null)
+        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        result
+        result.isSuccessful()
     }
 
-    def "custom plugin exception trown for returning false"() {
+    def "custom plugin exception thrown for returning false"() {
         given:
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
-            onBeforeJobStart(item, executionContext, null) >> false
+            onBeforeJobStart(item, executionContext, null) >> Mock(JobStatus){
+                isSuccessful() >> false
+            }
         }
         def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
         service.pluginService = Mock(PluginService){
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        def result = service.onBeforeJobStart(item, executionContext, null)
+        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
         thrown(JobLifeCycleException)
     }
 
-    def "custom plugin exception trown from the plugin"() {
+    def "custom plugin exception thrown from the plugin"() {
         given:
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def describedPlugin = new DescribedPlugin(new JobLifeCyclePluginImpl(), null, 'TestPlugin')
@@ -98,7 +103,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        def result = service.onBeforeJobStart(item, executionContext, null)
+        JobStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
         thrown(JobLifeCycleException)
     }

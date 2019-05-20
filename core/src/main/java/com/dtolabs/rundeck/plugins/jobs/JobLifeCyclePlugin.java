@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
+import com.dtolabs.rundeck.core.jobs.JobStatus;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 
 import java.util.Map;
@@ -38,6 +39,6 @@ public interface JobLifeCyclePlugin {
      * @param workflowLogManager used to be able to log
      * @return true if successful
      */
-    public boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext, LoggingManager workflowLogManager)throws JobLifeCycleException;
+    public JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext, LoggingManager workflowLogManager)throws JobLifeCycleException;
 
 }

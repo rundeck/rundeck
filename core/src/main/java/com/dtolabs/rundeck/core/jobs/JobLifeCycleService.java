@@ -7,7 +7,7 @@ import com.dtolabs.rundeck.core.logging.LoggingManager;
 
 public interface JobLifeCycleService {
 
-    boolean onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
+    JobStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
                              LoggingManager workflowLogManager) throws JobLifeCycleException;
 
 }
