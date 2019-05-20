@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleService
 import com.dtolabs.rundeck.core.logging.LoggingManager
 
 /**
@@ -31,10 +32,11 @@ class TestWEServiceThread extends WorkflowExecutionServiceThread {
             final WorkflowExecutionService eservice,
             final WorkflowExecutionItem eitem,
             final StepExecutionContext econtext,
-            LoggingManager loggingManager
+            LoggingManager loggingManager,
+            JobLifeCycleService jobLifeCycleService
     )
     {
-        super(eservice, eitem, econtext, loggingManager)
+        super(eservice, eitem, econtext, loggingManager, jobLifeCycleService)
     }
 
     void setSuccessful(boolean success){
