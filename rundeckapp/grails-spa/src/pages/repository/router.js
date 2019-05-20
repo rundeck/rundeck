@@ -3,6 +3,7 @@ import Router from 'vue-router';
 
 import PluginRepositoryView from "./views/PluginRepositoryView"
 import PluginConfigurationView from './views/PluginConfigurationView'
+import UploadPluginView from './views/UploadPluginView'
 
 Vue.use(Router)
 
@@ -20,8 +21,13 @@ export default new Router({
       component: PluginConfigurationView
     },
     {
+      path: '/artifact/index/upload',
+      name: 'upload',
+      component: UploadPluginView
+    },
+    {
       path: '*',
-      redirect: '/artifact/index/repositories'
+      redirect: '/artifact/index/configurations'
     }
   ]
 });
