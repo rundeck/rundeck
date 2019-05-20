@@ -81,11 +81,11 @@ fi
 echo "OK"
 
 
-echo "TEST: /api/2/project/${proj}/resources (GET) (unsupported)"
+echo "TEST: $API_BASE/api/2/project/${proj}/resources (GET) (unsupported)"
 params="format=unsupported"
 
 docurl ${runurl}?${params} > ${file} || fail "ERROR: failed request"
-$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: /api/2/project/${proj}/resources. Reason: Minimum supported version: 3" || fail "ERROR: failed request"
+$SHELL $SRC_DIR/api-test-error.sh ${file} "Unsupported API Version \"2\". API Request: $API_BASE/api/2/project/${proj}/resources. Reason: Minimum supported version: 3" || fail "ERROR: failed request"
 
 echo "OK"
 

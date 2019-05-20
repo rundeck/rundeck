@@ -1,3 +1,18 @@
+%{--
+- Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+-
+- Licensed under the Apache License, Version 2.0 (the "License");
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+--}%
 <!DOCTYPE html>
 <!--[if lt IE 7 ]> <html class="ie6"> <![endif]-->
 <!--[if IE 7 ]>    <html class="ie7"> <![endif]-->
@@ -6,22 +21,6 @@
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="en"><!--<![endif]-->
 <head>
     <title>
-        %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  --}%
-
       <g:layoutTitle default="${g.appTitle()}"/>
     </title>
     <meta charset="utf-8">
@@ -35,16 +34,10 @@
     <!-- fontawesome -->
     <!-- <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous"> -->
     <!-- /fontawesome -->
-    <!-- themify icons -->
-    <!-- <asset:stylesheet  href="themify.css" /> -->
-    <!-- /themify icons -->
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="fontawesome.css"/>
     <asset:stylesheet href="perfect-scrollbar.css"/>
     <asset:stylesheet href="app.css"/>
-    <!-- <asset:stylesheet href="custom.less.css"/> -->
-    <!-- <asset:stylesheet href="app.less.css"/> -->
-    <!-- <asset:stylesheet href="rundeck1.css"/> -->
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
@@ -66,17 +59,20 @@
     <asset:javascript src="prototype-bundle.js"/>
     </g:if>
     <asset:javascript src="application.js"/>
+    <asset:javascript src="details-element-polyfill.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
 
     <!-- VUE JS REQUIREMENTS -->
-    <asset:javascript src="static/manifest.js"/>
     <asset:javascript src="static/vendor.js"/>
     <!-- /VUE JS REQUIREMENTS -->
 
     <!-- VUE CSS MODULES -->
     <asset:stylesheet href="static/css/components/motd.css"/>
     <asset:stylesheet href="static/css/components/tour.css"/>
+    <g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+      <asset:stylesheet href="static/css/components/community-news-notification.css"/>
+    </g:if>
     <!-- /VUE CSS MODULES -->
 
     <script language="javascript">
@@ -158,21 +154,25 @@
         </g:each>
 
     </g:if>
+
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
     <g:layoutHead/>
     <script type=text/javascript>
-      window._rundeck = {
+        window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
         apiVersion: '${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}',
+        language: '${response.locale?.toString() ?: request.locale?.toString()}',
         projectName: '${enc(js:project?:params.project)}',
         activeTour: '${session.filterPref?.activeTour}',
-        activeTourStep: '${session.filterPref?.activeTourStep}'
-      }
+        activeTourStep: '${session.filterPref?.activeTourStep}',
+        hideVersionUpdateNotification: '${session.filterPref?.hideVersionUpdateNotification}'
+        })
     </script>
+    <asset:javascript src="static/components/central.js"/>
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
-    <div class="sidebar" data-background-color="black" data-active-color="danger">
+    <div class="sidebar" data-background-color="black" data-active-color="white">
 
       <div class="logo">
           <a class="home" href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}" title="Home">
@@ -205,10 +205,34 @@
       <div>
         <g:render template="/common/mainbar"/>
       </div>
+        <g:ifPageProperty name="page.subtitle">
+            <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <ul class="nav navbar-nav">
+                            <li class="primarylink">
+                                <a href="#">
+                                    <g:pageProperty name="page.subtitle"/>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </g:ifPageProperty>
+        <g:ifPageProperty name="page.subtitlesection">
+            <nav id="subtitlebar" class=" subtitlebar has-content ${pageProperty(name: 'page.subtitlecss')}">
+
+                <g:pageProperty name="page.subtitlesection"/>
+
+            </nav>
+        </g:ifPageProperty>
       <div class="content">
-        <div class="container-fluid">
-          <div id=project-motd-vue></div>
+
+        <div class="vue-project-motd">
+          <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}"></motd>
         </div>
+
         <div id="layoutBody">
             <g:layoutBody/>
         </div>
@@ -217,11 +241,6 @@
     </div>
 
   </div>
-<!--
-disable for now because profiler plugin is not compatible with grails 3.x
- < g:profilerOutput />
--->
-<miniprofiler:javascript/>
 
 <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
     <script type="text/javascript" defer>
@@ -233,6 +252,10 @@ disable for now because profiler plugin is not compatible with grails 3.x
 <!-- VUE JS MODULES -->
 <asset:javascript src="static/components/motd.js"/>
 <asset:javascript src="static/components/tour.js"/>
+<g:if test="${grailsApplication.config.rundeck.communityNews.disabled.isEmpty() ||!grailsApplication.config.rundeck.communityNews.disabled in [false,'false']}">
+  <asset:javascript src="static/components/community-news-notification.js"/>
+</g:if>
+
 <!-- /VUE JS MODULES -->
 
 </body>

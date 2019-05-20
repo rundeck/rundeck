@@ -24,6 +24,7 @@
 </head>
 
 <body>
+
 <g:set var="pluginInstall" value="${auth.resourceAllowedTest(
         type: 'resource',
         kind: 'plugin',
@@ -32,21 +33,22 @@
         context: 'application'
 )}"/>
 <script type="text/javascript">
-    window.repocaninstall = ${pluginInstall}
+    window.repocaninstall = ${pluginInstall ?: false};
 </script>
-<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.features?.repository?.enabled}"/>
-<g:if test="${repoEnabled == 'true'}">
+
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.enabled}"/>
+<script type="text/javascript">
+  window.repoEnabled = ${repoEnabled ?: false};
+</script>
+
+<g:set var="repoEnabled" value="${grailsApplication.config.rundeck?.feature?.repository?.localSearchOnly}"/>
+<script type="text/javascript">
+  window.repositoryLocalSearchOnly = ${localSearchOnly ?: false};
+</script>
+
 <div class="container-fluid">
-    <div id="repository-artifact-content">
-        <div id=repository-vue></div>
-    </div>
+  <div id=repository-vue></div>
 </div>
-<asset:javascript src="static/manifest.js"/>
-<asset:javascript src="static/vendor.js"/>
 <asset:javascript src="static/pages/repository.js"/>
-</g:if>
-<g:else>
-    <h3>This feature is not enabled</h3>
-</g:else>
 </body>
 </html>

@@ -112,9 +112,14 @@ public interface PluginMetadata {
     String getPluginThirdPartyDependencies();
 
     /**
-     * @return plugin third party dependencies
+     * @return link to plugin source
      */
     String getPluginSourceLink();
+
+    /**
+     * @return link to plugin docs
+     */
+    String getPluginDocsLink();
 
     /**
      * @return plugin type

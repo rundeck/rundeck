@@ -25,9 +25,12 @@
 <g:if test="${description}">
   <div class="row">
     <div class="col-sm-12">
-      <div class="h4 text-info"><g:enc>${description.title}</g:enc>
-        <small class="text-primary"><g:enc>${description.description}</g:enc></small>
-      </div>
+      <g:render template="/framework/renderPluginDesc" model="${[
+              serviceName: 'ResourceModelSource',
+              description: description,
+              showPluginIcon:true,
+              titleCss:'h4'
+      ]}"/>
     </div>
   </div>
 </g:if>

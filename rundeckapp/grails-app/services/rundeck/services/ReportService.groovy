@@ -294,17 +294,6 @@ class ReportService  {
                                                 isNotNull(val)
                                                 ne(val, '')
                                             }
-                                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
-                                            or {
-                                                eq(val, 'succeed')
-                                                eq(val, 'succeeded')
-                                                eq(val, 'true')
-                                            }
-                                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
-                                            or {
-                                                eq(val, 'fail')
-                                                eq(val, 'failed')
-                                            }
                                         } else if (query["${key}Filter"]) {
                                             eq(val, query["${key}Filter"])
                                         }
@@ -322,17 +311,6 @@ class ReportService  {
                             and {
                                 isNotNull(val)
                                 ne(val, '')
-                            }
-                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
-                            or {
-                                eq(val, 'succeed')
-                                eq(val, 'succeeded')
-                                eq(val, 'true')
-                            }
-                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
-                            or {
-                                eq(val, 'fail')
-                                eq(val, 'failed')
                             }
                         } else if (query["${key}Filter"]) {
                             eq(val, query["${key}Filter"])
@@ -434,7 +412,10 @@ class ReportService  {
         ]
 
         if(query?.jobIdFilter && query.jobIdFilter.toString().length() == 36) {
-            query.jobIdFilter = ScheduledExecution.findByUuid(query.jobIdFilter).id.toString()
+            def found = ScheduledExecution.findByUuid(query.jobIdFilter)
+            if(found) {
+                query.jobIdFilter = found.id.toString()
+            }
         }
 
         def filters = [:]

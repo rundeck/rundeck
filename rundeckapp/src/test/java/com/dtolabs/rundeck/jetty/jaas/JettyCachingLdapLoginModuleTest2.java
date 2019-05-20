@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.jetty.jaas;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
+import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -235,7 +237,7 @@ public class JettyCachingLdapLoginModuleTest2 {
     }
 
 
-    private CallbackHandler createCallbacks(final String user1, final String password) {
+    private CallbackHandler createCallbacks(final String user1, final Object password) {
         return new CallbackHandler() {
             @Override
             public void handle(final Callback[] callbacks) throws IOException, UnsupportedCallbackException {
@@ -275,6 +277,15 @@ public class JettyCachingLdapLoginModuleTest2 {
     }
 
     @Test
+    public void testDisallowEmptyCharArrayPasword() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        module._debug = true;
+        char[] empty = {};
+        module.setCallbackHandler(createCallbacks("user1", empty));
+        expectLoginException(module);
+    }
+
+    @Test
     public void testDisallowEmptyUsername() {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
         module._debug = true;
@@ -297,6 +308,39 @@ public class JettyCachingLdapLoginModuleTest2 {
         }
     }
 
+    @Test
+    public void testGetUserAttributesEmail_FirstName_LastName() {
+        JettyCachingLdapLoginModule module = getJettyCachingLdapLoginModule(false);
+        module._debug = true;
+        module.setCallbackHandler(createCallbacks("user1", "password"));
+        module.setSubject(new Subject());
+        try {
+            assertTrue(module.login());
+            assertTrue(module.commit());
+            assertTrue(module.getSubject().getPrincipals().stream().anyMatch(p -> p instanceof LdapEmailPrincipal ));
+            assertTrue(module.getSubject().getPrincipals().stream().anyMatch(p -> p instanceof LdapFirstNamePrincipal ));
+            assertTrue(module.getSubject().getPrincipals().stream().anyMatch(p -> p instanceof LdapLastNamePrincipal ));
+
+        } catch (FailedLoginException e) {
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail();
+        }
+    }
+
+    @Test
+    public void testSetOptions_Email_First_Last() {
+        JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
+        HashMap options = new HashMap();
+        options.put("userLastNameAttribute","lastAttrib");
+        options.put("userFirstNameAttribute","firstAttrib");
+        options.put("userEmailAttribute","emailAttrib");
+        module.initializeOptions(options);
+        assertEquals("lastAttrib",module._userLastNameAttribute);
+        assertEquals("firstAttrib",module._userFirstNameAttribute);
+        assertEquals("emailAttrib",module._userEmailAttribute);
+    }
+
 
     private JettyCachingLdapLoginModule getJettyCachingLdapLoginModule(boolean activeDirectory) {
         JettyCachingLdapLoginModule module = new JettyCachingLdapLoginModule();
@@ -313,6 +357,9 @@ public class JettyCachingLdapLoginModuleTest2 {
         when(userAttributes.get(module._userPasswordAttribute)).thenReturn(passwordAttribute);
         when(userSearchResult.getAttributes()).thenReturn(userAttributes);
         when(userSearchResults.nextElement()).thenReturn(userSearchResult);
+        when(userAttributes.get(module._userEmailAttribute)).thenReturn(new BasicAttribute(module._userEmailAttribute,"user@example.com"));
+        when(userAttributes.get(module._userFirstNameAttribute)).thenReturn(new BasicAttribute(module._userFirstNameAttribute,"First"));
+        when(userAttributes.get(module._userLastNameAttribute)).thenReturn(new BasicAttribute(module._userLastNameAttribute,"Last"));
 
         try {
             when(passwordAttribute.get()).thenReturn(password.getBytes());

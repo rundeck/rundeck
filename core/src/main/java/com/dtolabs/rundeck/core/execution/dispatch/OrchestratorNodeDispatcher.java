@@ -139,12 +139,6 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
                 tocall = dispatchableCallable(context, toDispatch, resultMap, node, failureMap);
             }
             nodeNames.add(node.getNodename());
-            context
-                .getExecutionListener()
-                .log(
-                    3,
-                    "Create " + (null != item ? "dispatched step" : "dispatchable workflow") + " for node: " + node.getNodename()
-                );
             executions.put(node, tocall);
         }
         if (null != failedListener) {
@@ -167,7 +161,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         
         try {
             success = processor.execute();
-        } catch (ExecutionException e) {
+        } catch (OrchestratorNodeProcessor.NodeProcessorException e) {
             context.getExecutionListener().log(0, e.getMessage());
             if (!keepgoing) {
                 throw new DispatcherException(e);

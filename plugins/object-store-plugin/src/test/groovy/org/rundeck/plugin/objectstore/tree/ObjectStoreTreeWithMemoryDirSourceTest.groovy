@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.utils.Streams
 import io.minio.MinioClient
 import io.minio.errors.ErrorResponseException
+import okhttp3.OkHttpClient
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
@@ -27,6 +28,9 @@ import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
 import spock.lang.Specification
 import testhelpers.MinioTestServer
+
+import java.util.logging.Level
+import java.util.logging.Logger
 
 
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
@@ -42,8 +46,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     }
 
     void setup() {
-        //directorySource = new ObjectStoreMemoryDirectorySource(mClient, configBucket)
-        directorySource = new ObjectStoreDirectAccessDirectorySource(mClient, configBucket)
+        directorySource = new ObjectStoreMemoryDirectorySource(mClient, configBucket)
         store = new ObjectStoreTree(mClient, configBucket, directorySource)
     }
 

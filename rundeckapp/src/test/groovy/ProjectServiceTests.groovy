@@ -27,6 +27,7 @@ import rundeck.ScheduledExecution
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.services.ArchiveRequestProgress
+import rundeck.services.ExecutionUtilService
 import rundeck.services.LoggingService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
@@ -167,6 +168,87 @@ class ProjectServiceTests  {
   </execution>
 </executions>'''
 
+    static String EXEC_XML_TEST6 ='''<executions>
+  <execution id='1'>
+    <jobId>1</jobId>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath />
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>exec command</exec>
+      </command>
+    </workflow>
+  </execution>
+</executions>'''
+
+    static String EXEC_XML_TEST7 ='''<executions>
+  <execution id='1'>
+    <jobId>1</jobId>
+    <dateStarted>1970-01-01T00:00:00Z</dateStarted>
+    <dateCompleted>1970-01-01T01:00:00Z</dateCompleted>
+    <status>true</status>
+    <outputfilepath />
+    <failedNodeList />
+    <succeededNodeList />
+    <abortedby />
+    <cancelled>false</cancelled>
+    <argString>-test args</argString>
+    <loglevel>WARN</loglevel>
+    <doNodedispatch>true</doNodedispatch>
+    <nodefilters>
+      <dispatch>
+        <threadcount>1</threadcount>
+        <keepgoing>false</keepgoing>
+        <excludePrecedence>true</excludePrecedence>
+        <rankOrder>ascending</rankOrder>
+      </dispatch>
+      <filter>hostname: test1 !tags: monkey</filter>
+    </nodefilters>
+    <project>testproj</project>
+    <user>testuser</user>
+    <workflow keepgoing='false' strategy='node-first'>
+      <command>
+        <exec>exec command</exec>
+      </command>
+    </workflow>
+    <fullJob>
+      <scheduleEnabled>true</scheduleEnabled>
+      <executionEnabled>true</executionEnabled>
+      <sequence keepgoing='true' strategy='node-first'>
+        <command>
+          <exec>exec command</exec>
+        </command>
+      </sequence>
+      <loglevel>WARN</loglevel>
+      <name>blue</name>
+      <nodeFilterEditable>false</nodeFilterEditable>
+      <description>a job</description>
+      <id>1</id>
+      <retry>1</retry>
+      <group>some/where</group>
+    </fullJob>
+  </execution>
+</executions>'''
     public void testExportExecution(){
         ProjectService svc = new ProjectService()
 
@@ -208,6 +290,8 @@ class ProjectServiceTests  {
         }
         svc.workflowService= workflowmock.proxyInstance()
 
+        svc.executionUtilService = new ExecutionUtilService()
+        svc.executionUtilService.grailsApplication = [:]
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
 //        println str
@@ -257,6 +341,8 @@ class ProjectServiceTests  {
             tempoutfile
         }
         svc.loggingService = logmock.proxyInstance()
+        svc.executionUtilService = new ExecutionUtilService()
+        svc.executionUtilService.grailsApplication = [:]
         def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
             assert exec == e
@@ -327,7 +413,8 @@ class ProjectServiceTests  {
             tempoutfile2
         }
         svc.workflowService = workflowmock.proxyInstance()
-
+        svc.executionUtilService = new ExecutionUtilService()
+        svc.executionUtilService.grailsApplication = [:]
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
 //        println str
@@ -808,5 +895,134 @@ class ProjectServiceTests  {
         assertEquals(75,svc.percent())
         svc.inc("b",5)
         assertEquals(100,svc.percent())
+    }
+
+
+    public void testExportExecutionWithScheduledExecution(){
+        ProjectService svc = new ProjectService()
+
+        def outfilename = "blahfile.xml"
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+
+        def zip = zipmock.proxyInstance()
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'testproj',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'exec command')]
+                ),
+                retry: '1'
+        )
+        assertNotNull job.save()
+
+        Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+                scheduledExecution: job
+        )
+        assertNotNull exec.save()
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        svc.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        svc.workflowService= workflowmock.proxyInstance()
+
+        svc.executionUtilService = new ExecutionUtilService()
+        svc.executionUtilService.grailsApplication =  [config:[rundeck:[execution:[logs:[fileStorage:[generateExecutionXml:false]]]]]]
+        svc.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+        assertEquals EXEC_XML_TEST6, str
+    }
+
+    public void testExportExecutionWithScheduledExecutionBackupJobEnabled(){
+        ProjectService svc = new ProjectService()
+
+        def outfilename = "blahfile.xml"
+
+        def zipmock=new MockFor(ZipBuilder)
+        def outwriter = new StringWriter()
+        zipmock.demand.file(1..1){name,Closure withwriter->
+            assertEquals(outfilename,name.toString())
+            withwriter.call(outwriter)
+            outwriter.flush()
+        }
+
+        def zip = zipmock.proxyInstance()
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'testproj',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'exec command')]
+                ),
+                retry: '1'
+        )
+        assertNotNull job.save()
+
+        Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')]),
+                scheduledExecution: job
+        )
+        assertNotNull exec.save()
+        def logmock = new MockFor(LoggingService)
+        logmock.demand.getLogFileForExecution(1..1){Execution e->
+            assert exec==e
+            new File(outfilename)
+        }
+        svc.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
+        workflowmock.demand.getStateFileForExecution(1..1){Execution e->
+            assert exec==e
+            null
+        }
+        svc.workflowService= workflowmock.proxyInstance()
+
+        svc.executionUtilService = new ExecutionUtilService()
+
+
+        svc.executionUtilService.grailsApplication = [:]
+        svc.exportExecution(zip,exec,outfilename)
+        def str=outwriter.toString()
+        assertEquals EXEC_XML_TEST7, str
     }
 }

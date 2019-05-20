@@ -17,7 +17,7 @@
 <%@ page import="rundeck.ScheduledExecution; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
-<div class="list-group">
+
 <g:if test="${flash.message}">
     <div class="list-group-item">
       <div class="alert alert-info">
@@ -45,8 +45,8 @@
 <asset:javascript src="prototype/dragdrop"/>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
-             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence]}"/>
-<div id="page_job_edit">
+             data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
+
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
   </g:if>
@@ -55,7 +55,8 @@
 
   </div>
 
-      <div class="list-group-item">
+  <div class="tab-pane active" id="tab_details">
+  <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
           <label for="schedJobName"
@@ -172,13 +173,15 @@
               </g:javascript>
           </div>
       </div>
-  </div><!--/.nput-group-item -->
+  </section><!--/.nput-group-item -->
+  </div><!-- end #tab_details -->
 
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
       <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
       %{--Options--}%
-      <div id="optionsContent" class=" list-group-item" >
+    <div class="tab-pane" id="tab_workflow">
+      <section id="optionsContent" class=" section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
@@ -197,10 +200,10 @@
                   </div>
               </div>
           </div>
-      </div>%{--//Options--}%
+      </section>%{--//Options--}%
 
       %{--Workflow--}%
-      <div id="workflowContent" class="list-group-item" >
+      <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
               <div class="${fieldColSize}">
@@ -218,10 +221,12 @@
                   </g:if>
               </div>
           </div>
-      </div>%{--//Workflow--}%
+      </section>%{--//Workflow--}%
+</div><!-- end#tab_workflow -->
 
   %{--Node Dispatch--}%
-  <div class="list-group-item node_filter_link_holder" id="nodegroupitem">
+    <div class="tab-pane" id="tab_nodes">
+  <section class="section-space-lg node_filter_link_holder" id="nodegroupitem">
   <div class="form-group">
       <label class="${labelColSize} control-label">
           <g:message code="Node.plural" />
@@ -262,11 +267,13 @@
           <g:javascript>
               <wdgt:eventHandlerJS for="doNodedispatchTrue" state="unempty" oneway="true">
                   <wdgt:action visible="true" targetSelector=".nodeFilterFields"/>
+                  <wdgt:action visible="true" targetSelector=".nodeFilterExcludeFields"/>
                   <wdgt:action visible="true" target="nodeDispatchFields"/>
               </wdgt:eventHandlerJS>
               <wdgt:eventHandlerJS for="doNodedispatchFalse" state="unempty" oneway="true">
                   <wdgt:action visible="false" target="nodeDispatchFields"/>
                   <wdgt:action visible="false" targetSelector=".nodeFilterFields"/>
+                  <wdgt:action visible="false" targetSelector=".nodeFilterExcludeFields"/>
               </wdgt:eventHandlerJS>
           </g:javascript>
       </div>
@@ -311,6 +318,64 @@
   </div>
   </div>
 
+  <div class="form-group  ${hasErrors(bean: scheduledExecution, field: 'filterExclude', 'has-error')}">
+    <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
+        <label class="${labelColSize} control-label">
+            <g:message code="node.filter.exclude" />
+        </label>
+
+        <div class="${fieldColSize}">
+            <g:set var="excludeFilterValue" value="${scheduledExecution.asExcludeFilter()}"/>
+
+            <span class="input-group  multiple-control-input-group">
+                <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                    <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                </g:if>
+                <g:render template="/framework/nodeFilterInputExcludeGroup"
+                          model="[filterset: filterset, filtvalue: excludeFilterValue, filterName: filterName]"/>
+            </span>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.excludeFilter.description" />
+            </span>
+        </div>
+
+
+    </div>
+  </div>
+  <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.excludeFilterUncheck.label"/>
+        </div>
+
+        <div class="${fieldColSize}">
+            <div class="radio radio-inline">
+                <g:radio name="excludeFilterUncheck" value="true"
+                         checked="${scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableTrue"/>
+                <label for="editableTrue">
+                    <g:message code="yes"/>
+                </label>
+            </div>
+
+            <div class="radio radio-inline">
+                <g:radio value="false" name="excludeFilterUncheck"
+                         checked="${!scheduledExecution.excludeFilterUncheck}"
+                         data-bind="checked: excludeFilterUncheck"
+                         id="editableFalse"/>
+                <label for="editableFalse">
+                    <g:message code="no"/>
+                </label>
+            </div>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.excludeFilterUncheck.description" />
+            </span>
+        </div>
+    </div>
+
+
   <div style="${wdgt.styleVisible(if: scheduledExecution?.doNodedispatch)}" class="subfields nodeFilterFields ">
   <g:if test="${grailsApplication.config.rundeck?.nodefilters?.showPrecedenceOption || scheduledExecution?.nodeExcludePrecedence!=null && !scheduledExecution?.nodeExcludePrecedence }">
 
@@ -350,18 +415,33 @@
           <div class=" col-sm-10  ">
 
               <div class="well well-sm embed matchednodes">
-                  <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                          data-loading-text="${g.message(code:'loading')}"
-                      data-bind="click: $data.updateMatchedNodes"
-                          title="${g.message(code:'click.to.refresh')}">
-                      <g:message code="refresh" />
-                      <i class="glyphicon glyphicon-refresh"></i>
-                  </button>
-                  <span class="text-primary" data-bind="if: loaded" >
-                      <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="count.nodes.matched"/></span>
-                  </span>
-                  <div id='matchednodes' class="clearfix">
-                      <g:render template="/framework/nodesEmbedKO" model="[showLoading:true,showTruncated:true]"/>
+                  <div class="row">
+                      <div class="col-sm-6">
+                          <span class="text-primary" data-bind="if: loaded">
+                              <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
+                                      code="count.nodes.matched"/></span>
+                          </span>
+                          <span data-bind="visible: loading() " class="text-info">
+                              <i class="glyphicon glyphicon-time"></i>
+                              <g:message code="loading.matched.nodes"/>
+                          </span>
+                      </div>
+
+                      <div class="col-sm-6">
+
+                          <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
+                                  data-loading-text="${g.message(code: 'loading')}"
+                                  data-bind="click: $data.updateMatchedNodes, attr: {disabled: loading}"
+                                  title="${g.message(code: 'click.to.refresh')}">
+                              <g:message code="refresh"/>
+                              <i class="glyphicon glyphicon-refresh"></i>
+                          </button>
+
+                      </div>
+                  </div>
+                  <div id='matchednodes' class="clearfix row">
+                      <g:render template="/framework/nodesEmbedKO"
+                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
                   </div>
               </div>
           </div>
@@ -543,19 +623,23 @@
   </div>
 
   </div>%{--//Node Dispatch--}%
-  </div>
+  </section>
+  </div><!-- end#tab_nodes-->
 
       %{--Notifications--}%
-      <div class="list-group-item"  >
+      <div class="tab-pane" id="tab_notifications"  >
+      <section class="section-space-lg"  >
               <g:set var="adminauth"
                   value="${auth.resourceAllowedTest(type: 'project', name: scheduledExecution.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
           <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
-      </div>%{--//Notifications--}%
+      </section>%{--//Notifications--}%
+      </div><!-- end#tab_notifications -->
 
   %{--Schedule--}%
-  <div class="list-group-item">
+    <div class="tab-pane" id="tab_schedule">
+  <section class="section-space-lg">
 
       <div class="form-group">
           <div class="${labelColSize}  control-label text-form-label">
@@ -681,11 +765,13 @@
               </div>
           </div>
       </g:if>
-  </div>%{--//Schedule--}%
+  </section>%{--//Schedule--}%
+</div><!-- end#tab_schedule -->
 
 
   %{--Log level--}%
-  <div class="list-group-item">
+  <div class="tab-pane" id="tab_other">
+  <section class="section-space-lg">
       <div class="form-group">
           <label class="${labelColClass}" for="loglevel">
             <g:message code="scheduledExecution.property.loglevel.label" />
@@ -924,8 +1010,8 @@
               </g:else>
           </div>
       </div>
-  </div>%{--//Log level--}%
-</div>
+  </section>%{--//Log level--}%
+</div><!-- end#tab_other -->
 
 <script type="text/javascript">
 //<!CDATA[
@@ -1004,6 +1090,19 @@ function getCurSEID(){
                 nodeFilter.selectNodeFilterLink(link);
             }
         }
+        function handleNodeExcludeFilterLink(link){
+            var holder = jQuery(link).parents('.node_filter_link_holder');
+            var nflinkid=holder.data('node-filter-link-id');
+            var nflinkid2=holder.attr('id');
+            if(nflinkid && nodeFilterMap[nflinkid]){
+                nodeFilterMap[nflinkid].selectNodeFilterExcludeLink(link);
+            }else if(nflinkid2 && nodeFilterMap['#'+nflinkid2]){
+                nodeFilterMap['#'+nflinkid2].selectNodeFilterExcludeLink(link);
+            }else{
+                nodeFilter.selectNodeFilterExcludeLink(link);
+            }
+
+        }
         function setupJobExecNodeFilterBinding(root,target,dataId){
             var filterParams = loadJsonData(dataId);
             var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
@@ -1056,6 +1155,10 @@ function getCurSEID(){
                 evt.preventDefault();
                 handleNodeFilterLink(this);
             })
+            jQuery('body').on('click', '.nodeexcludefilterlink', function (evt) {
+                evt.preventDefault();
+                handleNodeExcludeFilterLink(this);
+            })
             .on('change','.node_dispatch_radio',function(evt){
                 nodeFilter.updateMatchedNodes();
             })
@@ -1076,4 +1179,4 @@ function getCurSEID(){
 <div id="msg"></div>
 
     <g:render template="/framework/storageBrowseModalKO"/>
-</div>
+

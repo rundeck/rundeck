@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -53,6 +54,7 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
      */
     private static Map<Class, Class<? extends ScriptPluginBuilder>> clazzBuilderRegistry = [
             (NotificationPlugin)        : ScriptNotificationPluginBuilder,
+            (OptionValuesPlugin)        : ScriptOptionValuesPluginBuilder,
             (StreamingLogWriterPlugin)  : StreamingLogWriterPluginBuilder,
             (StreamingLogReaderPlugin)  : StreamingLogReaderPluginBuilder,
             (ExecutionFileStoragePlugin): ExecutionFileStoragePluginBuilder,
@@ -116,6 +118,8 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
             } else {
                 logger.error("Tags property of plugin script: ${filename} must be a list. Tags property ignored.")
             }
+        } else if (property == 'metadata' && newValue instanceof Map) {
+            descriptionBuilder.metadata(newValue)
         } else {
             super.setProperty(property, newValue)
         }
@@ -230,6 +234,11 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
     @Override
     String getPluginSourceLink() {
         return pluginAttributes['sourceLink']
+    }
+
+    @Override
+    String getPluginDocsLink() {
+        return pluginAttributes['docsLink']
     }
 
     @Override

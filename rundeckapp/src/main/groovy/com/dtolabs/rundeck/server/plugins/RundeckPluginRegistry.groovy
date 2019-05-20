@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
@@ -38,6 +39,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.plugins.CorePluginProviderServices
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
@@ -93,6 +95,19 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         return simpleName;
     }
+
+    public <T> boolean isFrameworkDependentPluginType(Class<T> type) {
+        return CorePluginProviderServices.isFrameworkDependentPluginType(type)
+    }
+
+    @Override
+    def <T> PluggableProviderService<T> getFrameworkDependentPluggableService(
+            final Class<T> type,
+            final Framework framework
+    ) {
+        return CorePluginProviderServices.getPluggableProviderServiceForType(type,framework)
+    }
+
     public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
         String found = ServiceTypes.pluginTypesMap.find { it.value == type }?.key
         def name = found ?: createServiceName(type.getSimpleName())
@@ -124,13 +139,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     public <T> ConfiguredPlugin<T> configurePluginByName(
             String name,
             PluggableProviderService<T> service,
-            Framework framework,
+            IFramework framework,
             String project, Map instanceConfiguration
     )
     {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
-                project, instanceConfiguration, name, service.getName());
+                project, instanceConfiguration, service.getName(), name);
         return configurePluginByName(name, service, resolver, PropertyScope.Instance)
     }
 
@@ -220,7 +235,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         return config
     }
-/**
+    /**
      *
      * Validate a provider for a service using the framework, project name and instance configuration map
      * @param name name of bean or provider
@@ -232,12 +247,12 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      */
     public ValidatedPlugin validatePluginByName(
             String name, PluggableProviderService service,
-            Framework framework,
+            IFramework framework,
             String project, Map instanceConfiguration
     )
     {
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
-                project, instanceConfiguration, name, service.getName());
+                project, instanceConfiguration, service.getName(), name);
         return validatePluginByName(name, service, resolver, PropertyScope.Instance)
     }
 
@@ -359,7 +374,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
-        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+         DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
         if (null != beanPlugin) {
             return beanPlugin
         }

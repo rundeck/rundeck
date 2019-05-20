@@ -1,6 +1,9 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.annotation.Subscriber
@@ -80,7 +83,9 @@ class FileUploadService {
 
 
     FileUploadPlugin getPlugin() {
-        def configured = pluginService.configurePlugin(pluginType, [:], FileUploadPlugin)
+        PluggableProviderService fileUploadProviderService = frameworkService.getRundeckPluginRegistry().createPluggableService(FileUploadPlugin.class)
+        def configured = pluginService.configurePlugin(pluginType, fileUploadProviderService, frameworkService.getFrameworkPropertyResolver(),
+                                                       PropertyScope.Framework)
         def plugin = configured.instance
         plugin.initialize()
         return plugin

@@ -45,7 +45,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 
 //versions of dependency we want to verify
 def versions=[
-        mysql:'5.1.42',
+        mysql:'5.1.47',
         jetty:'9.4.11.v20180605',
         servlet:'api-3.1.0'
 ]
@@ -117,7 +117,6 @@ def manifest=[
     "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
     "plugins/upvar-plugin/${target}/rundeck-upvar-plugin-${version}.jar":[:],
     "plugins/object-store-plugin/${target}/rundeck-object-store-plugin-${version}.jar":[:],
-    "plugins/local-tours-plugin/${target}/rundeck-local-tours-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate

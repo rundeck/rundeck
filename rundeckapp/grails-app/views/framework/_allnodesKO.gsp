@@ -14,29 +14,27 @@
 - limitations under the License.
 --}%
 
-<div xdata-bind="if: view()=='table'">
-    <div id="tagdemo">
-        <span data-bind="if: nodeSet().tagsummary">
+<div>
+    <div id="nodes_tags" data-bind="if: nodeSet().tagsummary">
             <span data-bind="foreach: nodeSet().tagsummary">
                 <span class="summary nodetags">
-                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-default', tag: tag"></node-filter-link>
+                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-muted', tag: tag"></node-filter-link>
                 </span>
             </span>
-        </span>
     </div>
     <div class="row row-space">
         <div class="col-sm-12 ">
             <table cellpadding="0" cellspacing="0" width="100%" id="nodesTable" class="nodesTable" >
                 <tr>
-                    <th>
+                    <th class="table-header">
                       <g:message code="Node"/></th>
                     <!--ko foreach: filterColumns-->
-                    <th data-bind="text: $data" class="text-capitalize"></th>
+                    <th data-bind="text: $data" class="text-capitalize table-header"></th>
                     <!--/ko -->
 
                     <!-- ko if: useDefaultColumns -->
-                    <th><g:message code="resource.metadata.entity.tags"/></th>
-                    <th colspan="3"><g:message code="user.at.host" /></th>
+                    <th class="table-header"><g:message code="resource.metadata.entity.tags"/></th>
+                    <th colspan="3" class="table-header"><g:message code="user.at.host" /></th>
                     <!-- /ko -->
                     <th></th>
                 </tr>
@@ -45,7 +43,7 @@
                     <td class="nodeident" data-bind="attr: {title: attributes.description}" >
 
                         <a href="#" data-toggle="collapse" data-bind="attr: {href: '#detail_'+$index() }">
-                            <i class="auto-caret"></i>
+                            <i class="auto-caret text-muted"></i>
                             <span class="node_ident" data-bind="css: {server: islocal}, css: $root.nodeSet().nodeCss(attributes), style: $root.nodeSet().nodeStyle(attributes)">
                                     <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                                     <!-- ko if: attributes['ui:icon:name'] -->
@@ -54,7 +52,7 @@
                                     <!-- /ko -->
                                     <!-- /ko -->
                                     <!-- ko if: !attributes['ui:icon:name'] -->
-                                    <i class="rdicon node icon-small" data-bind="css: {authrun: 'node-runnable'}"></i>
+                                        <i class="fas fa-hdd"></i>
                                     <!-- /ko -->
                                     </span>
                                     <span data-bind="text: nodename"></span>
@@ -66,7 +64,7 @@
                                         filterval: nodename,
                                         linkicon: 'glyphicon glyphicon-circle-arrow-right',
                                         "></node-filter-link>
-                        <div>
+
                           <span class="nodedesc"></span>
                           <span class="text-primary ">
                               <!-- ko if: attributes['ui:badges'] -->
@@ -76,7 +74,18 @@
                               <!-- /ko -->
                               <span data-bind="text: attributes.description"></span>
                           </span>
-                        </div>
+                          <span data-bind="css: $root.nodeSet().statusIconCss(attributes), style: $root.nodeSet().statusIconStyle(attributes)">
+                              <!-- ko if: attributes['ui:status:icon'] -->
+                              <!-- ko with: attributes['ui:status:icon']() -->
+                              <i  data-bind="css: $root.nodeSet().glyphiconCss($data)"></i>
+                              <!-- /ko -->
+                              <!-- /ko -->
+
+                              <!-- ko if: attributes['ui:status:text'] -->
+                              <span  data-bind="text: attributes['ui:status:text']"></span>
+                              <!-- /ko -->
+                          </span>
+                        
                     </td>
 
                     <!--ko foreach: $root.filterColumns -->
@@ -87,7 +96,8 @@
                                     <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
-                                        <node-filter-link class="label label-default" params="
+                                        <node-filter-link params="
+                                                    classnames: 'label label-muted',
                                                     filterkey: 'tags',
                                                     filterval: $data,
                                                     tag: $data
@@ -254,7 +264,7 @@
 
 <div id="remoteEditholder" style="display:none" class="popout">
     <span id="remoteEditHeader">
-        <span class="welcomeMessage">Edit node: <i class="rdicon node icon-small"></i> <span id="editNodeIdent"></span></span>
+        <span class="welcomeMessage">Edit node: <i class="fas fa-hdd"></i> <span id="editNodeIdent"></span></span>
     </span>
     <span class="toolbar" id="remoteEditToolbar">
         <span class="action " onclick="_remoteEditCompleted();" title="Close the remote edit box and discard any changes"><g:img file="icon-tiny-removex-gray.png" /> Close remote editing</span>

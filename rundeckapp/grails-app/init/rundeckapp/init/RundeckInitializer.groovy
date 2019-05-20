@@ -17,6 +17,7 @@ package rundeckapp.init
 
 import com.dtolabs.rundeck.core.utils.ZipUtil
 import grails.util.Environment
+import org.rundeck.security.CliAuthTester
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.Resource
 import rundeckapp.Application
@@ -52,6 +53,9 @@ class RundeckInitializer {
     public static final String SPRING_BOOT_TRUSTSTORE_PWD_PROP = "server.ssl.trust-store-password"
     public static final String SPRING_BOOT_ENABLE_SSL_PROP = "server.ssl.enabled"
     private static final String LINESEP = System.getProperty("line.separator");
+
+    private static final String WAR_BASE = "WEB-INF/classes"
+    private static final String FILE_PROTOCOL = "file:"
 
     private static final List<String> SUPPRESS_JAR_EXTRACT_FAILURE_LIST = ["jna-platform-4.1.0.jar","jna-4.1.0.jar"]
 
@@ -97,6 +101,11 @@ class RundeckInitializer {
         initConfigurations()
         setSystemProperties()
         initSsl()
+
+        if(config.isTestAuth()) {
+            CliAuthTester authTester = new CliAuthTester()
+            System.exit(authTester.testAuth(config) ? 0 : 1)
+        }
 
         File installCompleteMarker = new File(config.baseDir+"/var/.install_complete-"+System.getProperty("build.ident","missing-ver"))
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
@@ -290,12 +299,22 @@ class RundeckInitializer {
             //This is probably a jboss based server
             def vfsFile = location.getContent()
             vfsDirectoryDetected = true
-            if(location.toString().endsWith("WEB-INF/classes")) {
+            if(location.toString().endsWith(WAR_BASE)) {
                 return vfsFile.getPhysicalFile()
             }
         }
 
         try {
+            if(Environment.isWarDeployed()) {
+                String sloc = location.toString()
+                if(sloc.endsWith(".class") && sloc.contains(WAR_BASE)) {
+                    //An unusual case where the location returned by the protection domain code source did not give us a usable location.
+                    //Seen in Tomcat 7 on Centos 7
+                    String webinfclassesdir = sloc.substring(FILE_PROTOCOL.length(),sloc.indexOf(WAR_BASE)+WAR_BASE.length())
+                    return new File(webinfclassesdir)
+                }
+            }
+
             return new File(location.toURI());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
@@ -339,11 +358,24 @@ class RundeckInitializer {
         if(renamedDestFileName == "log4j.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             destinationFile = new File(thisJar.absolutePath,renamedDestFileName)
         }
-
+        if(destinationFile.name.contains("._")) return //skip partials here
         if(!overwrite && destinationFile.exists()) return
         if(!destinationFile.parentFile.exists()) destinationFile.parentFile.mkdirs()
         DEBUG("Writing config file: " + destinationFile.getAbsolutePath());
         expandTemplate(sourceTemplate.newInputStream(),destinationFile.newOutputStream(),props)
+
+        //add partial templates to destination
+        File sourceDir = sourceTemplate.parentFile
+        int i = 1;
+        File partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
+        while (partial.exists()) {
+            DEBUG("Adding partial template: " + partial.name)
+            ByteArrayOutputStream out = new ByteArrayOutputStream()
+            expandTemplate(partial.newInputStream(),out,props)
+            destinationFile << out.toString()
+            i++;
+            partial = new File(sourceDir, destinationFile.getName() + "._" + i+".template");
+        }
 
         if(renamedDestFileName == "rundeck-config.properties" && Environment.isWarDeployed() && !vfsDirectoryDetected) {
             List<String> rundeckConfig = destinationFile.readLines()

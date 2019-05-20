@@ -22,7 +22,7 @@
     <g:if test="${cutoffMarker}">
         <g:set var="remainingLine" value="${g.textBeforeLine(text: remainingLine, marker:cutoffMarker)}"/>
     </g:if>
-    <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
+
     <g:if test="${remainingLine?.trim()}">
         <g:set var="replTokens" value="${[:]}"/>
         <g:if test="${service && name}">
@@ -34,20 +34,21 @@
             <g:set var="replTokens" value="${['plugin.url':pluginBaseUrl]}"/>
         </g:if>
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
-            <span class="expandComponentHolder">
-              <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}" hideGlyphicon="true">
-                <span class="btn btn-default btn-xs more-indicator-verbiage">
-                  ${moreText?:message(code: "more", default: "More")}
-                </span>
-                <span class="btn btn-default btn-xs less-indicator-verbiage">
-                    <g:message code="less"  default="Less"/>
-                </span>
-              </g:expander>
-              <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
-                  <hr/>
-                  <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
-              </span>
-            </span>
+            <details class="more-info" ${mode=='expanded'?'open':''}>
+                <summary>
+                    <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
+                    <span class="btn-link btn-xs more-indicator-verbiage">
+                        ${moreText?:message(code: "more", default: "More")}
+                    </span>
+                    <span class="btn-link btn-xs less-indicator-verbiage">
+                        <g:message code="less"  default="Less"/>
+                    </span>
+                </summary>
+                <div class="${enc(attr: markdownCss ?: '')} more-info-content" >
+                    <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
+                </div>
+            </details>
+
         </g:if>
         <g:elseif test="${mode!='hidden'}">
             <span class="${enc(attr: markdownCss ?: '')}">
@@ -55,6 +56,9 @@
             </span>
         </g:elseif>
     </g:if>
+    <g:else>
+        <span class="${enc(attr: textCss ?: '')}"><g:enc>${firstline}</g:enc></span>
+    </g:else>
 </g:if>
 <g:else>
     <span class="${enc(attr:textCss?:'')}">

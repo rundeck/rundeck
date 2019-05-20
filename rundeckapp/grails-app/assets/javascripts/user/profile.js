@@ -116,7 +116,7 @@ function clearToken(elem) {
         type: 'POST',
         dataType: 'json',
         url: _genUrl(appLinks.userClearApiToken, params),
-        beforeSend: _ajaxSendTokens.curry('api_req_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.error) {
                 tokenAjaxError(data.error);
@@ -130,7 +130,7 @@ function clearToken(elem) {
         }, complete: function () {
             jQuery('#' + elem.identify() + ' .modal').modal('hide');
         }
-    }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
 function generateUserToken(login, elem, data) {
     var dom = jQuery('#' + elem);
@@ -139,7 +139,7 @@ function generateUserToken(login, elem, data) {
         dataType: 'json',
         url: _genUrl(appLinks.userGenerateUserToken),
         data: data,
-        beforeSend: _ajaxSendTokens.curry('api_req_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.result) {
                 addTokenRow(elem, login, data.tokenid);
@@ -151,7 +151,7 @@ function generateUserToken(login, elem, data) {
             tokenAjaxError(jqxhr.responseJSON && jqxhr.responseJSON.error ? jqxhr.responseJSON.error : error);
         }
     })
-        .success(_ajaxReceiveTokens.curry('api_req_tokens'))
+        .success(_createAjaxReceiveTokensHandler('api_req_tokens'))
         .then(function () {
             jQuery('#gentokenmodal').modal('hide');
         });
@@ -165,7 +165,7 @@ function revealUserToken(login, elem) {
         type: 'POST',
         dataType: 'json',
         url: _genUrl(appLinks.userRevealTokenData, {login: login, tokenid: tokenid}),
-        beforeSend: _ajaxSendTokens.curry('api_req_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.result) {
                 dom.hide();
@@ -178,7 +178,7 @@ function revealUserToken(login, elem) {
         error: function (jqxhr, status, error) {
             tokenAjaxError(jqxhr.responseJSON && jqxhr.responseJSON.error ? jqxhr.responseJSON.error : error);
         }
-    }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
 
 

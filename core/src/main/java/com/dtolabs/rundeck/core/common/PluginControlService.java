@@ -31,7 +31,6 @@ public interface PluginControlService {
     List<String> listDisabledPlugins();
 
     /**
-     * @param projectName project
      * @param plugins     descriptions list
      * @param serviceName service name
      * @return list of enabled plugin descriptions
@@ -61,7 +60,6 @@ public interface PluginControlService {
     boolean isDisabledPlugin(String pluginName, String serviceName);
 
     /**
-     * @param projectName project
      * @param pluginName  provider name
      * @param serviceName service name
      * @throws PluginDisabledException if the given plugin is disabled

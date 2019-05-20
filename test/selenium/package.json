@@ -7,8 +7,8 @@
     "selenium": "./bin/deck selenium",
     "selenium:watch": "./bin/deck selenium -j='--watch'",
     "selenium:debug:watch": "./bin/deck selenium --debug -j='--no-cache --watch'",
-    "selenium:viz": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u http://`hostname`:4440 -h\"",
-    "selenium:viz:update": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u http://`hostname`:4440 -h -j='-u'\""
+    "selenium:viz": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h\"",
+    "selenium:viz:update": "NETWORK=host docker-compose -f docker-local-compose.yml run --no-deps selenium \"npm install && ./bin/deck selenium -u ${RUNDECK_URL:-http://`hostname`:4440} -h -j='-u'\""
   },
   "author": "",
   "license": "ISC",
@@ -26,7 +26,7 @@
     "aws-sdk": "^2.318.0",
     "axios": "^0.18.0",
     "chalk": "^2.4.1",
-    "chromedriver": "^2.38.3",
+    "chromedriver": "2.46.0",
     "indent-string": "^3.2.0",
     "jest": "^23.2.0",
     "jest-image-snapshot": "^2.5.0",

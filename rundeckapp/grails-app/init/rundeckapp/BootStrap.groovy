@@ -1,6 +1,9 @@
 package rundeckapp
 
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheck
+import com.codahale.metrics.health.HealthCheckRegistry
+import com.dtolabs.launcher.Setup
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -17,9 +20,6 @@ import com.codahale.metrics.MetricRegistry
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.codahale.metrics.health.HealthCheck
-import com.codahale.metrics.health.HealthCheckRegistry
-import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
@@ -228,7 +228,7 @@ class BootStrap {
                  servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
                  servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
                  if (tokens) {
-                     log.debug("Loaded ${tokens.size} tokens from tokens file: ${tokensfile}...")
+                     log.debug("Loaded ${tokens.size()} tokens from tokens file: ${tokensfile}...")
                  }
              }
 
@@ -286,6 +286,12 @@ class BootStrap {
              SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
          }
 
+         if(!grailsApplication.config.rundeck.logout.redirect.url.isEmpty()) {
+             log.debug("Setting logout url to: ${grailsApplication.config.rundeck.logout.redirect.url}")
+             def logoutSuccessHandler = grailsApplication.mainContext.getBean("logoutSuccessHandler")
+             logoutSuccessHandler.defaultTargetUrl = grailsApplication.config.rundeck.logout.redirect.url
+         }
+
          if(grailsApplication.config.execution.follow.buffersize){
              servletContext.setAttribute("execution.follow.buffersize",grailsApplication.config.execution.follow.buffersize)
          }else{
@@ -323,6 +329,12 @@ class BootStrap {
          maxLastLines = maxLastLines instanceof String ? maxLastLines.toInteger() : maxLastLines
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
+         }
+         if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
+             log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
+            frameworkService.rescheduleAllCleanerExecutionsJob()
+         } else {
+             log.info("Feature 'cleanExecutionHistoryJob' is disabled")
          }
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override
@@ -459,6 +471,10 @@ class BootStrap {
                  log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
              fileUploadService.onBootstrap()
+
+             if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+                 log.warn("[Development Mode] Usage of H2 database is recommended only for development and testing")
+             }
          }
          grailsEventBus.notify('rundeck.bootstrap')
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")

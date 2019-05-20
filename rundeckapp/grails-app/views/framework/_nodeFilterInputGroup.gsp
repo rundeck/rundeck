@@ -15,7 +15,9 @@
   --}%
 
 %{--Filter navigation/selection dropdown--}%
+<g:if test="${showInputTitle}">
 <span class="input-group-addon input-group-addon-title"><g:message code="nodes" /></span>
+</g:if>
 <div class="input-group-btn">
   <button type="button" class="btn btn-default dropdown-toggle" data-bind="css: { 'btn-success': filterName(), 'btn-default': !filterName() }" data-toggle="dropdown">
     <span data-bind="text: filterNameDisplay() || ''"><g:message code="filter.title" /></span> <span class="caret"></span>
@@ -33,10 +35,13 @@
     </li>
     <li class="divider"></li>
     <li class="dropdown-header"><i class="glyphicon glyphicon-filter"></i> <g:message code="saved.filters" /></li>
-    <g:render template="/common/selectFilter" model="[filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? message(code:'all.nodes.menu.item') : null]"/>
+    <g:render template="/common/selectFilter" model="[className: 'nodefilterlink',filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? message(code:'all.nodes.menu.item') : null]"/>
   </ul>
 </div>
-<input type='search' name="${filterFieldName?enc(attr:filterFieldName):'filter'}" class="schedJobNodeFilter form-control"
+<input type='search'
+       name="${filterFieldName?enc(attr:filterFieldName):'filter'}"
+       class="schedJobNodeFilter form-control"
+       ${autofocus?'autofocus':''}
        data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
        data-toggle='popover'

@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.core.storage.KeyStorageLayer
 import grails.converters.JSON
+import groovy.transform.CompileStatic
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -184,14 +185,12 @@ class StorageController extends ControllerBase{
             def baos = new ByteArrayOutputStream()
             try{
                 def len=contents.writeContent(baos)
-                baos.writeTo(response.outputStream)
-                response.outputStream.close()
+                writeOutputStream(baos)
             }catch (IOException e){
                 //problem reading storage contents
                 log.error("Failed reading storage content: "+e.message,e)
                 response.status=HttpServletResponse.SC_INTERNAL_SERVER_ERROR
-                response.outputStream<<"Failed reading storage content: "+e.message
-                response.outputStream.close()
+                appendOutput(response, "Failed reading storage content: "+e.message)
             }
 
             return
@@ -209,6 +208,12 @@ class StorageController extends ControllerBase{
             default:
                 render jsonRenderResource(resource) as JSON
         }
+    }
+
+    @CompileStatic
+    private void writeOutputStream(ByteArrayOutputStream out) {
+        out.writeTo(response.outputStream)
+        response.outputStream.flush()
     }
 
     private Object renderError(String message) {
@@ -636,6 +641,7 @@ class StorageController extends ControllerBase{
         }
         return getResource(storageParams)
     }
+
     private def getResource(StorageParams storageParams,boolean forceDownload=false) {
         if (storageParams.hasErrors()) {
             apiService.renderErrorFormat(response, [

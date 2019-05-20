@@ -39,6 +39,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
+import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.ApiService
@@ -60,7 +61,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -1294,5 +1295,91 @@ class MenuControllerSpec extends Specification {
         model.users.admin
         model.users.admin.lastJob
 
+    }
+
+    def "api job forecast xml"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.scheduled=true
+        job1.save()
+
+        when:
+        params.id=testUUID
+        def result = controller.apiJobForecast()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+                Mock(UserAndRolesAuthContext)
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.xml != null
+        response.xml.id  == testUUID
+        response.xml.description  == 'a job'
+        response.xml.name  == 'job1'
+        response.xml.group  == 'some/where'
+        response.xml.href  == 'api/href'
+        response.xml.permalink  == 'gui/href'
+        response.xml.futureScheduledExecutions != null
+        response.xml.futureScheduledExecutions.size() == 1
+
+    }
+    def "api job forecast json"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.scheduled=true
+        job1.save()
+
+        when:
+        params.id=testUUID
+        response.format='json'
+        def result = controller.apiJobForecast()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+                Mock(UserAndRolesAuthContext)
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+        1 * controller.scheduledExecutionService.nextExecutions(_,_) >> [new Date()]
+
+        response.json != null
+        response.json.id  == testUUID
+        response.json.description  == 'a job'
+        response.json.name  == 'job1'
+        response.json.group  == 'some/where'
+        response.json.href  == 'api/href'
+        response.json.permalink  == 'gui/href'
+        response.json.futureScheduledExecutions != null
+        response.json.futureScheduledExecutions.size() == 1
     }
 }

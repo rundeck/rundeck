@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import rundeck.ScheduledExecutionStats
+
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -31,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
@@ -46,6 +49,7 @@ import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.ReferencedExecution
 import rundeck.controllers.ScheduledExecutionController
 import spock.lang.Issue
 import spock.lang.Specification
@@ -56,7 +60,7 @@ import spock.lang.Unroll
  */
 @TestFor(ScheduledExecutionService)
 @Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
-        WorkflowStep, Execution])
+        WorkflowStep, Execution, ReferencedExecution, ScheduledExecutionStats])
 class ScheduledExecutionServiceSpec extends Specification {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -1131,6 +1135,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAll(*_)>>true
             authorizeProjectResourceAll(*_)>>true
+            authorizeProjectResourceAny(*_)>>true
             existsFrameworkProject('AProject')>>true
             existsFrameworkProject('BProject')>>true
             getAuthContextWithProject(_,_)>>{args->
@@ -2136,6 +2141,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "load jobs with error handlers"(){
         given:
         setupDoUpdate()
+        service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
         def upload = new ScheduledExecution(
                 jobName: 'testUploadErrorHandlers',
                 groupPath: "testgroup",
@@ -2220,6 +2226,8 @@ class ScheduledExecutionServiceSpec extends Specification {
     def "load jobs should match updated jobs based on name,group,and project"(){
         given:
         setupDoUpdate()
+        //scm update setup
+        service.frameworkService.authorizeProjectJobAny(_,_,_,project) >> true
         def  uuid=UUID.randomUUID().toString()
         def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
         def upload = new ScheduledExecution(
@@ -2276,7 +2284,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         result.jobs.size() == 1
         result.jobs[0].properties.subMap(expect.keySet()) == expect
-
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,_,_) >> true
         where:
         origprops | inparams                   | expect
         //basic fields updated
@@ -2936,4 +2944,232 @@ class ScheduledExecutionServiceSpec extends Specification {
         [jobName: 'newName', executionEnabled: false]    | true
     }
 
+    @Unroll
+    def "scm update job using right update or scm_update permission"() {
+        given:
+        setupDoUpdate()
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+
+        def testmap=[
+                doNodedispatch: true,
+                nodeThreadcount: 4,
+                nodeKeepgoing: true,
+                nodeExcludePrecedence: true,
+                nodeInclude: 'asuka',
+                nodeIncludeName: 'test',
+                nodeExclude: 'testo',
+                nodeExcludeTags: 'dev',
+                nodeExcludeOsFamily: 'windows',
+                nodeIncludeTags: 'something',
+                description: 'blah'
+        ]
+
+        when:
+        def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
+
+        then:
+
+        result.jobs.size() == 1
+        result.jobs[0].properties.description == 'milk duds'
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+    }
+
+    def "not check scm_update permission if isnt a scm-import"() {
+        given:
+        setupDoUpdate()
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+
+        def testmap=[
+                doNodedispatch: true,
+                nodeThreadcount: 4,
+                nodeKeepgoing: true,
+                nodeExcludePrecedence: true,
+                nodeInclude: 'asuka',
+                nodeIncludeName: 'test',
+                nodeExclude: 'testo',
+                nodeExcludeTags: 'dev',
+                nodeExcludeOsFamily: 'windows',
+                nodeIncludeTags: 'something',
+                description: 'blah'
+        ]
+
+        when:
+        def result = service.loadJobs([upload], 'update', null, [method: 'x'], mockAuth())
+
+        then:
+
+        result.jobs.size() == 1
+        result.jobs[0].properties.description == 'milk duds'
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE],_) >> true
+        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+    }
+
+    @Unroll
+    def "scm update job without update or scm_update permission"() {
+        given:
+        setupDoUpdate()
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds']))
+
+        def testmap=[
+                doNodedispatch: true,
+                nodeThreadcount: 4,
+                nodeKeepgoing: true,
+                nodeExcludePrecedence: true,
+                nodeInclude: 'asuka',
+                nodeIncludeName: 'test',
+                nodeExclude: 'testo',
+                nodeExcludeTags: 'dev',
+                nodeExcludeOsFamily: 'windows',
+                nodeIncludeTags: 'something',
+                description: 'blah'
+        ]
+
+        when:
+        def result = service.loadJobs([upload], 'update', null, [method: 'scm-import'], mockAuth())
+
+        then:
+
+        result.jobs.size() == 0
+        result.errjobs.size() == 1
+        result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> false
+    }
+
+
+    @Unroll
+    def "scm delete scheduledExecution By Id"(){
+        given:
+        setupDoUpdate()
+        service.frameworkService.authorizeProjectResource(*_)>>false
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
+
+        when:
+        def result = service.deleteScheduledExecutionById(upload.id, mockAuth(), false, 'user', 'scm-import')
+
+        then:
+        result
+        result.success?.job
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_DELETE,AuthConstants.SCM_DELETE],_) >> true
+    }
+
+    @Unroll
+    def "not scm delete scheduledExecution By Id"(){
+        given:
+        setupDoUpdate()
+        service.frameworkService.authorizeProjectResource(*_)>>false
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
+        def uuid = UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams([:]) + [uuid: uuid]).save()
+        def upload = new ScheduledExecution(createJobParams([description: 'milk duds'])).save()
+
+        when:
+        def result = service.deleteScheduledExecutionById(upload.id, mockAuth(), false, 'user', 'non-scm')
+
+        then:
+        result
+        !result.sucess
+        result.error
+        0 * service.frameworkService.authorizeProjectJobAll(_,_,
+                [AuthConstants.SCM_DELETE],_) >> true
+    }
+
+    @Unroll
+    def "scm create jobs using scm_create"(){
+        given:
+        setupDoUpdate()
+        //scm create setup
+
+        def  uuid=UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+        def upload = new ScheduledExecution(
+                createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')
+        )
+
+        when:
+        def result = service.loadJobs([upload], 'create','remove', [method: 'scm-import'],  mockAuth())
+
+        then:
+        result.jobs.size()==1
+        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],'AProject') >> true
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],_) >> true
+
+    }
+
+    @Unroll
+    def "scm create jobs not using scm_create"(){
+        given:
+        setupDoUpdate()
+        //scm create setup
+
+        def  uuid=UUID.randomUUID().toString()
+        def orig = new ScheduledExecution(createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')+[uuid:uuid]).save()
+        def upload = new ScheduledExecution(
+                createJobParams(jobName:'job1',groupPath:'path1',project:'AProject')
+        )
+
+        when:
+        def result = service.loadJobs([upload], 'create','remove', [method: 'create'],  mockAuth())
+
+        then:
+        result.jobs.size()==1
+        1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
+                [AuthConstants.ACTION_CREATE],'AProject') >> true
+        0 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.SCM_CREATE],_) >> false
+        1 * service.frameworkService.authorizeProjectJobAny(_,_,
+                [AuthConstants.ACTION_CREATE],_) >> true
+
+    }
+
+    def "blank email notification attached options"() {
+        given:
+        setupDoValidate()
+
+        when:
+        def params = baseJobParams()+[
+                workflow      : new Workflow(
+                        threadcount: 1,
+                        keepgoing: true,
+                        commands: [new CommandExec(adhocRemoteString: 'a remote string')]
+                ),
+                notifications : [
+                        [
+                                eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
+                                type        : ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                                configuration     : [recipients : 'a@example.com,z@example.com', attachLog: true]
+                        ]
+                ]
+        ]
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+        def ScheduledExecution scheduledExecution = results.scheduledExecution
+
+        then:
+
+        results.failed
+        scheduledExecution != null
+        scheduledExecution instanceof ScheduledExecution
+
+        scheduledExecution.errors != null
+        scheduledExecution.errors.hasErrors()
+        scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH)
+
+    }
 }

@@ -3,10 +3,10 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import rundeck.services.framework.RundeckProjectConfigurable
+import org.rundeck.core.projects.ProjectConfigurable
 
 
-class MenuService implements RundeckProjectConfigurable {
+class MenuService implements ProjectConfigurable {
     static transactional = false
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -20,8 +20,8 @@ class MenuService implements RundeckProjectConfigurable {
             PropertyBuilder.builder().with {
                 options 'motdDisplay'
                 title 'Display the Project MOTD'
-                values("projectList", "projectHome")
-                labels([projectList: "Projects List", projectHome: "Project Home Page"])
+                values("projectList", "projectHome", "navbar")
+                labels([projectList: "Projects List", projectHome: "Project Home Page", navbar: "Navbar Indicator"])
                 required(false)
                 defaultValue null
             }.build(),

@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class WorkflowExecutionService extends ChainedProviderService<WorkflowExecutor> implements DescribableService {
+public class WorkflowExecutionService extends ChainedProviderService<WorkflowExecutor> implements DescribableService, PluggableProviderService<WorkflowExecutor> {
     private static final String SERVICE_NAME = ServiceNameConstants.WorkflowExecution;
 
     private List<ProviderService<WorkflowExecutor>> serviceList;

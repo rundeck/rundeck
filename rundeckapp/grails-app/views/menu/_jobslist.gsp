@@ -43,7 +43,7 @@
                                        </span>
 
                                        <g:render template="/scheduledExecution/description"
-                                                 model="[description: scheduledExecution?.description, textCss: 'text-primary', firstLineOnly:true]"/>
+                                                 model="[description: scheduledExecution?.description, textCss: 'text-secondary', firstLineOnly:true]"/>
                                </div>
                             </div>
                         </g:if>
@@ -142,7 +142,7 @@
                                 <div>
                                   <g:render template="/scheduledExecution/description"
                                             model="[description: scheduledExecution?.description,
-                                                    textCss:'text-primary',
+                                                    textCss:'text-secondary',
                                                     mode:'collapsed',
                                                     rkey:g.rkey(),
                                                     jobLinkId:scheduledExecution?.extid,
@@ -175,7 +175,7 @@
                                 </g:if>
                                 <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)}">
                                     <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
-                                          data-placement="auto left"
+                                          data-placement="auto right"
                                           title="${g.message(code: 'disabled.schedule.run')}">
                                         <i class="glyphicon glyphicon-time"></i>
                                         <span class="detail"><g:message code="disabled" /></span>
@@ -185,7 +185,7 @@
                                     <span class="scheduletime disabled has_tooltip"
                                           title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
                                           data-toggle="tooltip"
-                                          data-placement="auto left">
+                                          data-placement="auto right">
                                         <i class="glyphicon glyphicon-time"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>

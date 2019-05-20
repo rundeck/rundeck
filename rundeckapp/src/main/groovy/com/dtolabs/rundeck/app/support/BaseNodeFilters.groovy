@@ -52,6 +52,9 @@ public class BaseNodeFilters implements Validateable{
     Boolean nodeExcludePrecedence=true
     Boolean successOnEmptyNodeFilter=false
     String filter
+    String filterExclude
+    Boolean excludeFilterUncheck = false
+
 
     static constraints = {
         nodeInclude(nullable: true)
@@ -71,6 +74,9 @@ public class BaseNodeFilters implements Validateable{
         nodeExcludePrecedence(nullable: true)
         successOnEmptyNodeFilter(nullable: true)
         filter(nullable: true)
+        filterExclude(nullable: true)
+        excludeFilterUncheck(nullable: true)
+
     }
     static mapping = {
         nodeInclude(type: 'text')
@@ -88,6 +94,7 @@ public class BaseNodeFilters implements Validateable{
         nodeIncludeOsVersion(type: 'text')
         nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
+        filterExclude(type: 'text')
     }
 
     public boolean nodeFilterIsEmpty(){
@@ -105,6 +112,13 @@ public class BaseNodeFilters implements Validateable{
             return filter
         }
         return asFilter([include:asIncludeMap(),exclude:asExcludeMap()])
+    }
+    /**
+     * Generate an exclude filter string given the node filters
+     * @return
+     */
+    public String asExcludeFilter(){
+        return filterExclude
     }
     public static String asFilter(Map<String,Map<String, String>> filtermap){
         Map<String,String> include= filtermap.include
@@ -135,6 +149,37 @@ public class BaseNodeFilters implements Validateable{
         if (filters.filter) {
             nodeMap.putAll(NodeSet.parseFilter(filters.filter).exclude)
         }
+        if (filters.filterExclude && !filters.excludeFilterUncheck) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).include)
+        }
+        return nodeMap
+    }
+    public static Map<String, String> asIncludeUnselectedMap(filters) {
+        def nodeMap = [:]
+        nodeMap[NodeSet.HOSTNAME] = filters.nodeExclude
+        nodeMap[NodeSet.NAME] = filters.nodeExcludeName
+        nodeMap[NodeSet.TAGS] = filters.nodeExcludeTags
+        nodeMap[NodeSet.OS_NAME] = filters.nodeExcludeOsName
+        nodeMap[NodeSet.OS_FAMILY] = filters.nodeExcludeOsFamily
+        nodeMap[NodeSet.OS_ARCH] = filters.nodeExcludeOsArch
+        nodeMap[NodeSet.OS_VERSION] = filters.nodeExcludeOsVersion
+        if (filters.filterExclude && filters.excludeFilterUncheck) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).include)
+        }
+        return nodeMap
+    }
+    public static Map<String, String> asExcludeUnselectedMap(filters) {
+        def nodeMap = [:]
+        nodeMap[NodeSet.HOSTNAME] = filters.nodeExclude
+        nodeMap[NodeSet.NAME] = filters.nodeExcludeName
+        nodeMap[NodeSet.TAGS] = filters.nodeExcludeTags
+        nodeMap[NodeSet.OS_NAME] = filters.nodeExcludeOsName
+        nodeMap[NodeSet.OS_FAMILY] = filters.nodeExcludeOsFamily
+        nodeMap[NodeSet.OS_ARCH] = filters.nodeExcludeOsArch
+        nodeMap[NodeSet.OS_VERSION] = filters.nodeExcludeOsVersion
+        if (filters.filterExclude && filters.excludeFilterUncheck) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).exclude)
+        }
         return nodeMap
     }
     public Map<String, String> asIncludeMap(){
@@ -151,6 +196,9 @@ public class BaseNodeFilters implements Validateable{
         nodeMap[NodeSet.OS_VERSION] = filters.nodeIncludeOsVersion
         if (filters.filter) {
             nodeMap.putAll(NodeSet.parseFilter(filters.filter).include)
+        }
+        if (filters.filterExclude && !filters.excludeFilterUncheck) {
+            nodeMap.putAll(NodeSet.parseFilter(filters.filterExclude).exclude)
         }
         return nodeMap
     }
@@ -176,5 +224,6 @@ public class BaseNodeFilters implements Validateable{
     (nodeExcludeOsVersion?", nodeExcludeOsVersion='" + nodeExcludeOsVersion + '\'' : '') +
     (nodeExcludePrecedence?", nodeExcludePrecedence=" + nodeExcludePrecedence : '') +
     (filter?", filter=" + filter : '') +
+    (filterExclude?", filter=" + filterExclude : '') +
     '}' ;
     }}

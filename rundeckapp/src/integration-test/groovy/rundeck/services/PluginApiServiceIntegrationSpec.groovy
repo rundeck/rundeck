@@ -25,7 +25,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
         def pluginList = pluginApiService.listPluginsDetailed()
 
         then:
-        pluginList.descriptions.size() == 20
+        pluginList.descriptions.size() == 22
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7
         pluginList.embeddedFilenames != null
@@ -35,4 +35,21 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
     }
 
+    void "list plugins option value plugin enabled"() {
+        setup:
+        pluginApiService.grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled=true
+
+        when:
+        def pluginList = pluginApiService.listPluginsDetailed()
+
+        then:
+        pluginList.descriptions.size() == 23
+        pluginList.serviceDefaultScopes.size() == 2
+        pluginList.bundledPlugins.size() == 7
+        pluginList.embeddedFilenames != null
+        pluginList.specialConfiguration.size() == 7
+        pluginList.specialScoping.size() == 2
+        pluginList.uiPluginProfiles != null
+
+    }
 }

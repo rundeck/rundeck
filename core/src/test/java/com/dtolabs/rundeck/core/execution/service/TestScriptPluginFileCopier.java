@@ -79,6 +79,8 @@ public class TestScriptPluginFileCopier {
         private File scriptFile;
         private boolean interpreterArgsQuoted;
         private Map<String, Object> metadata;
+        private PluginMeta pluginMeta;
+        private Map<String, String> providerMeta;
 
         @Override public String getName() {
             return name;
@@ -159,12 +161,25 @@ public class TestScriptPluginFileCopier {
 
         @Override
         public PluginMeta getPluginMeta() {
-            return null;
+            return pluginMeta;
+        }
+
+        public void setPluginMeta(PluginMeta pluginMeta) {
+            this.pluginMeta = pluginMeta;
         }
 
         @Override
         public boolean getDefaultMergeEnvVars() {
             return false;
+        }
+
+        @Override
+        public Map<String, String> getProviderMeta() {
+            return providerMeta;
+        }
+
+        public void setProviderMeta(Map<String, String> providerMeta) {
+            this.providerMeta = providerMeta;
         }
     }
 
@@ -358,6 +373,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         ScriptPluginFileCopier scriptPluginFileCopier = new ScriptPluginFileCopier(testProvider, framework);
         scriptPluginFileCopier.setScriptExecHelper(
@@ -434,6 +452,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         ScriptPluginFileCopier scriptPluginFileCopier = new ScriptPluginFileCopier(testProvider, framework);
         scriptPluginFileCopier.setScriptExecHelper(
@@ -511,6 +532,9 @@ public class TestScriptPluginFileCopier {
         testProvider.setMetadata(new HashMap<String, Object>());
         testProvider.setName("test-plugin");
         testProvider.setScriptArgs("");
+        PluginMeta pluginMeta = new PluginMeta();
+        pluginMeta.setRundeckPluginVersion("1.2");
+        testProvider.setPluginMeta(pluginMeta);
 
         final String testOutputFilepath = "/another/test/path";
 

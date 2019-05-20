@@ -453,7 +453,10 @@ class WorkflowController extends ControllerBase {
         if (isErrorHandler) {
             wfEditAction = 'true' == params.newitem ? 'addHandler' : 'modifyHandler'
         }
-        def result = _applyWFEditAction(editwf, [action: wfEditAction, num: numi, params: params])
+        def result = _applyWFEditAction(
+                editwf,
+                [action: wfEditAction, num: numi, params: params, project: params.project]
+        )
         if (result.error) {
             log.error(result.error)
             item=result.item
@@ -787,7 +790,7 @@ class WorkflowController extends ControllerBase {
         } else if (input.action == 'insert') {
             def num = input.num
             def item= createItemFromParams(input.params)
-            _validateCommandExec(item, params.newitemtype, fprojects)
+            _validateCommandExec(item, params.newitemtype, fprojects, false, input.project)
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
             }
@@ -954,7 +957,7 @@ class WorkflowController extends ControllerBase {
             }
             def WorkflowStep item = editwf.commands.get(numi)
             def ehitem= createItemFromParams(input.params)
-            _validateCommandExec(ehitem, params.newitemtype, fprojects)
+            _validateCommandExec(ehitem, params.newitemtype, fprojects, false, input.project)
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }
@@ -1134,13 +1137,20 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
+    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null, boolean strict=false, String project=null) {
         if (exec instanceof JobExec) {
+            if(strict){
+                def refSe = exec.findJob(project)
+
+                if(!refSe){
+                    exec.errors.rejectValue('jobName', 'commandExec.jobName.strict.validation.message')
+                }
+            }
             if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }
             if(exec.uuid && !exec.jobName){
-                def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
+                def refSe = exec.findJob(project)
                 if(refSe){
                     exec.jobProject = refSe.project
                 }

@@ -6,18 +6,24 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.TourLoaderPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.core.GrailsApplication
 import org.grails.web.util.WebUtils
 import org.springframework.context.NoSuchMessageException
+import rundeck.services.feature.FeatureService
 
 import javax.servlet.ServletContext
 import java.text.SimpleDateFormat
@@ -29,6 +35,7 @@ class PluginApiService {
     FrameworkService frameworkService
     def messageSource
     UiPluginService uiPluginService
+    UIPluginProviderService uiPluginProviderService
     NotificationService notificationService
     LoggingService loggingService
     PluginService pluginService
@@ -36,7 +43,7 @@ class PluginApiService {
     LogFileStorageService logFileStorageService
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
-    TourLoaderPluginProviderService tourLoaderPluginProviderService
+    FeatureService featureService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -49,7 +56,7 @@ class PluginApiService {
                 framework.getNodeExecutorService(),
                 framework.getFileCopierService(),
                 framework.getNodeStepExecutorService(),
-                framework.getStepExecutionService(),
+                framework.getStepExecutionService()
         ].collectEntries{
             [it.name, it.listDescriptions().sort {a,b->a.name<=>b.name}]
         }
@@ -62,7 +69,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-
+        pluginDescs[ServiceNameConstants.NodeEnhancer]=pluginService.listPlugins(NodeEnhancerPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
         //TODO: use pluginService.listPlugins for these services/plugintypes
         [
                 framework.getResourceFormatParserService(),
@@ -71,6 +80,12 @@ class PluginApiService {
         ].each {
 
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
+        }
+
+        if(featureService.featurePresent("option-values-plugin")) {
+            pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
         }
 
         //web-app level plugin descriptions
@@ -99,7 +114,7 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
-        pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+        pluginDescs['FileUpload']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
@@ -108,10 +123,12 @@ class PluginApiService {
         pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-        pluginDescs[tourLoaderPluginProviderService.name]=pluginService.listPlugins(TourLoaderPlugin).collect {
+        pluginDescs['TourLoader']=pluginService.listPlugins(TourLoaderPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
-
+        pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
@@ -119,7 +136,7 @@ class PluginApiService {
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
-                def filename = uiPluginProfiles[provIdent].get('metadata')?.filename
+                def filename = uiPluginProfiles[provIdent].get('fileMetadata')?.filename
                 if(filename){
                     if(!loadedFileNameMap[filename]){
                         loadedFileNameMap[filename]=[]
@@ -140,7 +157,7 @@ class PluginApiService {
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
-                FileUploadPluginService: ['filesystem-temp'],
+                FileUpload: ['filesystem-temp'],
         ]
         //list included plugins
         def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
@@ -170,8 +187,8 @@ class PluginApiService {
                 (scmService.scmImportPluginProviderService.name):[
                         description: message("plugin.scmImport.special.description",locale),
                 ],
-                FileUploadPluginService:[
-                        description: message("plugin.FileUploadPluginService.special.description",locale),
+                FileUpload:[
+                        description: message("plugin.FileUpload.special.description",locale),
                 ]
         ]
         def specialScoping=[
@@ -266,12 +283,37 @@ class PluginApiService {
             allowed               : prop.selectValues,
             selectLabels          : prop.selectLabels,
             scope                 : prop.scope?.toString(),
-            options               : prop.renderingOptions
+            options               : asStringMap(prop)
         ]
     }
 
+    public Map<String, String> asStringMap(Property prop) {
+        if (!prop.renderingOptions) {
+            return null
+        }
+        Map<String, String> opts = [:]
+        prop.renderingOptions.each { String k, Object v ->
+            opts[k]=v.toString()
+        }
+        opts
+    }
+
     def listInstalledPluginIds() {
-        return listPlugins()*.providers.collect { it.pluginId }.flatten()
+        def idList = [:]
+        def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
+        plugins.each{ entry ->
+            def meta = frameworkService.getRundeckFramework().
+                    getPluginManager().
+                    getPluginMetadata("UI", entry.key)
+            String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(entry.key)
+            idList[id] = meta?.pluginFileVersion ?: "1.0.0"
+        }
+
+        listPlugins().each { p ->
+            p.providers.each { idList[it.pluginId] = it.pluginVersion }
+        }
+
+        return idList
     }
 
     Locale getLocale() {
@@ -288,7 +330,12 @@ class PluginApiService {
     }
 
     private long toEpoch(String dateString) {
-        PLUGIN_DATE_FMT.parse(dateString).time
+        try {
+            return PLUGIN_DATE_FMT.parse(dateString).time
+        } catch(Exception ex) {
+            log.error("unable to parse date: ${dateString}")
+        }
+        return System.currentTimeMillis()
     }
 
     private static final SimpleDateFormat PLUGIN_DATE_FMT = new SimpleDateFormat("EEE MMM dd hh:mm:ss Z yyyy")

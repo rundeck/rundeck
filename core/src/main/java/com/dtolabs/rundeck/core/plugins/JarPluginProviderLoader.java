@@ -90,6 +90,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
     public static final String RUNDECK_PLUGIN_TAGS = "Rundeck-Plugin-Tags";
     public static final String RUNDECK_PLUGIN_THIRD_PARTY_DEPS = "Rundeck-Plugin-Third-Party-Dependencies";
     public static final String RUNDECK_PLUGIN_SOURCE_LINK = "Rundeck-Plugin-Source-Link";
+    public static final String RUNDECK_PLUGIN_DOCS_LINK = "Rundeck-Plugin-Docs-Link";
     public static final String RUNDECK_PLUGIN_TARGET_HOST_COMPAT = "Rundeck-Plugin-Target-Host-Compatibility";
 
     //End Plugin Version 2 attributes
@@ -272,13 +273,14 @@ public class JarPluginProviderLoader implements ProviderLoader,
     private Attributes getMainAttributes() {
         if (null == mainAttributes) {
             mainAttributes = getJarMainAttributes(pluginJar);
-            if(mainAttributes!= null &&
-                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION) != null &&
-                    mainAttributes.getValue(RUNDECK_PLUGIN_VERSION).equals(JAR_PLUGIN_VERSION_2_0)) {
-                String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
-                if(pluginName == null) pluginName = pluginJar.getName();
-                pluginId = PluginUtils.generateShaIdFromName(pluginName);
+            String pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+            if(pluginName == null) {
+                //Fallback to something that will rarely change
+                //This is not ideal, but old plugins do not always have a name
+                //set in the attributes
+                pluginName = mainAttributes.getValue(RUNDECK_PLUGIN_CLASSNAMES);
             }
+            pluginId = PluginUtils.generateShaIdFromName(pluginName);
         }
         return mainAttributes;
     }
@@ -750,11 +752,11 @@ public class JarPluginProviderLoader implements ProviderLoader,
             String rundeckCompat = mainAttributes.getValue(RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
             if(rundeckCompat == null) throw new InvalidManifestException("Jar plugin manifest attribute missing: " + RUNDECK_PLUGIN_RUNDECK_COMPAT_VER);
             ArrayList<String> errors = new ArrayList<>();
-            PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckCompat);
-            if(!errors.isEmpty()) {
-                StringBuilder b = new StringBuilder();
-                for(String err : errors) { b.append(err);b.append("\n"); }
-                throw new InvalidManifestException(b.toString());
+            PluginValidation.State
+                state =
+                PluginMetadataValidator.validateRundeckCompatibility(errors, rundeckCompat);
+            if (!state.isValid()) {
+                throw new InvalidManifestException(String.join("\n", errors));
             }
         }
     }
@@ -923,7 +925,8 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public String getPluginArtifactName() {
         Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        String name = mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        return name != null ? name : pluginJar.getName();
     }
 
     @Override
@@ -935,7 +938,8 @@ public class JarPluginProviderLoader implements ProviderLoader,
     @Override
     public String getPluginFileVersion() {
         Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+        String version = mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+        return version != null ? version : "1.0.0";
     }
 
     @Override
@@ -965,8 +969,7 @@ public class JarPluginProviderLoader implements ProviderLoader,
 
     @Override
     public String getPluginName() {
-        Attributes mainAttributes = getMainAttributes();
-        return mainAttributes.getValue(RUNDECK_PLUGIN_NAME);
+        return getPluginArtifactName();
     }
 
     @Override
@@ -1022,6 +1025,12 @@ public class JarPluginProviderLoader implements ProviderLoader,
     public String getPluginSourceLink() {
         Attributes mainAttributes = getMainAttributes();
         return mainAttributes.getValue(RUNDECK_PLUGIN_SOURCE_LINK);
+    }
+
+    @Override
+    public String getPluginDocsLink() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_DOCS_LINK);
     }
 
     @Override

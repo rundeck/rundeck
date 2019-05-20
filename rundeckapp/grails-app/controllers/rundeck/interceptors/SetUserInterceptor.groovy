@@ -114,7 +114,7 @@ class SetUserInterceptor {
 
         //find AuthorizationRoleSource instances
         Map<String,AuthorizationRoleSource> type = applicationContext.getBeansOfType(AuthorizationRoleSource)
-        def roleset = new HashSet<String>()
+        def roleset = new HashSet<String>(userService.getUserGroupSourcePluginRoles(principal.name))
         type.each {name,AuthorizationRoleSource source->
             if(source.enabled) {
                 def roles = source.getUserRoles(principal.name, request)
@@ -147,6 +147,7 @@ class SetUserInterceptor {
         }
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
+            if(log.traceEnabled) log.trace("checking static tokens: ${tokens}")
             if (tokens[authtoken]) {
                 def userLine = tokens[authtoken]
                 def user = userLine.toString().split(",")[0]

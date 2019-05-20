@@ -255,7 +255,9 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
             .name(provider.getName())
             .title(MapData.metaStringProp(provider.getMetadata(), TITLE_PROP, provider.getName() + " Script Plugin"))
             .description(MapData.metaStringProp(provider.getMetadata(), DESCRIPTION_PROP, ""));
-
+        if (provider.getProviderMeta() != null) {
+            builder.metadata(MapData.toStringStringMap(provider.getProviderMeta()));
+        }
         if(allowCustomProperties) {
             createProperties(provider, useConventionalPropertiesMapping, builder);
         }
@@ -359,8 +361,16 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 description.getProperties()
         );
 
+        Map<String, Map<String, String>> newLocalDataContext = localDataContext;
 
-        return DataContextUtils.addContext("config", data, localDataContext);
+        VersionCompare pluginVersion = VersionCompare.forString(provider.getPluginMeta().getRundeckPluginVersion());
+        if(pluginVersion.atLeast(VersionCompare.forString(ScriptPluginProviderLoader.VERSION_2_0))){
+            //new context variable name
+            newLocalDataContext = DataContextUtils.addContext(serviceName.toLowerCase(), data, localDataContext);
+        }
+
+                //using "config" name to old plugins
+        return DataContextUtils.addContext("config", data, newLocalDataContext);
     }
 
     /**

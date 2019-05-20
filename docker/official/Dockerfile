@@ -1,13 +1,19 @@
-FROM rundeck/ubuntu-base@sha256:7057294fad2e341ea2582acf0a4d26fc66d7e1cf8d875f4207d3377f4b9fbd9f
+FROM rundeck/ubuntu-base@sha256:da17cd6654dc861c92c3a73dbb7fed90932ab3e6364a33b4eb92d72c40da24c2
 
-COPY --chown=rundeck:rundeck .build .
-RUN java -jar rundeck.war --installonly
+COPY --chown=rundeck:root .build .
+RUN java -jar rundeck.war --installonly \
+    # Create plugin folder
+    && mkdir libext \
+    # Adjust permissions for OpenShift
+    && chmod -R 0775 libext server tools user-assets var
 
-COPY --chown=rundeck:rundeck remco /etc/remco
-COPY --chown=rundeck:rundeck lib docker-lib
-COPY --chown=rundeck:rundeck etc etc
+COPY --chown=rundeck:root remco /etc/remco
+COPY --chown=rundeck:root lib docker-lib
+COPY --chown=rundeck:root etc etc
+
+RUN chmod -R 0775 etc
 
 VOLUME ["/home/rundeck/server/data"]
 
 EXPOSE 4440
-ENTRYPOINT [ "docker-lib/entry.sh" ]
+ENTRYPOINT [ "/tini", "--", "docker-lib/entry.sh" ]

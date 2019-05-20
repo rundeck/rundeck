@@ -420,8 +420,10 @@ function autocompleteBase(baseVarData,liitem, iseh, isnodestepfunc, istextareate
 function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
     "use strict";
     var currentProject = jQuery('#schedEditFrameworkProject').val();
+    var isReadOnly = jQuery("#" + nameid).attr('readonly');
+    var minChar = isReadOnly?500:0;
     jQuery("#" + nameid).devbridgeAutocomplete({
-        minChars: 0,
+        minChars: minChar,
         deferRequestBy: 500,
         lookup: function (q, callback) {
             var project = projid && jQuery('#' + projid).val() || currentProject;
@@ -443,6 +445,29 @@ function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
             jQuery('#' + uuid).val(selected.data.id);
         }
     });
+}
+
+function _enableNameJobRefFields(enable,uuid,nameid, groupid, projid) {
+    "use strict";
+    var nameField = jQuery("#" + nameid);
+    var groupField = jQuery("#" + groupid);
+    var uuidField = jQuery("#" + uuid);
+
+    nameField.attr('readonly', !enable);
+    groupField.attr('readonly', !enable);
+    uuidField.attr('readonly', enable);
+    //_initJobPickerAutocomplete(uuid,nameid, groupid, projid);
+    if(nameField.devbridgeAutocomplete()) {
+        if (enable) {
+            nameField.devbridgeAutocomplete().setOptions({
+                minChars: 0
+            });
+        } else {
+            nameField.devbridgeAutocomplete().setOptions({
+                minChars: 500
+            });
+        }
+    }
 }
 var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
@@ -478,7 +503,7 @@ function _wfisave(key,num, formelem,iseh) {
         type: 'POST',
         url: _genUrl(appLinks.workflowSave),
         data: data,
-        beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('job_edit_tokens'),
         success: function (resp, status, jqxhr) {
             var litem = jQuery('#wfli_' + key);
             litem.html(resp);
@@ -495,7 +520,7 @@ function _wfisave(key,num, formelem,iseh) {
                 postLoadItemEdit('#wfli_' + key, iseh);
             }
         }
-    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 var newitemElem;
 function _wfiaddnew(type,nodestep) {
@@ -551,7 +576,7 @@ function _wfisavenew(formelem) {
         type:'POST',
         url:_genUrl(appLinks.workflowSave),
         data:data,
-        beforeSend:_ajaxSendTokens.curry('job_edit_tokens'),
+        beforeSend:_createAjaxSendTokensHandler('job_edit_tokens'),
         success:function(resp,status,jqxhr){
             jQuery(newitemElem).html(resp);
             if(jQuery(newitemElem).find('.wfitemEditForm').length > 0){
@@ -566,7 +591,7 @@ function _wfisavenew(formelem) {
                 newitemElem = null;
             }
         }
-    }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('job_edit_tokens'));
 }
 function _wficancelnew() {
     jQuery(newitemElem.parentNode).remove();
@@ -735,7 +760,7 @@ function _ajaxWFAction(url, params){
         type: 'POST',
         url: _genUrl(url),
         data: params,
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success: function (data, status, jqxhr) {
             jQuery('#workflowContent').find('ol').html(data);
             newitemElem = null;
@@ -1028,7 +1053,7 @@ function _optsave(formelem, tokendataid, target) {
         type: "POST",
         url:_genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: jQuery('#'+formelem+" :input").serialize(),
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success:function(data,status,xhr){
             _removeOptionName(optname);
             _addOption({name: optname, type: opttype, multivalued: multivalued});
@@ -1120,7 +1145,7 @@ function _optsavenew(formelem,tokendataid) {
         type: "POST",
         url: _genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: params,
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
             _addOption({name: optname, type: opttype, multivalued: multivalued});
@@ -1151,7 +1176,7 @@ function _doRemoveOption(name, elem,tokendataid) {
                 type:'POST',
                 url:_genUrl(appLinks.editOptsRemove),
                 data:params,
-                beforeSend:_ajaxSendTokens.curry(tokendataid),
+                beforeSend:_createAjaxSendTokensHandler(tokendataid),
                 success:function(data,status,jqxhr){
                     _removeOptionName(name);
                     jQuery('#optionsContent').find('ul').html(data);
@@ -1193,7 +1218,7 @@ function _doReorderOption(name,data) {
     jQuery.ajax({
         type: "POST",
         url:_genUrl(appLinks.editOptsReorder,params),
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success:function(data,status,xhr){
             jQuery('#optionsContent').find('ul').html(data);
             _showOptControls();
@@ -1212,7 +1237,7 @@ function _doUndoOptsAction() {
         type:'POST',
         url:_genUrl(appLinks.editOptsUndo),
         data:params,
-        beforeSend:_ajaxSendTokens.curry(tokendataid),
+        beforeSend:_createAjaxSendTokensHandler(tokendataid),
         success:function(data,status,jqxhr){
             jQuery('#optionsContent').find('ul').html(data);
             _showOptControls();
@@ -1229,7 +1254,7 @@ function _doRedoOptsAction() {
         type: 'POST',
         url: _genUrl(appLinks.editOptsRedo),
         data: params,
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success: function (data, status, jqxhr) {
             jQuery('#optionsContent').find('ul').html(data);
             _showOptControls();
@@ -1246,7 +1271,7 @@ function _doRevertOptsAction() {
         type: 'POST',
         url: _genUrl(appLinks.editOptsRevert),
         data: params,
-        beforeSend: _ajaxSendTokens.curry(tokendataid),
+        beforeSend: _createAjaxSendTokensHandler(tokendataid),
         success: function (data, status, jqxhr) {
             jQuery('#optionsContent').find('ul').html(data);
             _showOptControls();

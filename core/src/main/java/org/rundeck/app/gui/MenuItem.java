@@ -29,10 +29,20 @@ public interface MenuItem {
         /**
          *
          */
-        PROJECT,
-        PROJECT_CONFIG,
-        SYSTEM_CONFIG,
-        USER_MENU
+        PROJECT(true),
+        PROJECT_CONFIG(true),
+        SYSTEM_CONFIG(false),
+        USER_MENU(false);
+
+        MenuType(final boolean projectType) {
+            this.projectType = projectType;
+        }
+
+        private final boolean projectType;
+
+        public boolean isProjectType() {
+            return projectType;
+        }
     }
 
     /**
@@ -57,6 +67,29 @@ public interface MenuItem {
      */
     default String getProjectHref(String project) {
         return null;
+    }
+
+    /**
+     * @return css class string for icon in certain menu locations, or null for a default, e.g. 'fas fa-check' for
+     *         font-awesome, or 'glyphicon glyphicon-ok' for glyphicon
+     */
+    default String getIconCSS() {
+        return null;
+    }
+
+    /**
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabled() {
+        return true;
+    }
+
+    /**
+     * @param project name for project oriented items
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabled(String project) {
+        return true;
     }
 
 }

@@ -22,7 +22,7 @@ public class ExportVarWorkflowStep implements StepPlugin {
     @PluginProperty(title = "Value",
             description = "Value of the variable, to uplift a existing variable, use a reference to it, like ${data.var1@node1} or ${data.var1*}.\n" +
                     "Also you can use ${data.var1*} within a workflow step, which collates all node values for ${data.var1} as a comma-separated string.\n" +
-                    "Or ${data.var1*-} to use - as the delimiter insted of comma",
+                    "Or ${data.var1*-} to use - as the delimiter instead of comma",
             required = true)
     private String value;
     @PluginProperty(title = "Group",

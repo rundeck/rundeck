@@ -778,8 +778,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         try {
             jarPluginProviderLoader.createCachedJar(invalidCacheDir,jarPluginProviderLoader.generateCachedJarName(ident));
             fail("Should fail to create cached jar");
-        } catch (PluginException e) {
-            e.printStackTrace();
+        } catch (PluginException ignored) {
         }
         invalidCacheDir.delete();
     }

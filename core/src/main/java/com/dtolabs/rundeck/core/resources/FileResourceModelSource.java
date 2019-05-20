@@ -60,7 +60,7 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
                 .property(p -> p
                         .freeSelect(Configuration.FORMAT)
                         .title("Format")
-                        .description("Format of the file")
+                        .description("Format of the file. If unspecified, the format will be determined by the file extension.")
                         .values(formats)
                 )
                 .property(p -> p
@@ -101,6 +101,7 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
                         .required(false)
                         .defaultValue("false")
                 )
+                .metadata("glyphicon", "file")
 
         );
     }

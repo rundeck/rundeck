@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description; com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
 
 <%--
    _optEdit.gsp
@@ -73,21 +73,21 @@
         <div class="form-group">
             <div class="col-sm-10 col-sm-offset-2">
                 <g:if test="${fileUploadPluginDescription}">
-                    <stepplugin:pluginIcon service="FileUploadPluginService"
+                    <stepplugin:pluginIcon service="FileUpload"
                                            name="${fileUploadPluginDescription.name}"
                                            width="16px"
                                            height="16px">
                         <i class="rdicon icon-small plugin"></i>
                     </stepplugin:pluginIcon>
                     <stepplugin:message
-                            service="FileUploadPluginService"
+                            service="FileUpload"
                             name="${fileUploadPluginDescription.name}"
                             code="plugin.title"
                             default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
                     <span class="text-primary"><g:render template="/scheduledExecution/description"
                                                        model="[description:
                                                                        stepplugin.messageText(
-                                                                               service: 'FileUploadPluginService',
+                                                                               service: 'FileUpload',
                                                                                name: fileUploadPluginDescription.name,
                                                                                code: 'plugin.description',
                                                                                default: fileUploadPluginDescription.description
@@ -98,7 +98,7 @@
                     <g:if test="${fileUploadPluginDescription?.properties}">
                         <g:set var="prefix" value="${'configMap.'}"/>
                         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                service:'FileUploadPluginService',
+                                service:'FileUpload',
                                 provider:fileUploadPluginDescription.name,
                                 properties:fileUploadPluginDescription?.properties,
                                 report: configMapValidate,
@@ -364,32 +364,51 @@
         </div>
         <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.values.label" /></label>
-            <div class="col-sm-10">
-                <g:set var="valueTypeListChecked" value="${!option || !option.realValuesUrl && params.valuesType != 'url' ? true : false}"/>
+            <div class="col-sm-2">
+                <g:set var="valueTypeListChecked" value="${!option || (!option.realValuesUrl && !option.optionValuesPluginType) ? true : false}"/>
                 <div>
-                    <div class="radio radio-inline">
-                      <g:radio name="valuesType"
-                               value="list"
-                               checked="${valueTypeListChecked}"
-                               id="vtrlist_${rkey}"/>
-                        <label for="vtrlist_${rkey}" class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
-                            <g:message code="form.label.valuesType.list.label" />
-                        </label>
-                    </div>
+                        <div class="radio">
+                          <g:radio name="valuesType"
+                                   value="list"
+                                   checked="${valueTypeListChecked}"
+                                   id="vtrlist_${rkey}"/>
+                            <label for="vtrlist_${rkey}" class=" ${hasErrors(bean: option, field: 'values', 'has-error')}">
+                                <g:message code="form.label.valuesType.list.label" />
+                            </label>
+                        </div>
 
-                    <div class="radio radio-inline">
-                      <g:radio name="valuesType" value="url"
-                               checked="${option?.realValuesUrl || params.valuesType == 'url' ? true : false}"
-                               id="vtrurl_${rkey}"/>
-                        <label for="vtrurl_${rkey}" class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
-                            <g:message code="form.option.valuesType.url.label" />
-                        </label>
-                    </div>
+                        <div class="radio">
+                          <g:radio name="valuesType" value="url"
+                                   checked="${option?.realValuesUrl ? true : false}"
+                                   id="vtrurl_${rkey}"/>
+                            <label for="vtrurl_${rkey}" class="left ${hasErrors(bean: option, field: 'valuesUrl', 'fieldError')}">
+                                <g:message code="form.option.valuesType.url.label" />
+                            </label>
+                        </div>
+                <feature:enabled name="option-values-plugin">
+                    <!--List OptionValuesPlugins here -->
+                    <g:each in="${optionValuesPlugins}" var="optionValPlugin">
+                        <div class="radio">
+                            <g:radio name="valuesType" value="${optionValPlugin.key}"
+                                     checked="${option?.optionValuesPluginType == optionValPlugin.key}"
+                                     id="optvalplugin_${optionValPlugin.key}"/>
+                            <label for="optvalplugin_${optionValPlugin.key}" class="${hasErrors(bean: option, field: 'valuesFromPlugin', 'fieldError')}">
+                            ${optionValPlugin.value.description?.title}
+                            </label>
+                        </div>
 
-                    <g:set var="listvalue" value="${option?.valuesList}"/>
-                    <g:set var="listjoin" value="${option?.values }"/>
-
+                        <wdgt:eventHandler for="optvalplugin_${optionValPlugin.key}" state="unempty"  inline="true">
+                            <wdgt:action target="vlist_${rkey}_section" visible="false"/>
+                            <wdgt:action target="vurl_${rkey}_section" visible="false"/>
+                        </wdgt:eventHandler>
+                    </g:each>
+                </feature:enabled>
                 </div>
+
+            </div>
+            <div class="col-sm-8">
+                <g:set var="listvalue" value="${option?.valuesList}"/>
+                <g:set var="listjoin" value="${option?.values }"/>
                 <div id="vlist_${rkey}_section" style="${wdgt.styleVisible(if: valueTypeListChecked)}">
 
                     <g:textField name="valuesList"
@@ -403,25 +422,27 @@
                 </div>
 
                 <div id="vurl_${enc(attr: rkey)}_section"
-                     style="${wdgt.styleVisible(if: option?.realValuesUrl)}">
+                     style="padding-top: 27px; ${wdgt.styleVisible(if: option?.realValuesUrl && !option?.optionValuesPluginType)}">
                     <g:textField type="url"
-                           class=" form-control"
-                           name="valuesUrl"
-                           value="${option?.realValuesUrl?.toString()}"
-                           size="60"
-                           placeholder="Remote URL"
-                           id="vurl_${rkey}"
+                                 class=" form-control"
+                                 name="valuesUrl"
+                                 value="${option?.realValuesUrl?.toString()}"
+                                 size="60"
+                                 placeholder="Remote URL"
+                                 id="vurl_${rkey}"
                     />
 
                     <div class="help-block">
                         <g:message code="form.option.valuesUrl.description" />
-                        <a href="${g.helpLinkUrl(path: '/manual/jobs.html#option-model-provider')}"
-                            target="_blank">
+                        <a href="${g.helpLinkUrl(path: '/manual/defining-job-options.html#option-model-provider')}"
+                           target="_blank">
                             <i class="glyphicon glyphicon-question-sign"></i>
                             <g:message code="rundeck.user.guide.option.model.provider" />
                         </a>
                     </div>
                 </div>
+
+
 
                 %{--automatically check appropriate radio button when text is entered in the list or url field--}%
                 <wdgt:eventHandler for="vlist_${rkey}" state="unempty" target="vtrlist_${rkey}"
@@ -437,7 +458,7 @@
                     <wdgt:action target="vlist_${rkey}" focus="true"/>
                     <wdgt:action target="vlist_${rkey}_section" visible="true"/>
                     <wdgt:action target="vurl_${rkey}_section" visible="false"/>
-               </wdgt:eventHandler>
+                </wdgt:eventHandler>
                 <wdgt:eventHandler for="vtrurl_${rkey}" state="unempty"  inline="true">
                     <wdgt:action target="vurl_${rkey}" focus="true"/>
                     <wdgt:action target="vlist_${rkey}_section" visible="false"/>
@@ -450,49 +471,44 @@
             <div class="col-sm-10">
                 <div class="radio">
                     <g:radio name="enforcedType" value="none" checked="${!option || !option?.enforced && null==option?.regex}"
-                        id="enforcedType_none"
-                             class="evnonregex"/>
+                            id="enforcedType_none"
+                            data-bind="checked: enforceType"/>
                     <label for="enforcedType_none">
                         <g:message code="none" />
                     </label>
                     <span class="text-primary"><g:message code="form.option.enforcedType.none.label" /></span>
                 </div>
                 <div class="radio">
-                    <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}" class="evnonregex"
-                             id="enforcedType_enforced"
+                    <g:radio name="enforcedType" value="enforced" checked="${option?.enforced?true:false}"
+                            id="enforcedType_enforced"
+                            data-bind="checked: enforceType"
                     />
                     <label for="enforcedType_enforced" class="${hasErrors(bean:option,field:'enforced','fieldError')}">
                         <g:message code="form.option.enforced.label" />
                     </label>
                 </div>
                 <div class="radio">
-                    <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"/>
+                    <g:radio name="enforcedType" value="regex" checked="${option?.regex?true:false}" id="etregex_${enc(attr:rkey)}"
+                            data-bind="checked: enforceType"/>
                     <label for="etregex_${enc(attr:rkey)}" class="${hasErrors(bean:option,field:'regex','fieldError')}">
                         <g:message code="form.option.regex.label" />
                     </label>
                 </div>
             </div>
             <div class="col-sm-10 col-sm-offset-2">
-
+                <!-- ko if: isRegexEnforceType() -->
                 <g:textField
                         name="regex"
                         class="form-control"
                         value="${option?.regex}"
-                        style="${wdgt.styleVisible(if: option?.regex)}"
                         size="40"
                         placeholder="Enter a Regular Expression"
                         id="vregex_${enc(attr: rkey)}"/>
                     <g:if test="${regexError}">
                         <pre class="text-danger"><g:enc>${regexError.trim()}</g:enc></pre>
                     </g:if>
+                <!-- /ko -->
             </div>
-            <wdgt:eventHandler for="etregex_${rkey}" state="unempty" inline="true">
-                <wdgt:action target="vregex_${rkey}" focus="true"/>
-                <wdgt:action target="vregex_${rkey}" visible="true"/>
-            </wdgt:eventHandler>
-            <wdgt:eventHandler forSelector=".evnonregex" state="unempty" inline="true">
-                <wdgt:action target="vregex_${rkey}" visible="false"/>
-            </wdgt:eventHandler>
         </div>
         <!-- /ko -->
         <div class="form-group">
@@ -512,6 +528,26 @@
                 </div>
                 <div class="help-block">
                     <g:message code="Option.required.description"/>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label"><g:message code="Option.hidden.label" /></label>
+            <div class="col-sm-10">
+                <div class="radio radio-inline">
+                    <g:radio id="option-hidden-no" name="hidden" value="false" checked="${!option || !option.hidden}"/>
+                    <label for="option-hidden-no">
+                        <g:message code="no" />
+                    </label>    
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio id="option-hidden-yes" name="hidden" value="true" checked="${option?.hidden}"/>
+                    <label for="option-hidden-yes">
+                        <g:message code="yes" />
+                    </label>
+                </div>
+                <div class="help-block">
+                    <g:message code="Option.hidden.description"/>
                 </div>
             </div>
         </div>
@@ -682,7 +718,15 @@
     </div>
     <g:javascript>
       fireWhenReady('optedit_${enc(js: rkey)}',function(){
-          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
+          var isRegex = ${null!=option?.regex};
+          var enforced = ${option?.enforced?true:false};
+          var currentEnforceType = "none";
+          if(enforced && !isRegex){
+              currentEnforceType = "enforced";
+          } else if(isRegex) {
+              currentEnforceType = "regex";
+          }
+          var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}",enforceType:currentEnforceType});
           ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
       });
     </g:javascript>

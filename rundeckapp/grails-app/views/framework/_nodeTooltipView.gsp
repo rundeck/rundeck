@@ -17,7 +17,7 @@
 ${enc(attr:key)}_tooltip" style="display:none;" class="detailpopup node_entry ${islocal?'server':''} tooltipcontent node_filter_link_holder"
      data-node-filter-link-id="${enc(attr:nodefilterLinkId?:'')}" >
     <span >
-        <i class="rdicon node ${runnable ? 'node-runnable' : ''} icon-small"></i>
+        <i class="fas fa-hdd"></i>
         <g:enc>${node.nodename}</g:enc>
     </span>
     <tmpl:nodeFilterLink key="name" value="${node.nodename}"

@@ -11,3 +11,12 @@
     }
   }
 }
+
+.card {
+  .card-content {
+    &.tight {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
+}

@@ -26,48 +26,56 @@ public class PluginMetadataValidator {
     private static String INCOMPATIBLE_PLUGIN_VER_MSG = "Plugin is not compatible with this version of Rundeck";
     public final static String OS_TYPE = System.getProperty("os.name").toLowerCase();
 
-    public static void validateTargetHostCompatibility(
+    public static PluginValidation.State validateTargetHostCompatibility(
             final List<String> errors,
             final String targetHostCompatibility
     ) {
         if(targetHostCompatibility == null) {
-            errors.add("No targetHostCompatibility property specified");
-            return;
+            errors.add("No targetHostCompatibility property specified in metadata");
+            return PluginValidation.State.INVALID;
         }
-        if(targetHostCompatibility.equals("all")) return;
+        if(targetHostCompatibility.equals("all")) return PluginValidation.State.VALID;
         if(!HOST_TYPES.contains(targetHostCompatibility)) {
             errors.add("Unknown target host type specified: " + targetHostCompatibility + ". Allowed types: " +
                        Arrays.toString(HOST_TYPES.toArray()));
+            return PluginValidation.State.INVALID;
         }
 
         if((targetHostCompatibility.equals("unix") && OS_TYPE.startsWith("windows")) ||
            (targetHostCompatibility.equals("windows") && !OS_TYPE.startsWith("windows"))) {
             errors.add("Plugin target host("+targetHostCompatibility+") is incompatible with this Rundeck instance: " + OS_TYPE);
+            return PluginValidation.State.INCOMPATIBLE;
         }
+        return PluginValidation.State.VALID;
     }
 
-    public static void validateRundeckCompatibility(
+    public static PluginValidation.State validateRundeckCompatibility(
             final List<String> errors,
             final String rundeckCompatibilityVersion
     ) {
         if(rundeckCompatibilityVersion == null) {
-            errors.add("rundeckCompatibilityVersion cannot be null");
-            return;
+            errors.add("rundeckCompatibilityVersion cannot be null in metadata");
+            return PluginValidation.State.INVALID;
         }
         VersionCompare rundeckVer = VersionCompare.forString(VersionConstants.VERSION);
         VersionCompare compatVer = VersionCompare.forString(rundeckCompatibilityVersion);
         if(!compatVer.majString.equals(rundeckVer.majString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
-            return;
+            return PluginValidation.State.INCOMPATIBLE;
         }
-        boolean ignorePatch = compatVer.minString.matches("x|\\d\\+");
+        if(compatVer.minString.equals("x")) return PluginValidation.State.VALID;
+        Integer cmin = new Integer(compatVer.minString.replaceAll("\\+",""));
+        if(rundeckVer.min > cmin) return PluginValidation.State.VALID;
         if(!checkVer(rundeckVer.min,compatVer.minString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
-            return;
+            return PluginValidation.State.INCOMPATIBLE;
         }
-        if(!ignorePatch && !checkVer(rundeckVer.patch,compatVer.patchString)) {
+        if(compatVer.patchString == null) return PluginValidation.State.VALID;
+        if(!checkVer(rundeckVer.patch,compatVer.patchString)) {
             errors.add(INCOMPATIBLE_PLUGIN_VER_MSG);
+            return PluginValidation.State.INCOMPATIBLE;
         }
+        return PluginValidation.State.VALID;
     }
 
     private static boolean checkVer(final Integer rdVer, final String compVer) {
@@ -79,7 +87,7 @@ public class PluginMetadataValidator {
     }
 
     static boolean compare(Integer rd, Integer compat, boolean greater) {
-        if(greater && rd > compat) return true;
+        if(greater && rd >= compat) return true;
         return compat.equals(rd);
     }
 }

@@ -21,11 +21,13 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
+import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -46,6 +48,7 @@ import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
@@ -114,6 +117,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter                : 'POST',
             storeJobfilter                 : 'POST',
+            deleteJobFilterAjax            : 'POST',
+            saveJobFilterAjax              : 'POST',
             apiJobDetail                   : 'GET',
             apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
@@ -221,8 +226,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         id: it.scheduledExecution.extid,
                         params:[project:it.scheduledExecution.project]
                 )
-                if (it.scheduledExecution && it.scheduledExecution.totalTime >= 0 && it.scheduledExecution.execCount > 0) {
-                    data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
+                if (it.scheduledExecution){
+                    def avgDur = it.scheduledExecution.getAverageDuration()
+                    if(avgDur > 0) {
+                        data['jobAverageDuration'] = avgDur
+                    }
                 }
                 if (it.argString) {
                     data.jobArguments = FrameworkService.parseOptsFromString(it.argString)
@@ -411,9 +419,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             }
                         }
                     }
-                    if (se.totalTime >= 0 && se.execCount > 0) {
-                        def long avg = Math.floor(se.totalTime / se.execCount)
-                        data.averageDuration = avg
+                    if (se.getAverageDuration() > 0) {
+                        data.averageDuration = se.getAverageDuration()
                     }
                     JobInfo.from(
                             se,
@@ -818,6 +825,105 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
 
+    def deleteJobFilterAjax(String project, String filtername) {
+        withForm {
+            g.refreshFormTokensHeader()
+            def User u = userService.findOrCreateUser(session.user)
+            final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
+            if (ffilter) {
+                ffilter.delete(flush: true)
+            }
+            render(contentType: 'application/json') {
+                success true
+            }
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
+    def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
+        withForm {
+            g.refreshFormTokensHeader()
+            if (query.hasErrors()) {
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            def User u = userService.findOrCreateUser(session.user)
+            def ScheduledExecutionFilter filter
+            def boolean saveuser = false
+            if (query.newFilterName && !query.existsFilterName) {
+                if (ScheduledExecutionFilter.findByNameAndUser(query.newFilterName, u)) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'request.error.conflict.already-exists.message',
+                            args  : ["Job Filter", query.newFilterName]
+                    ]
+                    )
+                }
+                filter = ScheduledExecutionFilter.fromQuery(query)
+                filter.name = query.newFilterName
+                filter.user = u
+                if (!filter.validate()) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.invalid.request',
+                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                    ]
+                    )
+                }
+                u.addToJobfilters(filter)
+                saveuser = true
+            } else if (query.existsFilterName) {
+                filter = ScheduledExecutionFilter.findByNameAndUser(query.existsFilterName, u)
+                if (filter) {
+                    filter.properties = query.properties
+                    filter.fix()
+                }
+            }
+            if (!filter.save(flush: true)) {
+                flash.errors = filter.errors
+//                params.saveFilter = true
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            if (saveuser) {
+                if (!u.save(flush: true)) {
+                    return renderErrorView([beanErrors: filter.errors])
+                }
+            }
+
+            render(contentType: 'application/json') {
+                success true
+                filterName query.newFilterName
+            }
+        }.invalidToken {
+
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
 
@@ -1186,6 +1292,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         AuthConstants.ACTION_READ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
+        }
+        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+            flash.error=message(code: "development.mode.warning")
         }
         [rundeckFramework: frameworkService.rundeckFramework]
     }
@@ -1858,6 +1967,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
+        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+            flash.error=message(code: "development.mode.warning")
+        }
 
         Date nowDate = new Date();
         String nodeName = servletContext.getAttribute("FRAMEWORK_NODE")
@@ -2026,19 +2138,24 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //first-run html info
         def isFirstRun=false
 
-        if(configurationService.getBoolean("startup.detectFirstRun",true) &&
-                frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
-            def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-            String buildIdent = grailsApplication.metadata.getProperty('build.ident', String)
-            def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
-            def file = new File(vardir, ".first-run-${vers}")
-            if(!file.exists()){
-                isFirstRun=true
-                file.withWriter("UTF-8"){out->
-                    out.write('#'+(new Date().toString()))
+        if (configurationService.getBoolean('startup.alwaysFirstRun', false)) {
+            isFirstRun=true
+        }else{
+            if(configurationService.getBoolean("startup.detectFirstRun",true) &&
+                    frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
+                def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
+                String buildIdent = grailsApplication.metadata.getProperty('build.ident', String)
+                def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
+                def file = new File(vardir, ".first-run-${vers}")
+                if(!file.exists()){
+                    isFirstRun=true
+                    file.withWriter("UTF-8"){out->
+                        out.write('#'+(new Date().toString()))
+                    }
                 }
             }
         }
+
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
 
@@ -2678,9 +2795,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             extra.serverNodeUUID = scheduledExecution.serverNodeUUID
             extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
         }
-        if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
-            def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
-            extra.averageDuration = avg
+        if (scheduledExecution.getAverageDuration()>0) {
+            extra.averageDuration = scheduledExecution.getAverageDuration()
         }
         if(scheduledExecution.shouldScheduleExecution()){
             extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
@@ -2696,6 +2812,126 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
                 [formats: ['xml', 'json']]
         )
+    }
+
+
+    def apiJobForecast() {
+        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (!frameworkService.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+        )) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : 'api.error.item.unauthorized',
+                            args  : ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!(response.format in ['all', 'xml', 'json'])) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+
+        def extra = [:]
+
+        //future scheduled executions forecast
+        def time = params.time? params.time : '1d'
+
+        Date futureDate = futureRelativeDate(time)
+
+        def max = null
+        if (params.max) {
+            max = params.int('max')
+            if (max <= 0) {
+                max = null
+            }
+        }
+
+        if (scheduledExecution.shouldScheduleExecution()) {
+            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate)
+            if (max
+                    && extra.futureScheduledExecutions
+                    && extra.futureScheduledExecutions.size() > max) {
+                extra.futureScheduledExecutions = extra.futureScheduledExecutions[0..<max]
+            }
+        }
+
+
+        respond(
+
+                JobInfo.from(
+                        scheduledExecution,
+                        apiService.apiHrefForJob(scheduledExecution),
+                        apiService.guiHrefForJob(scheduledExecution),
+                        extra
+                ),
+
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    private Date futureRelativeDate(String recentFilter){
+        Calendar n = GregorianCalendar.getInstance()
+        n.setTime(new Date())
+        def matcher = recentFilter =~ /^(\d+)([hdwmyns])$/
+        if (matcher.matches()) {
+            def i = matcher.group(1).toInteger()
+            def ndx
+            switch (matcher.group(2)) {
+                case 'h':
+                    ndx = Calendar.HOUR_OF_DAY
+                    break
+                case 'n':
+                    ndx = Calendar.MINUTE
+                    break
+                case 's':
+                    ndx = Calendar.SECOND
+                    break
+                case 'd':
+                    ndx = Calendar.DAY_OF_YEAR
+                    break
+                case 'w':
+                    ndx = Calendar.WEEK_OF_YEAR
+                    break
+                case 'm':
+                    ndx = Calendar.MONTH
+                    break
+                case 'y':
+                    ndx = Calendar.YEAR
+                    break
+            }
+            n.add(ndx, i)
+
+            return n.getTime()
+        }
+        null
     }
 
     private void respondApiJobsList(List<ScheduledExecution> results) {

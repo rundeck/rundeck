@@ -14,8 +14,7 @@
   - limitations under the License.
   --}%
 <%@ page import="rundeck.User;" %>
-<div class="row">
-<div class="col-sm-12 ">
+
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
@@ -29,17 +28,18 @@
     });
     </g:javascript>
     <!-- END: firefox hack -->
+<div class="exec-options-body container-fluid">
 
 <input id='runAtTime' type='hidden' name='runAtTime' value='' />
 
-<div>
 <g:if test="${!hideHead}">
-    <div class="panel-heading">
-        <div class="row">
+    <div class="row exec-options-header">
+        <div class="col-sm-12">
             <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
                            runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>
+
 </g:if>
     <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
     <g:embedJSON id="filterParamsJSON" data="${[filterName: params.filterName, filter: query?.filter, filterAll: params.showall in ['true', true]]}"/>
@@ -52,9 +52,8 @@
 <div>
 <div class="row">
 <div class="col-xs-12">
-<!-- <div class="${hideHead?'col-sm-9':'col-sm-12'}"> -->
-    <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
 
+    <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
         <g:message code="Node.plural" />
@@ -82,7 +81,7 @@
 
 
             <g:set var="selectedNodes"
-                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes!=null? selectedNodes.split(',').findAll{it}:null}"/>
+                   value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes instanceof String? selectedNodes.split(',').findAll{it}:selectedNodes instanceof Collection? selectedNodes:null}"/>
 
             <div class="row">
                 <div class="col-sm-12 checkbox">
@@ -147,7 +146,7 @@
                         </div>
                         <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
-                                <div class="group_select_control" style="display:none">
+                                <div class="group_select_control" style="${selectedNodes!=null?'':'display:none'}">
                                     <g:message code="select.prompt" />
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectall" ><g:message code="all" /></span>
                                     <span class="btn btn-xs btn-default textbtn-on-hover selectnone" ><g:message code="none" /></span>
@@ -158,7 +157,7 @@
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
                                         <g:set var="nkey" value="${g.rkey()}"/>
-                                        <div class="checkbox checkbox-inline">
+                                        <div class="checkbox node_select_checkbox" >
                                           <input id="${enc(attr:nkey)}"
                                                  type="checkbox"
                                                  data-ident="node"
@@ -171,7 +170,17 @@
                                             <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
                                                    id="${enc(attr:nkey)}_key">
-                                                   <g:enc>${node.nodename}</g:enc>
+
+
+                                                    <g:nodeIconStatusColor node="${node}" icon="true">
+                                                        <g:nodeIcon node="${node}">
+                                                            <i class="fas fa-hdd"></i>
+                                                        </g:nodeIcon>
+                                                    </g:nodeIconStatusColor>&nbsp;<span class="${unselectedNodes&& unselectedNodes.contains(node.nodename)?'node_unselected':''}"><g:enc>${node.nodename}</g:enc></span>
+                                                    <g:nodeHealthStatusColor node="${node}" title="${node.attributes['ui:status:text']}">
+                                                        <g:nodeStatusIcon node="${node}"/>
+                                                    </g:nodeHealthStatusColor>
+
                                                  </label>
 
                                         </div>
@@ -512,8 +521,10 @@
 </div>
 </div>
 </div>
+</div>
+
 <g:if test="${!hideHead}">
-<div class="panel-footer">
+<div class=" exec-options-footer container-fluid">
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">
 
@@ -522,21 +533,16 @@
               <g:if test="${!hideCancel}">
                   <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
               </g:if>
-              <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
-                    class="form-group has_tooltip"
-                    data-toggle="tooltip"
-                    data-placement="auto"
-              >%{--Extra div because attr disabled will cancel tooltip from showing --}%
-                  <button type="submit"
-                          style="margin-bottom:10px;"
-                          name="_action_runJobNow"
-                          id="execFormRunButton"
-                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                          class=" btn btn-success btn-sm">
-                      <i class="glyphicon glyphicon-play"></i>
-                      <g:message code="run.job.now" />
-                  </button>
-              </div>
+              <button type="submit"
+
+                      name="_action_runJobNow"
+                      id="execFormRunButton"
+                      title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
+                      ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
+                      class=" btn btn-success btn-sm has_tooltip">
+                  <i class="glyphicon glyphicon-play"></i>
+                  <g:message code="run.job.now" />
+              </button>
               <div class="checkbox checkbox-inline" style="margin-top:0;">
                   <g:checkBox id="followoutputcheck"
                                 name="follow"
@@ -595,10 +601,9 @@
     </div>
 </div>
 </g:if>
-</div>%{--/.panel--}%
+
 </g:uploadForm>
-</div> %{--/.col--}%
-</div> %{--/.row--}%
+
 <script lang="text/javascript">
     function init() {
         var pageParams = loadJsonData('pageParams');

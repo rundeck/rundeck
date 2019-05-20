@@ -16,54 +16,50 @@ $smoke-bg:                   #F5F5F5 !default;
 $pale-bg:                    #F9F7F3 !default;
 $medium-pale-bg:             #F1EAE0 !default;
 
-$table-line-color:           #CCC5B9 !default;
+$table-line-color:           #dfdfdf !default;
 $muted-color:                #a49e93 !default;
 
 $black-bg:                   rgba(30,30,30,.97) !default;
 
-$popover-color:              #FAE6A4 !default;
+$popover-color:              #fafafa !default;
 
 
 $black-color:                #333333 !default;
 $black-hr:                   #444444 !default;
 
-$white-background-color:        #FFFFFF !default;
 $brown-background-color:        $font-color !default;
 
 $light-gray:                 #E3E3E3 !default;
 $medium-gray:                #cfcfca !default;
 $dark-gray:                  #9A9A9A !default;
+$very-light-gray:            #F8F8F8 !default;
 
-$gray-input-bg:              #F3F2EE !default;
-$gray-input-outline:         #e8e7e3 !default;
+$gray-input-bg:              #eeeef3 !default;
+$gray-input-outline:         #e3e3e8 !default;
+$light-input-bg:             #fafaff !default;
 $danger-input-bg:            #FFC0A4 !default;
 $success-input-bg:           #ABF3CB !default;
 $other-medium-gray:          #A49E93 !default;
 $transparent-bg:             transparent !default;
 
 $default-color:              #66615B !default;
-$default-bg:                 #66615B !default;
 $default-states-color:       darken($default-color,11%) !default;
 
-$primary-color:              #7A9E9F !default;
-$primary-bg:                 #7A9E9F !default;
+$primary-color:              #616161 !default;
 $primary-states-color:       darken($primary-color,11%) !default;
+$primary-highlight-color:    lighten($primary-color, 11%) !default;
 
 $success-color:              #7AC29A !default;
-$success-bg:                 #7AC29A !default;
 $success-states-color:       darken($success-color,11%) !default;
 
 $info-color:                 #68B3C8 !default;
-$info-bg:                    #68B3C8 !default;
 $info-states-color:          darken($info-color,11%) !default;
 
 $warning-color:              #F3BB45 !default;
-$warning-bg:                 #F3BB45 !default;
 $warning-states-color:       darken($warning-color,11%) !default;
 
 
 $danger-color:               #EB5E28 !default;
-$danger-bg:                  #EB5E28 !default;
 $danger-states-color:        darken($danger-color,11%) !default;
 
 
@@ -114,8 +110,8 @@ $social-behance: 			#1769ff;
 $padding-default-vertical:     10px !default;
 $padding-default-horizontal:   20px !default;
 
-$padding-base-vertical:         7px !default;
-$padding-base-horizontal:       18px !default;
+$padding-base-vertical:         6px !default;
+$padding-base-horizontal:       12px !default;
 
 $padding-round-vertical:        9px !default;
 $padding-round-horizontal:     18px !default;
@@ -172,7 +168,7 @@ $font-size-h3:                 1.825em !default;
 $font-size-h4:                 1.5em   !default;
 $font-size-h5:                 1.25em  !default;
 $font-size-h6:                 0.9em   !default;
-$font-paragraph:               16px    !default;
+$font-paragraph:               14px    !default;
 $font-size-navbar:             16px    !default;
 $font-size-small:              12px    !default;
 
@@ -232,12 +228,18 @@ $green-navbar:              rgba(#4CD964, .98);
 $orange-navbar:             rgba(#FF9500, .98);
 $red-navbar:                rgba(#FF4C40, .98);
 
-$bg-nude:               #f4f3ef !default;
-$bg-primary:            #8ECFD5 !default;
-$bg-info:               #7CE4FE !default;
-$bg-success:            #8EF3C5 !default;
-$bg-warning:            #FFE28C !default;
-$bg-danger:             #FF8F5E !default;
+$bg-mainpanel:          #f5f5f5 !default;
+$bg-mainheader:         #f0f0f0 !default;
+$bg-subheader:          $very-light-gray !default;
+$bg-default:            #66615B !default;
+$bg-default-inverse:    #e6e6e6 !default;
+$bg-primary:            #b8b8b8 !default;
+$bg-info:               #caf3fc !default;
+$bg-success:            #cafce5 !default;
+$bg-warning:            #ffffe6 !default;
+$border-warning:        #ffff00 !default;
+$bg-danger:             #ffede6 !default;
+$border-danger:         #f97272 !default;
 
 $background-light-grey:     #E8E7E3 !default;
 $background-lighter-grey:   #F0EFEB !default;
@@ -382,3 +384,6 @@ $zindex-select-dropdown: 1060 !default; // must be higher than a modal backgroun
 
 //** Placeholder text color
 $input-color-placeholder: #999 !default;
+
+$legend-color:                   $dark-gray !default;
+$legend-border-color:            #e5e5e5 !default;

@@ -19,14 +19,18 @@ package com.dtolabs.rundeck.plugins;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy;
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
+import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
+import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
+import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
@@ -36,6 +40,8 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
+import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
+import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
 import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
@@ -77,7 +83,12 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
-
+        map.put(ServiceNameConstants.TourLoader, TourLoaderPlugin.class);
+        map.put(ServiceNameConstants.FileUpload, FileUploadPlugin.class);
+        map.put(ServiceNameConstants.WorkflowStrategy, WorkflowStrategy.class);
+        map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
+        map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
+        map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

@@ -52,7 +52,7 @@
                                          name: (params.project ?: request.project), context: "application"
        )}"/>
 
-<div class="subnav" style="display:none">
+<div class="subnav" style="${wdgt.styleVisible(if:projConfigOpen)}">
   <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
     <li id="nav-project-settings-edit-project">
       <g:link
@@ -154,15 +154,19 @@
       </g:link>
     </li>
 
-      <g:ifMenuItems type="PROJECT_CONFIG">
+      <g:ifMenuItems type="PROJECT_CONFIG"  project="${params.project}">
           <li role="separator" class="divider"></li>
+            <g:forMenuItems type="PROJECT_CONFIG" var="item" project="${params.project}">
+                <li>
+                    <a href="${enc(attr:item.getProjectHref(params.project))}"
+                       title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
+                        <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>
+                        <span class="sidebar-normal">
+                        <g:message code="${item.titleCode}" default="${item.title}"/>
+                        </span>
+                    </a>
+                </li>
+            </g:forMenuItems>
       </g:ifMenuItems>
-      <g:forMenuItems type="PROJECT_CONFIG" var="item">
-          <li>
-              <a href="${item.getProjectHref(params.project)}">
-                  <g:message code="${item.titleCode}" default="${item.title}"/>
-              </a>
-          </li>
-      </g:forMenuItems>
   </ul>
 </div>

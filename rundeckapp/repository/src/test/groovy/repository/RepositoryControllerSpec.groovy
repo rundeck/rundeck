@@ -41,13 +41,14 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "list artifacts no repo specified and only 1 repo defined"() {
+    void "list artifacts no repo specified"() {
         given:
-        controller.pluginApiService.installedPluginIds = [PluginUtils.generateShaIdFromName("InstalledPlugin")]
+        String pluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[pluginId] = "1.0"
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.listArtifactsByRepository(_,_,_) >> testArtifactList("private")
+        1 * client.listArtifacts(_,_) >> testArtifactList("private")
         controller.listArtifacts()
 
         then:
@@ -75,10 +76,11 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "search artifacts no repo specified and only 1 repo defined"() {
+    void "search artifacts"() {
+        given:
+        controller.pluginApiService.installedPluginIds = [:]
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
         1 * client.searchManifests(_) >> testSearch("private")
         params.searchTerm = "artifactType: script-plugin"
         controller.searchArtifacts()
@@ -92,13 +94,13 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
-    void "list installed artifacts no repo specified and only 1 repo defined"() {
+    void "list installed artifacts"() {
         given:
         def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
-        controller.pluginApiService.installedPluginIds = [installedPluginId]
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
 
         when:
-        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
         1 * client.listArtifacts(_,_) >> testArtifactList("private")
         controller.listInstalledArtifacts()
 
@@ -146,10 +148,14 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     void "uninstall artifact no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
+        def installedPluginId = PluginUtils.generateShaIdFromName("InstalledPlugin")
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
 
         when:
+        params.artifactId = installedPluginId
         1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
-        1 * client.getArtifact(_,_, null) >> new RundeckRepositoryArtifact()
+        1 * client.getArtifact("private",installedPluginId, "1.0") >> new RundeckRepositoryArtifact()
         1 * controller.repositoryPluginService.uninstallArtifact(_)
         controller.uninstallArtifact()
 
