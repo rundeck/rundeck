@@ -25,19 +25,28 @@ class MenuService implements ProjectConfigurable {
                 required(false)
                 defaultValue null
             }.build(),
-
+            PropertyBuilder.builder().with {
+                title "Allow Unsanitized HTML output"
+                description """
+If enabled, and a command's log filter specifies the `no-strip` meta tag, the output from the command will not be run through the tag sanitizer. This option only works if the framework level property is also enabled."""
+                booleanType "allowUnsanitized"
+                required false
+                defaultValue "false"
+            }.build()
     ]
     public static final String CONF_PROJ_README_DISPLAY = 'project.gui.readme.display'
     public static final String CONF_PROJ_MOTD_DISPLAY = 'project.gui.motd.display'
+    public static final String CONF_PROJ_ALLOW_UNSANITIZED = 'project.output.allowUnsanitized'
     public static final String PROJ_DISPLAY_DEFAULT = 'none'
     final LinkedHashMap<String, String> ConfigPropertiesMapping = [
             'readmeDisplay': CONF_PROJ_README_DISPLAY,
             'motdDisplay'  : CONF_PROJ_MOTD_DISPLAY,
+            'allowUnsanitized': CONF_PROJ_ALLOW_UNSANITIZED
     ]
 
     @Override
     Map<String, String> getCategories() {
-        [readmeDisplay: "gui", motdDisplay: 'gui']
+        [readmeDisplay: "gui", motdDisplay: 'gui', allowUnsanitized: 'gui']
     }
 
     @Override
