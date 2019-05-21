@@ -601,4 +601,49 @@ id: any string
         validation.errors.size()==0
     }
 
+
+    @Unroll
+    def "validate notBy is valid using deny"(){
+        when:
+        def validation = validationForString """
+context:
+    project: test
+notBy:
+    username: elf
+    group: jank
+for:
+    type:
+        - deny: '*'
+description: blah
+id: any string
+---
+""", new ValidationSet()
+
+        then:
+        validation.valid
+        validation.errors.size()==0
+    }
+
+    @Unroll
+    def "validate notBy is not valid using allow"(){
+        when:
+        def validation = validationForString """
+context:
+    project: test
+notBy:
+    username: elf
+    group: jank
+for:
+    type:
+        - allow: '*'
+description: blah
+id: any string
+---
+""", new ValidationSet()
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]']==["Type rule 'for: { type: [...] }' entry at index [1] Using notBy Can't be of type 'allow:' only'deny:'"]
+    }
 }

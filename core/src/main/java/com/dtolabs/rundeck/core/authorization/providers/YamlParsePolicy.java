@@ -295,6 +295,18 @@ public class YamlParsePolicy implements Policy {
                 validateRule(type, typeIndex, typeRule.getAllow(), "allow");
                 validateRule(type, typeIndex, typeRule.getDeny(), "deny");
 
+                if(policyDoc.getNotBy()!= null){
+                    //check not by using only deny
+                    if(typeRule.getAllow() != null){
+                        throw new AclPolicySyntaxException(
+                                String.format(
+                                        "Type rule 'for: { %s: [...] }' entry at index [%d] Using notBy Can't be of type 'allow:' only'deny:'",
+                                        type,
+                                        typeIndex
+                                )
+                        );
+                    }
+                }
                 if (typeRule.isEmpty()) {
                     throw new AclPolicySyntaxException(
                             String.format(
