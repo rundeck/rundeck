@@ -203,9 +203,9 @@
       </div>
     </div>
     <div class="main-panel" id="main-panel">
-      <div>
+
         <g:render template="/common/mainbar"/>
-      </div>
+
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
