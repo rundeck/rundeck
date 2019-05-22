@@ -43,6 +43,7 @@ public class AclRuleImpl implements AclRule {
     Set<String> allowActions;
     EnvironmentalContext environment;
     Set<String> denyActions;
+    boolean by;
 
     AclRuleImpl() {
 
@@ -66,6 +67,7 @@ public class AclRuleImpl implements AclRule {
         allowActions = (prototype.getAllowActions());
         denyActions = (prototype.getDenyActions());
         environment = (prototype.getEnvironment());
+        by = (prototype.isBy());
     }
 
 
@@ -138,7 +140,7 @@ public class AclRuleImpl implements AclRule {
                (null!=equalsResource? ", resource=" + equalsResource : "") +
                (subsetMatch?" subset " :"") +
                (null!=subsetResource? ", resource=" + subsetResource : "") +
-               " for: {"+
+                (by?" for":" not-for")+": {"+
                (null!=username?" username='" + username + '\'':"") +
                (null!=group?" group='" + group + '\'':"") +
                "}" +
@@ -170,5 +172,10 @@ public class AclRuleImpl implements AclRule {
     @Override
     public Map<String, Object> getEqualsResource() {
         return equalsResource;
+    }
+
+    @Override
+    public boolean isBy(){
+        return by;
     }
 }
