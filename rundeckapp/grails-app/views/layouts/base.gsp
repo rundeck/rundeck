@@ -116,6 +116,7 @@
       <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
     </g:if>
 
+    <asset:javascript src="global/rundeckui.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
