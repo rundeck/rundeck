@@ -112,7 +112,7 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
                     result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
-                    if(!result.isSuccessFul()){
+                    if(!result.isSuccessful()){
                         log.info("Result from plugin is false an exception will be thrown")
                         if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
                             throw new JobLifeCycleException (result.getDescription())

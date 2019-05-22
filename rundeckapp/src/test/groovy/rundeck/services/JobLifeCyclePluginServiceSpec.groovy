@@ -58,7 +58,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
             onBeforeJobStart(item, executionContext, null) >> Mock(JobLifeCycleStatus){
-                isSuccessFul() >> true
+                isSuccessful() >> true
             }
         }
         def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
@@ -68,7 +68,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
         when:
         JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        result.isSuccessFul()
+        result.isSuccessful()
     }
 
     def "custom plugin exception thrown for returning false"() {
@@ -76,7 +76,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
             onBeforeJobStart(item, executionContext, null) >> Mock(JobLifeCycleStatus){
-                isSuccessFul() >> false
+                isSuccessful() >> false
             }
         }
         def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
