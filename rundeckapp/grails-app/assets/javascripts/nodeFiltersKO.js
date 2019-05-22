@@ -510,14 +510,14 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
 
     self.useDefaultColumns=ko.pureComputed(function(){
-       return self.filterColumns().size()<1;
+        return self.filterColumns().length < 1
     });
 
     /**
      * Total column count for table view
      */
     self.totalColumnsCount=ko.pureComputed(function(){
-       return self.useDefaultColumns()? 5 : 2 + self.filterColumns().size();
+       return self.useDefaultColumns()? 5 : 2 + self.filterColumns().length;
     });
 
     self.isFilterNameAll=ko.pureComputed(function(){

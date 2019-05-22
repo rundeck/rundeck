@@ -76,11 +76,11 @@
 
 <g:javascript>
     fireWhenReady('optionSelect', function() {
-        $$('input[type=text]').each(function(e) {
-            Event.observe(e, 'keydown', noenter);
+        jQuery('input[type=text]').each(function (i, e) {
+            jQuery(e).on('keydown', noenter);
         });
-        $$('input[type=password]').each(function(e) {
-            Event.observe(e, 'keydown', noenter);
+        jQuery('input[type=password]').each(function (i, e) {
+            jQuery(e).on('keydown', noenter);
         });
     });
 </g:javascript>

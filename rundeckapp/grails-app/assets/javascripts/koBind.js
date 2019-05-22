@@ -28,7 +28,7 @@ function initKoBind (sel, mapping) {
     doc.find('[data-ko-bind]').each(function (i, el) {
         const controller = jQuery(el).data('koBind')
         const data = jQuery(el).data()
-        if (/^[A-Z]/.match(controller)) {
+        if (controller.match(/^[A-Z]/)) {
             const ctrl = eval(controller)
             if (typeof (ctrl) !== 'function') {
                 return
@@ -40,7 +40,7 @@ function initKoBind (sel, mapping) {
             }
             ko.applyBindings(obj, el)
         } else if (
-            /^[a-z]/.match(controller) &&
+            controller.match(/^[a-z]/) &&
             mapping &&
             typeof (mapping[controller]) === 'object' ||
             typeof (window[controller]) === 'object') {

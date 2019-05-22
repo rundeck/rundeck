@@ -312,103 +312,103 @@
             <g:javascript>
                 var updateSelectCount = function (evt) {
                     var count = 0;
-                    $$('[data-ident="node"]').each(function (e2) {
+                    jQuery('[data-ident="node"]').each(function (i,e2) {
                         if (e2.checked) {
                             count++;
                         }
                     });
-                    $$('.nodeselectcount').each(function (e2) {
-                        setText($(e2), count + '');
-                        $(e2).removeClassName('text-info');
-                        $(e2).removeClassName('text-danger');
-                        $(e2).addClassName(count>0?'text-info':'text-danger');
+                    jQuery('.nodeselectcount').each(function (i,e2) {
+                        jQuery(e2).text( count + '');
+                        jQuery(e2).removeClass('text-info');
+                        jQuery(e2).removeClass('text-danger');
+                        jQuery(e2).addClass(count>0?'text-info':'text-danger');
                     });
                 };
-                $$('[data-ident="node"]').each(function (e) {
-                    Event.observe(e, 'change', function (evt) {
-                      Event.fire($('nodeSelect'), 'nodeset:change');
+                jQuery('[data-ident="node"]').each(function (i,e) {
+                    jQuery(e).on('change', function (evt) {
+                      jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
                 });
-                Event.observe($('nodeSelect'), 'nodeset:change', updateSelectCount);
-                $$('div.jobmatchednodes span.selectall').each(function (e) {
-                    Event.observe(e, 'click', function (evt) {
-                        $(e).up('.group_section').select('input').each(function (el) {
+                jQuery('#nodeSelect').on( 'nodeset:change', updateSelectCount);
+                jQuery('div.jobmatchednodes span.selectall').each(function (i,e) {
+                    jQuery(e).on( 'click', function (evt) {
+                        jQuery(e).closest('.group_section').find('input').each(function (i,el) {
                             if (el.type == 'checkbox') {
                                 el.checked = true;
                             }
                         });
-                        $(e).up('.group_section').select('span.obs_tag_group').each(function (e) {
-                            $(e).setAttribute('data-tagselected', 'true');
-                            $(e).addClassName('active');
+                        jQuery(e).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
+                            jQuery(e).attr('data-tagselected', 'true');
+                            jQuery(e).addClass('active');
                         });
-                        Event.fire($('nodeSelect'), 'nodeset:change');
+                        jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.selectnone').each(function (e) {
-                    Event.observe(e, 'click', function (evt) {
-                        $(e).up('.group_section').select('input').each(function (el) {
+                jQuery('div.jobmatchednodes span.selectnone').each(function (i,e) {
+                    jQuery(e).on( 'click', function (evt) {
+                        jQuery(e).closest('.group_section').find('input').each(function (i,el) {
                             if (el.type == 'checkbox') {
                                 el.checked = false;
                             }
                         });
-                        $(e).up('.group_section').select('span.obs_tag_group').each(function (e) {
-                            $(e).setAttribute('data-tagselected', 'false');
-                            $(e).removeClassName('active');
+                        jQuery(e).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
+                            jQuery(e).attr('data-tagselected', 'false');
+                            jQuery(e).removeClass('active');
                         });
-                        Event.fire($('nodeSelect'), 'nodeset:change');
+                        jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
                 });
-                $$('div.jobmatchednodes span.obs_tag_group').each(function (e) {
-                    Event.observe(e, 'click', function (evt) {
+                jQuery('div.jobmatchednodes span.obs_tag_group').each(function (i,e) {
+                    jQuery(e).on( 'click', function (evt) {
                         var ischecked = e.getAttribute('data-tagselected') != 'false';
                         e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                         if (!ischecked) {
-                            $(e).addClassName('active');
+                            jQuery(e).addClass('active');
                         } else {
-                            $(e).removeClassName('active');
+                            jQuery(e).removeClass('active');
                         }
-                        $(e).up('.group_section').select('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (el) {
+                        jQuery(e).closest('.group_section').find('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (i,el) {
                             if (el.type == 'checkbox') {
                                 el.checked = !ischecked;
                             }
                         });
-                        $(e).up('.group_section').select('span.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (el) {
+                        jQuery(e).closest('.group_section').find('span.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (i,el) {
                             el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
                             if (!ischecked) {
-                                $(el).addClassName('active');
+                                jQuery(el).addClass('active');
                             } else {
-                                $(el).removeClassName('active');
+                                jQuery(el).removeClass('active');
                             }
                         });
-                        Event.fire($('nodeSelect'), 'nodeset:change');
+                        jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
                 });
 
-                Event.observe($('doReplaceFilters'), 'change', function (evt) {
+                jQuery('#doReplaceFilters').on( 'change', function (evt) {
                     var e = evt.element();
-                    $$('div.jobmatchednodes input').each(function (cb) {
+                    jQuery('div.jobmatchednodes input').each(function (i,cb) {
                         if (cb.type == 'checkbox') {
                             [cb].each(e.checked ? Field.enable : Field.disable);
                             if (!e.checked) {
-                                $$('.group_select_control').each(Element.hide);
+                                jQuery('.group_select_control').hide();
                                 cb.checked = true;
                             } else {
-                                $$('.group_select_control').each(Element.show);
+                                jQuery('.group_select_control').hide();
                             }
                         }
                     });
-                    Event.fire($('nodeSelect'), 'nodeset:change');
+                    jQuery('#nodeSelect').trigger( 'nodeset:change');
                     if(!e.checked){
-                        $$('.nodeselectcount').each(function (e2) {
-                            $(e2).removeClassName('text-info');
-                            $(e2).removeClassName('text-danger');
+                        jQuery('.nodeselectcount').each(function (i,e2) {
+                            jQuery(e2).removeClass('text-info');
+                            jQuery(e2).removeClass('text-danger');
                         });
                     }
                 });
 
 
                 /** reset focus on click, so that IE triggers onchange event*/
-                Event.observe($('doReplaceFilters'), 'click', function (evt) {
+                jQuery('#doReplaceFilters').on( 'click', function (evt) {
                     this.blur();
                     this.focus();
                 });
@@ -416,7 +416,7 @@
             </g:javascript>
             <g:if test="${scheduledExecution.hasNodesSelectedByDefault()}">
                 <g:javascript>
-                    Event.fire($('nodeSelect'), 'nodeset:change');
+                    jQuery('#nodeSelect').trigger( 'nodeset:change');
                 </g:javascript>
             </g:if>
 
@@ -626,7 +626,7 @@
                 appLinks.frameworkAdhoc,
                 appLinks.scheduledExecutionCreate,
                 appLinks.frameworkNodes,
-                Object.extend(filterParams, {
+                Object.assign(filterParams, {
                     nodeSummary:nodeSummary,
                     view: 'embed',
                     maxShown: 100,

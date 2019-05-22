@@ -263,7 +263,7 @@
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
-            $$('#wffilterform input').each(function(elem){
+            jQuery('#wffilterform input').each(function(ndx,elem){
                 if(elem.type=='text'){
                     elem.observe('keypress',noenter);
                 }

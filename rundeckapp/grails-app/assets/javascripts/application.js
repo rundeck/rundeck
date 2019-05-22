@@ -44,7 +44,11 @@ function setText(elem, text) {
 }
 
 function appendText(elem, text) {
-  $(elem).appendChild(document.createTextNode(text));
+  if(typeof(jQuery)!=='undefined'){
+    jQuery(elem).append(document.createTextNode(text))
+  }else if(typeof($)!=='undefined'){
+    $(elem).appendChild(document.createTextNode(text));
+  }
 }
 /**
  * take escaped text and unescape html encoding
@@ -243,7 +247,14 @@ function _isIe(version) {
  */
 function noenter(e) {
   if (e && e.keyCode == Event.KEY_RETURN) {
-    Event.stop(e);
+
+    if (e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    } else {
+      e.returnValue = false;
+      e.cancelBubble = true;
+    }
   }
   return !(e && e.keyCode == Event.KEY_RETURN);
 }
