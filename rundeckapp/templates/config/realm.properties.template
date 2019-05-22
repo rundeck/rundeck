@@ -12,3 +12,12 @@
 #
 ${default.admin.name}:${default.admin.password},user,admin
 ${default.user.name}:${default.user.password},user
+
+#
+# example users matching the example aclpolicy template roles
+#
+#project-admin:${default.admin.password},user,project_admin
+#job-runner:${default.admin.password},user,job_runner
+#job-writer:${default.admin.password},user,job_writer
+#job-reader:${default.admin.password},user,job_reader
+#job-viewer:${default.admin.password},user,job_viewer
