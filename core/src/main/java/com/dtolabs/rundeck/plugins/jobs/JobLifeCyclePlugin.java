@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent;
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 
@@ -33,12 +34,17 @@ import java.util.Map;
 public interface JobLifeCyclePlugin {
 
     /**
-     * IT calls a service in order to know whether a job should run or not
-     * @param item workflow data
-     * @param executionContext notification configuration
-     * @param workflowLogManager used to be able to log
-     * @return true if successful
+     * It triggers before the job starts
+     * @param event event execution data
+     * @return JobLifeCycleStatus
      */
-    public JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext, LoggingManager workflowLogManager)throws JobLifeCycleException;
+    public JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event) throws JobLifeCycleException;
+
+    /**
+     * It triggers when a job is ends
+     * @param event event execution data
+     * @return JobLifeCycleStatus
+     */
+    public JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event) throws JobLifeCycleException;
 
 }
