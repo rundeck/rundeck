@@ -1,13 +1,11 @@
 package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import com.dtolabs.rundeck.core.logging.LoggingManager;
 
 public interface JobLifeCycleService {
 
-    JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
-                             LoggingManager workflowLogManager) throws JobLifeCycleException;
+    JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event) throws JobLifeCycleException;
+
+    JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event) throws JobLifeCycleException;
 
 }
