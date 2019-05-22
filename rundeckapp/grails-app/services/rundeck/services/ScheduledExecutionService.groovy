@@ -632,14 +632,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //verify cluster member is schedule owner
 
             def nextdate = null
+            def nextExecNode = null
             try {
-                nextdate = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
-            newsched.serverNodeUUID = nextExecNode(scheduledExecution)
+            if(nextExecNode){
+                newsched.serverNodeUUID = nextExecNode
+            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -679,7 +682,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                def nexttime = scheduleJob(se, null, null)
+                def nexttime = null
+                def nextExecNode = null
+                (nexttime, nextExecNode) = scheduleJob(se, null, null)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -1048,19 +1053,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
             log.warn("$jobDesc, but executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if(!shouldScheduleInThisProject(se.project)){
             log.warn("$jobDesc, but project executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if (!se.shouldScheduleExecution()) {
             log.warn(
                     "$jobDesc, but job execution is disabled."
             )
-            return null;
+            return [null, null];
         }
 
         def jobDetail = createJobDetail(se)
@@ -1081,7 +1086,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
-        return nextTime
+        return [nextTime, jobDetail?.getJobDataMap()?.get("serverUUID")]
     }
 
     /**
@@ -1398,7 +1403,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                data.put("serverUUID", frameworkService.getServerUUID())
+//                data.put("serverUUID", frameworkService.getServerUUID())
+                data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -2571,14 +2577,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
-                    scheduledExecution.serverNodeUUID = nextExecNode(scheduledExecution)
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3157,14 +3166,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
-                    scheduledExecution.serverNodeUUID = nextExecNode(scheduledExecution)
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
