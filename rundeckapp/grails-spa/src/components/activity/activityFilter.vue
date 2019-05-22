@@ -1,7 +1,7 @@
 <template>
   <span>
 
-    <dropdown v-if="query.recentFilter!=='-'">
+    <dropdown v-if="query.recentFilter!=='-' && displayOpts.showRecentFilter">
       <span class="dropdown-toggle text-info">
         <i18n :path="'period.label.'+period.name"/>
         <span class="caret"></span>
@@ -21,6 +21,7 @@
       size="xs"
       :class="hasQuery?'btn-queried btn-info':'btn-secondary'"
       v-tooltip="hasQuery?$t('Click to edit Search Query'):''"
+      v-if="displayOpts.showFilter"
     >
       <span v-if="hasQuery" class="query-params-summary">
         <ul class="list-inline">
@@ -33,7 +34,7 @@
       <span v-else>{{$t('search.ellipsis')}}</span>
     </btn>
 
-    <saved-filters :query="value" :has-query="hasQuery" @select_filter="selectFilter($event)" v-if="value" :event-bus="eventBus"></saved-filters>
+    <saved-filters :query="value" :has-query="hasQuery" @select_filter="selectFilter($event)" v-if="value && displayOpts.showSavedFilters" :event-bus="eventBus"></saved-filters>
 
     <modal id="activityFilter" v-model="filterOpen" :title="$t('Search Activity')" size="lg" @hide="closing">
       <div>
@@ -178,9 +179,14 @@ export default {
     DateFilter,
     SavedFilters
   },
-  props: ["eventBus", "value","eventBus"],
+  props: ["eventBus", "value","eventBus","opts"],
   data() {
     return {
+      displayOpts: {
+        showRecentFilter: true,
+        showFilter: true,
+        showSavedFilter: true,
+      },
       filterOpen: false,
       DateQueryNames: [
         "startafterFilter",
@@ -366,6 +372,7 @@ export default {
     }
   },
   mounted() {
+    Object.assign(this.displayOpts, this.opts)
     this.reset()
   }
 }

@@ -1188,6 +1188,14 @@ function _initPopoverMousedownCatch (sel, allowed, callback) {
     }
   })
 }
+function _initStopPropagationOnClick(){
+  jQuery('body').on('click',function(event){
+    let closest = jQuery(event.target).closest('[data-click-stop-propagation]')
+    if(closest.length>0){
+      event.stopPropagation()
+    }
+  });
+}
 (function () {
   window.markdeepOptions = {
     mode: 'script',
@@ -1210,6 +1218,7 @@ function _initPopoverMousedownCatch (sel, allowed, callback) {
       _initCollapseExpander();
       _initAnsiToggle();
       _initMarkdeep();
+      _initStopPropagationOnClick();
     });
   }
 })();

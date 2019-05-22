@@ -138,19 +138,51 @@
               </div>
           </div>
     </div>
-
+    </div>
+    <div class="row" id="_job_main_placeholder">
         <div class="col-xs-12">
-          <div class="row">
-              <div class="card" id="activity_section">
-                  <div class="card-content">
-                      <g:render template="/reports/activityLinks"
-                                model="[scheduledExecution: scheduledExecution, knockoutBinding: true, includeJobRef: (
-                                        scheduledExecution.getRefExecCountStats() ? true : false
-                                )]"/>
-                  </div>
-              </div>
-          </div>
-      </div>
+            <div class="card" id="activity_section">
+                <div class="card-content">
+
+                    <div class="vue-tabs">
+                        <div class="nav-tabs-navigation">
+                            <div class="nav-tabs-wrapper">
+                                <ul class="nav nav-tabs activity_links">
+                                    <li class="active">
+                                        <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
+                                    </li>
+                                    <li>
+                                        <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="stats">
+
+
+                                <section class="_jobstats_content section-space-bottom-lg container-fluid" id="_job_stats_main">
+                                    <g:render template="/scheduledExecution/renderJobStats"
+                                              model="${[scheduledExecution: scheduledExecution]}"/>
+                                </section>
+
+
+                                <div id="_job_stats_extra_placeholder"></div>
+                            </div>
+                            <div class="tab-pane" id="history">
+
+                                <div data-ko-bind="history" class="_history_content vue-project-activity">
+
+                                    <activity-list :event-bus="EventBus"></activity-list>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
   </div>
 
 

@@ -1,9 +1,6 @@
 <template>
-  <div class="row activity-list">
-    <div class="col-xs-12">
-      <div class="card">
-        <div class="card-content">
-
+  <div class=" activity-list">
+    
           <section class="section-space-bottom">
 
             <span>
@@ -32,15 +29,15 @@
             </span>
 
 
-          <activity-filter v-model="query" :event-bus="eventBus"></activity-filter>
+          <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
           
           <div class="pull-right">
-            <span >
+            <span v-if="runningOpts.allowAutoRefresh">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
               <label for="auto-refresh">{{$t('Auto refresh')}}</label>
             </span>
             <!-- bulk edit controls -->
-            <span  v-if="auth.deleteExec && pagination.total>0">
+            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete">
                 <span v-if="bulkEditMode" >
                   <i18n path="bulk.selected.count">
                     <strong>{{bulkSelectedIds.length}}</strong>
@@ -333,9 +330,6 @@
           :showPrefix="false"
         >
         </offset-pagination>
-            </div>
-        </div>
-    </div>
 
   </div>
 </template>
@@ -400,6 +394,13 @@ export default Vue.extend({
         max:10,
         total:-1
       },
+      filterOpts: {},
+      showFilters: false,
+      showBulkDelete: true,
+      runningOpts: {
+        loadRunning:true,
+        allowAutoRefresh: true
+      } as {[key:string]:any},
       autorefresh:false,
       autorefreshms:5000,
       autorefreshtimeout:null as null | any,
@@ -725,13 +726,25 @@ export default Vue.extend({
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
+      if(window._rundeck.data['filterOpts'] ){
+        this.filterOpts = window._rundeck.data.filterOpts
+      }
+      this.showFilters = true
       if(window._rundeck.data['query'] ){
         this.query = Object.assign({},this.query,window._rundeck.data['query'] )
       }else{
         this.loadActivity(0)
       }
-      
-      this.loadRunning()
+      if(window._rundeck.data['runningOpts']){
+        this.runningOpts= window._rundeck.data.runningOpts
+      }
+
+      if(window._rundeck.data['viewOpts']){
+        this.showBulkDelete= window._rundeck.data.viewOpts.showBulkDelete
+      }
+      if(this.runningOpts['loadRunning']){
+        this.loadRunning()
+      }
     }
   }
 })
