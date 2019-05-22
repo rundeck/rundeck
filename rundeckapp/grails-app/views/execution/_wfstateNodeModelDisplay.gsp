@@ -15,7 +15,7 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState" %>
-<div data-bind="if: !stateLoaded()" style="margin-top:1em;">
+<div data-bind="if: !stateLoaded()" >
     <div class="">
         <div class="row-space-lg row">
             <div class="col-sm-12">
@@ -51,7 +51,7 @@
 </div>
 <div data-bind="if: stateLoaded()">
   <div >
-    <div class="row row-space" >
+    <div class="row " >
       <div class="col-sm-12">
         <tmpl:wfstateSummaryScore/>
       </div>
