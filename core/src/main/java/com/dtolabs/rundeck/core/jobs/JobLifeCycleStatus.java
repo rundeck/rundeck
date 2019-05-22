@@ -2,15 +2,15 @@ package com.dtolabs.rundeck.core.jobs;
 
 public class JobLifeCycleStatus {
 
-    private boolean successFul;
+    private boolean successful;
     private String description;
 
-    public boolean isSuccessFul() {
-        return successFul;
+    public boolean isSuccessful() {
+        return successful;
     }
 
-    public void setSuccessFul(boolean successFul) {
-        this.successFul = successFul;
+    public void setSuccessful(boolean successful) {
+        this.successful = successful;
     }
 
     public String getDescription() {
@@ -21,8 +21,8 @@ public class JobLifeCycleStatus {
         this.description = description;
     }
 
-    public JobLifeCycleStatus(boolean successFul, String description) {
-        this.successFul = successFul;
+    public JobLifeCycleStatus(boolean successful, String description) {
+        this.successful = successful;
         this.description = description;
     }
 

@@ -57,14 +57,14 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         given:
         service.jobLifeCyclePluginService = Mock(JobLifeCyclePluginService){
             onBeforeJobStart(_,_,_) >> Mock(JobLifeCycleStatus){
-                isSuccessFul() >> true
+                isSuccessful() >> true
             }
         }
 
         when:
         JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        result.isSuccessFul()
+        result.isSuccessful()
     }
 
     def "exception thrown"() {
@@ -85,7 +85,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         given:
         service.jobLifeCyclePluginService = Mock(JobLifeCyclePluginService){
             onBeforeJobStart(_,_,_) >> Mock(JobLifeCycleStatus){
-                isSuccessFul() >> false
+                isSuccessful() >> false
                 getDescription() >> "It has description because it is also false"
             }
         }
@@ -93,7 +93,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         when:
         JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
         then:
-        !result.isSuccessFul()
+        !result.isSuccessful()
         result.getDescription() == "It has description because it is also false"
     }
 
