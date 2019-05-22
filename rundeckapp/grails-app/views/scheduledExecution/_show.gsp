@@ -131,6 +131,7 @@
                                   <div class="markdeep">${rundoctext}</div>
                               </div>
                           </g:if>
+                          <div id="_job_content_placeholder" class="tab-pane"></div>
                       </div>
                       <!-- end tab content -->
                   </div>
