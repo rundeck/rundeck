@@ -33,7 +33,7 @@
         <g:renderErrors bean="${scheduledExecution}" as="list" field="argString"/>
     </div>
 </g:hasErrors>
-<div id="optionSelect">
+<div id="optionSelect" data-ko-bind="joboptions">
     <g:render template="/framework/jobOptionsKO"
               model="[
                       paramsPrefix        : 'extra.',

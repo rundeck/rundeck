@@ -24,6 +24,7 @@
 //= require historyKO
 //= require nodeFiltersKO
 //= require executionOptions
+//= require koBind
 
 /*
  Manifest for "scheduledExecution/show.gsp" page

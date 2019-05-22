@@ -27,49 +27,55 @@
 <content tag="subtitlesection">
 
     <div class="  subtitle-head flex-container flex-align-items-stretch">
-        <div class="subtitle-head-item  flex-item-2 flex-item flex-shrink-1">
+        <div class="subtitle-head-item  flex-item-auto">
             <g:render template="/scheduledExecution/showHead"
                       model="[scheduledExecution: scheduledExecution,
                               followparams      : [mode: followmode, lastlines: params.lastlines],
                               jobDescriptionMode: 'expanded',
-                              jobActionButtons  : true,
+                              jobActionButtons  : false,
                               linkCss           : 'text-h4',
                               scmExportEnabled  : scmExportEnabled,
                               scmExportStatus   : scmExportStatus,
                               scmImportEnabled  : scmImportEnabled,
                               scmImportStatus   : scmImportStatus
                       ]"/>
+
+            <section class="section-space">
+                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+            </section>
         </div>
 
-        <div class="subtitle-head-item  flex-item-1 flex-item flex-grow-2">
+        <div class="subtitle-head-item  flex-container column flex-justify-space-between">
 
-            <div class="row">
-                <g:render template="/scheduledExecution/renderJobStats"
-                          model="${[scheduledExecution: scheduledExecution]}"/>
+            <div class="job-action-button ">
+                <g:render template="/scheduledExecution/jobActionButton"
+                          model="[scheduledExecution: scheduledExecution,
+                                  hideTitle         : false,
+                                  dropdownClass     : 'dropdown-menu-right',
+                                  btnClass          : 'btn btn-secondary btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm pull-right">
-                        <g:message code="definition"/>
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm ">
                         <i class="glyphicon glyphicon-info-sign"></i>
+                        <g:message code="definition"/>
                     </a>
                 </section>
 
                 <g:render template="/common/modal"
                           model="[modalid   : 'job-definition-modal',
                                   modalsize : 'modal-lg',
-//                                  titleCode: 'definition',
                                   title     : scheduledExecution.jobName,
                                   cancelCode: 'close'
                           ]">
-                    <g:render template="/execution/execDetails"
-                              model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                    <div data-ko-bind="jobNodeFilters">
+                        <g:render template="/execution/execDetails"
+                                  model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                    </div>
                 </g:render>
             </g:if>
-            <section class="section-space">
-                <span class="uuid">${scheduledExecution.extid}</span>
-            </section>
+
         </div>
     </div>
 </content>

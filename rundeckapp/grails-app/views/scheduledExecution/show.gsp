@@ -20,9 +20,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
+    <meta name="skipPrototypeJs" content="true"/>
 
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
-    <asset:javascript src="prototype/effects"/>
+
     <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
@@ -47,22 +48,16 @@
             "use strict";
             var params = loadJsonData('jobParams');
             var jobNodeFilters = initJobNodeFilters(params);
-            var elementById = document.getElementById('definition');
-            if(elementById){
-                ko.applyBindings(jobNodeFilters, elementById);
-            }
+
 
             pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-            ko.applyBindings(pagehistory, document.getElementById('activity_section'));
             setupActivityLinks('activity_section', pagehistory);
 
             //setup option edit
             var joboptiondata = loadJsonData('jobOptionData');
             joboptions = new JobOptions(joboptiondata);
 
-            if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
-            }
+
 
 
             var remoteoptionloader = new RemoteOptionLoader({
@@ -87,6 +82,7 @@
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+            initKoBind(null, {jobNodeFilters: jobNodeFilters, history: pagehistory, joboptions: joboptions})
         }
         jQuery(init);
     </script>
