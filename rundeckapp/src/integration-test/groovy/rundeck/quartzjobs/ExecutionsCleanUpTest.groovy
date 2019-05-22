@@ -40,7 +40,7 @@ import rundeck.services.LogFileStorageService
 
 @Integration
 @Rollback
-class ExecutionsCleanerJobTest extends GroovyTestCase{
+class ExecutionsCleanUpTest extends GroovyTestCase{
 
     @Test
     void testExecuteJobCleanerNoExecutionsToDelete(){
@@ -56,7 +56,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         Execution execution = setupExecution(se, projName, execDate, execDate)
-        ExecutionsCleanerJob job = new ExecutionsCleanerJob()
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
 
         List execIdsToExclude = job.searchExecutions(
                 new FrameworkService(),
@@ -87,7 +87,7 @@ class ExecutionsCleanerJobTest extends GroovyTestCase{
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
         Execution execution = setupExecution(se, projName, execDate, execDate)
-        ExecutionsCleanerJob job = new ExecutionsCleanerJob()
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
 
         List execIdsToExclude = job.searchExecutions(new FrameworkService(),
                 new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
