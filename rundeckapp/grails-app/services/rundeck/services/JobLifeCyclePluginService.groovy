@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -99,19 +100,48 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
-    JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
-                                 LoggingManager workflowLogManager){
+    JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event){
 
         JobLifeCycleStatus result = new JobLifeCycleStatus()
-        String projectName = executionContext.getFrameworkProject()
-        IRundeckProject rundeckProject = executionContext.getFramework().getProjectManager().getFrameworkProject(projectName)
+        String projectName = event.getExecutionContext().getFrameworkProject()
+        IRundeckProject rundeckProject = event.getExecutionContext().getFramework().getProjectManager().getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
         jlcps.each{ String name, DescribedPlugin describedPlugin ->
             if (rundeckProject.hasProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) &&
                     rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
-                    result = plugin.onBeforeJobStart(item, executionContext, workflowLogManager)
+                    result = plugin.beforeJobStarts(event)
+                    if(!result.isSuccessful()){
+                        log.info("Result from plugin is false an exception will be thrown")
+                        if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
+                            throw new JobLifeCycleException (result.getDescription())
+                        }else{
+                            throw new JobLifeCycleException ('Response from ' + name + ' is false, but no description was provided by the plugin')
+                        }
+                    }
+                }catch(JobLifeCycleException e){
+                    throw e
+                }catch (Exception e){
+                    log.error(e.getMessage(), e)
+                    throw e
+                }
+            }
+        }
+        result
+    }
+
+    JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event){
+        JobLifeCycleStatus result = new JobLifeCycleStatus()
+        String projectName = event.getExecutionContext().getFrameworkProject()
+        IRundeckProject rundeckProject = event.getExecutionContext().getFramework().getProjectManager().getFrameworkProject(projectName)
+        def jlcps = listJobLifeCyclePlugins()
+        jlcps.each{ String name, DescribedPlugin describedPlugin ->
+            if (rundeckProject.hasProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) &&
+                    rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
+                try{
+                    JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
+                    result = plugin.afterJobEnds(event)
                     if(!result.isSuccessful()){
                         log.info("Result from plugin is false an exception will be thrown")
                         if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){

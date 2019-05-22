@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent;
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
@@ -83,7 +84,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
-            jobLifeCycleService.onBeforeJobStart(weitem, context, loggingManager);
+            jobLifeCycleService.beforeJobStarts(new JobLifeCycleEvent(weitem, context));
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(context, weitem));
             success = getResult().isSuccess();

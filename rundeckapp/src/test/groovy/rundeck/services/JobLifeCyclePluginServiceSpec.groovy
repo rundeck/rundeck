@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -47,8 +48,12 @@ class JobLifeCyclePluginServiceSpec extends Specification {
     static class JobLifeCyclePluginImpl implements JobLifeCyclePlugin {
 
         @Override
-        public JobLifeCycleStatus onBeforeJobStart(WorkflowExecutionItem item, StepExecutionContext executionContext,
-                                                   LoggingManager workflowLogManager)throws JobLifeCycleException{
+        public JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event)throws JobLifeCycleException{
+            throw new JobLifeCycleException("Test job life cycle exception")
+        }
+
+        @Override
+        public JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event)throws JobLifeCycleException{
             throw new JobLifeCycleException("Test job life cycle exception")
         }
     }
@@ -57,16 +62,16 @@ class JobLifeCyclePluginServiceSpec extends Specification {
         given:
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
-            onBeforeJobStart(item, executionContext, null) >> Mock(JobLifeCycleStatus){
+            beforeJobStarts(_) >> Mock(JobLifeCycleStatus){
                 isSuccessful() >> true
             }
         }
         def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
         service.pluginService = Mock(PluginService){
-            listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
+            listPlugins(_,_) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
         then:
         result.isSuccessful()
     }
@@ -75,7 +80,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
         given:
         service.jobLifeCyclePluginProviderService = jobLifeCyclePluginProviderService
         def plugin = Mock(JobLifeCyclePluginImpl){
-            onBeforeJobStart(item, executionContext, null) >> Mock(JobLifeCycleStatus){
+            beforeJobStarts(_) >> Mock(JobLifeCycleStatus){
                 isSuccessful() >> false
             }
         }
@@ -84,7 +89,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
         then:
         thrown(JobLifeCycleException)
     }
@@ -97,7 +102,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.onBeforeJobStart(item, executionContext, null)
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
         then:
         thrown(JobLifeCycleException)
     }
