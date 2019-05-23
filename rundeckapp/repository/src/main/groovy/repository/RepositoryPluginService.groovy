@@ -15,6 +15,7 @@ class RepositoryPluginService implements InitializingBean {
 
     File localFilesystemPluginDir
     StorageTree installedPluginTree
+    String storageTreePath
     private ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1)
 
     def syncInstalledArtifactsToPluginTarget() {
@@ -27,7 +28,7 @@ class RepositoryPluginService implements InitializingBean {
                  installed.add(file.name)
              }
 
-             installedPluginTree.listDirectoryResources("plugins").each {
+             installedPluginTree.listDirectoryResources(storageTreePath).each {
                  log.debug("found plugin: "+ it.getPath().getName());
 
                  if(!installed.contains(it.getPath().getName())) {
@@ -50,7 +51,7 @@ class RepositoryPluginService implements InitializingBean {
     void uninstallArtifact(final RepositoryArtifact artifact) {
         File oldPlugin = new File(localFilesystemPluginDir,artifact.installationFileName)
         if(oldPlugin.exists()) oldPlugin.delete()
-        installedPluginTree.deleteResource("plugins/${artifact.installationFileName}")
+        installedPluginTree.deleteResource("${storageTreePath}/${artifact.installationFileName}")
     }
 
     @Override

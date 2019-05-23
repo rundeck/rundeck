@@ -59,7 +59,7 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
-import rundeck.quartzjobs.ExecutionsCleanerJob
+import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 
@@ -1430,7 +1430,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
         String description = "Cleaner executions job"
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanerJob)
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanUp)
                                          .withIdentity(jobname, jobgroup)
                                          .withDescription(description)
                                          .usingJobData(new JobDataMap(config))

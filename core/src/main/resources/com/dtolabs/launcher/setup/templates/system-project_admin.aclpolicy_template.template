@@ -1,0 +1,51 @@
+description: Allow groups to list projects
+context:
+  application: 'rundeck'
+for:
+  project:
+  - allow: read
+    match:
+      name: '.*'
+by:
+  group: project_admin
+
+---
+description: Global project admin permissions to project_admin role
+context:
+  project: '.*'
+for:
+  resource:
+  - equals:
+      kind: job
+    allow: '*'
+  - equals:
+      kind: node
+    allow: '*'
+  - equals:
+      kind: event
+    allow: '*'
+  adhoc:
+    - allow: '*'
+  job:
+    - allow: '*'
+  node:
+    - allow: '*'
+  project:
+    - allow: '*'
+by:
+  group: project_admin
+---
+description: project_admin application scope permissions
+context:
+  application: 'rundeck'
+for:
+  resource:
+  - equals:
+      kind: project
+    allow: '*'
+  project:
+  - match:
+      name: '.*'
+    allow: '*'
+by:
+  group: project_admin

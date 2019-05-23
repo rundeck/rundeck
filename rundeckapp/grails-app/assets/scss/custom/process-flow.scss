@@ -4,6 +4,9 @@ div {
   &.pflowlist {
     ol {
       padding-left:0;
+      li{
+        margin-left: 20px;
+      }
       li.draggableitem.droppableitem{
         border: 1px solid #cfcfca;
         padding: 10px !important;

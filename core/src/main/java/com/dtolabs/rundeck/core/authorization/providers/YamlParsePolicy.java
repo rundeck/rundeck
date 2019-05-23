@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
  */
 public class YamlParsePolicy implements Policy {
     public static final String BY_SECTION = "by";
+    public static final String NOT_BY_SECTION = "notBy";
     public static final String USERNAME_KEY = "username";
     public static final String GROUP_KEY = "group";
     ACLPolicyDoc policyDoc;
@@ -51,6 +52,7 @@ public class YamlParsePolicy implements Policy {
     private Set<String> usernames = new HashSet<String>();
     private Set<String> groups = new HashSet<String>();
     private Set<AclRule> rules = new HashSet<>();
+    private boolean isBy;
 
     private YamlParsePolicy(
             final Set<Attribute> context,
@@ -132,6 +134,7 @@ public class YamlParsePolicy implements Policy {
     private void enumerateRules() {
         String description = policyDoc.getDescription();
         AclRuleBuilder envProto = AclRuleBuilder.builder()
+                                                .by(isBy)
                                                 .environment(environment.toBasic())
                                                 .description(description)
                                                 .sourceIdentity(sourceIdent);
@@ -148,8 +151,17 @@ public class YamlParsePolicy implements Policy {
 
     private void parseByClause() {
 
-        final Object u = policyDoc.getBy().getUsername();
-        final Object g = policyDoc.getBy().getGroup();
+        Object u = null;
+        Object g = null;
+        if(null != policyDoc.getBy()) {
+            this.isBy = true;
+            u = policyDoc.getBy().getUsername();
+            g = policyDoc.getBy().getGroup();
+        }else if(null != policyDoc.getNotBy()){
+            this.isBy=false;
+            u = policyDoc.getNotBy().getUsername();
+            g = policyDoc.getNotBy().getGroup();
+        }
 
         if (null != u) {
             if (u instanceof String) {
@@ -227,12 +239,14 @@ public class YamlParsePolicy implements Policy {
     }
 
     private void validate() {
-        if (null == policyDoc.getBy()) {
+        if (null == policyDoc.getBy() && null == policyDoc.getNotBy()) {
             throw new AclPolicySyntaxException(
-                    "Required 'by:' section was not present"
+                    "Required 'by:' or 'notBy:' section was not present"
             );
         }
-        if (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername()) {
+
+        if (null != policyDoc.getBy() &&
+                (null == policyDoc.getBy().getGroup() && null == policyDoc.getBy().getUsername())) {
 
             throw new AclPolicySyntaxException(
                     "Section '" + BY_SECTION +
@@ -242,6 +256,19 @@ public class YamlParsePolicy implements Policy {
                     ":' and/or '" +
                     USERNAME_KEY +
                     ":'"
+            );
+        }
+        if (null != policyDoc.getNotBy() &&
+                (null == policyDoc.getNotBy().getGroup() && null == policyDoc.getNotBy().getUsername())) {
+
+            throw new AclPolicySyntaxException(
+                    "Section '" + NOT_BY_SECTION +
+                            ":' is not valid: " +
+                            " it must contain '" +
+                            GROUP_KEY +
+                            ":' and/or '" +
+                            USERNAME_KEY +
+                            ":'"
             );
         }
         if (null == policyDoc.getFor()) {
@@ -268,6 +295,18 @@ public class YamlParsePolicy implements Policy {
                 validateRule(type, typeIndex, typeRule.getAllow(), "allow");
                 validateRule(type, typeIndex, typeRule.getDeny(), "deny");
 
+                if(policyDoc.getNotBy()!= null){
+                    //check not by using only deny
+                    if(typeRule.getAllow() != null){
+                        throw new AclPolicySyntaxException(
+                                String.format(
+                                        "Type rule 'for: { %s: [...] }' entry at index [%d] Using notBy Can't be of type 'allow:' only'deny:'",
+                                        type,
+                                        typeIndex
+                                )
+                        );
+                    }
+                }
                 if (typeRule.isEmpty()) {
                     throw new AclPolicySyntaxException(
                             String.format(
@@ -471,6 +510,11 @@ public class YamlParsePolicy implements Policy {
     @Override
     public EnvironmentalContext getEnvironment() {
         return environment.toBasic();
+    }
+
+    @Override
+    public boolean isBy(){
+        return isBy;
     }
 
     static private class YamlEnvironmentalContext {

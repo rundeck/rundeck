@@ -52,7 +52,7 @@
 
                 %{--display step description--}%
                 <g:if test="${item.description}">
-                    <div class="text-info">
+                    <div class="wfstep-description">
                         <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
@@ -85,7 +85,7 @@
                     </g:if>
                 </g:if>
                 <g:if test="${item.description}">
-                    <g:enc>${item.description}</g:enc>
+                    <span class="wfstep-description"><g:enc>${item.description}</g:enc></span>
                 </g:if>
                 <stepplugin:display step="${item}" prefix="" includeFormFields="false"
                                     showPluginIcon="${!noimgs && !item.description}"
@@ -93,22 +93,26 @@
                 />
             </g:elseif>
             <g:else>
-                <g:if test="${!noimgs}">
-                    <g:set var="iname" value="${icon?:'icon-small'}"/>
-                    <i class="rdicon ${item.adhocRemoteString?'shell':item.adhocLocalString?'script':'scriptfile'} ${enc(attr:iname)}"></i>
-                </g:if>
                 <g:if test="${item.adhocRemoteString}">
+                    <g:if test="${!noimgs}">
+                        <i class="rdicon shell ${enc(attr: icon ?: 'icon-small')}"></i>
+                    </g:if>
                     <span class="argString"><g:truncate max="150" showtitle="true"><g:enc>${item.adhocRemoteString}</g:enc></g:truncate></span>
                 </g:if>
                 <g:elseif test="${item.adhocLocalString}">
-                    <g:render template="/execution/scriptDetailDisplay" model="${[rkey: g.rkey(),script:item.adhocLocalString,label: '',edit:edit]}"/>
+                    <g:render template="/execution/scriptDetailDisplay"
+                              model="${[rkey: g.rkey(), script: item.adhocLocalString, label: '', edit: edit, noimgs: noimgs, icon: icon]}"/>
                 </g:elseif>
                 <g:if test="${item.description}">
-                    <div class="text-info">
+                    <div class="wfstep-description">
                         <g:enc>${item.description}</g:enc>
                     </div>
                 </g:if>
                 <g:elseif test="${item.adhocFilepath}">
+
+                    <g:if test="${!noimgs}">
+                        <i class="rdicon scriptfile ${enc(attr: icon ?: 'icon-small')}"></i>
+                    </g:if>
                     <g:if test="${item.adhocFilepath=~/^https?:/}">
                         <g:set var="urlString" value="${item.adhocFilepath.replaceAll('^(https?://)([^:@/]+):[^@/]*@', '$1$2:****@')}"/>
                         <span class="argString"><g:truncate max="150"

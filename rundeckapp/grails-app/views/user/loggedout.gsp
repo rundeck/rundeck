@@ -31,7 +31,6 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="bootstrap.min.css"/>
     <asset:stylesheet href="app.css"/>
-    <asset:stylesheet href="custom.less.css"/>
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->

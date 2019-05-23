@@ -156,6 +156,7 @@ class RuleEvaluatorSpec extends Specification {
                         group: 'admin',
                         allowActions: ['EXECUTE'] as Set,
                         denyActions: ['DELETE'] as Set,
+                        by: true,
                         environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ),
         ] as Set
@@ -691,6 +692,105 @@ class RuleEvaluatorSpec extends Specification {
         result!=null
     }
 
+    def "test allow using notBy group"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRulesNotBy())
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","test","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "test allow using notBy username"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("admin","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "test reject using notBy username"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob'))
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        !result.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
+    def "test reject using notBy username regex"(){
+        given:
+        Authorization eval = new RuleEvaluator(basicRulesNotByUsername('bob|dan'))
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        def result2 = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("dan","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+
+        def result3 = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("jhon","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        result2!= null
+        result3!= null
+        !result.isAuthorized()
+        !result2.isAuthorized()
+        result3.isAuthorized()
+        "EXECUTE"==result.action
+    }
+
     Subject basicSubject(final String user, final String... groups) {
         def subject = new Subject()
         subject.principals<< new Username(user)
@@ -715,6 +815,7 @@ class RuleEvaluatorSpec extends Specification {
                             group         : 'admin',
                             allowActions  : ['EXECUTE'] as Set,
                             denyActions   : ['DELETE'] as Set,
+                            by: true,
                             environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                     ] + detail
             )
@@ -738,6 +839,7 @@ class RuleEvaluatorSpec extends Specification {
                                 group         : 'admin',
                                 allowActions  : ['EXECUTE'] as Set,
                                 denyActions   : ['DELETE'] as Set,
+                                by: true,
                                 environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                         ] + detail
                 ),
@@ -761,6 +863,7 @@ class RuleEvaluatorSpec extends Specification {
                         group: 'admin',
                         allowActions: ['EXECUTE'] as Set,
                         denyActions: ['DELETE'] as Set,
+                        by: true,
                         environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ),
         ] as Set
@@ -782,6 +885,7 @@ class RuleEvaluatorSpec extends Specification {
                         group         : 'admin',
                         allowActions  : ['EXECUTE'] as Set,
                         denyActions   : ['DELETE'] as Set,
+                        by: true,
                         environment   : BasicEnvironmentalContext.patternContextFor("project",".*")
                 ),
         ] as Set
@@ -801,6 +905,7 @@ class RuleEvaluatorSpec extends Specification {
                 username: null,
                 group: 'admin',
                 allowActions: ['READ'] as Set,
+                by: true,
                 environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
         ),
         ] as Set
@@ -821,10 +926,56 @@ class RuleEvaluatorSpec extends Specification {
                 username: null,
                 group: 'admin',
                 allowActions: ['DELETE'] as Set,
+                by: true,
                 environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
         ),
         ] as Set
         new AclRuleSetImpl(basicRules().rules + rules)
+    }
+
+    AclRuleSet basicRulesNotBy() {
+        def rules = [
+                new Rule(
+                        sourceIdentity: "test1",
+                        description: "bob job allow exec, deny delete for admin group",
+                        equalsResource: [
+                                jobName: 'bob'
+                        ],
+                        resourceType: 'job',
+                        regexMatch: false,
+                        containsMatch: false,
+                        equalsMatch: true,
+                        username: null,
+                        group: 'admin',
+                        allowActions: ['EXECUTE'] as Set,
+                        denyActions: ['DELETE'] as Set,
+                        by: false,
+                        environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ),
+        ] as Set
+        new AclRuleSetImpl(rules)
+    }
+    AclRuleSet basicRulesNotByUsername(String username) {
+        def rules = [
+                new Rule(
+                        sourceIdentity: "test1",
+                        description: "bob job allow exec, deny delete for admin group",
+                        equalsResource: [
+                                jobName: 'bob'
+                        ],
+                        resourceType: 'job',
+                        regexMatch: false,
+                        containsMatch: false,
+                        equalsMatch: true,
+                        username: username,
+                        group: null,
+                        allowActions: ['EXECUTE'] as Set,
+                        denyActions: ['DELETE'] as Set,
+                        by: false,
+                        environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ),
+        ] as Set
+        new AclRuleSetImpl(rules)
     }
     static class Rule implements AclRule{
         String sourceIdentity;
@@ -852,5 +1003,6 @@ class RuleEvaluatorSpec extends Specification {
         EnvironmentalContext environment;
 
         Set<String> denyActions;
+        boolean by;
     }
 }

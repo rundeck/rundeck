@@ -40,6 +40,10 @@ log4j.additivity.org.rundeck.storage.events=false
 log4j.logger.grails.app.services.rundeck.services.ProjectManagerService=INFO,stdout
 log4j.additivity.grails.app.services.rundeck.services.ProjectManagerService=false
 
+# Enable executions history cleanup logging
+log4j.logger.rundeck.quartzjobs.ExecutionsCleanUp=INFO,cleanup
+log4j.additivity.rundeck.quartzjobs.ExecutionsCleanUp=false
+
 # Enable this logger to log Hibernate output
 # handy to see its database interaction activity
 #log4j.logger.org.hibernate=debug,stdout
@@ -76,7 +80,7 @@ log4j.appender.file.file=${rundeck.log.dir}${file.separator}rundeck.log
 log4j.appender.file.datePattern='.'yyyy-MM-dd
 log4j.appender.file.append=true
 log4j.appender.file.layout=org.apache.log4j.PatternLayout
-log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
+log4j.appender.file.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} [%t] - %m%n
 
 
 #log4j.logger.org.codehaus.groovy.grails.plugins.quartz=debug,stdout
@@ -89,7 +93,7 @@ log4j.appender.audit=org.apache.log4j.DailyRollingFileAppender
 log4j.appender.audit.file=${rundeck.log.dir}${file.separator}rundeck.audit.log
 log4j.appender.audit.append=true
 log4j.appender.audit.layout=org.apache.log4j.PatternLayout
-log4j.appender.audit.layout.ConversionPattern=%d{ISO8601} - %m%n
+log4j.appender.audit.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n
 
 
 #
@@ -167,4 +171,15 @@ log4j.appender.project=org.apache.log4j.DailyRollingFileAppender
 log4j.appender.project.file=${rundeck.log.dir}${file.separator}rundeck.project.log
 log4j.appender.project.append=true
 log4j.appender.project.layout=org.apache.log4j.PatternLayout
-log4j.appender.project.layout.ConversionPattern=%d{ISO8601} - %m%n
+log4j.appender.project.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n
+
+#
+# cleanup log
+#
+# Logs Executions History Cleanup
+#
+log4j.appender.cleanup=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.cleanup.file=${rundeck.log.dir}${file.separator}rundeck.cleanup.log
+log4j.appender.cleanup.append=true
+log4j.appender.cleanup.layout=org.apache.log4j.PatternLayout
+log4j.appender.cleanup.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n

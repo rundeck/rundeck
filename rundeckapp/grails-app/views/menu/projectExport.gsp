@@ -28,6 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'export.archive')}"/>
+    <meta name="projconfigselected" content="export-archive"/>
     <title><g:message code="export.archive"/></title>
 </head>
 
