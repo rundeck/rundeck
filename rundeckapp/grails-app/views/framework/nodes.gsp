@@ -103,42 +103,7 @@
                           </button>
                           <ul class="dropdown-menu" role="menu">
 
-                              <li class="dropdown-header" data-bind="visible: filterName()">
-                                  <g:message code="filter" /><span data-bind="text: filterNameDisplay()"></span>
-                              </li>
-                              <li data-bind="visible: canSaveFilter">
-                                  <a href="#"
-                                     data-toggle="modal"
-                                     data-target="#saveFilterModal">
-                                      <i class="glyphicon glyphicon-plus"></i>
-                                      <g:message code="save.filter.ellipsis" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canDeleteFilter">
-                                  <a href="#"
-                                     class="textbtn textbtn-danger"
-                                     data-bind="click: deleteFilter">
-                                      <i class="glyphicon glyphicon-remove"></i>
-                                      <g:message code="delete.this.filter.ellipsis" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canSetDefaultFilter">
-                                  <a href="#"
-                                     class="textbtn textbtn-success"
-                                     data-bind="click: setDefaultFilter">
-                                      <i class="glyphicon glyphicon-filter"></i>
-                                      <g:message code="set.as.default.filter" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canRemoveDefaultFilter">
-                                  <a href="#"
-                                     class="btn btn-default"
-                                     data-bind="click: nodeSummary().removeDefault">
-                                      <i class="glyphicon glyphicon-ban-circle"></i>
-                                      <g:message code="remove.default.filter" />
-                                  </a>
-                              </li>
-                              <li class="divider" ></li>
+
                               <g:if test="${g.executionMode(is:'active',project:params.project)}">
 
                                   <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
