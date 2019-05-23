@@ -2393,7 +2393,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
 
 
-        def "reschedule adhoc executions method"() {
+        def "reschedule onetime executions method"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
         def exec1 = new Execution(
@@ -2417,7 +2417,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
-        def result = service.rescheduleAdHocJobs(Arrays.asList(exec1))
+        def result = service.rescheduleOnetimeExecutions(Arrays.asList(exec1))
 
         then:
         result.failedExecutions.size() == 0
