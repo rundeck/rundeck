@@ -101,11 +101,9 @@ function toggleDisclosure(id, iconid, closeUrl, openUrl) {
 
 
 function myToggleClassName(elem, name) {
-  if ($(elem).hasClassName(name)) {
-    $(elem).removeClassName(name);
-  } else {
-    $(elem).addClassName(name);
-  }
+
+    jQuery(elem).toggleClass(name)
+
 }
 
 
