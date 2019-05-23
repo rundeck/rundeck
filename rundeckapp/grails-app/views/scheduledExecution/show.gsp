@@ -53,7 +53,9 @@ search
                          request.project]}"/>
     <g:embedJSON id="jobDetail"
                  data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
-                          project: params.project ?: request.project]}"/>
+                          project: params.project ?:
+                                   request.project, scheduled: scheduledExecution?.scheduled, scheduleEnabled: scheduledExecution?.
+                         hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>
@@ -109,6 +111,16 @@ search
             context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
     <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
             projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+    <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
+    <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
+    <g:embedJSON id="authJson"
+                 data="${[
+                         projectAdmin: projAdminAuth,
+                         deleteExec  : deleteExecAuth,
+                         jobRun      : runAccess,
+                         jobRead     : readAccess
+                 ]}"/>
+
 
     <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
