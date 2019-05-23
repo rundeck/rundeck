@@ -68,5 +68,14 @@ public interface JobScheduleManager {
      */
     boolean updateScheduleOwner(String name, String group, Map data);
 
+    /**
+     * In cluster mode, return true if the scheduleOWner should change to current node.
+     *
+     * @param name job name
+     * @param group job group
+     * @param data map with job information, jobid and current schedule owner.
+     * @param project projectName
+     * @return uuid of node for the scheduled execution
+     */
     String determineExecNode(String name, String group, Map data, String project);
 }

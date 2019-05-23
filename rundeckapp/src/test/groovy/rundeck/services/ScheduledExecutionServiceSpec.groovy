@@ -176,6 +176,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            isClusterModeEnabled() >> clusterEnabled
+        }
+        service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+            determineExecNode(*_)>>{args->
+                return serverNodeUUID
+            }
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -193,11 +200,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
-        result == [scheduleDate, null]
+        result == [scheduleDate, serverNodeUUID]
 
         where:
-        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
-        true                | true            | true             | true        | true
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID
+        true                | true            | true             | true        | true            | false          | null
+        true                | true            | true             | true        | true            | true           | 'uuid'
     }
 
     @Unroll
