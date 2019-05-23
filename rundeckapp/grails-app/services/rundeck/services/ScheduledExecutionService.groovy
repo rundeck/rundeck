@@ -695,21 +695,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def executionList = results.list()
 
-        def adhocRescheduleResult = rescheduleAdHocJobs(executionList)
+        def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
 
         [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
     }
 
     /**
-     * Reschedule the provided ad-hoc scheduled executions. Invalid executions will be cleaned up.
-     * @param serverUUID
-     * @param project
-     * @return
+     * Reschedule the provided one-time executions. Invalid executions will be cleaned up.
+     * @param executionList The list of executions to reschedule.
+     * @return A map with: <pre>
+     *   [executions: List, // succeeded executions<br>
+     *   failedExecutions: List] // failed executions
+     * </pre>
      */
-    def rescheduleAdHocJobs(List<Execution> executionList) {
+    def rescheduleOnetimeExecutions(List<Execution> executionList) {
 
         Date now = new Date()
-        // Reschedule any executions which were scheduled ad hoc
+        // Reschedule any executions which were scheduled for one time execution.
 
         List<Execution> cleanupExecutions   = []
         def succeedExecutions = []
@@ -719,21 +721,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             ScheduledExecution se = e.scheduledExecution
 
             if (se.options.find { it.secureInput } != null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "the ad hoc schedule time has past")
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "the schedule time has past")
                 ok = false
             }
 
             if (ok) {
-                log.info("Rescheduling ad hoc execution of: " +
+                log.info("Rescheduling one-time execution of: " +
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
@@ -755,7 +757,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         succeedExecutions << [execution: e, time: nexttime]
                     }
                 } catch (Exception ex) {
-                    log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
+                    log.error("One Time job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
                 }
             }
@@ -766,7 +768,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!cleanupExecutions.isEmpty()) {
-            log.error("${cleanupExecutions.size()} ad hoc scheduled executions " +
+            log.error("${cleanupExecutions.size()} one-time scheduled executions " +
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
