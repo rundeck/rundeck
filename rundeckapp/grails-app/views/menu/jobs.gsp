@@ -29,7 +29,6 @@
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="pagehistory.js"/>
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
