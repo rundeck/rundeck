@@ -3,6 +3,8 @@
 // .dropdown-menu > span{
 //   @extend .dropdown-menu
 // }
-.dropdown-form .dropdown-menu {
-  padding: 10px;
+.dropdown-form .dropdown-menu > li {
+  &.form-item, &.form-inline {
+    padding: 10px;
+  }
 }
