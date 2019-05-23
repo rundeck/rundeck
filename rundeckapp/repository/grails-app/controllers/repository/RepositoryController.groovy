@@ -103,10 +103,11 @@ class RepositoryController {
         }
 
         def listPluginTypes() {
-            SortedSet<String> types = [] as SortedSet
+            def types = []
             ServiceTypes.getPluginTypesMap().keySet().each { name ->
-                types.add(name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, ''))
+                types.add([name:name,value:name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, '')])
             }
+            types.sort { a,b -> a.name <=> b.name }
             render types as JSON
         }
 

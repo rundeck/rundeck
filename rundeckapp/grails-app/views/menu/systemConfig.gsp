@@ -91,6 +91,19 @@
                 <code><g:enc>${loginmodule}</g:enc></code>
               </div>
             </div>
+            <hr>
+            <h4>Repositories</h4>
+            <div>
+              <p>Repositories contain plugins which can be searched and installed from inside the application.</p>
+              <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+              <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.feature.repository.enabled']]"/>
+            </div>
+
+            <div style="margin-top:1em;">
+              <p>Limit plugin searches to just installed plugins (true) or include searching the public repository (false | default).</p>
+               <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
+                 <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['rundeck.feature.repository.localSearchOnly']]"/>
+               </div>
           </div>
           <div class="card-footer">
             <hr>

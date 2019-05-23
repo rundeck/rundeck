@@ -17,21 +17,23 @@
 <g:link
         controller="execution"
         action="show"
-        class="primary"
+        class="${linkCss ?: ''}"
         id="${execution.id}"
         absolute="${absolute ? 'true' : 'false'}"
         params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">
-    <g:if test="${execution}">
+    <g:if test="${execution && !hideExecStatus}">
         <i class="exec-status icon "
            data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
         </i>
     </g:if>
+    <span class=" execstate "
+        data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
     <g:if test="${scheduledExecution}">
-        <span class="primary"><g:message code="scheduledExecution.identity"
-                                         args="[scheduledExecution.jobName, execution.id]"/></span>
+        <g:message code="scheduledExecution.identity"
+                   args="[scheduledExecution.jobName, execution.id.toString()]"/>
     </g:if>
     <g:else>
-        <span class="primary"><g:message code="execution.identity" args="[execution.id]"/></span>
+        <g:message code="execution.identity" args="[execution.id.toString()]"/>
     </g:else>
-
+    </span>
 </g:link>

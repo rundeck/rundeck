@@ -653,6 +653,7 @@
                     <g:set var="pluginprefix" value="pluginConfig."/>
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
+                            groupTitleCss      : 'h5',
                             service            : serviceName,
                             dynamicProperties  : dynamicProperties,
                             provider           : newitemDescription.name,
@@ -691,6 +692,7 @@
             </div>
         </g:if>
         <g:else>
+            <hr/>
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="description${rkey}"><g:message
                         code="Workflow.step.property.description.label"/></label>

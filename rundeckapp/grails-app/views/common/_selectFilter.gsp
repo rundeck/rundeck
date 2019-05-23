@@ -26,21 +26,7 @@
     <g:set var="projectfilters" value="${filterset.findAll{it.project==projectName}.sort({ a, b -> a.name.compareTo(b.name) })}"/>
     <g:set var="otherfilters" value="${filterset.findAll{it.project!=projectName}.sort({ a, b -> a.name.compareTo(b.name) })}"/>
     <g:set var="lastproject" value="${null}"/>
-    %{--<g:each in="${projectfilters + otherfilters }" var="filter">--}%
-        %{--<g:set var="isActive" value="${filter.name == filterName}"/>--}%
-        %{--<g:if test="${lastproject && lastproject!=filter.project}">--}%
-            %{--<li class="divider"></li>--}%
-        %{--</g:if>--}%
-        %{--<g:set var="lastproject" value="${filter.project}"/>--}%
-        %{--<li>--}%
-        %{--<g:link action="nodes" controller="framework" params="[filterName: filter.name, project: projectName]"--}%
-                %{--class="${isActive ? 'active' : ''} textbtn textbtn-primary ${className} "--}%
-            %{--data-node-filter-name="${enc(attr:filter.name)}"--}%
-            %{--data-node-filter="${enc(attr:filter.asFilter())}"--}%
-                %{--title="Apply filter: ${enc(attr:filter.name)}">--}%
-            %{--${filter.name}<g:if test="${filter.project!=projectName}"> [${filter.project}]</g:if></g:link>--}%
-        %{--</li>--}%
-    %{--</g:each>--}%
+
     <!-- ko if: nodeSummary() -->
     <!-- ko foreach: nodeSummary().filters -->
     <li>

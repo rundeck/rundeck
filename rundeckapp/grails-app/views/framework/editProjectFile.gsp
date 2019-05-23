@@ -22,7 +22,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
-    <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'edit.readme':filename=='motd.md'?'edit.motd':'edit.project.file')}"/>
+    <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'project.readme.title':filename=='motd.md'?'project.motd.title':'edit.project.file')}"/>
+    <meta name="projconfigselected" content="${(filename=='readme.md'?'edit-readme':filename=='motd.md'?'edit-motd':'edit.project.file')}"/>
     <title><g:message code="edit.project.file" /></title>
 
     <asset:javascript src="prototype/effects"/>
@@ -64,8 +65,14 @@
             </div>
             <div class="card-content">
               <div class="help-block">
-                <!-- TODO: This message mentions 'home page'. Is that accurate? Should this be changed to Dashboard? -->
-                <g:markdown><g:message code="project.file.${filename}.help.markdown" default="Enter markdown"/></g:markdown>
+                <details class="details-reset more-info">
+                    <summary>
+                        <g:message code="project.file.${filename}.help.markdown.summary" default="Enter markdown"/>
+                        <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
+                        <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
+                    </summary>
+                    <g:markdown><g:message code="project.file.${filename}.help.markdown" default="Enter markdown"/></g:markdown>
+                </details>
               </div>
               <textarea name="fileText" class="form-control code apply_ace" data-ace-autofocus='true' data-ace-session-mode="markdown" data-ace-height="500px" data-ace-control-soft-wrap="true">${fileText}</textarea>
             </div>

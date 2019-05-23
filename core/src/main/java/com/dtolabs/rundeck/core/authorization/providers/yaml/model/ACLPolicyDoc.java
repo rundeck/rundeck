@@ -48,6 +48,14 @@ public class ACLPolicyDoc {
         this.by = by;
     }
 
+    public NotBy getNotBy(){
+        return notBy;
+    }
+
+    public void setNotBy(NotBy notBy){
+        this.notBy = notBy;
+    }
+
     public Map<String, List<TypeRule>> getFor() {
         return forSection;
     }
@@ -372,12 +380,41 @@ public class ACLPolicyDoc {
         }
     }
 
+    public static class NotBy {
+        private Object username;
+        private Object group;
+
+        public Object getUsername() {
+            return username;
+        }
+
+        public void setUsername(Object username) {
+            this.username = username;
+        }
+
+        public Object getGroup() {
+            return group;
+        }
+
+        public void setGroup(Object group) {
+            this.group = group;
+        }
+
+        @Override
+        public String toString() {
+            return "NotBy{" +
+                    "username=" + username +
+                    ", group=" + group +
+                    '}';
+        }
+    }
 
     private Context context;
     private String description;
     //    private For forSection;
     private Map<String, List<TypeRule>> forSection;
     private By by;
+    private NotBy notBy;
     private String id;
 
     @Override
@@ -387,6 +424,7 @@ public class ACLPolicyDoc {
                ", description='" + description + '\'' +
                ", for=" + forSection +
                ", by=" + by +
+               ", notBy=" + notBy +
                ", id='" + id + '\'' +
                '}';
     }

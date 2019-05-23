@@ -481,6 +481,9 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             } catch (Throwable e) {
                 throw new ExecutionServiceException(e, "Could not create node source: " + e.getMessage());
             }
+            if (sourceForConfiguration == null) {
+                throw new ExecutionServiceException("Could not create node source: not found");
+            }
         }
 
         nodeSourceReferences.add(sourceForConfiguration);

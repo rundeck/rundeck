@@ -23,6 +23,7 @@ class PluginController extends ControllerBase {
     PluginService pluginService
     PluginApiService pluginApiService
     FrameworkService frameworkService
+    def messageSource
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {
@@ -130,7 +131,22 @@ class PluginController extends ControllerBase {
     }
 
     def listPlugins() {
-        render(pluginApiService.listPlugins() as JSON)
+        def providers = []
+        pluginApiService.listPlugins().each { svc ->
+            svc.providers.each { p ->
+                 def provider = [:]
+                provider.service = svc.service
+                provider.artifactName = p.pluginName
+                provider.name = p.name
+                provider.id = p.pluginId
+                provider.builtin = p.builtin
+                provider.pluginVersion = p.pluginVersion
+                provider.title = p.title
+                provider.description = p.description
+                providers.add(provider)
+            }
+        }
+        render(providers as JSON)
     }
 
     /**
@@ -315,22 +331,27 @@ class PluginController extends ControllerBase {
                                                           "system",
                                                           AuthConstants.ACTION_ADMIN)
         if (!authorized) {
-            flash.errors = ["request.error.unauthorized.title"]
-            redirectToPluginMenu()
+            renderErrorCodeAsJson("request.error.unauthorized.title")
             return
         }
         if(!params.pluginFile || params.pluginFile.isEmpty()) {
-            flash.errors = ["plugin.error.missing.upload.file"]
-            redirectToPluginMenu()
+            renderErrorCodeAsJson("plugin.error.missing.upload.file")
             return
         }
         ensureUploadLocation()
         File tmpFile = new File(frameworkService.getRundeckFramework().baseDir,RELATIVE_PLUGIN_UPLOAD_DIR+"/"+params.pluginFile.originalFilename)
         if(tmpFile.exists()) tmpFile.delete()
         tmpFile << ((MultipartFile)params.pluginFile).inputStream
-        flash.errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
+        def errors = validateAndCopyPlugin(params.pluginFile.originalFilename, tmpFile)
         tmpFile.delete()
-        redirectToPluginMenu()
+        def msg = [:]
+        if(!errors.isEmpty()) {
+            msg.err = errors.join(", ")
+        } else {
+            msg.msg = "done"
+        }
+
+        render msg as JSON
     }
 
     def installPlugin() {
@@ -339,18 +360,15 @@ class PluginController extends ControllerBase {
                                                                                "system",
                                                                                AuthConstants.ACTION_ADMIN)
         if (!authorized) {
-            flash.errors = ["request.error.unauthorized.title"]
-            redirectToPluginMenu()
+            renderErrorCodeAsJson("request.error.unauthorized.title")
             return
         }
         if(!params.pluginUrl) {
-            flash.errors = ["plugin.error.missing.url"]
-            redirectToPluginMenu()
+            renderErrorCodeAsJson("plugin.error.missing.url")
             return
         }
         if(!params.pluginUrl.contains("/")) {
-            flash.errors = ["plugin.error.invalid.url"]
-            redirectToPluginMenu()
+            renderErrorCodeAsJson("plugin.error.invalid.url")
             return
         }
         def parts = params.pluginUrl.split("/")
@@ -364,13 +382,19 @@ class PluginController extends ControllerBase {
                 tmpFile << inputStream
             }
         } catch(Exception ex) {
-            flash.errors = ["Failed to fetch plugin from URL. Error: ${ex.message}"]
-            redirectToPluginMenu()
+            def err  = [err: "Failed to fetch plugin from URL. Error: ${ex.message}"]
+            render err as JSON
             return
         }
-        flash.errors = validateAndCopyPlugin(parts.last(),tmpFile)
+        def errors = validateAndCopyPlugin(parts.last(),tmpFile)
         tmpFile.delete()
-        redirectToPluginMenu()
+        def msg = [:]
+        if(!errors.isEmpty()) {
+            msg.err = errors.join(", ")
+        } else {
+            msg.msg = "done"
+        }
+        render msg as JSON
     }
 
     private def validateAndCopyPlugin(String pluginName, File tmpPluginFile) {
@@ -391,8 +415,9 @@ class PluginController extends ControllerBase {
         return errors
     }
 
-    private redirectToPluginMenu() {
-        redirect controller:"menu",action:"plugins"
+    private String renderErrorCodeAsJson(String errCode) {
+        def err  = [err: messageSource.getMessage(errCode,null,RequestContextUtils.getLocale(request))]
+        render err as JSON
     }
 
     private def ensureUploadLocation() {

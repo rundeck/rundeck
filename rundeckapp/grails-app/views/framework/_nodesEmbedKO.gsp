@@ -17,25 +17,33 @@
 %{--random string for uniqueness--}%
 <g:set var="xkey" value="${g.rkey()}"/>
 <div  class="nodes-embed ansicolor-on matchednodes embed embed_clean" data-bind="">
-    <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} ">
+
+    <div data-bind="foreach: {data: nodeSet().nodes, 'as': 'node'} " class="row">
+
         <a
-           class="col-sm-3 node_ident embedded_node"
-           data-toggle="popover"
+           class=" col-xs-6 node_ident embedded_node tight"
            tabindex="0"
            role="button"
-           data-trigger="click"
            data-viewport="#main-panel"
            data-placement="auto"
            data-container="body"
            data-delay="{&quot;show&quot;:0,&quot;hide&quot;:200}"
            data-popover-template-class="popover-wide"
-
-           data-bind="css: {server: islocal},
+           data-bind="
                   css: $root.nodeSet().nodeCss(attributes),
+                  css2: {
+                      server: islocal,
+                      'col-lg-2': $root.nodeSet().nodes().length>20,
+                      'col-md-3': $root.nodeSet().nodes().length>12,
+                      'col-sm-4': $root.nodeSet().nodes().length>8 && $root.nodeSet().nodes().length<13,
+                  },
                   style: $root.nodeSet().nodeStyle(attributes),
-                  attr: { 'data-node': nodename },
+                  attr: { 'data-node': nodename, title: nodename},
                   bootstrapPopover: true,
-                  bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index()
+                  bootstrapPopoverContentRef: '#node_pop_${xkey}_'+$index(),
+                  bootstrapPopoverOptions:{trigger:'click'},
+                  bootstrapTooltip: nodename,
+                  bootstrapPopoverHideTooltip: true
                   ">
             <span data-bind="css: $root.nodeSet().iconCss(attributes), style: $root.nodeSet().iconStyle(attributes)">
                 <!-- ko if: attributes['ui:icon:name'] -->
@@ -58,6 +66,7 @@
                 <!-- /ko -->
             </span>
         </a>
+
 
         <div data-bind="attr: { 'id': 'node_pop_${xkey}_'+$index() }, css: {server: islocal }"
              style="display:none;"

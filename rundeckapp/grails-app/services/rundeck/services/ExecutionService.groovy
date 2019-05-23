@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -1006,13 +1007,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // debug output)
             def rootoverride = new OverridableStreamingLogWriter(loghandler)
 
+            def globalConfig = getGlobalPluginConfigurations(execution.project)
+
             def rootLogManager = new LoggingManagerImpl(
                     rootoverride,
                     directLogger,
                     logFilterPluginLoader,
-                    //TODO:  global/project filter plugins
-                    [
-                    ]
+                    globalConfig
             )
 
 
@@ -1031,8 +1032,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
                                     execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
-                            ) :
-                            []
+                            ) + globalConfig :
+                            globalConfig
             )
 
 
@@ -3854,5 +3855,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     boolean avgDurationExceeded(schedId, Map content){
         notificationService.triggerJobNotification('avgduration',schedId, content)
+    }
+
+    List<PluginConfiguration> getGlobalPluginConfigurations(String project){
+        def list = []
+
+        def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'framework.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+
+        def projPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'project.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+        list = list + projPlugins
+        list = list + fwPlugins
+
+        return list
     }
 }

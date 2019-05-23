@@ -52,7 +52,7 @@
                                          name: (params.project ?: request.project), context: "application"
        )}"/>
 
-<div class="subnav" style="display:none">
+<div class="subnav" style="${wdgt.styleVisible(if:projConfigOpen)}">
   <ul class="nav" style="" data-old-padding-top="" data-old-padding-bottom="" data-old-overflow="">
     <li id="nav-project-settings-edit-project">
       <g:link

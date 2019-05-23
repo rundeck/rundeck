@@ -336,11 +336,14 @@
   &[data-active-color="danger"]{
     @include sidebar-active-color($danger-color);
   }
+  &[data-active-color="white"]{
+    @include sidebar-active-color($white-color);
+  }
 
 }
 
 .main-panel{
-  background-color: $bg-nude;
+  background-color: $bg-mainpanel;
   overflow: auto;
   position: initial;
   // position: relative;
@@ -350,7 +353,7 @@
   min-height: 100%;
   overflow-x: hidden;
   > .content{
-    padding: 30px 15px 0 15px;
+    padding: 15px 15px 0 15px;
     min-height: calc(100% - 135px);
     // min-height: calc(100% - 120px);
     // min-height: calc(100% - 150px);

@@ -54,78 +54,69 @@
 )}"/>
 <g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'off':'on'}"/>
 
-<g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
-    <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
-</g:if>
 
 <div id="wffilterform">
     <g:render template="/common/messages"/>
     <g:set var="wasfiltered" value="${paginateParams?.keySet().grep(~/(?!proj).*Filter|groupPath|idlist$/)}"/>
-    <g:if test="${params.createFilters}">
-      <span class="note help">
-          <g:message code="job.filter.create.help" />
-      </span>
-    </g:if>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
     <div>
       <div>
         <!-- filter -->
-        <div style="border-bottom:1px solid #ddd; margin-bottom:2em; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
-          <g:form action="jobs" params="[project:params.project]" method="POST" class="form" useToken="true">
+
+
+<div class="modal" id="jobs_filters" tabindex="-1" role="dialog"
+     aria-labelledby="jobs_filters_title" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+    <g:form action="jobs" params="[project:params.project]" method="POST" class="form form-horizontal" useToken="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="jobs_filters_title"><g:message code="filter.jobs" /></h4>
+            </div>
+
+            <div class="modal-body" id="jobs_filters_content">
+
+
             <g:if test="${params.compact}">
               <g:hiddenField name="compact" value="${params.compact}"/>
             </g:if>
             <g:hiddenField name="project" value="${params.project}"/>
-            <div style="margin-bottom:1em">
-              <span class="btn btn-default btn-xs pull-right obs_filtertoggle">
-                Close
-                <!-- <g:message code="filter.title" /> -->
-              </span>
-              <g:if test="${!filterName}">
-                <a class="btn btn-xs btn-success" data-toggle="modal" href="#saveFilterModal" title="${message(code:"job.filter.save.button.title")}">
-                  <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
-                </a>
-              </g:if>
-              <g:else >
-                <div class="filterdef saved clear">
-                  <span class="prompt"><g:enc>${filterName}</g:enc></span>
-                  <a class="btn btn-xs btn-simple btn-danger" data-toggle="modal"
-                        href="#deleteFilterModal" title="${message(code:"job.filter.delete.button.title")}">
-                    <b class="glyphicon glyphicon-remove"></b>
-                    <g:message code="job.filter.delete.button" />
-                  </a>
-                </div>
-              </g:else>
-            </div>
-              <g:render template="/common/queryFilterManagerModal" model="${[rkey:rkey,filterName:filterName,
-                      filterset:filterset,update:'wffilterform',
-                      deleteActionSubmit:'deleteJobfilter',
-                      storeActionSubmit:'storeJobfilter']}"/>
-              <div class="filter">
+
                 <g:hiddenField name="max" value="-1"/>
                 <g:hiddenField name="offset" value="0"/>
                 <g:if test="${params.idlist}">
                   <div class="form-group">
-                    <label for="${enc(attr:rkey)}idlist"><g:message code="jobquery.title.idlist"/></label>:
-                    <g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}" class="form-control" />
+                    <label class="col-sm-2 control-label" for="${enc(attr:rkey)}idlist"><g:message code="jobquery.title.idlist"/></label>
+                    <div class="col-sm-10">
+                        <g:textField name="idlist" id="${rkey}idlist" value="${params.idlist}" class="form-control" />
+                    </div>
                   </div>
                 </g:if>
                 <div class="form-group">
-                  <label for="${enc(attr:rkey)}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>:
-                  <g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}" class="form-control" />
+                  <label class="col-sm-2 control-label" for="${enc(attr:rkey)}jobFilter"><g:message code="jobquery.title.jobFilter"/></label>
+                  <div class="col-sm-10">
+                    <g:textField name="jobFilter" id="${rkey}jobFilter" value="${params.jobFilter}" class="form-control" />
+                  </div>
                 </div>
                 <div class="form-group">
-                  <label for="${enc(attr:rkey)}groupPath"><g:message code="jobquery.title.groupPath"/></label>:
-                  <g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}" class="form-control"/>
+                  <label class="col-sm-2 control-label" for="${enc(attr:rkey)}groupPath"><g:message code="jobquery.title.groupPath"/></label>
+                  <div class="col-sm-10">
+                      <div class="input-group">
+                          <span class="input-group-addon"><i class="glyphicon glyphicon-folder-open"></i></span>
+                          <g:textField name="groupPath" id="${rkey}groupPath" value="${params.groupPath}" class="form-control"/>
+                      </div>
+                  </div>
                 </div>
                 <div class="form-group">
-                  <label for="${enc(attr:rkey)}descFilter"><g:message code="jobquery.title.descFilter"/></label>:
-                  <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}" class="form-control"/>
+                    <label class="col-sm-2 control-label" for="${enc(attr:rkey)}descFilter"><g:message code="jobquery.title.descFilter"/></label>
+                    <div class="col-sm-10">
+                        <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}" class="form-control"/>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>:
-                    <br>
-                    ${params.scheduledFilter}
+                    <label class="col-sm-2 control-label" for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>
+
+                    <div class="col-sm-10">
                     <label class="radio-inline">
                         <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="true" checked="${params.scheduledFilter==true}"/>
                         <g:message code="yes" />
@@ -138,31 +129,55 @@
                         <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="" checked="${params.scheduledFilter == null}"/>
                         <g:message code="all"/>
                     </label>
+                    </div>
                 </div>
                 <g:if test="${clusterModeEnabled}">
                 <div class="form-group">
-                    <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
-                    <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}" class="form-control"/>
+                    <label class="col-sm-2 control-label" for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>
+
+                    <div class="col-sm-10">
+                        <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}" class="form-control"/>
+                    </div>
                 </div>
                 </g:if>
-                <div class="form-group">
-                  <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary btn-sm"/>
-                  <g:actionSubmit value="${message(code:'job.filter.clear.button.title')}" controller='menu' action='clearJobsFilter' class="btn btn-default btn-sm"/>
+
+
+
+        </div>
+
+            <div class="modal-footer" id="jobs_filters_footer">
+
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        <g:message code="cancel"/>
+                    </button>
+
+                  <g:actionSubmit value="${message(code:'job.filter.apply.button.title')}" controller='menu' action='jobs' class="btn btn-primary "/>
+
+                     <a
+                     class="btn btn-success pull-right"
+                     data-dismiss="modal"
+                     data-toggle="modal"
+                     href="#saveJobFilterKOModal"
+                     title="${message(code:"job.filter.save.button.title")}" >
+                      <i class="glyphicon glyphicon-plus"></i> <g:message code="job.filter.save.button" />
+                    </a>
+
                 </div>
-              </div>
+        </div>
           </g:form>
-        </div><!-- end filter -->
+        </div>
+        </div>
         <div style="text-align:left;vertical-align:top;" id="${enc(attr:rkey)}wfcontent" class="wfcontent">
           <div class="jobscontent head" style="margin-bottom:1em;">
             <g:if test="${!params.compact}">
               <div class=" pull-right" id="jobpageactionbuttons">
-                <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
+                <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" data-ko-bind="bulkeditor" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
                   <span class="text-info">
                     <i class="glyphicon glyphicon-exclamation-sign "></i>
                     <!--ko text: defaultDisplayText()--><!--/ko-->
                   </span>
                 </span>
-                <div id="scmStatusPopoverOK" style="display: none;">
+                <div id="scmStatusPopoverOK" style="display: none;" data-ko-bind="bulkeditor">
                   <!-- ko if: displayExport() -->
                   <dl>
                     <dt><g:message code="scm.export.title"/></dt>
@@ -198,7 +213,7 @@
                     <g:message code="job.actions" />
                     <span class="caret"></span>
                   </button>
-                  <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu">
+                  <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu" data-ko-bind="bulkeditor">
                   <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                     <li>
                       <g:link controller="scheduledExecution" action="create" params="[project: params.project ?: request.project]" class="">
@@ -270,54 +285,7 @@
         </div>
     </g:if>
 
-                <g:if test="${wasfiltered}">
-                    <div>
-                      <g:if test="${!params.compact}">
-                        <div class="alert alert-info">
-                          <span class="h5"><g:enc>${totalauthorized}</g:enc>
-                          <g:message code="jobs.matching.filter" />
-                        </div>
-                      </g:if>
-                      <g:if test="${filterset}">
-                          <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
-                          <!--<span class="info note">Filter:</span>-->
-                      </g:if>
-                    </div>
-                </g:if>
-                <g:else>
-                    <span class="btn btn-default btn-xs obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
-                        <g:message code="filter.title" />
-                        <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
-                    </span>
-                    <g:if test="${filterset}">
-                        <span style="margin-left:10px;">
-                            <span class="info note"><g:message code="choose.a.filter" /></span>
-                            <g:render template="/common/selectFilter" model="[noSelection:'-All-',filterset:filterset,filterName:filterName,prefName:'workflows']"/>
-                        </span>
-                    </g:if>
-                </g:else>
-                <g:if test="${wasfiltered}">
-                  <span title="Click to modify filter" class="btn btn-default btn-xs query obs_filtertoggle"  id='${rkey}filter-toggle'>
-                      <g:each in="${wasfiltered.sort()}" var="qparam">
-                          <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
-
-                          <g:if test="${paginateParams[qparam] instanceof java.util.Date}">
-                              <span class="queryvalue date" title="${enc(attr:paginateParams[qparam].toString())}">
-                                  <g:relativeDate atDate="${paginateParams[qparam]}"/>
-                              </span>
-                          </g:if>
-                          <g:else>
-                              <span class="queryvalue text">
-                                  ${g.message(code:'jobquery.title.'+qparam+'.label.'+paginateParams[qparam].toString(),default:enc(html:paginateParams[qparam].toString()).toString())}
-                              </span>
-                          </g:else>
-
-                      </g:each>
-
-                      <b class="glyphicon glyphicon-chevron-right"></b>
-                  </span>
-                </g:if>
-                    <span id="group_controls">
+                    <span id="group_controls" data-ko-bind="bulkeditor">
                       <span class="btn btn-default btn-xs" data-bind="click: expandAllComponents">
                           <g:message code="expand.all" />
                       </span>
@@ -382,7 +350,7 @@
             </g:form>
         </g:if>
                     <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
-                        <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true" data-ko-bind="bulkeditor">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -440,7 +408,7 @@
                             </div><!-- /.modal-dialog -->
                         </div><!-- /.modal -->
 
-                    <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" >
+                    <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" data-ko-bind="bulkeditor">
                         <div class="bulk_edit_controls panel panel-warning"  >
                             <div class="panel-heading">
                                 <button type="button" class="close "
@@ -528,7 +496,7 @@
 
                         </div>
                     </div>
-                        <div id="job_group_tree" class="panel-group">
+                        <div id="job_group_tree" class="panel-group" data-ko-bind="bulkeditor">
                         <g:if test="${jobgroups}">
 
                             <g:timerStart key="groupTree"/>
