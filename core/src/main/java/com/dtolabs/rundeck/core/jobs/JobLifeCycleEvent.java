@@ -2,7 +2,6 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import com.dtolabs.rundeck.core.logging.LoggingManager;
 
 public class JobLifeCycleEvent {
     private WorkflowExecutionItem item;
