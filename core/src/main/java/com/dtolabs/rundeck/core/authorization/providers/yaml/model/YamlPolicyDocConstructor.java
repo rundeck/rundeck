@@ -79,7 +79,7 @@ public class YamlPolicyDocConstructor extends Constructor {
     }
 
     static Set<String> ALLOWED_POLICY_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "by", "id", "for", "context", "description"
+            "by", "notBy","id", "for", "context", "description"
     )));
     static Set<String> ALLOWED_CONTEXT_KEYS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
             "project","application"
