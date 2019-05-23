@@ -18,7 +18,7 @@
 
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
 <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
-<g:set var="runEnabled" value="${g.executionMode(is: 'active', project: scheduledExecution.project)}"/>
+<g:set var="runEnabled" value="${g.executionMode(is: 'active', project: scheduledExecution.project) && scheduledExecution.hasExecutionEnabled()}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
 <g:set var="rundoctext"
@@ -93,21 +93,8 @@
                                       <li class="active"><a href="#runjob" data-toggle="tab"><g:message
                                               code="scheduledExecution.show.run.tab.name"/></a></li>
                                   </g:if>
-                                  <g:else>
-                                      <li class="disabled">
-                                          <a href="#"
-                                             title="${message(
-                                                     code: !runEnabled ? 'disabled.job.run' :
-                                                           'unauthorized.job.run'
-                                             )}"
-                                             class="has_tooltip"
-                                             data-placement="bottom">
-                                              <g:message code="scheduledExecution.show.run.tab.name"/>
-                                          </a>
-                                      </li>
-                                  </g:else>
                                   <g:if test="${rundoctext}">
-                                      <li class="${(canRunJob || readAccess) ? '' : 'active'}">
+                                      <li class="${(canRunJob ) ? '' : 'active'}">
                                           <a href="#runbook" data-toggle="tab"><g:message code="runbook"/></a>
                                       </li>
                                   </g:if>
@@ -127,7 +114,7 @@
                           </g:if>
 
                           <g:if test="${rundoctext}">
-                              <div id="runbook" class="tab-pane  ${(canRunJob || readAccess) ? '' : 'active'}">
+                              <div id="runbook" class="tab-pane  ${(canRunJob ) ? '' : 'active'}">
                                   <div class="markdeep">${rundoctext}</div>
                               </div>
                           </g:if>
