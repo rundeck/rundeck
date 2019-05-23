@@ -21,7 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <meta name="skipprototypeJs" content="true"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
@@ -29,7 +29,7 @@
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="prototype/effects"/>
+
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="menu/joboptionsTest.js"/>
@@ -264,7 +264,7 @@
             });
             jQuery('#wffilterform input').each(function(ndx,elem){
                 if(elem.type=='text'){
-                    elem.observe('keypress',noenter);
+                    jQuery(elem).on('keypress',noenter);
                 }
             });
             bulkeditor=new BulkEditor({messages:window.Messages});
