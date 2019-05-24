@@ -30,6 +30,41 @@
                 return link
             }
         },
+
+        addMenuNavLink (text, url, active, group, link) {
+            if (!link || !link.length) {
+                return
+            }
+            let li = jQuery(
+                `<li class=""><a href="#" class="">${text}</a></li>`
+            )
+            li.find('a').attr('href', url)
+            if (active) {
+                li.addClass('active')
+            }
+            let adminMenu = link.find('ul.dropdown-menu')
+            let appendAfter = adminMenu.find('li').last()
+
+            //determine if group separator is present
+            let groupdivider = adminMenu.find(`li.divider[data-group=${group.id}]`)
+            if (!groupdivider.length) {
+                let text=group.title||group.id
+                groupdivider = jQuery(`<li class="divider" data-group="${group.id}"></li>`)
+                let header = jQuery(`<li class="dropdown-header">${text}</li>`)
+                let divider = adminMenu.find('li.divider')
+                if (!divider.length) {
+                    adminMenu.append(groupdivider)
+                } else {
+                    divider.last().before(groupdivider)
+                }
+                groupdivider.after(header)
+                appendAfter = header
+            } else {
+                appendAfter = groupdivider.next()
+            }
+            appendAfter.after(li)
+        },
+
         scheduledExecution: {
             show: {
 
