@@ -41,7 +41,7 @@
                     <g:each in="${buttons}" var="button">
                         <button class="btn ${button.css ?: 'btn-default'} " data-bind="${button.bind ?: ''}"
                                 onclick="${button.js ?: ''}">
-                            ${button.message}
+                            ${button.message ?: button.messageCode ? message(code: button.messageCode) : 'button'}
                         </button>
                     </g:each>
                     <g:if test="${links}">
