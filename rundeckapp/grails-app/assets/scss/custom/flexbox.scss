@@ -29,6 +29,9 @@
   &.flex-align-items-baseline {
     align-items: baseline;
   }
+  &.flex-align-items-flex-end {
+    align-items: flex-end;
+  }
 
   .flex-item {
     &.flex-grow-1 {
