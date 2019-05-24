@@ -21,9 +21,6 @@
   <div class="col-xs-12">
     <g:form controller="project" action="importArchive" params="[project: params.project ?: request.project]" useToken="true" enctype="multipart/form-data" class="form">
       <div class="card" id="importform">
-        <div class="card-header">
-          <h3 class="card-title"><g:message code="import.archive"/></h3>
-        </div>
         <div class="card-content">
           <div class="list-group list-group-tab-content">
             <div class="list-group-item">
@@ -175,7 +172,7 @@
             <g:actionSubmit action="importArchive" value="${g.message(code:'button.action.Import',default:'Import')}" id="uploadFormUpload" onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)" class="btn btn-primary"/>
           </div>
           <div id="importUploadSpinner" class="spinner block" style="display:none;">
-            <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
+            <i class="fas fa-spinner fa-pulse"></i>
             <g:message code="uploading.file"/>
           </div>
         </div>

@@ -29,6 +29,7 @@
   <meta name="layout" content="base"/>
   <meta name="tabpage" content="projectconfigure"/>
   <meta name="projtabtitle" content="${message(code: 'edit.nodes.title')}"/>
+  <meta name="projconfigselected" content="edit-nodes"/>
   <meta name="skipPrototypeJs" content="true"/>
 
   <title><g:message code="edit.nodes.title"/>: <g:enc>${params.project ?: request.project}</g:enc></title>

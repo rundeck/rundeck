@@ -62,15 +62,20 @@
     <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 
     <span class="configpair">
-        <span title="${enc(attr: propdesc)}"><stepplugin:message
-                service="${service}"
-                name="${provider}"
-                code="${messagePrefix}property.${prop.name}.title"
-                default="${prop.title ?: prop.name}"/>:</span>
-        <g:collapser key="${rakey}"><g:enc>${label ? label : ''}</g:enc>${split.size()} lines</g:collapser>
-        <div class="collapse collapse-expandable" id="${enc(attr:rakey)}">
-        <div class="scriptContent apply_ace" ><g:enc>${script}</g:enc></div>
-        </div>
+        <details class="more-info details-reset">
+            <summary >
+                <span title="${enc(attr: propdesc)}"><stepplugin:message
+                        service="${service}"
+                        name="${provider}"
+                        code="${messagePrefix}property.${prop.name}.title"
+                        default="${prop.title ?: prop.name}"/>:</span>
+
+                <span class="text-info">${split.size()} lines</span>
+                <span class="more-indicator-verbiage more-info-icon"><g:icon name="chevron-right"/></span>
+                <span class="less-indicator-verbiage more-info-icon"><g:icon name="chevron-down"/></span>
+            </summary>
+            <div class="scriptContent apply_ace"><g:enc>${script}</g:enc></div>
+        </details>
     </span>
 </g:elseif>
 <g:elseif test="${values[prop.name]}">

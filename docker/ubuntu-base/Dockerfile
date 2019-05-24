@@ -23,6 +23,7 @@ RUN echo "dash dash/sh boolean false" | debconf-set-selections \
 RUN set -euxo pipefail \
     && sed -i -e 's#http://\(archive\|security\)#mirror://mirrors#' -e 's#/ubuntu/#/mirrors.txt#' /etc/apt/sources.list \
     && apt-get -y update && apt-get -y --no-install-recommends install \
+        acl \
         curl \
         gnupg2 \
         ssh-client \
@@ -32,7 +33,8 @@ RUN set -euxo pipefail \
         wget \
     && rm -rf /var/lib/apt/lists/* \
     # Setup rundeck user
-    && adduser --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
+    && adduser --gid 0 --shell /bin/bash --home /home/rundeck --gecos "" --disabled-password rundeck \
+    && chmod 0775 /home/rundeck \
     && passwd -d rundeck \
     && addgroup rundeck sudo \
     && echo | sudo -u rundeck ssh-keygen -N '' \

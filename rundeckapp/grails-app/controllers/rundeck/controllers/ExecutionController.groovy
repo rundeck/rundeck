@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import com.dtolabs.rundeck.app.support.ExecutionQueryMetrics
+import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.common.PluginDisabledException
@@ -38,9 +38,10 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.util.MetricsStatsBuilder
 import grails.converters.JSON
 import groovy.transform.PackageScope
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
@@ -52,10 +53,10 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.workflow.StateMapping
 
 import javax.servlet.http.HttpServletResponse
+import java.sql.Time
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.stream.Collectors
 
 /**
 * ExecutionController
@@ -1613,7 +1614,7 @@ setTimeout(function(){
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
 
-                
+
                 entry.each{
                     appendOutput(response, it.mesg+lineSep)
                 }
@@ -2207,20 +2208,37 @@ setTimeout(function(){
                 grailsApplication.config.rundeck?.pagination?.default?.max ?
                         grailsApplication.config.rundeck.pagination.default.max.toInteger() :
                         20
-        def results = executionService.queryExecutions(query, resOffset, resMax)
-        def result=results.result
-        def total=results.total
-        //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext,result,[AuthConstants.ACTION_READ])
 
-        withFormat{
-            xml{
-                return executionService.respondExecutionsXml(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+        def results
+        try {
+            results = executionService.queryExecutions(query, resOffset, resMax)
+        }
+        catch (ExecutionQueryException e) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.error',
+                    args  : [message(code: e.getErrorMessageCode())]
+                ]
+            )
+        }
+
+        def result = results.result
+        def total = results.total
+        //filter query results to READ authorized executions
+        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
+
+        withFormat {
+            xml {
+                return executionService.respondExecutionsXml(request, response, filtered, [total: total, offset: resOffset, max: resMax])
             }
-            json{
-                return executionService.respondExecutionsJson(request,response,filtered,[total:total,offset:resOffset,max:resMax])
+            json {
+                return executionService.respondExecutionsJson(request, response, filtered, [total: total, offset: resOffset, max: resMax])
             }
         }
+
+
     }
 
 
@@ -2328,14 +2346,8 @@ setTimeout(function(){
                 ])
         }
 
-        AuthContext authContext;
-
         if(params.project) {
-            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
             query.projFilter = params.project
-        }
-        else {
-            authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
 
         if (null != query) {
@@ -2402,50 +2414,29 @@ setTimeout(function(){
             }
         }
 
-        def resOffset = params.int('offset', 0)
-        def resMax = params.int('max', -1)
 
-        def results = executionService.queryExecutions(query, resOffset, resMax)
-        def result = results.result
-        def total = results.total
-        //filter query results to READ authorized executions
-        def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(authContext, result, [AuthConstants.ACTION_READ])
-
-        // Calculate stats
-        def metricsBuilder = new MetricsStatsBuilder()
-        def metricsBuilderStatus = new MetricsStatsBuilder()
-        def metricsBuilderDuration = new MetricsStatsBuilder()
-        filtered.each { Execution exec ->
-
-            // count total
-            metricsBuilder.count(ExecutionQueryMetrics.TOTAL_COUNT)
-
-            // count state
-            metricsBuilderStatus.count(exec.getExecutionState())
-
-            // duration stats.
-            def dur = exec.durationAsLong()
-            if (dur) {
-                // register duration avg
-                metricsBuilderDuration.average(ExecutionQueryMetrics.DURATION_AVERAGE, dur)
-                // register duration max
-                metricsBuilderDuration.max(ExecutionQueryMetrics.DURATION_MAX, dur)
-                // register duration min
-                metricsBuilderDuration.min(ExecutionQueryMetrics.DURATION_MIN, dur)
-            }
+        def metrics
+        try {
+            // Get metric data
+            metrics = executionService.queryExecutionMetrics(query)
+        }
+        catch (ExecutionQueryException e) {
+            return apiService.renderErrorFormat(
+                response,
+                [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.error',
+                    args  : [message(code: e.getErrorMessageCode())]
+                ]
+            )
         }
 
-        // Build and format response
-        def metrics = new HashMap(metricsBuilder.buildStatsMap())
-        def metricsDur = new HashMap(metricsBuilderDuration.buildStatsMap())
-        metricsOutputFormatTimeNumberAsString(metricsDur, [
-                ExecutionQueryMetrics.DURATION_AVERAGE,
-                ExecutionQueryMetrics.DURATION_MIN,
-                ExecutionQueryMetrics.DURATION_MAX
+        // Format times to be human readable.
+        metricsOutputFormatTimeNumberAsString(metrics.duration, [
+            "average",
+            "min",
+            "max"
         ])
-        metrics['status']=metricsBuilderStatus.buildStatsMap()
-        metrics['duration']=metricsDur
-
 
 
         withFormat {
@@ -2455,16 +2446,15 @@ setTimeout(function(){
             xml {
                 render(contentType: "application/xml") {
                     delegate.'result' {
-                        metrics.each {key, value ->
-                            if(value instanceof Map){
-                                Map sub=value
-                                delegate."${key}"{
-                                    sub.each{k1,v1->
+                        metrics.each { key, value ->
+                            if (value instanceof Map) {
+                                Map sub = value
+                                delegate."${key}" {
+                                    sub.each { k1, v1 ->
                                         delegate."${k1}"(v1)
                                     }
                                 }
-                            }
-                            else {
+                            } else {
                                 delegate."${key}"(value)
                             }
                         }
@@ -2472,13 +2462,15 @@ setTimeout(function(){
                 }
             }
         }
+
+
     }
 
     /**
      * On the supplied map, formats the specified keys as a time String.
      * Map values must subclass java.lang.Number
      */
-    static void metricsOutputFormatTimeNumberAsString(Map<String, Object> map, List<String> keys) {
+    static void metricsOutputFormatTimeNumberAsString(Map<Object, Number> map, List<String> keys) {
         keys.each { k ->
             if(map.containsKey(k)) {
                 map[k] = formatTimeNumberAsString(map[k])

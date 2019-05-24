@@ -20,8 +20,8 @@ class MenuService implements ProjectConfigurable {
             PropertyBuilder.builder().with {
                 options 'motdDisplay'
                 title 'Display the Project MOTD'
-                values("projectList", "projectHome")
-                labels([projectList: "Projects List", projectHome: "Project Home Page"])
+                values("projectList", "projectHome", "navbar")
+                labels([projectList: "Projects List", projectHome: "Project Home Page", navbar: "Navbar Indicator"])
                 required(false)
                 defaultValue null
             }.build(),

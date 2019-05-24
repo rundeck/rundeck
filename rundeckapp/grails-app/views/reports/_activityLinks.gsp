@@ -20,7 +20,7 @@
 <g:set var="linkParams" value="${filter?filter+projParams:projParams}"/>
 <g:set var="runningParams" value="${filter ? filter + projParams : projParams}"/>
 <g:if test="${scheduledExecution}">
-    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, includeJobRef: includeJobRef]+projParams}"/>
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.extid, includeJobRef: includeJobRef]+projParams}"/>
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <div class="vue-tabs">
@@ -292,7 +292,7 @@
                 <span data-bind="if: execution().jobArguments">
                     <span data-bind="foreachprop: execution().jobArguments">
                         <span data-bind="text: key"></span>:
-                        <span data-bind="text: value" class="optvalue"></span>
+                        <code data-bind="text: value" class="optvalue"></code>
                     </span>
                 </span>
                 <!-- ko if: !execution().jobArguments -->

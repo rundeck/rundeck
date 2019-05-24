@@ -76,4 +76,18 @@ public class ScheduledExecutionFilter {
         }
     }
 
+    public Map toMap() {
+        [
+                name                : name,
+                jobFilter           : jobFilter,
+                projFilter          : projFilter,
+                groupPath           : groupPath,
+                descFilter          : descFilter,
+                loglevelFilter      : loglevelFilter,
+                idlist              : idlist,
+                scheduledFilter     : scheduledFilter,
+                serverNodeUUIDFilter: serverNodeUUIDFilter
+        ]
+    }
+
 }

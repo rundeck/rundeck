@@ -27,8 +27,8 @@ class BootStrapTest extends Specification implements GrailsUnitTest {
     def "init with sync enabled"() {
 
         setup:
-        grailsApplication.config.rundeck.features.repository.enabled=true
-        grailsApplication.config.rundeck.features.repository.syncOnBootstrap=true
+        grailsApplication.config.rundeck.feature.repository.enabled=true
+        grailsApplication.config.rundeck.feature.repository.syncOnBootstrap=true
 
         when:
         BootStrap bootStrap = new BootStrap()
@@ -45,8 +45,8 @@ class BootStrapTest extends Specification implements GrailsUnitTest {
     def "init with sync disabled"() {
 
         setup:
-        grailsApplication.config.rundeck.features.repository.enabled=true
-        grailsApplication.config.rundeck.features.repository.syncOnBootstrap=false
+        grailsApplication.config.rundeck.feature.repository.enabled=true
+        grailsApplication.config.rundeck.feature.repository.syncOnBootstrap=false
 
         when:
         BootStrap bootStrap = new BootStrap()
@@ -63,8 +63,8 @@ class BootStrapTest extends Specification implements GrailsUnitTest {
     def "init with repository disabled"() {
 
         setup:
-        grailsApplication.config.rundeck.features.repository.enabled=false
-        grailsApplication.config.rundeck.features.repository.syncOnBootstrap=true
+        grailsApplication.config.rundeck.feature.repository.enabled=false
+        grailsApplication.config.rundeck.feature.repository.syncOnBootstrap=true
 
         when:
         BootStrap bootStrap = new BootStrap()

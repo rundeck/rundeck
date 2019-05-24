@@ -28,6 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code:'configuration')}"/>
+    <meta name="projconfigselected" content="edit-project"/>
     <title><g:message code="edit.configuration" /></title>
 
     <asset:javascript src="prototype/effects"/>

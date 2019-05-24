@@ -91,6 +91,35 @@ class ReportFilter {
         }
     }
 
+    Map toMap() {
+        [
+                'name',
+                "jobFilter",
+                "jobIdFilter",
+                "userFilter",
+                "execnodeFilter",
+                "titleFilter",
+                "statFilter",
+                "recentFilter",
+                "startafterFilter",
+                "startbeforeFilter",
+                "endafterFilter",
+                "endbeforeFilter",
+                'dostartafterFilter',
+                'dostartbeforeFilter',
+                'doendafterFilter',
+                'doendbeforeFilter',
+        ].collectEntries {
+            [(it): this[it]]
+        }
+    }
+
+    public static ReportFilter fromQuery(ExecQuery query){
+        final ReportFilter filter = new ReportFilter(query.properties.findAll{it.key=~/(.*Filter)$/})
+
+        return filter
+    }
+
     public ExecQuery createQuery(){
         ExecQuery query = new ExecQuery(this.properties.findAll{it.key=~/.*Filter$/})
         return query

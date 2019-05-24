@@ -2,10 +2,10 @@
 .navbar .navbar-nav > li > a.btn{
     border-radius: $border-radius-btn-base;
     box-sizing: border-box;
-    border-width: $border-thick;
+    border-width: $border-thin;
     background-color: $transparent-bg;
     font-size: $font-size-base;
-    font-weight: $font-weight-bold;
+    font-weight: $font-weight-normal;
 
     padding: $padding-base-vertical $padding-base-horizontal;
 
@@ -52,6 +52,11 @@
 .navbar .navbar-nav > li > a.btn.btn-info, .btn-info    { @include btn-styles($info-color, $info-states-color); }
 .navbar .navbar-nav > li > a.btn.btn-warning, .btn-warning { @include btn-styles($warning-color, $warning-states-color); }
 .navbar .navbar-nav > li > a.btn.btn-danger, .btn-danger  { @include btn-styles($danger-color, $danger-states-color); }
+
+.btn.btn-primary {
+    border-width: $border-thick;
+    font-weight: $font-weight-bold;
+}
 
 .btn-neutral {
     @include btn-styles($white-color, $white-color);
@@ -170,4 +175,13 @@
     .btn {
         margin-bottom: 5px;
     }
+}
+
+.btn-muted {
+    border-color: $light-gray;
+    color: $dark-gray;
+}
+.btn-secondary {
+    border-color: $medium-gray;
+    color: $dark-gray;
 }

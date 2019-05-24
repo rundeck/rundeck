@@ -62,6 +62,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'gui.menu.AccessControl')}"/>
+    <meta name="projconfigselected" content="access-control"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[params.project]:params.project}"/>
     <title><g:message code="page.title.project.access.control.0" args="${[projectLabel]}"/></title>
 

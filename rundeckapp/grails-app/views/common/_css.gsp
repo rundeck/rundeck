@@ -13,9 +13,6 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<g:if test="${session[org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME]?.language=='de'}">
-    <g:set var="customCss" value=".navbar-brand,.navbar-default{border-radius: 0 0 10px 10px; }"/>
-</g:if>
 
 <g:set var="sidebarColor" value="${grailsApplication.config.rundeck.gui.sidebarColor}"/>
 <g:set var="sidebarTextColor" value="${grailsApplication.config.rundeck.gui.sidebarTextColor}"/>
@@ -59,7 +56,4 @@
       color: ${instanceNameLabelTextColor} !important;
     }
   </g:if>
-</style>
-<style type="text/css">
-    ${enc(rawtext:customCss)}
 </style>

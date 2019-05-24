@@ -200,6 +200,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "upload plugin no file specified"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        messageSource.addMessage("plugin.error.missing.upload.file",Locale.ENGLISH,"A plugin file must be specified")
 
         when:
         controller.uploadPlugin()
@@ -207,13 +208,13 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
-        response.redirectUrl == "/menu/plugins"
-        flash.errors == ["plugin.error.missing.upload.file"]
+        response.text == '{"err":"A plugin file must be specified"}'
     }
 
     void "install plugin no plugin url specified"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        messageSource.addMessage("plugin.error.missing.url",Locale.ENGLISH,"The plugin URL is required")
 
         when:
         controller.installPlugin()
@@ -221,8 +222,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
-        response.redirectUrl == "/menu/plugins"
-        flash.errors == ["plugin.error.missing.url"]
+        response.text == '{"err":"The plugin URL is required"}'
     }
 
     void "upload plugin"() {
@@ -246,8 +246,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
-        response.redirectUrl == "/menu/plugins"
-        flash.installSuccess
+        response.text == '{"msg":"done"}'
         uploaded.exists()
 
         cleanup:
@@ -274,8 +273,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> true
-        response.redirectUrl == "/menu/plugins"
-        flash.installSuccess
+        response.text == '{"msg":"done"}'
         installed.exists()
 
         cleanup:
@@ -285,6 +283,7 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
     void "unauthorized install plugin fails"() {
         setup:
         controller.frameworkService = Mock(FrameworkService)
+        messageSource.addMessage("request.error.unauthorized.title",Locale.ENGLISH,"Unauthorized")
         
         when:
         def pluginUrl = Thread.currentThread().getContextClassLoader().getResource(PLUGIN_FILE)
@@ -294,7 +293,6 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
         then:
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.frameworkService.authorizeApplicationResourceType(_,_,_) >> false
-        response.redirectUrl == "/menu/plugins"
-        flash.errors == ["request.error.unauthorized.title"]
+        response.text == '{"err":"Unauthorized"}'
     }
 }
