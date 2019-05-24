@@ -372,9 +372,9 @@
               <section>
                   <g:if test="${isAdhoc}">
                       <div class="text-h5">
-                          <i class="exec-status icon "
+                          <b class="exec-status icon "
                              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
-                          </i>
+                          </b>
                           <g:render template="wfItemView" model="[
                                   item: execution.workflow.commands[0],
                                   icon: 'icon-small'
