@@ -126,7 +126,6 @@
   <body id="executionShowPage">
   <content tag="subtitlecss">execution-page</content>
   <content tag="subtitlesection">
-
       <div class=" execution_ko subtitle-head flex-container reverse flex-align-items-stretch">
           <div class="subtitle-head-item execution-head-info flex-item-1">
               <section class="flex-container reverse">

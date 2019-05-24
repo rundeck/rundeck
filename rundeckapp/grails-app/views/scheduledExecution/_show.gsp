@@ -134,7 +134,6 @@
     </div>
 
         <div class="col-xs-12">
-          <div class="row">
               <div class="card" id="activity_section">
                   <div class="card-content">
                       <g:render template="/reports/activityLinks"
@@ -143,7 +142,6 @@
                                 )]"/>
                   </div>
               </div>
-          </div>
       </div>
   </div>
 

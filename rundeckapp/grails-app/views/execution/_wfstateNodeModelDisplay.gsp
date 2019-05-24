@@ -169,9 +169,9 @@
 
                   <div data-bind="if: followingOutput">
                   <div class="row " data-bind="visible: followingOutput">
-                      <div class="col-sm-12 wfnodeoutput exec-output -view-opt--node-inset-disabled" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } ">
-
+                      <div class="col-sm-12 wfnodeoutput exec-output -view-opt--node-inset-disabled" data-bind="attr: { 'data-node': $parent.name , 'data-stepctx': stepctx } " style="max-height:200px; overflow-y:scroll;">
                       </div>
+                      <div><button>TEST</button></div>
                   </div>
                   <div data-bind="visible: followingOutput() && outputLineCount() < 0 " class="row row-space ">
                       <div class="col-sm-12">
