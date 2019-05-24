@@ -274,12 +274,11 @@ function _applyAce(e, height) {
   if (_isIe(8) || _isIe(7) || _isIe(6)) {
     return;
   }
-  $(e).setStyle({
-    width: "100%",
-    height: height != null ? height : "200px"
-  });
-  $(e).addClassName('ace_editor');
-  var editor = ace.edit(e.identify());
+  jQuery(e).width( "100%")
+      .height( height != null ? height : "200px");
+
+  jQuery(e).addClass('ace_editor');
+  var editor = ace.edit(generateId(e));
   editor.setTheme("ace/theme/" + (jQuery(e).data('aceSessionTheme') || 'chrome'));
   editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
   editor.setReadOnly(true);
