@@ -115,7 +115,7 @@
     <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
                 <div  v-if="bulkEditProgress">
                     <em>
-                        <i class="glyphicon glyphicon-time text-info"></i>
+                        <b class="glyphicon glyphicon-time text-info"></b>
                         {{$t('Requesting bulk delete, please wait.')}}
                     </em>
                 </div>
@@ -183,9 +183,9 @@
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
-                    <i class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
-                    <i class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></i>
-                    <i class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></i>
+                    <b class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
+                    <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
+                    <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
 
                 <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)">
