@@ -108,28 +108,27 @@
                   (\d+)\D.*
                 --%>
 
-                  <div class=" group_select_control">
-                  <div class="radio">
-                      <input id="cherrypickradio"
-                             type="radio"
-                             name="extra.nodeoverride"
-                             checked="checked"
-                             value="cherrypick"
-                      />
-                      <label for="cherrypickradio">
-                          <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
-                      </label>
-                      <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
-                      <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
-                  </div>
-                      <g:if test="${tagsummary}">
-                          <g:render template="/framework/tagsummary"
-                                    model="${[tagsummary:tagsummary,action:[classnames:'label label-muted obs_tag_group',onclick:'']]}"/>
-                      </g:if>
 
-                  </div>
                 <g:if test="${!nodesetvariables && nodes}">
-
+                    <div class=" group_select_control">
+                        <div class="radio">
+                            <input id="cherrypickradio"
+                                   type="radio"
+                                   name="extra.nodeoverride"
+                                   checked="checked"
+                                   value="cherrypick"
+                            />
+                            <label for="cherrypickradio">
+                                <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
+                            </label>
+                            <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
+                            <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
+                        </div>
+                        <g:if test="${tagsummary}">
+                            <g:render template="/framework/tagsummary"
+                                      model="${[tagsummary:tagsummary,action:[classnames:'label label-muted obs_tag_group',onclick:'']]}"/>
+                        </g:if>
+                    </div>
                 <g:if test="${namegroups}">
 
                     <g:each in="${namegroups.keySet().sort()}" var="group">
