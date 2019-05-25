@@ -55,7 +55,6 @@
       <asset:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
-      <asset:javascript src="prototype-bundle.js"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
