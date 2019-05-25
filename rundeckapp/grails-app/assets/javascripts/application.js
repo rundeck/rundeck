@@ -239,6 +239,16 @@ function _isIe(version) {
 }
 
 
+function stopEvent (e) {
+  if (e.preventDefault) {
+    e.preventDefault()
+    e.stopPropagation()
+  } else {
+    e.returnValue = false
+    e.cancelBubble = true
+  }
+}
+
 /**
  * keypress handler which disallows Return key
  * @param e event
@@ -246,13 +256,7 @@ function _isIe(version) {
 function noenter(e) {
   if (e && e.keyCode == Event.KEY_RETURN) {
 
-    if (e.preventDefault) {
-      e.preventDefault();
-      e.stopPropagation();
-    } else {
-      e.returnValue = false;
-      e.cancelBubble = true;
-    }
+    stopEvent(e)
   }
   return !(e && e.keyCode == Event.KEY_RETURN);
 }
@@ -265,7 +269,7 @@ function noenter(e) {
 function nochars(chars, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0);
 }
@@ -494,7 +498,7 @@ function controlkeycode(e) {
 function onlychars(regex, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && !String.fromCharCode(kCode).match(regex)) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
