@@ -52,28 +52,6 @@
 </div>
 
 
-<div class="form-group">
-    <label class="col-sm-2 control-label" for="extra.loglevel">Log level</label>
-
-    <div class="col-sm-10">
-      <div class="radio radio-inline">
-        <g:radio id="logLevelNormal" name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
-        <label for="logLevelNormal">
-            <g:message code="loglevel.normal" />
-        </label>
-      </div>
-      <div class="radio radio-inline">
-        <g:radio id="logLevelDebug" name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
-        <label for="logLevelDebug">
-            <g:message code="loglevel.debug" />
-        </label>
-      </div>
-      <div class="help-block">
-          <g:message code="scheduledExecution.property.loglevel.help" />
-      </div>
-    </div>
-</div>
-
 <g:javascript>
     fireWhenReady('optionSelect', function() {
         jQuery('input[type=text]').each(function (i, e) {

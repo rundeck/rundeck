@@ -17,7 +17,8 @@
 
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
-        params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
+              params="[project: scheduledExecution.project]" role="form" >
+<div id="exec_options_form">
     <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
     <input type="text" style="display:none" class="ixnay">
     <input type="password" style="display:none" class="ixnay">
@@ -30,7 +31,7 @@
     <!-- END: firefox hack -->
 <div class="exec-options-body container-fluid">
 
-<input id='runAtTime' type='hidden' name='runAtTime' value='' />
+
 
 <g:if test="${!hideHead}">
     <div class="row exec-options-header">
@@ -51,7 +52,7 @@
 <div>
 <div>
 <div class="row">
-<div class="col-xs-12">
+    <div class="col-xs-12 form-horizontal">
 
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
@@ -106,30 +107,36 @@
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
-                <g:if test="${!nodesetvariables && nodes}">
-                <g:if test="${namegroups}">
-                    <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
-                        <input id="cherrypickradio"
-                               type="radio"
-                               name="extra.nodeoverride"
-                                checked="checked"
-                                value="cherrypick"
-                               />
-                        <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
-                        <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
-                        <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
-                        <g:if test="${tagsummary}">
-                            <g:render template="/framework/tagsummary"
-                                      model="${[tagsummary:tagsummary,action:[classnames:'tag active btn btn-xs btn-link obs_tag_group',onclick:'']]}"/>
-                        </g:if>
 
-                    </div>
+                  <div class=" group_select_control">
+                  <div class="radio">
+                      <input id="cherrypickradio"
+                             type="radio"
+                             name="extra.nodeoverride"
+                             checked="checked"
+                             value="cherrypick"
+                      />
+                      <label for="cherrypickradio">
+                          <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
+                      </label>
+                      <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
+                      <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
+                  </div>
+                      <g:if test="${tagsummary}">
+                          <g:render template="/framework/tagsummary"
+                                    model="${[tagsummary:tagsummary,action:[classnames:'label label-muted obs_tag_group',onclick:'']]}"/>
+                      </g:if>
+
+                  </div>
+                <g:if test="${!nodesetvariables && nodes}">
+
+                <g:if test="${namegroups}">
 
                     <g:each in="${namegroups.keySet().sort()}" var="group">
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <g:expander key="${expkey}" open="${selectedNodes!=null?'true':'false'}">
+                            <span data-toggle="collapse" data-target="#${expkey}" open="${selectedNodes!=null?'true':'false'}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     <g:enc>${namegroups[group][0]}</g:enc></span>
@@ -142,9 +149,10 @@
                                     <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc><g:message code="matched.nodes.prompt" /></span>
                                 </g:else>
                                 <g:enc>(${namegroups[group].size()})</g:enc>
-                            </g:expander>
+                                <b class="glyphicon glyphicon-chevron-${selectedNodes!=null ? 'down' : 'right'}"></b>
+                            </span>
                         </div>
-                        <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
+                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse ${wdgt.css(if: selectedNodes!=null, then:'in')}">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="${selectedNodes!=null?'':'display:none'}">
                                     <g:message code="select.prompt" />
@@ -215,21 +223,25 @@
                     %{-- filter text --}%
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
-                        <label for="filterradio" style="display: block">
-                    <input id="filterradio"
-                           type="radio"
-                           name="extra.nodeoverride"
-                        ${(!nodesetvariables && nodes)?'':'checked=true'}
-                           value="filter"
-                    />
-                        <span>
-                    <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
-                            <g:message code="job.run.override.node"/>: </span>
+                    <div class="radio">
+                        <input id="filterradio"
+                               type="radio"
+                               name="extra.nodeoverride"
+                            ${(!nodesetvariables && nodes)?'':'checked=true'}
+                               value="filter"
+                        />
+                        <label for="filterradio" >
+                            <span>
+                        <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
+                                <g:message code="job.run.override.node"/>: </span>
+
+                        </label>
+                    </div>
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
                         <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll{it.project == project}}"/>
                     </g:if>
 
-                    <div id="nodefilterViewArea">
+                    <div id="nodefilterViewArea" data-ko-bind="nodeFilter">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                             <div class="spacing">
                                 <div class="">
@@ -300,7 +312,6 @@
 
 
 
-                </label>
                         %{-- filter text --}%
                     </div>
 
@@ -385,15 +396,15 @@
                 });
 
                 jQuery('#doReplaceFilters').on( 'change', function (evt) {
-                    var e = evt.element();
+                    var e = evt.target
                     jQuery('div.jobmatchednodes input').each(function (i,cb) {
                         if (cb.type == 'checkbox') {
-                            [cb].each(e.checked ? Field.enable : Field.disable);
+                            jQuery(cb).prop('disabled',!e.checked)
                             if (!e.checked) {
                                 jQuery('.group_select_control').hide();
                                 cb.checked = true;
                             } else {
-                                jQuery('.group_select_control').hide();
+                                jQuery('.group_select_control').show();
                             }
                         }
                     });
@@ -429,93 +440,7 @@
 </div>
 <g:if test="${hideHead}">
 <div class="col-xs-12">
-    <div id="formbuttons">
-        <g:if test="${!hideCancel}">
-            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
-        </g:if>
-        <div class="">
-            <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
-                  class="has_tooltip"
-                  data-toggle="tooltip"
-                  data-placement="auto">
-                %{--Extra div because attr disabled will cancel tooltip from showing --}%
-                <div class="col-xs-12 col-sm-8">
-                  <div class="row">
-                    <div class="col-xs-3">
-                      <button type="submit"
-                              name="_action_runJobNow"
-                              id="execFormRunButton"
-                              ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                              class=" btn btn-success btn-sm">
-                          <g:message code="run.job.now" />
-                          <b class="glyphicon glyphicon-play"></b>
-                      </button>
-                    </div>
-                    <div class="col-xs-4">
-                      <div class="checkbox" style="margin-top:7px;">
-                        <g:checkBox id="followoutputcheck" name="follow"
-                                    checked="${defaultFollow || params.follow == 'true'}"
-                                    value="true"/>
-                        <label for="followoutputcheck">
-                            <g:message code="job.run.watch.output"/>
-                        </label>
-                      </div>
-                    </div>
-                    <div class="col-xs-4">
-                      <select class="form-control " name="followdetail">
-                          <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
-                              <g:message code="execution.page.show.tab.Summary.title"/>
-                          </option>
-                          <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
-                              <g:message code="report"/>
-                          </option>
-                          <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
-                              <g:message code="execution.show.mode.Log.title"/>
-                          </option>
-                          <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
-                              <g:message code="html"/>
-                          </option>
-                      </select>
-                    </div>
-                  </div>
-
-
-
-                </div>
-                <div class="col-xs-12 col-sm-4">
-                  <a tabindex="0" role="button"
-                          id="showScheduler"
-                          ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                          class=" btn btn-default btn-sm pull-right"
-                          data-toggle="popover" title="Set start time" data-trigger="click"
-                          data-placement="auto" data-container="body" data-html="true"
-                          data-trigger="focus" data-content="<div id='scheduler'>
-                                  <div class='input-group date' id='datetimepicker'>
-                                      <input type='text' class='form-control' />
-                                      <span class='input-group-addon'>
-                                          <span class='glyphicon glyphicon-calendar'></span>
-                                      </span>
-                                  </div>
-                                  <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
-                                      ${message(code:"the.time.must.be.in.the.future")}
-                                  </div>
-                                  <button type='submit'
-                                          id='scheduleSubmitButton'
-                                          name='_action_runJobLater'
-                                          class=' btn btn-success schedule-button'>
-                                      ${message(code:'schedule.job')}
-                                      <b class='glyphicon glyphicon-time'></b>
-                                  </button>
-                              </div>">
-                      <g:message code="run.job.later" />
-                      <b class="glyphicon glyphicon-time"></b>
-                  </a>
-                </div>
-            </div>
-        </div>
-        <div class="clearfix">
-        </div>
-    </div>
+    <g:render template="/scheduledExecution/execOptionsFormButtons" model="[scheduledExecution:scheduledExecution,hideCancel:hideCancel,showRunLater:true]"/>
 </div>
 </g:if>
 </div>
@@ -526,82 +451,13 @@
 <g:if test="${!hideHead}">
 <div class=" exec-options-footer container-fluid">
     <div class="row" >
-        <div class="col-sm-12 form-inline" id="formbuttons">
-
-          <div class="row">
-            <div class="col-xs-9">
-              <g:if test="${!hideCancel}">
-                  <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default btn-sm"/>
-              </g:if>
-              <button type="submit"
-
-                      name="_action_runJobNow"
-                      id="execFormRunButton"
-                      title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
-                      ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                      class=" btn btn-success btn-sm has_tooltip">
-                  <i class="glyphicon glyphicon-play"></i>
-                  <g:message code="run.job.now" />
-              </button>
-              <div class="checkbox checkbox-inline" style="margin-top:0;">
-                  <g:checkBox id="followoutputcheck"
-                                name="follow"
-                                checked="${defaultFollow || params.follow == 'true'}"
-                                value="true"/>
-                  <label for="followoutputcheck">
-                    <g:message code="job.run.watch.output"/>
-                  </label>
-                  <select class="form-control" name="followdetail">
-                      <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
-                          <g:message code="execution.page.show.tab.Summary.title"/>
-                      </option>
-                      <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
-                          <g:message code="report"/>
-                      </option>
-                      <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
-                          <g:message code="execution.show.mode.Log.title"/>
-                      </option>
-                      <option value="html" ${scheduledExecution.defaultTab=='html'?'selected="selected"':''}>
-                          <g:message code="html"/>
-                      </option>
-                  </select>
-              </div>
-            </div>
-            <div class="col-xs-3 text-right">
-              <a tabindex="0" role="button"
-                      id="showScheduler"
-                      ${scheduledExecution.hasExecutionEnabled() ? '':'disabled' }
-                      class=" btn btn-default btn-sm"
-                      style="margin-top:6px;"
-                      data-toggle="popover" title="Set start time" data-trigger="click"
-                      data-placement="auto" data-container="#formbuttons" data-html="true"
-                      data-trigger="focus" data-content="<div id='scheduler'>
-                              <div class='input-group date' id='datetimepicker'>
-                                  <input type='text' class='form-control' />
-                                  <span class='input-group-addon'>
-                                      <span class='glyphicon glyphicon-calendar'></span>
-                                  </span>
-                              </div>
-                              <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
-                                  ${message(code:"the.time.must.be.in.the.future")}
-                              </div>
-                              <button type='submit'
-                                      id='scheduleAjaxButton'
-                                      class=' btn btn-success schedule-button'>
-                                  <i class='glyphicon glyphicon-time'></i>
-                                  ${message(code:'schedule.job')}
-                              </button>
-                          </div>">
-                  <i class="glyphicon glyphicon-time"></i>
-                  <g:message code="run.job.later" />
-              </a>
-            </div>
-          </div>
+        <div class="col-sm-12 form-inline">
+            <g:render template="/scheduledExecution/execOptionsFormButtons" model="[scheduledExecution:scheduledExecution,hideCancel:hideCancel]"/>
         </div>
     </div>
 </div>
 </g:if>
-
+</div>
 </g:uploadForm>
 
 <script lang="text/javascript">
@@ -620,6 +476,8 @@
 
         //setup node filters knockout bindings
         var filterParams = loadJsonData('filterParamsJSON');
+        let kocontrollers={}
+
         <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
         var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
         var nodeFilter = new NodeFilters(
@@ -636,7 +494,7 @@
                     nodesTitlePlural: message('Node.plural')
                 }));
 
-            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
+            // ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
         //show selected named filter
         nodeFilter.filterName.subscribe(function (val) {
             if (val) {
@@ -653,7 +511,12 @@
         jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
         nodeFilter.selectNodeFilterLink(tmpfilt);
 
+        kocontrollers.nodeFilter = nodeFilter
+
         </g:if>
+        kocontrollers.runformoptions = new JobRunFormOptions({debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')}})
+
+        initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
     }
     jQuery(document).ready(init);
 </script>

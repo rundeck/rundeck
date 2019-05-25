@@ -162,7 +162,7 @@
             var joboptions = new JobOptions(joboptiondata);
 
             if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+                // ko.applyBindings(joboptions, document.getElementById('optionSelect'));
             }
 
             var remoteoptionloader = new RemoteOptionLoader({
@@ -185,6 +185,7 @@
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
             });
+            initKoBind('#execDiv',{joboptions:joboptions},/*'menu/jobs'*/)
             if(doShow){
                 jQuery('#execDiv').modal('show');
             }
