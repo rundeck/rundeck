@@ -109,119 +109,114 @@ function myToggleClassName(elem, name) {
 
 var Expander = {
   toggle: function (elem, contain, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+
     var holder;
     var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
       if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     } else {
-      if (e.hasClassName('expandComponentControl')) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
         if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
     var value = false;
-    if (content) {
-      value = !Element.visible(content);
+    if (content.length) {
+      value = !content.is(':visible')
     } else if (icnh) {
-      var icn = icnh.down('.glyphicon');
+      var icn = icnh.find('.glyphicon')
       if (icn) {
-        value = icn.hasClassName('glyphicon-chevron-down');
+        value = icn.hasClass('glyphicon-chevron-down')
       }
     }
     Expander.setOpen(elem, contain, value, expression);
     return value;
   },
   setOpen: function (elem, contain, value, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
-    var holder;
-    var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
-      if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+    var holder = []
+    var icnh = []
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
+      if (holder.length) {
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     }
-    if (!holder || !icnh) {
-      if (e.hasClassName('expandComponentControl')) {
+    if (!holder.length || !icnh.length) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
-        if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+        if (icnh.length) {
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
-    if (content) {
+    if ( content.length) {
       if (value) {
-        Element.show(content);
+        content.show()
       } else {
-        Element.hide(content);
+        content.hide()
       }
       if (null != expression) {
         //also set open related expression match
-        $$(expression).each(function (e) {
+        jQuery(expression).each(function (i, e) {
           if (value) {
-            Element.show(e);
+            jQuery(e).show()
           } else {
-            Element.hide(e);
+            jQuery(e).hide()
           }
         });
       }
     }
-    if (holder) {
+    if (holder.length) {
       if (value) {
-        Element.addClassName(holder, "expanded");
+        holder.addClass("expanded")
       } else {
-        Element.removeClassName(holder, "expanded");
+        holder.removeClass("expanded")
       }
-    } else if (icnh && content) {
+    } else if (icnh.length && content.length) {
       if (value) {
-        Element.addClassName(icnh, "expanded");
-        Element.removeClassName(icnh, "closed");
+        icnh.addClass("expanded")
+        icnh.removeClass("closed")
       } else {
-        Element.removeClassName(icnh, "expanded");
-        Element.addClassName(icnh, "closed");
+        icnh.removeClass("expanded")
+        icnh.addClass("closed")
       }
     }
-    if (icnh) {
-      var icn = icnh.down('.glyphicon');
-      if (icn) {
+    if (icnh.length) {
+      var icn = icnh.find('.glyphicon')
+      if (icn.length) {
         if (value) {
-          icn.addClassName('glyphicon-chevron-down');
-          icn.removeClassName('glyphicon-chevron-right');
+          icn.addClass('glyphicon-chevron-down')
+          icn.removeClass('glyphicon-chevron-right')
         } else {
-          icn.addClassName('glyphicon-chevron-right');
-          icn.removeClassName('glyphicon-chevron-down');
+          icn.addClass('glyphicon-chevron-right')
+          icn.removeClass('glyphicon-chevron-down')
         }
       }
     }
