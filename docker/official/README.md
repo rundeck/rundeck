@@ -103,6 +103,11 @@ to a default for getting started, this should be set manually for more advanced 
 Controls the base URL the app will use for links, redirects, etc.
 This is the URL users will use to access the site.
 
+### `RUNDECK_SERVER_CONTEXTPATH=/`
+
+Set to path Rundeck is running under(i.e. `http://localhost/rundeck`). Useful if running Rundeck
+behind a reverse proxy under a path on the hostname.
+
 ### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
 
 Controls both the `maxFileSize` and `maxRequest` for the grails controller config.
