@@ -108,6 +108,11 @@ This is the URL users will use to access the site.
 Set to path Rundeck is running under(i.e. `http://localhost/rundeck`). Useful if running Rundeck
 behind a reverse proxy under a path on the hostname.
 
+### `RUNDECK_SERVER_FORWARDED=false`
+
+Set to `true` if running behind a reverse proxy. `X-Forwarded-Proto` header must be set
+if running behind a TLS terminating proxy.
+
 ### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
 
 Controls both the `maxFileSize` and `maxRequest` for the grails controller config.
