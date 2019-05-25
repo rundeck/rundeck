@@ -244,8 +244,8 @@
                 v-model="bulkSelectedIds"
                 class="_defaultInput"/>
             </td>
-            <td class="eventicon " :title="executionState(rpt.execution.status)" >
-                <i class="exec-status icon" :data-execstate="executionStateCss(rpt.execution.status)" :data-statusstring="rpt.execution.status"></i>
+            <td class="eventicon " :title="reportState(rpt)" >
+                <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
             <td class="right date " v-tooltip.bottom="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
@@ -280,7 +280,7 @@
                       {{$t('job.has.been.deleted.0',[rpt.jobName])}}
                 </span>
 
-                <span v-if="isCustomStatus(rpt.execution.status)">
+                <span v-if="isCustomReportStatus(rpt)">
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
                 </span>
             </td>
@@ -527,8 +527,14 @@ export default Vue.extend({
     isCustomStatus(status:string) {
       return knownStatusList.indexOf(status)<0
     },
+    isCustomReportStatus(rpt:any){
+      return this.isCustomStatus(this.reportState(rpt))
+    },
     executionStateCss(status:string){
       return this.executionState(status).toUpperCase()
+    },
+    reportStateCss(rpt:any){
+      return this.executionStateCss(this.reportState(rpt))
     },
     executionState(status:string){
         if (status == 'scheduled') {
@@ -553,6 +559,9 @@ export default Vue.extend({
             return 'failed-with-retry';
         }
         return 'other';
+    },
+    reportState(rpt:any){
+      return rpt.execution.cancelled?this.executionState('cancel'):this.executionState(rpt.execution.status)
     },
     reload(){
       this.reports=[]
