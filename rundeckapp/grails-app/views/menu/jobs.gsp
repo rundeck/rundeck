@@ -28,7 +28,6 @@
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
-    <asset:javascript src="util/yellowfade.js"/>
 
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
@@ -49,8 +48,8 @@
         /** knockout binding for activity */
         var pageActivity;
         function showError(message){
-             appendText($('error'),message);
-             $("error").show();
+             appendText('#error',message);
+             jQuery("#error").show();
         }
         var _jobExecUnloadHandlers=new Array();
         function _registerJobExecUnloadHandler(handler){
@@ -61,20 +60,20 @@
                 for(var i =0;i<_jobExecUnloadHandlers.length;i++){
                     _jobExecUnloadHandlers[i].call();
                 }
-                _jobExecUnloadHandlers.clear();
+                _jobExecUnloadHandlers.length=0;
             }
 
             jQuery('#execDiv').modal('hide');
             clearHtml('execDivContent');
 
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
         function requestError(item,message){
             unloadExec();
             showError("Failed request: "+item+". Result: "+message);
         }
         function loadExec(id,eparams) {
-            $("error").hide();
+            jQuery("#error").hide();
             var params=eparams;
             if(!params){
                 params={id:id};
@@ -123,31 +122,31 @@
         function loadedFormSuccess(doShow,id){
             jQuery('#execDivContent .exec-options-body').addClass('modal-body')
             jQuery('#execDivContent .exec-options-footer').addClass('modal-footer')
-            if ($('execFormCancelButton')) {
-                Event.observe($('execFormCancelButton'),'click',function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormCancelButton').length) {
+                jQuery('#execFormCancelButton').on('click',function(evt) {
+                    stopEvent(evt);
                     unloadExec();
                     return false;
                 },false);
-                $('execFormCancelButton').name = "_x";
+                jQuery('#execFormCancelButton').attr('name', "_x");
             }
-            if ($('execFormRunButton')) {
-                Event.observe($('execFormRunButton'),'click', function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormRunButton').length) {
+                jQuery('#execFormRunButton').on('click', function(evt) {
+                    stopEvent(evt);
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    $('formbuttons').loading(message('job.starting.execution'));
+                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 },false);
             }
             jQuery('#showScheduler').on('shown.bs.popover', function() {
-                if ($('scheduleAjaxButton')) {
-                    Event.observe($('scheduleAjaxButton'), 'click', function(evt) {
-                        Event.stop(evt);
+                if (jQuery('#scheduleAjaxButton').length) {
+                    jQuery('#scheduleAjaxButton').on( 'click', function(evt) {
+                        stopEvent(evt);
                         if (isValidDate()) {
                             toggleAlert(true);
 		                    execSubmit('execDivContent',
                                 appLinks.scheduledExecutionScheduleJobInline);
-		                    $('formbuttons').loading(message('job.scheduling.execution'));
+		                    //$('formbuttons').loading(message('job.scheduling.execution'));
                         } else {
                             toggleAlert(false);
                         }
@@ -189,7 +188,7 @@
             if(doShow){
                 jQuery('#execDiv').modal('show');
             }
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
 
 
@@ -323,8 +322,6 @@
 
     </script>
 
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{
         color:red;
