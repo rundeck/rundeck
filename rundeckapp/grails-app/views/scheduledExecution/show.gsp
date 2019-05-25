@@ -24,7 +24,7 @@
 
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
 
-    <asset:javascript src="menu/joboptions.js"/>
+
     <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
@@ -102,7 +102,15 @@ search
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
-            initKoBind(null, {jobNodeFilters: jobNodeFilters, history: pagehistory, joboptions: joboptions})
+
+            initKoBind(null,
+                {
+                    jobNodeFilters: jobNodeFilters,
+                    history: pagehistory,
+                    joboptions: joboptions,
+                },
+                // 'job/show'
+            )
         }
         jQuery(init);
     </script>
