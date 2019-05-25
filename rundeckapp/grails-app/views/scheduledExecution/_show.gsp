@@ -69,7 +69,7 @@
                                   title     : scheduledExecution.jobName,
                                   cancelCode: 'close'
                           ]">
-                    <div data-ko-bind="jobNodeFilters">
+                    <div data-ko-bind="jobNodeFilters" id="detailtable">
                         <g:render template="/execution/execDetails"
                                   model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
                     </div>
