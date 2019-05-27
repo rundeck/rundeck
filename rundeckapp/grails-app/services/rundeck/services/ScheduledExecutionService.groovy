@@ -59,7 +59,7 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
-import rundeck.quartzjobs.ExecutionsCleanerJob
+import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 
@@ -693,30 +693,49 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(project) {
             results = results.withProject(project)
         }
+        def executionList = results.list()
+
+        def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
+
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
+    }
+
+    /**
+     * Reschedule the provided one-time executions. Invalid executions will be cleaned up.
+     * @param executionList The list of executions to reschedule.
+     * @return A map with: <pre>
+     *   [executions: List, // succeeded executions<br>
+     *   failedExecutions: List] // failed executions
+     * </pre>
+     */
+    def rescheduleOnetimeExecutions(List<Execution> executionList) {
+
+        Date now = new Date()
+        // Reschedule any executions which were scheduled for one time execution.
 
         List<Execution> cleanupExecutions   = []
         def succeedExecutions = []
-        def executionList = results.list()
+
         executionList.each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
 
             if (se.options.find { it.secureInput } != null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "the ad hoc schedule time has past")
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "the schedule time has past")
                 ok = false
             }
 
             if (ok) {
-                log.info("Rescheduling ad hoc execution of: " +
+                log.info("Rescheduling one-time execution of: " +
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
@@ -738,7 +757,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         succeedExecutions << [execution: e, time: nexttime]
                     }
                 } catch (Exception ex) {
-                    log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
+                    log.error("One Time job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
                 }
             }
@@ -749,11 +768,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!cleanupExecutions.isEmpty()) {
-            log.error("${cleanupExecutions.size()} ad hoc scheduled executions " +
+            log.error("${cleanupExecutions.size()} one-time scheduled executions " +
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
-        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
+        [executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**
@@ -828,19 +847,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 map.remove('configuration')
             }
             if(step instanceof JobExec) {
-                ScheduledExecution refjob
+                ScheduledExecution refjob = step.findJob(project)
                 if(!step.useName && step.uuid){
-                    refjob = ScheduledExecution.findByUuid(step.uuid)
                     if(refjob) {
                         map.jobref.name = refjob.jobName
                         map.jobref.group = refjob.groupPath
                     }
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            step.jobProject?step.jobProject:project,
-                            step.jobName,
-                            step.jobGroup
-                    )
                 }
 
                 if(refjob){
@@ -858,16 +870,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def eh = step.errorHandler
 
             if(eh instanceof JobExec) {
-                ScheduledExecution refjob
-                if(!eh.useName && eh.uuid){
-                    refjob = ScheduledExecution.findByUuid(eh.uuid)
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            eh.jobProject?eh.jobProject:project,
-                            eh.jobName,
-                            eh.jobGroup
-                    )
-                }
+                ScheduledExecution refjob = eh.findJob(project)
                 if(refjob){
                     map.ehJobId=refjob.extid
                     boolean doload=(null==jobids[map.ehJobId])
@@ -1085,7 +1088,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            
+
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
@@ -1429,7 +1432,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
         String description = "Cleaner executions job"
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanerJob)
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanUp)
                                          .withIdentity(jobname, jobgroup)
                                          .withDescription(description)
                                          .usingJobData(new JobDataMap(config))
@@ -1964,12 +1967,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     static def parseOrchestratorFromParams(params){
-        
+
         if (params.orchestratorId) {
             params.orchestrator = parseParamOrchestrator(params)
         }
     }
-    
+
     static Orchestrator parseParamOrchestrator(params){
         Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
         def plugin = params.orchestratorPlugin[params.orchestratorId];
@@ -2516,7 +2519,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -2803,7 +2806,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
                 (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
-        
+
         def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
@@ -3107,7 +3110,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
             scheduledExecution.orchestrator.save()
@@ -3707,7 +3710,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -3718,7 +3721,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             scheduledExecution.orchestrator = null
         }
-        
+
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications

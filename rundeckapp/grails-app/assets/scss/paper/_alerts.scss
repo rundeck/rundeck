@@ -1,6 +1,6 @@
 .alert {
   border: 0;
-  border-radius: 0;
+  border-radius: $border-radius-extreme;
   color: #FFFFFF;
   padding: 10px 15px;
   font-size: 14px;
@@ -46,23 +46,30 @@
   }
 }
 
+.alert {
+  background-color: $bg-default-inverse;
+  color: $default-states-color;
+}
+
+.alert-primary {
+  background-color: $bg-primary;
+}
+
 .alert-info {
   background-color: $bg-info;
-  color: $info-states-color;
 }
 
 .alert-success {
   background-color: $bg-success;
-  color: $success-states-color;
 }
 
 .alert-warning {
   background-color: $bg-warning;
-  color: $warning-states-color;
+  border: 1px solid $border-warning;
 }
 
 .alert-danger {
   background-color: $bg-danger;
-  color: $danger-states-color;
+  border: 2px solid $border-danger;
 }
 

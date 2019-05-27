@@ -35,12 +35,12 @@
             <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
         </g:if>
     %{--Job Reference item--}%
-        <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
+        <g:if test="${'job'==newitemtype || item instanceof JobExec }">
             <section >
                 <div class="form-group">
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.jobreference.title" /></label>
                     <div class="col-sm-10">
-                        <g:set var="isUseName" value="${item ? item.useName : newitemusename == 'true'}"/>
+                        <g:set var="isUseName" value="${ item?.useName || false }"/>
                         <div class="radio">
                             <g:radio id="useNameTrue"  name="useName" value="true"
                                      onclick="_enableNameJobRefFields(true,'jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}');"
@@ -653,6 +653,7 @@
                     <g:set var="pluginprefix" value="pluginConfig."/>
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
+                            groupTitleCss      : 'h5',
                             service            : serviceName,
                             dynamicProperties  : dynamicProperties,
                             provider           : newitemDescription.name,
@@ -691,6 +692,7 @@
             </div>
         </g:if>
         <g:else>
+            <hr/>
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="description${rkey}"><g:message
                         code="Workflow.step.property.description.label"/></label>

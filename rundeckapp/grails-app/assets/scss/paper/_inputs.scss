@@ -22,7 +22,7 @@
 
     &:focus{
        border: 1px solid $gray-input-outline;
-       background-color: $white-bg;
+       background-color: $light-input-bg;
        @include box-shadow(none);
        outline: 0 !important;
     }
@@ -42,7 +42,7 @@
     }
     .has-success &:focus,
     &.valid:focus, &[aria-invalid="false"]:focus{
-        background-color: $white-bg;
+        background-color: $light-input-bg;
         border-color: $success-color;
     }
     .has-error &,
@@ -53,7 +53,7 @@
     }
     .has-error &:focus,
     &.error:focus{
-        background-color: $white-bg;
+        background-color: $light-input-bg;
         border-color: $danger-color;
     }
 
@@ -186,7 +186,7 @@ textarea.form-control{
 }
 
 .input-group-focus .input-group-addon{
-    background-color: $white-bg;
+    background-color: $light-input-bg;
 }
 
 label::after + input[aria-required="true"]{

@@ -521,7 +521,7 @@ class EditOptsController {
                 }
             }
         }
-        if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl)) {
+        if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl && !opt.optionValuesPluginType)) {
             if (params && params.valuesType == 'url') {
                 opt.errors.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
             } else {

@@ -17,7 +17,7 @@
 <%@ page import="rundeck.ScheduledExecution; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
-<div class="list-group">
+
 <g:if test="${flash.message}">
     <div class="list-group-item">
       <div class="alert alert-info">
@@ -46,7 +46,7 @@
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
-<div id="page_job_edit">
+
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
   </g:if>
@@ -55,7 +55,8 @@
 
   </div>
 
-      <div class="list-group-item">
+  <div class="tab-pane active" id="tab_details">
+  <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
           <label for="schedJobName"
@@ -172,13 +173,15 @@
               </g:javascript>
           </div>
       </div>
-  </div><!--/.nput-group-item -->
+  </section><!--/.nput-group-item -->
+  </div><!-- end #tab_details -->
 
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
       <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
       %{--Options--}%
-      <div id="optionsContent" class=" list-group-item" >
+    <div class="tab-pane" id="tab_workflow">
+      <section id="optionsContent" class=" section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
@@ -197,10 +200,10 @@
                   </div>
               </div>
           </div>
-      </div>%{--//Options--}%
+      </section>%{--//Options--}%
 
       %{--Workflow--}%
-      <div id="workflowContent" class="list-group-item" >
+      <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
               <div class="${fieldColSize}">
@@ -218,10 +221,12 @@
                   </g:if>
               </div>
           </div>
-      </div>%{--//Workflow--}%
+      </section>%{--//Workflow--}%
+</div><!-- end#tab_workflow -->
 
   %{--Node Dispatch--}%
-  <div class="list-group-item node_filter_link_holder" id="nodegroupitem">
+    <div class="tab-pane" id="tab_nodes">
+  <section class="section-space-lg node_filter_link_holder" id="nodegroupitem">
   <div class="form-group">
       <label class="${labelColSize} control-label">
           <g:message code="Node.plural" />
@@ -618,19 +623,23 @@
   </div>
 
   </div>%{--//Node Dispatch--}%
-  </div>
+  </section>
+  </div><!-- end#tab_nodes-->
 
       %{--Notifications--}%
-      <div class="list-group-item"  >
+      <div class="tab-pane" id="tab_notifications"  >
+      <section class="section-space-lg"  >
               <g:set var="adminauth"
                   value="${auth.resourceAllowedTest(type: 'project', name: scheduledExecution.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
           <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
-      </div>%{--//Notifications--}%
+      </section>%{--//Notifications--}%
+      </div><!-- end#tab_notifications -->
 
   %{--Schedule--}%
-  <div class="list-group-item">
+    <div class="tab-pane" id="tab_schedule">
+  <section class="section-space-lg">
 
       <div class="form-group">
           <div class="${labelColSize}  control-label text-form-label">
@@ -756,11 +765,13 @@
               </div>
           </div>
       </g:if>
-  </div>%{--//Schedule--}%
+  </section>%{--//Schedule--}%
+</div><!-- end#tab_schedule -->
 
 
   %{--Log level--}%
-  <div class="list-group-item">
+  <div class="tab-pane" id="tab_other">
+  <section class="section-space-lg">
       <div class="form-group">
           <label class="${labelColClass}" for="loglevel">
             <g:message code="scheduledExecution.property.loglevel.label" />
@@ -999,8 +1010,8 @@
               </g:else>
           </div>
       </div>
-  </div>%{--//Log level--}%
-</div>
+  </section>%{--//Log level--}%
+</div><!-- end#tab_other -->
 
 <script type="text/javascript">
 //<!CDATA[
@@ -1168,4 +1179,4 @@ function getCurSEID(){
 <div id="msg"></div>
 
     <g:render template="/framework/storageBrowseModalKO"/>
-</div>
+
