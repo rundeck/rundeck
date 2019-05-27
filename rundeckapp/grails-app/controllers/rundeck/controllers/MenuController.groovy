@@ -1368,7 +1368,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             meta.count = policiesvalidation?.policies?.countPolicies()
             //
             meta.policies = policiesvalidation?.policies?.policies.collect(){
-                def by = 'by:'
+                def by = it.isBy()?'by:':'notBy:'
                 if(it.groups?.size()>0){
                     by = by+' group: '+it.groups.join(", ")
                 }

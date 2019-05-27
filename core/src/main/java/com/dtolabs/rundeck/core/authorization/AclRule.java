@@ -57,4 +57,6 @@ public interface AclRule {
 //    }
 
     public Set<String> getDenyActions();
+
+    public boolean isBy();
 }
