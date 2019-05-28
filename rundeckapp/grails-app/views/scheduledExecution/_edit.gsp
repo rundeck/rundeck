@@ -430,13 +430,19 @@
               <div class="well well-sm matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
-                          <span class="text-primary" data-bind="if: loaded">
+                          <span class="text-info" data-bind="if: loaded() && !loading()">
                               <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
                                       code="count.nodes.matched"/></span>
                           </span>
-                          <span data-bind="visible: loading() " class="text-info">
+                          <span data-bind="visible: loading() " class="text-muted">
                               <i class="glyphicon glyphicon-time"></i>
                               <g:message code="loading.matched.nodes"/>
+                          </span>
+
+                          <span data-bind="if: total()>maxShown()">
+                              <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary">
+                                  <g:message code="count.nodes.shown"/>
+                              </span>
                           </span>
                       </div>
 
@@ -453,8 +459,10 @@
                       </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO"
-                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
+                      <div class="col-sm-12 container-fluid">
+                          <g:render template="/framework/nodesEmbedKO"
+                                    model="[showLoading: false, showTruncated: false, showExcludeFilterLinks: true]"/>
+                      </div>
                   </div>
               </div>
           </div>
