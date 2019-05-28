@@ -22,8 +22,13 @@ import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.gorm.DataTest
 import grails.testing.services.ServiceUnitTest
+import org.apache.commons.logging.Log
+import org.slf4j.Logger
 import rundeck.User
 import spock.lang.Specification
+
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 
 class UserServiceSpec extends Specification implements ServiceUnitTest<UserService>, DataTest {
@@ -70,6 +75,34 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user  | groups
         "any" | ["one","two"]
         "any" | []
+    }
+
+    def "User Group Source Plugin doesn't process misconfigured plugin"() {
+        when:
+        boolean errorCalled = false
+        service.log.metaClass.static.error =  { String msg, Throwable ex ->
+            println "log called"
+            errorCalled = true
+        }
+
+        TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin([])
+        RundeckPluginRegistry rundeckPluginRegistry = Mock(RundeckPluginRegistry)
+        PluginService pluginService = Mock(PluginService) {
+            listPlugins(UserGroupSourcePlugin) >> { [testPlugin:testPlugin] }
+            configurePlugin(_,_,_,_) >> { null }
+        }
+        FrameworkService fwkService = Mock(FrameworkService) {
+            getRundeckPluginRegistry() >> rundeckPluginRegistry
+            getPluginService() >> pluginService
+        }
+        service.frameworkService = fwkService
+        def roles = service.getUserGroupSourcePluginRoles("any")
+
+        then:
+        roles == []
+        !errorCalled
+
+
     }
 
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)
