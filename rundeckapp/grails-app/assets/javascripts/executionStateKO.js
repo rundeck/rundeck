@@ -916,6 +916,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
+    self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
@@ -1370,7 +1371,19 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.findNode=function(node){
         return self.nodeIndex[node];
     };
-
+    self.toggleHumanizedDisplay=function(){
+        self.humanizedDisplay(!self.humanizedDisplay());
+    }
+    self.startTimeAgo=ko.pureComputed(function () {
+        let time=self.startTime()
+        if(!time) return
+        return moment(self.startTime()).fromNow();
+    })
+    self.endTimeAgo=ko.pureComputed(function () {
+        let time=self.endTime()
+        if(!time) return
+        return moment(self.endTime()).fromNow();
+    })
 
     self.execDurationSimple = ko.pureComputed(function () {
         return MomentUtil.formatDurationSimple(self.execDuration());
@@ -1378,6 +1391,11 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.execDurationHumanized = ko.pureComputed(function () {
         return MomentUtil.formatDurationHumanize(self.execDuration());
     });
+    self.execDurationDisplay=ko.pureComputed(function () {
+        const human=self.humanizedDisplay();
+        if(human) return MomentUtil.formatDurationHumanize(self.execDuration());
+        return MomentUtil.formatDurationSimple(self.execDuration());
+    })
     self.followFlowState = function (flowState,followNodes) {
         "use strict";
         flowState.addUpdater({

@@ -415,7 +415,7 @@
                                  class="form-control"
                                  value="${listvalue ? listvalue : listjoin ? listjoin.join(',') : ''}"
                                  size="60"
-                                 placeholder="Comma separated list"
+                                 placeholder="${message(code:"form.option.valuesList.placeholder")}"
                                  id="vlist_${rkey}"
                     />
 
@@ -428,7 +428,7 @@
                                  name="valuesUrl"
                                  value="${option?.realValuesUrl?.toString()}"
                                  size="60"
-                                 placeholder="Remote URL"
+                                 placeholder="${message(code:"form.option.valuesURL.placeholder")}"
                                  id="vurl_${rkey}"
                     />
 
@@ -465,6 +465,45 @@
                     <wdgt:action target="vurl_${rkey}_section" visible="true"/>
                 </wdgt:eventHandler>
             </div>
+        </div>
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label"><g:message code="form.option.sort.label" /></label>
+
+            <div class="col-sm-3">
+                <div class="radio radio-inline">
+                    <g:radio id="option-sort-values-no" name="sortValues" value="false" checked="${!option || !option.sortValues}"/>
+                    <label for="option-sort-values-no">
+                        <g:message code="no" />
+                    </label>
+                </div>
+                <div class="radio radio-inline">
+                    <g:radio id="option-sort-values-yes" name="sortValues" value="true" checked="${option?.sortValues}"/>
+                    <label for="option-sort-values-yes">
+                        <g:message code="yes" />
+                    </label>
+                </div>
+                <div class="help-block">
+                    <g:message code="form.option.sort.description"/>
+                </div>
+            </div>
+
+            <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
+                <div class="input-group-addon">
+                    <g:message code="form.option.valuesDelimiter.label" />
+                </div>
+                <input type="text"
+                       name="valuesListDelimiter"
+                       value="${enc(attr:option?.valuesListDelimiter)}"
+                       size="5"
+                       class="form-control"
+                       id="vlistdelimiter_${enc(attr:rkey)}"
+                />
+
+            </div>
+            <span class="help-block">
+                <g:message code="form.option.valuesDelimiter.description"/>
+            </span>
         </div>
         <div class="form-group opt_keystorage_disabled" style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.enforcedType.label" /></label>

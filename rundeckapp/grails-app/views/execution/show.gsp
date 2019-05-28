@@ -55,7 +55,6 @@
       <asset:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
-      <asset:javascript src="prototype-bundle.js"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
@@ -372,9 +371,9 @@
               <section>
                   <g:if test="${isAdhoc}">
                       <div class="text-h5">
-                          <i class="exec-status icon "
+                          <b class="exec-status icon "
                              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
-                          </i>
+                          </b>
                           <g:render template="wfItemView" model="[
                                   item: execution.workflow.commands[0],
                                   icon: 'icon-small'

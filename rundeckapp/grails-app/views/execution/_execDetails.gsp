@@ -16,9 +16,21 @@
 
 <%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
 <g:set var="rkey" value="${g.rkey()}"/>
-<div class="row" style="margin-top:1em">
+<div class="row">
 <div class="col-sm-12 table-responsive">
 <table class="table item_details">
+    <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && !execdata.hasExecutionEnabled()}">
+        <tr>
+            <td></td>
+            <td>
+
+                <span class="scheduletime willnotrun text-warning">
+                    <i class="glyphicon glyphicon-time"></i>
+                    <span class="detail"><g:message code="scheduleExecution.execution.disabled" /></span>
+                </span>
+            </td>
+        </tr>
+    </g:if>
     <g:if test="${execdata!=null && execdata.id && execdata instanceof ScheduledExecution && execdata.scheduled}">
         <tr>
         <td ><g:message code="scheduledExecution.property.crontab.detail.prompt" /></td>
@@ -51,6 +63,12 @@
                           title="${g.message(code: 'disabled.schedule.run')}">
                         <i class="glyphicon glyphicon-time"></i>
                         <span class="detail"><g:message code="disabled.schedule.run" /></span>
+                    </span>
+                </g:elseif>
+                <g:elseif test="${scheduledExecution.scheduled && !scheduledExecution.hasScheduleEnabled()}">
+                    <span class="scheduletime willnotrun  text-warning">
+                        <i class="glyphicon glyphicon-time"></i>
+                        <span class="detail"><g:message code="scheduleExecution.schedule.disabled" /></span>
                     </span>
                 </g:elseif>
                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
