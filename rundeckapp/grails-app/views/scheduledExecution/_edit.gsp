@@ -100,15 +100,22 @@
                   />
 
                   <span class="input-group-btn">
-                      <span class="btn btn-default" data-loading-text="Loading..."
-                            id="groupChooseBtn" title="Click on the name of the group to use">
-                          <g:message code="choose.action.label" /> <i class="caret"></i>
+                      <span class="btn btn-default"
+                            data-toggle="modal"
+                            data-target="#groupChooseModal"
+                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                          <g:message code="choose.action.label" />
                       </span>
                   </span>
               </div>
 
 
           </div>
+          <g:render template="/common/modal" model="[modalid:'groupChooseModal',titleCode:'job.edit.groupPath.choose.text']">
+                <div id="groupChooseModalContent">
+
+                </div>
+          </g:render>
       </div>
 
           %{--description--}%
@@ -1170,7 +1177,7 @@ function getCurSEID(){
             })
             ;
             const jobDef = loadJsonData('jobDefinitionJSON')
-            let jobeditor = new JobEditor(jobDef)
+            window.jobeditor = new JobEditor(jobDef)
             initKoBind(null,{jobeditor:jobeditor})
         }
 

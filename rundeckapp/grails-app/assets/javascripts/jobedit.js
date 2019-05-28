@@ -1329,32 +1329,18 @@ function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, mo
 //group chooser
 function groupChosen(path) {
     jobWasEdited();
-    jQuery('#schedJobGroup').val(path);
-    jQuery('#schedJobGroup').highlight();
-    jQuery('#groupChooseBtn').popover('hide');
-}
-function loadGroupChooser() {
-    var btn = jQuery('#groupChooseBtn');
-    btn.button('loading');
-    var project = jQuery('#schedEditFrameworkProject').val();
-    if (btn.data('grouptreeshown') == 'true') {
-        btn.popover('hide');
-        btn.button('reset');
-    } else {
-        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment + '?jscallback=true', function (d) {
-            var btn = jQuery('#groupChooseBtn');
-            btn.popover({html: true, container: 'body', placement: 'left', content: d, trigger: 'manual'}).popover('show');
-            btn.button('reset');
-        });
-    }
+    jobeditor.groupPath(path)
+    jQuery('#groupChooseModal').modal('hide')
+
 }
 jQuery(window).load(function () {
-    jQuery('#groupChooseBtn').click(loadGroupChooser);
-    jQuery('#groupChooseBtn').on('shown.bs.popover', function (e) {
-        jQuery('#groupChooseBtn').data('grouptreeshown', 'true');
+    jQuery('#groupChooseModal').on('shown.bs.modal', function (e) {
+        jQuery.get(appLinks.scheduledExecutionGroupTreeFragment + '?jscallback=true', function (d) {
+            jQuery('#groupChooseModalContent').html(d)
+        });
     });
-    jQuery('#groupChooseBtn').on('hide.bs.popover', function (e) {
-        jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
+    jQuery('#groupChooseModal').on('hide.bs.modal', function (e) {
+
     });
 
     jQuery('.notifyFields').each(function (i,elem) {
