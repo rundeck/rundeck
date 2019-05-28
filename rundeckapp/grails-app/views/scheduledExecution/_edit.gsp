@@ -425,9 +425,9 @@
               <g:message code="matched.nodes.prompt" />
           </label>
 
-          <div class=" col-sm-10  ">
+          <div class=" col-sm-10  container-fluid">
 
-              <div class="well well-sm embed matchednodes">
+              <div class="well well-sm matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
                           <span class="text-primary" data-bind="if: loaded">
