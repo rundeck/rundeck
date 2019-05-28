@@ -56,6 +56,20 @@
   }
 }
 
+#navbar-menu {
+  > li.user-button > a {
+    padding: 10px 15px;
+  }
+
+  > li.user-button > a.btn {
+    margin: 8px 3px;
+  }
+}
+
+.subtitlebar {
+  clear: both;
+}
+
 .subtitlebar, .mainbar {
   .primarylink {
     font-size: 32px;
@@ -66,7 +80,6 @@
     li {
       a {
         padding: 0;
-        margin: 0;
 
         &.dropdown-toggle {
           cursor: pointer;

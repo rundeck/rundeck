@@ -112,6 +112,7 @@
       <g:set var="_sidebarClass" value="sidebar-mini" scope="page"/>
     </g:if>
 
+    <asset:javascript src="global/rundeckui.js"/>
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
         <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
@@ -198,9 +199,9 @@
       </div>
     </div>
     <div class="main-panel" id="main-panel">
-      <div>
+
         <g:render template="/common/mainbar"/>
-      </div>
+
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">

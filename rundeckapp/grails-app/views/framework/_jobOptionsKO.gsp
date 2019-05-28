@@ -152,7 +152,7 @@ data for configuring remote option cascading/dependencies
     </div>
 
 
-    <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT}">
+    <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT && params.debug}">
       <div class="col-xs-12 col-sm-10-col-sm-offset-2">
         <div class="well">
           <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">

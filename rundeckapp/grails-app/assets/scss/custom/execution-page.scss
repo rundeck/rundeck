@@ -58,3 +58,14 @@
   }
 
 }
+.execution-state-summary{
+
+  .execution-user,
+  .execution-retry{
+    display:block;
+  }
+  .execution-summary-status,
+  .execution-duration{
+    margin: 0 5px 0 0;
+  }
+}

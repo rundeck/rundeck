@@ -105,7 +105,13 @@ search
         <g:render template="/common/messages"/>
 
         <div class="row vue-project-activity">
-            <activity-list  :event-bus="EventBus"></activity-list>
+            <div class="col-xs-12">
+                <div class="card">
+                    <div class="card-content">
+                        <activity-list :event-bus="EventBus"></activity-list>
+                    </div>
+                </div>
+            </div>
         </div>
 
     </div>
