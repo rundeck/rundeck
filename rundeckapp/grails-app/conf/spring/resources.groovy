@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import com.dtolabs.rundeck.server.plugins.webhook.LogWebhookEventPlugin
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -384,6 +385,9 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
+
+    logWebhookEventPlugin(LogWebhookEventPlugin)
+    pluginRegistry['log-webhook-event'] = 'logWebhookEventPlugin'
 
     //list of plugin classes to generate factory beans for
     [

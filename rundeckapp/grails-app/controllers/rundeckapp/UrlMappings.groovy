@@ -241,6 +241,20 @@ class UrlMappings {
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
+        "/api/$api_version/webhook-admin/list"(controller: 'webhook', action: 'list')
+        "/api/$api_version/webhook-admin/add"(controller: 'webhook') {
+            action=[POST:"add"]
+        }
+        "/api/$api_version/webhook/$name"(controller: 'webhook') {
+            action=[POST:"post"]
+        }
+        "/api/$api_version/webhook-admin/delete/$name"(controller: 'webhook') {
+            action=[DELETE:"remove"]
+        }
+        "/api/$api_version/webhook-admin/deleteAll"(controller: 'webhook') {
+            action=[DELETE:"removeAll"]
+        }
+
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 

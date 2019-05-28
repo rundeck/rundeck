@@ -34,6 +34,7 @@ include	'rundeck-storage',
     'plugins:orchestrator-plugin',
     'plugins:git-plugin',
     'plugins:upvar-plugin',
+    'plugins:localscript',
     'rundeckapp',
     'rundeckapp:metricsweb',
     'rundeckapp:grails-spa',
@@ -43,3 +44,4 @@ include	'rundeck-storage',
     'docker'
 
 project(":rundeckapp").name = "rundeck"
+project(":plugins:localscript").projectDir = new File("/Users/stephen/code/standalone-rundeck-plugins/localscript")
