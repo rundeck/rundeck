@@ -19,6 +19,7 @@ package rundeck.services
 import com.codahale.metrics.Gauge
 import com.codahale.metrics.MetricRegistry
 import com.google.common.cache.Cache
+import org.apache.commons.lang.RandomStringUtils
 
 /**
  * Created by greg on 7/30/15.
