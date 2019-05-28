@@ -3049,11 +3049,11 @@ class ScheduledExecutionControllerTests  {
         Option opt = job.options.iterator().next()
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.values
-        assertEquals 3, opt.values.size()
-        assertTrue opt.values.contains("a")
-        assertTrue opt.values.contains("b")
-        assertTrue opt.values.contains("c")
+        assertNotNull opt.optionValues
+        assertEquals 3, opt.optionValues.size()
+        assertTrue opt.optionValues.contains("a")
+        assertTrue opt.optionValues.contains("b")
+        assertTrue opt.optionValues.contains("c")
     }
 
     public void testUploadOptions2() {
@@ -3145,11 +3145,11 @@ class ScheduledExecutionControllerTests  {
         Option opt = job.options.iterator().next()
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.values
-        assertEquals 3, opt.values.size()
-        assertTrue opt.values.contains("a")
-        assertTrue opt.values.contains("b")
-        assertTrue opt.values.contains("c")
+        assertNotNull opt.optionValues
+        assertEquals 3, opt.optionValues.size()
+        assertTrue opt.optionValues.contains("a")
+        assertTrue opt.optionValues.contains("b")
+        assertTrue opt.optionValues.contains("c")
     }
 
     public void testUploadShouldCreate() {

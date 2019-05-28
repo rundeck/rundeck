@@ -160,7 +160,7 @@ public class WidgetTagLib {
         if('change'==evt && obsfreq){
             funcstr<<"function(${g.enc(js:varname)},value){"
         }else{
-            funcstr<<"function(evt){var ${g.enc(js:varname)}=evt.element();"
+            funcstr<<"function(evt){var ${g.enc(js:varname)}=evt.target;"
         }
 
         //define condition

@@ -1,9 +1,6 @@
 <template>
-  <div class="row activity-list">
-    <div class="col-xs-12">
-      <div class="card">
-        <div class="card-content">
-
+  <div class=" activity-list">
+    
           <section class="section-space-bottom">
 
             <span>
@@ -32,15 +29,15 @@
             </span>
 
 
-          <activity-filter v-model="query" :event-bus="eventBus"></activity-filter>
+          <activity-filter v-model="query" :event-bus="eventBus" :opts="filterOpts" v-if="showFilters"></activity-filter>
           
           <div class="pull-right">
-            <span >
+            <span v-if="runningOpts.allowAutoRefresh">
               <input type=checkbox id=auto-refresh v-model=autorefresh />
               <label for="auto-refresh">{{$t('Auto refresh')}}</label>
             </span>
             <!-- bulk edit controls -->
-            <span  v-if="auth.deleteExec && pagination.total>0">
+            <span  v-if="auth.deleteExec && pagination.total>0 && showBulkDelete">
                 <span v-if="bulkEditMode" >
                   <i18n path="bulk.selected.count">
                     <strong>{{bulkSelectedIds.length}}</strong>
@@ -118,7 +115,7 @@
     <modal v-model="showBulkEditResults" id="bulkexecdeleteresult" :title="$t('Bulk Delete Executions: Results')" >
                 <div  v-if="bulkEditProgress">
                     <em>
-                        <i class="glyphicon glyphicon-time text-info"></i>
+                        <b class="glyphicon glyphicon-time text-info"></b>
                         {{$t('Requesting bulk delete, please wait.')}}
                     </em>
                 </div>
@@ -186,9 +183,9 @@
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
-                    <i class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
-                    <i class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></i>
-                    <i class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></i>
+                    <b class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
+                    <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
+                    <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
 
                 <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)">
@@ -247,8 +244,8 @@
                 v-model="bulkSelectedIds"
                 class="_defaultInput"/>
             </td>
-            <td class="eventicon " :title="executionState(rpt.execution.status)" >
-                <i class="exec-status icon" :data-execstate="executionStateCss(rpt.execution.status)" :data-statusstring="rpt.execution.status"></i>
+            <td class="eventicon " :title="reportState(rpt)" >
+                <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
             <td class="right date " v-tooltip.bottom="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
@@ -283,7 +280,7 @@
                       {{$t('job.has.been.deleted.0',[rpt.jobName])}}
                 </span>
 
-                <span v-if="isCustomStatus(rpt.execution.status)">
+                <span v-if="isCustomReportStatus(rpt)">
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
                 </span>
             </td>
@@ -333,9 +330,6 @@
           :showPrefix="false"
         >
         </offset-pagination>
-            </div>
-        </div>
-    </div>
 
   </div>
 </template>
@@ -400,6 +394,13 @@ export default Vue.extend({
         max:10,
         total:-1
       },
+      filterOpts: {},
+      showFilters: false,
+      showBulkDelete: true,
+      runningOpts: {
+        loadRunning:true,
+        allowAutoRefresh: true
+      } as {[key:string]:any},
       autorefresh:false,
       autorefreshms:5000,
       autorefreshtimeout:null as null | any,
@@ -526,8 +527,14 @@ export default Vue.extend({
     isCustomStatus(status:string) {
       return knownStatusList.indexOf(status)<0
     },
+    isCustomReportStatus(rpt:any){
+      return this.isCustomStatus(this.reportState(rpt))
+    },
     executionStateCss(status:string){
       return this.executionState(status).toUpperCase()
+    },
+    reportStateCss(rpt:any){
+      return this.executionStateCss(this.reportState(rpt))
     },
     executionState(status:string){
         if (status == 'scheduled') {
@@ -552,6 +559,9 @@ export default Vue.extend({
             return 'failed-with-retry';
         }
         return 'other';
+    },
+    reportState(rpt:any){
+      return rpt.execution.cancelled?this.executionState('cancel'):this.executionState(rpt.execution.status)
     },
     reload(){
       this.reports=[]
@@ -725,13 +735,25 @@ export default Vue.extend({
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
       }
+      if(window._rundeck.data['filterOpts'] ){
+        this.filterOpts = window._rundeck.data.filterOpts
+      }
+      this.showFilters = true
       if(window._rundeck.data['query'] ){
         this.query = Object.assign({},this.query,window._rundeck.data['query'] )
       }else{
         this.loadActivity(0)
       }
-      
-      this.loadRunning()
+      if(window._rundeck.data['runningOpts']){
+        this.runningOpts= window._rundeck.data.runningOpts
+      }
+
+      if(window._rundeck.data['viewOpts']){
+        this.showBulkDelete= window._rundeck.data.viewOpts.showBulkDelete
+      }
+      if(this.runningOpts['loadRunning']){
+        this.loadRunning()
+      }
     }
   }
 })

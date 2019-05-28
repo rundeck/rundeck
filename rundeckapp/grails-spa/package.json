@@ -8,7 +8,9 @@
     "dev": "NODE_ENV=production node build/build.js",
     "start": "npm run dev",
     "lint": "eslint --ext .js,.vue src",
-    "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js"
+    "build": "NODE_ENV=production BUILD_TYPE=bundle node build/build.js",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -26,7 +28,8 @@
     "vue-scrollto": "^2.15.0",
     "vue2-ace-editor": "0.0.11",
     "vue2-filters": "^0.3.0",
-    "vuex": "^3.1.0"
+    "vuex": "^3.1.0",
+    "snyk": "^1.165.2"
   },
   "devDependencies": {
     "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#69f412b59541e0bb27e60cde3a96cfa1354c0fe4",
@@ -93,5 +96,6 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
-  ]
+  ],
+  "snyk": true
 }

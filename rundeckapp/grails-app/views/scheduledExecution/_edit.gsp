@@ -1110,7 +1110,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         nodefilterLinkId:root,
                         project: selFrameworkProject,
@@ -1137,7 +1137,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         maxShown:100,
                         nodefilterLinkId: '#nodegroupitem',

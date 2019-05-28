@@ -21,16 +21,14 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <meta name="skipprototypeJs" content="true"/>
+    <meta name="skipPrototypeJs" content="true"/>
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="pagehistory.js"/>
-    <asset:javascript src="prototype/effects"/>
+
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="menu/joboptionsTest.js"/>
@@ -50,8 +48,8 @@
         /** knockout binding for activity */
         var pageActivity;
         function showError(message){
-             appendText($('error'),message);
-             $("error").show();
+             appendText('#error',message);
+             jQuery("#error").show();
         }
         var _jobExecUnloadHandlers=new Array();
         function _registerJobExecUnloadHandler(handler){
@@ -62,20 +60,20 @@
                 for(var i =0;i<_jobExecUnloadHandlers.length;i++){
                     _jobExecUnloadHandlers[i].call();
                 }
-                _jobExecUnloadHandlers.clear();
+                _jobExecUnloadHandlers.length=0;
             }
 
             jQuery('#execDiv').modal('hide');
             clearHtml('execDivContent');
 
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
         function requestError(item,message){
             unloadExec();
             showError("Failed request: "+item+". Result: "+message);
         }
         function loadExec(id,eparams) {
-            $("error").hide();
+            jQuery("#error").hide();
             var params=eparams;
             if(!params){
                 params={id:id};
@@ -124,31 +122,31 @@
         function loadedFormSuccess(doShow,id){
             jQuery('#execDivContent .exec-options-body').addClass('modal-body')
             jQuery('#execDivContent .exec-options-footer').addClass('modal-footer')
-            if ($('execFormCancelButton')) {
-                Event.observe($('execFormCancelButton'),'click',function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormCancelButton').length) {
+                jQuery('#execFormCancelButton').on('click',function(evt) {
+                    stopEvent(evt);
                     unloadExec();
                     return false;
                 },false);
-                $('execFormCancelButton').name = "_x";
+                jQuery('#execFormCancelButton').attr('name', "_x");
             }
-            if ($('execFormRunButton')) {
-                Event.observe($('execFormRunButton'),'click', function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormRunButton').length) {
+                jQuery('#execFormRunButton').on('click', function(evt) {
+                    stopEvent(evt);
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    $('formbuttons').loading(message('job.starting.execution'));
+                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
                 },false);
             }
             jQuery('#showScheduler').on('shown.bs.popover', function() {
-                if ($('scheduleAjaxButton')) {
-                    Event.observe($('scheduleAjaxButton'), 'click', function(evt) {
-                        Event.stop(evt);
+                if (jQuery('#scheduleAjaxButton').length) {
+                    jQuery('#scheduleAjaxButton').on( 'click', function(evt) {
+                        stopEvent(evt);
                         if (isValidDate()) {
                             toggleAlert(true);
 		                    execSubmit('execDivContent',
                                 appLinks.scheduledExecutionScheduleJobInline);
-		                    $('formbuttons').loading(message('job.scheduling.execution'));
+		                    //$('formbuttons').loading(message('job.scheduling.execution'));
                         } else {
                             toggleAlert(false);
                         }
@@ -163,7 +161,7 @@
             var joboptions = new JobOptions(joboptiondata);
 
             if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+                // ko.applyBindings(joboptions, document.getElementById('optionSelect'));
             }
 
             var remoteoptionloader = new RemoteOptionLoader({
@@ -186,10 +184,11 @@
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
             });
+            initKoBind('#execDiv',{joboptions:joboptions},/*'menu/jobs'*/)
             if(doShow){
                 jQuery('#execDiv').modal('show');
             }
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
 
 
@@ -263,9 +262,9 @@
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
-            $$('#wffilterform input').each(function(elem){
+            jQuery('#wffilterform input').each(function(ndx,elem){
                 if(elem.type=='text'){
-                    elem.observe('keypress',noenter);
+                    jQuery(elem).on('keypress',noenter);
                 }
             });
             bulkeditor=new BulkEditor({messages:window.Messages});
@@ -323,8 +322,6 @@
 
     </script>
 
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{
         color:red;

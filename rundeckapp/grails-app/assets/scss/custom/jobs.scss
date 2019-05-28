@@ -32,7 +32,6 @@
 
 .jobstats {
   .job-stats-item {
-    text-align: center;
   }
 
   .job-stats-value {
@@ -54,5 +53,19 @@
   background: #e6e6e6;
   .jobInfoSection{
     padding: 10px 0;
+  }
+}
+
+.crontab .checklist {
+  .crondeselected {
+    text-decoration: line-through;
+    color: $dark-gray;
+  }
+  .cronselected{
+    font-weight: bold;
+  }
+
+  &.hidedeselected .crondeselected {
+    display: none;
   }
 }

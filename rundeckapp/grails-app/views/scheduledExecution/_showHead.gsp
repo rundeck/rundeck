@@ -42,9 +42,9 @@
 
       <span class="${linkCss ?: 'card-title h3'}">
       <g:if test="${includeExecStatus}">
-          <i class="exec-status icon "
+          <b class="exec-status icon "
              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
-          </i>
+          </b>
       </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
             class="text-primary"
@@ -75,6 +75,13 @@
                         importCommit  : importStatus?.commit,
                 ]"/>
 
+      <g:if test="${ !scheduledExecution.hasExecutionEnabled()}">
+          <span class=" label label-warning has_tooltip" data-toggle="tooltip"
+                data-placement="auto bottom" title="${message(code:'scheduleExecution.execution.disabled')}">
+              <i class="glyphicon ${scheduledExecution.scheduled?'glyphicon-time':'glyphicon-ban-circle'}"></i>
+              <span class="detail"><g:message code="disabled" /></span>
+          </span>
+      </g:if>
       <g:if test="${scheduledExecution.scheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
@@ -95,22 +102,33 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}" class="rundeck-server-uuid text-primary">
+                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
+                        data-name-truncated="8"
+                        data-uuid-label-none="true"
+                        class="rundeck-server-uuid text-secondary">
+                      <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
                   </span>
               </g:if>
           </span>
       </g:if>
       <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
-          <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
-              data-placement="auto left"
+          <span class="label label-secondary has_tooltip" data-toggle="tooltip"
+              data-placement="auto bottom"
                 title="${g.message(code: 'disabled.schedule.run')}">
               <i class="glyphicon glyphicon-time"></i>
               <span class="detail"><g:message code="disabled.schedule.run" /></span>
           </span>
       </g:elseif>
-      <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-          <span class="scheduletime willnotrun has_tooltip" data-toggle="tooltip"
-              data-placement="auto left"
+      <g:elseif test="${scheduledExecution.scheduled && !scheduledExecution.hasScheduleEnabled()}">
+          <span class=" label label-muted has_tooltip" data-toggle="tooltip"
+                data-placement="auto bottom" title="${message(code:'scheduleExecution.schedule.disabled')}">
+              <i class="glyphicon glyphicon-time"></i>
+              <span class="detail"><g:message code="disabled" /></span>
+          </span>
+      </g:elseif>
+      <g:elseif test="${scheduledExecution.scheduled && scheduledExecution.shouldScheduleExecution() && !nextExecution}">
+          <span class="label label-warning  has_tooltip" data-toggle="tooltip"
+              data-placement="auto bottom"
                 title="${g.message(code: 'job.schedule.will.never.fire')}">
               <i class="glyphicon glyphicon-time"></i>
               <span class="detail"><g:message code="never" /></span>

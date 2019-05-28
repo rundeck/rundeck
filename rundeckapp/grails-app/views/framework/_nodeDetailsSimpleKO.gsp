@@ -97,7 +97,7 @@
 
       </tr>
       %{-- unless exclude tags --}%
-      <tr data-bind="if: tags().size()>0">
+      <tr data-bind="if: tags().length > 0">
           <td class="key">
             <g:message code="node.metadata.tags"/>
           </td>
@@ -182,7 +182,7 @@
               </a>
           </td>
           <td colspan="3" class="text-muted">
-              <span data-bind="text: namespace.values.size()"></span>
+              <span data-bind="text: namespace.values.length"></span>
           </td>
       </tr>
           <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_${crefText}_'+$index()+'_'+$parentContext.$index()}" >
