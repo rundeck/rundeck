@@ -28,7 +28,7 @@
         class="form-horizontal"
         onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
 
-<div class="card obs_delete_hide" id="editForm">
+<div class="card " id="editForm">
     <div class="card-header" data-ko-bind="jobeditor">
         <div class="row">
             <h4 class="col-sm-10 card-title">
@@ -70,21 +70,3 @@
 </div>
 
 </g:form>
-<g:javascript>
-fireWhenReady('editForm',function(){
-    $$('.behavior_delete_show').each(function(e){
-        Event.observe(e,'click',function(evt){
-            evt.stop();
-            $$('.obs_delete_hide').each(Element.hide);
-            $$('.obs_delete_show').each(Element.show);
-        })
-    });
-    $$('.behavior_delete_hide').each(function(e){
-        Event.observe(e,'click',function(evt){
-            evt.stop();
-            $$('.obs_delete_hide').each(Element.show);
-            $$('.obs_delete_show').each(Element.hide);
-        })
-    });
-});
-</g:javascript>
