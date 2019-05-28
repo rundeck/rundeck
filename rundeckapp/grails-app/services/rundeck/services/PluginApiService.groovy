@@ -17,6 +17,7 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
@@ -130,6 +131,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
