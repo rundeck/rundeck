@@ -19,6 +19,8 @@
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require knockout-onenter
+//= require ko/handler-bootstrapTooltip
+//= require ko/handler-bootstrapPopover
 //= require workflowStepEditorKO
 //= require nodeFiltersKO
 //= require optionEditKO
@@ -26,6 +28,8 @@
 //= require storageBrowseKO
 //= require prototype-bundle
 //= require ace-bundle
+//= require scheduledExecution/jobEditorKO
+//= require koBind
 
 /*
  Manifest: include jobedit.js, workflowStepEditorKO, nodeFiltersKO, optionEditKO, filterStepPluginsKO

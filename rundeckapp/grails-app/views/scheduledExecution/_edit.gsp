@@ -46,6 +46,10 @@
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
+<g:embedJSON id="jobDefinitionJSON"
+             data="${[jobName:scheduledExecution?.jobName,groupPath:scheduledExecution?.groupPath, uuid: scheduledExecution?.uuid,
+                     href:scheduledExecution?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
+             ]}"/>
 
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
@@ -55,7 +59,7 @@
 
   </div>
 
-  <div class="tab-pane active" id="tab_details">
+  <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
   <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
@@ -69,6 +73,7 @@
                            value="${scheduledExecution?.jobName}"
                            id="schedJobName"
                            class="form-control"
+                  data-bind="value: jobName"
               />
               <g:hasErrors bean="${scheduledExecution}" field="jobName">
                   <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
@@ -88,6 +93,7 @@
                       </span>
                   </g:hasErrors>
                   <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
+                      data-bind="value: groupPath"
                          id="schedJobGroup"
                       class="form-control"
                       placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
@@ -1163,6 +1169,9 @@ function getCurSEID(){
                 nodeFilter.updateMatchedNodes();
             })
             ;
+            const jobDef = loadJsonData('jobDefinitionJSON')
+            let jobeditor = new JobEditor(jobDef)
+            initKoBind(null,{jobeditor:jobeditor})
         }
 
         jQuery(pageinit);

@@ -29,10 +29,14 @@
         onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
 
 <div class="card obs_delete_hide" id="editForm">
-    <div class="card-header">
+    <div class="card-header" data-ko-bind="jobeditor">
         <div class="row">
             <h4 class="col-sm-10 card-title">
-              <g:message code="ScheduledExecution.page.edit.title" />
+                <span class="text-secondary colon-after"><g:message code="ScheduledExecution.page.edit.title" /></span>
+                <a href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
+
+                </a>
+                <span class=" text-muted" data-bind="text: uuid"></span>
             </h4>
 
             <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}"
