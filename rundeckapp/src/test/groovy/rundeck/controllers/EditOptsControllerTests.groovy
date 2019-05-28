@@ -64,12 +64,12 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNotNull option.values
-            assertEquals 3,option.values.size()
-            assertTrue option.values.contains('a')
-            assertTrue option.values.contains('b')
-            assertTrue option.values.contains('c')
-            assertNull option.valuesList
+            assertNotNull option.optionValues
+            assertEquals 3,option.optionValues.size()
+            assertTrue option.optionValues.contains('a')
+            assertTrue option.optionValues.contains('b')
+            assertTrue option.optionValues.contains('c')
+            assertNotNull option.valuesList
             assertNull option.realValuesUrl
             assertNull option.regex
             assertNull option.defaultValue
@@ -152,7 +152,7 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNotNull option.values
+            assertNotNull option.optionValues
             assertNull option.realValuesUrl
             assertNull option.regex
             assertNull option.defaultValue
@@ -173,7 +173,7 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNotNull option.values
+            assertNotNull option.optionValues
             assertNull option.realValuesUrl
             assertNull option.regex
             assertNull option.defaultValue
@@ -194,7 +194,7 @@ class EditOptsControllerTests  {
             assertEquals 'a description', option.description
             assertFalse option.required
             assertFalse option.enforced
-            assertNotNull option.values
+            assertNotNull option.optionValues
             assertNull option.realValuesUrl
             assertNull option.regex
             assertNull option.defaultValue
@@ -218,17 +218,91 @@ class EditOptsControllerTests  {
             assertFalse test2.required
             assertNull test2.realValuesUrl
             assertNull test2.regex
-            assertNotNull test2.values
-            assertEquals 3, test2.values.size()
-            assertTrue test2.values.contains('a')
-            assertTrue test2.values.contains('b')
-            assertTrue test2.values.contains('c')
-            assertNull test2.valuesList
+            assertNotNull test2.optionValues
+            assertEquals 3, test2.optionValues.size()
+            assertTrue test2.optionValues.contains('a')
+            assertTrue test2.optionValues.contains('b')
+            assertTrue test2.optionValues.contains('c')
+            assertNotNull test2.valuesList
 
         }
 
 
+    void test_setOptionFromParams_sort_options() {
+        EditOptsController ctrl = new EditOptsController()
+        Option test1 = new Option()
+        ctrl._setOptionFromParams(test1,[name:'optname',description:'a description',valuesType:'url',enforcedType:'regex',valuesUrl:'http://test.com',regex:'testregex'])
 
+        Option test2 = ctrl._setOptionFromParams(test1,[name:'optname',description:'a description2',defaultValue:'a',valuesType:'list',valuesList:'c,b,a', sortValues: 'true'])
+        assertNotNull test2
+        assertEquals 'optname',test2.name
+        assertEquals 'a description2',test2.description
+        assertEquals 'a',test2.defaultValue
+        assertFalse test2.required
+        assertNull test2.realValuesUrl
+        assertNotNull test2.optionValues
+        assertEquals 3, test2.optionValues.size()
+        assertEquals "[a, b, c]" , test2.optionValues.toString()
+        assertNotNull test2.valuesList
 
+    }
 
+    void test_setOptionFromParams_sort_numeric_options() {
+        EditOptsController ctrl = new EditOptsController()
+        Option test1 = new Option()
+        ctrl._setOptionFromParams(test1,[name:'optname',description:'a description',valuesType:'url',enforcedType:'regex',valuesUrl:'http://test.com',regex:'testregex'])
+
+        Option test2 = ctrl._setOptionFromParams(test1,[name:'optname',description:'a description2',defaultValue:'a',valuesType:'list',valuesList:'33.3,22,44.0,11.0,3,1,2', sortValues: 'true'])
+        assertNotNull test2
+        assertEquals 'optname',test2.name
+        assertEquals 'a description2',test2.description
+        assertEquals 'a',test2.defaultValue
+        assertFalse test2.required
+        assertNull test2.realValuesUrl
+        assertNotNull test2.optionValues
+        assertEquals 7, test2.optionValues.size()
+        assertEquals "[1, 2, 3, 11.0, 22, 33.3, 44.0]" , test2.optionValues.toString()
+        assertNotNull test2.valuesList
+
+    }
+
+    void test_setOptionFromParams_nosort_options() {
+        EditOptsController ctrl = new EditOptsController()
+        Option test1 = new Option()
+        ctrl._setOptionFromParams(test1,[name:'optname',description:'a description',valuesType:'url',enforcedType:'regex',valuesUrl:'http://test.com',regex:'testregex'])
+
+        Option test2 = ctrl._setOptionFromParams(test1,[name:'optname',description:'a description2',defaultValue:'a',valuesType:'list',valuesList:'c,b,a', sortValues: 'false'])
+        assertNotNull test2
+        assertEquals 'optname',test2.name
+        assertEquals 'a description2',test2.description
+        assertEquals 'a',test2.defaultValue
+        assertFalse test2.required
+        assertNull test2.realValuesUrl
+        assertNotNull test2.optionValues
+        assertEquals 3, test2.optionValues.size()
+        assertEquals "[c, b, a]" , test2.optionValues.toString()
+        assertNotNull test2.valuesList
+
+    }
+
+    void test_setOptionFromParams_options_delimiters() {
+        EditOptsController ctrl = new EditOptsController()
+        Option test1 = new Option()
+        ctrl._setOptionFromParams(test1,[name:'optname',description:'a description',valuesType:'url',enforcedType:'regex',valuesUrl:'http://test.com',regex:'testregex'])
+
+        Option test2 = ctrl._setOptionFromParams(test1,[name:'optname',description:'a description2',defaultValue:'a',valuesType:'list',valuesList:'a|b|c|d|f|g', sortValues: 'false', valuesListDelimiter: "|"])
+        assertNotNull test2
+        assertEquals 'optname',test2.name
+        assertEquals 'a description2',test2.description
+        assertEquals 'a',test2.defaultValue
+        assertFalse test2.required
+        assertNull test2.realValuesUrl
+        assertNotNull test2.optionValues
+        assertEquals 6, test2.optionValues.size()
+        assertTrue test2.optionValues.contains('a')
+        assertTrue test2.optionValues.contains('b')
+        assertTrue test2.optionValues.contains('c')
+        assertNotNull test2.valuesList
+
+    }
 }

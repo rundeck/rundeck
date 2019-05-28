@@ -1094,7 +1094,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.options[0].enforced
         results.scheduledExecution.options[0].multivalued
         results.scheduledExecution.options[0].delimiter==','
-        results.scheduledExecution.options[0].values==['val1','val2','val3'] as Set
+        results.scheduledExecution.options[0].optionValues==['val1','val2','val3'] as List
     }
     def "invalid options multivalued"() {
         given:
