@@ -97,14 +97,19 @@
     ${autofocus?'autofocus':''}
        data-bind="textInput: filterWithoutAll,  executeOnEnter: newFilterText"
        placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
-       data-toggle='popover'
+       value="${enc(attr:filtvalue)}"
+       id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}"/>
+<div class="input-group-btn">
+    <a class="btn btn-default"
+       tabindex="0"
+       role="button"
+       data-toggle="popover"
        data-popover-content-ref="#${queryFieldHelpId?enc(attr:queryFieldHelpId):'queryFilterHelp'}"
        data-placement="bottom"
-       data-trigger="manual"
+       data-trigger="focus"
        data-container="body"
-       value="${enc(attr:filtvalue)}" id="${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}"/>
-<div class="input-group-btn">
-    <a class="btn btn-default" data-toggle='popover-for' data-target="#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}" onclick="jQuery('#${filterFieldId ? enc(attr: filterFieldId) : 'schedJobNodeFilter'}').popover('toggle')">
+       data-popover-template-class="popover-wide"
+       >
         <i class="glyphicon glyphicon-question-sign"></i>
     </a>
     <a class="btn btn-primary btn-fill" data-bind="click: $data.newFilterText, css: {disabled: !filter()}" href="#">
