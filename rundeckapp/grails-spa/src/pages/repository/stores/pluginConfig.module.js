@@ -2,7 +2,9 @@ import axios from 'axios'
 
 const state = {
   plugins: [],
+  pluginsByService: [],
   provider: null,
+  providersDetails: null,
   rdBase: null,
   services: [],
   serviceName: null,
@@ -31,6 +33,12 @@ const mutations = {
   },
   SET_SERVICE_FACET(state, name) {
     state.selectedServiceFacet = name
+  },
+  SET_PLUGINS_BY_SERVICE(state, payload) {
+    state.pluginsByService = payload
+  },
+  SET_PROVIDERS_DETAILS(state, payload) {
+    state.providersDetails = payload
   }
 }
 const actions = {
@@ -44,6 +52,43 @@ const actions = {
     commit
   }, serviceName) {
     commit("SET_SERVICE_FACET", serviceName)
+  },
+  getProvidersInfo({
+    commit,
+    dispatch
+  }, providers) {
+    dispatch('overlay/openOverlay', {
+      loadingSpinner: true,
+      loadingMessage: 'loading...'
+    }, {
+      root: true
+    })
+    let providersDetails = []
+
+    providers.forEach(provider => {
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${state.rdBase}plugin/detail/${provider.serviceName}/${provider.providerName}`,
+        withCredentials: true
+      }).then(response => {
+        providersDetails.push({
+          provider: provider,
+          response: response.data
+        })
+      });
+    });
+    commit("SET_PROVIDERS_DETAILS", providersDetails)
+    setTimeout(() => {
+      dispatch('overlay/closeOverlay', false, {
+        root: true
+      })
+      dispatch('modal/openModal', true, {
+        root: true
+      })
+    }, 500)
   },
   getProviderInfo({
     commit,
@@ -95,6 +140,23 @@ const actions = {
         })
       }
     });
+  },
+  getProvidersListByService({
+    commit
+  }) {
+    if (window._rundeck && window._rundeck.rdBase) {
+      const rdBase = window._rundeck.rdBase;
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${rdBase}plugin/listByService`,
+        withCredentials: true
+      }).then(response => {
+        commit('SET_PLUGINS_BY_SERVICE', response.data)
+      });
+    }
   },
   initData({
     commit,

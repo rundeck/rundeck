@@ -1,11 +1,16 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12 col-sm-4">
-        <h2 style="margin:0">Installed Plugins</h2>
+      <div class="col-xs-12 col-sm-3">
+        <h2 style="margin: 0px;font-size: 2.3em;margin-top: 5px;">Installed Plugins</h2>
       </div>
-      <div class="col-xs-12 col-sm-4">
-        <select class="form-control" @change="changeServiceFacet">
+      <div class="col-xs-12 col-sm-3">
+        <select
+          class="form-control"
+          @change="changeServiceFacet"
+          style="height:46px"
+          :disabled="view === 'detail'"
+        >
           <option value>View All</option>
           <option
             v-for="(service, index) in services"
@@ -14,13 +19,14 @@
           >{{service.value}}</option>
         </select>
       </div>
-      <div class="col-xs-12 col-sm-4">
+      <div class="col-xs-12 col-sm-3">
         <form @submit.prevent="search">
           <div class="input-group input-group-lg">
             <input
               type="text"
               class="form-control"
               placeholder="Search for..."
+              :disabled="view === 'detail'"
               v-model="searchString"
             >
             <span class="input-group-btn" v-if="searchResults.length > 0">
@@ -29,12 +35,39 @@
               </button>
             </span>
             <span class="input-group-btn" v-else>
-              <button @click="search" class="btn btn-default btn-fill" type="button">
+              <button
+                :disabled="view === 'detail'"
+                @click="search"
+                class="btn btn-default btn-fill"
+                type="button"
+              >
                 <i class="fas fa-search"></i>
               </button>
             </span>
           </div>
         </form>
+      </div>
+      <div class="col-xs-12 col-sm-3">
+        <div class="btn-group btn-group-lg" role="group">
+          <button
+            type="button"
+            @click="view = 'grid'"
+            class="btn btn-default"
+            :class="{'active': view === 'grid'}"
+          >Grid</button>
+          <button
+            type="button"
+            @click="view = 'list'"
+            class="btn btn-default"
+            :class="{'active': view === 'list'}"
+          >List</button>
+          <button
+            type="button"
+            @click="view = 'detail'"
+            class="btn btn-default"
+            :class="{'active': view === 'detail'}"
+          >Detail</button>
+        </div>
       </div>
     </div>
     <div class="row">
@@ -48,12 +81,116 @@
           />
         </div>
         <div v-else class="artifact-grid row row-flex row-flex-wrap">
+          <ProviderCardRow
+            v-show="view === 'list'"
+            :provider="plugin"
+            class="col-xs-12 col-sm-12"
+            v-for="(plugin, index) in plugins"
+            :key="`card_row_${index}`"
+          />
+
           <ProviderCard
+            v-show="view === 'grid'"
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
             v-for="(plugin, index) in plugins"
-            :key="index"
+            :key="`card_${index}`"
           />
+          <div v-show="view === 'detail'" class="col-sm-4 details-checkbox-column">
+            <div
+              style="max-height: 80vh;overflow-y: scroll; display:inline-block;"
+              class="flex-col"
+            >
+              <div v-for="(service, index) in pluginsByService" :key="index">
+                <div v-if="service.providers.length">
+                  <h4 class="checkbox-group-title">{{service.service | splitAtCapitalLetter }}</h4>
+                  <ul>
+                    <li v-for="(plugin, index) in service.providers" :key="index">
+                      <label>
+                        <input
+                          type="checkbox"
+                          v-model="checkedServiceProviders"
+                          :value="{serviceName: service.service, providerName: plugin.name}"
+                        >
+                        {{plugin.title}}
+                      </label>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-show="view === 'detail'" class="col-sm-8 details-output">
+            <div
+              style="display: inline-block;max-height: 80vh;overflow-y: scroll;"
+              class="flex-col"
+            >
+              <div v-if="!providersDetails || providersDetails.length === 0">
+                <div class="card">
+                  <div class="card-content" style="text-align:center">
+                    <h3 style="margin:0;">Select a Provider for more information.</h3>
+                  </div>
+                </div>
+              </div>
+              <div v-for="(details, index) in providersDetails" :key="index">
+                <div class="card">
+                  <div class="card-header">
+                    <h3 style="margin:0;" class="card-title">{{details.response.title}}</h3>
+                    <h5 style="margin:0;">{{details.provider.serviceName | splitAtCapitalLetter }}</h5>
+                  </div>
+                  <hr>
+                  <div class="card-content">
+                    <p>
+                      Provider Name:
+                      <code>{{details.response.name}}</code>
+                    </p>
+                    <p>{{details.response.desc}}</p>
+                    <ul class="provider-props">
+                      <li v-for="(prop, index) in details.response.props" :key="index">
+                        <div class="row">
+                          <div class="col-xs-12 col-sm-3">
+                            <strong>{{prop.title}}</strong>
+                          </div>
+                          <div class="col-xs-12 col-sm-9 provider-prop-divs">
+                            <div>{{prop.desc}}</div>
+                            <div>
+                              <strong>Configure Project:</strong>
+                              <code>project.plugin.{{details.provider.serviceName}}.{{details.response.name}}.{{prop.name}}={{prop.defaultValue}}</code>
+                            </div>
+                            <div>
+                              <strong>Configure Framework:</strong>
+                              <ConfigureFrameworkString
+                                :serviceName="details.provider.serviceName"
+                                :provider="details.response"
+                                :prop="prop"
+                              />
+                            </div>
+                            <div class="row">
+                              <div class="col-xs-12 col-sm-3" v-if="prop.defaultValue">
+                                <strong>Default value:</strong>
+                                <code>{{prop.defaultValue}}</code>
+                              </div>
+                              <div
+                                class="col-xs-12 col-sm-9"
+                                v-if="prop.allowed && prop.allowed.length"
+                              >
+                                <strong>Allowed values:</strong>
+                                <ul class="values">
+                                  <li v-for="(allowedItem, index) in prop.allowed" :key="index">
+                                    <code>{{allowedItem}}</code>
+                                  </li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -130,14 +267,28 @@ const FuseSearchOptions = {
 import axios from "axios";
 
 import { mapState, mapActions, mapGetters } from "vuex";
-import ProviderCard from "../components/Provider";
+import ProviderCard from "../components/ProviderCard";
+import ProviderCardRow from "../components/ProviderCardRow";
 import ConfigureFrameworkString from "../components/ConfigureFrameworkString";
 
 export default {
   name: "PluginConfigurationView",
-  components: { ProviderCard, ConfigureFrameworkString },
+  components: { ProviderCard, ProviderCardRow, ConfigureFrameworkString },
+  filters: {
+    splitAtCapitalLetter: function(value) {
+      if (!value) return "";
+      value = value.toString();
+      return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+    }
+  },
   methods: {
-    ...mapActions("plugins", ["initData", "setServiceFacet", "getServices"]),
+    ...mapActions("plugins", [
+      "initData",
+      "setServiceFacet",
+      "getServices",
+      "getProvidersListByService",
+      "getProvidersInfo"
+    ]),
     ...mapActions("modal", ["closeModal"]),
     handleModalClose() {
       this.closeModal();
@@ -165,7 +316,14 @@ export default {
   },
   computed: {
     ...mapState("modal", ["modalOpen"]),
-    ...mapState("plugins", ["plugins", "provider", "serviceName"]),
+    ...mapState("plugins", [
+      "plugins",
+      "provider",
+      "serviceName",
+      "services",
+      "pluginsByService",
+      "providersDetails"
+    ]),
     isModalOpen: {
       get: function() {
         return this.modalOpen;
@@ -179,9 +337,8 @@ export default {
   },
   created() {
     this.initData();
-    this.getServices().then(result => {
-      this.services = result;
-    });
+    this.getServices();
+    this.getProvidersListByService();
   },
   data() {
     return {
@@ -190,8 +347,14 @@ export default {
       searchIndex: [],
       searchResults: [],
       selectedService: null,
-      services: []
+      view: "grid",
+      checkedServiceProviders: []
     };
+  },
+  watch: {
+    checkedServiceProviders: function(newVal, oldVal) {
+      this.getProvidersInfo(newVal);
+    }
   }
 };
 </script>
@@ -199,6 +362,25 @@ export default {
 <style lang="scss" scoped>
 .artifact {
   max-width: 33.33333333%;
+}
+.details-checkbox-column {
+  margin-top: 1em;
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .checkbox-group-title:first-of-type {
+    // margin-top: 0;
+  }
+}
+.details-output {
+  margin-top: 1em;
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
 }
 </style>
 <style lang="scss">
