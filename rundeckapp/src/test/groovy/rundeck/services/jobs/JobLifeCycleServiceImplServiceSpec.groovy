@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
-import com.dtolabs.rundeck.core.logging.LoggingManager
+import com.dtolabs.rundeck.plugins.jobs.JobLifeCycleEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobLifeCyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.JobLifeCyclePluginProviderService
 import grails.test.mixin.Mock
@@ -67,7 +67,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         }
 
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         result.isSuccessful()
     }
@@ -81,7 +81,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         }
 
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         thrown(JobLifeCycleException)
     }
@@ -96,7 +96,7 @@ class JobLifeCycleServiceImplServiceSpec extends Specification {
         }
 
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         !result.isSuccessful()
         result.getDescription() == "It has description because it is also false"

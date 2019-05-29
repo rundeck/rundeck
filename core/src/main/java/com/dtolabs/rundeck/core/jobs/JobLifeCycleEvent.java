@@ -1,34 +1,16 @@
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
-public class JobLifeCycleEvent {
-    private WorkflowExecutionItem item;
-    private StepExecutionContext executionContext;
+import java.util.Map;
 
-    public JobLifeCycleEvent(){
-    }
+public interface JobLifeCycleEvent {
 
-    public JobLifeCycleEvent(WorkflowExecutionItem item, StepExecutionContext executionContext) {
-        this.item = item;
-        this.executionContext = executionContext;
-    }
-
-    public WorkflowExecutionItem getItem() {
-        return item;
-    }
-
-    public void setItem(WorkflowExecutionItem item) {
-        this.item = item;
-    }
-
-    public StepExecutionContext getExecutionContext() {
-        return executionContext;
-    }
-
-    public void setExecutionContext(StepExecutionContext executionContext) {
-        this.executionContext = executionContext;
-    }
+    StepExecutionContext getExecutionContext();
+    Map<String, String> getOptions();
+    ExecutionLogger getExecutionLogger();
+    String getUserName();
+    String getExecutionId();
 
 }
