@@ -50,10 +50,8 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-      <asset:javascript src="workflow.js"/>
-      <asset:javascript src="executionControl.js"/>
-      <asset:javascript src="executionState.js"/>
-      <asset:javascript src="executionState_HistoryKO.js"/>
+
+      <asset:javascript src="execution/show.js"/>
 
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
@@ -126,7 +124,7 @@
   <content tag="subtitlecss">execution-page</content>
   <content tag="subtitlesection">
 
-      <div class=" execution_ko subtitle-head flex-container reverse flex-align-items-stretch">
+      <div class="  subtitle-head flex-container reverse flex-align-items-stretch" data-ko-bind="nodeflow">
           <div class="subtitle-head-item execution-head-info flex-item-1">
               <section class="flex-container reverse">
                   <section class="flex-item-1 text-right">
@@ -410,7 +408,7 @@
           </div>
       </div>
 
-      <div class="execution_ko" data-bind="if: !completed()">
+      <div class="" data-bind="if: !completed()" data-ko-bind="nodeflow">
           <g:if test="${scheduledExecution}">
           %{--progress bar--}%
               <div>
@@ -464,7 +462,7 @@
 
               <div class="row">
                   <div class="col-sm-12">
-                      <div class="card card-plain  execution_ko">
+                      <div class="card card-plain " data-ko-bind="nodeflow">
                           <div class="btn-group ">
                               <button class="btn btn-default btn-sm dropdown-toggle "
                                       data-target="#"
@@ -708,7 +706,8 @@
 
                       </div>
 
-                      <div class="card execution_ko  exec-output "
+                      <div class="card exec-output "
+                           data-ko-bind="nodeflow"
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
                           <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
@@ -762,7 +761,10 @@
                           </g:if>
                     </div>
 
-                      <div data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'" class="execution_ko alert alert-warning" style="display:none">
+                      <div data-ko-bind="nodeflow"
+                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'"
+                           class="alert alert-warning"
+                           style="display:none">
                           <span data-bind="text: logoutput().fileLoadError" ></span>
                       </div>
                   </div>
@@ -1012,9 +1014,7 @@
             executionState:'${enc(js:execution.executionState)}',
             executionStatusString:'${enc(js:execution.status)}'
         },{},nodeflowvm);
-        jQuery('.execution_ko').each(function(i,e){
-            ko.applyBindings(nodeflowvm,e);
-        })
+
         nodeflowvm.selectedNodes.subscribe(function (newValue) {
             if (newValue) {
                 flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
@@ -1061,6 +1061,7 @@
         }else{
             nodeflowvm.activeTab("flow");
         }
+        initKoBind(null, {nodeflow: nodeflowvm})
     }
     jQuery(init);
   </g:javascript>
