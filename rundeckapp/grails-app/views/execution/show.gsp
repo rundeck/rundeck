@@ -708,8 +708,9 @@
 
                       </div>
 
-                      <div class="card execution_ko exec-output-bg exec-output " data-mode="normal"
-                           data-bind="attr: {'data-mode': logoutput().options.styleMode}">
+                      <div class="card execution_ko  exec-output "
+                           data-mode="normal"
+                           data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
                           <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
                         <g:render template="/common/messages"/>
 
