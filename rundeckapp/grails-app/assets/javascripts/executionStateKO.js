@@ -915,9 +915,17 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.endTime=ko.observable();
     self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
-    self.activeTab=ko.observable("summary");
+    self.activeTab = ko.observable("nodes")
+    self.tabs = ko.observableArray(data.tabs || [
+        {id: 'nodes', title: 'Nodes'},
+        {id: 'output', title: 'Log Output'}
+    ])
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
+    self.activeTabData = ko.pureComputed(function () {
+        const theTab = self.activeTab()
+        return self.tabs().find((e) => e.id === theTab)
+    })
     self.scheduled = ko.pureComputed(function () {
         return self.executionState() === 'SCHEDULED';
     });

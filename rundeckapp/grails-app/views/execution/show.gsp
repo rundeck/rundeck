@@ -64,6 +64,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
       <style type="text/css">
         #log{
             margin-bottom:20px;
@@ -463,40 +464,47 @@
               <div class="row">
                   <div class="col-sm-12">
                       <div class="card card-plain " data-ko-bind="nodeflow">
-                          <div class="btn-group ">
+                          <div class="btn-group " data-bind="if: tabs().length>2">
                               <button class="btn btn-default btn-sm dropdown-toggle "
                                       data-target="#"
                                       data-toggle="dropdown">
-                                  View:
-                                  <span data-bind="if: activeTab()!=='output'"><g:message code="Nodes"/></span>
-                                  <span data-bind="if: activeTab()==='output'"><g:message
-                                          code="execution.show.mode.Log.title"/></span>
+                                  <span class="colon-after"><g:message code="view"/></span>
+                                  <span data-bind="text: activeTabData() && activeTabData().title">
+
+                                  </span>
                                   <i class="caret"></i>
                               </button>
-                              <ul class="dropdown-menu pull-left" role="menu">
-                                  <li id="tab_link_flow">
-                                      <a href="#state" data-bind="click: function(){activeTab('flow')}">
-                                          <g:message code="Nodes"/>
-                                      </a>
-                                  </li>
+                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: tabs">
 
-                                  <li id="tab_link_output">
-                                      <a href="#output" data-bind="click: function(){activeTab('output')}">
-                                          <g:message code="execution.show.mode.Log.title"/>
+                                  <li data-bind="attr: {id: 'tab_link_'+id }">
+                                      <a href="#"
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }, text: title">
                                       </a>
                                   </li>
 
                               </ul>
+
                           </div>
+                          <a href="#state"
+                             data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
+                             class="btn btn-simple btn-sm">
+                              <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
+                          </a>
+                          <a href="#output"
+                             data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
+                             class="btn btn-simple btn-sm">
+                              <g:message code="execution.show.mode.Log.title"/> &raquo;
+                          </a>
 
                           <span data-bind="visible: activeTab()==='output'">
 
-                              <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
-                                  <g:message code="execution.page.view.options.title"/>
-                                  <i class="glyphicon glyphicon-cog"></i>
-                              </a>
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
+
+                                  <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                      <g:message code="execution.page.view.options.title"/>
+                                      <i class="glyphicon glyphicon-cog"></i>
+                                  </a>
 
                                   <span class="btn-group">
                                       <button type="button" class="btn btn-simple btn-xs dropdown-toggle"
@@ -711,23 +719,24 @@
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
                           <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
-                        <g:render template="/common/messages"/>
+                              <g:render template="/common/messages"/>
 
 
-                        <div class="tab-content">
+                              <div class="tab-content" id="exec-main-view">
 
-                            <div class="tab-pane " id="state" data-bind="css: {active: activeTab()==='flow'}">
-                              <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
-                                 <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                                  <div class="tab-pane " id="nodes" data-bind="css: {active: activeTab()==='nodes'}">
+                                      <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
+                                          <g:render template="wfstateNodeModelDisplay" bean="${workflowState}"
+                                                    var="workflowState"/>
+                                      </div>
+                                  </div>
+
+                                  <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
+                                      <g:render template="/execution/showFragment"
+                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
+                                  </div>
+
                               </div>
-                          </div>
-
-                            <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
-                                <g:render template="/execution/showFragment"
-                                          model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
-                            </div>
-
-                        </div>
                           </div>
 
                           <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
@@ -911,7 +920,7 @@
   </script>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
-  <g:javascript>
+        <script type="application/javascript">
     var workflow=null;
     var followControl=null;
     var flowState=null;
@@ -1002,7 +1011,11 @@
         loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
-        reloadInterval:1500
+        reloadInterval:1500,
+            tabs:[
+                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
+                {id: 'output', title: message('execution.show.mode.Log.title')}
+            ]
      });
 
       nodeflowvm.followFlowState(flowState,true);
@@ -1025,12 +1038,11 @@
 
         //knockout activeTab change listener to begin output or state listener
         nodeflowvm.activeTab.subscribe(function(val){
-           if(val==='flow'){
+            window.location.hash = "#" + val
+            if (val === 'nodes') {
                 followState();
-                window.location.hash='#monitor'
            }else if(val==='output'){
                 followOutput();
-                window.location.hash='#output'
            }
         });
 
@@ -1056,14 +1068,15 @@
         var outDetails = window.location.hash;
         if(outDetails === '#output'){
             nodeflowvm.activeTab("output");
-        }else if(outDetails === '#monitor'){
-            nodeflowvm.activeTab("flow");
+        } else if (outDetails === '#nodes') {
+            nodeflowvm.activeTab("nodes");
         }else{
-            nodeflowvm.activeTab("flow");
+            //default to nodes tab, original options of 'summary' and 'monitor' will go here
+            nodeflowvm.activeTab("nodes");
         }
         initKoBind(null, {nodeflow: nodeflowvm})
     }
     jQuery(init);
-  </g:javascript>
+    </script>
   </body>
 </html>
