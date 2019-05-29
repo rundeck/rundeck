@@ -43,6 +43,7 @@ import org.rundeck.app.spi.Services;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -134,6 +135,14 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                                           final INodeEntry node)
         throws NodeStepException {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
+        Description description = getDescription();
+        Map<String,Boolean> blankIfUnexMap = new HashMap<>();
+        if(description != null) {
+            description.getProperties().forEach(p -> {
+                if (!p.isBlankIfUnexpandable()) blankIfUnexMap.put(p.getName(), p.isBlankIfUnexpandable());
+                else blankIfUnexMap.put(p.getName(), blankIfUnexpanded);
+            });
+        }
         if (null != instanceConfiguration) {
             instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                     instanceConfiguration,
@@ -142,7 +151,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                     null,
                     context.getSharedDataContext(),
                     false,
-                    blankIfUnexpanded
+                    blankIfUnexMap
             );
         }
         final String providerName = item.getNodeStepType();
@@ -152,7 +161,7 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable, DynamicPro
                                                                                                   getServiceName(),
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
-        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
+        final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (NodeStepException e) {

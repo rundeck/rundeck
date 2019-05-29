@@ -40,6 +40,7 @@ public class PropertyBuilder {
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
     private boolean dynamicValues;
+    private boolean blankIfUnexpandabled = true;
 
     private PropertyBuilder() {
 
@@ -68,6 +69,7 @@ public class PropertyBuilder {
             .validator(orig.getValidator())
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
+            .blankIfUnexpandable(orig.isBlankIfUnexpandable())
             ;
     }
 
@@ -208,6 +210,17 @@ public class PropertyBuilder {
      */
     public PropertyBuilder required(final boolean required) {
         this.required = required;
+        return this;
+    }
+
+    /**
+     * Set blankIfUnexpandable
+     * @param blankIfUnexpandable true if unexpanded variables get replaced with blanks
+     *
+     * @return this builder
+     */
+    public PropertyBuilder blankIfUnexpandable(final boolean blankIfUnexpandable) {
+        this.blankIfUnexpandabled = blankIfUnexpandable;
         return this;
     }
 
@@ -356,7 +369,8 @@ public class PropertyBuilder {
                 validator,
                 scope,
                 renderingOptions,
-                dynamicValues
+                dynamicValues,
+                blankIfUnexpandabled
         );
     }
 

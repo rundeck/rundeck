@@ -228,6 +228,35 @@ public class SharedDataContextUtils {
     )
             throws IOException
     {
+        replaceTokensInScript(
+                script,
+                dataContext,
+                style,
+                destination, nodeName, true
+        );
+    }
+
+    /**
+     * Copies the source file to a file, replacing the @key.X@ tokens with the values from the data
+     * context
+     *
+     * @param script      source file path
+     * @param dataContext input data context
+     * @param style       line ending style
+     * @param destination destination file, or null to create a temp file
+     *
+     * @throws java.io.IOException on io error
+     */
+    public static void replaceTokensInScript(
+            final String script,
+            final MultiDataContext<ContextView, DataContext> dataContext,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination,
+            final String nodeName,
+            final boolean blankIfMissing
+    )
+            throws IOException
+    {
         if (null == script) {
             throw new NullPointerException("script cannot be null");
         }
@@ -235,7 +264,7 @@ public class SharedDataContextUtils {
                 new StringReader(script),
                 dataContext,
                 style,
-                destination, nodeName
+                destination, nodeName,blankIfMissing
         );
     }
 
@@ -292,6 +321,29 @@ public class SharedDataContextUtils {
     )
             throws IOException
     {
+        replaceTokensInReader(reader,dataContext,style,destination,nodeName,true);
+    }
+    /**
+     * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens
+     * with the values from the data context
+     *
+     * @param reader      reader
+     * @param dataContext input data context
+     * @param style       script file line ending style to use
+     * @param destination destination file
+     *
+     * @throws java.io.IOException on io error
+     */
+    public static void replaceTokensInReader(
+            final Reader reader,
+            final MultiDataContext<ContextView, DataContext> dataContext,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination,
+            final String nodeName,
+            final boolean blankIfMissing
+    )
+            throws IOException
+    {
 
         //use ReplaceTokens to replace tokens within the stream
         ScriptVarExpander scriptVarExpander = new ScriptVarExpander();
@@ -303,7 +355,7 @@ public class SharedDataContextUtils {
                         ContextView::nodeStep,
                         variable
                 ),
-                true,
+                blankIfMissing,
                 '@',
                 '@'
         );
@@ -351,6 +403,44 @@ public class SharedDataContextUtils {
     {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
+            Object o = input.get(s);
+            output.put(
+                    s,
+                    replaceDataReferencesInObject(o,
+                                                  currentContext,
+                                                  viewMap,
+                                                  converter,
+                                                  data,
+                                                  failOnUnexpanded,
+                                                  blankIfUnexpanded
+                    )
+            );
+        }
+        return output;
+    }
+
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferences(
+            final Map<String, Object> input,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            final Map<String,Boolean> blankIfUnexpandedFieldMap
+    )
+    {
+        final HashMap<String, Object> output = new HashMap<>();
+        for (final String s : input.keySet()) {
+            Boolean blankIfUnexpanded = blankIfUnexpandedFieldMap.getOrDefault(s,true);
             Object o = input.get(s);
             output.put(
                     s,
