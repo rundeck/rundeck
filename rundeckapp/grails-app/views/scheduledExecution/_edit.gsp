@@ -966,21 +966,14 @@
 
           <div class="${fieldColSize}">
               <div class="radio radio-inline">
-                <g:radio value="summary" name="defaultTab"
-                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                <g:radio value="nodes" name="defaultTab"
+                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab in ['summary','monitor','nodes']}"
                          id="tabSummary"/>
                 <label for="tabSummary">
-                    <g:message code="execution.page.show.tab.Summary.title"/>
+                    <g:message code="execution.page.show.tab.Nodes.title"/>
                 </label>
               </div>
-              <div class="radio radio-inline">
-                <g:radio name="defaultTab" value="monitor"
-                         checked="${scheduledExecution.defaultTab=='monitor'}"
-                         id="tabMonitor"/>
-                <label for="tabMonitor">
-                    <g:message code="report"/>
-                </label>
-              </div>
+
               <div class="radio radio-inline">
                 <g:radio name="defaultTab" value="output"
                          checked="${scheduledExecution.defaultTab=='output'}"
