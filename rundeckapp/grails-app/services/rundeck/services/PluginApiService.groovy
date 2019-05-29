@@ -224,6 +224,7 @@ class PluginApiService {
                 String artifactName = meta?.pluginArtifactName ?: provider.name
                 String tgtHost = meta?.targetHostCompatibility ?: 'all'
                 String rdVer = meta?.rundeckCompatibilityVersion ?: 'unspecified'
+                String author = meta?.pluginAuthor ?: ''
                 String id = meta?.pluginId ?: PluginUtils.generateShaIdFromName(artifactName)
                 [pluginId   : id,
                  pluginName : artifactName,
@@ -232,6 +233,7 @@ class PluginApiService {
                  description  : provider.description,
                  builtin      : builtin,
                  pluginVersion: ver,
+                 pluginAuthor : author,
                  rundeckCompatibilityVersion: rdVer,
                  targetHostCompatibility: tgtHost,
                  pluginDate   : toEpoch(dte),

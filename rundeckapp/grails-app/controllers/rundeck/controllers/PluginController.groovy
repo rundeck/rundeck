@@ -143,6 +143,7 @@ class PluginController extends ControllerBase {
                 provider.pluginVersion = p.pluginVersion
                 provider.title = p.title
                 provider.description = p.description
+                provider.author = p.pluginAuthor
                 providers.add(provider)
             }
         }
