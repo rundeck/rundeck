@@ -8,8 +8,8 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
-import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.plugins.jobs.JobLifeCycleEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobLifeCyclePlugin
 import com.dtolabs.rundeck.server.plugins.services.JobLifeCyclePluginProviderService
 import grails.test.mixin.Mock
@@ -28,8 +28,8 @@ class JobLifeCyclePluginServiceSpec extends Specification {
 
     def item = Mock(WorkflowExecutionItem)
     def iRundeckProject = Mock(IRundeckProject){
-        hasProperty("project.enable.jobLifeCycle.on.before.TestPlugin") >> true
-        getProperty("project.enable.jobLifeCycle.on.before.TestPlugin") >> 'true'
+        hasProperty("project.enable.jobLifeCycle.on.TestPlugin") >> true
+        getProperty("project.enable.jobLifeCycle.on.TestPlugin") >> 'beforeJob,afterJob'
     }
     def projectManager = Mock(ProjectManager) {
         getFrameworkProject("Test") >> iRundeckProject
@@ -71,7 +71,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(_,_) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         result.isSuccessful()
     }
@@ -89,7 +89,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         thrown(JobLifeCycleException)
     }
@@ -102,7 +102,7 @@ class JobLifeCyclePluginServiceSpec extends Specification {
             listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEvent(item, executionContext))
+        JobLifeCycleStatus result = service.beforeJobStarts(new JobLifeCycleEventImpl(executionContext))
         then:
         thrown(JobLifeCycleException)
     }
