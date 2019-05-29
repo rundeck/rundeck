@@ -871,6 +871,10 @@ public class SSHTaskBuilder {
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
 
+        scp.setTimeout(sshConnectionInfo.getTimeout());
+        scp.setCommandTimeout(sshConnectionInfo.getCommandTimeout());
+        scp.setConnectTimeout(sshConnectionInfo.getConnectTimeout());
+
         //Set the local and remote file paths
 
         FileSet top = new FileSet();
