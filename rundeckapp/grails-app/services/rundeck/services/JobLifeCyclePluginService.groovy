@@ -2,11 +2,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobLifeCycleException
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent
 import com.dtolabs.rundeck.core.jobs.JobLifeCycleStatus
-import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -31,7 +28,7 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
     PluginService pluginService
     JobLifeCyclePluginProviderService jobLifeCyclePluginProviderService
     FrameworkService frameworkService
-    public static final String CONF_PROJECT_ENABLE_JOB_ON_BEFORE = 'project.enable.jobLifeCycle.on.before.'
+    public static final String CONF_PROJECT_ENABLE_JOB = 'project.enable.jobLifeCycle.on.'
 
     LinkedHashMap<String, String> configPropertiesMapping
     LinkedHashMap<String, String> configProperties
@@ -44,15 +41,15 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         listJobLifeCyclePlugins().each { String name, DescribedPlugin describedPlugin ->
             projectConfigProperties.add(
                     PropertyBuilder.builder().with {
-                        booleanType 'jobLifeCycle'+ name
-                        title 'Enable '+ name + ' before job starts'
-                        description describedPlugin.getDescription().getDescription()
+                        options 'jobLifeCycle' + name
+                        title 'Enable ' + name
+                        values("beforeJob", "afterJob")
+                        labels([beforeJob: "Run before job starts", afterJob: "Run after job ends"])
                         required(false)
                         defaultValue null
-                        renderingOption('booleanTrueDisplayValueClass', 'text-warning')
                     }.build()
             )
-            configPropertiesMapping.put('jobLifeCycle' + name, CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name)
+            configPropertiesMapping.put('jobLifeCycle' + name , CONF_PROJECT_ENABLE_JOB + name)
             configProperties.put('jobLifeCycle' + name, 'jobLifeCycle')
         }
         this.configPropertiesMapping = configPropertiesMapping
@@ -101,18 +98,17 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
     }
 
     JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event){
-
         JobLifeCycleStatus result = new JobLifeCycleStatus()
-        String projectName = event.getExecutionContext().getFrameworkProject()
-        IRundeckProject rundeckProject = event.getExecutionContext().getFramework().getProjectManager().getFrameworkProject(projectName)
+        String projectName = event.getExecutionContext()?.getFrameworkProject()
+        IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
         jlcps.each{ String name, DescribedPlugin describedPlugin ->
-            if (rundeckProject.hasProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) &&
-                    rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
+            if (rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + name) &&
+                    Arrays.asList(rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).split("\\s*,\\s*")).contains('beforeJob')) {
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
                     result = plugin.beforeJobStarts(event)
-                    if(!result.isSuccessful()){
+                    if(result != null && !result?.isSuccessful()){
                         log.info("Result from plugin is false an exception will be thrown")
                         if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
                             throw new JobLifeCycleException (result.getDescription())
@@ -133,16 +129,16 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
 
     JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event){
         JobLifeCycleStatus result = new JobLifeCycleStatus()
-        String projectName = event.getExecutionContext().getFrameworkProject()
-        IRundeckProject rundeckProject = event.getExecutionContext().getFramework().getProjectManager().getFrameworkProject(projectName)
+        String projectName = event.getExecutionContext()?.getFrameworkProject()
+        IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
         jlcps.each{ String name, DescribedPlugin describedPlugin ->
-            if (rundeckProject.hasProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) &&
-                    rundeckProject.getProperty(CONF_PROJECT_ENABLE_JOB_ON_BEFORE + name) == 'true') {
+            if (rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + name) &&
+                    Arrays.asList(rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).split("\\s*,\\s*")).contains('afterJob')) {
                 try{
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
                     result = plugin.afterJobEnds(event)
-                    if(!result.isSuccessful()){
+                    if(result != null && !result.isSuccessful()){
                         log.info("Result from plugin is false an exception will be thrown")
                         if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
                             throw new JobLifeCycleException (result.getDescription())
