@@ -500,39 +500,77 @@
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <g:link class=""
-                                          title="${message(
-                                                  code: 'execution.show.log.text.button.description',
-                                                  default: 'View text output'
-                                          )}"
-                                          controller="execution" action="downloadOutput" id="${execution.id}"
-                                          params="[view     : 'inline', formatted: false, project: execution.project,
-                                                   stripansi: true]" target="_blank">
-                                      <g:message code="execution.show.log.text.button.title"/>
-                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
-                                  </g:link>
-                                  <g:link class=""
-                                          title="${message(
-                                                  code: 'execution.show.log.html.button.description',
-                                                  default: 'View rendered output'
-                                          )}"
-                                          controller="execution" action="renderOutput" id="${execution.id}"
-                                          params="[project: execution.project, ansicolor: 'on', loglevels: 'on', convertContent: 'on']"
-                                          target="_blank">
-                                      <g:message code="execution.show.log.html.button.title"/>
-                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
-                                  </g:link>
-                                  <g:link class="btn btn-default btn-xs"
-                                          title="${message(
-                                                  code: 'execution.show.log.download.button.description',
-                                                  default: 'Download {0} bytes',
-                                                  args: [filesize > 0 ? filesize : '?']
-                                          )}"
-                                          controller="execution" action="downloadOutput" id="${execution.id}"
-                                          params="[project: execution.project]" target="_blank">
-                                      <b class="glyphicon glyphicon-file"></b>
-                                      <g:message code="execution.show.log.download.button.title"/>
-                                  </g:link>
+                                  <span class="btn-group">
+                                      <button type="button" class="btn btn-simple btn-xs dropdown-toggle"
+                                              data-toggle="dropdown">
+                                          <g:message code="execution.log" />
+                                          <span class="caret"></span>
+                                      </button>
+                                      <ul class="dropdown-menu pull-right" role="menu">
+                                          <li>
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.text.button.description',
+                                                              default: 'View text output'
+                                                      )}"
+                                                      controller="execution"
+                                                      action="downloadOutput"
+                                                      id="${execution.id}"
+                                                      params="[
+                                                              view     : 'inline',
+                                                              formatted: false,
+                                                              project  : execution.project,
+                                                              stripansi: true
+                                                      ]"
+                                                      target="_blank">
+
+                                                  <g:message code="execution.show.log.text.button.title"/>
+                                              </g:link>
+                                          </li>
+                                          <li>
+
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.html.button.description',
+                                                              default: 'View rendered output'
+                                                      )}"
+                                                      controller="execution"
+                                                      action="renderOutput"
+                                                      id="${execution.id}"
+                                                      params="[
+                                                              project: execution.project,
+                                                              ansicolor: 'on',
+                                                              loglevels: 'on',
+                                                              convertContent: 'on'
+                                                      ]"
+                                                      target="_blank">
+
+                                                  <g:message code="execution.show.log.html.button.title"/>
+                                              </g:link>
+                                          </li>
+                                          <li role="separator" class="divider"></li>
+                                          <li class="dropdown-header">
+                                              <g:message code="execution.show.log.download.button.title"/>
+                                          </li>
+                                          <li>
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.download.button.description',
+                                                              default: 'Download {0} bytes',
+                                                              args: [filesize > 0 ? filesize : '?']
+                                                      )}"
+                                                      controller="execution"
+                                                      action="downloadOutput"
+                                                      id="${execution.id}"
+                                                      params="[project: execution.project]"
+                                                      target="_blank">
+
+                                                  <b class="glyphicon glyphicon-download"></b>
+                                                  <g:message code="formatted.text" />
+                                              </g:link>
+                                          </li>
+                                      </ul>
+                                  </span>
 
                               </span>
 
