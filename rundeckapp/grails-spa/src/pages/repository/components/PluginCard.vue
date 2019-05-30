@@ -16,6 +16,7 @@
             class="requires-rundeck-version"
             v-if="result.rundeckCompatibility"
           >Requires Rundeck {{result.rundeckCompatibility}}</div>
+          <div v-if="result.author" style="margin-bottom:1em;">Author: {{result.author}}</div>
           <div class="plugin-description" v-html="result.description"></div>
           <div v-if="result.artifactType">
             <label>Plugin Type:</label>
@@ -35,7 +36,7 @@
               </a>
               <a
                 v-if="result.record && result.record.post_slug "
-                :href="`https://online.rundeck.com/plugins/${result.record.post_slug}`"
+                :href="`https://online.rundeck.com/plugins/${result.record.post_slug}/`"
                 target="_blank"
               >
                 <i class="fas fa-file-alt"></i>

@@ -1,12 +1,7 @@
 <template>
   <li id="appTour">
-    <a class="btn btn-simple" @click="openTourSelectorModal">
-      <img
-        src="../duck.png"
-        alt
-        height="32px"
-        style="margin-top:12px; margin-right:15px; opacity:.6;"
-      >
+    <a class="btn btn-simple" @click="openTourSelectorModal" style="margin-top:12px;">
+      <img src="../duck.png" alt height="32px" style="margin-right:15px; opacity:.6;">
     </a>
     <section>
       <modal v-model="tourSelectionModal" title="Available Tours" ref="modal">
@@ -38,47 +33,52 @@
 </template>
 
 <script lang='ts'>
-import Vue from 'vue'
-import Trellis, {getRundeckContext} from '@rundeck/ui-trellis'
-import TourServices from '@/components/tour/services'
+import Vue from "vue";
+import Trellis, { getRundeckContext } from "@rundeck/ui-trellis";
+import TourServices from "@/components/tour/services";
 
-const context = getRundeckContext()
+const context = getRundeckContext();
 
 export default Vue.extend({
-  name: 'TourPicker',
-  props: ['eventBus'],
-  data () {
+  name: "TourPicker",
+  props: ["eventBus"],
+  data() {
     return {
       hasActiveTour: false,
       tourSelectionModal: false,
       tours: [] as any[]
-    }
+    };
   },
   methods: {
-    startTour: function (tourLoader: string, tourEntry: any) {
+    startTour: function(tourLoader: string, tourEntry: any) {
       TourServices.getTour(tourLoader, tourEntry.key).then((tour: any) => {
-        Trellis.FilterPrefs.setFilterPref('activeTour', tourLoader + ':' + tourEntry.key).then(() => {
+        Trellis.FilterPrefs.setFilterPref(
+          "activeTour",
+          tourLoader + ":" + tourEntry.key
+        ).then(() => {
           if (tour.project) {
-            window.location.replace(`${context.rdBase}project/${tour.project}/home`)
+            window.location.replace(
+              `${context.rdBase}project/${tour.project}/home`
+            );
           } else {
-            this.eventBus.$emit('tourSelected', tour)
-            this.tourSelectionModal = false
+            this.eventBus.$emit("tourSelected", tour);
+            this.tourSelectionModal = false;
           }
-        })
-      })
+        });
+      });
     },
-    openTourSelectorModal: function () {
+    openTourSelectorModal: function() {
       if (this.tours.length) {
-        this.tourSelectionModal = true
+        this.tourSelectionModal = true;
       } else {
-        TourServices.getTours().then((tours) => {
-          this.tourSelectionModal = true
-          this.tours = tours
-        })
+        TourServices.getTours().then(tours => {
+          this.tourSelectionModal = true;
+          this.tours = tours;
+        });
       }
     }
   }
-})
+});
 </script>
 
 <style scoped lang="scss">
