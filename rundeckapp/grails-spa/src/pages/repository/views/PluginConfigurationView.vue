@@ -47,7 +47,7 @@
           </div>
         </form>
       </div>
-      <div class="col-xs-12 col-sm-3">
+      <div class="col-xs-12 col-sm-3 text-right">
         <div class="btn-group btn-group-lg" role="group">
           <button
             type="button"
@@ -74,10 +74,18 @@
       <div class="col-xs-12">
         <div v-if="searchResults.length" class="artifact-grid row row-flex row-flex-wrap">
           <ProviderCard
+            v-show="view === 'grid'"
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
             v-for="(plugin, index) in searchResults"
             :key="index"
+          />
+          <ProviderCardRow
+            v-show="view === 'list'"
+            :provider="plugin"
+            class="col-xs-12 col-sm-12"
+            v-for="(plugin, index) in searchResults"
+            :key="`card_row_${index}`"
           />
         </div>
         <div v-else class="artifact-grid row row-flex row-flex-wrap">
@@ -364,14 +372,17 @@ export default {
   max-width: 33.33333333%;
 }
 .details-checkbox-column {
-  margin-top: 1em;
+  // margin-top: 1em;
+  // max-height: 80vh;
+  // overflow-y: scroll;
+  // display: inline-block;
+  & > div > div:first-child > div > .checkbox-group-title {
+    margin-top: 0;
+  }
   ul {
     list-style: none;
     padding: 0;
     margin: 0;
-  }
-  .checkbox-group-title:first-of-type {
-    // margin-top: 0;
   }
 }
 .details-output {

@@ -85,9 +85,6 @@ const actions = {
       dispatch('overlay/closeOverlay', false, {
         root: true
       })
-      dispatch('modal/openModal', true, {
-        root: true
-      })
     }, 500)
   },
   getProviderInfo({

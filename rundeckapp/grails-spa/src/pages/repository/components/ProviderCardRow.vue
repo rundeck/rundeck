@@ -4,10 +4,10 @@
       <div class="card-header">
         <h3 class="card-title">
           <span v-if="provider.builtin">
-            <i class="fa fa-briefcase" aria-hidden="true"></i>
+            <i class="fa fa-briefcase" aria-hidden="true" v-tooltip.hover="`Built-In`"></i>
           </span>
           <span v-else>
-            <i class="fa fa-file" aria-hidden="true"></i>
+            <i class="fa fa-file" aria-hidden="true" v-tooltip.hover="`Installed File`"></i>
           </span>
           <span v-if="provider.title">{{provider.title}}</span>
           <span v-else>{{provider.name}}</span>
@@ -21,6 +21,7 @@
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
+          <div v-if="provider.author">Author: {{provider.author}}</div>
           <div class="plugin-description" v-html="provider.description"></div>
         </div>
       </div>
@@ -76,6 +77,10 @@ export default {
       color: white;
       font-weight: bold;
       font-size: 1.2em;
+      i {
+        font-size: 1.2em;
+        margin-right: 1em;
+      }
     }
     .support-type {
       color: white;

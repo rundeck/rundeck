@@ -16,6 +16,7 @@
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
+          <div v-if="provider.author" style="margin-bottom:1em;">Author: {{provider.author}}</div>
           <div class="plugin-description" v-html="provider.description"></div>
 
           <ul class="provides">
@@ -24,10 +25,10 @@
         </div>
       </div>
       <div class="card-footer">
-        <span class="provider-builtin-icon" v-if="provider.builtin">
+        <span class="provider-builtin-icon" v-if="provider.builtin" v-tooltip.hover="`Built-In`">
           <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
         </span>
-        <span class="provider-builtin-icon" v-else>
+        <span class="provider-builtin-icon" v-else v-tooltip.hover="`Installed File`">
           <i class="fa fa-file fa-2x" aria-hidden="true"></i>
         </span>
         <!-- <a @click="openInfo" style="cursor:pointer;">
