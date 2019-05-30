@@ -34,6 +34,17 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
     LinkedHashMap<String, String> configProperties
     List<Property> projectConfigProperties
 
+    enum EventType{
+        BEFORE('beforeJob'), AFTER('afterJob')
+        private final String value
+        EventType(String value){
+            this.value = value
+        }
+        String getValue(){
+            this.value
+        }
+    }
+
     def loadProperties(){
         List<Property> projectConfigProperties = new ArrayList<Property>()
         LinkedHashMap<String, String> configPropertiesMapping = []
@@ -43,8 +54,8 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
                     PropertyBuilder.builder().with {
                         options 'jobLifeCycle' + name
                         title 'Enable ' + name
-                        values("beforeJob", "afterJob")
-                        labels([beforeJob: "Run before job starts", afterJob: "Run after job ends"])
+                        values(EventType.values()*.value)
+                        labels([(EventType.BEFORE.value): "Run before job starts", (EventType.AFTER.value): "Run after job ends"])
                         required(false)
                         defaultValue null
                     }.build()
@@ -98,57 +109,39 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
     }
 
     JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event){
-        JobLifeCycleStatus result = new JobLifeCycleStatus()
-        String projectName = event.getExecutionContext()?.getFrameworkProject()
-        IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
-        def jlcps = listJobLifeCyclePlugins()
-        jlcps.each{ String name, DescribedPlugin describedPlugin ->
-            if (rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + name) &&
-                    Arrays.asList(rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).split("\\s*,\\s*")).contains('beforeJob')) {
-                try{
-                    JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
-                    result = plugin.beforeJobStarts(event)
-                    if(result != null && !result?.isSuccessful()){
-                        log.info("Result from plugin is false an exception will be thrown")
-                        if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
-                            throw new JobLifeCycleException (result.getDescription())
-                        }else{
-                            throw new JobLifeCycleException ('Response from ' + name + ' is false, but no description was provided by the plugin')
-                        }
-                    }
-                }catch(JobLifeCycleException e){
-                    throw e
-                }catch (Exception e){
-                    log.error(e.getMessage(), e)
-                    throw e
-                }
-            }
-        }
-        result
+        executeLifeCycle(event, EventType.BEFORE)
     }
 
     JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event){
+        executeLifeCycle(event, EventType.AFTER)
+    }
+
+    def executeLifeCycle(def event, def eventType){
         JobLifeCycleStatus result = new JobLifeCycleStatus()
         String projectName = event.getExecutionContext()?.getFrameworkProject()
         IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
         def jlcps = listJobLifeCyclePlugins()
-        jlcps.each{ String name, DescribedPlugin describedPlugin ->
+        jlcps.each { String name, DescribedPlugin describedPlugin ->
             if (rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + name) &&
-                    Arrays.asList(rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).split("\\s*,\\s*")).contains('afterJob')) {
-                try{
+                    Arrays.asList(rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).split("\\s*,\\s*")).contains(eventType.getValue())) {
+                try {
                     JobLifeCyclePlugin plugin = (JobLifeCyclePlugin) describedPlugin.instance
-                    result = plugin.afterJobEnds(event)
-                    if(result != null && !result.isSuccessful()){
+                    if(eventType.equals(EventType.BEFORE)){
+                        result = plugin.beforeJobStarts(event)
+                    }else if(eventType.equals(EventType.AFTER)) {
+                        result = plugin.afterJobEnds(event)
+                    }
+                    if (result != null && !result.isSuccessful()) {
                         log.info("Result from plugin is false an exception will be thrown")
-                        if(result.getDescription() != null && !result.getDescription().trim().isEmpty()){
-                            throw new JobLifeCycleException (result.getDescription())
-                        }else{
-                            throw new JobLifeCycleException ('Response from ' + name + ' is false, but no description was provided by the plugin')
+                        if (result.getDescription() != null && !result.getDescription().trim().isEmpty()) {
+                            throw new JobLifeCycleException(result.getDescription())
+                        } else {
+                            throw new JobLifeCycleException('Response from ' + name + ' is false, but no description was provided by the plugin')
                         }
                     }
-                }catch(JobLifeCycleException e){
+                } catch (JobLifeCycleException e) {
                     throw e
-                }catch (Exception e){
+                } catch (Exception e) {
                     log.error(e.getMessage(), e)
                     throw e
                 }
