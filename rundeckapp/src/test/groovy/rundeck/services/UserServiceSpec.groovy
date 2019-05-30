@@ -81,7 +81,6 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         when:
         boolean errorCalled = false
         service.log.metaClass.static.error =  { String msg, Throwable ex ->
-            println "log called"
             errorCalled = true
         }
 

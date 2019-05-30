@@ -123,4 +123,51 @@ class NodeStepPluginAdapterSpec extends Specification {
         [p: 'Q'] | [a: 'b', c: '', d: 'something "xyzQqws"']
         [c: 'Z', p: 'Q'] | [a: 'b', c: 'Z', d: 'something "xyzQqws"']
     }
+
+    def "expand config vars uses blank from property config"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
+            getFrameworkProject() >> PROJECT_NAME
+        }
+        def node = new NodeEntryImpl('node')
+        def plugin = Mock(NodeStepPlugin)
+        def wrap = new TestPlugin(
+                impl: plugin,
+                description: DescriptionBuilder.builder()
+                                               .name('nodetype')
+                                               .property(PropertyBuilder.builder().string('a').build())
+                                               .property(PropertyBuilder.builder().string('c').blankIfUnexpandable(false).build())
+                                               .property(PropertyBuilder.builder().string('d').blankIfUnexpandable(false).build())
+                                               .build()
+        )
+        def adapter = new NodeStepPluginAdapter(wrap)
+        def item = new TestExecItem(
+                type: 'atype',
+                stepConfiguration: inputconfig,
+                nodeStepType: 'nodetype',
+                label: 'a label'
+        )
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        1 * plugin.executeNodeStep(!null as PluginStepContext, expect, node)
+        result.isSuccess()
+
+        where:
+
+        inputconfig = [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"']
+        data | expect
+        [:] | [a: 'b', c: '${option.c}', d: 'something "xyz${option.p}qws"']
+        [c: 'q'] | [a: 'b', c: 'q', d: 'something "xyz${option.p}qws"']
+        [p: 'Q'] | [a: 'b', c: '${option.c}', d: 'something "xyzQqws"']
+        [c: 'Z', p: 'Q'] | [a: 'b', c: 'Z', d: 'something "xyzQqws"']
+    }
 }
