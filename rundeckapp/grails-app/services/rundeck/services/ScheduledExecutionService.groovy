@@ -2015,6 +2015,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution) {
             return [success: false]
         }
+        if(changeinfo){
+            def extraInfo=" executionEnabled: "+params.executionEnabled+", scheduleEnabled: "+params.scheduleEnabled+""
+            logJobChange(changeinfo+[extraInfo: extraInfo],scheduledExecution.properties)
+        }
 
 
         def oldSched = scheduledExecution.scheduled

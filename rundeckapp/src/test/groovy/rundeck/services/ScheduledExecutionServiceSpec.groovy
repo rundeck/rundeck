@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import org.apache.log4j.Logger
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -3239,5 +3240,44 @@ class ScheduledExecutionServiceSpec extends Specification {
         scheduledExecution.errors.hasErrors()
         scheduledExecution.errors.hasFieldErrors(ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH)
 
+    }
+
+
+    def "log change on flags change"() {
+        given:
+        def jobChangeLogger = Mock(Logger)
+        setupDoValidate(true)
+        def uuid = setupDoUpdate(true)
+
+        def se = new ScheduledExecution(createJobParams()).save()
+        service.jobSchedulerService=Mock(JobSchedulerService)
+        and:
+        service.jobChangeLogger = jobChangeLogger
+        def expectedLog = user+' MODIFY [1] AProject "some/where/blue" (update)'
+        when:
+        def params = baseJobParams()+[
+
+        ]
+        //def results = service._dovalidate(params, Mock(UserAndRoles))
+        def results = service._doUpdateExecutionFlags(
+                [id: se.id.toString(), executionEnabled: executionEnabled, scheduleEnabled: scheduleEnabled],
+                null,
+                null,
+                null,
+                null,
+                [method: 'update', change: 'modify', user: user]
+        )
+
+
+        then:
+        1 * service.jobChangeLogger.info(expectedLog)
+
+        where:
+        scheduleEnabled | executionEnabled  | user
+        true            | true              | 'admin'
+        null            | false             | 'test'
+        false           | true              | 'dev'
+        true            | null              | 'qa'
+        null            | null              |' user'
     }
 }
