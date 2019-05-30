@@ -782,6 +782,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!requestHasValidToken()) {
             return
         }
+        //cancel modification
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'home', )
+        }
+
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.newproject

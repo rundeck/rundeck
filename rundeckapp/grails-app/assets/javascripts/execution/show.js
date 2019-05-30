@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+/*
+  for page execution/show.gsp
+*/
+
+
+//= require workflow
+//= require executionControl
+//= require executionState
 //= require momentutil
 //= require knockout.min
 //= require knockout-mapping
@@ -21,9 +29,6 @@
 //= require historyKO
 //= require executionStateKO
 //= require executionLogOutputKO
-
-/*
- Manifest: include executionStateKO and historyKO
- */
+//= require koBind
 
 

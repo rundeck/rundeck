@@ -66,3 +66,7 @@
 
   background-color: #f5f5f5;
 }
+
+.colon-after::after {
+  content: ':'
+}
