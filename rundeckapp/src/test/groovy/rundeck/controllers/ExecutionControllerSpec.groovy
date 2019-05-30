@@ -20,6 +20,9 @@ import asset.pipeline.grails.AssetMethodTagLib
 import asset.pipeline.grails.AssetProcessorService
 import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
@@ -288,6 +291,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
+        controller.metaClass.checkAllowUnsanitized = { final String project -> false }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
@@ -320,6 +324,59 @@ class ExecutionControllerSpec extends Specification {
         '<script>alert("hi");</script> \033[31mred\033[0m' |
                 '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
                 'class="ansi-mode-normal"></span>'
+    }
+
+    def "render output does not escape html with meta 'no-strip'"() {
+        given:
+        def assetTaglib = mockTagLib(AssetMethodTagLib)
+        assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+            assetBaseUrl(*_) >> ''
+            getAssetPath(*_) >> ''
+        }
+
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.metaClass.checkAllowUnsanitized = { final String project -> true }
+        controller.metaClass.convertContentDataType = { final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName -> message }
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService) {
+            getBoolean('gui.execution.logs.renderConvertedContent',true) >> true
+        }
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: new Date(),
+                                                               message: message,
+                                                               metadata: ["content-meta:no-strip":"true","content-data-type":"text/html"],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                               ]
+        )
+
+        when:
+        params.id = e1.id.toString()
+        params.convertContent = "true"
+        controller.renderOutput()
+        def ostring = response.contentAsString
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        ostring.contains(output)
+
+
+        where:
+        message                                            | output
+        'a simple message'                                 | 'a simple message'
+        'a simple <script>alert("hi");</script> message'   | 'a simple <script>alert("hi");</script> message'
+        '<style>.mystyle { font-weight: bold; }</style><div class="mystyle">Test</div>'   | '<style>.mystyle { font-weight: bold; }</style><div class="mystyle">Test</div>'
     }
 
     def "tail exec output maxlines param"() {
@@ -778,5 +835,40 @@ class ExecutionControllerSpec extends Specification {
         acceptHeader | resultHeader
         'gzip'       | 'gzip'
         null         | null
+    }
+
+    @Unroll
+    def "checkAllowUnsanitized"() {
+
+        when:
+        def prjCfg = Mock(IRundeckProjectConfig) {
+            hasProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> projectHasProp
+            getProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
+        }
+        def prjMgr = Mock(ProjectManager) {
+            loadProjectConfig("proj1") >> prjCfg
+        }
+        def fwk = Mock(Framework) {
+            hasProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> frameworkHasProp
+            getProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
+            getProjectManager() >> prjMgr
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            getRundeckFramework() >> fwk
+        }
+        boolean val = controller.checkAllowUnsanitized("proj1")
+
+        then:
+        val == expected
+
+        where:
+        frameworkHasProp | framework   | projectHasProp | project | expected
+            false        | null        |  true          | "true"  | false
+            true         | "true"      |  true          | "true"  | true
+            true         | "false"     |  true          | "true"  | false
+            true         | "false"     |  true          | "false" | false
+            true         | "true"      |  true          | "false" | false
+            true         | "true"      |  false         | null    | false
+
     }
 }

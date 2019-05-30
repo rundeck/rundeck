@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import groovy.transform.PackageScope
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
@@ -61,6 +62,8 @@ import java.util.stream.Collectors
 * ExecutionController
 */
 class ExecutionController extends ControllerBase{
+    static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
+    static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
 
     FrameworkService frameworkService
     ExecutionService executionService
@@ -871,6 +874,7 @@ class ExecutionController extends ControllerBase{
 
         def csslevel=!(params.loglevels in ['off','false'])
         def renderContent = shouldConvertContent(params)
+        boolean allowUnsanitized = checkAllowUnsanitized(e.project)
         iterator.each{ LogEvent msgbuf ->
             if(msgbuf.eventType != LogUtil.EVENT_TYPE_LOG){
                 return
@@ -886,7 +890,11 @@ class ExecutionController extends ControllerBase{
                 }
                 String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html', e.project)
                 if (result != null) {
-                    msghtml = result.encodeAsSanitizedHTML()
+                    if(allowUnsanitized && meta["no-strip"] == "true") {
+                        msghtml = result
+                    } else {
+                        msghtml = result.encodeAsSanitizedHTML()
+                    }
                     converted = true
                 }
             }
@@ -929,6 +937,19 @@ setTimeout(function(){
 ''')
         }
 
+    }
+
+    boolean checkAllowUnsanitized(String project) {
+        if(frameworkService.getRundeckFramework().hasProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
+            if ("true" != frameworkService.getRundeckFramework().
+                    getProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
+            def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
+            if(projectConfig.hasProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
+                return "true" == projectConfig.getProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+            }
+            return false
+        }
+        return false
     }
 
     /**
@@ -1492,7 +1513,7 @@ setTimeout(function(){
 //        }
         if (shouldConvertContent(params)) {
             //interpret any log content
-
+            boolean allowUnsanitized = checkAllowUnsanitized(e.project)
             entry.each {logentry->
                 if (logentry.mesg && logentry['content-data-type']) {
                     //look up content-type
@@ -1508,7 +1529,11 @@ setTimeout(function(){
                             e.project
                     )
                     if (result != null) {
-                        logentry.loghtml = result.encodeAsSanitizedHTML()
+                        if(allowUnsanitized && meta["no-strip"] == "true") {
+                            logentry.loghtml = result
+                        } else {
+                            logentry.loghtml = result.encodeAsSanitizedHTML()
+                        }
                     }
                 }
             }
@@ -1598,7 +1623,8 @@ setTimeout(function(){
     }
 
     //TODO: move to a service
-    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
+    @PackageScope
+    String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
 //        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
         def plugins = listViewPlugins()
 
