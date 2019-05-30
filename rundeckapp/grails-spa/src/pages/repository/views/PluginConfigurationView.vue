@@ -48,7 +48,7 @@
         </form>
       </div>
       <div class="col-xs-12 col-sm-3 text-right">
-        <div class="btn-group btn-group-lg" role="group">
+        <div class="btn-group btn-group-lg squareish-buttons" role="group">
           <button
             type="button"
             @click="view = 'grid'"
@@ -370,6 +370,11 @@ export default {
 <style lang="scss" scoped>
 .artifact {
   max-width: 33.33333333%;
+}
+.btn-group.btn-group.squareish-buttons {
+  .btn {
+    border-width: 2px;
+  }
 }
 .details-checkbox-column {
   // margin-top: 1em;
