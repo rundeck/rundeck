@@ -100,18 +100,14 @@
 
                                 <g:message code="job.run.watch.output"/>
                                 <select class="form-control " name="followdetail">
-                                    <option value="summary" ${(
+                                    <option value="nodes" ${(
                                                                       !scheduledExecution.defaultTab ||
-                                                                      scheduledExecution.defaultTab ==
-                                                                      'summary'
+                                                                      scheduledExecution.defaultTab in
+                                                                      ['summary','nodes','report']
                                                               ) ? 'selected="selected"' : ''}>
-                                        <g:message code="execution.page.show.tab.Summary.title"/>
+                                        <g:message code="execution.page.show.tab.Nodes.title"/>
                                     </option>
-                                    <option value="monitor" ${scheduledExecution.defaultTab == 'monitor' ?
-                                                              'selected="selected"' :
-                                                              ''}>
-                                        <g:message code="report"/>
-                                    </option>
+
                                     <option value="output" ${scheduledExecution.defaultTab == 'output' ?
                                                              'selected="selected"' :
                                                              ''}>

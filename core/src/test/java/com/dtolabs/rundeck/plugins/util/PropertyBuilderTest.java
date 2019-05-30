@@ -331,4 +331,12 @@ public class PropertyBuilderTest extends TestCase {
                        true,
                        test1.isRequired());
     }
+    public void testStringWithBlankIfUnexpandableTrue() {
+        PropertyBuilder b = PropertyBuilder.builder().string("str-test");
+        b.blankIfUnexpandable(false);
+        Property str = b.build();
+
+        assertFalse(str.isBlankIfUnexpandable());
+
+    }
 }

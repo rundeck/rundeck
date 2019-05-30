@@ -1,14 +1,14 @@
 <template>
   <div v-if="displayCard">
-    <div class="card result flex-col">
+    <div class="card result flex-col" @click="openInfo" style="cursor:pointer;">
       <div class="card-header">
         <span class="current-version-number label label-default">{{provider.pluginVersion}}</span>
-        <span v-if="provider.builtin">
-          <i class="fa fa-briefcase" aria-hidden="true"></i>
+        <!-- <span class="provider-builtin-icon" v-if="provider.builtin">
+          <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
         </span>
-        <span v-else>
-          <i class="fa fa-file" aria-hidden="true"></i>
-        </span>
+        <span class="provider-builtin-icon" v-else>
+          <i class="fa fa-file fa-2x" aria-hidden="true"></i>
+        </span>-->
         <h3 class="card-title">
           <span v-if="provider.title">{{provider.title}}</span>
           <span v-else>{{provider.name}}</span>
@@ -16,6 +16,7 @@
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
+          <div v-if="provider.author" style="margin-bottom:1em;">Author: {{provider.author}}</div>
           <div class="plugin-description" v-html="provider.description"></div>
 
           <ul class="provides">
@@ -24,9 +25,15 @@
         </div>
       </div>
       <div class="card-footer">
-        <a @click="openInfo" style="cursor:pointer;">
+        <span class="provider-builtin-icon" v-if="provider.builtin" v-tooltip.hover="`Built-In`">
+          <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
+        </span>
+        <span class="provider-builtin-icon" v-else v-tooltip.hover="`Installed File`">
+          <i class="fa fa-file fa-2x" aria-hidden="true"></i>
+        </span>
+        <!-- <a @click="openInfo" style="cursor:pointer;">
           <i class="fas fa-file-code fa-2x"></i>
-        </a>
+        </a>-->
       </div>
     </div>
   </div>
@@ -86,6 +93,12 @@ export default {
       // font-weight: bold;
       margin: 0 0 0.25em;
       // text-transform: uppercase;
+    }
+    .provider-builtin-icon {
+      color: white;
+      position: absolute;
+      left: 1em;
+      top: 1em;
     }
     .current-version-number {
       position: absolute;

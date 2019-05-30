@@ -5,28 +5,6 @@
         <h2 style="margin:0;line-height:45px;">Plugin Repositories</h2>
       </div>
       <div class="col-xs-12 col-sm-4">
-        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
-          <button
-            @click="showWhichPlugins = true"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === true}"
-            :disabled="searchResults.length > 0"
-          >Installed</button>
-          <button
-            @click="showWhichPlugins = null"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === null}"
-            :disabled="searchResults.length > 0"
-          >All</button>
-          <button
-            @click="showWhichPlugins = false"
-            class="btn btn-default"
-            :class="{'active': showWhichPlugins === false}"
-            :disabled="searchResults.length > 0"
-          >Not Installed</button>
-        </div>
-      </div>
-      <div class="col-xs-12 col-sm-4">
         <form @submit.prevent="search">
           <div class="input-group input-group-lg">
             <input
@@ -47,6 +25,28 @@
             </span>
           </div>
         </form>
+      </div>
+      <div class="col-xs-12 col-sm-4 text-right">
+        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
+          <button
+            @click="showWhichPlugins = true"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === true}"
+            :disabled="searchResults.length > 0"
+          >Installed</button>
+          <button
+            @click="showWhichPlugins = null"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === null}"
+            :disabled="searchResults.length > 0"
+          >All</button>
+          <button
+            @click="showWhichPlugins = false"
+            class="btn btn-default"
+            :class="{'active': showWhichPlugins === false}"
+            :disabled="searchResults.length > 0"
+          >Not Installed</button>
+        </div>
       </div>
     </div>
     <div class="row" v-show="searchResults.length > 0">

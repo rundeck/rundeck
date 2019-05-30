@@ -239,4 +239,107 @@ class SSHTaskBuilderSpec extends Specification {
         ['test1.txt'] | ['sub1']      | ['test1.txt', 'sub1/test3.xml', 'sub1/sub2/test4.blah']
         ['test1.txt'] | ['sub1/sub2'] | ['test1.txt', 'sub1/sub2/test4.blah']
     }
+
+    def "buildScp with timeouts"() {
+        given:
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        def project = new Project()
+        def basedir = copyDir.toFile()
+        def filesMap = makeDirFiles(copyDir, [
+                'test1.txt'
+        ]
+        )
+
+        def files = copyfiles.collect { filesMap[it] }
+        def remotePath = "monkey/test"
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'bob'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyStoragePath() >> 'keys/fake/path'
+            getPrivateKeyStorageData() >> {
+                new ByteArrayInputStream('data'.bytes)
+            }
+            getConnectTimeout() >> 40000
+            getCommandTimeout() >> 50000
+        }
+        def listener = Mock(ExecutionListener)
+
+        when:
+        def result = SSHTaskBuilder.buildScp(
+                node,
+                project,
+                remotePath,
+                files.get(0),
+                nodeAuthentication,
+                0,
+                listener
+        )
+
+        then:
+
+        result != null
+        result instanceof ExtScp
+        ExtScp built = (ExtScp) result
+
+        built.getCommandTimeout()==50000
+        built.getConnectTimeout()==40000
+
+        where:
+        copyfiles                                                            | _
+        ['test1.txt']                                                        | _
+    }
+
+    def "buildMultiScp with timeouts"() {
+        given:
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        def project = new Project()
+        def basedir = copyDir.toFile()
+        def filesMap = makeDirFiles(copyDir, [
+                'test1.txt'
+        ]
+        )
+
+        def files = copyfiles.collect { filesMap[it] }
+        def remotePath = "monkey/test"
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'bob'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyStoragePath() >> 'keys/fake/path'
+            getPrivateKeyStorageData() >> {
+                new ByteArrayInputStream('data'.bytes)
+            }
+            getConnectTimeout() >> 40000
+            getCommandTimeout() >> 50000
+        }
+        def listener = Mock(ExecutionListener)
+
+        when:
+        def result = SSHTaskBuilder.buildMultiScp(
+                node,
+                project,
+                basedir,
+                files,
+                remotePath,
+                nodeAuthentication,
+                0,
+                listener
+        );
+        then:
+        result != null
+        result instanceof ExtScp
+        ExtScp built = (ExtScp) result
+
+        built.getCommandTimeout()==50000
+        built.getConnectTimeout()==40000
+
+        where:
+        copyfiles                                                            | _
+        ['test1.txt']                                                        | _
+
+    }
+
 }

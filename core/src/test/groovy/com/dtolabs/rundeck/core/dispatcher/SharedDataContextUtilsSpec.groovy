@@ -163,6 +163,34 @@ class SharedDataContextUtilsSpec extends Specification {
     }
 
     @Unroll
+    def "replace data references with blankIfUnexpanded field control map"() {
+        given:
+        WFSharedContext shared = new WFSharedContext()
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
+        shared.merge(ContextView.step(1), new BaseDataContext([a: [b: "step1", stepval: "astepval1"]]))
+        when:
+        def result = SharedDataContextUtils.replaceDataReferences(
+                input,
+                ContextView.global(),
+                ContextView.&nodeStep,
+                null,
+                shared,
+                false,
+                controlMap
+        )
+        then:
+        result == expected
+
+        where:
+        input | controlMap | expected
+        ['prop1':'${a.globalval} ${a.tester}'] | [:] | ['prop1':'aglobalval ']
+        ['prop1':'${a.globalval} ${a.tester}','prop2':'z${no.exist}z'] | ['prop1':false] |  ['prop1':'aglobalval ${a.tester}','prop2':'zz']
+
+    }
+
+    @Unroll
     def "replace tokens in script duplicate start char #script"() {
         given:
         Framework fwk = null
