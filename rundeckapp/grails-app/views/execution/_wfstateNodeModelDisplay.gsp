@@ -58,13 +58,13 @@
     </div>
     <div class="row text-primary row-space">
       <div class="col-sm-3">
-        Node
+        <g:message code="execution.show.mode.column.node" />
       </div>
       <div class="col-sm-2 col-sm-offset-5">
-        Start time
+        <g:message code="start.time" />
       </div>
       <div class="col-sm-2">
-        Duration
+        <g:message code="duration" />
       </div>
     </div>
   </div>
