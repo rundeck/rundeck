@@ -19,7 +19,6 @@
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require workflow
-//= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
 //= require executionStateKO
@@ -262,14 +261,6 @@ function init() {
         }
     });
 
-    //history tabs binding
-    var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-    // ko.applyBindings(history, document.getElementById('activity_section'));
-    setupActivityLinks('activity_section', history);
-    //if empty query, automatically load first activity_link
-    if (pageParams.emptyQuery == 'true') {
-        history.activateNowRunningTab();
-    }
 
     //setup node filters knockout bindings
     var filterParams = loadJsonData('filterParamsJSON');
@@ -312,6 +303,6 @@ function init() {
         adhocCommand.loadRecentCommands();
     });
 
-    initKoBind(null, {nodeFilter: nodeFilter, history: history, adhocCommand: adhocCommand})
+    initKoBind(null, {nodeFilter: nodeFilter, adhocCommand: adhocCommand})
 }
 jQuery(document).ready(init);
