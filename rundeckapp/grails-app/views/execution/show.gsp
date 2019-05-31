@@ -21,6 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
+    <meta name="skipPrototypeJs" content="base" />
 
     <title><g:appTitle/> -
       <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
