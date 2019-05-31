@@ -24,7 +24,7 @@
     <meta name="skipPrototypeJs" content="base" />
 
     <title><g:appTitle/> -
-      <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
+    %{--      <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>--}%
       <g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if>
       <g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/>
     </title>
@@ -1126,6 +1126,40 @@ search
                 followOutput();
            }
         });
+
+        let doupdate = true//!nodeflowvm.completed()
+        let prefixed=''
+        const updateTitle = function (prefix) {
+            let title=document.title
+            if(prefixed && title.startsWith(prefixed)){
+                title=title.substring(prefixed.length)
+            }
+            document.title = prefix + title;
+            prefixed=prefix
+        }
+
+        nodeflowvm.executionState.subscribe(function (val) {
+            if (val === 'RUNNING' && !doupdate) {
+                doupdate = true
+            } else if (val === 'RUNNING' && doupdate) {
+                doupdate = true
+
+                updateTitle('[RUNNING] ')
+            } else if (null != val && val !== 'RUNNING' && doupdate) {
+                var prefix = (
+                    val === 'SUCCEEDED' ?
+                    '✅ [OK] ' :
+                    val === 'ABORTED' ?
+                    '✖︎ [KILLED] ' :
+                    val === 'TIMEDOUT' ?
+                    '⏱︎ [TIMEOUT] ' :
+                    val === 'FAILED' ?
+                    '⛔︎ [FAILED] ' :
+                    ('✴️ [' + (val) + '] ')//🔶
+                );
+                updateTitle(prefix)
+            }
+        })
 
 
 
