@@ -174,7 +174,11 @@ class DbStorageService implements NamespacedStorage{
     protected Storage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        def found
+
+        Storage.withNewSession {
+            found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        }
         found
     }
 
