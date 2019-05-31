@@ -133,7 +133,6 @@ function continueRunFollow(data) {
     var followControl = new FollowControl(data.id, 'runcontent', {
         workflow:workflow,
         parentElement: 'commandPerform',
-        viewoptionsCompleteId: 'viewoptionscomplete',
         cmdOutputErrorId: 'cmdoutputerror',
         outfileSizeId: 'outfilesize',
         extraParams: pageParams.disableMarkdown,

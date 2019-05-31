@@ -1038,7 +1038,6 @@ search
         fileloadId:'fileload',
         fileloadPctId:'fileloadpercent',
         fileloadProgressId:'fileloadprogress',
-        viewoptionsCompleteId:'viewoptionscomplete',
         cmdOutputErrorId:'cmdoutputerror',
         outfileSizeId:'outfilesize',
         workflow:workflow,
@@ -1128,15 +1127,7 @@ search
         });
 
 
-        if(document.getElementById('activity_section')){
-            activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-            activity.nowRunningEnabled(${null != execution?.dateCompleted});
-            //enable now running activity tab once execution completes
-            activity.highlightExecutionId("${execution.id}");
-            nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
-            ko.applyBindings(activity, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', activity);
-       }
+
         jQuery('.apply_ace').each(function () {
             _applyAce(this);
         });
