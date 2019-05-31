@@ -513,16 +513,20 @@ function fireWhenReady(elem, func) {
  * @returns {string}
  * @private
  */
-function _genUrl(url, params) {
-  var urlparams = [];
+function _genUrlQuery (params) {
+  var urlparams = []
   if (typeof (params) == 'string') {
-    urlparams = [params];
+    urlparams = [params]
   } else if (typeof (params) == 'object') {
     for (var e in params) {
-      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]))
     }
   }
-  return url + (urlparams.length ? ((url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
+  return urlparams.join("&")
+}
+function _genUrl(url, params) {
+  let paramString = _genUrlQuery(params)
+  return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
 }
 /**
  * Generate a link
