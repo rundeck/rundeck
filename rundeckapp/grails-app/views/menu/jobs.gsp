@@ -127,7 +127,7 @@
                     stopEvent(evt);
                     unloadExec();
                     return false;
-                },false);
+                });
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
@@ -136,7 +136,7 @@
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
                     // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
-                },false);
+                });
             }
             jQuery('#showScheduler').on('shown.bs.popover', function() {
                 if (jQuery('#scheduleAjaxButton').length) {
@@ -151,7 +151,7 @@
                             toggleAlert(false);
                         }
                         return false;
-                    }, false);
+                    });
                 }
             });
 
