@@ -392,9 +392,9 @@ var FollowControl = function (eid, elem, params) {
         var tbod = jQuery("<tbody>")
         tbl.append(tbod)
 
-        jQuery('#'+this.parentElement).append(tbl)
-
-        jQuery('#'+this.parentElement).show()
+        let parent = jQuery(typeof(this.parentElement) === 'string' ? '#' + this.parentElement : this.parentElement)
+        parent.append(tbl)
+        parent.show()
         return tbl[0]
     },
     pauseLoading: function (callback) {
