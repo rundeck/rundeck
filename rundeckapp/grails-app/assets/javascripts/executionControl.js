@@ -1168,24 +1168,7 @@ var FollowControl = function (eid, elem, params) {
         }
     },
     jobFinishStatus: function(result,statusString) {
-        if (null != result) {
-            if (this.updatepagetitle) {
-                var prefix = (
-                    result === 'succeeded' ?
-                        '✅ [OK] ' :
-                        result === 'aborted' ?
-                            '✖︎ [KILLED] ' :
-                            result === 'timedout' ?
-                                '⏱︎ [TIMEOUT] ' :
-                                result === 'failed' ?
-                                    '⛔︎ [FAILED] ' :
-                                    ('✴️ [' + (result) + '] ')//🔶
-                );
-                if (!document.title.startsWith(prefix)) {
-                    document.title = prefix + document.title;
-                }
-            }
-        }
+
     },
     isCompleted: function (id) {
         return this.runningcmd && this.runningcmd.completed && this.runningcmd.id === id
