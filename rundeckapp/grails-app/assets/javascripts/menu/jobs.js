@@ -18,7 +18,6 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
-//= require historyKO
 //= require nodeFiltersKO
 //= require executionOptions
 //= require jobFiltersKO

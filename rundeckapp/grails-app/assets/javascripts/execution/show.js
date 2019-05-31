@@ -26,7 +26,6 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
-//= require historyKO
 //= require executionStateKO
 //= require executionLogOutputKO
 //= require koBind
