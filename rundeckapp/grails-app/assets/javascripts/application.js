@@ -507,8 +507,7 @@ function fireWhenReady(elem, func) {
 }
 
 /**
- * Generate a URL
- * @param url
+ * Generate a URL query string
  * @param params
  * @returns {string}
  * @private
@@ -524,6 +523,13 @@ function _genUrlQuery (params) {
   }
   return urlparams.join("&")
 }
+/**
+ * Generate a URL
+ * @param url
+ * @param params
+ * @returns {string}
+ * @private
+ */
 function _genUrl(url, params) {
   let paramString = _genUrlQuery(params)
   return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
