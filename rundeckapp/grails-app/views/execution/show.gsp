@@ -21,6 +21,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
+    <meta name="skipPrototypeJs" content="base" />
 
     <title><g:appTitle/> -
       <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
@@ -65,6 +66,24 @@
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
       <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
+
+      <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+      <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
       <style type="text/css">
         #log{
             margin-bottom:20px;
@@ -119,6 +138,42 @@
             display: inline;
         }
       </style>
+      <g:set var="projectName" value="${execution.project}"/>
+      <g:javascript>
+    var execInfo=loadJsonData('execInfoJSON');
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: appLinks.menuNowrunningAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+          },
+          query:{
+              jobIdFilter:execInfo.jobId
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+    }
+})
+      </g:javascript>
+      <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
@@ -779,20 +834,47 @@
                   </div>
           <g:if test="${scheduledExecution}">
 
-              <div class="col-sm-12" id="activity_section">
+              <div class="col-sm-12">
 
-                  <div class="card card-plain">
-                      <div class="card-header">
-                          <h3 class="card-title">
-                              <g:message code="page.section.Activity.for.this.job"/>
-                          </h3>
-                      </div>
-                  </div>
-
-                  <div class="card">
+                  <div class="card" id="activity_section">
                       <div class="card-content">
-                          <g:render template="/reports/activityLinks"
-                                    model="[hideNowRunning: !execution.dateCompleted, execution: execution, scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
+
+                          <div class="vue-tabs">
+                              <div class="nav-tabs-navigation">
+                                  <div class="nav-tabs-wrapper">
+                                      <ul class="nav nav-tabs activity_links">
+                                          <li class="active">
+                                              <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
+                                          </li>
+                                          <li>
+                                              <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                          </li>
+                                      </ul>
+                                  </div>
+                              </div>
+                              <div class="tab-content">
+                                  <div class="tab-pane active" id="stats">
+
+
+                                      <section class="_jobstats_content section-space-bottom-lg container-fluid" id="_job_stats_main">
+                                          <g:render template="/scheduledExecution/renderJobStats"
+                                                    model="${[scheduledExecution: scheduledExecution]}"/>
+                                      </section>
+
+
+                                      <div id="_job_stats_extra_placeholder"></div>
+                                  </div>
+                                  <div class="tab-pane" id="history">
+
+                                      <div data-ko-bind="history" class="_history_content vue-project-activity">
+
+                                          <activity-list :event-bus="EventBus"></activity-list>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+
                       </div>
                   </div>
               </div>
@@ -957,7 +1039,6 @@
         fileloadId:'fileload',
         fileloadPctId:'fileloadpercent',
         fileloadProgressId:'fileloadprogress',
-        viewoptionsCompleteId:'viewoptionscomplete',
         cmdOutputErrorId:'cmdoutputerror',
         outfileSizeId:'outfilesize',
         workflow:workflow,
@@ -1047,15 +1128,7 @@
         });
 
 
-        if(document.getElementById('activity_section')){
-            activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-            activity.nowRunningEnabled(${null != execution?.dateCompleted});
-            //enable now running activity tab once execution completes
-            activity.highlightExecutionId("${execution.id}");
-            nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
-            ko.applyBindings(activity, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', activity);
-       }
+
         jQuery('.apply_ace').each(function () {
             _applyAce(this);
         });

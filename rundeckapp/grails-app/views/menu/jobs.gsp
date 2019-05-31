@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.User; grails.util.Environment" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.User; grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
@@ -22,12 +22,14 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
     <meta name="skipPrototypeJs" content="true"/>
-    <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
+    <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
@@ -44,9 +46,26 @@
     <g:jsMessages id="queryformmessages"
     code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
+
+      <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+      <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
     <script type="text/javascript">
-        /** knockout binding for activity */
-        var pageActivity;
+        
         function showError(message){
              appendText('#error',message);
              jQuery("#error").show();
@@ -101,9 +120,7 @@
                         if (result.follow && result.href) {
                             document.location = result.href;
                         } else {
-                            if (!pageActivity.selected()) {
-                                pageActivity.activateNowRunningTab();
-                            }
+
                             unloadExec();
                         }
                     } else if (result.error === 'invalid') {
@@ -127,7 +144,7 @@
                     stopEvent(evt);
                     unloadExec();
                     return false;
-                },false);
+                });
                 jQuery('#execFormCancelButton').attr('name', "_x");
             }
             if (jQuery('#execFormRunButton').length) {
@@ -136,7 +153,7 @@
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
                     // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
-                },false);
+                });
             }
             jQuery('#showScheduler').on('shown.bs.popover', function() {
                 if (jQuery('#scheduleAjaxButton').length) {
@@ -151,7 +168,7 @@
                             toggleAlert(false);
                         }
                         return false;
-                    }, false);
+                    });
                 }
             });
 
@@ -254,10 +271,6 @@
         var bulkeditor;
         jQuery(document).ready(function () {
             init();
-            if (jQuery('#activity_section')) {
-                pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                setupActivityLinks('activity_section', pageActivity);
-            }
             jQuery(document).on('click','.act_execute_job',function(evt){
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
@@ -316,7 +329,7 @@
                 filters:filtersData.filters,
                 currentFilter:filtersData.currentFilter
             })
-            initKoBind(null,{history:pageActivity,bulkeditor:bulkeditor,jobFilters:jobFilters})
+            initKoBind(null,{bulkeditor:bulkeditor,jobFilters:jobFilters})
         });
 
 
@@ -338,6 +351,42 @@
     </g:if>
 
     <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
+
+      <g:javascript>
+
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: appLinks.menuNowrunningAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+          },
+          query:{
+              jobIdFilter:'!null'
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+    }
+})
+      </g:javascript>
+      <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
 
@@ -600,10 +649,17 @@
             <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
           </div>
       </div>
-      <div class="card"  id="activity_section" data-ko-bind="history">
-        <div class="card-content">
-          <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
-        </div>
+      <div class="card"  id="activity_section" >
+
+            <div class="card-content">
+
+                <div  class="_history_content vue-project-activity">
+
+                    <activity-list :event-bus="EventBus"></activity-list>
+
+                </div>
+
+            </div>
       </div>
     </div>
   </div>

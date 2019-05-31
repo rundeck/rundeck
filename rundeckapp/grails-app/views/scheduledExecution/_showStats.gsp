@@ -17,8 +17,8 @@
 
     <div class="col-xs-12 col-sm-4 job-stats-item">
 
-        <span class="job-stats-value" id="jobstat_execcount_total" data-execcount="${total}">
-            <g:formatNumber number="${total}"/>
+        <span class="job-stats-value" id="jobstat_execcount_total" data-execcount="${execCount}">
+            <g:formatNumber number="${execCount}"/>
         </span>
         <span class="text-table-header"><g:message code="Execution.plural"/></span>
 

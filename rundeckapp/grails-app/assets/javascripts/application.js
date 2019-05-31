@@ -507,6 +507,23 @@ function fireWhenReady(elem, func) {
 }
 
 /**
+ * Generate a URL query string
+ * @param params
+ * @returns {string}
+ * @private
+ */
+function _genUrlQuery (params) {
+  var urlparams = []
+  if (typeof (params) == 'string') {
+    urlparams = [params]
+  } else if (typeof (params) == 'object') {
+    for (var e in params) {
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]))
+    }
+  }
+  return urlparams.join("&")
+}
+/**
  * Generate a URL
  * @param url
  * @param params
@@ -514,15 +531,8 @@ function fireWhenReady(elem, func) {
  * @private
  */
 function _genUrl(url, params) {
-  var urlparams = [];
-  if (typeof (params) == 'string') {
-    urlparams = [params];
-  } else if (typeof (params) == 'object') {
-    for (var e in params) {
-      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
-    }
-  }
-  return url + (urlparams.length ? ((url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
+  let paramString = _genUrlQuery(params)
+  return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
 }
 /**
  * Generate a link

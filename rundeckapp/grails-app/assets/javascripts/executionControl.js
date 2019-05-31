@@ -18,103 +18,90 @@
 /**
  * Control execution follow page state for an execution
  */
-var FollowControl = Class.create({
-    parentElement:null,
-    executionId:null,
-    fileloadId:null,
-    fileloadPctId:null,
-    fileloadProgressId:null,
-    viewoptionsCompleteId:null,
-    cmdOutputErrorId:null,
-    outfileSizeId:null,
-    autoscroll:true,
-    targetElement:null,
-    cmdoutputtbl: null,
-    cmdoutspinner: null,
-    runningcmd: null,
-    finishedExecutionAction: true,
-    appendtop: null,
-    collapseCtx: null,
-    showFinalLine: null,
-    groupOutput: null,
-    colTime:null,
-    colNode:null,
-    colStep:null,
-    lineCount:0,
-    lastrow:null,
-    contextIdCounter: 0,
-    contextStatus: null,
+var FollowControl = function (eid, elem, params) {
 
-    lastTBody:null,
-    ctxBodySet: null,
-    ctxBodyFinalSet: null,
-    ctxGroupSet: null,
 
-    //node mode
-    ctxGroupTbodies:null,
+    this.executionId = eid
+    this.targetElement = elem
+    this.refresh = this.tailmode
+    //utils to obviate prototype
+    const Element_hide = function (e, e2) {
+        jQuery(e2 || e).hide()
+    }
+    const Element_show = function (e, e2) {
+        jQuery(e2 || e).show()
+    }
 
-    taildelay: 1,
-    isrunning: false,
-    starttime:null,
-    updatepagetitle:false,
+    Object.assign(this, {
+        appendtop: {value: false, changed: false},
+        collapseCtx: {value: true, changed: false},
+        showFinalLine: {value: true, changed: false},
+        groupOutput: {value: true},
+        colTime: {value: true},
+        colNode: {value: true},
+        colStep: {value: true},
+        ctxBodySet: new Array(),
+        ctxBodyFinalSet: new Array(),
+        ctxGroupSet: new Array(),
+        ctxGroupTbodies: {},
+        contextStatus: {},
+        extraParams: {},
+        execData: {},
+        appLinks: {},
+        parentElement: null,
+        executionId: null,
+        fileloadId: null,
+        fileloadPctId: null,
+        fileloadProgressId: null,
+        cmdOutputErrorId: null,
+        outfileSizeId: null,
+        autoscroll: true,
+        targetElement: null,
+        cmdoutputtbl: null,
+        cmdoutspinner: null,
+        runningcmd: null,
+        finishedExecutionAction: true,
+        lineCount: 0,
+        lastrow: null,
+        contextIdCounter: 0,
 
-    //instance vars
-    extraParams:null,
-    totalCount:0,
-    totalDuration:0,
-    killjobhtml:'',
-    killjobauth: false,
-    execData:null,
-    nodemode:false,
-    browsemode:false,
-    tailmode:false,
-    cancelload: false,
-    partialload: false,
-    refresh:false,
-    truncateToTail:false,
-    lastlines:20,
-    maxLastLines: 500,
-    iconUrl:'/images/icon',
-    smallIconUrl:'/images/icon-small',
-    appLinks: null,
-    workflow:null,
-    multiworkflow:null,
-    clusterExec: null,
-    showClusterExecWarning: true,
-    onLoadComplete: null,
-    onLoadingFile: null,
-    onFileloadMessage: null,
-    onFileloadError: null,
-    onFileloadPercentage: null,
+        lastTBody: null,
 
-    initialize: function(eid,elem,params){
-        this.executionId=eid;
-        this.targetElement=elem;
-        jQuery.extend(this,{
-            appendtop: {value: false, changed: false},
-            collapseCtx: {value: true, changed: false},
-            showFinalLine: {value: true, changed: false},
-            groupOutput: {value: true},
-            colTime: {value: true},
-            colNode: {value: true},
-            colStep: {value: true},
-            ctxBodySet: new Array(),
-            ctxBodyFinalSet: new Array(),
-            ctxGroupSet: new Array(),
-            ctxGroupTbodies: {},
-            contextStatus: {},
-            extraParams: {},
-            execData: {},
-            appLinks: {}
-        });
-        jQuery.extend(this,params);
-        this.refresh= this.tailmode;
-        this._init();
-        if(this.dobind){
-            this.bindActions(elem);
-        }
-        this.readyMode();
-    },
+        //node mode
+
+        taildelay: 1,
+        isrunning: false,
+        starttime: null,
+        updatepagetitle: false,
+
+        //instance vars
+        totalCount: 0,
+        totalDuration: 0,
+        killjobhtml: '',
+        killjobauth: false,
+        nodemode: false,
+        browsemode: false,
+        tailmode: false,
+        cancelload: false,
+        partialload: false,
+        refresh: false,
+        truncateToTail: false,
+        lastlines: 20,
+        maxLastLines: 500,
+        iconUrl: '/images/icon',
+        smallIconUrl: '/images/icon-small',
+        workflow: null,
+        multiworkflow: null,
+        clusterExec: null,
+        showClusterExecWarning: true,
+        onLoadComplete: null,
+        onLoadingFile: null,
+        onFileloadMessage: null,
+        onFileloadError: null,
+        onFileloadPercentage: null
+    })
+    Object.assign(this, params)
+    Object.assign(this, {
     _init: function(){
         //clear and reset vars
         this.cmdoutputtbl = null;
@@ -128,120 +115,6 @@ var FollowControl = Class.create({
         this.contextStatus = new Object();
         //node mode
         this.ctxGroupTbodies={};
-    },
-    bindActions: function(elem){
-        var obj=this;
-        if(!elem){
-            return;
-        }
-        $(elem).select('a.out_setmode_tail').each(function(e){
-            Event.observe(e,'click',function(evt){Event.stop(evt);
-                if(!obj.nodemode){
-                    obj.setMode('tail');
-                    obj.setGroupOutput(false);
-                }else{
-                    obj.setMode('tail');
-                    obj.reload();
-                }
-            });
-        });
-        $(elem).select('a.out_setmode_browse').each(function(e){
-            Event.observe(e,'click',function(evt){Event.stop(evt);
-                if (!obj.nodemode) {
-                    obj.setMode('browse');
-                    obj.setGroupOutput(true);
-                } else {
-                    obj.setMode('browse');
-                    obj.reload();
-                }
-            });
-        });
-        $(elem).select('a.out_setmode_node').each(function(e){
-            Event.observe(e,'click',function(evt){Event.stop(evt);obj.setMode('node');obj.reload();});
-        });
-        $(elem).select('.out_setmode_toggle').each(function(e){
-            Event.observe(e,'change',function(evt){
-                Event.stop(evt);
-                obj.setMode(e.down('input').checked?'node':'tail');
-                obj.reload();
-            });
-        });
-        $(elem).select('.log-wrap-toggle').each(function (e) {
-            Event.observe(e, 'change', function (evt) {
-                Event.stop(evt);
-                obj.setLogWrap(e.down('input').checked ? true : false);
-            });
-        });
-        $(elem).select('.opt_append_top_true').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setOutputAppendTop(true);});
-        });
-        $(elem).select('.opt_append_top_false').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setOutputAppendTop(false);});
-        });
-        $(elem).select('.opt_display_col_time').each(function (e) {
-            e.onclick = null;
-            Event.observe(e, 'click', function (evt) {
-                obj.setColTime(e.checked);
-            });
-        });
-        $(elem).select('.opt_display_col_node').each(function (e) {
-            e.onclick = null;
-            Event.observe(e, 'click', function (evt) {
-                obj.setColNode(e.checked);
-            });
-        });
-        $(elem).select('.opt_display_col_step').each(function (e) {
-            e.onclick = null;
-            Event.observe(e, 'click', function (evt) {
-                obj.setColStep(e.checked);
-            });
-        });
-        $(elem).select('.opt_auto_scroll_true').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setOutputAutoscroll(e.checked);});
-        });
-        $(elem).select('.opt_group_output').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setGroupOutput(e.checked);});
-        });
-        $(elem).select('.opt_collapse_ctx').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setCollapseCtx(e.checked);});
-        });
-        $(elem).select('.opt_show_final').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.setShowFinalLine(e.checked);});
-        });
-        $(elem).select('.opt_last_lines_dec').each(function(e){
-            e.onmousedown=null;
-            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyLastlines(-5);});
-        });
-        $(elem).select('.opt_last_lines_inc').each(function(e){
-            e.onmousedown=null;
-            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyLastlines(5);});
-        });
-        $(elem).select('.opt_last_lines_val').each(function(e){
-            e.onchange=null;
-            Event.observe(e,'change',function(evt){obj.updateLastlines(e.value);});
-        });
-        $(elem).select('.opt_update_every_dec').each(function(e){
-            e.onmousedown=null;
-            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyTaildelay(-1);});
-        });
-        $(elem).select('.opt_update_every_inc').each(function(e){
-            e.onmousedown=null;
-            Event.observe(e,'mousedown',function(evt){Event.stop(evt);obj.modifyTaildelay(1);});
-        });
-        $(elem).select('.opt_update_every_val').each(function(e){
-            e.onchange=null;
-            Event.observe(e,'change',function(evt){obj.updateTaildelay(e.value);});
-        });
-        $(elem).select('.act_cancel').each(function(e){
-            e.onclick=null;
-            Event.observe(e,'click',function(evt){obj.docancel();});
-        });
     },
     setMode: function(mode){
         this.tailmode=mode=="tail";
@@ -257,141 +130,47 @@ var FollowControl = Class.create({
     },
     setLogWrap: function (wrapped) {
         "use strict";
-        if ($(this.cmdoutputtbl)) {
+        if (this.cmdoutputtbl) {
             if (wrapped) {
-                jQuery($(this.cmdoutputtbl)).removeClass('no-wrap');
+                jQuery(this.cmdoutputtbl).removeClass('no-wrap')
             } else {
-                jQuery($(this.cmdoutputtbl)).addClass('no-wrap');
+                jQuery(this.cmdoutputtbl).addClass('no-wrap')
             }
         }
-    },
-    readyTail: function(){
-        var obj=this;
-        $(this.targetElement).select('.opt_mode_tail').each(Element.show);
-        $(this.targetElement).select('.out_setmode_tail').each(function(e){
-            var li=$(e).up('li');
-            if(li){
-                li.addClassName('active');
-            }
-        });
-
-        $(this.targetElement).select('.opt_last_lines_val').each(function(e){
-            e.value=obj.lastlines;
-        });
-        $(this.targetElement).select('.opt_update_every_val').each(function(e){
-            e.value=obj.taildelay;
-        });
     },
     readyMode: function(){
         var obj=this;
         this.setGroupOutput(this.browsemode||this.nodemode);
-        if(this.targetElement && $(this.targetElement)){
-            $(this.targetElement).select('.obs_node_false').each(!this.nodemode?Element.show:Element.hide);
-            $(this.targetElement).select('.obs_node_true').each(this.nodemode?Element.show:Element.hide);
-            $(this.targetElement).select('.opt_mode').each(Element.hide);
-            $(this.targetElement).select('.out_setmode').each(function(e){
-                e.removeClassName('active');
+        if (this.targetElement && jQuery('#' + this.targetElement).length) {
 
-                var li = $(e).up('li');
-                if (li) {
-                    li.removeClassName('active');
-                }
-            });
             if(this.tailmode){
-                this.readyTail();
+
             }else if(this.browsemode){
-                $(this.targetElement).select('.opt_mode_browse').each(Element.show);
-                $(this.targetElement).select('.out_setmode_browse').each(function(e){e.addClassName('active');});
-                //set form inputs to reflect state
-                $(this.targetElement).select('.opt_append_top_true').each(function(e){
-                    if(obj.appendtop.value){
-                        e.addClassName('active');
-                    }else{
-                        e.removeClassName('active');
-                    }
-                });
-                $(this.targetElement).select('.opt_append_top_false').each(function(e){
-                    if(!obj.appendtop.value){
-                        e.addClassName('active');
-                    }else{
-                        e.removeClassName('active');
-                    }
-                });
-                $(this.targetElement).select('.opt_group_output').each(function(e){
-                    e.checked=obj.groupOutput.value;
-                    if(obj.groupOutput.value){
-                        e.up('label').addClassName('active');
-                    }else{
-                        e.up('label').removeClassName('active');
-                    }
-                });
-
-                $(this.targetElement).select('.opt_collapse_ctx').each(function(e){
-                    e.checked=obj.collapseCtx.value;
-                    if(obj.collapseCtx.value){
-                        e.up('label').addClassName('active');
-                    }else{
-                        e.up('label').removeClassName('active');
-                    }
-                });
-
-                $(this.targetElement).select('.opt_show_final').each(function(e){
-                    e.checked=obj.showFinalLine.value;
-                    if(obj.showFinalLine.value){
-                        e.up('label').addClassName('active');
-                    }else{
-                        e.up('label').removeClassName('active');
-                    }
-                });
 
 
             }else if(this.nodemode){
-                $(this.targetElement).select('.out_setmode_node').each(function(e){
-                    var li = $(e).up('li');
-                    if (li) {
-                        li.addClassName('active');
-                    }
-                });
+
             }
         }
     },
     appendCmdOutputError: function (message) {
-        if ($(this.cmdOutputErrorId)) {
-            appendText($(this.cmdOutputErrorId),message);
-            $(this.cmdOutputErrorId).show();
+        if (jQuery('#' + this.cmdOutputErrorId).length) {
+            appendText('#' + this.cmdOutputErrorId, message)
+            jQuery('#' + this.cmdOutputErrorId).show()
         }
         if (typeof (this.onFileloadError) === 'function') {
             this.onFileloadError(message)
         }
     },
     _log: function(message) {
-        if ($('log')) {
-            appendText($("log"), message);
-            appendHtml($("log"), "<br>");
+        if (jQuery('#log').length) {
+            appendText("#log", message)
+            appendHtml("#log", "<br>")
         }
     },
 
-    updateTaildelay: function(val) {
-        val = parseInt(val);
-        if (isNaN(val)) {
-            val = 1;
-        }
-        if (val > 60) {
-            val = 60;
-        } else if (val < 0) {
-            val = 0;
-        }
-        this.taildelay = val;
-        $('taildelayvalue').value = this.taildelay;
 
-        return false;
-    },
-    modifyTaildelay: function(val) {
-        var oldval = parseInt($('taildelayvalue').value);
-        val = parseInt(val);
-        oldval = oldval + val;
-        this.updateTaildelay(oldval);
-    },
+
 
     updateLastlines: function(val) {
         val = parseInt(val);
@@ -404,7 +183,7 @@ var FollowControl = Class.create({
             val = 5;
         }
         this.lastlines = val;
-        $('lastlinesvalue').value = this.lastlines;
+        jQuery('#lastlinesvalue').value = this.lastlines
         if (!this.isrunning) {
             this.isrunning = true;
             var obj=this;
@@ -415,11 +194,10 @@ var FollowControl = Class.create({
         return false;
     },
     modifyLastlines: function(val) {
-        var oldval = parseInt($('lastlinesvalue').value);
+        var oldval = parseInt(jQuery('#lastlinesvalue').value)
         val = parseInt(val);
         oldval = oldval + val;
         this.updateLastlines(oldval);
-        this.readyTail();
     },
     isAppendTop: function() {
         return this.appendtop.value ? true : false;
@@ -434,35 +212,33 @@ var FollowControl = Class.create({
         }
 
         if (this.collapseCtx.value) {
-            this.ctxBodySet._each(Element.hide);
-            this.ctxBodyFinalSet._each(this.showFinalLine.value ? Element.show : Element.hide);
-            $$('.expandicon,tr.contextRow').each(function(e) {
-                e.addClassName('closed');
-                e.removeClassName('opened');
+            this.ctxBodySet._each(Element_hide)
+            this.ctxBodyFinalSet._each(this.showFinalLine.value ? Element_show : Element_hide)
+            jQuery('.expandicon,tr.contextRow').each(function (i, e) {
+                jQuery(e).addClass('closed').removeClass('opened')
             });
         } else {
-            this.ctxBodySet._each(Element.show);
-            this.ctxBodyFinalSet._each(Element.show);
-            $$('.expandicon,tr.contextRow').each(function(e) {
-                e.removeClassName('closed');
-                e.addClassName('opened');
+            this.ctxBodySet._each(Element_show)
+            this.ctxBodyFinalSet._each(Element_show)
+            jQuery('.expandicon,tr.contextRow').each(function (i, e) {
+                jQuery(e).removeClass('closed').addClass('opened')
             });
         }
         this.setCtxCollapseDisplay(val);
     },
     setCtxCollapseDisplay:function(val) {
-        if ($('ctxcollapseLabel')) {
+        if (jQuery('#ctxcollapseLabel').length) {
             if (val) {
-                $('ctxcollapseLabel').addClassName('active');
+                jQuery('#ctxcollapseLabel').addClass('active')
             } else {
-                $('ctxcollapseLabel').removeClassName('active');
+                jQuery('#ctxcollapseLabel').removeClass('active')
             }
         }
-        if ($('ctxshowlastlineoption')) {
+        if (jQuery('#ctxshowlastlineoption').length) {
             if (val) {
-                $('ctxshowlastlineoption').show();
+                jQuery('#ctxshowlastlineoption').show()
             } else {
-                $('ctxshowlastlineoption').hide();
+                jQuery('#ctxshowlastlineoption').hide()
             }
         }
     },
@@ -471,46 +247,46 @@ var FollowControl = Class.create({
         if (this.groupOutput.value != val) {
             this.groupOutput.value = val;
         }
-        this.ctxGroupSet.each(this.groupOutput.value ? Element.show : Element.hide);
+        this.ctxGroupSet.forEach(this.groupOutput.value ? Element_show : Element_hide)
         if (this.groupOutput.value && this.collapseCtx.value) {
-            this.ctxBodySet.each(Element.hide);
-            this.ctxBodyFinalSet.each(this.showFinalLine.value ? Element.show : Element.hide);
+            this.ctxBodySet.forEach(Element_hide)
+            this.ctxBodyFinalSet.forEach(this.showFinalLine.value ? Element_show : Element_hide)
         } else {
-            this.ctxBodySet.each(Element.show);
-            this.ctxBodyFinalSet.each(Element.show);
+            this.ctxBodySet.forEach(Element_show)
+            this.ctxBodyFinalSet.forEach(Element_show)
         }
 
         if (!this.groupOutput.value) {
-            if ($(this.cmdoutputtbl)) {
+            if (this.cmdoutputtbl) {
                 this.setColTime(this.colTime.value);
                 this.setColNode(this.colNode.value);
                 this.setColStep(this.colStep.value);
             }
-            if ($('ctxcollapseLabel')) {
-                $('ctxcollapseLabel').hide();
+            if (jQuery('#ctxcollapseLabel').length) {
+                jQuery('#ctxcollapseLabel').hide()
             }
-            if ($('ctxshowlastlineoption')) {
-                $('ctxshowlastlineoption').hide();
+            if (jQuery('#ctxshowlastlineoption').length) {
+                jQuery('#ctxshowlastlineoption').hide()
             }
 
         } else {
-            if ($(this.cmdoutputtbl)) {
-                $(this.cmdoutputtbl).removeClassName('collapse_time');
-                $(this.cmdoutputtbl).addClassName('collapse_node');
-                $(this.cmdoutputtbl).addClassName('collapse_stepnum');
+            if (this.cmdoutputtbl) {
+                jQuery(this.cmdoutputtbl).removeClass('collapse_time')
+                jQuery(this.cmdoutputtbl).addClass('collapse_node')
+                jQuery(this.cmdoutputtbl).addClass('collapse_stepnum')
             }
-            if ($('ctxcollapseLabel')) {
-                $('ctxcollapseLabel').show();
+            if (jQuery('#ctxcollapseLabel').length) {
+                jQuery('#ctxcollapseLabel').show()
             }
             this.setCtxCollapseDisplay(this.collapseCtx.value);
         }
-        $$('.obs_grouped_true').each(val?Element.show:Element.hide);
-        $$('.obs_grouped_false').each(!val ? Element.show : Element.hide);
-        if ($('ctxshowgroupoption')) {
+        jQuery('.obs_grouped_true').each(val ? Element_show : Element_hide)
+        jQuery('.obs_grouped_false').each(!val ? Element_show : Element_hide)
+        if (jQuery('#ctxshowgroupoption').length) {
             if (val) {
-                $('ctxshowgroupoption').addClassName('active');
+                jQuery('#ctxshowgroupoption').addClass('active')
             } else {
-                $('ctxshowgroupoption').removeClassName('active');
+                jQuery('#ctxshowgroupoption').removeClass('active')
             }
         }
     },
@@ -522,55 +298,43 @@ var FollowControl = Class.create({
         var obj=this;
         this.ctxBodyFinalSet.each(function(elem, ndx) {
             if (!obj.showFinalLine.value && obj.collapseCtx.value && obj.ctxBodySet[ndx] && !Element.visible(obj.ctxBodySet[ndx])) {
-                Element.hide(elem);
+                Element_hide(elem)
             } else {
-                Element.show(elem);
+                Element_show(elem)
             }
         });
 
-        if ($('ctxshowlastlineoption')) {
+        if (jQuery('#ctxshowlastlineoption').length) {
             if (val) {
-                $('ctxshowlastlineoption').addClassName('active');
+                jQuery('#ctxshowlastlineoption').addClass('active')
             } else {
-                $('ctxshowlastlineoption').removeClassName('active');
+                jQuery('#ctxshowlastlineoption').removeClass('active')
             }
         }
     },
-    setColTime: function (show) {
-        if ($(this.cmdoutputtbl)) {
+        togCls: function (val, obj, cls) {
+            if (obj) {
 
-            if (show) {
-                $(this.cmdoutputtbl).removeClassName('collapse_time');
-            } else {
-                $(this.cmdoutputtbl).addClassName('collapse_time');
+                if (val) {
+                    jQuery(obj).removeClass(cls)
+                } else {
+                    jQuery(obj).addClass(cls)
+                }
             }
-        }
+        },
+    setColTime: function (show) {
+        this.togCls(show, this.cmdoutputtbl, 'collapse_time')
 
         this.colTime.value = show;
     },
     setColNode: function (show) {
-
-        if ($(this.cmdoutputtbl)) {
-
-            if (show) {
-                $(this.cmdoutputtbl).removeClassName('collapse_node');
-            } else {
-                $(this.cmdoutputtbl).addClassName('collapse_node');
-            }
-        }
+        this.togCls(show, this.cmdoutputtbl, 'collapse_node')
 
         this.colNode.value = show;
     },
     setColStep: function (show) {
+        this.togCls(show, this.cmdoutputtbl, 'collapse_stepnum')
 
-        if ($(this.cmdoutputtbl)) {
-
-            if (show) {
-                $(this.cmdoutputtbl).removeClassName('collapse_stepnum');
-            } else {
-                $(this.cmdoutputtbl).addClassName('collapse_stepnum');
-            }
-        }
 
         this.colStep.value = show;
     },
@@ -579,19 +343,19 @@ var FollowControl = Class.create({
             this.appendtop.changed = !this.appendtop.changed;
         }
 
-        if ($('appendTopLabel')) {
+        if (jQuery('#appendTopLabel').length) {
 
             if (istop) {
-                $('appendTopLabel').addClassName('active');
+                jQuery('#appendTopLabel').addClass('active')
             } else {
-                $('appendTopLabel').removeClassName('active');
+                jQuery('#appendTopLabel').removeClass('active')
             }
         }
-        if ($('appendBottomLabel')) {
+        if (jQuery('#appendBottomLabel').length) {
             if (istop) {
-                $('appendBottomLabel').removeClassName('active');
+                jQuery('#appendBottomLabel').removeClass('active')
             } else {
-                $('appendBottomLabel').addClassName('active');
+                jQuery('#appendBottomLabel').addClass('active')
             }
         }
         this.appendtop.value = istop;
@@ -603,35 +367,35 @@ var FollowControl = Class.create({
     clearTable: function(tbl) {
 
         if (tbl) {
-            $(this.parentElement).removeChild(tbl);
+            jQuery(tbl).remove()
             this.cmdoutputtbl = null;
         }
         this._init();
     },
 
     createTable: function(id) {
-        var tbl = new Element("table");
-        tbl.setAttribute("border", "0");
-        tbl.setAttribute("width", "100%");
-        tbl.setAttribute("height", "auto");
-        tbl.setAttribute("cellSpacing", "0");
-        tbl.setAttribute("cellPadding", "0");
-        tbl.addClassName('execoutput');
+        var tbl = jQuery("<table>")
+        tbl.attr("border", "0")
+        tbl.attr("width", "100%")
+        tbl.attr("height", "auto")
+        tbl.attr("cellSpacing", "0")
+        tbl.attr("cellPadding", "0")
+        tbl.addClass('execoutput')
         if(id){
-            tbl.setAttribute('id', id);
+            tbl.attr('id', id)
         }
         if(!this.tailmode){
-            $(tbl).addClassName('collapse_node');
-            $(tbl).addClassName('collapse_stepnum');
+            jQuery(tbl).addClass('collapse_node')
+            jQuery(tbl).addClass('collapse_stepnum')
         }
 
-        var tbod = new Element("tbody");
-        tbl.appendChild(tbod);
+        var tbod = jQuery("<tbody>")
+        tbl.append(tbod)
 
-        $(this.parentElement).appendChild(tbl);
-
-        $(this.parentElement).show();
-        return tbl;
+        let parent = jQuery(typeof(this.parentElement) === 'string' ? '#' + this.parentElement : this.parentElement)
+        parent.append(tbl)
+        parent.show()
+        return tbl[0]
     },
     pauseLoading: function (callback) {
         this._onStopCallback = callback
@@ -668,6 +432,7 @@ var FollowControl = Class.create({
             try {
                 this.clearTable(this.cmdoutputtbl);
             } catch (e) {
+                console.log("error",e)
                 this._log(e);
             }
         }
@@ -687,7 +452,7 @@ var FollowControl = Class.create({
             this.finishedExecution();
             if(this.runningcmd.count===0){
                 //hide table header
-                $(this.cmdoutputtbl).hide();
+                jQuery(this.cmdoutputtbl).hide()
             }
             return;
         }
@@ -703,7 +468,7 @@ var FollowControl = Class.create({
         this.runningcmd.percent = data.percentLoaded;
         this.runningcmd.pending = data.pending;
 
-        var entries = $A(data.entries);
+        var entries = [].concat(data.entries)
         //if tail mode, count number of rows
         var rowcount= this.countTableRows(this.cmdoutputtbl);
         var compacted = data.compacted;
@@ -741,20 +506,19 @@ var FollowControl = Class.create({
         if (this.clusterExec && this.showClusterExecWarning) {
             if (!this.runningcmd.completed) {
                 //show cluster loading info
-                jQuery('#' + $(this.parentElement).identify() + '_clusterinfo').show();
+                jQuery('#' + generateId(this.parentElement) + '_clusterinfo').show()
             } else {
-                jQuery('#' + $(this.parentElement).identify() + '_clusterinfo').hide();
+                jQuery('#' + generateId(this.parentElement) + '_clusterinfo').hide()
             }
         }
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
             //halt timer
 
-            if ($(this.viewoptionsCompleteId) && null != data.totalSize) {
-                if ($(this.outfileSizeId)) {
-                    setText($(this.outfileSizeId),data.totalSize + " bytes");
+            if (null != data.totalSize) {
+                if (jQuery('#' + this.outfileSizeId)) {
+                    setText('#' + this.outfileSizeId, data.totalSize + " bytes")
                 }
-                $(this.viewoptionsCompleteId).show();
             }
             this.finishDataOutput();
             this.finishedExecution(this.runningcmd.jobstatus,this.runningcmd.statusString);
@@ -796,11 +560,10 @@ var FollowControl = Class.create({
         }
         if (this.runningcmd.jobcompleted) {
 
-            if (this.viewoptionsCompleteId && $(this.viewoptionsCompleteId) && null != data.totalSize) {
-                if ($(this.outfileSizeId)) {
-                    setText($(this.outfileSizeId), data.totalSize + " bytes");
+            if (null != data.totalSize) {
+                if (jQuery('#' + this.outfileSizeId)) {
+                    setText('#' + this.outfileSizeId, data.totalSize + " bytes")
                 }
-                $(this.viewoptionsCompleteId).show();
             }
         }
         if (this.cancelload) {
@@ -823,69 +586,68 @@ var FollowControl = Class.create({
             try {
                 var lastcell = this.lastTBody.rows[this.isAppendTop() ? 0 : this.lastTBody.rows.length - 1];
                 this.lastTBody.removeChild(lastcell);
-                var temptbod = new Element("tbody");
-                temptbod.setAttribute('id', 'final' + this.lastTBody.getAttribute('id'));
+                var temptbod = jQuery("<tbody>")
+                temptbod.attr('id', 'final' + this.lastTBody.getAttribute('id'))
                 if (this.isAppendTop()) {
-                    this.cmdoutputtbl.insertBefore(temptbod, this.lastTBody);
+                    this.cmdoutputtbl.insertBefore(temptbod[0], this.lastTBody);
                 } else {
-                    this.cmdoutputtbl.appendChild(temptbod);
+                    this.cmdoutputtbl.appendChild(temptbod[0]);
                 }
 
-                temptbod.appendChild(lastcell);
+                temptbod.append(lastcell)
                 this.ctxBodyFinalSet.push(temptbod);
                 if (0 == this.lastTBody.rows.length) {
-                    var expicon = $('ctxExp' + this.contextIdCounter);
+                    // var expicon = jQuery('#ctxExp' + this.contextIdCounter);
 //                    if (expicon) {
 //                        expicon.removeClassName('expandicon');
 //                    }
-                    var ctxgrp = $('ctxgroup' + this.contextIdCounter);
+                    var ctxgrp = jQuery('#ctxgroup' + this.contextIdCounter)
 
-                    if (ctxgrp && ctxgrp.rows.length > 0) {
-//                        $(ctxgrp.rows[0]).removeClassName('expandable');
-//                        $(ctxgrp.rows[0]).removeClassName('action');
-                        $(ctxgrp.rows[0]).addClassName('expandable');
-                        $(ctxgrp.rows[0]).addClassName('action');
+                    if (ctxgrp.length && ctxgrp[0].rows.length > 0) {
+                        jQuery(ctxgrp[0].rows[0]).addClass('expandable')
+                        jQuery(ctxgrp[0].rows[0]).addClass('action')
                     }
                 } else {
 
-                    var ctxgrp = $('ctxgroup' + this.contextIdCounter);
+                    var ctxgrp = jQuery('#ctxgroup' + this.contextIdCounter)
 
-                    if (ctxgrp && ctxgrp.rows.length > 0) {
-                        $(ctxgrp.rows[0]).addClassName('expandable');
-                        $(ctxgrp.rows[0]).addClassName('action');
+                    if (ctxgrp.length && ctxgrp[0].rows.length > 0) {
+                        jQuery(ctxgrp[0].rows[0]).addClass('expandable')
+                        jQuery(ctxgrp[0].rows[0]).addClass('action')
                     }
                 }
             } catch(e) {
-                this.appendCmdOutputError("finishDataOutput"+e);
+                console.log("error",e)
+                this.appendCmdOutputError("finishDataOutput: "+e);
             }
         }
         if(this.lineCount == 0) {
             //show empty message
-            jQuery('#' + $(this.parentElement).identify() + '_empty').show();
+            jQuery('#' + generateId(this.parentElement) + '_empty').show()
         }
     },
     toggleDataBody: function(ctxid) {
         if (Element.visible('databody' + ctxid)) {
-            $('databody' + ctxid).hide();
-            $('ctxExp' + ctxid).removeClassName('opened');
-            $('ctxExp' + ctxid).addClassName('closed');
-            $('ctxExp' + ctxid).up('tr.contextRow').removeClassName('opened');
-            $('ctxExp' + ctxid).up('tr.contextRow').addClassName('closed');
-            if ($('finaldatabody' + ctxid)) {
+            jQuery('#databody' + ctxid).hide()
+            jQuery('#ctxExp' + ctxid).removeClass('opened')
+            jQuery('#ctxExp' + ctxid).addClass('closed')
+            jQuery('#ctxExp' + ctxid).closest('tr.contextRow').removeClass('opened')
+            jQuery('#ctxExp' + ctxid).closest('tr.contextRow').addClass('closed')
+            if (jQuery('#finaldatabody' + ctxid).length) {
                 if (this.collapseCtx.value && this.showFinalLine.value) {
-                    $('finaldatabody' + ctxid).show();
+                    jQuery('#finaldatabody' + ctxid).show()
                 } else {
-                    $('finaldatabody' + ctxid).hide();
+                    jQuery('#finaldatabody' + ctxid).hide()
                 }
             }
         } else {
-            $('databody' + ctxid).show();
-            $('ctxExp' + ctxid).removeClassName('closed');
-            $('ctxExp' + ctxid).addClassName('opened');
-            $('ctxExp' + ctxid).up('tr.contextRow').removeClassName('closed');
-            $('ctxExp' + ctxid).up('tr.contextRow').addClassName('opened');
-            if ($('finaldatabody' + ctxid)) {
-                $('finaldatabody' + ctxid).show();
+            jQuery('#databody' + ctxid).show()
+            jQuery('#ctxExp' + ctxid).removeClass('closed')
+            jQuery('#ctxExp' + ctxid).addClass('opened')
+            jQuery('#ctxExp' + ctxid).closest('tr.contextRow').removeClass('closed')
+            jQuery('#ctxExp' + ctxid).closest('tr.contextRow').addClass('opened')
+            if (jQuery('#finaldatabody' + ctxid).length) {
+                jQuery('#finaldatabody' + ctxid).show()
             }
         }
 
@@ -933,7 +695,7 @@ var FollowControl = Class.create({
         //count rows for every table body
         for (var j = 0; j < tbl.tBodies.length; j++) {
             for (var k = 0; k < tbl.tBodies[j].rows.length ; k++) {
-                if (!$(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+                if (!jQuery(tbl.tBodies[j].rows[0]).hasClass('contextRow')) {
                     count++;
                 }
             }
@@ -947,7 +709,7 @@ var FollowControl = Class.create({
             console.log("tbody " + j + ", original length: " + tbl.tBodies[j].rows.length);
             for(var k=0;k<tbl.tBodies[j].rows.length && count>0;k++){
                 var row= tbl.tBodies[j].rows[k];
-                if(!$(row).hasClassName('contextRow')){
+                if (!jQuery(row).hasClass('contextRow')) {
                     tbl.tBodies[j].removeChild(row);
                     count--;
                     k--;
@@ -955,7 +717,7 @@ var FollowControl = Class.create({
             }
             console.log("tbody " + j + ", new length: " + tbl.tBodies[j].rows.length);
 
-            if (tbl.tBodies[j].rows.length == 1 && $(tbl.tBodies[j].rows[0]).hasClassName('contextRow')) {
+            if (tbl.tBodies[j].rows.length == 1 && jQuery(tbl.tBodies[j].rows[0]).hasClass('contextRow')) {
                 tbl.removeChild(tbl.tBodies[j]);
                 j--;
             }
@@ -969,7 +731,7 @@ var FollowControl = Class.create({
                 for (var j = 0 ; j < tbl.tBodies.length ; j++) {
                     var parent = tbl.tBodies[j];
 
-                    var rows = $A(parent.rows);
+                    var rows = new Array(parent.rows)
                     var len = rows.length;
                     var first = rows[0];
 
@@ -988,9 +750,9 @@ var FollowControl = Class.create({
                     parent.insertBefore(curNode, first);
                     if (1 == curNode.rows.length) {
                         var row = curNode.rows[0];
-                        if ($(row).hasClassName('contextRow')) {
-                            $(row).addClassName(this.isAppendTop() ? "up" : "down");
-                            $(row).removeClassName(this.isAppendTop() ? "down" : "up");
+                        if (jQuery(row).hasClass('contextRow')) {
+                            jQuery(row).addClass(this.isAppendTop() ? "up" : "down")
+                            jQuery(row).removeClass(this.isAppendTop() ? "down" : "up")
                         }
                     }
                 }
@@ -999,6 +761,7 @@ var FollowControl = Class.create({
                 this.appendtop.changed = false;
             }
         } catch(e) {
+            console.log("error",e)
             this.appendCmdOutputError("reverseOutputTable "+e);
         }
     },
@@ -1027,12 +790,12 @@ var FollowControl = Class.create({
             tbody = this.ctxGroupTbodies[node];
         }
 
-        var tr = $(tbody.insertRow(-1));
+        var tr = tbody.insertRow(-1)
         this.configureDataRow(tr, data, node);
-        if ($('ctxCount' + node)) {
-            setText($('ctxCount' + node), '' + tbody.rows.length + " lines");
+        if (jQuery('#ctxCount' + node).length) {
+            setText('#ctxCount' + node, '' + tbody.rows.length + " lines")
             if (data.level == 'ERROR' || data.level == 'SEVERE') {
-                $('ctxCount' + node).addClassName(data.level);
+                jQuery('#ctxCount' + node).addClass(data.level)
             }
         }
         this.runningcmd.count++;
@@ -1042,69 +805,69 @@ var FollowControl = Class.create({
 
     createNewNodeTbody: function(data, tbl, ctxid) {
         //create new Table body
-        var newtbod = new Element("tbody");
+        var newtbod = jQuery("<tbody>")
 
-        newtbod.setAttribute('id', 'ctxgroup' + ctxid);
+        newtbod.attr('id', 'ctxgroup' + ctxid)
         if (this.isAppendTop()) {
-            tbl.insertBefore(newtbod, tbl.tBodies[0]);
+            tbl.insertBefore(newtbod[0], tbl.tBodies[0]);
         } else {
-            tbl.appendChild(newtbod);
+            jQuery(tbl).append(newtbod);
         }
         this.ctxGroupSet.push(newtbod);
 
-        var tr = $(newtbod.insertRow(this.isAppendTop() ? 0 : -1));
-        var iconcell = $(tr.insertCell(0));
+        var tr = newtbod.insertRow(this.isAppendTop() ? 0 : -1)
+        var iconcell = tr.insertCell(0)
         iconcell.setAttribute('id', 'ctxIcon' + ctxid);
-        tr.addClassName('contextRow');
+        jQuery(tr).addClass('contextRow')
         if (this.isAppendTop()) {
-            tr.addClassName("up");
+            jQuery(tr).addClass("up")
         } else {
-            tr.addClassName("down");
+            jQuery(tr).addClass("down")
         }
-        $(tr).addClassName('expandable');
-        $(tr).addClassName('action');
+        jQuery(tr).addClass('expandable')
+        jQuery(tr).addClass('action')
         iconcell.addClassName("icon");
-        var cell = $(tr.insertCell(1));
+        var cell = tr.insertCell(1)
         cell.setAttribute('colSpan', '4');
 
 
         if (null != data['node'] && '' != data['node']) {
-            var sp = new Element('span');
-            sp.addClassName('node');
+            var sp = jQuery('<span>')
+            sp.addClass('node')
             setText(sp,data['node']);
-            cell.appendChild(sp);
+            cell.appendChild(sp[0]);
         }
 
         if ( data['stepctx'] && this.workflow) {
             var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
             tr.addClassName('console');
-            appendHtml(cell," <span class='console'>[console]</span>");
+            jQuery(cell).append(jQuery(" <span class='console'>[console]</span>"))
         }
-        var countspan = new Element('span');
-        countspan.setAttribute('id', 'ctxCount' + ctxid);
-        countspan.setAttribute('count', '0');
-        countspan.addClassName('ctxcounter');
+        var countspan = jQuery('<span>')
+        countspan.attr('id', 'ctxCount' + ctxid)
+        countspan.attr('count', '0')
+        countspan.addClass('ctxcounter')
         setText(countspan, " -");
-        cell.appendChild(countspan);
-        var cell2 = $(tr.insertCell(2));
+        cell.appendChild(countspan[0]);
+        var cell2 = tr.insertCell(2)
         cell2.setAttribute('id', 'ctxExp' + ctxid);
-        cell2.addClassName('rowexpicon');
-        cell2.addClassName('expandicon');
+        jQuery(cell2).addClass('rowexpicon')
+        jQuery(cell2).addClass('expandicon')
         var obj=this;
         tr.onclick = function() {
             obj.toggleDataBody(ctxid);
         };
 
         //create new tablebody for data rows
-        var datatbod = new Element("tbody");
-        datatbod.setAttribute('id', 'databody' + ctxid);
-        tbl.appendChild(datatbod);
+        var datatbod = jQuery("<tbody>")
+        datatbod.attr('id', 'databody' + ctxid)
+        jQuery(tbl).append(datatbod);
 
         //start all data tbody as closed
-        Element.hide($(datatbod));
-        cell2.addClassName('closed');
-        tr.addClassName('closed');
+        Element_hide(datatbod)
+        jQuery(cell2).addClass('closed')
+        jQuery(tr).addClass('closed')
 
         return datatbod;
     },
@@ -1114,41 +877,42 @@ var FollowControl = Class.create({
         try {
             var lastcell = this.lastTBody.rows[this.isAppendTop() ? 0 : this.lastTBody.rows.length - 1];
             this.lastTBody.removeChild(lastcell);
-            var temptbod = new Element("tbody");
-            temptbod.setAttribute('id', 'final' + this.lastTBody.getAttribute('id'));
+            var temptbod = jQuery("<tbody>")
+            temptbod.attr('id', 'final' + this.lastTBody.getAttribute('id'))
             if (this.isAppendTop()) {
-                tbl.insertBefore(temptbod, this.lastTBody);
+                tbl.insertBefore(temptbod[0], this.lastTBody);
             } else {
-                tbl.appendChild(temptbod);
+                jQuery(tbl).append(temptbod);
             }
-            temptbod.appendChild(lastcell);
+            temptbod.append(lastcell)
             this.ctxBodyFinalSet.push(temptbod);
             if (this.showFinalLine.value) {
-                Element.show($(temptbod));
+                Element_show((temptbod))
             } else if (this.groupOutput.value && this.collapseCtx.value) {
-                Element.hide($(temptbod));
+                Element_hide((temptbod))
             }
             if (0 == this.lastTBody.rows.length) {
-                var expicon = $('ctxExp' + this.contextIdCounter);
+                // var expicon = jQuery('#ctxExp' + this.contextIdCounter);
 //                if (expicon) {
 //                    expicon.removeClassName('expandicon');
 //                }
-                var ctxgrp = $('ctxgroup' + this.contextIdCounter);
+                var ctxgrp = jQuery('#ctxgroup' + this.contextIdCounter)
 
-                if (ctxgrp && ctxgrp.rows.length > 0) {
-                    $(ctxgrp.rows[0]).addClassName('expandable');
-                    $(ctxgrp.rows[0]).addClassName('action');
+                if (ctxgrp.length && ctxgrp[0].rows.length > 0) {
+                    jQuery(ctxgrp[0].rows[0]).addClass('expandable')
+                    jQuery(ctxgrp[0].rows[0]).addClass('action')
                 }
             } else {
 
-                var ctxgrp = $('ctxgroup' + this.contextIdCounter);
+                var ctxgrp = jQuery('#ctxgroup' + this.contextIdCounter)
 
-                if (ctxgrp && ctxgrp.rows.length > 0) {
-                    $(ctxgrp.rows[0]).addClassName('expandable');
-                    $(ctxgrp.rows[0]).addClassName('action');
+                if (ctxgrp.length && ctxgrp[0].rows.length > 0) {
+                    jQuery(ctxgrp[0].rows[0]).addClass('expandable')
+                    jQuery(ctxgrp[0].rows[0]).addClass('action')
                 }
             }
         } catch(e) {
+            console.log("error",e)
             this.appendCmdOutputError("createFinalContextTbody "+e);
         }
 
@@ -1157,55 +921,55 @@ var FollowControl = Class.create({
     },
     createNewContextTbody: function(data, tbl, ctxid) {
         //create new Table body
-        var newtbod = new Element("tbody");
+        var newtbod = jQuery("<tbody>")
 
-        newtbod.setAttribute('id', 'ctxgroup' + ctxid);
+        newtbod.attr('id', 'ctxgroup' + ctxid)
         if (this.isAppendTop()) {
-            tbl.insertBefore(newtbod, tbl.tBodies[0]);
+            tbl.insertBefore(newtbod[0], tbl.tBodies[0])
         } else {
-            tbl.appendChild(newtbod);
+            jQuery(tbl).append(newtbod)
         }
-        this.ctxGroupSet.push(newtbod);
+        this.ctxGroupSet.push(newtbod[0])
         if (!this.groupOutput.value) {
             newtbod.hide();
         }
 
 
-        var tr = $(newtbod.insertRow(this.isAppendTop() ? 0 : -1));
+        var tr = (newtbod[0].insertRow(this.isAppendTop() ? 0 : -1))
 
-        var iconcell = $(tr.insertCell(0));
+        var iconcell = (tr.insertCell(0))
         iconcell.setAttribute('id', 'ctxIcon' + ctxid);
-        tr.addClassName('contextRow');
+        jQuery(tr).addClass('contextRow')
         if (this.isAppendTop()) {
-            tr.addClassName("up");
+            jQuery(tr).addClass("up")
         } else {
-            tr.addClassName("down");
+            jQuery(tr).addClass("down")
         }
-        iconcell.addClassName("icon");
-        var cell = $(tr.insertCell(1));
+        jQuery(iconcell).addClass("icon")
+        var cell = (tr.insertCell(1))
         cell.setAttribute('colSpan', '2');
 
 
         if (null != data['node'] && '' != data['node']) {
-            var sp = new Element('span');
-            sp.addClassName('node');
+            var sp = jQuery('<span>')
+            jQuery(sp).addClass('node')
             setText(sp, data['node']);
-            cell.appendChild(sp);
+            cell.appendChild(sp[0]);
         }
 
         if (data['stepctx'] && this.workflow) {
             var contextstr = this.workflow.renderContextString(data['stepctx']);
             var stepnum = this.workflow.renderContextStepNumber(data['stepctx']);
 
-            var sp = new Element('span');
-            sp.addClassName('stepnum');
+            var sp = jQuery('<span>')
+            sp.addClass('stepnum')
             sp.title=contextstr;
             setText(sp,contextstr);
-            cell.appendChild(sp);
-            var sp2 = new Element('span');
-            sp2.addClassName('stepident');
+            cell.appendChild(sp[0]);
+            var sp2 = jQuery('<span>')
+            sp2.addClass('stepident')
             setText(sp, contextstr);
-            cell.appendChild(sp2);
+            cell.appendChild(sp2[0]);
             //if dynamic step info available load dynamically
             if(this.multiworkflow){
                 this.multiworkflow.getStepInfoForStepctx(data['stepctx'],function(info){
@@ -1214,35 +978,35 @@ var FollowControl = Class.create({
                 });
             }
         } else {
-            tr.addClassName('console');
-            appendHtml(cell," <span class='console'>[console]</span>");
+            jQuery(tr).addClass('console')
+            jQuery(cell).append(jQuery(" <span class='console'>[console]</span>"))
         }
-        var cell2 = $(tr.insertCell(2));
+        var cell2 = (tr.insertCell(2))
         cell2.setAttribute('id', 'ctxExp' + ctxid);
-        cell2.addClassName('rowexpicon');
-        cell2.addClassName('expandicon');
+        jQuery(cell2).addClass('rowexpicon')
+        jQuery(cell2).addClass('expandicon')
         var obj=this;
         tr.onclick = function() {
             obj.toggleDataBody(ctxid);
         };
 
         //create new tablebody for data rows
-        var datatbod = new Element("tbody");
+        var datatbod = jQuery("<tbody>")
         if (this.isAppendTop()) {
-            tbl.insertBefore(datatbod, newtbod);
+            tbl.insertBefore(datatbod[0], newtbod);
         } else {
-            tbl.appendChild(datatbod);
+            jQuery(tbl).append(datatbod);
         }
-        this.lastTBody = datatbod;
+        this.lastTBody = datatbod[0];
         this.lastTBody.setAttribute('id', 'databody' + ctxid);
         this.ctxBodySet.push(this.lastTBody);
         if (this.groupOutput.value && this.collapseCtx.value) {
-            Element.hide($(this.lastTBody));
-            cell2.addClassName('closed');
-            tr.addClassName('closed');
+            Element_hide((this.lastTBody))
+            jQuery(cell2).addClass('closed')
+            jQuery(tr).addClass('closed')
         } else {
-            cell2.addClassName('opened');
-            tr.addClassName('opened');
+            jQuery(cell2).addClass('opened')
+            jQuery(tr).addClass('opened')
         }
     },
 
@@ -1279,7 +1043,7 @@ var FollowControl = Class.create({
             this.createNewContextTbody(data, tbl, ctxid);
 
         }
-        var tr = $(this.lastTBody.insertRow(this.isAppendTop() ? 0 : -1));
+        var tr = (this.lastTBody.insertRow(this.isAppendTop() ? 0 : -1))
         this.configureDataRow(tr, data, ctxid);
 
         this.runningcmd.count++;
@@ -1292,55 +1056,55 @@ var FollowControl = Class.create({
         if (data.level == 'ERROR' || data.level == 'SEVERE') {
             this.contextStatus[ctxid] = data.level.toLowerCase();
         }
-        var tdtime = $(tr.insertCell(0));
+        var tdtime = jQuery(tr.insertCell(0))
         //tdtime.setAttribute('width', '20');
-        tdtime.addClassName('info');
-        tdtime.addClassName('time');
-        var timespan = new Element('span');
-        timespan.addClassName(data.level);
+        tdtime.addClass('info')
+        tdtime.addClass('time')
+        var timespan = jQuery('<span>')
+        timespan.addClass(data.level)
         setText(timespan,data.time);
-        tdtime.appendChild(timespan);
+        tdtime.append(timespan)
         if(data.absolute_time){
             if(typeof(moment)=='function'){
                 setText(timespan, MomentUtil.formatTime(data.absolute_time,'HH:mm:ss'));
             }
-            tdtime.setAttribute('title', data.absolute_time);
+            tdtime.attr('title', data.absolute_time)
         }
         var cellndx=1;
         var colspan="2";
-        var tdnode=$(tr.insertCell(cellndx));
+        var tdnode = jQuery(tr.insertCell(cellndx))
         cellndx++;
-        tdnode.addClassName('node');
+        tdnode.addClass('node')
         var shownode=false;
         if (this.lastrow && typeof(this.lastrow['node'])!=undefined && data.node==this.lastrow['node']){
-            tdnode.addClassName('repeat');
-            tr.addClassName('node-repeat');
+            tdnode.addClass('repeat')
+            jQuery(tr).addClass('node-repeat')
         }else if (!data.node) {
-            tdnode.addClassName('empty');
+            tdnode.addClass('empty')
             shownode = true;
-            tr.addClassName('node-empty');
+            jQuery(tr).addClass('node-empty')
         } else{
-            tdnode.setAttribute('title', data.node);
+            tdnode.attr('title', data.node)
             setText(tdnode, data.node);
             shownode=true;
-            tr.addClassName('node-new');
+            jQuery(tr).addClass('node-new')
         }
 
         //add context column
-        var tdctx = $(tr.insertCell(cellndx));
+        var tdctx = jQuery(tr.insertCell(cellndx))
         cellndx++;
-        tdctx.addClassName('stepnum');
+        tdctx.addClass('stepnum')
         if (!shownode && this.lastrow && this.lastrow['stepctx'] == data['stepctx'] ) {
-//                tdctx.addClassName('repeat');
+//                tdctx.addClass('repeat');
         }else if(data['stepctx'] && this.workflow){
 
             var stepNumText = this.workflow.renderContextStepNumber(data['stepctx']);
             var cmdtext= stepNumText + " " + this.workflow.renderContextString(data['stepctx']);
-            var icon= new Element('i');
-            icon.addClassName('rdicon icon-small '+ this.workflow.contextType(data['stepctx']));
-            tdctx.appendChild(icon);
-            tdctx.appendChild(document.createTextNode(" "+cmdtext));
-            tdctx.setAttribute('title', data['stepctx']);
+            var icon = jQuery('<i>')
+            icon.addClass('rdicon icon-small ' + this.workflow.contextType(data['stepctx']))
+            tdctx.append(icon)
+            tdctx.append(document.createTextNode(" " + cmdtext))
+            tdctx.attr('title', data['stepctx'])
             if(this.multiworkflow){
                 var td = jQuery(tdctx);
                 var stepinfo=this.multiworkflow.getStepInfoForStepctx(data['stepctx']);
@@ -1350,19 +1114,19 @@ var FollowControl = Class.create({
                 ko.applyBindings(stepinfo,td[0]);
             }
         }
-        var tddata = $(tr.insertCell(cellndx));
-        tddata.addClassName('data');
-        tddata.setAttribute('colspan', colspan);
+        var tddata = jQuery(tr.insertCell(cellndx))
+        tddata.addClass('data')
+        tddata.attr('colspan', colspan);
         if (null != data['loghtml']) {
-            setHtml(tddata,data.loghtml);
-            tddata.addClassName('datahtml log_'+ data.level.toLowerCase());
+            tddata.html(data.loghtml);
+            tddata.addClass('datahtml log_' + data.level.toLowerCase())
         } else {
             var txt = data.log;
             if(txt==''){
                 txt="\n";
             }
             setText(tddata,txt);
-            tddata.addClassName('log_'+data.level.toLowerCase());
+            tddata.addClass('log_' + data.level.toLowerCase())
         }
         //append node
         if (shownode && data.node) {
@@ -1374,14 +1138,14 @@ var FollowControl = Class.create({
         }
     },
     clearCmdOutput: function() {
-        clearHtml($(this.parentElement));
+        clearHtml((this.parentElement))
         this.cmdoutputtbl = null;
         this.cmdoutspinner = null;
         this.runningcmd = null;
     },
     beginExecution: function() {
         this.clearCmdOutput();
-        $(this.parentElement).show();
+        jQuery(this.parentElement).show()
 
         this.isrunning = true;
         this.cancelload = false
@@ -1391,8 +1155,8 @@ var FollowControl = Class.create({
         if(!this.finishedExecutionAction){
             return;
         }
-        if ($('cmdoutspinner')) {
-            $('cmdoutspinner').remove();
+        if (jQuery('#cmdoutspinner').length) {
+            jQuery('#cmdoutspinner').remove()
         }
         this.cmdoutspinner = null;
         this.isrunning = false;
@@ -1489,4 +1253,10 @@ var FollowControl = Class.create({
             }
         }).success(_createAjaxReceiveTokensHandler('exec_cancel_token'));
     },
-});
+    })
+
+
+    this._init()
+
+    this.readyMode()
+}

@@ -419,11 +419,11 @@
                                 </h3>
                             </div>
                             <div class="panel-body">
-                                <span class="btn btn-default btn-xs " data-bind="click: selectAll">
+                                <span class="btn btn-simple btn-xs btn-hover" data-bind="click: selectAll">
                                     <g:icon name="check"/>
                                     <g:message code="select.all" />
                                 </span>
-                                <span class="btn btn-default btn-xs " data-bind="click: selectNone" >
+                                <span class="btn btn-simple btn-xs btn-hover " data-bind="click: selectNone" >
                                     <g:icon name="unchecked"/>
                                     <g:message code="select.none" />
                                 </span>

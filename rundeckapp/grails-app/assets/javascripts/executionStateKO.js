@@ -1134,7 +1134,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         var ctrl = new FollowControl(null, null, {
             parentElement: targetElement,
             showClusterExecWarning: false,
-            extraParams: '&' + Object.toQueryString(params),
+            extraParams: '&' + _genUrlQuery(params),
             appLinks: {tailExecutionOutput: self.followOutputUrl},
             finishedExecutionAction: false,
             autoscroll:false,
