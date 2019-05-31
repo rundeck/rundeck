@@ -23,7 +23,6 @@ var FollowControl = function (eid, elem, params) {
 
     this.executionId = eid
     this.targetElement = elem
-    this.refresh = this.tailmode
     //utils to obviate prototype
     const Element_hide = function (e, e2) {
         jQuery(e2 || e).hide()
@@ -49,14 +48,12 @@ var FollowControl = function (eid, elem, params) {
         execData: {},
         appLinks: {},
         parentElement: null,
-        executionId: null,
         fileloadId: null,
         fileloadPctId: null,
         fileloadProgressId: null,
         cmdOutputErrorId: null,
         outfileSizeId: null,
         autoscroll: true,
-        targetElement: null,
         cmdoutputtbl: null,
         cmdoutspinner: null,
         runningcmd: null,
@@ -84,7 +81,6 @@ var FollowControl = function (eid, elem, params) {
         tailmode: false,
         cancelload: false,
         partialload: false,
-        refresh: false,
         truncateToTail: false,
         lastlines: 20,
         maxLastLines: 500,
