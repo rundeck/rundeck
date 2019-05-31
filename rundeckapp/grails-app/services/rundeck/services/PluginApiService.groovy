@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
@@ -136,6 +137,10 @@ class PluginApiService {
         pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListener).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
