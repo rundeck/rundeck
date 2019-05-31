@@ -47,8 +47,12 @@
         </a>
       </div>
       <div style="padding-top:16vh;">
-        <div style="font-size: xx-large; color: #fff;">405 - Method not allowed</div>
         <div>
+
+          <div class="col-xs-12 col-sm-6 col-sm-offset-6 four-oh-four-messaging">
+            <h1>405</h1>
+            <h2><g:message code="request.error.notallowed.message" />
+            </h2>
             <div>
               <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
                 class="
@@ -57,6 +61,12 @@
           </div>
         </div>
       </div>
+          <div class="laser-cat-container">
+            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+              <img src="${resource(dir: 'images', file: 'spacecat/laser-cat.png')}" class="img-responsive"
+                alt="Laser Cat" />
+            </g:if>
+          </div>
       <g:render template="/common/footer" />
     </div>
 </body>
