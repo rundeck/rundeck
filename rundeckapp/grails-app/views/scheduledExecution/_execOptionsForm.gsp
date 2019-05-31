@@ -61,7 +61,7 @@
     </div>
 
 
-    <div class="col-sm-10">
+        <div class="col-sm-10">
         <g:if test="${nodesetvariables && !failedNodes}">
             %{--show node filters--}%
             <div>
@@ -83,59 +83,112 @@
 
             <g:set var="selectedNodes"
                    value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes instanceof String? selectedNodes.split(',').findAll{it}:selectedNodes instanceof Collection? selectedNodes:null}"/>
+            <g:embedJSON id="selectedNodesJson" data="${selectedNodes?:[]}"/>
+            <g:embedJSON id="allNodesJson" data="${nodes?nodes*.nodename:[]}"/>
+            <g:embedJSON id="namegroupsJson" data="${namegroups?:[:]}"/>
+            <g:embedJSON id="namegrouptagsJson" data="${grouptags?:[:]}"/>
 
-            <div class="row">
-                <div class="col-sm-12 checkbox">
-                    <input name="extra._replaceNodeFilters" value="true" type="checkbox"
-                           data-toggle="collapse"
-                           data-target="#nodeSelect"
-                        ${selectedNodes!=null?'checked':''}
-                           id="doReplaceFilters"/>
-                    <label for="doReplaceFilters">
-                    <g:message code="change.the.target.nodes" />
-                    <g:if test="${selectedNodes || nodes}">
-                        (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
-                    </g:if>
-                    </label>
-                </div>
+            <div class="row" data-ko-bind="runformoptions">
+                <div class="col-sm-12 ">
 
-            </div>
-            <div>
-              <div class=" matchednodes embed jobmatchednodes group_section collapse ${selectedNodes!=null? 'in' : ''}" id="nodeSelect">
-                <%--
-                 split node names into groups, in several patterns
-                  .*\D(\d+)
-                  (\d+)\D.*
-                --%>
+                    <div class="checkbox checkbox-inline">
+                        <input name="extra._replaceNodeFilters"
+                               value="true"
+                               type="checkbox"
+                               data-bind="checked: changeTargetNodes"
+                               id="doReplaceFilters"/>
+                        <label for="doReplaceFilters">
+                            <g:message code="change.the.target.nodes"/>
+                            <!-- ko if: !isNodeFilterVisible() -->
+                            (<span data-bind="text: selectedNodes().length, css: {'text-info':selectedNodes().length,'text-danger':!selectedNodes().length}" ></span>)
+                            <!-- /ko -->
+                            <!-- ko if: isNodeFilterVisible() -->
+                            (<span data-bind="
+                                visible: isNodeFilterVisible() && nodeFilter, text: nodeFilter.total,
+                                css: {'text-info':nodeFilter.total,'text-danger':!nodeFilter.total()}" >0</span>)
+                            <!-- /ko -->
+                        </label>
+
+                    </div>
 
 
-                <g:if test="${!nodesetvariables && nodes}">
-                    <div class=" group_select_control">
-                        <div class="radio">
+%{--                        <label>--}%
+                            %{--                            <select name="extra.nodeoverride" data-bind="value: nodeOverride" class="form-control">--}%
+                            %{--                                <option disabled value="">-Choose-</option>--}%
+                            %{--                                <option value="cherrypick">Selecting Nodes</option>--}%
+                            %{--                                <option value="filter">Overriding Node Filter</option>--}%
+                            %{--                            </select>--}%
+%{--                        </label>--}%
+
+                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
                             <input id="cherrypickradio"
                                    type="radio"
                                    name="extra.nodeoverride"
                                    checked="checked"
                                    value="cherrypick"
-                            />
+                                   data-bind="checked: nodeOverride"/>
                             <label for="cherrypickradio">
-                                <g:message code="select.prompt" /> (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
+                                Select Nodes
                             </label>
-                            <span class="btn btn-xs btn-default textbtn-on-hover selectall"><g:message code="all" /></span>
-                            <span class="btn btn-xs btn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
                         </div>
-                        <g:if test="${tagsummary}">
-                            <g:render template="/framework/tagsummary"
-                                      model="${[tagsummary:tagsummary,action:[classnames:'label label-muted obs_tag_group',onclick:'']]}"/>
-                        </g:if>
+
+                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
+                            <input id="filterradio"
+                                   type="radio"
+                                   name="extra.nodeoverride"
+                                   value="filter"
+                                   data-bind="checked: nodeOverride"/>
+                            <label for="filterradio">
+                                <g:message code="job.run.override.node"/>
+                            </label>
+                        </div>
+
+
+                </div>
+
+            </div>
+            <div>
+                <div class=" matchednodes embed jobmatchednodes group_section " id="nodeSelect">
+                <%--
+                 split node names into groups, in several patterns
+                  .*\D(\d+)
+                  (\d+)\D.*
+                --%>
+                    <div data-ko-bind="runformoptions" data-bind="visible: isCherrypickVisible">
+
+                <g:if test="${!nodesetvariables && nodes}">
+                    <div class=" ">
+                        <div class="">
+                            Select Nodes
+                            <!-- ko if: isCherrypickVisible -->
+                            (<span data-bind="text: selectedNodes().length, css: {'text-info':selectedNodes().length,'text-danger':!selectedNodes().length}" ></span>)
+                            <!-- /ko -->
+
+                        <!-- ko if: isCherrypickVisible -->
+                            <span class="btn btn-xs btn-simple  btn-hover " data-bind="click: selectAllNodes">
+                                <g:icon name="check"/>
+                                <g:message code="select.all" />
+                            </span>
+                            <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: selectNoNodes">
+                                <g:icon name="unchecked"/>
+                                <g:message code="select.none" />
+                            </span>
+                            <!-- /ko -->
+                        </div>
+%{--                        <g:if test="${tagsummary}">--}%
+
+%{--                            <g:render template="/framework/tagsummary"--}%
+%{--                                      model="${[tagsummary:tagsummary,action:[classnames:'label label-muted autoclickable obs_tag_group',onclick:'']]}"/>--}%
+
+%{--                        </g:if>--}%
                     </div>
                 <g:if test="${namegroups}">
-
+                    <div>
                     <g:each in="${namegroups.keySet().sort()}" var="group">
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <span data-toggle="collapse" data-target="#${expkey}" open="${selectedNodes!=null?'true':'false'}">
+                            <span data-toggle="collapse" data-target="#${expkey}" data-bind="css: {in: hasSelectedNodes}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     <g:enc>${namegroups[group][0]}</g:enc></span>
@@ -151,15 +204,21 @@
                                 <b class="glyphicon glyphicon-chevron-${selectedNodes!=null ? 'down' : 'right'}"></b>
                             </span>
                         </div>
-                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse ${wdgt.css(if: selectedNodes!=null, then:'in')}">
+                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse " data-bind="css: {in: hasSelectedNodes}" >
                                 <g:if test="${namegroups.size()>1}">
-                                <div class="group_select_control" style="${selectedNodes!=null?'':'display:none'}">
-                                    <g:message code="select.prompt" />
-                                    <span class="btn btn-xs btn-default textbtn-on-hover selectall" ><g:message code="all" /></span>
-                                    <span class="btn btn-xs btn-default textbtn-on-hover selectnone" ><g:message code="none" /></span>
-                                    <g:if test="${grouptags && grouptags[group]}">
-                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'tag active btn btn-xs btn-link  obs_tag_group',onclick:'']]}"/>
-                                    </g:if>
+                                <div class="group_select_control" style="">
+
+                                    <span class="btn btn-xs btn-simple btn-hover " data-bind="click: function(){groupSelectAll($element)}" data-group="${enc(attr:group)}">
+                                        <g:icon name="check"/>
+                                        <g:message code="select.all" />
+                                    </span>
+                                    <span class="btn btn-xs btn-simple  btn-hover "  data-bind="click: function(){groupSelectNone($element)}" data-group="${enc(attr:group)}" >
+                                        <g:icon name="unchecked"/>
+                                        <g:message code="select.none" />
+                                    </span>
+%{--                                    <g:if test="${grouptags && grouptags[group]}">--}%
+%{--                                        <g:render template="/framework/tagsummary" model="${[tagsummary:grouptags[group],action:[classnames:'label label-muted autoclickable  obs_tag_group',onclick:'']]}"/>--}%
+%{--                                    </g:if>--}%
                                 </div>
                                 </g:if>
                                     <g:each var="node" in="${nodemap.subMap(namegroups[group]).values()}" status="index">
@@ -169,10 +228,11 @@
                                                  type="checkbox"
                                                  data-ident="node"
                                                  name="extra.nodeIncludeName"
+                                                 data-bind="checked: selectedNodes, enable: hasSelectedNodes"
                                                  value="${enc(attr:node.nodename)}"
-                                                 ${selectedNodes!=null ? '':'disabled' }
+
                                                  data-tag="${enc(attr:node.tags?.join(' '))}"
-                                                  ${(null== selectedNodes||selectedNodes.contains(node.nodename))?'checked':''}
+
                                                  />
                                             <label for="${enc(attr:nkey)}"
                                                    class=" ${localNodeName && localNodeName == node.nodename ? 'server' : ''} node_ident"
@@ -195,7 +255,7 @@
                             </div>
                         </div>
                     </g:each>
-
+                    </div>
                 </g:if>
                 <g:else>
                     <g:each var="node" in="${nodes}" status="index">
@@ -208,39 +268,27 @@
                                        type="checkbox"
                                        name="extra.nodeIncludeName"
                                        data-ident="node"
+                                       data-bind="checked: selectedNodes, enable: hasSelectedNodes"
                                        value="${enc(attr:node.nodename)}"
-                                       disabled="true"
                                        data-tag="${enc(attr:node.tags?.join(' '))}"
-                                       checked="true"/><g:enc>${node.nodename}</g:enc></label>
+                                       /><g:enc>${node.nodename}</g:enc></label>
 
                         </div>
                     </g:each>
                 </g:else>
                 </g:if>
+                    </div>
                 <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
                 <div class="subfields nodeFilterFields ">
                     %{-- filter text --}%
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
-                    <div class="radio">
-                        <input id="filterradio"
-                               type="radio"
-                               name="extra.nodeoverride"
-                            ${(!nodesetvariables && nodes)?'':'checked=true'}
-                               value="filter"
-                        />
-                        <label for="filterradio" >
-                            <span>
-                        <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
-                                <g:message code="job.run.override.node"/>: </span>
 
-                        </label>
-                    </div>
-                    <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-                        <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll{it.project == project}}"/>
-                    </g:if>
+                        <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                            <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll { it.project == project }}"/>
+                        </g:if>
 
-                    <div id="nodefilterViewArea" data-ko-bind="nodeFilter">
+                        <div id="nodefilterViewArea" data-ko-bind="nodeFilter" data-bind="visible: nodeFiltersVisible">
                         <div class="${emptyQuery ? 'active' : ''}" id="nodeFilterInline">
                             <div class="spacing">
                                 <div class="">
@@ -339,60 +387,58 @@
                       jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
                 });
-                jQuery('#nodeSelect').on( 'nodeset:change', updateSelectCount);
-                jQuery('div.jobmatchednodes span.selectall').each(function (i,e) {
-                    jQuery(e).on( 'click', function (evt) {
-                        jQuery(e).closest('.group_section').find('input').each(function (i,el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = true;
-                            }
-                        });
-                        jQuery(e).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
-                            jQuery(e).attr('data-tagselected', 'true');
-                            jQuery(e).addClass('active');
-                        });
-                        jQuery('#nodeSelect').trigger( 'nodeset:change');
-                    });
-                });
-                jQuery('div.jobmatchednodes span.selectnone').each(function (i,e) {
-                    jQuery(e).on( 'click', function (evt) {
-                        jQuery(e).closest('.group_section').find('input').each(function (i,el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = false;
-                            }
-                        });
-                        jQuery(e).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
-                            jQuery(e).attr('data-tagselected', 'false');
-                            jQuery(e).removeClass('active');
-                        });
-                        jQuery('#nodeSelect').trigger( 'nodeset:change');
-                    });
-                });
-                jQuery('div.jobmatchednodes span.obs_tag_group').each(function (i,e) {
-                    jQuery(e).on( 'click', function (evt) {
-                        var ischecked = e.getAttribute('data-tagselected') != 'false';
-                        e.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
-                        if (!ischecked) {
-                            jQuery(e).addClass('active');
-                        } else {
-                            jQuery(e).removeClass('active');
+                // jQuery('#nodeSelect').on( 'nodeset:change', updateSelectCount);
+                jQuery('div.jobmatchednodes').on( 'click','span.selectall', function (evt) {
+                    jQuery(this).closest('.group_section').find('input').each(function (i,el) {
+                        if (el.type == 'checkbox') {
+                            el.checked = true;
                         }
-                        jQuery(e).closest('.group_section').find('input[data-tag~="' + e.getAttribute('data-tag') + '"]').each(function (i,el) {
-                            if (el.type == 'checkbox') {
-                                el.checked = !ischecked;
-                            }
-                        });
-                        jQuery(e).closest('.group_section').find('span.obs_tag_group[data-tag="' + e.getAttribute('data-tag') + '"]').each(function (i,el) {
-                            el.setAttribute('data-tagselected', ischecked ? 'false' : 'true');
-                            if (!ischecked) {
-                                jQuery(el).addClass('active');
-                            } else {
-                                jQuery(el).removeClass('active');
-                            }
-                        });
-                        jQuery('#nodeSelect').trigger( 'nodeset:change');
                     });
+                    jQuery(this).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
+                        jQuery(e).data('tagselected', 'true');
+                        jQuery(e).addClass('active');
+                    });
+                    jQuery('#nodeSelect').trigger( 'nodeset:change');
                 });
+
+                jQuery('div.jobmatchednodes').on( 'click','span.selectnone', function (evt) {
+                    jQuery(this).closest('.group_section').find('input').each(function (i,el) {
+                        if (el.type == 'checkbox') {
+                            el.checked = false;
+                        }
+                    });
+                    jQuery(this).closest('.group_section').find('span.obs_tag_group').each(function (i,e) {
+                        jQuery(e).data('tagselected', 'false');
+                        jQuery(e).removeClass('active');
+                    });
+                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+                });
+
+
+                jQuery('div.jobmatchednodes').on( 'click', 'span.obs_tag_group', function (evt) {
+                    var ischecked = jQuery(this).data('tagselected') != 'false';
+                    jQuery(this).data('tagselected', ischecked ? 'false' : 'true');
+                    if (!ischecked) {
+                        jQuery(this).addClass('active');
+                    } else {
+                        jQuery(this).removeClass('active');
+                    }
+                    jQuery(this).closest('.group_section').find('input[data-tag~="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                        if (el.type == 'checkbox') {
+                            el.checked = !ischecked;
+                        }
+                    });
+                    jQuery(this).closest('.group_section').find('span.obs_tag_group[data-tag="' + jQuery(this).data('tag') + '"]').each(function (i,el) {
+                        el.data('tagselected', ischecked ? 'false' : 'true');
+                        if (!ischecked) {
+                            jQuery(el).addClass('active');
+                        } else {
+                            jQuery(el).removeClass('active');
+                        }
+                    });
+                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+                });
+
 
                 jQuery('#doReplaceFilters').on( 'change', function (evt) {
                     var e = evt.target
@@ -400,10 +446,7 @@
                         if (cb.type == 'checkbox') {
                             jQuery(cb).prop('disabled',!e.checked)
                             if (!e.checked) {
-                                jQuery('.group_select_control').hide();
                                 cb.checked = true;
-                            } else {
-                                jQuery('.group_select_control').show();
                             }
                         }
                     });
@@ -476,10 +519,11 @@
         //setup node filters knockout bindings
         var filterParams = loadJsonData('filterParamsJSON');
         let kocontrollers={}
+        var nodeFilter
 
         <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
         var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-        var nodeFilter = new NodeFilters(
+        nodeFilter = new NodeFilters(
                 appLinks.frameworkAdhoc,
                 appLinks.scheduledExecutionCreate,
                 appLinks.frameworkNodes,
@@ -513,7 +557,23 @@
         kocontrollers.nodeFilter = nodeFilter
 
         </g:if>
-        kocontrollers.runformoptions = new JobRunFormOptions({debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')}})
+        let hasSelectedNodes=${enc(js:selectedNodes!=null)};
+        kocontrollers.runformoptions = new JobRunFormOptions({
+            debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')},
+            changeTargetNodes:hasSelectedNodes,
+            canOverrideFilter:${enc(js:scheduledExecution.nodeFilterEditable|| nodefilter == '')},
+            nodeOverride: "${enc(js:!nodesetvariables && nodes?'cherrypick':'filter')}",
+            selectedNodes:loadJsonData(hasSelectedNodes?'selectedNodesJson':'allNodesJson'),
+            allNodes:loadJsonData('allNodesJson'),
+            hasSelectedNodes: hasSelectedNodes,
+            groups:loadJsonData('namegroupsJson'),
+            grouptags:loadJsonData('namegrouptagsJson'),
+            nodeFilter: nodeFilter
+        })
+        if (typeof (nodeFilter) !== 'undefined') {
+            kocontrollers.runformoptions.isNodeFilterVisible.subscribe(nodeFilter.nodeFiltersVisible)
+            nodeFilter.nodeFiltersVisible(kocontrollers.runformoptions.isNodeFilterVisible())
+        }
 
         initKoBind('#exec_options_form', kocontrollers, /*'execform'*/)
     }

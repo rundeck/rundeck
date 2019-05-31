@@ -474,6 +474,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.truncated=ko.observable(false);
     self.loaded=ko.observable(false);
     self.excludeFilterUncheck = ko.observable(data.excludeFilterUncheck?'true':'false');
+    self.nodeFiltersVisible = ko.observable(data.nodeFiltersVisible || true)
 
     /**
      *
