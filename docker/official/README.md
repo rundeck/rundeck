@@ -87,6 +87,8 @@ See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/c
 
 ## Environment Variables
 
+Not all rundeck configuration listed in the official documentation is available for setup yet. Please take a look at the templates to see all available variables.
+
 ### `JVM_MAX_RAM_FRACTION=1`
 
 The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
