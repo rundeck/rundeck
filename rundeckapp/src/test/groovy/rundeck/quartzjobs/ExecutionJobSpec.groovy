@@ -16,6 +16,11 @@
 
 package rundeck.quartzjobs
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import grails.test.mixin.Mock
 import org.quartz.JobDataMap
 import org.quartz.JobDetail
@@ -415,6 +420,90 @@ class ExecutionJobSpec extends Specification {
         then:
 
         result == 30000
+
+    }
+
+    def "average notification context"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                options: [
+                        new Option(
+                                name: 'env',
+                                required: true
+                        )
+                ],
+                notifyAvgDurationThreshold:'0s',
+                averageDuration:1,
+                totalTime: 1,
+                execCount: 1
+        )
+        se.save(flush:true)
+
+        Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: se.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+                )
+        ).save(flush: true)
+
+        def secureOption = [:]
+        def secureOptsExposed = [:]
+        def datacontext = [option:[env:true]]
+        def eus = Mock(ExecutionUtilService)
+        def auth = Mock(AuthContext)
+        def framework = Mock(Framework)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getFramework() >> framework
+
+        }
+
+        def execmap = [
+                execution         : e,
+                scheduledExecution: se,
+                thread : Mock(WorkflowExecutionServiceThread){
+                    getContext()>>origContext
+                    isAlive()>>true
+                }
+        ]
+
+        def es = Mock(ExecutionService){
+            executeAsyncBegin(framework, auth, e, se, secureOption, secureOptsExposed)>>execmap
+        }
+
+        ExecutionJob executionJob = new ExecutionJob()
+        def context = execmap.thread.context
+        Map content = [
+                execution: execmap.execution,
+                context:context
+        ]
+
+        when:
+
+        def result=executionJob.executeCommand(es,eus, e, framework, auth, se,0,secureOption, secureOptsExposed)
+
+        then:
+
+        1* es.avgDurationExceeded(_,content)
+        result != null
 
     }
 }

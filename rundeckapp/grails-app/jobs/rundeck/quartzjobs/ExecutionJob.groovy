@@ -390,6 +390,7 @@ class ExecutionJob implements InterruptableJob {
                                                                     thread?.context?.dataContext
                                     )
 
+        def context = execmap?.thread?.context
         boolean never=true
         while (thread.isAlive() || never) {
             never=false
@@ -405,7 +406,7 @@ class ExecutionJob implements InterruptableJob {
                             execmap.scheduledExecution.id,
                             [
                                     execution: execmap.execution,
-                                    context:execmap
+                                    context:context
                             ]
                     )
                     avgNotificationSent=true
