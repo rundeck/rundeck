@@ -5,7 +5,10 @@ plugins {
 configurations{
   spa
 }
-
+node{
+    download = true
+    version='9.2.0'
+}
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
