@@ -6,8 +6,8 @@ configurations{
   spa
 }
 node{
-    download = true
-    version='9.2.0'
+    download = project.hasProperty('node.install')
+    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
 }
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
