@@ -22,7 +22,7 @@
    Created: Feb 2, 2010 3:16:55 PM
    $Id$
 --%>
-<g:set var="selfprofile" value="${user.login == request.remoteUser}"/>
+<g:set var="selfprofile" value="${user.login?.equalsIgnoreCase(request.remoteUser)}"/>
 
 <div class="row">
     <div class="col-sm-12">
