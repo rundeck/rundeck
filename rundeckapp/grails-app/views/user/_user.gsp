@@ -79,7 +79,7 @@
 </div>
 
 
-<g:if test="${session.user == user.login && (tokenAdmin || serviceToken || selfToken)}">
+<g:if test="${session.user?.equalsIgnoreCase(user.login) && (tokenAdmin || serviceToken || selfToken)}">
     <div id="gentokensection">
         <div class="row ">
             <div class="col-sm-12">
