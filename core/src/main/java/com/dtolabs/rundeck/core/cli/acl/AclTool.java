@@ -856,7 +856,8 @@ public class AclTool extends BaseTool {
                     ACLConstants.TYPE_USER,
                     ACLConstants.TYPE_JOB,
                     ACLConstants.TYPE_APITOKEN,
-                    ACLConstants.TYPE_PLUGIN
+                    ACLConstants.TYPE_PLUGIN,
+                    ACLConstants.TYPE_WEBHOOK
             )
     );
 
@@ -930,6 +931,13 @@ public class AclTool extends BaseTool {
                                                             ACLConstants.ACTION_UNINSTALL,
                                                             ACLConstants.ACTION_ADMIN);
 
+    static final List<String> appWebhookActions = Arrays.asList(ACLConstants.ACTION_READ,
+                                                               ACLConstants.ACTION_CREATE,
+                                                               ACLConstants.ACTION_UPDATE,
+                                                               ACLConstants.ACTION_DELETE,
+                                                               ACLConstants.ACTION_POST,
+                                                               ACLConstants.ACTION_ADMIN);
+
     static {
         appResActionsByType = new HashMap<>();
         appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
@@ -959,6 +967,7 @@ public class AclTool extends BaseTool {
         appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_PLUGIN, appPluginActions);
+        appKindActionsByType.put(ACLConstants.TYPE_WEBHOOK, appWebhookActions);
     }
 
 
@@ -1219,7 +1228,7 @@ public class AclTool extends BaseTool {
                     optionDisplayString(GENERIC_OPT) +
                     "\n" +
                     "    Create projects, read system info, manage system ACLs, manage users, change\n" +
-                    "      execution mode, manage plugins.\n" +
+                    "      execution mode, manage plugins, manage webhooks.\n" +
                     "    generic kinds" +
                     " in this context: \n" +
                     "    " +
@@ -1972,6 +1981,7 @@ public class AclTool extends BaseTool {
         public static final String ACTION_UPDATE = "update";
         public static final String ACTION_DELETE = "delete";
         public static final String ACTION_RUN = "run";
+        public static final String ACTION_POST = "post";
         public static final String ACTION_KILL = "kill";
         public static final String ACTION_ADMIN = "admin";
         public static final String ACTION_GENERATE_USER_TOKEN = "generate_user_token";
@@ -2005,6 +2015,7 @@ public class AclTool extends BaseTool {
         public static final String TYPE_EVENT = "event";
         public static final String TYPE_USER = "user";
         public static final String TYPE_STORAGE = "storage";
+        public static final String TYPE_WEBHOOK = "webhook";
 
         private Map<String, String> resType(String type) {
             return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));

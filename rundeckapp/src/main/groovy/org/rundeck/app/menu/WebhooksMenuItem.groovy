@@ -13,10 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.plugins.webhook;
+package org.rundeck.app.menu
 
-import com.dtolabs.rundeck.core.webhook.WebhookEventException;
+import grails.web.mapping.LinkGenerator
+import org.rundeck.app.gui.MenuItem
+import org.springframework.beans.factory.annotation.Autowired
 
-public interface WebhookEventPlugin {
-    public void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
+
+class WebhooksMenuItem implements MenuItem {
+
+    String title = "Webhooks"
+    String titleCode = "Webhooks.title"
+    MenuItem.MenuType type = MenuType.SYSTEM_CONFIG
+
+    @Autowired
+    LinkGenerator grailsLinkGenerator
+
+    @Override
+    String getHref() {
+        return grailsLinkGenerator.link(uri:"/webhooks")
+    }
 }

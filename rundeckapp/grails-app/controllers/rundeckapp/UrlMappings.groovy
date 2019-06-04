@@ -241,17 +241,16 @@ class UrlMappings {
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
         "/api/$api_version/webhook-admin/list"(controller: 'webhook', action: 'list')
-        "/api/$api_version/webhook-admin/add"(controller: 'webhook') {
-            action=[POST:"add"]
+        "/api/$api_version/webhook-admin/listWebhookPlugins"(controller: 'webhook', action: 'webhookPlugins')
+
+        "/api/$api_version/webhook-admin/save"(controller: 'webhook') {
+            action=[POST:"save"]
         }
         "/api/$api_version/webhook/$name"(controller: 'webhook') {
             action=[POST:"post"]
         }
-        "/api/$api_version/webhook-admin/delete/$name"(controller: 'webhook') {
+        "/api/$api_version/webhook-admin/delete/$id"(controller: 'webhook') {
             action=[DELETE:"remove"]
-        }
-        "/api/$api_version/webhook-admin/deleteAll"(controller: 'webhook') {
-            action=[DELETE:"removeAll"]
         }
 
         //catchall
@@ -332,6 +331,13 @@ class UrlMappings {
         }
 
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
+        "/webhooks"(controller:'Webhook',action:'index')
+        "/webhook-admin/save"(controller: 'webhook') {
+            action=[POST:"save"]
+        }
+        "/webhook-admin/delete/$id"(controller: 'webhook') {
+            action=[DELETE:"remove"]
+        }
 
         "404"(view: '/404')
         "405"(view: '/405')

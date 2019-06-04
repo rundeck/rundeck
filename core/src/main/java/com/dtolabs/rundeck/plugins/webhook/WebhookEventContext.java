@@ -15,8 +15,12 @@
  */
 package com.dtolabs.rundeck.plugins.webhook;
 
-import com.dtolabs.rundeck.core.webhook.WebhookEventException;
+import org.rundeck.app.spi.Services;
 
-public interface WebhookEventPlugin {
-    public void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
+public interface WebhookEventContext {
+
+    /**
+     * Services available in the context
+     */
+    Services getServices();
 }

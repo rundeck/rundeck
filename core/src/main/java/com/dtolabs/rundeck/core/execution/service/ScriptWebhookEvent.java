@@ -19,7 +19,9 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.plugins.BaseScriptPlugin;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
+import com.dtolabs.rundeck.core.webhook.WebhookEventException;
 import com.dtolabs.rundeck.plugins.webhook.WebhookData;
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext;
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin;
 import org.apache.log4j.Logger;
 
@@ -42,7 +44,7 @@ public class ScriptWebhookEvent extends BaseScriptPlugin implements WebhookEvent
     }
 
     @Override
-    public void onEvent(final WebhookData data) {
+    public void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
         //TODO: Implement this
     }
 }
