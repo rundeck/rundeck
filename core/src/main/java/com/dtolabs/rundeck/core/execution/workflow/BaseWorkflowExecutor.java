@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.data.BaseDataContext;
@@ -33,12 +34,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
@@ -62,9 +58,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     protected static final String SECURE_OPTION_KEY = "secureOption";
     protected static final String SECURE_OPTION_VALUE = "****";
 
-    private final Framework framework;
+    private final IFramework framework;
 
-    public BaseWorkflowExecutor(final Framework framework) {
+    public BaseWorkflowExecutor(final IFramework framework) {
         this.framework = framework;
     }
 
@@ -99,7 +95,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return item.getWorkflow() instanceof StepFirstWrapper;
     }
 
-    protected Framework getFramework() {
+    protected IFramework getFramework() {
         return framework;
     }
 
@@ -691,7 +687,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 cmd
         );
 
-        result.setSuccess(stepResult.isSuccess());
+        //result.setSuccess(stepResult.isSuccess());
 
         //node recorder report
         Map<String, NodeStepResult> nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
@@ -704,8 +700,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         if (stepController.isControlled()) {
             result = WorkflowStatusResultImpl.with(stepController);
+            stepResult = controlledStepResult(stepController, stepResult);
             executionContext.getExecutionListener().log(3, result.toString());
         }
+        result.setSuccess(stepResult.isSuccess());
         try {
             if (!result.isSuccess() && cmd instanceof HasFailureHandler) {
                 final HasFailureHandler handles = (HasFailureHandler) cmd;
@@ -822,6 +820,31 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return new StepResultCapture(stepResult, result, combinedResultData);
     }
 
+    private StepExecutionResult controlledStepResult(
+            final FlowController stepController,
+            final StepExecutionResult stepResult
+    )
+    {
+        return new StepExecutionResultWrapper(stepResult) {
+            @Override
+            public boolean isSuccess() {
+                return stepController.getControlBehavior() == ControlBehavior.Continue
+                        ? stepResult.isSuccess()
+                        : stepController.isSuccess();
+            }
+
+            @Override
+            public FailureReason getFailureReason() {
+                return stepController.getFailureReason(super.getFailureReason());
+            }
+
+            @Override
+            public String toString() {
+                return "[" + stepController + "]: " + super.toString();
+            }
+        };
+    }
+
     public void combineResultData(
             final int c,
             final DataOutput outputContext,
@@ -917,7 +940,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                    "stepResult=" + stepResult +
                    ", stepSuccess=" + isSuccess() +
                    ", statusString='" + getStatusString() + '\'' +
-                   ", controlBehavior=" + getStepResult() +
+                   ", controlBehavior=" + getControlBehavior() +
                    ", resultData=" + resultData +
                    '}';
         }
