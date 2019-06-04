@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
+import com.dtolabs.rundeck.server.plugins.webhook.JobRunWebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.webhook.LogWebhookEventPlugin
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
@@ -53,6 +54,7 @@ import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
 import org.rundeck.app.cluster.ClusterInfo
+import org.rundeck.app.menu.WebhooksMenuItem
 import org.rundeck.app.services.EnhancedNodeService
 import org.rundeck.app.spi.RundeckSpiBaseServicesProvider
 import org.rundeck.security.JettyCompatibleSpringSecurityPasswordEncoder
@@ -388,6 +390,8 @@ beans={
 
     logWebhookEventPlugin(LogWebhookEventPlugin)
     pluginRegistry['log-webhook-event'] = 'logWebhookEventPlugin'
+    jobRunWebhookEventPlugin(JobRunWebhookEventPlugin)
+    pluginRegistry['webhook-run-job'] = 'jobRunWebhookEventPlugin'
 
     //list of plugin classes to generate factory beans for
     [
@@ -538,4 +542,6 @@ beans={
             grailsApplication = grailsApplication
         }
     }
+
+    webhooksMenuItem(WebhooksMenuItem)
 }

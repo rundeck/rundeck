@@ -18,12 +18,15 @@ package com.dtolabs.rundeck.plugins.webhook;
 import lombok.Data;
 
 import java.io.InputStream;
+import java.util.UUID;
 
 @Data
 public class WebhookData {
+    private String      id = UUID.randomUUID().toString();
     private long        timestamp;
     private String      sender;
     private String      webhook;
     private String      project;
+    private String      contentType;
     private InputStream data;
 }

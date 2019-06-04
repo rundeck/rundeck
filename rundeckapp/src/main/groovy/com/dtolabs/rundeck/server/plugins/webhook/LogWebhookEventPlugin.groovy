@@ -16,10 +16,12 @@
 package com.dtolabs.rundeck.server.plugins.webhook
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,7 +35,7 @@ class LogWebhookEventPlugin implements WebhookEventPlugin {
     String supplementalText
 
     @Override
-    void onEvent(final WebhookData data) {
+    void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
         //LOG.info("Webhook Event: ${data.webhook} ${data.project} ${data.timestamp} ${data.sender}")
         //LOG.info(data.data.text)
         println("Webhook Event: ${data.webhook} ${data.project} ${data.timestamp} ${data.sender}")
