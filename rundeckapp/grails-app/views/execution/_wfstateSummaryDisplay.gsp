@@ -26,7 +26,7 @@
 
                 <div>
                     <a class="btn btn-default btn-sm" href="#output"
-                       data-bind="click: showTab.curry('tab_link_output') "><g:message
+                       data-bind="click: activeTab('output')"><g:message
                             code="button.action.view.log.output"/></a>
                 </div>
             </div>
@@ -51,6 +51,11 @@
 
         <div class="row jobstats" data-bind="if: !completed()">
             <div class="col-xs-12 col-sm-4 job-stats-item">
+
+                <span class="job-stats-value">
+                    <span class="text-primary" data-bind="text: waitingNodes().length"></span>
+                </span>
+
                 <span class="text-table-header has_tooltip"
                       title="${enc(attr: g.message(code: 'workflowState.summary.nodes.waiting.description'))}"
                       data-container="body"
@@ -59,19 +64,9 @@
 
                 </span>
 
-                <span class="job-stats-value">
-                    <span class="text-primary" data-bind="text: waitingNodes().length"></span>
-                </span>
             </div>
 
             <div class="col-xs-12 col-sm-4 job-stats-item">
-
-                <span class="text-table-header has_tooltip"
-                      title="${enc(attr: g.message(code: 'workflowState.summary.nodes.running.description'))}"
-                      data-container="body"
-                      data-bind="bootstrapTooltip: true ">
-                    <g:message code="running"/>
-                </span>
 
                 <span class="job-stats-value">
                     <span
@@ -79,21 +74,31 @@
                         <span class=" " data-bind="text: runningNodes().length"></span>
                     </span>
                 </span>
+
+                <span class="text-table-header has_tooltip"
+                      title="${enc(attr: g.message(code: 'workflowState.summary.nodes.running.description'))}"
+                      data-container="body"
+                      data-bind="bootstrapTooltip: true ">
+                    <g:message code="running"/>
+                </span>
+                
             </div>
 
             <div class="col-xs-12 col-sm-4 job-stats-item">
+
+                <span class="job-stats-value">
+                    <span
+                            data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
+                        <span data-bind="text: completedNodes().length"></span>
+                    </span>
+                </span>
+
                 <span class="text-table-header has_tooltip"
                       title="${enc(attr: g.message(code: 'workflowState.summary.nodes.complete.description'))}"
                       data-container="body"
                       data-bind="bootstrapTooltip: true ">
                     <g:message code="done"/>
 
-                </span>
-                <span class="job-stats-value">
-                    <span
-                            data-bind="css: {'text-info': completedNodes().length > 0 , 'text-primary': completedNodes().length < 1 } ">
-                        <span data-bind="text: completedNodes().length"></span>
-                    </span>
                 </span>
 
             </div>

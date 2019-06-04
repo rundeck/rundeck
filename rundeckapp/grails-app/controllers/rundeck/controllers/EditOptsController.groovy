@@ -509,19 +509,19 @@ class EditOptsController {
             opt.errors.rejectValue('hidden', 'option.hidden.notallowed.message')
             return result
         }
-        if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
+        if (opt.enforced && (opt.optionValues || opt.valuesList) && opt.defaultValue) {
             opt.convertValuesList()
-            if(!opt.multivalued && !opt.values.contains(opt.defaultValue)) {
+            if(!opt.multivalued && !opt.optionValues.contains(opt.defaultValue)) {
                 opt.errors.rejectValue('defaultValue', 'option.defaultValue.notallowed.message')
             }else if(opt.multivalued && opt.delimiter){
                 //validate each default value
-                def found = opt.defaultValue.split(Pattern.quote(opt.delimiter)).find{ !opt.values.contains(it) }
+                def found = opt.defaultValue.split(Pattern.quote(opt.delimiter)).find{ !opt.optionValues.contains(it) }
                 if(found){
                     opt.errors.rejectValue('defaultValue', 'option.defaultValue.multivalued.notallowed.message',[found] as Object[],"{0} invalid value")
                 }
             }
         }
-        if (opt.enforced && (!opt.values && !opt.valuesList && !opt.realValuesUrl)) {
+        if (opt.enforced && (!opt.optionValues && !opt.valuesList && !opt.realValuesUrl && !opt.optionValuesPluginType)) {
             if (params && params.valuesType == 'url') {
                 opt.errors.rejectValue('valuesUrl', 'option.enforced.emptyvalues.message')
             } else {
@@ -536,10 +536,10 @@ class EditOptsController {
                 result.regexError = e.message
                 opt.errors.rejectValue('regex', 'option.regex.invalid.message', [opt.regex] as Object[], "Invalid Regex: {0}")
             }
-            if (opt.values || opt.valuesList) {
+            if (opt.optionValues || opt.valuesList) {
                 opt.convertValuesList()
                 def inval = []
-                opt.values.each {val ->
+                opt.optionValues.each {val ->
                     if (!(val =~ /${opt.regex}/)) {
                         opt.errors.rejectValue('values', 'option.values.regexmismatch.message', [val.toString(), opt.regex] as Object[], "Value does not match regex: {0}")
                     }
@@ -578,6 +578,8 @@ class EditOptsController {
             }
             if(!hasSelectedOnRemoteValue) opt.errors.rejectValue('defaultValue', 'option.defaultValue.required.message')
         }
+        //we will not persist field values anymore (replace it for option.valueList)
+        opt.values = null
         return result
     }
 
@@ -638,12 +640,19 @@ class EditOptsController {
             params.secureExposed = false
             params.isDate = true
         }
-
+        if(null==params.sortValues){
+            params.sortValues=false
+        }
         opt.properties = params
         if (params.optionType && params.configMap) {
             opt.configMap = params.configMap
         }
-        opt.valuesList = params.valuesList
+        if(params.valuesList){
+            opt.valuesList = params.valuesList
+        }else{
+            opt.valuesList = null
+            opt.values = null
+        }
         if(params.valuesType == 'list'){
             opt.realValuesUrl=null
         }else if(params.valuesType == 'url'){

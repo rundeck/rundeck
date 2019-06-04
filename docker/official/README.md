@@ -87,6 +87,8 @@ See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/c
 
 ## Environment Variables
 
+Not all rundeck configuration listed in the official documentation is available for setup yet. Please take a look at the templates to see all available variables.
+
 ### `JVM_MAX_RAM_FRACTION=1`
 
 The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
@@ -102,6 +104,16 @@ to a default for getting started, this should be set manually for more advanced 
 
 Controls the base URL the app will use for links, redirects, etc.
 This is the URL users will use to access the site.
+
+### `RUNDECK_SERVER_CONTEXTPATH=/`
+
+Set to path Rundeck is running under(i.e. `http://localhost/rundeck`). Useful if running Rundeck
+behind a reverse proxy under a path on the hostname.
+
+### `RUNDECK_SERVER_FORWARDED=false`
+
+Set to `true` if running behind a reverse proxy. `X-Forwarded-Proto` header must be set
+if running behind a TLS terminating proxy.
 
 ### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
 

@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -59,7 +60,7 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
-import rundeck.quartzjobs.ExecutionsCleanerJob
+import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
 
@@ -77,6 +78,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
+
+    def JobScheduleManager rundeckJobScheduleManager
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -629,13 +632,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //verify cluster member is schedule owner
 
             def nextdate = null
+            def nextExecNode = null
             try {
-                nextdate = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
+            if(nextExecNode){
+                newsched.serverNodeUUID = nextExecNode
+            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -675,7 +682,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                def nexttime = scheduleJob(se, null, null)
+                def nexttime = null
+                def nextExecNode = null
+                (nexttime, nextExecNode) = scheduleJob(se, null, null)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -693,30 +702,49 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(project) {
             results = results.withProject(project)
         }
+        def executionList = results.list()
+
+        def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
+
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
+    }
+
+    /**
+     * Reschedule the provided one-time executions. Invalid executions will be cleaned up.
+     * @param executionList The list of executions to reschedule.
+     * @return A map with: <pre>
+     *   [executions: List, // succeeded executions<br>
+     *   failedExecutions: List] // failed executions
+     * </pre>
+     */
+    def rescheduleOnetimeExecutions(List<Execution> executionList) {
+
+        Date now = new Date()
+        // Reschedule any executions which were scheduled for one time execution.
 
         List<Execution> cleanupExecutions   = []
         def succeedExecutions = []
-        def executionList = results.list()
+
         executionList.each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
 
             if (se.options.find { it.secureInput } != null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "the ad hoc schedule time has past")
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "the schedule time has past")
                 ok = false
             }
 
             if (ok) {
-                log.info("Rescheduling ad hoc execution of: " +
+                log.info("Rescheduling one-time execution of: " +
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
@@ -738,7 +766,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         succeedExecutions << [execution: e, time: nexttime]
                     }
                 } catch (Exception ex) {
-                    log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
+                    log.error("One Time job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
                 }
             }
@@ -749,11 +777,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!cleanupExecutions.isEmpty()) {
-            log.error("${cleanupExecutions.size()} ad hoc scheduled executions " +
+            log.error("${cleanupExecutions.size()} one-time scheduled executions " +
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
-        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
+        [executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**
@@ -1044,19 +1072,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
             log.warn("$jobDesc, but executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if(!shouldScheduleInThisProject(se.project)){
             log.warn("$jobDesc, but project executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if (!se.shouldScheduleExecution()) {
             log.warn(
                     "$jobDesc, but job execution is disabled."
             )
-            return null;
+            return [null, null];
         }
 
         def jobDetail = createJobDetail(se)
@@ -1069,7 +1097,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            
+
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
@@ -1077,7 +1105,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
-        return nextTime
+        return [nextTime, jobDetail?.getJobDataMap()?.get("serverUUID")]
     }
 
     /**
@@ -1394,7 +1422,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                data.put("serverUUID", frameworkService.getServerUUID())
+//                data.put("serverUUID", frameworkService.getServerUUID())
+                data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -1413,7 +1442,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
         String description = "Cleaner executions job"
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanerJob)
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanUp)
                                          .withIdentity(jobname, jobgroup)
                                          .withDescription(description)
                                          .usingJobData(new JobDataMap(config))
@@ -1531,6 +1560,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
         return trigger.getFireTimeAfter(new Date())
+    }
+
+    def String nextExecNode(ScheduledExecution se){
+        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
     }
 
     /**
@@ -1948,12 +1981,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     static def parseOrchestratorFromParams(params){
-        
+
         if (params.orchestratorId) {
             params.orchestrator = parseParamOrchestrator(params)
         }
     }
-    
+
     static Orchestrator parseParamOrchestrator(params){
         Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
         def plugin = params.orchestratorPlugin[params.orchestratorId];
@@ -2500,7 +2533,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -2563,13 +2596,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -2787,7 +2824,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
                 (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
-        
+
         def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
@@ -3091,7 +3128,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
             scheduledExecution.orchestrator.save()
@@ -3148,13 +3185,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3691,7 +3732,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -3702,7 +3743,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             scheduledExecution.orchestrator = null
         }
-        
+
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications

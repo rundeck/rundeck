@@ -102,93 +102,13 @@
     </div>
   </div>
 </div>
-</g:if>
-<div class="${inlineView ? 'card-content tight inlineexecution' : ''}">
-  <g:if test="${showDownloadOptions||showViewOptions}">
-  <div id="commandFlow" class="outputcontrols" style="margin-top: 1em; margin-bottom:1em;">
 
-      <div class="row" style="border-bottom:1px solid #e8e8e8;">
-        <div class="col-sm-8" style="margin-bottom: 10px">
-          <g:if test="${showViewOptions}">
-            <a href="#" class="collapser btn btn-xs" data-toggle="collapse" data-target="#viewoptions" title="Log Output View Options">
-              View Options
-            </a>
-
-            <div class="collapse" id="viewoptions">
-              <div style="${wdgt.styleVisible(unless: followmode == 'node')}" class="obs_node_false ">
-                <span class="obs_grouped_false" style="${wdgt.styleVisible(if: followmode == 'tail')}">
-                  <span class="text-primary">Log view:</span>
-                  <label class="action  join" title="Click to change" id="colTimeShowLabel">
-                    <g:checkBox name="coltime" id="colTimeShow" value="true" checked="true" class="opt_display_col_time"/>
-                    Time
-                  </label>
-                  <label class="action  join" title="Click to change" id="colNodeShowLabel">
-                    <g:checkBox name="coltime" id="colNodeShow" value="true" checked="true" class="opt_display_col_node"/>
-                    Node
-                  </label>
-                  <label class="action" title="Click to change" id="colStepShowLabel">
-                    <g:checkBox name="coltime" id="colStepShow" value="true" checked="${!inlineView}" class="opt_display_col_step"/>
-                    Step
-                  </label>
-                  <label class="ansi-color-toggle">
-                    <input type="checkbox" checked/>
-                    <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
-                  </label>
-                  <label class="log-wrap-toggle">
-                    <input type="checkbox" checked/>
-                    <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
-                  </label>
-                </span>
-              </div>
-
-              <div>
-                <span class="text-primary">Node view:</span>
-                <label class="out_setmode_toggle out_setmode">
-                  <input type="checkbox" ${followmode == 'node' ? 'checked' : ''}/>
-                  <g:message code="execution.show.mode.Compact.title" default="Compact"/>
-                </label>
-              </div>
-            </div>
-          </g:if>
-        </div>
-        <div class="col-sm-4">
-          <g:if test="${showDownloadOptions}">
-            <div class="pull-right">
-              <span class="tabs-sibling" style="${execution.dateCompleted ? '' : 'display:none'}" id="viewoptionscomplete">
-                <span>
-                  <g:link class="btn btn-default btn-xs"
-                          title="${message(code:'execution.show.log.text.button.description', default:'View text output')}"
-                          controller="execution" action="downloadOutput" id="${execution.id}"
-                          params="[view     : 'inline', formatted: false, project: execution.project,
-                                   stripansi:true]" target="_blank">
-                    <g:message code="execution.show.log.text.button.title" />
-                  </g:link>
-                </span>
-                <span>
-                  <g:link class="btn btn-default btn-xs"
-                          title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
-                          controller="execution" action="renderOutput" id="${execution.id}"
-                          params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']" target="_blank">
-                    <g:message code="execution.show.log.html.button.title" />
-                  </g:link>
-                </span>
-                <span class="sepL">
-                  <g:link class="btn btn-default btn-xs"
-                          title="${message(code:'execution.show.log.download.button.description', default:'Download {0} bytes', args:[filesize> 0 ? filesize : '?'])}"
-                          controller="execution" action="downloadOutput" id="${execution.id}"
-                          params="[project: execution.project]" target="_blank">
-                    <b class="glyphicon glyphicon-file"></b>
-                    <g:message code="execution.show.log.download.button.title" />
-                  </g:link>
-                </span>
-              </span>
-            </div>
-          </g:if>
-        </div>
-      </div>
-
+  <div data-bind="visible: logoutput().fileLoadError" class="executionshow alert alert-warning" style="display: none">
+    <span data-bind="text: logoutput().fileLoadError" ></span>
   </div>
-  </g:if>
+
+</g:if>
+<div class="executionshow ${inlineView ? 'card-content tight inlineexecution' : ''}">
   <div data-bind="if: logoutput().loadingFile">
     <div class="card-content-full-width ">
       <div class=" progress progress-embed progress-square flex-container flex-justify-start" >
@@ -197,9 +117,9 @@
              aria-valuenow="10"
              aria-valuemin="0"
              aria-valuemax="100"
-             style="width: 10%;"
+             style="width: 30%;"
           data-bind="style: {width: logoutput().fileLoadPercentWidth}, attr: {'aria-valuenow': logoutput().fileLoadPercentage }">
-          <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner" data-bind="visible: logoutput().running()"/>
+            <i class="fas fa-spinner fa-pulse" data-bind="visible: logoutput().running()"></i>
             <span data-bind="text: logoutput().fileLoadText"></span>
 
         </div>
@@ -217,16 +137,16 @@
       </div>
     </div>
   </div>
-  <div data-bind="if: logoutput().running() && !logoutput().loadingFile()">
+  <div data-bind="if: logoutput().running() && !logoutput().loadingFile() && !logoutput().fileLoadError()">
     <div class="card-content-full-width">
-      <div class=" progress progress-embed progress-square progress-striped active" >
+      <div class=" progress progress-embed progress-square progress-striped active" style="height: 1.5em">
         <div class="progress-bar progress-bar-default "
              role="progressbar"
              aria-valuenow="0"
              aria-valuemin="0"
              aria-valuemax="100"
-             style="width: 10%;">
-          <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
+             style="width: 100%;">
+            <i class="fas fa-spinner fa-pulse"></i>
             Loading
         </div>
       </div>

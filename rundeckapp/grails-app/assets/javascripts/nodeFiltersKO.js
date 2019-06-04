@@ -474,6 +474,7 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.truncated=ko.observable(false);
     self.loaded=ko.observable(false);
     self.excludeFilterUncheck = ko.observable(data.excludeFilterUncheck?'true':'false');
+    self.nodeFiltersVisible = ko.observable(data.nodeFiltersVisible || true)
 
     /**
      *
@@ -510,14 +511,14 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     });
 
     self.useDefaultColumns=ko.pureComputed(function(){
-       return self.filterColumns().size()<1;
+        return self.filterColumns().length < 1
     });
 
     /**
      * Total column count for table view
      */
     self.totalColumnsCount=ko.pureComputed(function(){
-       return self.useDefaultColumns()? 5 : 2 + self.filterColumns().size();
+       return self.useDefaultColumns()? 5 : 2 + self.filterColumns().length;
     });
 
     self.isFilterNameAll=ko.pureComputed(function(){

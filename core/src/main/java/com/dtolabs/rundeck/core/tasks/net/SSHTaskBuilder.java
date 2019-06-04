@@ -798,7 +798,13 @@ public class SSHTaskBuilder {
             throw new BuilderException("username was not set");
         }
 
+
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
+
+        scp.setTimeout(sshConnectionInfo.getTimeout());
+        scp.setCommandTimeout(sshConnectionInfo.getCommandTimeout());
+        scp.setConnectTimeout(sshConnectionInfo.getConnectTimeout());
+
 
         //Set the local and remote file paths
 
@@ -822,6 +828,10 @@ public class SSHTaskBuilder {
         }
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
+
+        scp.setTimeout(sshConnectionInfo.getTimeout());
+        scp.setCommandTimeout(sshConnectionInfo.getCommandTimeout());
+        scp.setConnectTimeout(sshConnectionInfo.getConnectTimeout());
 
         //Set the local and remote file paths
 
@@ -860,6 +870,10 @@ public class SSHTaskBuilder {
         }
 
         configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
+
+        scp.setTimeout(sshConnectionInfo.getTimeout());
+        scp.setCommandTimeout(sshConnectionInfo.getCommandTimeout());
+        scp.setConnectTimeout(sshConnectionInfo.getConnectTimeout());
 
         //Set the local and remote file paths
 

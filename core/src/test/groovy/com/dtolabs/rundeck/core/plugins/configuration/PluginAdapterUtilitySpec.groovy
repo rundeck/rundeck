@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginMeta
 import com.dtolabs.rundeck.plugins.descriptions.PluginMetadata
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.ReplaceDataVariablesWithBlanks
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -92,6 +93,10 @@ class PluginAdapterUtilitySpec extends Specification {
         long testlong1;
         @PluginProperty
         Long testlong2;
+
+        @PluginProperty
+        @ReplaceDataVariablesWithBlanks(value = false)
+        String blankNotExpanded;
     }
 
     static class mapResolver implements PropertyResolver {
@@ -375,5 +380,16 @@ class PluginAdapterUtilitySpec extends Specification {
             desc.metadata.size() == 2
             desc.metadata['asdf'] == 'xyz'
             desc.metadata['1234'] == '908'
+    }
+
+    def "Turn off blank replacements for unexpanded variabled"() {
+        when:
+        def testProp = PluginAdapterUtility.buildFieldProperties(Configuretest1).find { it.name == "testString"}
+        def blankProp = PluginAdapterUtility.buildFieldProperties(Configuretest1).find { it.name == "blankNotExpanded"}
+
+        then:
+        !blankProp.blankIfUnexpandable
+        testProp.blankIfUnexpandable
+
     }
 }

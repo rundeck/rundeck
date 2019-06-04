@@ -18,10 +18,20 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
-//= require historyKO
 //= require nodeFiltersKO
 //= require executionOptions
 //= require jobFiltersKO
+//= require knockout-onenter
+//= require knockout-node-filter-link
+//= require menu/job-remote-options
+//= require menu/joboptions
+//= require ko/binding-popover
+//= require ko/binding-datetimepicker
+//= require ko/handler-bootstrapPopover
+//= require ko/handler-bootstrapTooltip
+//= require ko/handler-messageTemplate
+//= require ko/binding-css2
+//= require scheduledExecution/jobRunFormOptionsKO
 //= require koBind
 
 /*

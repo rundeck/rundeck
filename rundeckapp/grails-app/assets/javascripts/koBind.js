@@ -20,15 +20,26 @@
 /**
  * bind via knockout, e.g. data-ko-bind="varName" or data-ko-bind="TypeName"
  */
-function initKoBind (sel, mapping) {
+function initKoBind (sel, mapping,debug) {
     let doc = jQuery('body')
     if (sel) {
         doc = jQuery(sel)
     }
+    if(debug){
+        console.log(`${debug}: start binding for ${!sel?'body':sel}:`, mapping,doc)
+    }
     doc.find('[data-ko-bind]').each(function (i, el) {
-        const controller = jQuery(el).data('koBind')
-        const data = jQuery(el).data()
-        if (/^[A-Z]/.match(controller)) {
+        let jqel = jQuery(el)
+        const controller = jqel.data('koBind')
+        if(mapping[controller] && jqel.data('koBoundController')){
+            //already bound, skip
+            if(debug){
+                console.log(`${debug}: warning: ko-bind for ${controller} : another is already bound:`, el, jqel.data('koBoundController'))
+            }
+            return
+        }
+        const data = jqel.data()
+        if (controller.match(/^[A-Z]/)) {
             const ctrl = eval(controller)
             if (typeof (ctrl) !== 'function') {
                 return
@@ -39,14 +50,23 @@ function initKoBind (sel, mapping) {
                 window[data['koBindVar']] = obj
             }
             ko.applyBindings(obj, el)
+            jqel.data('koBoundController',obj)
+            if(debug){
+                console.log(`${debug}: (bind): ko-bind for new ${controller} `, el, obj)
+            }
         } else if (
-            /^[a-z]/.match(controller) &&
+            controller.match(/^[a-z]/) &&
             mapping &&
-            typeof (mapping[controller]) === 'object' ||
-            typeof (window[controller]) === 'object') {
-            ko.applyBindings(mapping && mapping[controller] || window[controller], el)
-        } else {
-            console.log("warning: ko-bind for " + controller + " on " + el + ": controller not found.", el)
+            typeof (mapping[controller]) === 'object') {
+            let ctrl = mapping && mapping[controller]
+            ko.applyBindings(ctrl, el)
+
+            jqel.data('koBoundController',ctrl)
+            if(debug){
+                console.log(`${debug}: (bind): ko-bind for mapped: ${controller}`, el, ctrl)
+            }
+        } else if(debug) {
+            console.log(`${debug}: warning: ko-bind for ${controller} : controller not found.`, el)
         }
     })
 }

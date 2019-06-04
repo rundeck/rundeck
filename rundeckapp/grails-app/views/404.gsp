@@ -1,97 +1,85 @@
 %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
-  -
-  - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
-  - You may obtain a copy of the License at
-  -
-  -     http://www.apache.org/licenses/LICENSE-2.0
-  -
-  - Unless required by applicable law or agreed to in writing, software
-  - distributed under the License is distributed on an "AS IS" BASIS,
-  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  - See the License for the specific language governing permissions and
-  - limitations under the License.
-  --}%
-
-<%--
-  Created by IntelliJ IDEA.
-  User: greg
-  Date: 3/12/14
-  Time: 11:36 AM
-  To change this template use File | Settings | File Templates.
---%>
+- Copyright 2019 Rundeck, Inc. (https://www.rundeck.com)
+-
+- Licensed under the Apache License, Version 2.0 (the "License");
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+- http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+--}%
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
-<head><title><g:appTitle/> - <g:message code="request.error.notfound.title" /></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
-    <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="bootstrap.min.css"/>
-    <asset:stylesheet href="app.css"/>
-    <!--[if lt IE 9]>
+
+<head>
+  <title>
+    <g:appTitle /> -
+    <g:message code="request.error.notfound.title" />
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="SHORTCUT" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
+  <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
+  <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}" />
+  <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}" />
+  <asset:stylesheet href="bootstrap.min.css" />
+  <asset:stylesheet href="app.css" />
+  <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
-    <asset:javascript src="jquery.js"/>
-    <asset:javascript src="bootstrap.js"/>
-    <style>
-        @keyframes riseup {
-            0% {bottom: -480px;}
-            50% {bottom: -5px;}
-            100% {bottom: -40px;}
-        }
-        svg{
-            position: fixed;
-            right: calc(50% - 150px);
-            bottom: -40px;
-            z-index: 9;
-            animation: riseup 6s ease-in-out;
-            box-shadow : 0px -0px 0px transparent /*trick for chrome*/
-        }
-        .grumpy{
-            fill: #444444;
-        }
-    </style>
+  <asset:javascript src="jquery.js" />
+  <asset:javascript src="bootstrap.js" />
 </head>
-<body id="fourohfour">
-<div class="wrapper wrapper-full-page">
-  <div class="full-page four-oh-four">
-  <!-- <div class="full-page login-page" data-color="" data-image="static/img/background/background-2.jpg"> -->
-    <div class="content">
-      <div class="container">
-        <div class="row">
-          <div class="col-md-4 col-sm-6 col-md-offset-4 col-sm-offset-3">
-              <div class="card" data-background="color" data-color="blue">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <div class="logo">
-                        <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"title="Home">
-                          <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
-                        </a>
-                    </div>
-                  </h3>
-                </div>
-                <div class="card-content text-center">
-                  <div class="h3"><g:message code="request.error.notfound.title"/></div>
-                  <div class="text-danger h5">
-                      <g:message code="page.notfound.message"/>
-                  </div>
-                </div>
-                <div class="card-footer text-center">
-                  URI: <g:enc>${request.forwardURI}</g:enc>
 
-                </div>
-              </div>
+<body>
+  <div class="wrapper">
+    <div class="four-oh-four">
+      <div class="nav-bar">
+        <a
+          href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}">
+          <img src="${resource(dir: 'images', file: 'rundeck-full-logo-white.png')}" alt="Rundeck"
+            style="height: 20px; width: auto;" />
+        </a>
+      </div>
+      <div style="padding-top:16vh;">
+        <div>
+          <div class="col-xs-12 col-sm-6 space-cat-container">
+            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+              <img src="${resource(dir: 'images', file: 'spacecat/saucer-cat.png')}" class="img-responsive"
+                alt="Space Cat" />
+            </g:if>
+          </div>
+          <div class="col-xs-12 col-sm-6 four-oh-four-messaging">
+            <h1>404</h1>
+            <h2>
+              <g:message code="request.error.notfound.title" />
+            </h2>
+            <g:if test="${!grailsApplication.config.rundeck?.feature?.fourOhFour?.hideSpaceCat in [true, 'true']}">
+              <h3>"We must be purrr-fectly lost"</h3>
+            </g:if>
+            <div>
+              <h4 class="text-danger ">
+                <g:message code="page.notfound.message" />
+              </h4>
+              <h5>
+                URI: <g:enc>${request.forwardURI}</g:enc>
+              </h5>
             </div>
+            <div>
+              <a href="${grailsApplication.config.rundeck.gui.titleLink ? enc(attr:grailsApplication.config.rundeck.gui.titleLink) : g.createLink(uri: '/')}"
+                class="
+                btn btn-lg return-button">Return to Rundeck</a>
+            </div>
+          </div>
         </div>
       </div>
+      <g:render template="/common/footer" />
     </div>
-    <g:render template="/common/footer"/>
-  </div>
-</div>
-<svg xmlns="http://www.w3.org/2000/svg" width="248.074" height="256"><path class="grumpy" d="M243.79 255.6c-1.574-27.876-23.408-49.921-24.333-77.997-5.693-22.6-13.132-45.103-14.708-68.474-5.615-6.764-15.36-10.482-15.66-19.5 4.587-7.848-5.18 3.002-.5-5.733 4.026-9.61-6.671-5.384-3.103-12.762 4.386-3.107-7.029-.537-7.445-5.066-7.562 3.674 2.382-3.742-4.93-1.122 4.325-3.063-4.159-.88.952-3.093-3.013.167-8.532 2.96-4.318-1.938-7.99-2.555-4.575-2.375-7.603-5.425-9.263-.795-16.145-4.393-25.781-8.922-20.587-6.613-42.996-3.394-63.808.778-5.602 3.951-13.891-1.604-12.927 4.934-3.423 1.22-3.961-2.64-5.605 1.7-6.1-5.134.772 3.118-4.369-.986 2.683 8.439-11.167-5.955-14.9-8.736-2.642-3.722-19.798-11.623-7.297-4.192 5.438 4.11 19.127 13.95 17.217 16.871 3.077 5.433-7.186.303-1.832 6.49-1.571-1.05-22.688-18.915-10.036-7.187 6.607 4.19 15.306 14.632 6.87 19.464-.303 5.435-1.671 12.221 6.516 5.098 4.339-4.694 8.467-10.999 14.987-6.743 5.419-6.296 8.875.753 15.927-3.829 3.593-3.572 8.326-8.575 6.385.391-2.974 6.02-6.923 10.52-5.467 17.797-1.109-9.955-2.452 9.808-1.141 12.514-2.318 10.093-6.178 17.177-14.633 23.191-7.34 3.34-15.888 13.357-22.635 12.473-9.175-6.228-27.217-5.926-20.316-21.301.221-13.233 4.973-26.042 12.354-36.965-.143-9.705-6.292-19.606-8.295-28.94-5.493-8.434-11.141-19.805-9.071-30.167 6.048-6.267 15.745 6.127 20.936 9.803 7.851 5.858 15.802 14.109 24.025 17.706 30.037-7.925 63.41-12.077 92.753.788 16.456-8.228 23.91-26.736 37.89-38.062 8.176-8.907 26.621-13.18 30.774 1.904 4.872 15.001 4.052 31.642.432 46.816-4.438 9.027-8.228 27.634-9.602 31.804 2.82-4.77 4.738-10.248 3.116-1.375-1.044 9.962-4.786 18.936.692 27.825.291 12.334 1.18 24.66 4.326 36.745 3.86 20.526 7.728 41.295 17.325 60.084 6.093 13.762 12.115 28.278 11.122 43.645-1.291-.076-3.857.47-4.284-.306zM50.52 111.454c21.074-3.285-3.123-26.282-12.01-12.85-4.756 8.37 3.951 15.396 12.01 12.85zm-4.998-3.604c-9.023-8.178 6.418-18.525 4.284-3.704.011 2.299-1.578 5.491-4.284 3.704zm160.804-17.474c-1.181-2.589-5.849.89 0 0zm1.054-9.961c2.085-3.548-8.122-14.543-2.134-4.423 3.465 1.407-1.229 7.53 2.134 4.423zm-11.593-11.219c-4.739-2.606-3.148-6.031.841-3.897-6.309-4.26-5.59-6.676.96-1.814 10.193 6.271.175-1.023-2-5.414 6.465 3.274 3.224-3.624 7.589-3.774 2.515-3.453-1.892-9.107 1.619-7.13-2.415-6.194-12.858-11.5-6.366-11.3-2.615-6.96-10.841-4.19-6.2.662-4.388-1.877-6.09-4.09-3.162.872-8.211-6.124 6.444 10.154-3.344 3.578-5.169 3.508-5.372 1.823-12.932 5.26-1.318.792 10.668 1.8.591 4.123 1.768 1.662 14.223 3.066 4.071 1.984.715 1.488-3.95 2.196-4.392 2.473 5.497 5.836 15.005 7.85 20.651 13.527.403 1.547 1.301.616 2.074.85zm2.244-21.928c-8.807-6.995 7.663 4.505.034.034l-.034-.034zm-5.134-4.045c-7.79-5.026 2.785-2.87-1.75-3.272 1.01 1.546 6.681 4.484 1.75 3.272zM35.221 50.43c-4.28-4.919-6.42-.878 0 0zm168.113-8.33c-3.58-6.778-2.152.408 0 0zm-22.2-.543c-2.082-3.489-5.916.509 0 0zm27.232-2.38c7.1-3.164 8.03-10.29 4.3-18.498-8.951-6.8-5.57 6.643-7.79 13.628-.189 1.532 1.265 6.757 3.49 4.87zm-11.593-10.301c-6.965-6.74-6.325-1.166 0 0zm4.351-.986c-2.755-6.499-7.739-5.689-.986-.272 2.863 3.456.21.221.986.272zM33.384 253.084c-11.124-.264-22.219-.97-33.384-.544 5.961-10.089 12.5-20.187 13.176-32.28 1.535-18.667 3.345-37.484 2.802-56.18-.905-10.086 11.191-9.71 18.81-11.706 4.49 2.587 4.497 12.299 13.911 11.523.59 10.007 13.2 17.62 23.535 18.742 7.03 4.653 22.26-3.244 24.725 3.166-8.16 4.257-23.475 2.703-28.495 4.141 9.915 7.027 21.453 11.848 33.83 9.983 5.9 7.05-6.145 12.809-12.403 11.054-7.188-1.7-16.904-2.042-22.816.183 10.287 2.417-3.667 4.287-3.467 4.318 2.15 4.769-16.476 6.76-4.062 7.212 8.42.397 23.24 12.943 6.496 11.6-4.392.023-23.678 1.706-9.2 2.47 7.045-.07 11.202 5.258 16.047 4.76 1.235 2.61 23.9.103 10.378 5.516-8.876-1.12-.814 8.858-10.782 6.176-12.958.107-26.602.115-39.1-.134zm32.74-42.802c-1.77-4.476-12.546 1.99-1.53.306l1.746.319-.216-.625zm70.237-27.945c-11.374-2.97-23.995-7.655-29.207-19.205-6.075-10.367-12.833-23.084-26.883-22.213-12.317-3.04-31.005 7.242-26.59 21.326-5.99 7.385-5.87-14.82.35-17.949 2.073-7.195 27.802-9.114 13.284-14.918-15.907-6.651 6.83-19.057 14.583-9.323 11.445 5.628-1.73 7.167-3.06 13.089 12.827 3.636 23.26 12.385 29.033 24.613.039 9.124 11.42 15.41 19.246 10.127 5.685-12.485 17.864 7.603 27.455 6.664 12.69 4.684-16.401 10.015-18.211 7.789zm19.582-9.077c-7.397-2.977-22.56-7.993-23.815-14.3 4.325-6.384 17.443-1.048 22.387 3.999.89 1.757 8.464 13.199 1.428 10.3zm-3.502-14.619c-7.15-4.194-18.717-2.886-20.343-8.03 8.162-.194 16.327-.114 24.49-.163-2.396 1.806-2.087 8.455-4.147 8.193zm-135.749-3.943c-2.454-7.78-1.47-13.77 8.005-10.568 6.854-1.968 19.28 4.886 6.592 7.205-4.558.108-11.442 4.282-14.597 3.363zm113.413-6.562c.723-11.191-18.684-13.754-25.433-22.05-9.033-4.64-6.183-14.373-9.158-21.107-4.467-8.87-2.248-17.626-3.757-28.95 2.097 2.255 3.124-12.656 6.357-3.574 1.803 14.054 8.91-2.335 12.341-5.23 6.516 1.25 2.498 6.468 8.907 8.77 7.05 1.648 9.63 7.066 7.106 12.035 11.101 7.654 27.406-.672 35.24 11.606 7.881 2.436 12.904 13.463 4.28 16-2.644 10.622 6.441 23.465-6.212 31.072-2.728 4.412-8.924 1.392-13.303 2.278H130.14v-.68l-.034-.17zm.374-32.364c14.06-2.255 13.73-24.246-.76-16.723 5.209 6.123-3.24 17.648-5.903 6.388 2.409-18.531-18.069 6.24-2.572 9.206 2.862.68 6.473 1.912 9.235 1.129zM29.985 142.935c-7.513-.831-18.482 2.523-14.491-9.608-2.85-14.624 16.23.983 22.527 3.174-2.236 5.8-.57 8.67-8.036 6.434zm48.037-54.803c-.543-5.127 3.698-10.751 5.1-15.06 6.58 2.323 2.103 16.887-5.1 15.06zM53.477 51.926c-3.653-6.721 4.133 3.553 0 0z"/></svg>
 </body>
+
 </html>

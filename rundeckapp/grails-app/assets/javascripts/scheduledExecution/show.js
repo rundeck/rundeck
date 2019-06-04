@@ -21,9 +21,15 @@
 //= require knockout.min
 //= require knockout-mapping
 //= require knockout-foreachprop
-//= require historyKO
+//= require menu/job-remote-options
+//= require ko/binding-popover
+//= require ko/binding-datetimepicker
 //= require nodeFiltersKO
 //= require executionOptions
+//= require menu/joboptions
+//= require scheduledExecution/jobRunFormOptionsKO
+
+//= require koBind
 
 /*
  Manifest for "scheduledExecution/show.gsp" page

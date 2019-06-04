@@ -2482,10 +2482,10 @@ void testDecodeBasic__no_group(){
             assertFalse "incorrect enforced", opt0.required
             assertEquals "incorrect regex", "abc", opt0.regex
             assertNull "incorrect values size", opt0.realValuesUrl
-            assertNotNull "incorrect values size", opt0.values
-            assertEquals "incorrect values size", 3, opt0.values.size()
+            assertNotNull "incorrect values size", opt0.optionValues
+            assertEquals "incorrect values size", 3, opt0.optionValues.size()
             def values=[]
-            values.addAll(opt0.values as List)
+            values.addAll(opt0.optionValues as List)
             assertTrue "incorrect values content", values.contains("123")
             assertTrue "incorrect values content", values.contains("456")
             assertTrue "incorrect values content", values.contains("789")
@@ -2844,10 +2844,10 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect enforced", "false", opt0.enforced.toString()
             assertEquals "incorrect regex", "abc", opt0.regex
             assertNull "incorrect values size", opt0.realValuesUrl
-            assertNotNull "incorrect values size", opt0.values
-            assertEquals "incorrect values size", 3, opt0.values.size()
+            assertNotNull "incorrect values size", opt0.optionValues
+            assertEquals "incorrect values size", 3, opt0.optionValues.size()
             def values=[]
-            values.addAll(opt0.values as List)
+            values.addAll(opt0.optionValues as List)
             assertTrue "incorrect values content", values.contains("123")
             assertTrue "incorrect values content", values.contains("456")
             assertTrue "incorrect values content", values.contains("789")

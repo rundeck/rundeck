@@ -2,7 +2,10 @@ FROM rundeck/ubuntu-base@sha256:da17cd6654dc861c92c3a73dbb7fed90932ab3e6364a33b4
 
 COPY --chown=rundeck:root .build .
 RUN java -jar rundeck.war --installonly \
-    && chmod -R 0775 server tools user-assets var
+    # Create plugin folder
+    && mkdir libext \
+    # Adjust permissions for OpenShift
+    && chmod -R 0775 libext server tools user-assets var
 
 COPY --chown=rundeck:root remco /etc/remco
 COPY --chown=rundeck:root lib docker-lib

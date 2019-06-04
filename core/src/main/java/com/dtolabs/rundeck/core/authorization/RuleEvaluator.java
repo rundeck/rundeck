@@ -118,31 +118,55 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             return false;
         }
 
+        if(rule.isBy()) {
+            if (subject.getUsername() != null && rule.getUsername() != null) {
 
-        if (subject.getUsername() != null && rule.getUsername() != null) {
-
-            if (subject.getUsername().equals(rule.getUsername())
-                || matchesPattern(subject.getUsername(), rule.getUsername())
-                    ) {
-                return true;
-            } else if (rule.getUsername() != null) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
+                if (subject.getUsername().equals(rule.getUsername())
+                        || matchesPattern(subject.getUsername(), rule.getUsername())
+                        ) {
+                    return true;
+                } else if (rule.getUsername() != null) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
+                    }
                 }
             }
-        }
 
 
-        if (subject.getGroups().size() > 0) {
-            // no username matched, check groups.
-            if (subject.getGroups().contains(rule.getGroup())
-                || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
-                return true;
-            } else if (subject.getGroups().size() > 0) {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
+            if (subject.getGroups().size() > 0) {
+                // no username matched, check groups.
+                if (subject.getGroups().contains(rule.getGroup())
+                        || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
+                    return true;
+                } else if (subject.getGroups().size() > 0) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
+                    }
                 }
             }
+        }else { //notBy acl
+            if (subject.getUsername() != null && rule.getUsername() != null) {
+                if (subject.getUsername().equals(rule.getUsername())
+                        || matchesPattern(subject.getUsername(), rule.getUsername())
+                        ) {
+                    return false;
+                } else if (rule.getUsername() != null) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(rule.toString() + ": username not excluded: " + rule.getUsername());
+                    }
+                }
+            }
+            if (subject.getGroups().size() > 0) {
+                if (subject.getGroups().contains(rule.getGroup())
+                        || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
+                    return false;
+                } else if (subject.getGroups().size() > 0) {
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(rule.toString() + ": group not excluded: " + rule.getGroup());
+                    }
+                }
+            }
+            return true;
         }
         return false;
     }

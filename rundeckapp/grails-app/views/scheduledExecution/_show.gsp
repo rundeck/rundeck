@@ -18,7 +18,7 @@
 
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
 <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
-<g:set var="runEnabled" value="${g.executionMode(is: 'active', project: scheduledExecution.project)}"/>
+<g:set var="runEnabled" value="${g.executionMode(is: 'active', project: scheduledExecution.project) && scheduledExecution.hasExecutionEnabled()}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
 <g:set var="rundoctext"
@@ -27,49 +27,55 @@
 <content tag="subtitlesection">
 
     <div class="  subtitle-head flex-container flex-align-items-stretch">
-        <div class="subtitle-head-item  flex-item-2 flex-item flex-shrink-1">
+        <div class="subtitle-head-item  flex-item-auto">
             <g:render template="/scheduledExecution/showHead"
                       model="[scheduledExecution: scheduledExecution,
                               followparams      : [mode: followmode, lastlines: params.lastlines],
                               jobDescriptionMode: 'expanded',
-                              jobActionButtons  : true,
+                              jobActionButtons  : false,
                               linkCss           : 'text-h4',
                               scmExportEnabled  : scmExportEnabled,
                               scmExportStatus   : scmExportStatus,
                               scmImportEnabled  : scmImportEnabled,
                               scmImportStatus   : scmImportStatus
                       ]"/>
+
+            <section class="section-space">
+                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+            </section>
         </div>
 
-        <div class="subtitle-head-item  flex-item-1 flex-item flex-grow-2">
+        <div class="subtitle-head-item  flex-container column flex-justify-space-between flex-align-items-flex-end">
 
-            <div class="row">
-                <g:render template="/scheduledExecution/renderJobStats"
-                          model="${[scheduledExecution: scheduledExecution]}"/>
+            <div class="job-action-button ">
+                <g:render template="/scheduledExecution/jobActionButton"
+                          model="[scheduledExecution: scheduledExecution,
+                                  hideTitle         : false,
+                                  dropdownClass     : 'dropdown-menu-right',
+                                  btnClass          : 'btn btn-secondary btn-sm']"/>
             </div>
 
             <g:if test="${readAccess}">
                 <section class="section-space">
-                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm pull-right">
-                        <g:message code="definition"/>
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm ">
                         <i class="glyphicon glyphicon-info-sign"></i>
+                        <g:message code="definition"/>
                     </a>
                 </section>
 
                 <g:render template="/common/modal"
                           model="[modalid   : 'job-definition-modal',
                                   modalsize : 'modal-lg',
-//                                  titleCode: 'definition',
                                   title     : scheduledExecution.jobName,
                                   cancelCode: 'close'
                           ]">
-                    <g:render template="/execution/execDetails"
-                              model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                    <div data-ko-bind="jobNodeFilters" id="detailtable">
+                        <g:render template="/execution/execDetails"
+                                  model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                    </div>
                 </g:render>
             </g:if>
-            <section class="section-space">
-                <span class="uuid">${scheduledExecution.extid}</span>
-            </section>
+
         </div>
     </div>
 </content>
@@ -87,21 +93,8 @@
                                       <li class="active"><a href="#runjob" data-toggle="tab"><g:message
                                               code="scheduledExecution.show.run.tab.name"/></a></li>
                                   </g:if>
-                                  <g:else>
-                                      <li class="disabled">
-                                          <a href="#"
-                                             title="${message(
-                                                     code: !runEnabled ? 'disabled.job.run' :
-                                                           'unauthorized.job.run'
-                                             )}"
-                                             class="has_tooltip"
-                                             data-placement="bottom">
-                                              <g:message code="scheduledExecution.show.run.tab.name"/>
-                                          </a>
-                                      </li>
-                                  </g:else>
                                   <g:if test="${rundoctext}">
-                                      <li class="${(canRunJob || readAccess) ? '' : 'active'}">
+                                      <li class="${(canRunJob ) ? '' : 'active'}">
                                           <a href="#runbook" data-toggle="tab"><g:message code="runbook"/></a>
                                       </li>
                                   </g:if>
@@ -121,10 +114,11 @@
                           </g:if>
 
                           <g:if test="${rundoctext}">
-                              <div id="runbook" class="tab-pane  ${(canRunJob || readAccess) ? '' : 'active'}">
+                              <div id="runbook" class="tab-pane  ${(canRunJob ) ? '' : 'active'}">
                                   <div class="markdeep">${rundoctext}</div>
                               </div>
                           </g:if>
+                          <div id="_job_content_placeholder" class="tab-pane"></div>
                       </div>
                       <!-- end tab content -->
                   </div>
@@ -132,19 +126,51 @@
               </div>
           </div>
     </div>
-
+    </div>
+    <div class="row" id="_job_main_placeholder">
         <div class="col-xs-12">
-          <div class="row">
-              <div class="card" id="activity_section">
-                  <div class="card-content">
-                      <g:render template="/reports/activityLinks"
-                                model="[scheduledExecution: scheduledExecution, knockoutBinding: true, includeJobRef: (
-                                        scheduledExecution.getRefExecCountStats() ? true : false
-                                )]"/>
-                  </div>
-              </div>
-          </div>
-      </div>
+            <div class="card" id="activity_section">
+                <div class="card-content">
+
+                    <div class="vue-tabs">
+                        <div class="nav-tabs-navigation">
+                            <div class="nav-tabs-wrapper">
+                                <ul class="nav nav-tabs activity_links">
+                                    <li class="active">
+                                        <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
+                                    </li>
+                                    <li>
+                                        <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="stats">
+
+
+                                <section class="_jobstats_content section-space-bottom-lg container-fluid" id="_job_stats_main">
+                                    <g:render template="/scheduledExecution/renderJobStats"
+                                              model="${[scheduledExecution: scheduledExecution]}"/>
+                                </section>
+
+
+                                <div id="_job_stats_extra_placeholder"></div>
+                            </div>
+                            <div class="tab-pane" id="history">
+
+                                <div data-ko-bind="history" class="_history_content vue-project-activity">
+
+                                    <activity-list :event-bus="EventBus"></activity-list>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
   </div>
 
 

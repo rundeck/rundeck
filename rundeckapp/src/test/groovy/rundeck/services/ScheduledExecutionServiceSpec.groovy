@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import rundeck.ScheduledExecutionStats
 
 import static org.junit.Assert.*
@@ -175,6 +176,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
             getFrameworkProject(_) >> projectMock
+            getServerUUID() >> 'uuid'
+            isClusterModeEnabled() >> clusterEnabled
+        }
+        service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+            determineExecNode(*_)>>{args->
+                return serverNodeUUID
+            }
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -192,11 +200,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
-        result == scheduleDate
+        result == [scheduleDate, serverNodeUUID]
 
         where:
-        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
-        true                | true            | true             | true        | true
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled | clusterEnabled | serverNodeUUID
+        true                | true            | true             | true        | true            | false          | null
+        true                | true            | true             | true        | true            | true           | 'uuid'
     }
 
     @Unroll
@@ -314,7 +323,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         0 * service.quartzScheduler.scheduleJob(_, _)
-        result == null
+        result == [null, null]
 
         where:
         executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule
@@ -1094,7 +1103,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.options[0].enforced
         results.scheduledExecution.options[0].multivalued
         results.scheduledExecution.options[0].delimiter==','
-        results.scheduledExecution.options[0].values==['val1','val2','val3'] as Set
+        results.scheduledExecution.options[0].optionValues==['val1','val2','val3'] as List
     }
     def "invalid options multivalued"() {
         given:
@@ -1149,6 +1158,11 @@ class ScheduledExecutionServiceSpec extends Specification {
                 }
             }
             getFrameworkProject(_) >> projectMock
+        }
+        service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+            determineExecNode(*_)>>{args->
+                return uuid
+            }
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
@@ -2119,7 +2133,13 @@ class ScheduledExecutionServiceSpec extends Specification {
             getUsername() >> 'test'
             getRoles() >> new HashSet<String>(['test'])
         }
-        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            getRundeckJobScheduleManager()>>Mock(JobScheduleManager){
+                determineExecNode(*_)>>{args->
+                    return uuid
+                }
+            }
+        }
 
         when:
         def results = service._doupdateJob(se.id,newJob, auth)
@@ -2391,6 +2411,48 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
+
+
+        def "reschedule onetime executions method"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
+
+        when:
+        def result = service.rescheduleOnetimeExecutions(Arrays.asList(exec1))
+
+        then:
+        result.failedExecutions.size() == 0
+        result.executions.size() == 1
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
+    }
+
     def "reschedule adhoc execution getAuthContext error"() {
         given:
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
@@ -2430,12 +2492,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         setupDoValidate(true)
         def uuid = setupDoUpdate(true)
-        
+
         def se = new ScheduledExecution(createJobParams()).save()
         service.jobSchedulerService=Mock(JobSchedulerService)
         when:
         def params = baseJobParams()+[
-                
+
         ]
         //def results = service._dovalidate(params, Mock(UserAndRoles))
         def results = service._doUpdateExecutionFlags(
@@ -2627,7 +2689,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
-        result == scheduleDate
+        result == [scheduleDate, null]
 
         where:
         executionsAreActive | timezone
@@ -2868,9 +2930,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         null |  _
 
     }
-      
-              
-      
+
+
+
     @Unroll
     def "do update job on cluster"(){
         given:
@@ -2912,7 +2974,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
         def currentOwner = '05b604ed-9a1e-4cb4-8def-b17a071afec9'
         def uuid = setupDoUpdate(true,serverUUID)
-        service.jobSchedulerService = Mock(JobSchedulerService)
+        service.jobSchedulerService = Mock(JobSchedulerService){
+            getRundeckJobScheduleManager()>>Mock(JobScheduleManager){
+                determineExecNode(*_)>>{args->
+                    return uuid
+                }
+            }
+        }
 
         def orig = [serverNodeUUID: currentOwner]
 

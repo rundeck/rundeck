@@ -37,7 +37,7 @@
         <span class="desc"><g:strip>${option.description}</g:strip></span>
     </span>
     <g:if test="${option?.values || option.valuesList}">
-        <g:set var="opts" value="${option.values?option.values.sort():option.valuesList.split(',').sort()}"/>
+        <g:set var="opts" value="${option.optionValues}"/>
         <div class="popout detailpopup" id="vls_${rkey}_tooltip" style="width:200px;display:none;" >
             <div class="info note">Allowed Values</div>
             <g:each var="val" in="${opts}" status="i"><g:enc>${0!=i?', ':''}</g:enc><span class="valueItem"><g:enc>${val}</g:enc></span></g:each>

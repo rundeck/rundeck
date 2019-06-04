@@ -94,11 +94,11 @@
                 <g:if test="${jobgroups[group.key]}">
                 <span class="" data-bind="visible: enabled">
                     &bull;
-                    <a href="#" class="btn btn-xs btn-simple" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
+                    <a href="#" class="btn btn-xs btn-simple btn-hover" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
                         <g:icon name="check"/>
                         <g:message code="select.all" />
                     </a>
-                    <a href="#" class="btn btn-xs btn-simple" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
+                    <a href="#" class="btn btn-xs btn-simple btn-hover" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
                         <g:icon name="unchecked"/>
                         <g:message code="select.none" />
                     </a>

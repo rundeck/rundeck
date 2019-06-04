@@ -2,7 +2,7 @@ import {Context} from 'context'
 import {CreateContext} from 'test/selenium'
 import {LoginPage} from 'pages/login.page'
 import {NavigationPage} from 'pages/navigation.page'
-import {By} from 'selenium-webdriver'
+import {By, until} from 'selenium-webdriver'
 
 import 'test/rundeck'
 import { sleep } from 'async/util';
@@ -61,6 +61,9 @@ describe('expanded navigation bar', () => {
     it('visits activity', async () => {
         await navigation.visitActivity()
         await navigation.blur()
+        const elems = await navigation.ctx.driver.findElements(By.css('.fa-spinner'))
+        await Promise.all(elems.map(el => ctx.driver.wait(until.stalenessOf(el),5000)))
+
         const img = Buffer.from(await navigation.screenshot(true), 'base64')
         expect(img).toMatchImageSnapshot({customSnapshotsDir: '__image_snapshots__', customDiffConfig: {threshold: 0.01}})
     })

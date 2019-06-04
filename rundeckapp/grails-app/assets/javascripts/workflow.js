@@ -69,39 +69,42 @@ function _wfStringForStep(step){
     }
     return string;
 }
-var RDWorkflow = Class.create({
-    workflow:null,
-    initialize: function(wf,params){
-        this.workflow=wf;
-        jQuery.extend(this, params);
-    },
-    contextType: function (ctx) {
-        if(typeof(ctx)=='string'){
-            ctx= RDWorkflow.parseContextId(ctx);
-        }
-        var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])];
-        return _wfTypeForStep(step);
-    },
-    renderContextStepNumber: function (ctx) {
-        if (typeof(ctx) == 'string') {
-            ctx = RDWorkflow.parseContextId(ctx);
-        }
-        var string = '';
-        string += RDWorkflow.stepNumberForContextId(ctx[0]);
-        if (ctx.length > 1) {
+
+var RDWorkflow = function (wf,params) {
+    var self = this
+    this.workflow = wf
+    Object.assign(this, params)
+    Object.assign(self, {
+
+
+        contextType: function (ctx) {
+            if (typeof (ctx) == 'string') {
+                ctx = RDWorkflow.parseContextId(ctx)
+            }
+            var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])]
+            return _wfTypeForStep(step)
+        },
+        renderContextStepNumber: function (ctx) {
+            if (typeof (ctx) == 'string') {
+                ctx = RDWorkflow.parseContextId(ctx)
+            }
+            var string = ''
+            string += RDWorkflow.stepNumberForContextId(ctx[0])
+            if (ctx.length > 1) {
 //                string += "/" + ctx.slice(1).join("/")
+            }
+            string += ". "
+            return string
+        },
+        renderContextString: function (ctx) {
+            if (typeof (ctx) == 'string') {
+                ctx = RDWorkflow.parseContextId(ctx)
+            }
+            var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])]
+            return _wfStringForStep(step)
         }
-        string += ". ";
-        return string;
-    },
-    renderContextString: function (ctx) {
-        if(typeof(ctx)=='string'){
-            ctx= RDWorkflow.parseContextId(ctx);
-        }
-        var step = this.workflow[RDWorkflow.workflowIndexForContextId(ctx[0])];
-        return _wfStringForStep(step);
-    }
-});
+    })
+}
 /**
  * remove escaping and halt processing at any break chars, returns object with 'text' (unescaped text), 'bchar' (seen break char or null),
  * 'rest' (remaining escaped text after first seen breakchar or null)

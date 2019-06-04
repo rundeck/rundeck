@@ -21,9 +21,10 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
-    <meta name="skipMotd" content="true"/>
+    <meta name="skipPrototypeJs" content="base" />
+
     <title><g:appTitle/> -
-      <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
+    %{--      <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>--}%
       <g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if>
       <g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/>
     </title>
@@ -50,12 +51,9 @@
 
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
-      <asset:javascript src="workflow.js"/>
-      <asset:javascript src="executionControl.js"/>
-      <asset:javascript src="executionState.js"/>
-      <asset:javascript src="executionState_HistoryKO.js"/>
 
-      <asset:javascript src="prototype-bundle.js"/>
+      <asset:javascript src="execution/show.js"/>
+
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
@@ -67,15 +65,31 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
+
+      <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+      <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
       <style type="text/css">
         #log{
             margin-bottom:20px;
         }
-        .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
-            background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
-            padding-right: 16px;
-            background-repeat: no-repeat;
-            background-position: right 2px;
+        .padded{
+            padding: 10px;
         }
         .errmsg {
             color: gray;
@@ -124,13 +138,49 @@
             display: inline;
         }
       </style>
+      <g:set var="projectName" value="${execution.project}"/>
+      <g:javascript>
+    var execInfo=loadJsonData('execInfoJSON');
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: appLinks.menuNowrunningAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+          },
+          query:{
+              jobIdFilter:execInfo.jobId
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+    }
+})
+      </g:javascript>
+      <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
   <content tag="subtitlecss">execution-page</content>
   <content tag="subtitlesection">
 
-      <div class=" execution_ko subtitle-head flex-container reverse flex-align-items-stretch">
+      <div class="  subtitle-head flex-container reverse flex-align-items-stretch" data-ko-bind="nodeflow">
           <div class="subtitle-head-item execution-head-info flex-item-1">
               <section class="flex-container reverse">
                   <section class="flex-item-1 text-right">
@@ -375,9 +425,9 @@
               <section>
                   <g:if test="${isAdhoc}">
                       <div class="text-h5">
-                          <i class="exec-status icon "
+                          <b class="exec-status icon "
                              data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
-                          </i>
+                          </b>
                           <g:render template="wfItemView" model="[
                                   item: execution.workflow.commands[0],
                                   icon: 'icon-small'
@@ -414,7 +464,7 @@
           </div>
       </div>
 
-      <div class="execution_ko" data-bind="if: !completed()">
+      <div class="" data-bind="if: !completed()" data-ko-bind="nodeflow">
           <g:if test="${scheduledExecution}">
           %{--progress bar--}%
               <div>
@@ -468,75 +518,120 @@
 
               <div class="row">
                   <div class="col-sm-12">
-                      <div class="card card-plain  execution_ko">
-                          <div class="btn-group ">
+                      <div class="card card-plain " data-ko-bind="nodeflow">
+                          <div class="btn-group " data-bind="if: tabs().length>2">
                               <button class="btn btn-default btn-sm dropdown-toggle "
                                       data-target="#"
                                       data-toggle="dropdown">
-                                  View:
-                                  <span data-bind="if: activeTab()!=='output'"><g:message code="Nodes"/></span>
-                                  <span data-bind="if: activeTab()==='output'"><g:message
-                                          code="execution.show.mode.Log.title"/></span>
+                                  <span class="colon-after"><g:message code="view"/></span>
+                                  <span data-bind="text: activeTabData() && activeTabData().title">
+
+                                  </span>
                                   <i class="caret"></i>
                               </button>
-                              <ul class="dropdown-menu pull-left" role="menu">
-                                  <li id="tab_link_flow">
-                                      <a href="#state" data-bind="click: function(){activeTab('flow')}">
-                                          <g:message code="Nodes"/>
-                                      </a>
-                                  </li>
+                              <ul class="dropdown-menu pull-left" role="menu" data-bind="foreach: tabs">
 
-                                  <li id="tab_link_output">
-                                      <a href="#output" data-bind="click: function(){activeTab('output')}">
-                                          <g:message code="execution.show.mode.Log.title"/>
+                                  <li data-bind="attr: {id: 'tab_link_'+id }">
+                                      <a href="#"
+                                         data-bind="click: function(){$root.activeTab(id)}, attr: {href: '#'+id }, text: title">
                                       </a>
                                   </li>
 
                               </ul>
+
                           </div>
+                          <a href="#state"
+                             data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
+                             class="btn btn-simple btn-sm">
+                              <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
+                          </a>
+                          <a href="#output"
+                             data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
+                             class="btn btn-simple btn-sm">
+                              <g:message code="execution.show.mode.Log.title"/> &raquo;
+                          </a>
 
                           <span data-bind="visible: activeTab()==='output'">
 
-                              <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
-                                  <g:message code="execution.page.view.options.title"/>
-                                  <i class="glyphicon glyphicon-cog"></i>
-                              </a>
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <g:link class=""
-                                          title="${message(
-                                                  code: 'execution.show.log.text.button.description',
-                                                  default: 'View text output'
-                                          )}"
-                                          controller="execution" action="downloadOutput" id="${execution.id}"
-                                          params="[view     : 'inline', formatted: false, project: execution.project,
-                                                   stripansi: true]" target="_blank">
-                                      <g:message code="execution.show.log.text.button.title"/>
-                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
-                                  </g:link>
-                                  <g:link class=""
-                                          title="${message(
-                                                  code: 'execution.show.log.html.button.description',
-                                                  default: 'View rendered output'
-                                          )}"
-                                          controller="execution" action="renderOutput" id="${execution.id}"
-                                          params="[project: execution.project, ansicolor: 'on', loglevels: 'on', convertContent: 'on']"
-                                          target="_blank">
-                                      <g:message code="execution.show.log.html.button.title"/>
-                                  %{--                          <i class="glyphicon glyphicon-share-alt"></i>--}%
-                                  </g:link>
-                                  <g:link class="btn btn-default btn-xs"
-                                          title="${message(
-                                                  code: 'execution.show.log.download.button.description',
-                                                  default: 'Download {0} bytes',
-                                                  args: [filesize > 0 ? filesize : '?']
-                                          )}"
-                                          controller="execution" action="downloadOutput" id="${execution.id}"
-                                          params="[project: execution.project]" target="_blank">
-                                      <b class="glyphicon glyphicon-file"></b>
-                                      <g:message code="execution.show.log.download.button.title"/>
-                                  </g:link>
+                                  <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
+                                      <g:message code="execution.page.view.options.title"/>
+                                      <i class="glyphicon glyphicon-cog"></i>
+                                  </a>
+
+                                  <span class="btn-group">
+                                      <button type="button" class="btn btn-simple btn-xs dropdown-toggle"
+                                              data-toggle="dropdown">
+                                          <g:message code="execution.log" />
+                                          <span class="caret"></span>
+                                      </button>
+                                      <ul class="dropdown-menu pull-right" role="menu">
+                                          <li>
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.text.button.description',
+                                                              default: 'View text output'
+                                                      )}"
+                                                      controller="execution"
+                                                      action="downloadOutput"
+                                                      id="${execution.id}"
+                                                      params="[
+                                                              view     : 'inline',
+                                                              formatted: false,
+                                                              project  : execution.project,
+                                                              stripansi: true
+                                                      ]"
+                                                      target="_blank">
+
+                                                  <g:message code="execution.show.log.text.button.title"/>
+                                              </g:link>
+                                          </li>
+                                          <li>
+
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.html.button.description',
+                                                              default: 'View rendered output'
+                                                      )}"
+                                                      controller="execution"
+                                                      action="renderOutput"
+                                                      id="${execution.id}"
+                                                      params="[
+                                                              project: execution.project,
+                                                              ansicolor: 'on',
+                                                              loglevels: 'on',
+                                                              convertContent: 'on'
+                                                      ]"
+                                                      target="_blank">
+
+                                                  <g:message code="execution.show.log.html.button.title"/>
+                                              </g:link>
+                                          </li>
+                                          <li role="separator" class="divider"></li>
+                                          <li class="dropdown-header">
+                                              <g:message code="execution.show.log.download.button.title"/>
+                                          </li>
+                                          <li>
+                                              <g:link class=""
+                                                      title="${message(
+                                                              code: 'execution.show.log.download.button.description',
+                                                              default: 'Download {0} bytes',
+                                                              args: [filesize > 0 ? filesize : '?']
+                                                      )}"
+                                                      controller="execution"
+                                                      action="downloadOutput"
+                                                      id="${execution.id}"
+                                                      params="[project: execution.project]"
+                                                      target="_blank">
+
+                                                  <b class="glyphicon glyphicon-download"></b>
+                                                  <g:message code="formatted.text" />
+                                              </g:link>
+                                          </li>
+                                      </ul>
+                                  </span>
 
                               </span>
 
@@ -674,26 +769,29 @@
 
                       </div>
 
-                      <div class="card execution_ko exec-output-bg exec-output " data-mode="normal"
-                           data-bind="attr: {'data-mode': logoutput().options.styleMode}">
+                      <div class="card exec-output "
+                           data-ko-bind="nodeflow"
+                           data-mode="normal"
+                           data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
                           <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
-                        <g:render template="/common/messages"/>
+                              <g:render template="/common/messages"/>
 
 
-                        <div class="tab-content">
+                              <div class="tab-content" id="exec-main-view">
 
-                            <div class="tab-pane " id="state" data-bind="css: {active: activeTab()==='flow'}">
-                              <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
-                                 <g:render template="wfstateNodeModelDisplay" bean="${workflowState}" var="workflowState"/>
+                                  <div class="tab-pane " id="nodes" data-bind="css: {active: activeTab()==='nodes'}">
+                                      <div class="flowstate ansicolor ansicolor-on" id="nodeflowstate">
+                                          <g:render template="wfstateNodeModelDisplay" bean="${workflowState}"
+                                                    var="workflowState"/>
+                                      </div>
+                                  </div>
+
+                                  <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
+                                      <g:render template="/execution/showFragment"
+                                                model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
+                                  </div>
+
                               </div>
-                          </div>
-
-                            <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
-                                <g:render template="/execution/showFragment"
-                                          model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
-                            </div>
-
-                        </div>
                           </div>
 
                           <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
@@ -726,23 +824,57 @@
 
                           </g:if>
                     </div>
+
+                      <div data-ko-bind="nodeflow"
+                           data-bind="visible: logoutput().fileLoadError() && activeTab()==='output'"
+                           class="alert alert-warning"
+                           style="display:none">
+                          <span data-bind="text: logoutput().fileLoadError" ></span>
+                      </div>
                   </div>
           <g:if test="${scheduledExecution}">
 
-              <div class="col-sm-12" id="activity_section">
+              <div class="col-sm-12">
 
-                  <div class="card card-plain">
-                      <div class="card-header">
-                          <h3 class="card-title">
-                              <g:message code="page.section.Activity.for.this.job"/>
-                          </h3>
-                      </div>
-                  </div>
-
-                  <div class="card">
+                  <div class="card" id="activity_section">
                       <div class="card-content">
-                          <g:render template="/reports/activityLinks"
-                                    model="[hideNowRunning: !execution.dateCompleted, execution: execution, scheduledExecution: scheduledExecution, knockoutBinding: true]"/>
+
+                          <div class="vue-tabs">
+                              <div class="nav-tabs-navigation">
+                                  <div class="nav-tabs-wrapper">
+                                      <ul class="nav nav-tabs activity_links">
+                                          <li class="active">
+                                              <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
+                                          </li>
+                                          <li>
+                                              <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                          </li>
+                                      </ul>
+                                  </div>
+                              </div>
+                              <div class="tab-content">
+                                  <div class="tab-pane active" id="stats">
+
+
+                                      <section class="_jobstats_content section-space-bottom-lg container-fluid" id="_job_stats_main">
+                                          <g:render template="/scheduledExecution/renderJobStats"
+                                                    model="${[scheduledExecution: scheduledExecution]}"/>
+                                      </section>
+
+
+                                      <div id="_job_stats_extra_placeholder"></div>
+                                  </div>
+                                  <div class="tab-pane" id="history">
+
+                                      <div data-ko-bind="history" class="_history_content vue-project-activity">
+
+                                          <activity-list :event-bus="EventBus"></activity-list>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+
+
                       </div>
                   </div>
               </div>
@@ -870,7 +1002,7 @@
   </script>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
-  <g:javascript>
+        <script type="application/javascript">
     var workflow=null;
     var followControl=null;
     var flowState=null;
@@ -907,7 +1039,6 @@
         fileloadId:'fileload',
         fileloadPctId:'fileloadpercent',
         fileloadProgressId:'fileloadprogress',
-        viewoptionsCompleteId:'viewoptionscomplete',
         cmdOutputErrorId:'cmdoutputerror',
         outfileSizeId:'outfilesize',
         workflow:workflow,
@@ -961,7 +1092,11 @@
         loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
         outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
         selectedOutputStatusId:'selectedoutputview',
-        reloadInterval:1500
+        reloadInterval:1500,
+            tabs:[
+                {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
+                {id: 'output', title: message('execution.show.mode.Log.title')}
+            ]
      });
 
       nodeflowvm.followFlowState(flowState,true);
@@ -973,9 +1108,7 @@
             executionState:'${enc(js:execution.executionState)}',
             executionStatusString:'${enc(js:execution.status)}'
         },{},nodeflowvm);
-        jQuery('.execution_ko').each(function(i,e){
-            ko.applyBindings(nodeflowvm,e);
-        })
+
         nodeflowvm.selectedNodes.subscribe(function (newValue) {
             if (newValue) {
                 flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
@@ -986,25 +1119,50 @@
 
         //knockout activeTab change listener to begin output or state listener
         nodeflowvm.activeTab.subscribe(function(val){
-           if(val==='flow'){
+            window.location.hash = "#" + val
+            if (val === 'nodes') {
                 followState();
-                window.location.hash='#monitor'
            }else if(val==='output'){
                 followOutput();
-                window.location.hash='#output'
            }
         });
 
+        let doupdate = true//!nodeflowvm.completed()
+        let prefixed=''
+        const updateTitle = function (prefix) {
+            let title=document.title
+            if(prefixed && title.startsWith(prefixed)){
+                title=title.substring(prefixed.length)
+            }
+            document.title = prefix + title;
+            prefixed=prefix
+        }
 
-        if(document.getElementById('activity_section')){
-            activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-            activity.nowRunningEnabled(${null != execution?.dateCompleted});
-            //enable now running activity tab once execution completes
-            activity.highlightExecutionId("${execution.id}");
-            nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
-            ko.applyBindings(activity, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', activity);
-       }
+        nodeflowvm.executionState.subscribe(function (val) {
+            if (val === 'RUNNING' && !doupdate) {
+                doupdate = true
+            } else if (val === 'RUNNING' && doupdate) {
+                doupdate = true
+
+                updateTitle('[RUNNING] ')
+            } else if (null != val && val !== 'RUNNING' && doupdate) {
+                var prefix = (
+                    val === 'SUCCEEDED' ?
+                    '✅ [OK] ' :
+                    val === 'ABORTED' ?
+                    '✖︎ [KILLED] ' :
+                    val === 'TIMEDOUT' ?
+                    '⏱︎ [TIMEOUT] ' :
+                    val === 'FAILED' ?
+                    '⛔︎ [FAILED] ' :
+                    ('✴️ [' + (val) + '] ')//🔶
+                );
+                updateTitle(prefix)
+            }
+        })
+
+
+
         jQuery('.apply_ace').each(function () {
             _applyAce(this);
         });
@@ -1017,13 +1175,15 @@
         var outDetails = window.location.hash;
         if(outDetails === '#output'){
             nodeflowvm.activeTab("output");
-        }else if(outDetails === '#monitor'){
-            nodeflowvm.activeTab("flow");
+        } else if (outDetails === '#nodes') {
+            nodeflowvm.activeTab("nodes");
         }else{
-            nodeflowvm.activeTab("flow");
+            //default to nodes tab, original options of 'summary' and 'monitor' will go here
+            nodeflowvm.activeTab("nodes");
         }
+        initKoBind(null, {nodeflow: nodeflowvm})
     }
     jQuery(init);
-  </g:javascript>
+    </script>
   </body>
 </html>

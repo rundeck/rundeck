@@ -93,7 +93,7 @@
                         <span class="value" data-bind="if: $parent.attributes[$data]">
                             <span data-bind="if: $data=='tags'">
                                 <span class="nodetags">
-                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
+                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().length > 0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
                                         <node-filter-link params="
@@ -123,7 +123,7 @@
                     <td  title="Tags" class="nodetags" >
                         <span data-bind="if: tags">
                             <span class="nodetags">
-                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
+                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().length > 0}"></i> -->
                                 <span data-bind="foreach: tags">
                                     <node-filter-link params="
                                                     filterkey: 'tags',

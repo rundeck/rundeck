@@ -65,4 +65,6 @@ public interface Policy extends AclRuleSetSource {
      * @return description of the policy
      */
     String getDescription();
+
+    public boolean isBy();
 }

@@ -14,23 +14,23 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.User; grails.util.Environment" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.User; grails.util.Environment" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
-    <meta name="skipprototypeJs" content="true"/>
-    <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
+    <meta name="skipPrototypeJs" content="true"/>
+    <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <g:set var="paginateJobs" value="${grailsApplication.config.rundeck.gui.paginatejobs}" />
     <g:set var="paginateJobsPerPage" value="${grailsApplication.config.rundeck.gui.paginatejobs.max.per.page}" />
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="pagehistory.js"/>
-    <asset:javascript src="prototype/effects"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="menu/joboptionsTest.js"/>
@@ -46,12 +46,29 @@
     <g:jsMessages id="queryformmessages"
     code="jobquery.title.name,jobquery.title.jobFilter,jobquery.title.projFilter,jobquery.title.groupPath,jobquery.title.descFilter,jobquery.title.loglevelFilter,jobquery.title.idlist,jobquery.title.scheduledFilter,jobquery.title.serverNodeUUIDFilter"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
+
+      <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+      <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+      <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
     <script type="text/javascript">
-        /** knockout binding for activity */
-        var pageActivity;
+        
         function showError(message){
-             appendText($('error'),message);
-             $("error").show();
+             appendText('#error',message);
+             jQuery("#error").show();
         }
         var _jobExecUnloadHandlers=new Array();
         function _registerJobExecUnloadHandler(handler){
@@ -62,20 +79,20 @@
                 for(var i =0;i<_jobExecUnloadHandlers.length;i++){
                     _jobExecUnloadHandlers[i].call();
                 }
-                _jobExecUnloadHandlers.clear();
+                _jobExecUnloadHandlers.length=0;
             }
 
             jQuery('#execDiv').modal('hide');
             clearHtml('execDivContent');
 
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
         function requestError(item,message){
             unloadExec();
             showError("Failed request: "+item+". Result: "+message);
         }
         function loadExec(id,eparams) {
-            $("error").hide();
+            jQuery("#error").hide();
             var params=eparams;
             if(!params){
                 params={id:id};
@@ -103,9 +120,7 @@
                         if (result.follow && result.href) {
                             document.location = result.href;
                         } else {
-                            if (!pageActivity.selected()) {
-                                pageActivity.activateNowRunningTab();
-                            }
+
                             unloadExec();
                         }
                     } else if (result.error === 'invalid') {
@@ -124,36 +139,36 @@
         function loadedFormSuccess(doShow,id){
             jQuery('#execDivContent .exec-options-body').addClass('modal-body')
             jQuery('#execDivContent .exec-options-footer').addClass('modal-footer')
-            if ($('execFormCancelButton')) {
-                Event.observe($('execFormCancelButton'),'click',function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormCancelButton').length) {
+                jQuery('#execFormCancelButton').on('click',function(evt) {
+                    stopEvent(evt);
                     unloadExec();
                     return false;
-                },false);
-                $('execFormCancelButton').name = "_x";
+                });
+                jQuery('#execFormCancelButton').attr('name', "_x");
             }
-            if ($('execFormRunButton')) {
-                Event.observe($('execFormRunButton'),'click', function(evt) {
-                    Event.stop(evt);
+            if (jQuery('#execFormRunButton').length) {
+                jQuery('#execFormRunButton').on('click', function(evt) {
+                    stopEvent(evt);
                     execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    $('formbuttons').loading(message('job.starting.execution'));
+                    // jQuery('#formbuttons').loading(message('job.starting.execution'));
                     return false;
-                },false);
+                });
             }
             jQuery('#showScheduler').on('shown.bs.popover', function() {
-                if ($('scheduleAjaxButton')) {
-                    Event.observe($('scheduleAjaxButton'), 'click', function(evt) {
-                        Event.stop(evt);
+                if (jQuery('#scheduleAjaxButton').length) {
+                    jQuery('#scheduleAjaxButton').on( 'click', function(evt) {
+                        stopEvent(evt);
                         if (isValidDate()) {
                             toggleAlert(true);
 		                    execSubmit('execDivContent',
                                 appLinks.scheduledExecutionScheduleJobInline);
-		                    $('formbuttons').loading(message('job.scheduling.execution'));
+		                    //$('formbuttons').loading(message('job.scheduling.execution'));
                         } else {
                             toggleAlert(false);
                         }
                         return false;
-                    }, false);
+                    });
                 }
             });
 
@@ -163,7 +178,7 @@
             var joboptions = new JobOptions(joboptiondata);
 
             if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+                // ko.applyBindings(joboptions, document.getElementById('optionSelect'));
             }
 
             var remoteoptionloader = new RemoteOptionLoader({
@@ -186,10 +201,11 @@
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
             });
+            initKoBind('#execDiv',{joboptions:joboptions},/*'menu/jobs'*/)
             if(doShow){
                 jQuery('#execDiv').modal('show');
             }
-            $('busy').hide();
+            jQuery('#busy').hide();
         }
 
 
@@ -215,13 +231,18 @@
             }
         }
 
-
-        function filterToggleSave(evt) {
-            ['${enc(js:rkey)}filter','${enc(js:rkey)}fsave'].each(Element.show);
-            ['${enc(js:rkey)}filter-toggle','${enc(js:rkey)}fsavebtn'].each(Element.hide);
+        function initJobActionMenus(){
+            jQuery('.act_job_action_dropdown').click(function(){
+                var id=jQuery(this).data('jobId');
+                var el=jQuery(this).parent().find('.dropdown-menu');
+                el.load(
+                    _genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id})
+                );
+            });
         }
-        function init(){
 
+        function init(){
+            initJobActionMenus();
 
             PageActionHandlers.registerHandler('job_delete_single',function(el){
                 bulkeditor.activateActionForJob(bulkeditor.DELETE,el.data('jobId'));
@@ -245,26 +266,18 @@
             });
 
 
-
-            $$('.obs_filtersave').each(function(e) {
-                Event.observe(e, 'click', filterToggleSave);
-            });
         }
 
         var bulkeditor;
         jQuery(document).ready(function () {
             init();
-            if (jQuery('#activity_section')) {
-                pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                setupActivityLinks('activity_section', pageActivity);
-            }
             jQuery(document).on('click','.act_execute_job',function(evt){
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
-            $$('#wffilterform input').each(function(elem){
+            jQuery('#wffilterform input').each(function(ndx,elem){
                 if(elem.type=='text'){
-                    elem.observe('keypress',noenter);
+                    jQuery(elem).on('keypress',noenter);
                 }
             });
             bulkeditor=new BulkEditor({messages:window.Messages});
@@ -316,14 +329,12 @@
                 filters:filtersData.filters,
                 currentFilter:filtersData.currentFilter
             })
-            initKoBind(null,{history:pageActivity,bulkeditor:bulkeditor,jobFilters:jobFilters})
+            initKoBind(null,{bulkeditor:bulkeditor,jobFilters:jobFilters})
         });
 
 
     </script>
 
-    <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{
         color:red;
@@ -340,6 +351,42 @@
     </g:if>
 
     <g:embedJSON id="jobFiltersJson" data="${[filters:filterset?filterset*.toMap():[],currentFilter:filterName]}"/>
+
+      <g:javascript>
+
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: appLinks.menuNowrunningAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+          },
+          query:{
+              jobIdFilter:'!null'
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning:false,
+                allowAutoRefresh: false
+            }
+    }
+})
+      </g:javascript>
+      <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
 
@@ -354,27 +401,6 @@
 
      <span class="label label-secondary has_tooltip" title="${totalauthorized} Jobs Found"><g:enc>${totalauthorized}</g:enc></span>
 
-%{--    <g:if test="${ wasfiltered && paginateParams.groupPath && !filterName   }">--}%
-
-%{--            <g:if test="${paginateParams.groupPath.indexOf('/')>0}">--}%
-%{--                <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>--}%
-%{--                <g:set var="newparams" value="${new HashMap(paginateParams)}"/>--}%
-%{--                %{--}%
-%{--                    newparams['groupPath']=uplevel--}%
-%{--                }%--}%
-%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="Parent" params="${newparams+[project:params.project]}">--}%
-%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
-
-%{--                </g:link>--}%
-%{--            </g:if>--}%
-%{--            <g:else>--}%
-%{--                <g:link controller="menu" action="jobs" class="btn btn-simple btn-secondary " title="View All Jobs" params="[project: params.project]">--}%
-%{--                    <i class="glyphicon glyphicon-chevron-left"></i>--}%
-%{--                    All--}%
-%{--                </g:link>--}%
-%{--            </g:else>--}%
-
-%{--    </g:if>--}%
 
       <g:if test="${wasfiltered && wasfiltered.contains('groupPath') && !filterName}">
         <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:paginateParams.groupPath,project:params.project]"/>
@@ -623,10 +649,17 @@
             <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h3>
           </div>
       </div>
-      <div class="card"  id="activity_section" data-ko-bind="history">
-        <div class="card-content">
-          <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
-        </div>
+      <div class="card"  id="activity_section" >
+
+            <div class="card-content">
+
+                <div  class="_history_content vue-project-activity">
+
+                    <activity-list :event-bus="EventBus"></activity-list>
+
+                </div>
+
+            </div>
       </div>
     </div>
   </div>

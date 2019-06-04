@@ -48,6 +48,9 @@
         }
         var now = moment();
         var ms = now.diff(time);
+        if(ms < 0 ){
+            ms = -ms
+        }
         var since = moment.duration(ms);
         if (since.asDays() < 1 && now.month() == time.month()) {
             //same date

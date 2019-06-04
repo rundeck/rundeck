@@ -256,8 +256,11 @@ class DbStorageServiceTests {
         assertEquals('abc1', res1.contents.getInputStream().text)
     }
     void testCreateResource_exists() {
-        assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        Storage.withNewTransaction {
+            assertNotNull new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        }
+
         try {
             def res1 = service.createResource(null,'abc', StorageUtil.withStream(bytes('abc'),[abc:'xyz3']))
             fail("expected error")
@@ -391,11 +394,17 @@ class DbStorageServiceTests {
     }
 
     void testUpdateResource_ok() {
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull storage1
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
-        def res1 = service.updateResource(null,'abc', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
+        def storage1
+        def res1
+        Storage.withNewTransaction {
+            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+            assertNotNull storage1
+            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        }
+
+        res1 = service.updateResource(null, 'abc', StorageUtil.withStream(bytes('abc'), [abc: 'xyz3']))
         assertNotNull(res1)
+
         assertEquals('abc', res1.path.path)
         assertEquals(false, res1.directory)
         assertEquals([abc: 'xyz3'], res1.contents.meta)
@@ -414,12 +423,18 @@ class DbStorageServiceTests {
         }
     }
     void testUpdateResource_ok_ns() {
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull storage1
-        def storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
-                storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull storage2
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+
+        def storage1
+        def storage2
+        Storage.withNewTransaction {
+            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+            assertNotNull storage1
+            storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
+                    storageMeta: [abc: 'xyz1']).save(true)
+
+            assertNotNull storage2
+            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        }
         def res1 = service.updateResource('other','abc', StorageUtil.withStream(bytes('abc3'), [abc: 'xyz3']))
         assertNotNull(res1)
         assertEquals('abc', res1.path.path)
@@ -473,9 +488,12 @@ class DbStorageServiceTests {
     }
 
     void testDeleteResource_ok() {
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull storage1
-        assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        def storage1
+        Storage.withNewTransaction {
+            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+            assertNotNull storage1
+            assertNotNull new Storage(data: 'abc2'.bytes, name: 'abc', dir: 'xyz', storageMeta: [abc: 'xyz2']).save(true)
+        }
         def res1 = service.deleteResource(null,'abc')
         assertTrue(res1)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')
@@ -483,11 +501,15 @@ class DbStorageServiceTests {
         assertNull(Storage.get(storage1.id))
     }
     void testDeleteResource_ns_ok() {
-        def storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
-        assertNotNull storage1
-        def storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
-                storageMeta: [abc: 'xyz2']).save(true)
-        assertNotNull storage2
+        def storage1
+        def storage2
+        Storage.withNewTransaction {
+            storage1 = new Storage(data: 'abc1'.bytes, name: 'abc', dir: '', storageMeta: [abc: 'xyz1']).save(true)
+            assertNotNull storage1
+            storage2 = new Storage(namespace: 'other', data: 'abc2'.bytes, name: 'abc', dir: '',
+                    storageMeta: [abc: 'xyz2']).save(true)
+            assertNotNull storage2
+        }
         def res1 = service.deleteResource('other','abc')
         assertTrue(res1)
         def store1 = Storage.findByNamespaceAndDirAndName(null,'', 'abc')

@@ -121,4 +121,10 @@ public interface Property {
      * @return a map of optional rendering options for the UI
      */
     public Map<String, Object> getRenderingOptions();
+
+    /**
+     * @return if true, variable that cannot be expanded will be replaced by a blank string
+     * otherwise unexpanded variables will be left as is
+     */
+    public default boolean isBlankIfUnexpandable() { return true; }
 }

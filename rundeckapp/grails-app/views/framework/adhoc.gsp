@@ -24,10 +24,13 @@
   <g:set var="projectName" value="${params.project ?: request.project}"/>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${projectLabel}</g:enc></title>
-    <asset:javascript src="executionState.js"/>
+
+  <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+  <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+
+  <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="pagehistory.js"/>
     <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
@@ -45,6 +48,60 @@
             adhocKillAllowed:auth.adhocAllowedTest(action: AuthConstants.ACTION_KILL,project:params.project)
     ]}"/>
     <g:jsMessages code="Node,Node.plural"/>
+
+    <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+    <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
+
+  <g:javascript>
+
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: appLinks.menuNowrunningAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+    },
+    query:{
+        jobIdFilter:'null'
+      },
+      filterOpts: {
+          showFilter: false,
+          showRecentFilter: true,
+          showSavedFilter: false
+      },
+      runningOpts: {
+          loadRunning:false,
+          allowAutoRefresh: false
+      }
+}
+})
+  </g:javascript>
+  <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 <body>
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
@@ -297,7 +354,7 @@
 
     <div class="col-xs-12">
 
-      <div id="activity_section" data-ko-bind="history">
+      <div >
           <div class="card card-plain">
             <div class="card-header">
               <h3 class="card-title">
@@ -305,16 +362,18 @@
               </h3>
             </div>
           </div>
-          <div class="card">
-            <div class="card-content">
-              <g:render template="/reports/activityLinks" model="[filter         : [
-                      jobIdFilter: 'null',
-                      userFilter: session.user,
-                      projFilter: params.project ?: request.project
-              ],
-                                                                  knockoutBinding: true, showTitle: true]"/>
+        <div class="card"  id="activity_section" >
+
+          <div class="card-content">
+
+            <div  class="_history_content vue-project-activity">
+
+              <activity-list :event-bus="EventBus"></activity-list>
+
             </div>
+
           </div>
+        </div>
 
       </div>
 

@@ -168,6 +168,49 @@ public class PropertyUtil {
                                    final Map<String, Object> renderingOptions,
                                    final boolean dynamicValues
     ) {
+        return forType(
+                type,
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                values,
+                null,
+                validator,
+                scope,
+                renderingOptions,
+                false,
+                true
+        );
+    }
+    /**
+     * @param type type
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param values optional values list
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return a property instance for a particular simple type
+     */
+    public static Property forType(final Property.Type type,
+                                   final String name,
+                                   final String title,
+                                   final String description,
+                                   final boolean required,
+                                   final String defaultValue,
+                                   final List<String> values,
+                                   final Map<String, String> labels,
+                                   final PropertyValidator validator,
+                                   final PropertyScope scope,
+                                   final Map<String, Object> renderingOptions,
+                                   final boolean dynamicValues,
+                                   final boolean blankIfUnexpandable
+    ) {
         switch (type) {
             case Integer:
                 return integer(name, title, description, required, defaultValue, validator, scope, renderingOptions);
@@ -211,7 +254,7 @@ public class PropertyUtil {
                         renderingOptions
                 );
             default:
-                return string(name, title, description, required, defaultValue, validator, scope, renderingOptions);
+                return string(name, title, description, required, defaultValue, validator, scope, renderingOptions,blankIfUnexpandable);
         }
     }
 
@@ -281,7 +324,27 @@ public class PropertyUtil {
                                   final boolean required,
                                   final String defaultValue, final PropertyValidator validator,
                                   final PropertyScope scope, final Map<String, Object> renderingOptions) {
-        return new StringProperty(name, title, description, required, defaultValue, validator, scope, renderingOptions);
+        return string(name, title, description, required, defaultValue, validator, scope, renderingOptions,true);
+    }
+
+    /**
+     *
+     * @param name name
+     * @param title optional title
+     * @param description optional description
+     * @param required true if required
+     * @param defaultValue optional default value
+     * @param validator validator
+     * @param scope resolution scope
+     * @param renderingOptions options
+     * @return Return a string property
+     */
+    public static Property string(final String name, final String title, final String description,
+                                  final boolean required,
+                                  final String defaultValue, final PropertyValidator validator,
+                                  final PropertyScope scope, final Map<String, Object> renderingOptions,
+                                  final boolean blankIfUnexpandable) {
+        return new StringProperty(name, title, description, required, defaultValue, validator, scope, renderingOptions, blankIfUnexpandable);
     }
 
     /**
@@ -805,8 +868,9 @@ public class PropertyUtil {
                               final String defaultValue,
                               final PropertyValidator validator,
                               final PropertyScope scope,
-                              final Map<String, Object> renderingOptions) {
-            super(name, title, description, required, defaultValue, validator, scope, renderingOptions);
+                              final Map<String, Object> renderingOptions,
+                              final boolean blankIfUnexpandable) {
+            super(name, title, description, required, defaultValue, validator, scope, renderingOptions,blankIfUnexpandable);
         }
 
         public Type getType() {

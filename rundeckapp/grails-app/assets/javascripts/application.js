@@ -44,7 +44,11 @@ function setText(elem, text) {
 }
 
 function appendText(elem, text) {
-  $(elem).appendChild(document.createTextNode(text));
+  if(typeof(jQuery)!=='undefined'){
+    jQuery(elem).append(document.createTextNode(text))
+  }else if(typeof($)!=='undefined'){
+    $(elem).appendChild(document.createTextNode(text));
+  }
 }
 /**
  * take escaped text and unescape html encoding
@@ -97,129 +101,122 @@ function toggleDisclosure(id, iconid, closeUrl, openUrl) {
 
 
 function myToggleClassName(elem, name) {
-  if ($(elem).hasClassName(name)) {
-    $(elem).removeClassName(name);
-  } else {
-    $(elem).addClassName(name);
-  }
+
+    jQuery(elem).toggleClass(name)
+
 }
 
 
 var Expander = {
   toggle: function (elem, contain, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+
     var holder;
     var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
       if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     } else {
-      if (e.hasClassName('expandComponentControl')) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
         if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
     var value = false;
-    if (content) {
-      value = !Element.visible(content);
+    if (content.length) {
+      value = !content.is(':visible')
     } else if (icnh) {
-      var icn = icnh.down('.glyphicon');
+      var icn = icnh.find('.glyphicon')
       if (icn) {
-        value = icn.hasClassName('glyphicon-chevron-down');
+        value = icn.hasClass('glyphicon-chevron-down')
       }
     }
     Expander.setOpen(elem, contain, value, expression);
     return value;
   },
   setOpen: function (elem, contain, value, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
-    var holder;
-    var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
-      if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+    var holder = []
+    var icnh = []
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
+      if (holder.length) {
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     }
-    if (!holder || !icnh) {
-      if (e.hasClassName('expandComponentControl')) {
+    if (!holder.length || !icnh.length) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
-        if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+        if (icnh.length) {
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
-    if (content) {
+    if ( content.length) {
       if (value) {
-        Element.show(content);
+        content.show()
       } else {
-        Element.hide(content);
+        content.hide()
       }
       if (null != expression) {
         //also set open related expression match
-        $$(expression).each(function (e) {
+        jQuery(expression).each(function (i, e) {
           if (value) {
-            Element.show(e);
+            jQuery(e).show()
           } else {
-            Element.hide(e);
+            jQuery(e).hide()
           }
         });
       }
     }
-    if (holder) {
+    if (holder.length) {
       if (value) {
-        Element.addClassName(holder, "expanded");
+        holder.addClass("expanded")
       } else {
-        Element.removeClassName(holder, "expanded");
+        holder.removeClass("expanded")
       }
-    } else if (icnh && content) {
+    } else if (icnh.length && content.length) {
       if (value) {
-        Element.addClassName(icnh, "expanded");
-        Element.removeClassName(icnh, "closed");
+        icnh.addClass("expanded")
+        icnh.removeClass("closed")
       } else {
-        Element.removeClassName(icnh, "expanded");
-        Element.addClassName(icnh, "closed");
+        icnh.removeClass("expanded")
+        icnh.addClass("closed")
       }
     }
-    if (icnh) {
-      var icn = icnh.down('.glyphicon');
-      if (icn) {
+    if (icnh.length) {
+      var icn = icnh.find('.glyphicon')
+      if (icn.length) {
         if (value) {
-          icn.addClassName('glyphicon-chevron-down');
-          icn.removeClassName('glyphicon-chevron-right');
+          icn.addClass('glyphicon-chevron-down')
+          icn.removeClass('glyphicon-chevron-right')
         } else {
-          icn.addClassName('glyphicon-chevron-right');
-          icn.removeClassName('glyphicon-chevron-down');
+          icn.addClass('glyphicon-chevron-right')
+          icn.removeClass('glyphicon-chevron-down')
         }
       }
     }
@@ -237,13 +234,24 @@ function _isIe(version) {
 }
 
 
+function stopEvent (e) {
+  if (e.preventDefault) {
+    e.preventDefault()
+    e.stopPropagation()
+  } else {
+    e.returnValue = false
+    e.cancelBubble = true
+  }
+}
+
 /**
  * keypress handler which disallows Return key
  * @param e event
  */
 function noenter(e) {
   if (e && e.keyCode == Event.KEY_RETURN) {
-    Event.stop(e);
+
+    stopEvent(e)
   }
   return !(e && e.keyCode == Event.KEY_RETURN);
 }
@@ -256,7 +264,7 @@ function noenter(e) {
 function nochars(chars, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0);
 }
@@ -265,12 +273,11 @@ function _applyAce(e, height) {
   if (_isIe(8) || _isIe(7) || _isIe(6)) {
     return;
   }
-  $(e).setStyle({
-    width: "100%",
-    height: height != null ? height : "200px"
-  });
-  $(e).addClassName('ace_editor');
-  var editor = ace.edit(e.identify());
+  jQuery(e).width( "100%")
+      .height( height != null ? height : "200px");
+
+  jQuery(e).addClass('ace_editor');
+  var editor = ace.edit(generateId(e));
   editor.setTheme("ace/theme/" + (jQuery(e).data('aceSessionTheme') || 'chrome'));
   editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
   editor.setReadOnly(true);
@@ -486,7 +493,7 @@ function controlkeycode(e) {
 function onlychars(regex, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && !String.fromCharCode(kCode).match(regex)) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
@@ -500,6 +507,23 @@ function fireWhenReady(elem, func) {
 }
 
 /**
+ * Generate a URL query string
+ * @param params
+ * @returns {string}
+ * @private
+ */
+function _genUrlQuery (params) {
+  var urlparams = []
+  if (typeof (params) == 'string') {
+    urlparams = [params]
+  } else if (typeof (params) == 'object') {
+    for (var e in params) {
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]))
+    }
+  }
+  return urlparams.join("&")
+}
+/**
  * Generate a URL
  * @param url
  * @param params
@@ -507,15 +531,8 @@ function fireWhenReady(elem, func) {
  * @private
  */
 function _genUrl(url, params) {
-  var urlparams = [];
-  if (typeof (params) == 'string') {
-    urlparams = [params];
-  } else if (typeof (params) == 'object') {
-    for (var e in params) {
-      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
-    }
-  }
-  return url + (urlparams.length ? ((url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
+  let paramString = _genUrlQuery(params)
+  return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
 }
 /**
  * Generate a link
@@ -1177,6 +1194,14 @@ function _initPopoverMousedownCatch (sel, allowed, callback) {
     }
   })
 }
+function _initStopPropagationOnClick(){
+  jQuery('body').on('click',function(event){
+    let closest = jQuery(event.target).closest('[data-click-stop-propagation]')
+    if(closest.length>0){
+      event.stopPropagation()
+    }
+  });
+}
 (function () {
   window.markdeepOptions = {
     mode: 'script',
@@ -1199,6 +1224,7 @@ function _initPopoverMousedownCatch (sel, allowed, callback) {
       _initCollapseExpander();
       _initAnsiToggle();
       _initMarkdeep();
+      _initStopPropagationOnClick();
     });
   }
 })();
@@ -1237,8 +1263,8 @@ var _setLoading = function (element, text) {
   } else {
     var sp = new Element('span');
     sp.addClassName('loading');
-    var img = new Element('img');
-    img.src = appLinks.iconSpinner;
+    var img = new Element('i');
+    img.addClassName('fas fa-spinner fa-pulse')
     $(sp).appendChild(img);
     appendText(sp, ' ' + text);
     clearHtml(element);

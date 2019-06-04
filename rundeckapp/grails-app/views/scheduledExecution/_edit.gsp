@@ -46,6 +46,10 @@
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
+<g:embedJSON id="jobDefinitionJSON"
+             data="${[jobName:scheduledExecution?.jobName,groupPath:scheduledExecution?.groupPath, uuid: scheduledExecution?.uuid,
+                     href:scheduledExecution?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
+             ]}"/>
 
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
@@ -55,7 +59,7 @@
 
   </div>
 
-  <div class="tab-pane active" id="tab_details">
+  <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
   <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
@@ -69,6 +73,7 @@
                            value="${scheduledExecution?.jobName}"
                            id="schedJobName"
                            class="form-control"
+                  data-bind="value: jobName"
               />
               <g:hasErrors bean="${scheduledExecution}" field="jobName">
                   <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
@@ -88,21 +93,29 @@
                       </span>
                   </g:hasErrors>
                   <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
+                      data-bind="value: groupPath"
                          id="schedJobGroup"
                       class="form-control"
                       placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
                   />
 
                   <span class="input-group-btn">
-                      <span class="btn btn-default" data-loading-text="Loading..."
-                            id="groupChooseBtn" title="Click on the name of the group to use">
-                          <g:message code="choose.action.label" /> <i class="caret"></i>
+                      <span class="btn btn-default"
+                            data-toggle="modal"
+                            data-target="#groupChooseModal"
+                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                          <g:message code="choose.action.label" />
                       </span>
                   </span>
               </div>
 
 
           </div>
+          <g:render template="/common/modal" model="[modalid:'groupChooseModal',titleCode:'job.edit.groupPath.choose.text']">
+                <div id="groupChooseModalContent">
+
+                </div>
+          </g:render>
       </div>
 
           %{--description--}%
@@ -412,18 +425,24 @@
               <g:message code="matched.nodes.prompt" />
           </label>
 
-          <div class=" col-sm-10  ">
+          <div class=" col-sm-10  container-fluid">
 
-              <div class="well well-sm embed matchednodes">
+              <div class="well well-sm matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
-                          <span class="text-primary" data-bind="if: loaded">
+                          <span class="text-info" data-bind="if: loaded() && !loading()">
                               <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
                                       code="count.nodes.matched"/></span>
                           </span>
-                          <span data-bind="visible: loading() " class="text-info">
+                          <span data-bind="visible: loading() " class="text-muted">
                               <i class="glyphicon glyphicon-time"></i>
                               <g:message code="loading.matched.nodes"/>
+                          </span>
+
+                          <span data-bind="if: total()>maxShown()">
+                              <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary">
+                                  <g:message code="count.nodes.shown"/>
+                              </span>
                           </span>
                       </div>
 
@@ -440,8 +459,10 @@
                       </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO"
-                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
+                      <div class="col-sm-12 container-fluid">
+                          <g:render template="/framework/nodesEmbedKO"
+                                    model="[showLoading: false, showTruncated: false, showExcludeFilterLinks: true]"/>
+                      </div>
                   </div>
               </div>
           </div>
@@ -945,21 +966,14 @@
 
           <div class="${fieldColSize}">
               <div class="radio radio-inline">
-                <g:radio value="summary" name="defaultTab"
-                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                <g:radio value="nodes" name="defaultTab"
+                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab in ['summary','monitor','nodes']}"
                          id="tabSummary"/>
                 <label for="tabSummary">
-                    <g:message code="execution.page.show.tab.Summary.title"/>
+                    <g:message code="execution.page.show.tab.Nodes.title"/>
                 </label>
               </div>
-              <div class="radio radio-inline">
-                <g:radio name="defaultTab" value="monitor"
-                         checked="${scheduledExecution.defaultTab=='monitor'}"
-                         id="tabMonitor"/>
-                <label for="tabMonitor">
-                    <g:message code="report"/>
-                </label>
-              </div>
+
               <div class="radio radio-inline">
                 <g:radio name="defaultTab" value="output"
                          checked="${scheduledExecution.defaultTab=='output'}"
@@ -1110,7 +1124,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         nodefilterLinkId:root,
                         project: selFrameworkProject,
@@ -1137,7 +1151,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         maxShown:100,
                         nodefilterLinkId: '#nodegroupitem',
@@ -1163,6 +1177,9 @@ function getCurSEID(){
                 nodeFilter.updateMatchedNodes();
             })
             ;
+            const jobDef = loadJsonData('jobDefinitionJSON')
+            window.jobeditor = new JobEditor(jobDef)
+            initKoBind(null,{jobeditor:jobeditor})
         }
 
         jQuery(pageinit);

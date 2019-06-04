@@ -60,7 +60,8 @@
               <tmpl:editProjectForm/>
             </div>
             <div class="card-footer">
-              <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
+              <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default"/>
+              <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-primary"/>
             </div>
           </div>
         </g:form>

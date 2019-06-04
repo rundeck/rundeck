@@ -149,8 +149,10 @@ var VersionIdentity=function(data){
             icon,
             self.version.versionData['uuid'].substring(0, uuidSize)
         ].join('-').toLowerCase();
-        var name=self.version.serverName?self.version.serverName:'';
-        var shortname = self.version.versionData['uuid'].substring(0, uuidSize);
+
+        var shortname = domdata['uuidLabelNone']?'':self.version.versionData['uuid'].substring(0, uuidSize);
+        var truncname = self.version.versionData['uuid'].substring(0, domdata && domdata['nameTruncated']||0);
+        var name=domdata.nameTruncated?truncname:self.version.serverName?self.version.serverName:'';
         var glyphicon= jQuery('<span></span>');
         var ispan = jQuery('<span></span>');
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
@@ -162,25 +164,21 @@ var VersionIdentity=function(data){
 
         var span=jQuery('<span></span>')
                 .attr('title',codename+' / '+data.serverUuid)
-                //.addClass('version-icon')
-                .css({
-                    //'color': color
-                    //'text-shadow': '1px 1px 3px #333333'
-                })
-            .append(
-                namestyle
-                    .append(nametext)
-            ).append(
-                idstyle
-                    .append(glyphicon)
-                    .append(' '+(self.version.serverName?shortname:codename))
-            )
-            //.append(nodeicon)
+
+                .append(
+                    namestyle
+                        .append(nametext)
+                ).append(
+                    idstyle
+                        .append(glyphicon)
+                        .append(' '+(self.version.serverName?shortname:codename))
+                )
 
             .append(jQuery('<span></span>').text(' '))
             ;
-            jQuery(dom).append(span);
-            //jQuery(dom).append(jQuery('<a></a>').attr('href','/menu/systemInfo').append(span));
+
+        jQuery(dom).append(span);
+
     };
 };
 (function(){

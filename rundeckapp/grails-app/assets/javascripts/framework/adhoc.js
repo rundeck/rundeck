@@ -19,7 +19,6 @@
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require workflow
-//= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
 //= require executionStateKO
@@ -114,7 +113,9 @@ function startRunFollow(data) {
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);
-                ko.applyBindings(nodeflowvm,jQuery('#runcontent .executionshow')[0]);
+                jQuery('#runcontent .executionshow').each(function(index,el){
+                    ko.applyBindings(nodeflowvm,el);
+                })
             } else {
                 requestFailure(jqxhr);
             }
@@ -132,7 +133,6 @@ function continueRunFollow(data) {
     var followControl = new FollowControl(data.id, 'runcontent', {
         workflow:workflow,
         parentElement: 'commandPerform',
-        viewoptionsCompleteId: 'viewoptionscomplete',
         cmdOutputErrorId: 'cmdoutputerror',
         outfileSizeId: 'outfilesize',
         extraParams: pageParams.disableMarkdown,
@@ -260,14 +260,6 @@ function init() {
         }
     });
 
-    //history tabs binding
-    var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-    // ko.applyBindings(history, document.getElementById('activity_section'));
-    setupActivityLinks('activity_section', history);
-    //if empty query, automatically load first activity_link
-    if (pageParams.emptyQuery == 'true') {
-        history.activateNowRunningTab();
-    }
 
     //setup node filters knockout bindings
     var filterParams = loadJsonData('filterParamsJSON');
@@ -310,6 +302,6 @@ function init() {
         adhocCommand.loadRecentCommands();
     });
 
-    initKoBind(null, {nodeFilter: nodeFilter, history: history, adhocCommand: adhocCommand})
+    initKoBind(null, {nodeFilter: nodeFilter, adhocCommand: adhocCommand})
 }
 jQuery(document).ready(init);

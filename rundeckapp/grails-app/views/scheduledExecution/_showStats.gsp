@@ -13,15 +13,15 @@
 - See the License for the specific language governing permissions and
 - limitations under the License.
 --}%
-<div class="jobstats ">
+<div class="jobstats row">
 
     <div class="col-xs-12 col-sm-4 job-stats-item">
 
+        <span class="job-stats-value" id="jobstat_execcount_total" data-execcount="${execCount}">
+            <g:formatNumber number="${execCount}"/>
+        </span>
         <span class="text-table-header"><g:message code="Execution.plural"/></span>
 
-        <span class="job-stats-value" id="jobstat_execcount_total" data-execcount="${total}">
-            <g:formatNumber number="${total}"/>
-        </span>
 
     </div>
     <g:if test="${lastrun || reflastrun}">
@@ -35,27 +35,34 @@
             <g:set var="successindex" value="${ratelevels.findIndexOf { it <= (successrate) }}"/>
             <g:set var="successcolor"
                    value="${successindex >= 0 ? ratecolors[successindex] : ratecolors[-1]}"/>
-            <span class="text-table-header"><g:message code="success.rate"/></span>
 
             <span class="job-stats-value ${successcolor}" data-successrate="${successrate}">
                 <g:formatNumber number="${successrate}" type="percent"/>
 
             </span>
+
+            <span class="text-table-header"><g:message code="success.rate"/></span>
+
         </div>
     </g:if>
 
 
-    <g:if test="${scheduledExecution.getAverageDuration() > 0}">
 
         <div class="col-xs-12 col-sm-4 job-stats-item">
             <g:set var="avgduration" value="${scheduledExecution.getAverageDuration()}"/>
 
-            <span class="text-table-header"><g:message code="average.duration"/></span>
 
             <span class="job-stats-value" data-avgduration="${avgduration}">
-                <g:timeDuration time="${avgduration}"/>
+                <g:if test="${avgduration>0}">
+                    <g:timeDuration time="${avgduration}"/>
+                </g:if>
+                <g:else>
+                    <span class="text-muted">
+                        -
+                    </span>
+                </g:else>
             </span>
+            <span class="text-table-header"><g:message code="average.duration"/></span>
         </div>
-    </g:if>
 
 </div>

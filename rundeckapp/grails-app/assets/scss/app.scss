@@ -38,6 +38,12 @@
 @import "paper/animated-buttons";
 @import "paper/switch";
 
+// Font Awesome 5
+@import "fontawesome/fontawesome";
+@import "fontawesome/regular";
+@import "fontawesome/solid";
+@import "fontawesome/brands";
+
 //SCSS for Pages
 @import "paper/pages";
 
@@ -57,6 +63,7 @@
 @import "custom/forms";
 @import "custom/flexbox";
 @import "custom/buttons";
+@import "custom/dropdown";
 @import "custom/expand";
 @import "custom/execution-page";
 @import "custom/input-group";
@@ -94,7 +101,7 @@
 @import "pages/page_storage";
 @import "pages/nodes";
 @import "pages/jobs";
-
+@import "pages/four-oh-four";
 
 // COMPONENTS
 @import "custom/community-news-sidebar";
