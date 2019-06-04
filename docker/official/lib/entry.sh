@@ -32,6 +32,11 @@ echo "rundeck.server.uuid = ${RUNDECK_SERVER_UUID}" > ${REMCO_TMP_DIR}/framework
 cat ${REMCO_TMP_DIR}/framework/* >> etc/framework.properties
 cat ${REMCO_TMP_DIR}/rundeck-config/* >> server/config/rundeck-config.properties
 
+# Avoid secrets propagation to local jobs
+unset RUNDECK_JAAS_LDAP_BINDPASSWORD
+unset RUNDECK_DATABASE_PASSWORD
+unset RUNDECK_DATABASE_USERNAME
+
 exec java \
     -XX:+UnlockExperimentalVMOptions \
     -XX:MaxRAMFraction="${JVM_MAX_RAM_FRACTION}" \
