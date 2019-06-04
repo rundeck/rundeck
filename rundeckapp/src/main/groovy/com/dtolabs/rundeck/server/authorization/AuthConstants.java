@@ -41,6 +41,7 @@ public class AuthConstants {
     public static final String ACTION_RUN = "run";
     public static final String ACTION_KILL = "kill";
     public static final String ACTION_ADMIN = "admin";
+    public static final String ACTION_POST = "post";
     public static final String ACTION_REFRESH = "refresh";
     public static final String ACTION_RUNAS = "runAs";
     public static final String ACTION_KILLAS = "killAs";
@@ -73,6 +74,7 @@ public class AuthConstants {
     public static final String TYPE_USER = "user";
     public static final String TYPE_STORAGE = "storage";
     public static final String TYPE_PLUGIN = "plugin";
+    public static final String TYPE_WEBHOOK = "webhook";
 
     private static Map<String, String> resType(String type) {
         return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));
@@ -83,6 +85,7 @@ public class AuthConstants {
     public static final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
     public static final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
     public static final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
+    public static final Map<String, String> RESOURCE_TYPE_WEBHOOK = resType(TYPE_WEBHOOK);
     public static final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(AuthorizationUtil
             .resource(TYPE_ADHOC));
 }

@@ -2,26 +2,36 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.NoSuchResourceException
+import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import rundeck.Webhook
 
 class WebhookController {
+    private static final ObjectMapper mapper = new ObjectMapper()
     def webhookService
     def frameworkService
 
     def index() { }
 
-    def add() {
-        def msg = webhookService.createNewHook(request.JSON)
+    def save() {
+        def msg = [:]
+        try {
+            msg = webhookService.saveHook(request.JSON)
+        } catch(Exception ex) {
+            msg.err = ex.message
+        }
         render msg as JSON
     }
 
     def remove() {
         try {
-            def output = webhookService.delete(params.name)
+            def output = webhookService.delete(params.id.toLong())
             render output as JSON
         } catch(Exception ex) {
             response.status = 500
@@ -31,27 +41,33 @@ class WebhookController {
 
     }
 
-    def removeAll() {
-        webhookService.deleteAll()
-        render new HashMap([msg:"deleted all"]) as JSON
+    def list() {
+        def hooks = Webhook.findAll().collect {
+            [id:it.id,name:it.name,eventPlugin:it.eventPlugin,config:mapper.readValue(it.pluginConfigurationJson,HashMap)]
+        }
+        render hooks as JSON
     }
 
-    def list() {
-        render Webhook.findAll() as JSON
+    def webhookPlugins() {
+        render webhookService.listWebhookPlugins() as JSON
     }
 
     def post() {
-        if (!authorized(WEBHOOK_RESOURCE,"post")) {
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!authorized(authContext, AuthConstants.RESOURCE_TYPE_WEBHOOK, AuthConstants.ACTION_POST)) {
             specifyUnauthorizedError()
             return
         }
-        try {
-            frameworkService.getFrameworkProject(params.project)
-        } catch(NoSuchResourceException ex) {
-            response.setStatus(400)
-            def err = [error:ex.message]
-            render err as JSON
-            return
+        if(params.project) {
+            try {
+                frameworkService.authorizeProjectResource(authContext,AuthConstants.RE)
+                frameworkService.getFrameworkProject(params.project)
+            } catch (NoSuchResourceException ex) {
+                response.setStatus(400)
+                def err = [error: ex.message]
+                render err as JSON
+                return
+            }
         }
 
         //TODO: authorize with API token
@@ -63,10 +79,16 @@ class WebhookController {
         whkdata.timestamp = System.currentTimeMillis()
         whkdata.sender = request.remoteAddr
         whkdata.project = params.project
+        whkdata.contentType = request.contentType
         whkdata.data = request.inputStream
 
-        webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata)
-        render new HashMap([msg:"ok"]) as JSON
+        try {
+            webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext)
+            render new HashMap([msg: "ok"]) as JSON
+        } catch(WebhookEventException wee) {
+            response.status = 400
+            render new HashMap([err:wee.message]) as JSON
+        }
     }
 
     private def specifyUnauthorizedError() {
@@ -76,14 +98,13 @@ class WebhookController {
     }
 
     @PackageScope
-    boolean authorized(Map resourceType = ADMIN_RESOURCE,String action = "admin") {
-        List authorizedActions = ["admin"]
-        if(action != "admin") authorizedActions.add(action)
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+    boolean authorized(AuthContext authContext, Map resourceType = ADMIN_RESOURCE,String action = AuthConstants.ACTION_ADMIN) {
+        List authorizedActions = [AuthConstants.ACTION_ADMIN]
+        if(action != AuthConstants.ACTION_ADMIN) authorizedActions.add(action)
         frameworkService.authorizeApplicationResourceAny(authContext,resourceType,authorizedActions)
 
     }
 
-    private static Map WEBHOOK_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("webhook"))
     private static Map ADMIN_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("admin"))
+    private static Map PROJECT_RESOURCE = Collections.unmodifiableMap(AuthorizationUtil.resourceType("project"))
 }

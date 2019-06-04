@@ -13,10 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.plugins.webhook;
+package com.dtolabs.rundeck.core.webhook;
 
-import com.dtolabs.rundeck.core.webhook.WebhookEventException;
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext;
+import org.rundeck.app.spi.Services;
 
-public interface WebhookEventPlugin {
-    public void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
+public class WebhookEventContextImpl implements WebhookEventContext {
+
+    private final Services services;
+
+    public WebhookEventContextImpl( final Services services) {
+        this.services = services;
+    }
+
+    @Override
+    public Services getServices() {
+        return services;
+    }
 }

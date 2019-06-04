@@ -13,10 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.plugins.webhook;
+package com.dtolabs.rundeck.core.webhook;
 
-import com.dtolabs.rundeck.core.webhook.WebhookEventException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 
-public interface WebhookEventPlugin {
-    public void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
+public class WebhookEventException extends Exception {
+    protected FailureReason failureReason;
+
+    public WebhookEventException(String msg, FailureReason reason) {
+        super(msg);
+        this.failureReason = reason;
+    }
+
+    public WebhookEventException(Throwable ex, String msg, FailureReason reason) {
+        super(msg,ex);
+        this.failureReason = reason;
+    }
+
+    public FailureReason getFailureReason() {
+        return failureReason;
+    }
 }
