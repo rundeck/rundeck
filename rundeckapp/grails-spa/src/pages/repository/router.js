@@ -7,27 +7,30 @@ import UploadPluginView from './views/UploadPluginView'
 
 Vue.use(Router)
 
+var ctx = window._rundeck.context;
+if(ctx !== "/") ctx += "/";
+
 export default new Router({
   mode: 'history',
   linkExactActiveClass: 'is-active',
   routes: [{
-      path: '/artifact/index/repositories',
+      path: ctx+'artifact/index/repositories',
       name: 'repositories',
       component: PluginRepositoryView
     },
     {
-      path: '/artifact/index/configurations',
+      path: ctx+'artifact/index/configurations',
       name: 'configurations',
       component: PluginConfigurationView
     },
     {
-      path: '/artifact/index/upload',
+      path: ctx+'artifact/index/upload',
       name: 'upload',
       component: UploadPluginView
     },
     {
       path: '*',
-      redirect: '/artifact/index/configurations'
+      redirect: ctx+'artifact/index/configurations'
     }
   ]
 });
