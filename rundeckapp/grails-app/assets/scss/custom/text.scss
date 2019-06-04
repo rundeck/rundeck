@@ -71,3 +71,10 @@
 .colon-after::after {
   content: ':'
 }
+
+pre.snippet .line{
+  display:block;
+  &.error{
+    color: red;
+  }
+}
