@@ -176,7 +176,7 @@ class StateMapping {
         steps.each{step->
             def stepStateForCtx = stepStateForCtx(map, StateUtils.stepIdentifierFromString(step.stepctx),node)
             if(stepStateForCtx) {
-                def found = stepStateForCtx.nodeStates?.get(node)
+                def found = stepStateForCtx.nodeStates?.containsKey(node) ? stepStateForCtx.nodeStates?.get(node) : null
                 if (found) {
                     def newfound=new HashMap(found)
                     newfound.stepctx = step.stepctx
