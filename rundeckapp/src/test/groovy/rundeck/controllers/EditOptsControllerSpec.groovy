@@ -618,4 +618,17 @@ class EditOptsControllerSpec extends Specification {
         null == option.values || 0 == option.values.size()
         option.valuesList == null
     }
+
+    def "enforce allowed values with option plugin is valid"() {
+
+        when:
+        Option opt = new Option()
+        opt.name = "opt1"
+        opt.optionValuesPluginType = "optionValues"
+        opt.enforced = true
+        def result = controller._validateOption(opt)
+
+        then:
+        result.isEmpty()
+    }
 }
