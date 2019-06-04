@@ -26,8 +26,8 @@
                 </g:if>
 
                 <input type="hidden"
-                       name="extra.debug"
-                       data-bind="value: debug"
+                       name="extra.loglevel"
+                       data-bind="value: loglevel"
                        id="extra_loglevel"
 
                 />

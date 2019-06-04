@@ -20,6 +20,7 @@
 
 .hover-reveal-hidden:hover .visibility-hidden {
   visibility: visible;
+  transition-delay: 0s;
 }
 
 .as-inline-block {
@@ -69,4 +70,11 @@
 
 .colon-after::after {
   content: ':'
+}
+
+pre.snippet .line{
+  display:block;
+  &.error{
+    color: red;
+  }
 }

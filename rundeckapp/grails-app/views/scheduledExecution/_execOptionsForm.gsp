@@ -128,7 +128,7 @@
                                    value="cherrypick"
                                    data-bind="checked: nodeOverride"/>
                             <label for="cherrypickradio">
-                                Select Nodes
+                                <g:message code="select.nodes" />
                             </label>
                         </div>
 

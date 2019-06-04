@@ -69,3 +69,41 @@
     display: none;
   }
 }
+
+.job_list_row, .job_list_group_header {
+  clear: both;
+}
+
+.job_list_group_header {
+
+  border-radius: 3px;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+
+  .jobgroupexpand {
+    padding: 3px;
+    display: block;
+    //color: #454545;
+    //text-decoration: underline;
+  }
+}
+
+.expandComponentHolder.expanded > .job_list_group_header > .jobgroupexpand {
+  //todo: emphasize expanded groups. but, expander widget doesn't correctly set expanded state for nested elements yet
+  //color: #454545;
+  //text-decoration: underline;
+}
+
+.job_list_row {
+  padding: 1px 0 1px 3px;
+  border-style: solid;
+  border-width: 0 0 3px 0;
+  border-color: transparent;
+
+  &:hover {
+    background: #F8f8f8;
+    border-color: #e8e8e8;
+  }
+}

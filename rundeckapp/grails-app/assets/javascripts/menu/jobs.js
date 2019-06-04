@@ -119,10 +119,28 @@ function BulkEditor(data){
         }
     };
     self.expandAllComponents=function(){
-        jQuery('.expandComponent').show();
+        jQuery('.topgroup .expandComponent').show();
+        jQuery('#job_group_tree .expandComponent .expandComponentControl [data-expanding]').each(function(i,e){
+            if(jQuery(e).data('expanderOpenClass')){
+                jQuery(e).addClass(jQuery(e).data('expanderOpenClass'))
+            }
+            if(jQuery(e).data('expanderCloseClass')){
+                jQuery(e).removeClass(jQuery(e).data('expanderCloseClass'))
+            }
+        });
+        jQuery('#job_group_tree .expandComponent .expandComponentHolder').addClass('expanded');
     };
     self.collapseAllComponents=function(){
         jQuery('.topgroup .expandComponent').hide();
+        jQuery('#job_group_tree .expandComponent .expandComponentControl [data-expanding]').each(function(i,e){
+            if(jQuery(e).data('expanderOpenClass')){
+                jQuery(e).removeClass(jQuery(e).data('expanderOpenClass'))
+            }
+            if(jQuery(e).data('expanderCloseClass')){
+                jQuery(e).addClass(jQuery(e).data('expanderCloseClass'))
+            }
+        });
+        jQuery('#job_group_tree .expandComponent .expandComponentHolder').removeClass('expanded');
     };
     self.selectAll=function(){
         self.expandAllComponents();

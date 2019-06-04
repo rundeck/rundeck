@@ -43,6 +43,7 @@ var FollowControl = function (eid, elem, params) {
         ctxBodyFinalSet: new Array(),
         ctxGroupSet: new Array(),
         ctxGroupTbodies: {},
+        ctxGroupNodes: {},
         contextStatus: {},
         extraParams: {},
         execData: {},
@@ -293,7 +294,10 @@ var FollowControl = function (eid, elem, params) {
         }
         var obj=this;
         this.ctxBodyFinalSet.each(function(elem, ndx) {
-            if (!obj.showFinalLine.value && obj.collapseCtx.value && obj.ctxBodySet[ndx] && !Element.visible(obj.ctxBodySet[ndx])) {
+            if (!obj.showFinalLine.value &&
+                obj.collapseCtx.value &&
+                obj.ctxBodySet[ndx] &&
+                !jQuery(obj.ctxBodySet[ndx]).is(':visible')) {
                 Element_hide(elem)
             } else {
                 Element_show(elem)
@@ -622,9 +626,9 @@ var FollowControl = function (eid, elem, params) {
             jQuery('#' + generateId(this.parentElement) + '_empty').show()
         }
     },
-    toggleDataBody: function(ctxid) {
-        if (Element.visible('databody' + ctxid)) {
-            jQuery('#databody' + ctxid).hide()
+        toggleDataBody: function (elem, ctxid) {
+            if (jQuery(elem).is(':visible')) {
+                jQuery(elem).hide()
             jQuery('#ctxExp' + ctxid).removeClass('opened')
             jQuery('#ctxExp' + ctxid).addClass('closed')
             jQuery('#ctxExp' + ctxid).closest('tr.contextRow').removeClass('opened')
@@ -637,7 +641,7 @@ var FollowControl = function (eid, elem, params) {
                 }
             }
         } else {
-            jQuery('#databody' + ctxid).show()
+                jQuery(elem).show()
             jQuery('#ctxExp' + ctxid).removeClass('closed')
             jQuery('#ctxExp' + ctxid).addClass('opened')
             jQuery('#ctxExp' + ctxid).closest('tr.contextRow').removeClass('closed')
@@ -778,20 +782,24 @@ var FollowControl = function (eid, elem, params) {
         if (!node) {
             node = this.execData.node;
         }
+        if (!this.ctxGroupNodes[node]) {
+            this.ctxGroupNodes[node] = 'node_' + this.contextIdCounter++
+        }
+        var ctxid = this.ctxGroupNodes[node]
         var tbody;
-        if (!this.ctxGroupTbodies[node]) {
-            tbody = this.createNewNodeTbody(data, tbl, node);
-            this.ctxGroupTbodies[node] = tbody;
+        if (!this.ctxGroupTbodies[ctxid]) {
+            tbody = this.createNewNodeTbody(data, tbl, ctxid);
+            this.ctxGroupTbodies[ctxid] = tbody;
         } else {
-            tbody = this.ctxGroupTbodies[node];
+            tbody = this.ctxGroupTbodies[ctxid];
         }
 
         var tr = tbody.insertRow(-1)
-        this.configureDataRow(tr, data, node);
-        if (jQuery('#ctxCount' + node).length) {
-            setText('#ctxCount' + node, '' + tbody.rows.length + " lines")
+        this.configureDataRow(tr, data, ctxid);
+        if (jQuery('#ctxCount' + ctxid).length) {
+            setText('#ctxCount' + ctxid, '' + tbody.rows.length + " lines")
             if (data.level == 'ERROR' || data.level == 'SEVERE') {
-                jQuery('#ctxCount' + node).addClass(data.level)
+                jQuery('#ctxCount' + ctxid).addClass(data.level)
             }
         }
         this.runningcmd.count++;
@@ -809,9 +817,9 @@ var FollowControl = function (eid, elem, params) {
         } else {
             jQuery(tbl).append(newtbod);
         }
-        this.ctxGroupSet.push(newtbod);
+        this.ctxGroupSet.push(newtbod[0])
 
-        var tr = newtbod.insertRow(this.isAppendTop() ? 0 : -1)
+        var tr = newtbod[0].insertRow(this.isAppendTop() ? 0 : -1)
         var iconcell = tr.insertCell(0)
         iconcell.setAttribute('id', 'ctxIcon' + ctxid);
         jQuery(tr).addClass('contextRow')
@@ -822,7 +830,7 @@ var FollowControl = function (eid, elem, params) {
         }
         jQuery(tr).addClass('expandable')
         jQuery(tr).addClass('action')
-        iconcell.addClassName("icon");
+        jQuery(iconcell).addClass("icon")
         var cell = tr.insertCell(1)
         cell.setAttribute('colSpan', '4');
 
@@ -837,7 +845,7 @@ var FollowControl = function (eid, elem, params) {
         if ( data['stepctx'] && this.workflow) {
             var contextstr= this.workflow.renderContextString(data['stepctx']);
         } else {
-            tr.addClassName('console');
+            jQuery(tr).addClass('console');
             jQuery(cell).append(jQuery(" <span class='console'>[console]</span>"))
         }
         var countspan = jQuery('<span>')
@@ -851,21 +859,22 @@ var FollowControl = function (eid, elem, params) {
         jQuery(cell2).addClass('rowexpicon')
         jQuery(cell2).addClass('expandicon')
         var obj=this;
-        tr.onclick = function() {
-            obj.toggleDataBody(ctxid);
-        };
-
         //create new tablebody for data rows
         var datatbod = jQuery("<tbody>")
         datatbod.attr('id', 'databody' + ctxid)
         jQuery(tbl).append(datatbod);
+
+        tr.onclick = function () {
+            obj.toggleDataBody(datatbod[0], ctxid)
+        }
+
 
         //start all data tbody as closed
         Element_hide(datatbod)
         jQuery(cell2).addClass('closed')
         jQuery(tr).addClass('closed')
 
-        return datatbod;
+        return datatbod[0]
     },
 
     createFinalContextTbody: function(data, tbl, ctxid) {
@@ -982,9 +991,6 @@ var FollowControl = function (eid, elem, params) {
         jQuery(cell2).addClass('rowexpicon')
         jQuery(cell2).addClass('expandicon')
         var obj=this;
-        tr.onclick = function() {
-            obj.toggleDataBody(ctxid);
-        };
 
         //create new tablebody for data rows
         var datatbod = jQuery("<tbody>")
@@ -995,6 +1001,9 @@ var FollowControl = function (eid, elem, params) {
         }
         this.lastTBody = datatbod[0];
         this.lastTBody.setAttribute('id', 'databody' + ctxid);
+        tr.onclick = function () {
+            obj.toggleDataBody(datatbod[0], ctxid)
+        }
         this.ctxBodySet.push(this.lastTBody);
         if (this.groupOutput.value && this.collapseCtx.value) {
             Element_hide((this.lastTBody))
