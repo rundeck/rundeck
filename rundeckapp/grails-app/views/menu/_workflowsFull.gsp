@@ -286,10 +286,10 @@
     </g:if>
 
                     <span id="group_controls" data-ko-bind="bulkeditor">
-                      <span class="btn btn-default btn-xs" data-bind="click: expandAllComponents">
+                      <span class="btn btn-secondary btn-simple btn-hover btn-xs" data-bind="click: expandAllComponents">
                           <g:message code="expand.all" />
                       </span>
-                      <span class="btn btn-default btn-xs" data-bind="click: collapseAllComponents">
+                      <span class="btn btn-secondary btn-simple btn-hover btn-xs" data-bind="click: collapseAllComponents">
                           <g:message code="collapse.all" />
                       </span>
                     </span>
@@ -496,7 +496,7 @@
 
                         </div>
                     </div>
-                        <div id="job_group_tree" class="panel-group" data-ko-bind="bulkeditor">
+                        <div id="job_group_tree" data-ko-bind="bulkeditor">
                         <g:if test="${jobgroups}">
 
                             <g:timerStart key="groupTree"/>

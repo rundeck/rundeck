@@ -20,6 +20,7 @@
 
 .hover-reveal-hidden:hover .visibility-hidden {
   visibility: visible;
+  transition-delay: 0s;
 }
 
 .as-inline-block {

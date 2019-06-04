@@ -70,27 +70,31 @@
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
     <g:set var="groupopen" value="${(wasfiltered || jscallback || (level.size()<= jobExpandLevel || jobExpandLevel<0))}"/>
-    ${raw("<")}div class="expandComponentHolder panel panel-default ${groupopen ? 'expanded' : ''} " style="" ${raw(">")}
+    ${raw("<")}div class="expandComponentHolder  ${groupopen ? 'expanded' : ''} " style="" ${raw(">")}
         %{divcounts++;}%
-        <div class="panel-heading">
+        <div class="job_list_group_header hover-reveal-hidden">
         <g:if test="${jscallback}">
             <span class="expandComponentControl textbtn textbtn-success groupname jobgroupexpand"
                   title="Select this group"
                   onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
-                  style="padding-left:4px;">
+                  >
               <i class="glyphicon glyphicon-folder-close"></i> <g:enc>${displaygroup}</g:enc>
             </span>
         </g:if>
         <g:else>
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
-            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand text-secondary">
-                <span class="foldertoggle">&nbsp;</span>
-                <g:if test="${jobsjscallback}">
-                    <g:enc>${displaygroup}</g:enc>
+            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true"  classnames="jobgroupexpand text-secondary autoclickable" iconCss="text-muted">
+
+                <g:enc>${displaygroup}</g:enc>
+
+                <g:if test="${!jobsjscallback}">
+                    <a class="groupname text-primary visibility-hidden "
+                    title="Browse job group: ${enc(attr:prefix ? prefix + '/' + group.key : group.key)}"
+                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><i class="glyphicon glyphicon-folder-open"></i></a>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class="groupname secondary panel-title" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
+
                 <g:if test="${jobgroups[group.key]}">
                 <span class="" data-bind="visible: enabled">
                     &bull;
@@ -110,10 +114,10 @@
         </div>
 
         <g:timerEnd key="prepare"/>
-    ${raw("<")}div class="expandComponent panel-collapse sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${raw(">")}
+    ${raw("<")}div class="expandComponent  sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${raw(">")}
         %{ divcounts++;}%
         <g:if test="${jobgroups[group.key]}">
-            <div class="jobGroups subjobs list-group ">
+            <div class="jobGroups subjobs  ">
             <g:render template="jobslist" model="[hideSummary:true,jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(), clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
             </div>
         </g:if>

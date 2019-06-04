@@ -21,7 +21,7 @@
                 <g:if test="${jobslist.size()>0}">
                     <% def j=0 %>
                     <g:each in="${runAuthRequired?jobslist.findAll{ jobauthorizations&&jobauthorizations[AuthConstants.ACTION_RUN]?.contains(it.id.toString())}:jobslist}" var="scheduledExecution">
-                    <div class="list-group-item">
+                    <div class="">
                         <g:set var="nextExecution"
                                value="${ (nextExecutions)? nextExecutions[scheduledExecution.id] : null}"/>
                         <g:set var="clusterUUID"
@@ -31,7 +31,7 @@
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <div class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
-                               <div class="jobname"
+                               <div class="jobname job_list_row"
                                    data-job-id="${scheduledExecution.extid}"
                                    data-job-name="${scheduledExecution.jobName}"
                                    data-job-group="${scheduledExecution.groupPath}"
@@ -50,7 +50,7 @@
                         <g:else>
                             %{--normal view--}%
                         <div class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-                            <div class="jobname"
+                            <div class="jobname job_list_row hover-reveal-hidden"
                                 data-job-id="${scheduledExecution.extid}"
                                 data-job-name="${scheduledExecution.jobName}"
                                 data-job-group="${scheduledExecution.groupPath}"
@@ -69,10 +69,8 @@
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
                                                     id="${scheduledExecution.extid}"
-                                                    class=" btn btn-default btn-xs has_tooltip act_execute_job"
+                                                    class=" btn btn-success btn-simple btn-hover btn-xs act_execute_job"
                                                     params="[project: scheduledExecution.project]"
-                                                    data-toggle="tooltip"
-                                                    data-placement="auto right"
                                                     title="Choose options and Run Job"
                                                     data-job-id="${scheduledExecution.extid}"
                                             >
@@ -91,6 +89,12 @@
                                                 </span>
                                             </g:ifExecutionMode>
                                         </g:if>
+                                        <g:else>
+                                            <span class=" text-muted disabled   act_execute_job" style=" padding: 4px 5px;"
+                                                title="Cannot run job" disabled>
+                                                <b class="glyphicon glyphicon-minus"></b>
+                                            </span>
+                                        </g:else>
                                     </span>
 
                                 <g:set var="exportstatus" value="${scmExportEnabled ? scmStatus?.get(scheduledExecution.extid):null}"/>
@@ -115,13 +119,13 @@
                                 </span>
                                 <!-- /ko -->
 
-                                <div class="btn-group pull-right">
+                                <div class="btn-group pull-right visibility-hidden">
                                     <button type="button"
-                                            class="btn btn-default btn-sm dropdown-toggle act_job_action_dropdown"
-                                            title="${g.message(code: 'click.for.job.actions')}"
+                                            class="btn btn-secondary btn-xs dropdown-toggle act_job_action_dropdown"
                                             data-job-id="${enc(attr:scheduledExecution.extid)}"
                                             data-toggle="dropdown"
                                             aria-expanded="false">
+                                            <g:message code="actions" />
                                         <span class="caret"></span>
                                     </button>
                                     <ul class="dropdown-menu" role="menu">
@@ -131,7 +135,7 @@
                                 <g:link action="show"
                                         controller="scheduledExecution"
                                         id="${scheduledExecution.extid}"
-                                        class="hover_show_job_info"
+                                        class="hover_show_job_info text-primary"
                                         params="[project: scheduledExecution.project]"
                                         data-job-id="${scheduledExecution.extid}">
                                     <g:if test="${showIcon}">
@@ -139,19 +143,20 @@
                                     </g:if>
                                     <g:enc>${scheduledExecution.jobName}</g:enc>
                                 </g:link>
-                                <div>
+
                                   <g:render template="/scheduledExecution/description"
                                             model="[description: scheduledExecution?.description,
                                                     textCss:'text-secondary',
                                                     mode:'collapsed',
+                                                    firstLineOnly:true,
                                                     rkey:g.rkey(),
                                                     jobLinkId:scheduledExecution?.extid,
                                                     cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
                                             ]"/>
-                                </div>
-                            </div>
+
+
                             <g:if test="${scheduledExecution.scheduled}">
-                            <div class="scheduletime" style="margin-top:5px; margin-left:5px;">
+                            <span class="scheduletime" >
                                 <g:if test="${scheduledExecution.scheduled && nextExecution}">
                                     <g:if test="${serverClusterNodeUUID && !remoteClusterNodeUUID}">
                                         <span class="text-warning has_tooltip" title="${message(code:"scheduledExecution.scheduled.cluster.orphan.title")}"
@@ -161,46 +166,44 @@
                                         </span>
                                     </g:if>
                                     <g:else>
-                                        <g:icon name="time"/>
+                                        <span class="text-success">
+                                            <g:icon name="time"/>
+                                        </span>
                                     </g:else>
-                                    <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}">
-                                        <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil"/>
+                                    <span title="${remoteClusterNodeUUID ? g.message(code: "scheduled.to.run.on.server.0", args:[remoteClusterNodeUUID]) : ''} at ${g.relativeDate(atDate: nextExecution)}"
+                                            class="text-secondary">
+                                        <g:relativeDate elapsed="${nextExecution}" untilClass="timeuntil text-success"/>
                                     </span>
 
-                                    <g:if test="${remoteClusterNodeUUID}">
-                                        on
-                                        <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name=" " class="rundeck-server-uuid text-primary">
-                                        </span>
-                                    </g:if>
                                 </g:if>
-                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)}">
-                                    <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
+                                <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active', project:scheduledExecution.project)|| !scheduledExecution.hasExecutionEnabled()}">
+                                    <span class="scheduletime disabled has_tooltip text-secondary" data-toggle="tooltip"
                                           data-placement="auto right"
                                           title="${g.message(code: 'disabled.schedule.run')}">
-                                        <i class="glyphicon glyphicon-time"></i>
+                                        <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="disabled" /></span>
                                     </span>
                                 </g:elseif>
                                 <g:elseif test="${!scheduledExecution.hasScheduleEnabled() && scheduledExecution.hasExecutionEnabled()}">
-                                    <span class="scheduletime disabled has_tooltip"
+                                    <span class="scheduletime disabled has_tooltip text-secondary"
                                           title="${g.message(code: 'scheduleExecution.schedule.disabled')}"
                                           data-toggle="tooltip"
                                           data-placement="auto right">
-                                        <i class="glyphicon glyphicon-time"></i>
+                                        <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
-                                <g:elseif test="${scheduledExecution.hasScheduleEnabled() && !g.scheduleMode(is:'active', project:scheduledExecution.project)}">
-                                    <span class="scheduletime disabled has_tooltip"
+                                <g:elseif test="${scheduledExecution.hasScheduleEnabled() && !g.scheduleMode(is:'active', project:scheduledExecution.project) }">
+                                    <span class="scheduletime disabled has_tooltip text-secondary"
                                           title="${g.message(code: 'project.schedule.disabled')}"
                                           data-toggle="tooltip"
                                           data-placement="auto left">
-                                        <i class="glyphicon glyphicon-time"></i>
+                                        <i class="glyphicon glyphicon-pause"></i>
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
                                 <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-                                    <span class="scheduletime willnotrun has_tooltip"
+                                    <span class="scheduletime willnotrun has_tooltip text-warning"
                                           title="${g.message(code: 'job.schedule.will.never.fire')}"
                                           data-toggle="tooltip"
                                           data-placement="auto left">
@@ -208,8 +211,9 @@
                                         <span class="detail"><g:message code="never"/></span>
                                     </span>
                                 </g:elseif>
-                            </div>
+                            </span>
                             </g:if>
+                            </div>
                         </div>
                         </g:else>
                         <% j++ %>
