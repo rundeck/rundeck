@@ -2043,6 +2043,40 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
+    def "list now running multiple projects"() {
+        given:
+            def query = new QueueQuery()
+            query.projFilter = 'AProject,BProject'
+            def exec = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'userB',
+                    project: 'AProject'
+            ).save(flush: true)
+            def exec2 = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user',
+                    project: 'BProject'
+            ).save(flush: true)
+            def exec3 = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user',
+                    project: 'CProject'
+            ).save(flush: true)
+        when:
+            def result = service.queryQueue(query)
+
+        then:
+            exec
+            exec2
+            exec3
+            2 == result.total
+            2 == result.nowrunning.size()
+
+    }
+
     @Unroll
     def "should scheduleAdHocJob with runAtTime"() {
         given:
