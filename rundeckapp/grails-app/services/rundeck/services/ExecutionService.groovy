@@ -368,6 +368,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Date nowDate = new Date()
 
         def allProjectsQuery=query.projFilter=='*';
+        def multiProjectsQuery = query.projFilter.indexOf(',') > 0
 
         def crit = Execution.createCriteria()
         def runlist = crit.list{
@@ -389,9 +390,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 if(!allProjectsQuery){
-                    eqfilters.each{ key,val ->
-                        if(query["${key}Filter"]){
-                            eq(val,query["${key}Filter"])
+
+                    eqfilters.each { filtPrefix, fieldName ->
+                        if (query["${filtPrefix}Filter"]) {
+                            if (!multiProjectsQuery) {
+                                eq(fieldName, query["${filtPrefix}Filter"])
+                            } else {
+                                or {
+                                    query["${filtPrefix}Filter"].split(/,/).each { xval ->
+                                        eq(fieldName, xval.trim())
+                                    }
+                                }
+                            }
                         }
                     }
                 }
