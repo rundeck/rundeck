@@ -37,7 +37,7 @@ cat ${REMCO_TMP_DIR}/rundeck-config/* >> server/config/rundeck-config.properties
 SETTING_RUNDECK_FORWARDED="${RUNDECK_SERVER_FORWARDED:-false}"
 
 # Unset all RUNDECK_* environment variables
-if [[ "${RUNDECK_ENVARS_UNSETALL:-false}" = "true" ]] ; then
+if [[ "${RUNDECK_ENVARS_UNSETALL:-true}" = "true" ]] ; then
     unset `env | awk -F '=' '{print $1}' | grep -e '^RUNDECK_'`
 fi
 

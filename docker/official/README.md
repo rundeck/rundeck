@@ -21,7 +21,8 @@ utilize named volumes:
 
 **Environment variables**  
 Locally run jobs run as the `rundeck` user, the same as the server, and may carry the
-environment variables used when starting the server. See `RUNDECK_ENVARS_UNSETALL` and
+environment variables used when starting the server. By default all environment variables
+starting with `RUNDECK_` are unset before starting Rundeck. See `RUNDECK_ENVARS_UNSETALL` and
 `RUNDECK_ENVARS_UNSETS` below for unset options.
 
 ## ssh keys
@@ -203,8 +204,9 @@ Default from address.
 Mail properties that get passed through to Grails. For example, to use StartTLS(required by many servers including AWS SES), `["mail.smtp.starttls.enable":"true","mail.smtp.port":"587"]`.
 
 
-### `RUNDECK_ENVARS_UNSETALL`
-Set to `true` to unset all environment variables starting with `RUNDECK_` before starting Rundeck.
+### `RUNDECK_ENVARS_UNSETALL=true`
+Unsets all environment variables starting with `RUNDECK_` before starting Rundeck. Set to `false`
+to utilize the `RUNDECK_ENVARS_UNSETS` option.
 
 ### `RUNDECK_ENVARS_UNSETS`
 Set to a space-separated list of environment variables to unset before starting Rundeck.
