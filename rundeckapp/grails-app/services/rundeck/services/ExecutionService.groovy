@@ -368,7 +368,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Date nowDate = new Date()
 
         def allProjectsQuery=query.projFilter=='*';
-        def multiProjectsQuery = query.projFilter.indexOf(',') > 0
+        def multiProjectsQuery = query.projFilter?.indexOf(',') > 0
 
         def crit = Execution.createCriteria()
         def runlist = crit.list{
