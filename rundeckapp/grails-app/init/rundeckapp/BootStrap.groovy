@@ -274,9 +274,13 @@ class BootStrap {
              authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
          }
 
+         if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled
+            || grailsApplication.config.grails.plugin.springsecurity.useX509 in [true,'true']){
+             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
+         }
+
          if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled){
              SpringSecurityUtils.clientRegisterFilter("rundeckPreauthFilter", SecurityFilterPosition.PRE_AUTH_FILTER.order - 10)
-             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
              log.info("Preauthentication is enabled")
          } else {
              log.info("Preauthentication is disabled")

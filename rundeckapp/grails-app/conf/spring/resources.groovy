@@ -484,10 +484,13 @@ beans={
             filter = ref("rundeckPreauthFilter")
             enabled = false
         }
+    }
+
+    if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']
+            || grailsApplication.config.grails.plugin.springsecurity.useX509 in [true,'true']) {
         preAuthenticatedAuthProvider(PreAuthenticatedAuthenticationProvider) {
             preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
         }
-
     }
 
     if(grailsApplication.config.rundeck.useJaas in [true,'true']) {

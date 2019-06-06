@@ -5,7 +5,10 @@ plugins {
 configurations{
   spa
 }
-
+node{
+    download = project.hasProperty('node.install')
+    version = project.hasProperty('node.install') ? project.getProperty('node.install') : null
+}
 task runNpmBuild(type: NpmTask, group: 'build') {
     dependsOn npmInstall
 
