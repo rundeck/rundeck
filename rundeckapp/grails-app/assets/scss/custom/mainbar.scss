@@ -74,6 +74,10 @@
   .primarylink {
     font-size: 32px;
     margin: 5px 10px 0 0;
+
+    > a {
+      display: inline-block;
+    }
   }
 
   .nav.navbar-nav {
