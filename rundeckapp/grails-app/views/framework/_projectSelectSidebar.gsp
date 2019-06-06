@@ -33,10 +33,9 @@
     </auth:resourceAllowed>
     <g:each var="project" in="${projectSet}">
         <li>
-          <g:link controller="menu" action="index" params="${selectParams + [project: project]}">
+          <g:link controller="menu" action="index" params="${selectParams + [project: project]}" data-project="${project}">
             <span class="sidebar-mini">${(labels?labels[project]:project).charAt(0)}</span>
             <span class="sidebar-normal">
-              <b class="glyphicon glyphicon-task"></b>
               ${labels?labels[project]:project}
             </span>
           </g:link>
