@@ -45,6 +45,10 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         }
     }
 
+    /**
+     *
+     * It loads the plugin properties to be shown under the project configuration
+     */
     def loadProperties(){
         List<Property> projectConfigProperties = new ArrayList<Property>()
         LinkedHashMap<String, String> configPropertiesMapping = []
@@ -86,15 +90,6 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         projectConfigProperties
     }
 
-    ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
-        return pluginService.validatePlugin(name, jobLifeCyclePluginProviderService,
-                frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
-    }
-    ValidatedPlugin validatePluginConfig(String name, Map projectProps, Map config) {
-        return pluginService.validatePlugin(name, jobLifeCyclePluginProviderService,
-                frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
-    }
-
     /**
      *
      * @param name
@@ -104,19 +99,39 @@ public class JobLifeCyclePluginService implements ApplicationContextAware, Proje
         return pluginService.getPluginDescriptor(name, jobLifeCyclePluginProviderService)
     }
 
+    /**
+     *
+     * @return Map containing all of the JobLifeCyclePlugin implementations
+     */
     Map listJobLifeCyclePlugins(){
         return pluginService.listPlugins(JobLifeCyclePlugin, jobLifeCyclePluginProviderService)
     }
 
+    /**
+     *
+     * @param event job life cycle event
+     * @return JobLifeCycleStatus response from plugin implementation
+     */
     JobLifeCycleStatus beforeJobStarts(JobLifeCycleEvent event){
         executeLifeCycle(event, EventType.BEFORE)
     }
 
+    /**
+     *
+     * @param event job life cycle event
+     * @return JobLifeCycleStatus response from plugin implementation
+     */
     JobLifeCycleStatus afterJobEnds(JobLifeCycleEvent event){
         executeLifeCycle(event, EventType.AFTER)
     }
 
-    def executeLifeCycle(def event, def eventType){
+    /**
+     *
+     * @param event job life cycle event
+     * @param eventType type of event
+     * @return JobLifeCycleStatus response from plugin implementation
+     */
+    JobLifeCycleStatus executeLifeCycle(def event, def eventType){
         JobLifeCycleStatus result = new JobLifeCycleStatus()
         String projectName = event.getExecutionContext()?.getFrameworkProject()
         IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
