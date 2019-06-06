@@ -56,6 +56,12 @@
     <asset:stylesheet href="static/css/components/version-notification.css"/>
     <!-- /VUE CSS MODULES -->
 
+    <style type="text/css">
+    .project_list_item_link{
+        display:inline-block;
+        width: calc(100% - 20px);
+    }
+    </style>
 </head>
 <body>
 <div class="row">
@@ -231,11 +237,11 @@
           <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
           %{--Template for project details--}%
             <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
-              <div class="row row-hover">
+              <div class="row row-hover row-border-top">
                 <div class="col-sm-6 col-md-8">
                   <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project"
-                    class="text-h3 as-block link-hover link-block-padded text-inverse">
-                    <i class="fas fa-archive"></i>
+                    class="text-h3  link-hover  text-inverse project_list_item_link">
+
                     <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
                       <span data-bind="text: $root.projectForName(project).label"></span>
                     </span>
@@ -254,9 +260,9 @@
                         </span>
                     </span>
 
-                      <div data-bind="if: $root.projectForName(project)">
-                        <span class="text-info text-base" data-bind="text: $root.projectForName(project).description"></span>
-                      </div>
+                      <span data-bind="if: $root.projectForName(project)">
+                        <span class="text-secondary text-base" data-bind="text: $root.projectForName(project).description"></span>
+                      </span>
                   </a>
 
                   <div data-bind="if: $root.projectForName(project)">

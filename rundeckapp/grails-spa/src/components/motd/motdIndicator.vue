@@ -36,7 +36,7 @@ export default {
       return this.styleIcons[this.style]||this.styleIcons.default
     },
     showTitle(){
-      return this.style==='danger' || this.style==='warning'
+      return true
     }
   },
   methods:{

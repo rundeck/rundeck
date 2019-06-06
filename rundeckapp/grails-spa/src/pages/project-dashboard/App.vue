@@ -1,9 +1,10 @@
 <template>
   <div id="app" v-if="project">
-    <project-readme v-if="project" :project="project"></project-readme>
-    <project-description v-if="project && project.description" :project="project"></project-description>
+    <slot :project="project"></slot>
+    <project-readme v-if="project && showReadme!=='false' " :project="project"></project-readme>
+    <project-description v-if="project && project.description && showDescription!=='false'" :project="project"></project-description>
     <!-- <activity-list v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-list> -->
-    <activity-summary v-if="project" :project="project" :rdBase="rdBase" ></activity-summary>
+    <activity-summary v-if="project  && showSummary!=='false'" :project="project" :rdBase="rdBase" ></activity-summary>
   </div>
 </template>
 
@@ -20,7 +21,7 @@ import {
 
 export default {
   name: 'App',
-  props:['eventBus'],
+  props:['eventBus', 'showDescription','showReadme','showSummary','showActivity'],
   components: {
     // motd,
     projectDescription,
