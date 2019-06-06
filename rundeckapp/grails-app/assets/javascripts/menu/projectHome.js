@@ -19,6 +19,8 @@
 //= require knockout-onenter
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
+//= require ko/handler-bootstrapPopover
+//= require ko/handler-bootstrapTooltip
 //= require menu/project-model
 
 function ProjectHome(name, data) {
