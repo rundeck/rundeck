@@ -50,11 +50,38 @@
         }
     })
     </g:javascript>
+    <style type="text/css">
+
+    .subtitlebar.no-min-height {
+        min-height: auto;
+    }
+    .text-project-description{
+        margin: 5px 0;
+        font-style: italic;
+        display: block;
+    }
+    </style>
     <asset:javascript src="menu/projectHome.js"/>
 </head>
 
 <body>
-  <div class="container-fluid">
+<content tag="subtitlecss">plain no-min-height</content>
+<content tag="subtitlesection">
+
+<div class="container-fluid" >
+<div class="row">
+<div class="col-xs-12">
+<div data-ko-bind="projectHome">
+    <span class="text-h3 text-secondary text-project-description" >
+        <span data-bind="text: project().description"></span>
+    </span>
+</div>
+</div>
+</div>
+
+</div>
+</content>
+  <div class="conntainer-fluid">
     <div class="row">
         <div class="col-xs-12">
             <g:render template="/common/messages"/>
@@ -62,7 +89,7 @@
     </div>
 
     <div id="projectHome-content" class="project-dashboard-vue">
-      <App :event-bus="EventBus"/>
+      <App :event-bus="EventBus" show-description="false"/>
     </div>
 
   </div>
