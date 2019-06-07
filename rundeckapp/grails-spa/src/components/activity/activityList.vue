@@ -188,7 +188,7 @@
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
 
-                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)">
+                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="3">
                       <progress-bar v-if="exec.status == 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" />
                       <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width/>
                       <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" />
@@ -224,7 +224,7 @@
         </tbody>
         <tbody class="since-count-data autoclickable"  @click="reload" v-if="sincecount>0">
           <tr>
-            <td colspan=6 class=text-center>
+              <td colspan=8 class=text-center>
                 {{ $tc('info.newexecutions.since.0', sincecount) }}
             </td>
           </tr>
@@ -264,6 +264,9 @@
             <td class=" node-stats" :title="$t('0.total',[rpt.node.total])">
                 <span v-if="rpt.node.failed>0">{{rpt.node.failed}} {{$t('failed')}}</span>
                 <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
+            </td>
+            <td class="duration text-secondary">
+                <span class="duration">{{rpt.duration | duration('humanize',false)}}</span>
             </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
