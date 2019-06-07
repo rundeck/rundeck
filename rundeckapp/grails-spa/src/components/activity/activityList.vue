@@ -261,6 +261,10 @@
                 </span>
             </td>
 
+            <td class=" node-stats" :title="$t('0.total',[rpt.node.total])">
+                <span v-if="rpt.node.failed>0">{{rpt.node.failed}} {{$t('failed')}}</span>
+                <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
+            </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
                 {{rpt.user}}
@@ -372,6 +376,21 @@ function _genUrl(url:string, params:any) {
 
 const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
     'cancel','aborted','retry','timedout','timeout','fail'];
+
+function nodeStats(node: string) {
+    let info = {
+        total: 1,
+        succeeded: 1,
+        failed: 0
+    } as { [key: string]: number }
+    let match = node.match(/(\d+)\/(\d+)\/(\d+)/)
+    if (match) {
+        info.succeeded = parseInt(match[1])
+        info.failed = parseInt(match[2])
+        info.total = parseInt(match[3])
+    }
+    return info
+}
 
 export default Vue.extend({
   name: 'ActivityList',
@@ -666,7 +685,10 @@ export default Vue.extend({
           this.pagination.offset=response.data.offset
           this.pagination.total=response.data.total
           this.lastDate=response.data.lastDate
-          this.reports = response.data.reports
+          this.reports = response.data.reports.map((rpt: any) => {
+            rpt.node = nodeStats(rpt.node)
+            return rpt
+          })
           this.eventBus&&this.eventBus.$emit('activity-query-result',response.data)
         }
       }catch(error){

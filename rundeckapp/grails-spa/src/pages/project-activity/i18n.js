@@ -36,6 +36,9 @@ const translationStrings = {
     'filter.save.name.prompt': 'Name:',
     'filter.save.validation.name.blank': 'Name Cannot be blank',
     'filter.save.button': 'Save Filter...',
+    'failed': 'failed',
+    'ok':'ok',
+    '0.total':'{0} total',
 
     period: {
       label: {
