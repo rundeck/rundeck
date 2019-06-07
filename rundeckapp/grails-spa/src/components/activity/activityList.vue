@@ -659,7 +659,6 @@ export default Vue.extend({
       try{
         this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
         this.loadingRunning=false
-        this.checkrefresh()
       }catch(error){
         this.loadingRunning=false
         this.loadError = error.message
@@ -705,14 +704,18 @@ export default Vue.extend({
       }
       this.loadActivity(offset)
     },
-    checkrefresh(){
+    checkrefresh(time: number = 0) {
       if(!this.loadingRunning && this.autorefresh){
-        this.autorefreshtimeout = setTimeout(()=>{
-          // this.reload();
-          // this.loadActivity(this.pagination.offset)
-          this.loadRunning()
-          this.loadSince()
-        }, this.loadError?(this.autorefreshms*10):this.autorefreshms);
+        let delay: number = time ? (new Date().getTime() - time) : 0
+        let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
+        ms = Math.min(60000, Math.max(ms, 5 * delay))
+        this.autorefreshtimeout = setTimeout(() => {
+          let cur = new Date()
+          Promise.all([
+            this.loadRunning(),
+            this.loadSince()
+          ]).then(() => this.checkrefresh(cur.getTime()))
+        }, ms);
       }
     },
     startAutorefresh(){
@@ -775,7 +778,7 @@ export default Vue.extend({
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
-      this.autorefreshms = window._rundeck.data['autorefreshms']
+        this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
       
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max
