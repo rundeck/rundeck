@@ -17,6 +17,7 @@ package org.rundeck.jaas.jetty;
 
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
+import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.security.PropertyUserStore;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.security.Credential;
@@ -123,7 +124,9 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
             for ( Principal principal : principals )
             {
-                roles.add( principal.getName() );
+                if(principal instanceof AbstractLoginService.RolePrincipal) {
+                    roles.add(principal.getName());
+                }
             }
 
             Credential credential = (Credential)userIdentity.getSubject().getPrivateCredentials().iterator().next();
