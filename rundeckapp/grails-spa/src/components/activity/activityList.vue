@@ -183,12 +183,12 @@
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
-                    <b class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
+                    <b class="fas fa-circle-notch fa-spin text-info" v-if="exec.status==='running'"></b>
                     <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
 
-                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)">
+                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="3">
                       <progress-bar v-if="exec.status == 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" />
                       <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width/>
                       <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" />
@@ -224,7 +224,7 @@
         </tbody>
         <tbody class="since-count-data autoclickable"  @click="reload" v-if="sincecount>0">
           <tr>
-            <td colspan=6 class=text-center>
+              <td colspan=8 class=text-center>
                 {{ $tc('info.newexecutions.since.0', sincecount) }}
             </td>
           </tr>
@@ -247,18 +247,27 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
-                    <span class="timeabs">
-                        {{rpt.dateCompleted | moment('from','now')}}
+                    <span class="timeabs ">
+                        {{rpt.dateCompleted | moment(momentJobFormat)}}
                     </span>
-                    <span title="">
-                        <span class="text-primary"><i18n path="in.of" default="in"/></span>
-                        <span class="duration" data-bind="text: durationHumanize()">{{rpt.duration | duration('humanize')}}</span>
+                    <span class="timerel text-muted" v-if="isRecentCalendarDate(rpt.dateCompleted)">
+                        {{rpt.dateCompleted | moment('calendar',null)}}
+                    </span>
+                    <span class="timerel text-muted" v-else>
+                        {{rpt.dateCompleted | moment('from','now')}}
                     </span>
                 </span>
             </td>
 
+            <td class=" node-stats" :title="$t('0.total',[rpt.node.total])">
+                <span v-if="rpt.node.failed>0">{{rpt.node.failed}} {{$t('failed')}}</span>
+                <span v-else-if="rpt.node.succeeded>0">{{rpt.node.succeeded}} {{$t('ok')}}</span>
+            </td>
+            <td class="duration text-secondary">
+                <span class="duration">{{rpt.duration | duration('humanize',false)}}</span>
+            </td>
             <td class="  user text-right " style="white-space: nowrap;">
                 <em><i18n path="by" default="by"/></em>
                 {{rpt.user}}
@@ -270,7 +279,7 @@
                   <span v-else>
                     {{rpt.executionString}}
                   </span>
-                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
+                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId && query.jobIdFilter !=='!null'" class="text-secondary">
                     <i class="fas fa-arrow-circle-right-alt"></i>
                     {{$t('Referenced')}}
                   </span>
@@ -371,6 +380,21 @@ function _genUrl(url:string, params:any) {
 const knownStatusList = ['scheduled','running','succeed','succeeded','failed',
     'cancel','aborted','retry','timedout','timeout','fail'];
 
+function nodeStats(node: string) {
+    let info = {
+        total: 1,
+        succeeded: 1,
+        failed: 0
+    } as { [key: string]: number }
+    let match = node.match(/(\d+)\/(\d+)\/(\d+)/)
+    if (match) {
+        info.succeeded = parseInt(match[1])
+        info.failed = parseInt(match[2])
+        info.total = parseInt(match[3])
+    }
+    return info
+}
+
 export default Vue.extend({
   name: 'ActivityList',
   components:{
@@ -464,6 +488,24 @@ export default Vue.extend({
         return ''
       }
       return moment(date).format(this.momentJobFormat)
+    },
+    jobCompletedISOFormat(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).toISOString()
+    },
+    jobCompletedFromNow(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).fromNow()
+    },
+    isRecentCalendarDate(date:string){
+      if(!date){
+        return false
+      }
+      return moment().diff(moment(date),'days') <= 7
     },
     runningStatusTooltip(exec:Execution){
       if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
@@ -617,7 +659,6 @@ export default Vue.extend({
       try{
         this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
         this.loadingRunning=false
-        this.checkrefresh()
       }catch(error){
         this.loadingRunning=false
         this.loadError = error.message
@@ -646,7 +687,10 @@ export default Vue.extend({
           this.pagination.offset=response.data.offset
           this.pagination.total=response.data.total
           this.lastDate=response.data.lastDate
-          this.reports = response.data.reports
+          this.reports = response.data.reports.map((rpt: any) => {
+            rpt.node = nodeStats(rpt.node)
+            return rpt
+          })
           this.eventBus&&this.eventBus.$emit('activity-query-result',response.data)
         }
       }catch(error){
@@ -660,14 +704,18 @@ export default Vue.extend({
       }
       this.loadActivity(offset)
     },
-    checkrefresh(){
+    checkrefresh(time: number = 0) {
       if(!this.loadingRunning && this.autorefresh){
-        this.autorefreshtimeout = setTimeout(()=>{
-          // this.reload();
-          // this.loadActivity(this.pagination.offset)
-          this.loadRunning()
-          this.loadSince()
-        }, this.loadError?(this.autorefreshms*10):this.autorefreshms);
+        let delay: number = time ? (new Date().getTime() - time) : 0
+        let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
+        ms = Math.min(60000, Math.max(ms, 5 * delay))
+        this.autorefreshtimeout = setTimeout(() => {
+          let cur = new Date()
+          Promise.all([
+            this.loadRunning(),
+            this.loadSince()
+          ]).then(() => this.checkrefresh(cur.getTime()))
+        }, ms);
       }
     },
     startAutorefresh(){
@@ -730,7 +778,7 @@ export default Vue.extend({
       this.bulkDeleteUrl = window._rundeck.data['bulkDeleteUrl']
       this.activityPageHref = window._rundeck.data['activityPageHref']
       this.sinceUpdatedUrl = window._rundeck.data['sinceUpdatedUrl']
-      this.autorefreshms = window._rundeck.data['autorefreshms']
+        this.autorefreshms = window._rundeck.data['autorefreshms'] || 5000
       
       if(window._rundeck.data['pagination'] && window._rundeck.data['pagination'].max){
         this.pagination.max=window._rundeck.data['pagination'].max

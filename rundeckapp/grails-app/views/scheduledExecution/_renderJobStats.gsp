@@ -24,7 +24,7 @@
 <g:set var="refsuccesscount"
        value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
 <g:set var="execCount"
-       value="${scheduledExecution.id ? Execution.countByScheduledExecution(scheduledExecution) : 0}"/>
+       value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
 <g:set var="refexecCount"
        value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
 <g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
