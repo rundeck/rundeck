@@ -183,7 +183,7 @@
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
-                    <b class="fas fa-circle-notch fa-spin text-info"  v-if="exec.status==='running'"></i>
+                    <b class="fas fa-circle-notch fa-spin text-info" v-if="exec.status==='running'"></b>
                     <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
