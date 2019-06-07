@@ -276,7 +276,7 @@
                   <span v-else>
                     {{rpt.executionString}}
                   </span>
-                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId" class="text-secondary">
+                  <span v-if="query.jobIdFilter && rpt.jobId && query.jobIdFilter !==rpt.jobId && query.jobIdFilter !=='!null'" class="text-secondary">
                     <i class="fas fa-arrow-circle-right-alt"></i>
                     {{$t('Referenced')}}
                   </span>
