@@ -1,84 +1,129 @@
-Release 3.0.21
+Release 3.1.0-rc1
 ===========
 
-Date: 2019-04-24
+Date: 2019-06-07
 
-Name: <span style="color: pink"><span class="glyphicon glyphicon-plane"></span> "jalapeño popper pink plane"</span>
+Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></span> "mozzarella stick peru piggy-bank"</span>
 
 ## Notes
 
-Bug fixes
+Release Candidate
+
+Upgrading
+===========
+
+See in progress upgrade guide changes: https://github.com/rundeck/docs/pull/255
+
+Please comment there if any upgrading issues are found.
+
+Changes
+=======
+
+* UI revamp for most parts of the app:
+  * Project list
+  * Job list
+  * Job view
+  * Job Editor
+  * Execution view
+  * Activity view
+* Rundeck Repository
+  * Now you can browse and install plugins from the Rundeck GUI
+* Execution cleaner
+  * Project configuration allows automatically removing older executions periodically
+* Options: 
+  * Can preserve allowed value list order (sort is not optional)
+  * Can specify multi value delimiter
+  * https://github.com/rundeck/rundeck/pull/4599
+* Auth:
+  * Can specify a required user role for Rundeck access (https://github.com/rundeck/rundeck/pull/4820)
+  * ACLs can use "notBy" instead of "by" to deny access to non matching groups/users. See https://github.com/rundeck/rundeck/pull/4769
+* Jobs:
+  * Default Log filters can be added at project/framework level, such as the Mask Passwords plugin (https://github.com/rundeck/rundeck/pull/4806)
+  * Configuration to allow unsantized html in log output (https://github.com/rundeck/rundeck/pull/4784)
+
 
 ## Contributors
 
-* Carlos Eduardo Roriz Franco
+* Alberto Hormazabal (ahormazabal)
+* Alex Honor (ahonor)
+* Diego Queiroz (DiegoQueiroz)
 * Greg Schueler (gschueler)
-* Greg Zapp (ProTip)
 * Jaime Tobar (jtobard)
 * Jesse Marple (jessemarple)
 * Luis Toledo (ltamaster)
+* Greg Zapp (ProTip)
 * Stefan Kirrmann (kirrmann)
 * Stephen Joyner (sjrd218)
 * carlos (carlosrfranco)
 
 ## Bug Reporters
 
-* G3NSVRV
-* JesusRo
+* DiegoQueiroz
+* JPst
 * ProTip
-* benruset
+* RolandVExp
+* ahormazabal
+* am312
 * carlosrfranco
-* ckaiser79
-* dabest1
-* fgutierrezz
+* cwaltherf
 * gschueler
 * hs-hub-world
+* jairov4
+* jbanda15
 * jessemarple
-* jplassnibatt
 * jtobard
 * kirrmann
 * ltamaster
-* marcoc610
 * sebastianbello
 * sjrd218
 
 ## Issues
 
-[Milestone 3.0.21](https://github.com/rundeck/rundeck/milestone/106)
+[Milestone 3.1.0-RC1](https://github.com/rundeck/rundeck/milestone/80)
 
-* [Add docker configuration extension information](https://github.com/rundeck/rundeck/pull/4751)
-* [Fix: job exclude filter doesn't work for scheduled jobs](https://github.com/rundeck/rundeck/pull/4750)
-* [Fix new project / edit node source flow](https://github.com/rundeck/rundeck/pull/4746)
-* [Fixes StaticHostKeyChecking when using password for git plugin via ssh](https://github.com/rundeck/rundeck/pull/4745)
-* [Logout enhancements.](https://github.com/rundeck/rundeck/pull/4743)
-* [new project flow: after creation, should go to updated nodes config page](https://github.com/rundeck/rundeck/issues/4741)
-* [Fix: project does not exist error](https://github.com/rundeck/rundeck/pull/4735)
-* [Fix style on job form for Notification plugins, and webhook field](https://github.com/rundeck/rundeck/pull/4733)
-* [Fix: mask plugin password properties in project config](https://github.com/rundeck/rundeck/pull/4724)
-* [new version of python winrm plugin](https://github.com/rundeck/rundeck/pull/4722)
-* [Default java plugin metadata](https://github.com/rundeck/rundeck/pull/4719)
-* [node Config UI updates](https://github.com/rundeck/rundeck/pull/4714)
-* [Add server.session.timeout to docker remco template](https://github.com/rundeck/rundeck/pull/4712)
-* [Bug/3514/help popover not showing all content](https://github.com/rundeck/rundeck/pull/4709)
-* [Task/update location of job name group button](https://github.com/rundeck/rundeck/pull/4708)
-* [User group plugin type](https://github.com/rundeck/rundeck/pull/4701)
-* [Flow Control fail flag right behavior](https://github.com/rundeck/rundeck/pull/4700)
-* [Exclude Filter Ignored for Scheduled Job but not Adhoc Run](https://github.com/rundeck/rundeck/issues/4699)
-* [Add configuration for hiding the user/password login fields when SSO ](https://github.com/rundeck/rundeck/pull/4697)
-* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/pull/4689)
-* [compatibility for old versions of email notification (issue #4643)](https://github.com/rundeck/rundeck/pull/4688)
-* [Api endpoint for job forecast](https://github.com/rundeck/rundeck/pull/4682)
-* [Allow multi-page selections on job exections history report #4416](https://github.com/rundeck/rundeck/pull/4673)
-* [Fix problem deleting SCM configured project.](https://github.com/rundeck/rundeck/pull/4670)
-* [Use Password field type for password encryptor input](https://github.com/rundeck/rundeck/pull/4669)
-* ["Attached as file to Email" should be default when upgrading Rundeck](https://github.com/rundeck/rundeck/issues/4643)
-* [Retry Failed Nodes doesn't bring in failed nodes if Change the Target Nodes option was used](https://github.com/rundeck/rundeck/issues/4639)
-* [Make password utilitlity field Value To Encrypt to type password](https://github.com/rundeck/rundeck/issues/4624)
-* [Cannot delete SCM configured project after upgrade to Rundeck ver 3.0.17](https://github.com/rundeck/rundeck/issues/4623)
-* [Job with Flow Control with Halt option enabled doesn't work when called by another job.  ](https://github.com/rundeck/rundeck/issues/4605)
-* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/pull/4583)
-* [Old look&feel on notification plugins](https://github.com/rundeck/rundeck/issues/4530)
-* [Configurable Job Reference Validation](https://github.com/rundeck/rundeck/issues/4527)
-* [UI Error: "Project does not exist" when working on another project](https://github.com/rundeck/rundeck/issues/3905)
-* ["help balloon" is not showing all its content](https://github.com/rundeck/rundeck/issues/3514)
-* [Enable API endpoint for Schedule Forecast](https://github.com/rundeck/rundeck/issues/3469)
+* [Making the translation of messages to Brazilian Portuguese](https://github.com/rundeck/rundeck/pull/4523)
+* [Misc nodes page UI updates](https://github.com/rundeck/rundeck/pull/4521)
+* [removed UUID validation of jobRef](https://github.com/rundeck/rundeck/pull/4516)
+* [Improvement for audit.log file size](https://github.com/rundeck/rundeck/pull/4515)
+* [Add secondary node filter for jobs: Exclude filter](https://github.com/rundeck/rundeck/pull/4509)
+* [Node status UI attributes](https://github.com/rundeck/rundeck/pull/4508)
+* [Update copyright](https://github.com/rundeck/rundeck/issues/4504)
+* [Fix #4488. Help Grails write output stream correctly on Tomcat 7.](https://github.com/rundeck/rundeck/pull/4503)
+* [Render the SSO login button in a more sensible way.](https://github.com/rundeck/rundeck/pull/4500)
+* [Update repository version.](https://github.com/rundeck/rundeck/pull/4495)
+* [API job import fails on WriteListener error](https://github.com/rundeck/rundeck/issues/4488)
+* [Feature/community news component](https://github.com/rundeck/rundeck/pull/4485)
+* [New scheduled execution stats table ](https://github.com/rundeck/rundeck/pull/4482)
+* [Fix project/framework prop resolution](https://github.com/rundeck/rundeck/pull/4476)
+* [Some framework/project plugin property resolution is not correct](https://github.com/rundeck/rundeck/issues/4475)
+* [Notification email template with log output: use blank when not included](https://github.com/rundeck/rundeck/pull/4474)
+* [Job options hidden1](https://github.com/rundeck/rundeck/pull/4472)
+* [UUID validation of jobRef breaks bulk import of jobs in clean instance of RunDeck](https://github.com/rundeck/rundeck/issues/4471)
+* [Disable JobStats because it produces a deadlock on mssql.](https://github.com/rundeck/rundeck/pull/4468)
+* [Updates the Copyright date in the footer and licenses page](https://github.com/rundeck/rundeck/pull/4461)
+* [Feature/version notification](https://github.com/rundeck/rundeck/pull/4460)
+* [Cleanup: orchestrator node processor logging](https://github.com/rundeck/rundeck/pull/4457)
+* [Fix #4454 resume correct step context after handler](https://github.com/rundeck/rundeck/pull/4455)
+* [Wrong step id logged in rdlog when error handler executed](https://github.com/rundeck/rundeck/issues/4454)
+* [Fix race condition/workflow state bug](https://github.com/rundeck/rundeck/pull/4453)
+* [Remove extraneous login module config](https://github.com/rundeck/rundeck/pull/4452)
+* [Docker - Fix key for project storage type](https://github.com/rundeck/rundeck/pull/4446)
+* [Docker - Unable to set project storage type](https://github.com/rundeck/rundeck/issues/4445)
+* [Fix rd-acl tool in Docker image](https://github.com/rundeck/rundeck/pull/4444)
+* [Notification email template with log output: use blank when not included](https://github.com/rundeck/rundeck/issues/4443)
+* [Add API endpoint that allows a user to list their roles](https://github.com/rundeck/rundeck/pull/4441)
+* [rd-acl not running on docker version: /home/greg/.sdkman/candidates/java/8.0.172-zulu/jre/bin/java: No such file or directory](https://github.com/rundeck/rundeck/issues/4436)
+* [Very large Rundeck.audit.log](https://github.com/rundeck/rundeck/issues/4435)
+* [Add tomcat api tests](https://github.com/rundeck/rundeck/pull/4433)
+* [Fix #4179 kill job reference thread when parent is killed](https://github.com/rundeck/rundeck/pull/4432)
+* [Job detail in execution xml for log storage](https://github.com/rundeck/rundeck/pull/4431)
+* [loginmodule unnecessary overwritten in Docker instance ignoring file](https://github.com/rundeck/rundeck/issues/4430)
+* [Docker CSP config: Ensure newlines are added when options are rendered](https://github.com/rundeck/rundeck/pull/4424)
+* [Docker - CSP config overrides on same line](https://github.com/rundeck/rundeck/issues/4423)
+* [Job detail in execution xml for log storage](https://github.com/rundeck/rundeck/issues/4414)
+* [Adds Plugin provider metadata](https://github.com/rundeck/rundeck/pull/4393)
+* [Add option values plugin type. Fixes issue 77](https://github.com/rundeck/rundeck/pull/4344)
+* [Killing parent job doesn't kill running child jobs ( in 3.0.x , not able to kill parent job )](https://github.com/rundeck/rundeck/issues/4179)
+* [Feature request : hide unmodifyable job options, such as secrets](https://github.com/rundeck/rundeck/issues/4135)
+* [Job step skipped for no apparent reason](https://github.com/rundeck/rundeck/issues/3443)
+* [Local script option provider](https://github.com/rundeck/rundeck/issues/77)
