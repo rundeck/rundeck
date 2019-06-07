@@ -18,6 +18,7 @@
 function JobRunFormOptions (data) {
     var self = this
     self.nodeFilter = data.nodeFilter
+    self.follow = ko.observable(typeof (data.follow) === 'undefined' || data.follow)
     self.debug = ko.observable(data.debug === true || data.debug === 'true')
     self.loglevel = ko.pureComputed(function () {
         return self.debug() ? 'DEBUG' : 'NORMAL'

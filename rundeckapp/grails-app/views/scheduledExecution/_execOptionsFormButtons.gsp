@@ -63,7 +63,6 @@
                 <div class="form-inline">
                     <div class="">
 
-                        <input type="hidden" id="followoutputcheck" name="follow" value="true"/>
 
 
                         <div class="form-group">
@@ -102,6 +101,7 @@
 
             <div class="col-xs-12 col-sm-3">
 
+                <input type="hidden" id="followoutputcheck" name="follow" value="true" data-bind="value: follow"/>
                 <div class="btn-group pull-right">
                     <button type="submit"
                             name="_action_runJobNow"
@@ -109,6 +109,8 @@
                         ${scheduledExecution.hasExecutionEnabled() ? '' : 'disabled'}
                             class=" btn btn-success  ">
                         <b class="fas fa-bug"  data-bind="visible: debug()"></b>
+                        <b class="fas fa-eye"  data-bind="visible: follow()"></b>
+
                         <g:message code="run.job.now"/>
                         <b class="glyphicon glyphicon-play"></b>
                     </button>
@@ -126,6 +128,13 @@
                                 <b class="fas fa-bug"></b>
                                 <g:message code="run.with.debug.output" />
                                 <b class="fas fa-check" data-bind="visible: debug()"></b>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-bind="click: function(){follow(!follow())}">
+                                <b class="fas fa-eye"></b>
+                                <g:message code="follow.output" />
+                                <b class="fas fa-check" data-bind="visible: follow()"></b>
                             </a>
                         </li>
                         <g:if test="${showRunLater}">
