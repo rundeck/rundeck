@@ -247,14 +247,16 @@
             <td class="eventicon " :title="reportState(rpt)" >
                 <b class="exec-status icon" :data-execstate="reportStateCss(rpt)" :data-statusstring="reportState(rpt)"></b>
             </td>
-            <td class="right date " v-tooltip.bottom="$t('info.completed.0',[jobCompletedFormat(rpt.dateCompleted)])">
+            <td class="right date " v-tooltip.bottom="$t('info.completed.0.1',[jobCompletedISOFormat(rpt.dateCompleted),jobCompletedFromNow(rpt.dateCompleted)])">
                 <span v-if="rpt.dateCompleted">
-                    <span class="timeabs">
-                        {{rpt.dateCompleted | moment('from','now')}}
+                    <span class="timeabs ">
+                        {{rpt.dateCompleted | moment(momentJobFormat)}}
                     </span>
-                    <span title="">
-                        <span class="text-primary"><i18n path="in.of" default="in"/></span>
-                        <span class="duration" data-bind="text: durationHumanize()">{{rpt.duration | duration('humanize')}}</span>
+                    <span class="timerel text-muted" v-if="isRecentCalendarDate(rpt.dateCompleted)">
+                        {{rpt.dateCompleted | moment('calendar',null)}}
+                    </span>
+                    <span class="timerel text-muted" v-else>
+                        {{rpt.dateCompleted | moment('from','now')}}
                     </span>
                 </span>
             </td>
@@ -464,6 +466,24 @@ export default Vue.extend({
         return ''
       }
       return moment(date).format(this.momentJobFormat)
+    },
+    jobCompletedISOFormat(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).toISOString()
+    },
+    jobCompletedFromNow(date:string){
+      if(!date){
+        return ''
+      }
+      return moment(date).fromNow()
+    },
+    isRecentCalendarDate(date:string){
+      if(!date){
+        return false
+      }
+      return moment().diff(moment(date),'days') <= 7
     },
     runningStatusTooltip(exec:Execution){
       if(exec.status == 'scheduled' && exec.dateStarted && exec.dateStarted.date){
