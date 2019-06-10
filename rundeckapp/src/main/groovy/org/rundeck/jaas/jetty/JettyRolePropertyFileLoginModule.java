@@ -68,7 +68,8 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             logger.debug("using reloadable realm property file reader");
             module = new ReloadablePropertyFileLoginModule();
         } else {
-            module = new PropertyFileLoginModule();
+            module = new ReloadablePropertyFileLoginModule();
+            ((ReloadablePropertyFileLoginModule)module).setReloadEnabled(false);
         }
         module.initialize(subject, callbackHandler, shared, options);
     }

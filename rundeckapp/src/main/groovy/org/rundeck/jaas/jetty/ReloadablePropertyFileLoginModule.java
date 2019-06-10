@@ -42,7 +42,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
         private int _refreshInterval = 0;
         private String _filename = DEFAULT_FILENAME;
-
+        private boolean _reloadEnabled = true;
 
 
         /**
@@ -70,7 +70,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             if (_propertyUserStores.get(_filename) == null)
             {
                 PropertyUserStore propertyUserStore = new PropertyUserStore();
-                propertyUserStore.setHotReload(true);
+                propertyUserStore.setHotReload(_reloadEnabled);
                 propertyUserStore.setConfig(_filename);
 
                 PropertyUserStore prev = _propertyUserStores.putIfAbsent(_filename, propertyUserStore);
@@ -134,4 +134,11 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             return new UserInfo(userName, credential, roles);
         }
 
+    public boolean isReloadEnabled() {
+        return _reloadEnabled;
     }
+
+    public void setReloadEnabled(final boolean enabled) {
+        this._reloadEnabled = enabled;
+    }
+}
