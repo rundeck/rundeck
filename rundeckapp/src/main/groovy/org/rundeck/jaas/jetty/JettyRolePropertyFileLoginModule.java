@@ -65,7 +65,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
         if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
-            logger.debug("using reloadable realm property file reader");
+            debug("using reloadable realm property file reader");
             module = new ReloadablePropertyFileLoginModule();
         } else {
             module = new PropertyFileLoginModule();
@@ -128,15 +128,6 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             }
         }
         return true;
-    }
-
-    /**
-     * Emit Debug message via logger
-     *
-     * @param message message
-     */
-    protected void debug(String message) {
-        logger.debug(message);
     }
 
     @Override
