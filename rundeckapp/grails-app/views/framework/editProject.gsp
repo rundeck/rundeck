@@ -78,7 +78,7 @@
           </h3>
         </div>
         <div class="card-content">
-          <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
+          <g:render template="editProjectFormTabs" model="${[editOnly:true,project: params.project ?: request.project]}"/>
         </div>
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>

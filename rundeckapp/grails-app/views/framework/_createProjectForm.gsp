@@ -57,7 +57,7 @@
               <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>
             <div class="card-content">
-              <tmpl:editProjectForm/>
+              <tmpl:editProjectFormTabs/>
             </div>
             <div class="card-footer">
               <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default"/>

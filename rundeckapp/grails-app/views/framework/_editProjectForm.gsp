@@ -67,12 +67,11 @@
         }
     }
 </script>
-<div class="list-group">
   <g:if test="${editOnly}">
     <g:hiddenField name="project" value="${project}"/>
   </g:if>
+<div class="tab-pane active" id="tab_details">
   <g:if test="${!editOnly}">
-    <div class="list-group-item">
       <div class="form-group ${projectNameError?'has-error':''}">
         <label for="project" class="required">
           <g:message code="domain.Project.field.name" default="Project Name"/>
@@ -82,9 +81,7 @@
           <div class="text-warning"><g:enc>${projectNameError}</g:enc></div>
         </g:if>
       </div>
-    </div>
   </g:if>
-  <div class="list-group-item">
     <div class="form-group ">
         <label for="label">
             <g:message code="domain.Project.label.label" default="Label"/>
@@ -102,7 +99,7 @@
     </div>
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
-  <div class="list-group-item">
+  <div class="tab-pane" id="tab_history">
       <label class=" control-label"><g:message code="execution.history.cleanup.label" default="Execution History Clean"/>:</label>
       <div class="row">
           <div class="col-sm-4">
@@ -115,7 +112,7 @@
                           id="${nkey+'enable_cleaner_input'}"
                           onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
-                  <label>
+                  <label for="${nkey+'enable_cleaner_input'}">
                       <b><g:enc>Enable</g:enc></b>
                   </label>
                   <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
@@ -151,7 +148,7 @@
             </g:if>
         </div>
         <div class="form-group">
-            %{--<div class="panel panel-default panel-tab-content crontab tabtarget"  >--}%
+            %{--<div class="panel panel-default panel-tab-pane crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
                 <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>
@@ -203,7 +200,7 @@
 </feature:enabled>
   <g:set var="categories" value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
   <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
-    <div class="list-group-item">
+    <div class="tab-pane" id="tab_category_${category}">
     <g:render template="projectConfigurableForm"
               model="${[extraConfigSet: extraConfig?.values(),
                           category      : category,
@@ -214,7 +211,7 @@
     </div>
   </g:each>
   <g:if test="${nodeExecDescriptions}">
-    <div class="list-group-item">
+    <div class="tab-pane" id="tab_nodeexec">
       <span class="h4">Default <g:message code="framework.service.NodeExecutor.label" /></span>
       <span class="help-block"><g:message code="domain.Project.edit.NodeExecutor.explanation" /></span>
       <g:each in="${nodeExecDescriptions}" var="description" status="nex">
@@ -261,7 +258,7 @@
     </div>
   </g:if>
   <g:if test="${fileCopyDescriptions}">
-    <div class="list-group-item">
+    <div class="tab-pane" id="tab_filecopy">
     <span class="h4">Default Node <g:message code="framework.service.FileCopier.label"/></span>
     <span class="help-block"><g:message code="domain.Project.edit.FileCopier.explanation" /></span>
     <g:each in="${fileCopyDescriptions}" var="description" status="nex">
@@ -307,4 +304,3 @@
     </g:each>
     </div>
   </g:if>
-</div>
