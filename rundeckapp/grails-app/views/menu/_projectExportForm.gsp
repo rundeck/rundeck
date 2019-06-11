@@ -41,7 +41,7 @@
         });
     });
 </script>
-<div class="col-xs-12">
+<div>
   <g:form style="display: inline;" controller="project" action="exportPrepare" class="form-horizontal" params="[project: (params.project ?: request.project)]" useToken="true">
     <div class="card" id="exportform">
       <div class="card-content">
@@ -139,10 +139,10 @@
         </div>
       </div>
       <div class="card-footer">
-        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
-        <button type="submit" class="btn btn-primary"><g:message code="export.archive"/> <g:icon name="download"/></button>
+        <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default  btn-sm"/>
+        <button type="submit" class="btn btn-primary btn-sm"><g:message code="export.archive"/> <g:icon name="download"/></button>
         <auth:resourceAllowed action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
-          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info pull-right"><g:message code="export.another.instance"/></button>
+          <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-info  btn-sm pull-right"><g:message code="export.another.instance"/></button>
         </auth:resourceAllowed>
       </div>
     </div>

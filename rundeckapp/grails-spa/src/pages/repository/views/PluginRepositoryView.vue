@@ -27,25 +27,29 @@
         </form>
       </div>
       <div class="col-xs-12 col-sm-4 text-right">
-        <div class="btn-group btn-group-lg squareish-buttons" role="group" aria-label="...">
-          <button
+        <div
+          class="btn-group btn-group-lg btn-group-justified squareish-buttons"
+          role="group"
+          aria-label="..."
+        >
+          <a
             @click="showWhichPlugins = true"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === true}"
             :disabled="searchResults.length > 0"
-          >Installed</button>
-          <button
+          >Installed</a>
+          <a
             @click="showWhichPlugins = null"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === null}"
             :disabled="searchResults.length > 0"
-          >All</button>
-          <button
+          >All</a>
+          <a
             @click="showWhichPlugins = false"
             class="btn btn-default"
             :class="{'active': showWhichPlugins === false}"
             :disabled="searchResults.length > 0"
-          >Not Installed</button>
+          >Not Installed</a>
         </div>
       </div>
     </div>

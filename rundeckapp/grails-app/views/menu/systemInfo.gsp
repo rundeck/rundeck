@@ -109,7 +109,7 @@
                           </g:if>
                           <g:else>:</g:else>
                         </span>
-                        <span class="${valuename=='serverUUID'?'rundeck-server-uuid':''} ${dataset[dataname][valuename+'.status']?'text-'+dataset[dataname][valuename+'.status']:''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
+                        <span class="${valuename=='serverUUID'?'rundeck-server-uuid':''} ${dataset[dataname][valuename+'.status']?'text-'+dataset[dataname][valuename+'.status']:''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}" style="word-break:break-all">
                           <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
                             <g:render template="/common/progressBar"
                                       model="${[completePercent:(int)(100*dataset[dataname][valuename]),title:dataset[dataname][valuename+'.info']?dataset[dataname][valuename+'.info']:dataset[dataname][valuename],progressClass:'progress-embed',showpercent:true,height:28]}"/>

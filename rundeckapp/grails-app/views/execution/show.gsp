@@ -542,12 +542,12 @@ search
                           </div>
                           <a href="#state"
                              data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
-                             class="btn btn-simple btn-sm">
+                             class="btn btn-sm">
                               <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
                           </a>
                           <a href="#output"
                              data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
-                             class="btn btn-simple btn-sm">
+                             class="btn btn-sm">
                               <g:message code="execution.show.mode.Log.title"/> &raquo;
                           </a>
 
@@ -562,7 +562,7 @@ search
                                   </a>
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-simple btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-xs dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>

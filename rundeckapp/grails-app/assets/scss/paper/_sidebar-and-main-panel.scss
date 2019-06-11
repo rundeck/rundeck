@@ -1,5 +1,5 @@
 .sidebar,
-.off-canvas-sidebar{
+.off-canvas-sidebar {
   width: 260px;
   display: block;
   position: fixed;
@@ -9,7 +9,7 @@
   z-index: 1000;
   // overflow: hidden;
 
-  .sidebar-background{
+  .sidebar-background {
     position: absolute;
     z-index: 1;
     height: 100%;
@@ -21,7 +21,7 @@
     background-position: center center;
   }
 
-  .logo{
+  .logo {
     padding: 5px 0px;
     // padding: 15px 0px;
     // padding: 18px 0px;
@@ -32,7 +32,7 @@
     z-index: 4;
     display: block;
 
-    a.logo-mini{
+    a.logo-mini {
       float: left;
       width: 30px;
       text-align: center;
@@ -40,29 +40,29 @@
       margin-right: 15px;
     }
 
-    a.logo-normal{
+    a.logo-normal {
       display: block;
       opacity: 1;
       @include transform-translate-x(0px);
     }
 
-    .logo-img{
-        width: 34px;
-        display: inline-block;
-        height: 34px;
-        margin-left: 0px;
-        margin-right: 10px;
-        background: white;
-        border-radius: 40px;
-        text-align: center;
+    .logo-img {
+      width: 34px;
+      display: inline-block;
+      height: 34px;
+      margin-left: 0px;
+      margin-right: 10px;
+      background: white;
+      border-radius: 40px;
+      text-align: center;
 
-      img{
-          max-width: 18px;
-          position: relative;
+      img {
+        max-width: 18px;
+        position: relative;
       }
     }
 
-    .simple-text{
+    .simple-text {
       padding: 4px 0px;
       display: block;
       font-size: 14px;
@@ -72,14 +72,15 @@
       text-align: left;
       white-space: nowrap;
     }
-    p{
+
+    p {
       float: left;
       font-size: 20px;
       margin: 10px 10px;
       line-height: 20px;
     }
 
-    &:before{
+    &:before {
       content: "";
       position: absolute;
       bottom: 0px;
@@ -89,7 +90,7 @@
     }
   }
 
-  .sidebar-wrapper{
+  .sidebar-wrapper {
     position: relative;
     height: calc(100% - 75px);
     // max-height: none;
@@ -98,14 +99,14 @@
     box-shadow: inset -1px 0px 0px 0px $medium-gray;
     width: 260px;
 
-    .dropdown.open .dropdown-backdrop{
+    .dropdown.open .dropdown-backdrop {
       display: none !important;
     }
 
-    > .nav{
+    >.nav {
       margin-top: 10px;
 
-      i{
+      i {
         font-size: 24px;
         float: left;
         margin-right: 15px;
@@ -114,8 +115,8 @@
         text-align: center;
       }
 
-      li{
-        > a{
+      li {
+        >a {
           margin: 10px 0px 0px;
           padding-left: 25px;
           padding-right: 25px;
@@ -123,34 +124,34 @@
           white-space: nowrap;
         }
 
-        &:hover > a{
+        &:hover>a {
           opacity: 1;
         }
 
-        &.active > a{
+        &.active>a {
           color: $primary-color;
           opacity: 1;
         }
 
-        &.separator{
+        &.separator {
           margin: 15px 0;
 
-          &:after{
+          &:after {
             content: "";
             position: absolute;
             height: 1px;
             right: 10%;
             width: 80%;
-            background-color: rgba(255,255,255, .3);
+            background-color: rgba(255, 255, 255, .3);
           }
 
-          & + li {
+          &+li {
             margin-top: 31px;
           }
         }
       }
 
-      p{
+      p {
         margin: 0;
         line-height: 30px;
         font-size: 12px;
@@ -164,21 +165,21 @@
         white-space: nowrap;
       }
 
-      .caret{
+      .caret {
         margin-top: 12px;
         position: absolute;
         right: 1px;
       }
 
-      [data-toggle="collapse"] ~ div > ul > li > a {
+      [data-toggle="collapse"]~div>ul>li>a {
         margin: 0;
       }
     }
 
-    > .nav,
-    .user .info{
-      [data-toggle="collapse"] ~ div > ul > li > a{
-        .sidebar-normal{
+    >.nav,
+    .user .info {
+      [data-toggle="collapse"]~div>ul>li>a {
+        .sidebar-normal {
           margin: 0;
           position: relative;
           @include transform-translate-x(0px);
@@ -187,7 +188,7 @@
           display: block;
         }
 
-        .sidebar-mini{
+        .sidebar-mini {
           text-transform: uppercase;
           float: left;
           width: 30px;
@@ -196,7 +197,7 @@
           letter-spacing: 1px;
         }
 
-        i{
+        i {
           font-size: 17px;
           line-height: 20px;
           width: 26px;
@@ -205,22 +206,22 @@
     }
   }
 
-  .user{
+  .user {
     position: relative;
     margin-top: 20px;
     padding-bottom: 20px;
 
-    &:after{
+    &:after {
       content: "";
       position: absolute;
       bottom: 0px;
       right: 15px;
       width: calc(100% - 30px);
       height: 1px;
-      background-color: rgba(255,255,255, .3);
+      background-color: rgba(255, 255, 255, .3);
     }
 
-    .photo{
+    .photo {
       width: 34px;
       height: 34px;
       overflow: hidden;
@@ -230,13 +231,13 @@
       border-radius: 50%;
       margin-left: 23px;
 
-      img{
+      img {
         width: 100%;
       }
     }
 
-    .info{
-      a{
+    .info {
+      a {
         padding: $padding-base-vertical 25px;
         white-space: nowrap;
         display: block;
@@ -244,19 +245,19 @@
         position: relative;
 
         &:hover,
-        &:visited{
+        &:visited {
           opacity: 1;
         }
       }
 
-      > a > span{
+      >a>span {
         opacity: 1;
         line-height: 22px;
         display: block;
         position: relative;
       }
 
-      .caret{
+      .caret {
         position: absolute;
         top: 11px;
         right: 0px;
@@ -265,7 +266,7 @@
   }
 
   &:after,
-  &:before{
+  &:before {
     display: block;
     content: "";
     position: absolute;
@@ -274,75 +275,82 @@
     top: 0;
     left: 0;
     z-index: 2;
-    background:  $white-background-color;
+    background: $white-background-color;
   }
 
   &,
-  &[data-background-color="white"]{
+  &[data-background-color="white"] {
     @include sidebar-background-color($white-background-color, $default-color);
 
-    .user{
+    .user {
       margin-top: 20px;
 
-      .photo{
+      .photo {
         border: 2px solid rgba(0, 0, 0, 0.15);
       }
     }
   }
 
-  &[data-background-color="brown"]{
+  &[data-background-color="brown"] {
     @include sidebar-background-color($brown-background-color, $white-color);
   }
 
   &[data-background-color="black"] {
     @include sidebar-background-color($black-background-color, $white-color);
   }
+
   &[data-background-color="darkblue"] {
     @include sidebar-background-color($darkblue-background-color, $white-color);
   }
 
   &[data-background-color="brown"],
   &[data-background-color="darkblue"],
-  &[data-background-color="black"]{
-      &[data-active-color="danger"]{
-        @include sidebar-active-color( lighten($danger-color, 10%) );
-      }
+  &[data-background-color="black"] {
+    &[data-active-color="danger"] {
+      @include sidebar-active-color(lighten($danger-color, 10%));
+    }
 
-      .info{
-        a{
-          color: $white-color;
-        }
+    .info {
+      a {
+        color: $white-color;
       }
+    }
 
-      .user{
-        .photo{
-          border-color: rgba($white-color, 0.3);
-        }
+    .user {
+      .photo {
+        border-color: rgba($white-color, 0.3);
       }
+    }
 
   }
-  &[data-active-color="primary"]{
+
+  &[data-active-color="primary"] {
     @include sidebar-active-color($primary-color);
   }
-  &[data-active-color="info"]{
+
+  &[data-active-color="info"] {
     @include sidebar-active-color($info-color);
   }
-  &[data-active-color="success"]{
+
+  &[data-active-color="success"] {
     @include sidebar-active-color($success-color);
   }
-  &[data-active-color="warning"]{
+
+  &[data-active-color="warning"] {
     @include sidebar-active-color($warning-color);
   }
-  &[data-active-color="danger"]{
+
+  &[data-active-color="danger"] {
     @include sidebar-active-color($danger-color);
   }
-  &[data-active-color="white"]{
+
+  &[data-active-color="white"] {
     @include sidebar-active-color($white-color);
   }
 
 }
 
-.main-panel{
+.main-panel {
   background-color: $bg-mainpanel;
   overflow: auto;
   position: initial;
@@ -352,85 +360,91 @@
   width: $sidebar-width;
   min-height: 100%;
   overflow-x: hidden;
-  > .content{
+
+  >.content {
     padding: 15px 15px 0 15px;
     min-height: calc(100% - 135px);
     // min-height: calc(100% - 120px);
     // min-height: calc(100% - 150px);
 
-    .row .col-md-12 > .title{
+    .row .col-md-12>.title {
       margin-top: 0;
     }
   }
 
-  > .footer{
+  >.footer {
     border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    width: 100%;
   }
 
-  .navbar{
+  .navbar {
     margin-bottom: 0;
   }
 }
 
 .sidebar,
 .main-panel,
-.sidebar-wrapper{
-  -webkit-transition-property: top,bottom,width;
-  transition-property: top,bottom, width;
-  -webkit-transition-duration: .2s,.2s, .35s;
-  transition-duration: .2s,.2s, .35s;
-  -webkit-transition-timing-function: linear,linear,ease;
-  transition-timing-function: linear,linear,ease;
+.sidebar-wrapper {
+  -webkit-transition-property: top, bottom, width;
+  transition-property: top, bottom, width;
+  -webkit-transition-duration: .2s, .2s, .35s;
+  transition-duration: .2s, .2s, .35s;
+  -webkit-transition-timing-function: linear, linear, ease;
+  transition-timing-function: linear, linear, ease;
   -webkit-overflow-scrolling: touch;
 }
 
 .sidebar,
-.main-panel{
+.main-panel {
   max-height: 100%;
   height: 100%;
 }
 
 
 // regular settings for perfect scrollbar off
-.perfect-scrollbar-off{
+.perfect-scrollbar-off {
+
   .sidebar .sidebar-wrapper,
-  .main-panel{
+  .main-panel {
     overflow: auto;
   }
 }
 
-@media (min-width: $screen-md){
-  .sidebar-mini{
+@media (min-width: $screen-md) {
+  .sidebar-mini {
+
     .sidebar,
-    .sidebar .sidebar-wrapper{
+    .sidebar .sidebar-wrapper {
       width: 80px;
     }
 
-    .main-panel{
+    .main-panel {
       width: $sidebar-mini-width;
     }
 
-    .sidebar{
+    .sidebar {
       display: block;
       font-weight: 200;
       z-index: 1000;
 
-      .logo{
-        a.logo-mini{
+      .logo {
+        a.logo-mini {
           opacity: 1;
         }
 
-        a.logo-normal{
+        a.logo-normal {
           opacity: 0;
           @include transform-translate-x(-25px);
         }
       }
 
-      .sidebar-wrapper{
-        > .nav [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
-        .user .info [data-toggle="collapse"] ~ div > ul > li > a .sidebar-normal,
-        .user .info > a > span,
-        > .nav li > a p{
+      .sidebar-wrapper {
+
+        >.nav [data-toggle="collapse"]~div>ul>li>a .sidebar-normal,
+        .user .info [data-toggle="collapse"]~div>ul>li>a .sidebar-normal,
+        .user .info>a>span,
+        >.nav li>a p {
           @include transform-translate-x(-25px);
           opacity: 0;
         }
