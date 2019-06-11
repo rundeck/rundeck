@@ -17,6 +17,13 @@ The simplest way to persist data between container starts/upgrades is to
 utilize named volumes:  
 `$ docker run --name some-rundeck -v data:/home/rundeck/server/data rundeck/rundeck`
 
+## Security
+
+**Environment variables**  
+Locally run jobs run as the `rundeck` user, the same as the server, and may carry the
+environment variables used when starting the server. See `RUNDECK_ENVARS_UNSETALL` and
+`RUNDECK_ENVARS_UNSETS` below for unset options.
+
 ## ssh keys
 
 You can provide private ssh keys by mounting them into `/home/rundeck/.ssh`:  
@@ -187,3 +194,9 @@ Default from address.
 
 ### `RUNDECK_MAIL_PROPS`
 Mail properties that get passed through to Grails. For example, to use StartTLS(required by many servers including AWS SES), `["mail.smtp.starttls.enable":"true","mail.smtp.port":"587"]`.
+
+### `RUNDECK_ENVARS_UNSETALL`
+Set to `true` to unset all environment variables starting with `RUNDECK_` before starting Rundeck.
+
+### `RUNDECK_ENVARS_UNSETS`
+Set to a space-separated list of environment variables to unset before starting Rundeck.
