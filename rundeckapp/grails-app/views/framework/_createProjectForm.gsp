@@ -22,12 +22,59 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
+    <g:set var="nodeExecutorPluginsData" value="${nodeExecDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'NodeExecutor', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'NodeExecutor', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}"/>
+    <g:set var="fileCopierPluginsData" value="${fileCopyDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'FileCopier', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'FileCopier', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}" />
     <g:embedJSON id="projectDataJSON" data="${[
             create: true,
             name:params.newproject,
             defaultFileCopier:defaultFileCopy,
-            defaultNodeExec:defaultNodeExec
+            defaultNodeExec:defaultNodeExec,
+            descriptions: [
+                    NodeExecutor: nodeExecutorPluginsData,
+                    FileCopier: fileCopierPluginsData,
+            ]
     ]}"/>
+
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="framework/editProject.js"/>
     <g:javascript>

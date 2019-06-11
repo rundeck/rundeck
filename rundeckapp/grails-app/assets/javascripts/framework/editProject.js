@@ -20,6 +20,7 @@
 //= require knockout-mapping
 //= require knockout-onenter
 //= require storageBrowseKO
+//= require plugins/pluginMetadata
 //= require koBind
 
 function ProjectDefaultPlugin (data) {
@@ -27,15 +28,42 @@ function ProjectDefaultPlugin (data) {
     self.service = ko.observable(data.service)
     self.type = ko.observable(data.type)
     self.index = ko.observable(data.index)
+    self.editor = data.editor
+
+    self.description = ko.computed(function () {
+        let service = self.service()
+        let type = self.type()
+        if (!type) {
+            return
+        }
+        return self.editor.descriptions[service]().find((s) => s.type() === type)
+    })
 }
 
 function EditProject (data) {
     var self = this
     self.create = ko.observable(data.create || !data.name)
     self.name = ko.observable(data.name)
+    self.descriptions = {}
+    if (data.descriptions) {
+        for (let p in data.descriptions) {
+            if(data.descriptions.hasOwnProperty(p)) {
+                ko.mapping.fromJS({[p]: data.descriptions[p]}, {
+                    [p]: {
+                        key: function (data) {
+                            return ko.utils.unwrapObservable(data.type)
+                        },
+                        create: function (options) {
+                            return new PluginMetadata(options.data)
+                        }
+                    }
+                }, self.descriptions)
+            }
+        }
+    }
     self.defaults = {
-        'NodeExecutor': new ProjectDefaultPlugin({service: 'NodeExecutor', type: data.defaultNodeExec}),
-        'FileCopier': new ProjectDefaultPlugin({service: 'FileCopier', type: data.defaultFileCopier})
+        'NodeExecutor': new ProjectDefaultPlugin({service: 'NodeExecutor', type: data.defaultNodeExec, editor: self}),
+        'FileCopier': new ProjectDefaultPlugin({service: 'FileCopier', type: data.defaultFileCopier, editor: self})
     }
 }
 

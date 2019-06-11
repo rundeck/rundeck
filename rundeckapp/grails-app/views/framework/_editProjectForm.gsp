@@ -222,20 +222,79 @@
             </div>
         </div>
 
-        <div class=" form-group">
-            <label class="col-sm-2 control-label " for="default_${serviceDefaults.service}">Default <g:message
-                    code="framework.service.${serviceDefaults.service}.label"/></label>
+        <div class=" form-group spacing-lg">
+            <div class="col-sm-12">
+                <div class="btn-group btn-group-lg">
+                    <button type="button" class="btn btn-simple btn-hover  btn-secondary dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
 
-            <div class="col-sm-10">
-                <select name="default_${serviceDefaults.service}"
-                        data-bind="value: defaults['${serviceDefaults.service}'].type" class="form-control"
-                        id="default_${serviceDefaults.service}">
-                    <option value="" disabled>-- Select a <g:message
-                            code="framework.service.${serviceDefaults.service}.label"/> --</option>
-                    <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
-                        <option value="${enc(attr: description.name)}">${description.title}</option>
-                    </g:each>
-                </select>
+                        <span class="caret"></span>
+
+                        <span data-bind="if: defaults['${serviceDefaults.service}'].type() ">
+
+                            <span data-bind="if: defaults['${serviceDefaults.service}'].description() ">
+                                <span data-bind="with: defaults['${serviceDefaults.service}'].description">
+                                <!-- ko if: iconSrc -->
+                                <img width="24px" height="24px" data-bind="attr: {src: iconSrc}"/>
+                                <!-- /ko -->
+                                <!-- ko if: glyphicon -->
+                                <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: faicon -->
+                                <i data-bind="css: 'fas fa-'+faicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: fabicon -->
+                                <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
+                                <i class="rdicon icon-small plugin"></i>
+                                <!-- /ko -->
+                                <span data-bind="text: title"></span>
+                                </span>
+                            </span>
+                        </span>
+                        <span data-bind="if: !defaults['${serviceDefaults.service}'].type()">
+                            Select a <g:message
+                                    code="framework.service.${serviceDefaults.service}.label"/>
+                        </span>
+
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+
+
+                    <ul class="dropdown-menu ">
+
+                            <li data-bind="foreach: descriptions['${serviceDefaults.service}']">
+                                <a href="#" data-bind="click: function(){$parent.defaults['${serviceDefaults.service}'].type(type())}">
+                                    <!-- ko if: iconSrc -->
+                                    <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                                    <!-- /ko -->
+                                    <!-- ko if: glyphicon -->
+                                    <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: faicon -->
+                                    <i data-bind="css: 'fas fa-'+faicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: fabicon -->
+                                    <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
+                                    <i class="rdicon icon-small plugin"></i>
+                                    <!-- /ko -->
+                                    <span data-bind="text: title"></span>
+
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+                <span data-bind="if: defaults['${serviceDefaults.service}'].description() ">
+                    <span data-bind="with: defaults['${serviceDefaults.service}'].description">
+                        <span class="text-info">
+                            <span data-bind="text: descriptionFirstLine"></span>
+                        </span>
+                    </span>
+                </span>
+                <input type="hidden" name="default_${serviceDefaults.service}" data-bind="value: defaults['${serviceDefaults.service}'].type"/>
             </div>
         </div>
         <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
@@ -245,37 +304,12 @@
             <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
           <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
-          <div class=" fcopyDetails" id="${enc(attr: nkey) + '_det'}"
+          <div class=" " id="${enc(attr: nkey) + '_det'}"
                data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
+              <hr/>
               <g:hiddenField name="${serviceDefaults.prefix}.default.type"
                              value="${description.name}"/>
-              <div class="form-group">
-                  <div class=" col-sm-12 ">
-                      <stepplugin:pluginIcon service="${serviceDefaults.service}"
-                                             name="${description.name}"
-                                             width="16px"
-                                             height="16px">
-                          <i class="rdicon icon-small plugin"></i>
-                      </stepplugin:pluginIcon>
-                      <stepplugin:message
-                              service="${serviceDefaults.service}"
-                              name="${description.name}"
-                              code="plugin.title"
-                              default="${description.title}"/>
-                      -
-                      <g:render template="/scheduledExecution/description"
-                                model="[description: stepplugin.messageText(
-                                        service: serviceDefaults.service,
-                                        name: description.name,
-                                        code: 'plugin.description',
-                                        default: description.description
-                                ),
-                                        textCss    : 'text-info',
-                                        mode       : 'collapsed',
-                                        rkey       : g.rkey()]"/>
 
-                  </div>
-              </div>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                     service            : serviceDefaults.service,
                     provider           : description.name,
