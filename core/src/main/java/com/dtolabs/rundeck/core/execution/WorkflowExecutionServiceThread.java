@@ -15,82 +15,41 @@
  */
 
 /*
-* WorkflowExecutionServiceThread.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 3/29/11 12:00 PM
-* 
-*/
+ * WorkflowExecutionServiceThread.java
+ *
+ * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * Created: 3/29/11 12:00 PM
+ *
+ */
 package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
-import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 
-import java.util.function.Supplier;
+import java.util.Optional;
 
 /**
- * WorkflowExecutionServiceThread is ...
+ * WorkflowExecutionServiceThread implements main thread control for the execution of a single Workflow.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowExecutionResult> {
-    WorkflowExecutionService weservice;
-    WorkflowExecutionItem weitem;
-    private StepExecutionContext context;
-    private WorkflowExecutionResult result;
-    private LoggingManager loggingManager;
+    protected final WorkflowExecutionService weservice;
+    protected final WorkflowExecutionItem weitem;
+    protected final StepExecutionContext context;
+    protected final LoggingManager loggingManager;
+    protected WorkflowExecutionResult result;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager
-    )
-    {
+    ) {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
         this.loggingManager = loggingManager;
-    }
-
-    public void run() {
-        if (null == this.weservice || null == this.weitem || null == context) {
-            throw new IllegalStateException("project or execution detail not instantiated");
-        }
-        if (loggingManager != null) {
-            PluginLoggingManager pluginLogging = null;
-            try {
-                pluginLogging = loggingManager.createPluginLogging(context, null);
-            } catch (Throwable e) {
-                e.printStackTrace(System.err);
-                thrown = e;
-                return;
-            }
-            resultObject = pluginLogging.runWith(this::runWorkflow);
-        } else {
-            resultObject = runWorkflow();
-        }
-    }
-
-    public WorkflowExecutionResult runWorkflow() {
-        try {
-            final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            setResult(executorForItem.executeWorkflow(context, weitem));
-            success = getResult().isSuccess();
-            if (null != getResult().getException()) {
-                thrown = getResult().getException();
-            }
-            return getResult();
-        } catch (Throwable e) {
-            e.printStackTrace(System.err);
-            thrown = e;
-            return null;
-        }
     }
 
     public StepExecutionContext getContext() {
@@ -104,4 +63,110 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     public void setResult(final WorkflowExecutionResult result) {
         this.result = result;
     }
+
+
+    public void run() {
+        if (null == this.weservice || null == this.weitem || null == context) {
+            throw new IllegalStateException("project or execution detail not instantiated");
+        }
+
+        try {
+
+            StaticWorkflowExecutionResult executionResult = runWorkflow(weitem);
+
+            setResult(executionResult.workflowResult);
+            success = executionResult.success;
+            thrown = executionResult.thrown;
+            resultObject = executionResult.workflowResult;
+
+        } catch (Throwable e) {
+            e.printStackTrace(System.err);
+            thrown = e;
+            return;
+        }
+
+    }
+
+
+    /**
+     * Run the specified {@link WorkflowExecutionItem} using the current context and service.
+     * @param workflowExecutionItem
+     * @return
+     */
+    protected StaticWorkflowExecutionResult runWorkflow(final WorkflowExecutionItem workflowExecutionItem) {
+
+        StaticWorkflowExecutionResult executionResult;
+        if (loggingManager != null) {
+            executionResult = loggingManager.createPluginLogging(context, null)
+                    .runWith(() -> runWorkflowStatic(weservice, workflowExecutionItem, context));
+        } else {
+            executionResult = runWorkflowStatic(weservice, workflowExecutionItem, context);
+        }
+        return executionResult;
+    }
+
+    /**
+     * Runs the specified WorkflowExecutionItem using the service and context provided as parameters.
+     * @param weservice WorkflowExecutionService to resolve the WorkflowExecutor
+     * @param weitem {@link WorkflowExecutionItem} to execute.
+     * @param context Execution context.
+     * @return Object with the execution results.
+     */
+    protected static StaticWorkflowExecutionResult runWorkflowStatic(
+            WorkflowExecutionService weservice,
+            WorkflowExecutionItem weitem,
+            StepExecutionContext context
+    ) {
+
+        try {
+            final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
+            WorkflowExecutionResult wresult = executorForItem.executeWorkflow(context, weitem);
+
+            return new StaticWorkflowExecutionResult()
+                    .setWorkflowResult(wresult)
+                    .setSuccess(wresult.isSuccess())
+                    .setThrown(Optional.ofNullable(wresult.getException())
+                            .orElse(null));
+
+        } catch (Throwable e) {
+            e.printStackTrace(System.err);
+            return new StaticWorkflowExecutionResult()
+                    .setThrown(e);
+        }
+    }
+
+
+    /**
+     * Workflow Execution results container.
+     */
+    protected static class StaticWorkflowExecutionResult {
+        WorkflowExecutionResult workflowResult;
+        boolean success;
+        Throwable thrown;
+
+        public StaticWorkflowExecutionResult setWorkflowResult(WorkflowExecutionResult workflowResult) {
+            this.workflowResult = workflowResult;
+            return this;
+        }
+
+        public StaticWorkflowExecutionResult setSuccess(boolean success) {
+            this.success = success;
+            return this;
+        }
+
+        public StaticWorkflowExecutionResult setThrown(Throwable thrown) {
+            this.thrown = thrown;
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "StaticWorkflowExecutionResult{" +
+                    "workflowResult=" + workflowResult +
+                    ", success=" + success +
+                    ", thrown=" + thrown +
+                    '}';
+        }
+    }
+
 }

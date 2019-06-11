@@ -51,6 +51,7 @@ class ScheduledExecution extends ExecutionContext {
     String logOutputThresholdStatus;
 
     Workflow workflow
+    Workflow cleanupWorkflow
 
     Date nextExecution
     boolean scheduled = false
@@ -100,6 +101,7 @@ class ScheduledExecution extends ExecutionContext {
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         workflow(nullable:true)
+        cleanupWorkflow(nullable:true)
         options(nullable:true)
         jobName(blank: false, nullable: false, matches: "[^/]+", maxSize: 1024)
         groupPath(nullable:true, maxSize: 2048)
@@ -307,6 +309,7 @@ class ScheduledExecution extends ExecutionContext {
         }
 
         map.sequence=workflow.toMap()
+        map.cleanupSequence = cleanupWorkflow?.toMap()
 
         if(scheduled){
             map.schedule=[time:[hour:hour,minute:minute,seconds:seconds],month:month,year:year]
@@ -387,12 +390,12 @@ class ScheduledExecution extends ExecutionContext {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-        
+
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
         se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
         se.excludeFilterUncheck = data.excludeFilterUncheck?data.excludeFilterUncheck:false
-        
+
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -435,6 +438,11 @@ class ScheduledExecution extends ExecutionContext {
             Workflow wf = Workflow.fromMap(data.sequence as Map)
             se.workflow=wf
         }
+        if(data.cleanupSequence) {
+            Workflow cwf = Workflow.fromMap(data.cleanupSequence as Map)
+            se.cleanupWorkflow=cwf
+        }
+
         if(data.schedule){
             se.scheduled=true
             if(data.schedule.crontab){

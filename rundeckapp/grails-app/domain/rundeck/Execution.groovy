@@ -29,7 +29,7 @@ class Execution extends ExecutionContext {
 
     ScheduledExecution scheduledExecution
     Date dateStarted
-    Date dateCompleted 
+    Date dateCompleted
     String status
     String outputfilepath
     String failedNodeList
@@ -38,6 +38,7 @@ class Execution extends ExecutionContext {
     boolean cancelled
     Boolean timedOut=false
     Workflow workflow
+    Workflow cleanupWorkflow
     String executionType
     Integer retryAttempt=0
     Boolean willRetry=false
@@ -58,6 +59,7 @@ class Execution extends ExecutionContext {
         })
         logFileStorageRequest(nullable:true)
         workflow(nullable:true)
+        cleanupWorkflow(nullable: true)
         argString(nullable:true)
         dateStarted(nullable:true)
         dateCompleted(nullable:true)

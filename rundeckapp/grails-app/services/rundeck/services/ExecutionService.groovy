@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.MultiWorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -1155,14 +1156,32 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
             );
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
-            //create service object for the framework and listener
-            Thread thread = new WorkflowExecutionServiceThread(
+
+
+            // Create workflow execution items.
+            WorkflowExecutionItem mainItem = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+
+            WorkflowExecutionItem cleanupItem = execution?.cleanupWorkflow ?
+                    executionUtilService.createExecutionItemForWorkflow(execution.cleanupWorkflow) :
+                    null
+
+            Thread thread = new MultiWorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
-                    item,
+                    mainItem,
+                    cleanupItem ? [cleanupItem] : null,
                     executioncontext,
                     workflowLogManager
             )
+
+//            //create service object for the framework and listener
+//            Thread thread = new WorkflowExecutionServiceThread(
+//                    framework.getWorkflowExecutionService(),
+//                    item,
+//                    executioncontext,
+//                    workflowLogManager
+//            )
+
+
             thread.start()
             log.debug("started thread")
             return [
@@ -1875,6 +1894,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       nodeRankOrderAscending:params.nodeRankOrderAscending,
                                       nodeRankAttribute:params.nodeRankAttribute,
                                       workflow:params.workflow,
+                                      cleanupWorkflow: params.cleanupWorkflow?:null,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
                                       timeout:params.timeout?:null,
@@ -2303,9 +2323,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
+        //create duplicate workflows
         Workflow workflow = new Workflow(se.workflow)
-        //create duplicate workflow
         props.workflow = workflow
+
+        // create duplicate cleanup Workflow if exists
+        if(se.cleanupWorkflow) {
+            props.cleanupWorkflow = new Workflow(se.cleanupWorkflow)
+        }
 
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
