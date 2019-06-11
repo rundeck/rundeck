@@ -37,8 +37,10 @@ class Execution extends ExecutionContext {
     String abortedby
     boolean cancelled
     Boolean timedOut=false
+
     Workflow workflow
     Workflow cleanupWorkflow
+
     String executionType
     Integer retryAttempt=0
     Boolean willRetry=false

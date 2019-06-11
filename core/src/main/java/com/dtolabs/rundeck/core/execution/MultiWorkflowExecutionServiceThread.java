@@ -35,7 +35,6 @@ import java.util.function.Supplier;
  * Implementation of {@link WorkflowExecutionServiceThread} which implements the chained execution of
  * multiple workflows after the execution of a primary execution workflow.
  *
- * @author Alberto Hormazabal Cespedes (alberto@rundeck.com)
  */
 public class MultiWorkflowExecutionServiceThread extends WorkflowExecutionServiceThread {
 
@@ -76,24 +75,35 @@ public class MultiWorkflowExecutionServiceThread extends WorkflowExecutionServic
             resultObject = executionResult.workflowResult;
 
             if (cleanupWorkflowExecutionItems != null && !cleanupWorkflowExecutionItems.isEmpty()) {
-                context.getExecutionLogger().log(2, "==Executing Cleanup Workflows");
+                context.getExecutionLogger().log(2, "==> Executing Cleanup Workflows");
 
                 List<StaticWorkflowExecutionResult> cleanupResults = new ArrayList<>();
 
                 for (WorkflowExecutionItem nextWorkflow : cleanupWorkflowExecutionItems) {
 
                     try {
+
+                        // TODO apply filters and check if must execute this workflow
+
                         StaticWorkflowExecutionResult nextResult = runWorkflow(nextWorkflow);
                         context.getExecutionLogger().log(2, "Secondary Workflow Executed: " + nextResult.toString());
                         cleanupResults.add(nextResult);
 
                     } catch (Exception e) {
+
                         context.getExecutionLogger().log(0, "Error executing secondary workflow: " +
                                 e.getMessage());
                         e.printStackTrace(System.err);
-
-                        // TODO check state transition on secondary wf error.
+                        cleanupResults.add(new StaticWorkflowExecutionResult()
+                                .setSuccess(false)
+                                .setThrown(e));
                     }
+
+                    context.getExecutionLogger().log(2,
+                            "==> Executed " + cleanupResults.size() + " cleanup workflows.");
+
+
+                    // TODO resolve Execution state transition.
                 }
             }
         } catch (Throwable e) {
