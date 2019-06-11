@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-<div class="vue-tabs">
+<div class="vue-tabs"  data-ko-bind="editProject">
     <div class="nav-tabs-navigation">
         <div class="nav-tabs-wrapper">
             <ul class="nav nav-tabs" id="job_edit_tabs">
@@ -43,20 +43,13 @@
                         </a>
                     </li>
                 </g:each>
-                <g:if test="${nodeExecDescriptions}">
+                <g:each in="${serviceDefaultsList}" var="serviceDefaults">
                     <li>
-                        <a href="#tab_nodeexec" data-toggle="tab">
-                            Default <g:message code="framework.service.NodeExecutor.label" />
+                        <a href="#tab_svc_${serviceDefaults.service}" data-toggle="tab">
+                            Default <g:message code="framework.service.${serviceDefaults.service}.label"/>
                         </a>
                     </li>
-                </g:if>
-                <g:if test="${fileCopyDescriptions}">
-                    <li>
-                        <a href="#tab_filecopy" data-toggle="tab">
-                            Default Node <g:message code="framework.service.FileCopier.label"/>
-                        </a>
-                    </li>
-                </g:if>
+                </g:each>
 
             </ul>
         </div>
@@ -64,6 +57,6 @@
 </div>
 
 
-<div class="tab-content spacing-lg" id="page_job_edit">
-    <g:render template="editProjectForm" model="${[editOnly: editOnly, project: project]}"/>
+<div class="tab-content spacing-lg" id="page_job_edit" data-ko-bind="editProject">
+    <g:render template="editProjectForm" model="${[editOnly: editOnly, project: project,serviceDefaultsList:serviceDefaultsList]}"/>
 </div>

@@ -441,9 +441,9 @@ class FrameworkControllerTest {
         request.method = "POST"
 
         params.project = "TestSaveProject"
-        params.defaultNodeExec = 1
+        params.default_NodeExecutor = 'foobar'
         params.nodeexec = [
-                "1": [
+                "default": [
                         type  : "foobar",
                         config: [
                                 specialvalue1: "foobar",
@@ -692,9 +692,9 @@ class FrameworkControllerTest {
         request.method = "POST"
 
         params.project = "TestSaveProject"
-        params.defaultNodeExec = 1
+        params.default_NodeExecutor = 'foobar'
         params.nodeexec = [
-            "1": [
+            "default": [
                 type  : "foobar",
                 config: [
                     specialvalue1: "foobar",

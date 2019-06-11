@@ -20,7 +20,7 @@
    Created: 8/1/11 11:38 AM
 --%>
 
-<%@ page import="rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <g:render template="/common/messages" model="[notDismissable:true]"/>
 <script type="text/javascript">
     function changeCronExpression(elem){
@@ -76,7 +76,8 @@
         <label for="project" class="required">
           <g:message code="domain.Project.field.name" default="Project Name"/>
         </label>
-        <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"/>
+          <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"
+                       data-bind="value: name"/>
         <g:if test="${projectNameError}">
           <div class="text-warning"><g:enc>${projectNameError}</g:enc></div>
         </g:if>
@@ -210,97 +211,87 @@
               ]}"/>
     </div>
   </g:each>
-  <g:if test="${nodeExecDescriptions}">
-    <div class="tab-pane" id="tab_nodeexec">
-      <span class="h4">Default <g:message code="framework.service.NodeExecutor.label" /></span>
-      <span class="help-block"><g:message code="domain.Project.edit.NodeExecutor.explanation" /></span>
-      <g:each in="${nodeExecDescriptions}" var="description" status="nex">
-        <g:set var="nkey" value="${g.rkey()}"/>
-        <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
-        <div class="radio">
-          <g:radio
-            name="defaultNodeExec"
-            value="${nex}"
-            class="nexec"
-            id="${nkey+'_input'}"
-            checked="${isSelected}"/>
-            <label>
-              <b><g:enc>${description.title}</g:enc></b>
-            </label>
-            <span class="help-block"><g:enc>${description.description}</g:enc></span>
-        </div>
-        <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
-        <g:set var="nodeexecprefix" value="nodeexec.${nex}.config."/>
-        <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="false" targetSelector=".nexecDetails"/>
-        </wdgt:eventHandler>
-        <g:if test="${description && description.properties}">
-          <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-            <wdgt:action visible="true" target="${nkey+'_det'}"/>
-          </wdgt:eventHandler>
-          <div class="well well-sm nexecDetails" id="${enc(attr:nkey) + '_det'}" style="${wdgt.styleVisible(if: isSelected)}">
-            <div class="form-horizontal " >
-              <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                        service:com.dtolabs.rundeck.plugins.ServiceNameConstants.NodeExecutor,
-                        provider:description.name,
-                        properties:description.properties,
-                        report:nodeexecreport?.errors && isSelected ? nodeexecreport : null,
-                        prefix:nodeexecprefix,
-                        values:isSelected ? nodeexecconfig : null,
-                        fieldnamePrefix:nodeexecprefix,
-                        origfieldnamePrefix:'orig.' + nodeexecprefix,
-                        allowedScope: PropertyScope.Project
-              ]}"/>
+
+<g:each in="${serviceDefaultsList}" var="serviceDefaults">
+
+    <div class="tab-pane form-horizontal" id="tab_svc_${serviceDefaults.service}">
+
+        <div class="form-group">
+            <div class=" col-sm-12 help-block"><g:message
+                    code="domain.Project.edit.${serviceDefaults.service}.explanation"/>
             </div>
-          </div>
-        </g:if>
-      </g:each>
-    </div>
-  </g:if>
-  <g:if test="${fileCopyDescriptions}">
-    <div class="tab-pane" id="tab_filecopy">
-    <span class="h4">Default Node <g:message code="framework.service.FileCopier.label"/></span>
-    <span class="help-block"><g:message code="domain.Project.edit.FileCopier.explanation" /></span>
-    <g:each in="${fileCopyDescriptions}" var="description" status="nex">
-      <g:set var="nkey" value="${g.rkey()}"/>
-      <g:set var="isSelected" value="${defaultFileCopy == description.name}"/>
-      <div class="radio">
-        <g:radio
-            name="defaultFileCopy"
-            value="${nex}"
-            class="fcopy"
-            id="${nkey+'_input'}"
-            checked="${isSelected}"/>
-        <label>
-          <b><g:enc>${description.title}</g:enc></b>
-        </label>
-        <span class="help-block"><g:enc>${description.description}</g:enc></span>
-      </div>
-      <g:hiddenField name="fcopy.${nex}.type" value="${description.name}"/>
-      <g:set var="fcopyprefix" value="fcopy.${nex}.config."/>
-      <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="false" targetSelector=".fcopyDetails"/>
-      </wdgt:eventHandler>
+        </div>
+
+        <div class=" form-group">
+            <label class="col-sm-2 control-label " for="default_${serviceDefaults.service}">Default <g:message
+                    code="framework.service.${serviceDefaults.service}.label"/></label>
+
+            <div class="col-sm-10">
+                <select name="default_${serviceDefaults.service}"
+                        data-bind="value: defaults['${serviceDefaults.service}'].type" class="form-control"
+                        id="default_${serviceDefaults.service}">
+                    <option value="" disabled>-- Select a <g:message
+                            code="framework.service.${serviceDefaults.service}.label"/> --</option>
+                    <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
+                        <option value="${enc(attr: description.name)}">${description.title}</option>
+                    </g:each>
+                </select>
+            </div>
+        </div>
+        <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
+            <g:set var="nkey" value="${g.rkey()}"/>
+            <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
+
+            <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
-        <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="true" target="${nkey+'_det'}"/>
-        </wdgt:eventHandler>
-        <div class="well well-sm fcopyDetails" id="${enc(attr:nkey) + '_det'}" style="${wdgt.styleVisible(if: isSelected)}">
-          <div class="form-horizontal">
+          <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
+          <div class=" fcopyDetails" id="${enc(attr: nkey) + '_det'}"
+               data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
+              <g:hiddenField name="${serviceDefaults.prefix}.default.type"
+                             value="${description.name}"/>
+              <div class="form-group">
+                  <div class=" col-sm-12 ">
+                      <stepplugin:pluginIcon service="${serviceDefaults.service}"
+                                             name="${description.name}"
+                                             width="16px"
+                                             height="16px">
+                          <i class="rdicon icon-small plugin"></i>
+                      </stepplugin:pluginIcon>
+                      <stepplugin:message
+                              service="${serviceDefaults.service}"
+                              name="${description.name}"
+                              code="plugin.title"
+                              default="${description.title}"/>
+                      -
+                      <g:render template="/scheduledExecution/description"
+                                model="[description: stepplugin.messageText(
+                                        service: serviceDefaults.service,
+                                        name: description.name,
+                                        code: 'plugin.description',
+                                        default: description.description
+                                ),
+                                        textCss    : 'text-info',
+                                        mode       : 'collapsed',
+                                        rkey       : g.rkey()]"/>
+
+                  </div>
+              </div>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                      service:com.dtolabs.rundeck.plugins.ServiceNameConstants.FileCopier,
-                      provider:description.name,
-                      properties:description.properties,
-                      report:fcopyreport?.errors && isSelected ? fcopyreport : null,
-                      prefix:fcopyprefix,
-                      values:isSelected?fcopyconfig:null,
-                      fieldnamePrefix:fcopyprefix,
-                      origfieldnamePrefix:'orig.'+fcopyprefix,
-                      allowedScope:PropertyScope.Project
+                    service            : serviceDefaults.service,
+                    provider           : description.name,
+                    properties         : description.properties,
+                    report             : serviceDefaults.errreport?.errors && isSelected ? serviceDefaults.errreport :
+                                         null,
+                    prefix             : fcopyprefix,
+                    values             : isSelected ? serviceDefaults.config : null,
+                    fieldnamePrefix    : fcopyprefix,
+                    origfieldnamePrefix: 'orig.' + fcopyprefix,
+                    allowedScope       : PropertyScope.Project
             ]}"/>
-          </div>
+
         </div>
       </g:if>
     </g:each>
     </div>
-  </g:if>
+
+</g:each>
