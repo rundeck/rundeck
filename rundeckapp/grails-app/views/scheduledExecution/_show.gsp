@@ -114,6 +114,12 @@
 </content>
 
 <div class="container-fluid">
+    <g:if test="${!runAccess}">
+        <section class=" alert alert-warning">
+            <b class="glyphicon glyphicon-warning-sign"></b>
+            <g:message code="unauthorized.job.run"/>
+        </section>
+    </g:if>
     <g:if test="${canRunJob}">
         <div class="row">
             <div class="col-xs-12">
