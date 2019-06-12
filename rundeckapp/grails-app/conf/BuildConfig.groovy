@@ -125,6 +125,7 @@ grails.project.dependency.resolution = {
                 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.9.0',
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20160614.1'
 
+        compile 'commons-fileupload:commons-fileupload:1.3.3'
         compile("org.rundeck:rundeck-core:${rundeckVersion}")
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
