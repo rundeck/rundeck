@@ -74,14 +74,14 @@
                   model="${[
                           projects    : session.frameworkProjects,
                           labels      : session.frameworkLabels,
-                          project     : params.project ?: request.project,
+                          project     : projectName,
                           selectParams: selectParams
                   ]}"/>
     </li>
 </g:if>
-<g:if test="${params.project ?: request.project}">
+<g:if test="${projectName}">
     <li id="nav-project-dashboard-link" class="${enc(attr: homeselected)}">
-      <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
+      <g:link controller="menu" action="projectHome" params="[project: project ?: projectName]">
       <i class="fas fa-clipboard-list"></i>
         <p>
           <g:message code="gui.menu.Dashboard"/>
@@ -89,7 +89,7 @@
       </g:link>
     </li>
     <li id="nav-jobs-link" class="${enc(attr: wfselected)}">
-        <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: params.project ?: request.project]">
+        <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: projectName]">
             <i class="fas fa-tasks"></i>
             <p>
               <g:message code="gui.menu.Workflows"/>
@@ -97,16 +97,16 @@
         </g:link>
     </li>
     <li id="nav-nodes-link" class="${enc(attr:resselected)}">
-        <g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}" params="[project: params.project ?: request.project]">
+        <g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}" params="[project: projectName]">
             <i class="fas fa-sitemap"></i>
             <p>
               <g:message code="gui.menu.Nodes"/>
             </p>
         </g:link>
     </li>
-    <g:if test="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN, project: params.project ?: request.project)}">
+    <g:if test="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN, project: projectName)}">
         <li id="nav-commands-link" class="${enc(attr: adhocselected)}">
-            <g:link controller="framework" action="adhoc" class=" toptab ${enc(attr: adhocselected)}" params="[project: params.project ?: request.project]">
+            <g:link controller="framework" action="adhoc" class=" toptab ${enc(attr: adhocselected)}" params="[project: projectName]">
                 <i class="fas fa-terminal"></i>
                 <p>
                   <g:message code="gui.menu.Adhoc"/>
@@ -125,11 +125,11 @@
         </li>
     </auth:resourceAllowed>
     <g:if test="${params.project ?: request.project}">
-        <g:ifMenuItems type="PROJECT" project="${params.project ?: request.project}">
+        <g:ifMenuItems type="PROJECT" project="${projectName}">
         <li role="separator" class="divider"></li>
-            <g:forMenuItems type="PROJECT" var="item" project="${params.project ?: request.project}">
+            <g:forMenuItems type="PROJECT" var="item" project="${projectName}">
             <li>
-                <a href="${enc(attr: item.getProjectHref(params.project ?: request.project))}"
+                <a href="${enc(attr: item.getProjectHref(projectName))}"
                    class=" toptab "
                    title="${enc(attr: g.message(code: item.titleCode, default: item.title))}">
                     <i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i>
@@ -142,7 +142,7 @@
     <g:set var="projConfigAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT,
-                   name: (params.project ?: request.project),
+                   name: (projectName),
                    action: [AuthConstants.ACTION_CONFIGURE,
                             AuthConstants.ACTION_ADMIN,
                             AuthConstants.ACTION_IMPORT,
@@ -154,7 +154,7 @@
     <g:set var="projACLAuth"
            value="${auth.resourceAllowedTest(
                    type: AuthConstants.TYPE_PROJECT_ACL,
-                   name: (params.project ?: request.project),
+                   name: (projectName),
                    action: [AuthConstants.ACTION_READ,
                             AuthConstants.ACTION_ADMIN],
                    any: true,
