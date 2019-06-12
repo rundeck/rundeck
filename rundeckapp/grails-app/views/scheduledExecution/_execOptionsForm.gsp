@@ -506,7 +506,6 @@
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
             evt.preventDefault();
             nodeFilter.selectNodeFilterLink(this);
-            $('filterradio').checked=true;
         });
         jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
             evt.preventDefault();
