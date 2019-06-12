@@ -676,6 +676,73 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
+
+    @Unroll
+    def "save project default file copier"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params."default_${service}" = 'blah'
+            def defaultsConfig = [
+                    specialvalue1: "foobar",
+                    specialvalue2: "barfoo",
+                    specialvalue3: "fizbaz"
+            ]
+            params."$prefix" = [
+                    "default": [
+                            type  : type,
+                            config: defaultsConfig
+                    ]
+            ]
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
+            if (service == 'FileCopier') {
+                1 * controller.fcopyPasswordFieldsService.untrack(
+                        [[config: [type: type, props: defaultsConfig], index: 0]],
+                        _
+                )
+                1 * fwkService.addProjectFileCopierPropertiesForType(type, _, defaultsConfig, _)
+            } else {
+                1 * controller.execPasswordFieldsService.untrack(
+                        [[config: [type: type, props: defaultsConfig], index: 0]],
+                        _
+                )
+                1 * fwkService.addProjectNodeExecutorPropertiesForType(type, _, defaultsConfig, _)
+            }
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.updateFrameworkProjectConfig(
+                    _, {
+                it['project.description'] == ''
+            }, _
+            ) >> [success: true]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+
+        where:
+            service        | type     | prefix
+            'FileCopier'   | 'foobar' | 'fcopy'
+            'NodeExecutor' | 'foobar' | 'nodeexec'
+    }
     def "get project resources, project dne"(){
         setup:
         controller.frameworkService=Mock(FrameworkService){

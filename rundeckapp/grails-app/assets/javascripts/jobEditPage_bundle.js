@@ -21,6 +21,7 @@
 //= require knockout-onenter
 //= require ko/handler-bootstrapTooltip
 //= require ko/handler-bootstrapPopover
+//= require plugins/pluginMetadata
 //= require workflowStepEditorKO
 //= require nodeFiltersKO
 //= require optionEditKO
