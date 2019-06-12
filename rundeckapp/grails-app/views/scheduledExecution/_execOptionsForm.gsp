@@ -125,15 +125,6 @@
 
                     </div>
 
-
-%{--                        <label>--}%
-                            %{--                            <select name="extra.nodeoverride" data-bind="value: nodeOverride" class="form-control">--}%
-                            %{--                                <option disabled value="">-Choose-</option>--}%
-                            %{--                                <option value="cherrypick">Selecting Nodes</option>--}%
-                            %{--                                <option value="filter">Overriding Node Filter</option>--}%
-                            %{--                            </select>--}%
-%{--                        </label>--}%
-
                         <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
                             <input id="cherrypickradio"
                                    type="radio"
