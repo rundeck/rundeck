@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -4375,6 +4376,23 @@ class ScheduledExecutionController  extends ControllerBase{
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: 'api.error.item.unauthorized',
                             args: ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!frameworkService.authorizeProjectResourceAll(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_EVENT,
+                [AuthConstants.ACTION_READ],
+                scheduledExecution.project
+        )
+        ) {
+
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: 'api.error.item.unauthorized',
+                            args: ['Read', 'Events in Project', scheduledExecution.project]
                     ]
             )
         }

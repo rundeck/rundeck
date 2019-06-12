@@ -642,6 +642,8 @@ search
       </div>
     </div>
   </div>
+
+  <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="event">
   <div class="row">
     <div class="col-xs-12">
       <div class="card card-plain">
@@ -663,6 +665,7 @@ search
       </div>
     </div>
   </div>
+  </auth:resourceAllowed>
 </div>
 
 <div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">

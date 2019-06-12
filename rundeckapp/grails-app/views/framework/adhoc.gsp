@@ -28,6 +28,12 @@
   <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
   <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
+  <g:set var="eventReadAuth" value="${auth.resourceAllowedTest(
+          project: projectName,
+          action: AuthConstants.ACTION_READ,
+          kind: 'event'
+  )}"/>
+
   <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
@@ -352,6 +358,7 @@ search
       <div id="runcontent" class="card card-modified  exec-output card-grey-header nodes_run_content"></div>
     </div>
 
+    <g:if test="${eventReadAuth}">
     <div class="col-xs-12">
 
       <div >
@@ -378,6 +385,7 @@ search
       </div>
 
     </div>
+    </g:if>
 
   </div>
     <div id="loaderror"></div>

@@ -37,9 +37,11 @@
                 context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
         <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
                 params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+        <g:set var="projectEventsAuth" value="${auth.resourceAllowedTest(kind: 'event', project: params.project, action: AuthConstants.ACTION_READ) || projAdminAuth}"/>
     <g:javascript>
     window._rundeck = Object.assign(window._rundeck || {}, {
         data:{
+            projectEventsAuth:${enc(js:projectEventsAuth)},
             projectAdminAuth:${enc(js:projAdminAuth)},
             deleteExecAuth:${enc(js:deleteExecAuth)},
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",

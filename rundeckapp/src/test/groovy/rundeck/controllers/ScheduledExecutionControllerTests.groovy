@@ -1024,6 +1024,13 @@ class ScheduledExecutionControllerTests  {
                 assert 'view' in actions
                 true
             }
+            authorizeProjectResourceAll(1) { ctx, res, actions, proj ->
+                assert res == [type: 'resource', kind: 'event']
+                assert proj == se.project
+                assert 'read' in actions
+
+                true
+            }
         }
 
         sec.executionService = mockWith(ExecutionService) {

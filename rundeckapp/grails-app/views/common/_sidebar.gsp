@@ -60,6 +60,7 @@
     </g:ifPageProperty>
 </g:if>
 <g:if test="${session?.user && request.subject }">
+<g:set var="projectName" value="${params.project ?: request.project}"/>
 <g:if test="${session.frameworkProjects}">
     <li id="projectSelect">
       <a href="#" data-toggle="collapse">
@@ -113,14 +114,16 @@
             </g:link>
         </li>
     </g:if>
-    <li id="nav-activity-link" class="${enc(attr: eventsselected)}">
-      <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: params.project ?: request.project]">
-        <i class="fas fa-history"></i>
-        <p>
-          <g:message code="gui.menu.Events"/>
-        </p>
-      </g:link>
-    </li>
+    <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="event">
+        <li id="nav-activity-link" class="${enc(attr: eventsselected)}">
+          <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: projectName]">
+            <i class="fas fa-history"></i>
+            <p>
+              <g:message code="gui.menu.Events"/>
+            </p>
+          </g:link>
+        </li>
+    </auth:resourceAllowed>
     <g:if test="${params.project ?: request.project}">
         <g:ifMenuItems type="PROJECT" project="${params.project ?: request.project}">
         <li role="separator" class="divider"></li>
