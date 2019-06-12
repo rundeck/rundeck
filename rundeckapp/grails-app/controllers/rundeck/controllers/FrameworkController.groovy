@@ -188,7 +188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     usedFilter = params.filterName
                 }
             }
-        } else if (prefs['nodes']) {
+        } else if (!query.filter && prefs['nodes']) {
             return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
 
