@@ -39,19 +39,3 @@
 <p>
     <code><g:message code="attribute" default="attribute"/>: /regex/</code>
 </p>
-
-<strong><g:message code="examples" default="Examples"/>:</strong>
-<dl>
-    <dt><g:message code="all.nodes" default="All Nodes"/></dt>
-    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'.*',project:params.project?:request.project]"
-        data-node-filter="name: .*"
-    >name: .*</g:link> </dd>
-    <dt><g:message code="nodes.tagged" default="Nodes tagged"/> "production"</dt>
-    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'tags: production', project: params.project ?: request.project]"
-        data-node-filter="tags: production"
-    >tags: production</g:link> </dd>
-    <dt><g:message code="unix.nodes" default="Unix nodes"/></dt>
-    <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'osFamily: unix', project: params.project ?: request.project]"
-        data-node-filter="osFamily: unix"
-    >osFamily: unix</g:link> </dd>
-</dl>
