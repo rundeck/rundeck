@@ -65,7 +65,7 @@ saved.filters
 search
 "/>
     <script type="text/javascript">
-        
+
         function showError(message){
              appendText('#error',message);
              jQuery("#error").show();

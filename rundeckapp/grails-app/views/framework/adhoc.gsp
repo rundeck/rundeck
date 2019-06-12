@@ -112,7 +112,7 @@ search
 <content tag="subtitlesection">
   <div class="subtitle-head">
     <div class="subtitle-head-item">
-      <div class="row">
+      <div>
         <div class="col-xs-12 ">
           <div class="${emptyQuery ? 'active' : ''}" data-ko-bind="nodeFilter">
             <g:form action="adhoc" class="form form-horizontal" name="searchForm">

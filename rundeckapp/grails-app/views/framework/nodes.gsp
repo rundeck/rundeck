@@ -41,7 +41,7 @@
 </g:if>
 <content tag="subtitlecss">plain</content>
 <content tag="subtitlesection">
-    <div class="row">
+    <div>
         <div class="col-xs-12 subtitle-head">
             <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
                 <g:render template="nodeFilterInputGroup"
