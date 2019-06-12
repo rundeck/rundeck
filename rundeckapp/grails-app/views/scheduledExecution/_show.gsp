@@ -129,6 +129,8 @@
     </div>
     <div class="row" id="_job_main_placeholder">
         <div class="col-xs-12">
+            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: 'event')}"/>
+
             <div class="card" id="activity_section">
                 <div class="card-content">
 
@@ -139,9 +141,11 @@
                                     <li class="active">
                                         <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
                                     </li>
+                                    <g:if test="${hasEventReadAuth}">
                                     <li>
                                         <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
                                     </li>
+                                    </g:if>
                                 </ul>
                             </div>
                         </div>
@@ -157,6 +161,7 @@
 
                                 <div id="_job_stats_extra_placeholder"></div>
                             </div>
+                            <g:if test="${hasEventReadAuth}">
                             <div class="tab-pane" id="history">
 
                                 <div data-ko-bind="history" class="_history_content vue-project-activity">
@@ -164,6 +169,7 @@
                                     <activity-list :event-bus="EventBus"></activity-list>
                                 </div>
                             </div>
+                            </g:if>
                         </div>
                     </div>
 

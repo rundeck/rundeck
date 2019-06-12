@@ -834,6 +834,11 @@ search
                   </div>
           <g:if test="${scheduledExecution}">
 
+              <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(
+                      project: scheduledExecution.project,
+                      action: AuthConstants.ACTION_READ,
+                      kind: 'event'
+              )}"/>
               <div class="col-sm-12">
 
                   <div class="card" id="activity_section">
@@ -846,9 +851,11 @@ search
                                           <li class="active">
                                               <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
                                           </li>
-                                          <li>
-                                              <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
-                                          </li>
+                                          <g:if test="${hasEventReadAuth}">
+                                              <li>
+                                                  <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                              </li>
+                                          </g:if>
                                       </ul>
                                   </div>
                               </div>
@@ -864,13 +871,15 @@ search
 
                                       <div id="_job_stats_extra_placeholder"></div>
                                   </div>
-                                  <div class="tab-pane" id="history">
+                                  <g:if test="${hasEventReadAuth}">
+                                      <div class="tab-pane" id="history">
 
-                                      <div data-ko-bind="history" class="_history_content vue-project-activity">
+                                          <div data-ko-bind="history" class="_history_content vue-project-activity">
 
-                                          <activity-list :event-bus="EventBus"></activity-list>
+                                              <activity-list :event-bus="EventBus"></activity-list>
+                                          </div>
                                       </div>
-                                  </div>
+                                  </g:if>
                               </div>
                           </div>
 
