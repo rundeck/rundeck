@@ -47,8 +47,11 @@ dependencies {
     compile "org.grails.plugins:gsp"
 
     compile project(":core")
-    compile('com.github.rundeck.repository:repository-client:0.9.10') {
+    compile('com.github.rundeck.repository:repository-client:0.10.0') {
         exclude(group:"org.rundeck", module:"rundeck-core")
+        exclude(group:"org.rundeck", module:"rundeck-storage-api")
+        exclude(group:"org.rundeck", module:"rundeck-storage-data")
+        exclude(group:"org.rundeck", module:"rundeck-storage-filesys")
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
     }
