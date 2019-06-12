@@ -682,6 +682,12 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             filterName: self.filterName() ? self.filterName() : ''
         });
     };
+    self.nodesPageViewUrl=ko.computed(function () {
+        return _genUrl(self.baseNodesPageUrl, {
+            filter: self.filter(),
+            filterName: self.filterName()? self.filterName():''
+        });
+    })
     self.nodesPageView=function(){
         document.location = _genUrl(self.baseNodesPageUrl, {
             filter: self.filter(),

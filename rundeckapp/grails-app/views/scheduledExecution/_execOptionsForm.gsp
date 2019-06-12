@@ -348,11 +348,11 @@
                                         <span data-bind="if: total()>maxShown()">
                                             <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary"><g:message code="count.nodes.shown" /></span>
                                         </span>
-                                        <div class="pull-right">
-                                          <a class="btn btn-default btn-sm" data-bind="click: nodesPageView">
+                                        <span class="pull-right">
+                                            <a href="#" data-bind="attr: {href: nodesPageViewUrl }">
                                               <g:message code="view.in.nodes.page.prompt" />
                                           </a>
-                                        </div>
+                                        </span>
 
                                     </span>
                                 </div>
