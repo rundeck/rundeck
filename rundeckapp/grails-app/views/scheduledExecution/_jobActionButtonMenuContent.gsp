@@ -16,7 +16,6 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
-<g:set var="authView" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW])}"/>
 <g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ])}"/>
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
 <g:set var="authEnableDisableSchedule" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_SCHEDULE])}"/>
