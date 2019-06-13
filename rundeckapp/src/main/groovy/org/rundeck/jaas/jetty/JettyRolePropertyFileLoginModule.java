@@ -41,7 +41,7 @@ import java.util.Map;
  */
 public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyRolePropertyFileLoginModule.class.getName());
-    AbstractLoginModule module;
+    ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule();
     UserInfo            userInfo;
     boolean             caseInsensitive = true;
 
@@ -64,12 +64,8 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         if (null != caseInsensitiveStr) {
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
-        if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
-            logger.debug("using reloadable realm property file reader");
-            module = new ReloadablePropertyFileLoginModule();
-        } else {
-            module = new ReloadablePropertyFileLoginModule();
-            ((ReloadablePropertyFileLoginModule)module).setReloadEnabled(false);
+        if(!options.containsKey("hotReload") || !options.get("hotReload").equals("true")) {
+            module.setReloadEnabled(false);
         }
         module.initialize(subject, callbackHandler, shared, options);
     }

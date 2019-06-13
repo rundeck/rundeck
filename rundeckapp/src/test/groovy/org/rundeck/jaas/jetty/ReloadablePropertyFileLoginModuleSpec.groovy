@@ -15,12 +15,23 @@
  */
 package org.rundeck.jaas.jetty
 
+import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.security.auth.Subject
 
 
 class ReloadablePropertyFileLoginModuleSpec extends Specification {
+
+    @Shared
+    List<String> deleteAfterAllTests = []
+
+    def cleanupSpec() {
+        deleteAfterAllTests.each {
+            new File(it).delete()
+        }
+    }
+
     def "Ensure that only role principals are returned in getUserInfo"() {
         setup:
         File tmpFile = File.createTempFile("realm",".properties")
@@ -42,6 +53,7 @@ class ReloadablePropertyFileLoginModuleSpec extends Specification {
         setup:
         File tmpFile = File.createTempFile("realm",".properties")
         tmpFile << "testuser:test,one,two\n"
+        deleteAfterAllTests.add(tmpFile.absolutePath)
         ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule()
 
         when:
@@ -56,9 +68,6 @@ class ReloadablePropertyFileLoginModuleSpec extends Specification {
         then:
         attempt1 == attempt1Value
         attempt2?.userName == attempt2Value
-
-        cleanup:
-        tmpFile.delete()
 
         where:
         reloadEnabled | attempt1Value | attempt2Value

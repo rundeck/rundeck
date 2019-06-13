@@ -38,18 +38,14 @@ import java.util.Map;
  */
 public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule {
     public static final Logger logger = LoggerFactory.getLogger(JettyAuthPropertyFileLoginModule.class.getName());
-    AbstractLoginModule module;
+    ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule();
     UserInfo            userInfo;
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map shared, Map options) {
         super.initialize(subject, callbackHandler, shared, options);
-        if(options.containsKey("hotReload") && options.get("hotReload").equals("true")) {
-            logger.debug("using reloadable realm property file reader");
-            module = new ReloadablePropertyFileLoginModule();
-        } else {
-            module = new ReloadablePropertyFileLoginModule();
-            ((ReloadablePropertyFileLoginModule)module).setReloadEnabled(false);
+        if(!options.containsKey("hotReload") || !options.get("hotReload").equals("true")) {
+            module.setReloadEnabled(false);
         }
         module.initialize(subject, callbackHandler, shared, options);
     }
