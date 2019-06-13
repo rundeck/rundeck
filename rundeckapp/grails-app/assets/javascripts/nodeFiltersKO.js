@@ -39,8 +39,15 @@ function NodeSummary(data){
           url:_genUrl(appLinks.frameworkNodeSummaryAjax),
           type:'GET',
 
-          error:function(data,jqxhr,err){
-              self.error('Recent commands list: request failed for '+requrl+': '+err+", "+jqxhr);
+          error: function (jqxhr, status, err) {
+              if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                  self.error(jqxhr.responseJSON.message)
+              } else if (jqxhr.status === 403) {
+                  self.error('Not authorized')
+              } else {
+                  console.log('Nodes Summary: request failed for nodeSummaryAjax: ' + err, jqxhr)
+                  self.error('Nodes Summary: request failed: ' + err)
+              }
           }
       }).success(function(data){
           ko.mapping.fromJS(data,{},self);
@@ -470,6 +477,9 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
     self.emptyMessage=ko.observable(data.emptyMessage?data.emptyMessage:'No match');
     self.hideAll=ko.observable(data.hideAll!=null?(data.hideAll?true:false):false);
     self.nodeSummary=ko.observable(data.nodeSummary?data.nodeSummary:null);
+    if (self.nodeSummary()) {
+        self.nodeSummary().error.subscribe(self.error)
+    }
     self.nodeSet=ko.observable(new NodeSet());
     self.truncated=ko.observable(false);
     self.loaded=ko.observable(false);
@@ -967,10 +977,16 @@ function NodeFilters(baseRunUrl, baseSaveJobUrl, baseNodesPageUrl, data) {
             dataType:'json',
             url:requrl,
 
-            error:function(data,jqxhr,err){
+            error:function(jqxhr,status,err){
                 self.loading(false);
-                if (typeof(errcallback) == 'function') {
-                    self.error('Failed '+requrl+': '+err+", "+jqxhr);
+
+                if (jqxhr.responseJSON && jqxhr.responseJSON.message) {
+                    self.error(jqxhr.responseJSON.message)
+                } else if (jqxhr.status === 403) {
+                    self.error('Not authorized')
+                } else {
+                    console.log('Nodes Query: request failed: ' + err, jqxhr)
+                    self.error('Nodes Query: request failed: ' + err)
                 }
             },
             success:function(data,status,jqxhr){

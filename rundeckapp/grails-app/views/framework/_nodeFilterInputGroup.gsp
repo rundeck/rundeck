@@ -77,7 +77,6 @@
         <!-- ko if: nodeSummary().filters().length > 0 -->
         <li class="divider"></li>
         <li class="dropdown-header"> <g:message code="saved.filters" /></li>
-        %{--    <g:render template="/common/selectFilter" model="[className: 'nodefilterlink',filterList: true, filterset: filterset, filterName: filterName, prefName: 'nodes', noSelection: filterName ? message(code:'all.nodes.menu.item') : null]"/>--}%
         <!-- /ko -->
         <!-- ko foreach: nodeSummary().filters -->
         <li>

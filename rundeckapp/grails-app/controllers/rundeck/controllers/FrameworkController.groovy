@@ -188,7 +188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     usedFilter = params.filterName
                 }
             }
-        } else if (prefs['nodes']) {
+        } else if (!query.filter && prefs['nodes']) {
             return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
 
@@ -527,12 +527,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodeSummaryAjax(String project){
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                             [AuthConstants.ACTION_READ],
-                                                             project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
-            return
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                          [AuthConstants.ACTION_READ],
+                                                          project
+        )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',project],
+                    format:'json'
+            ])
         }
         def User u = userService.findOrCreateUser(session.user)
         def defaultFilter = null
@@ -658,6 +663,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesQueryAjax(ExtNodeFilters query) {
         if (requireAjax(action: 'nodes', params: params)) {
             return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             [AuthConstants.ACTION_READ],
+                                                             query.project
+                )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',query.project],
+                    format:'json'
+            ])
         }
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)

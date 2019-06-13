@@ -1311,6 +1311,30 @@ class FrameworkControllerSpec extends Specification {
         ]
     }
 
+
+    def "node page with filter param doesn't redirect"() {
+        given:
+            def project = 'testProj'
+            controller.userService = Mock(UserService)
+            controller.frameworkService = Mock(FrameworkService)
+            def testUser = new User(login: 'auser').save()
+            [
+                    new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
+                    new NodeFilter(user: testUser, filter: 'tags:xyz', name: 'filter2', project: project),
+                    new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
+
+            ]*.save(flush: true)
+            def query = new ExtNodeFilters(project: project, filter: 'tags:abc')
+        when:
+            params.project = project
+            def result = controller.nodes(query)
+        then:
+            1 * controller.userService.findOrCreateUser(_) >> testUser
+            1 * controller.userService.getFilterPref(_) >> [nodes: 'filter1']
+            response.status == 200
+            result.filter == 'tags:abc'
+    }
+
     def "save project node sources"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
