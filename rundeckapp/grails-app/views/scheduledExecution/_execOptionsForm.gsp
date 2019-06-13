@@ -163,7 +163,6 @@
 
                 <g:if test="${!nodesetvariables && nodes}">
                     <div class=" ">
-                        <div class="">
                             Select Nodes
                             <!-- ko if: isCherrypickVisible -->
                             (<span data-bind="text: selectedNodes().length, css: {'text-info':selectedNodes().length,'text-danger':!selectedNodes().length}" ></span>)
@@ -179,13 +178,6 @@
                                 <g:message code="select.none" />
                             </span>
                             <!-- /ko -->
-                        </div>
-%{--                        <g:if test="${tagsummary}">--}%
-
-%{--                            <g:render template="/framework/tagsummary"--}%
-%{--                                      model="${[tagsummary:tagsummary,action:[classnames:'label label-muted autoclickable obs_tag_group',onclick:'']]}"/>--}%
-
-%{--                        </g:if>--}%
                     </div>
                 <g:if test="${namegroups}">
                     <div>
