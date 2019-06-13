@@ -61,10 +61,12 @@
         </section>
     </g:if>
 
+    <g:if test="${scheduledExecution?.options}">
     <section class="form-horizontal section-pad-top-lg ${hideHead ? 'section-separator' : ''}">
         <g:render template="editOptions"
                   model="${[scheduledExecution: scheduledExecution, selectedoptsmap: selectedoptsmap, selectedargstring: selectedargstring, authorized: authorized, jobexecOptionErrors: jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     </section>
+    </g:if>
 
 
     <section class="form-horizontal section-separator"
@@ -80,7 +82,7 @@
             %{--show node filters--}%
             <div>
                 <span class="query form-control-static ">
-                   <span class="queryvalue text"><g:enc>${nodefilter}</g:enc></span>
+                   <code class="queryvalue text"><g:enc>${nodefilter}</g:enc></code>
                 </span>
             </div>
 
@@ -105,7 +107,7 @@
             <div class="row" data-ko-bind="runformoptions">
                 <div class="col-sm-12 ">
 
-                    <div class="checkbox checkbox-inline">
+                    <div class="checkbox checkbox-inline" data-bind="visible: canOverrideFilter() || !hasDynamicFilter()">
                         <input name="extra._replaceNodeFilters"
                                value="true"
                                type="checkbox"
@@ -125,7 +127,7 @@
 
                     </div>
 
-                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
+                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter() && !hasDynamicFilter()">
                             <input id="cherrypickradio"
                                    type="radio"
                                    name="extra.nodeoverride"
@@ -137,7 +139,7 @@
                             </label>
                         </div>
 
-                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
+                        <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter() && !hasDynamicFilter()">
                             <input id="filterradio"
                                    type="radio"
                                    name="extra.nodeoverride"
@@ -163,7 +165,6 @@
 
                 <g:if test="${!nodesetvariables && nodes}">
                     <div class=" ">
-                        <div class="">
                             Select Nodes
                             <!-- ko if: isCherrypickVisible -->
                             (<span data-bind="text: selectedNodes().length, css: {'text-info':selectedNodes().length,'text-danger':!selectedNodes().length}" ></span>)
@@ -179,13 +180,6 @@
                                 <g:message code="select.none" />
                             </span>
                             <!-- /ko -->
-                        </div>
-%{--                        <g:if test="${tagsummary}">--}%
-
-%{--                            <g:render template="/framework/tagsummary"--}%
-%{--                                      model="${[tagsummary:tagsummary,action:[classnames:'label label-muted autoclickable obs_tag_group',onclick:'']]}"/>--}%
-
-%{--                        </g:if>--}%
                     </div>
                 <g:if test="${namegroups}">
                     <div>
@@ -193,7 +187,7 @@
                         <div class="panel panel-default">
                       <div class="panel-heading">
                           <g:set var="expkey" value="${g.rkey()}"/>
-                            <span data-toggle="collapse" data-target="#${expkey}" data-bind="css: {in: hasSelectedNodes}">
+                            <span data-toggle="collapse" data-target="#${expkey}" data-bind="css: {in: changeTargetNodes}">
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     <g:enc>${namegroups[group][0]}</g:enc></span>
@@ -209,7 +203,7 @@
                                 <b class="glyphicon glyphicon-chevron-${selectedNodes!=null ? 'down' : 'right'}"></b>
                             </span>
                         </div>
-                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse " data-bind="css: {in: hasSelectedNodes}" >
+                        <div id="${enc(attr:expkey)}"  class="group_section panel-body collapse " data-bind="css: {in: changeTargetNodes}" >
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="">
 
@@ -233,7 +227,7 @@
                                                  type="checkbox"
                                                  data-ident="node"
                                                  name="extra.nodeIncludeName"
-                                                 data-bind="checked: selectedNodes, enable: hasSelectedNodes"
+                                                 data-bind="checked: selectedNodes, enable: changeTargetNodes"
                                                  value="${enc(attr:node.nodename)}"
 
                                                  data-tag="${enc(attr:node.tags?.join(' '))}"
@@ -273,7 +267,7 @@
                                        type="checkbox"
                                        name="extra.nodeIncludeName"
                                        data-ident="node"
-                                       data-bind="checked: selectedNodes, enable: hasSelectedNodes"
+                                       data-bind="checked: selectedNodes, enable: changeTargetNodes"
                                        value="${enc(attr:node.nodename)}"
                                        data-tag="${enc(attr:node.tags?.join(' '))}"
                                        /><g:enc>${node.nodename}</g:enc></label>
@@ -373,26 +367,7 @@
             </div>
             </div>
             <g:javascript>
-                var updateSelectCount = function (evt) {
-                    var count = 0;
-                    jQuery('[data-ident="node"]').each(function (i,e2) {
-                        if (e2.checked) {
-                            count++;
-                        }
-                    });
-                    jQuery('.nodeselectcount').each(function (i,e2) {
-                        jQuery(e2).text( count + '');
-                        jQuery(e2).removeClass('text-info');
-                        jQuery(e2).removeClass('text-danger');
-                        jQuery(e2).addClass(count>0?'text-info':'text-danger');
-                    });
-                };
-                jQuery('[data-ident="node"]').each(function (i,e) {
-                    jQuery(e).on('change', function (evt) {
-                      jQuery('#nodeSelect').trigger( 'nodeset:change');
-                    });
-                });
-                // jQuery('#nodeSelect').on( 'nodeset:change', updateSelectCount);
+
                 jQuery('div.jobmatchednodes').on( 'click','span.selectall', function (evt) {
                     jQuery(this).closest('.group_section').find('input').each(function (i,el) {
                         if (el.type == 'checkbox') {
@@ -403,7 +378,7 @@
                         jQuery(e).data('tagselected', 'true');
                         jQuery(e).addClass('active');
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
                 jQuery('div.jobmatchednodes').on( 'click','span.selectnone', function (evt) {
@@ -416,7 +391,7 @@
                         jQuery(e).data('tagselected', 'false');
                         jQuery(e).removeClass('active');
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
 
@@ -441,7 +416,7 @@
                             jQuery(el).removeClass('active');
                         }
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
 
@@ -455,7 +430,7 @@
                             }
                         }
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                     if(!e.checked){
                         jQuery('.nodeselectcount').each(function (i,e2) {
                             jQuery(e2).removeClass('text-info');
@@ -472,11 +447,6 @@
                 });
 
             </g:javascript>
-            <g:if test="${scheduledExecution.hasNodesSelectedByDefault()}">
-                <g:javascript>
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
-                </g:javascript>
-            </g:if>
 
     </div>
         </div>
@@ -554,13 +524,16 @@
         kocontrollers.nodeFilter = nodeFilter
 
         </g:if>
-        let hasSelectedNodes=${enc(js:selectedNodes!=null)};
+        let hasSelectedNodes=${enc(js:selectedNodes!=null && selectedNodes)};
+        let hasSelectedByDefault=${enc(js:scheduledExecution.hasNodesSelectedByDefault())};
+        let selectedNodes=hasSelectedNodes?loadJsonData('selectedNodesJson'):hasSelectedByDefault?loadJsonData('allNodesJson'):[];
         kocontrollers.runformoptions = new JobRunFormOptions({
             debug:${enc(js:scheduledExecution?.loglevel=='DEBUG')},
-            changeTargetNodes:hasSelectedNodes,
+            changeTargetNodes:hasSelectedNodes||!hasSelectedByDefault,
             canOverrideFilter:${enc(js:scheduledExecution.nodeFilterEditable|| nodefilter == '')},
             nodeOverride: "${enc(js:!nodesetvariables && nodes?'cherrypick':'filter')}",
-            selectedNodes:loadJsonData(hasSelectedNodes?'selectedNodesJson':'allNodesJson'),
+            selectedNodes: selectedNodes,
+            hasDynamicFilter: ${enc(js:!!nodesetvariables)},
             allNodes:loadJsonData('allNodesJson'),
             hasSelectedNodes: hasSelectedNodes,
             groups:loadJsonData('namegroupsJson'),
