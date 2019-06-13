@@ -61,10 +61,12 @@
         </section>
     </g:if>
 
+    <g:if test="${scheduledExecution?.options}">
     <section class="form-horizontal section-pad-top-lg ${hideHead ? 'section-separator' : ''}">
         <g:render template="editOptions"
                   model="${[scheduledExecution: scheduledExecution, selectedoptsmap: selectedoptsmap, selectedargstring: selectedargstring, authorized: authorized, jobexecOptionErrors: jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     </section>
+    </g:if>
 
 
     <section class="form-horizontal section-separator"
