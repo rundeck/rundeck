@@ -373,26 +373,7 @@
             </div>
             </div>
             <g:javascript>
-                var updateSelectCount = function (evt) {
-                    var count = 0;
-                    jQuery('[data-ident="node"]').each(function (i,e2) {
-                        if (e2.checked) {
-                            count++;
-                        }
-                    });
-                    jQuery('.nodeselectcount').each(function (i,e2) {
-                        jQuery(e2).text( count + '');
-                        jQuery(e2).removeClass('text-info');
-                        jQuery(e2).removeClass('text-danger');
-                        jQuery(e2).addClass(count>0?'text-info':'text-danger');
-                    });
-                };
-                jQuery('[data-ident="node"]').each(function (i,e) {
-                    jQuery(e).on('change', function (evt) {
-                      jQuery('#nodeSelect').trigger( 'nodeset:change');
-                    });
-                });
-                // jQuery('#nodeSelect').on( 'nodeset:change', updateSelectCount);
+
                 jQuery('div.jobmatchednodes').on( 'click','span.selectall', function (evt) {
                     jQuery(this).closest('.group_section').find('input').each(function (i,el) {
                         if (el.type == 'checkbox') {
@@ -403,7 +384,7 @@
                         jQuery(e).data('tagselected', 'true');
                         jQuery(e).addClass('active');
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
                 jQuery('div.jobmatchednodes').on( 'click','span.selectnone', function (evt) {
@@ -416,7 +397,7 @@
                         jQuery(e).data('tagselected', 'false');
                         jQuery(e).removeClass('active');
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
 
@@ -441,7 +422,7 @@
                             jQuery(el).removeClass('active');
                         }
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                 });
 
 
@@ -455,7 +436,7 @@
                             }
                         }
                     });
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
+
                     if(!e.checked){
                         jQuery('.nodeselectcount').each(function (i,e2) {
                             jQuery(e2).removeClass('text-info');
@@ -472,11 +453,6 @@
                 });
 
             </g:javascript>
-            <g:if test="${scheduledExecution.hasNodesSelectedByDefault()}">
-                <g:javascript>
-                    jQuery('#nodeSelect').trigger( 'nodeset:change');
-                </g:javascript>
-            </g:if>
 
     </div>
         </div>
