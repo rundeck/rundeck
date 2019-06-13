@@ -1249,6 +1249,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (job && defStoragePath?.contains('${job.')) {
                         defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("job", job, null)).trim()
                     }
+                    if (job && defStoragePath?.contains('${global.')) {
+                        defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("global", job, null)).trim()
+                    }
                     def password
                     def nodeDeferred = false
                     if (defStoragePath?.contains('${node.')) {
