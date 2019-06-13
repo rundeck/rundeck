@@ -16,8 +16,6 @@
 
 
 <div id="formbuttons" data-ko-bind="runformoptions">
-    <div class="">
-        <div>
 
             <div class="col-xs-12 col-sm-4">
                 <g:if test="${!hideCancel}">
@@ -59,13 +57,9 @@
                 </g:render>
             </div>
 
-            <div class="col-xs-12 col-sm-5">
-                <div class="form-inline">
-                    <div class="">
-
-
-
-                        <div class="form-group">
+            <div class="col-xs-12 col-sm-8">
+                <span class="form-inline" data-bind="if: follow">
+                     <span class="form-group">
                             <label>
 
                                 <g:message code="job.run.watch.output"/>
@@ -90,16 +84,11 @@
                                     </option>
                                 </select>
                             </label>
-                        </div>
-                    </div>
-
-                </div>
+                        </span>
+                </span>
 
 
 
-            </div>
-
-            <div class="col-xs-12 col-sm-3">
 
                 <input type="hidden" id="followoutputcheck" name="follow" value="true" data-bind="value: follow"/>
                 <div class="btn-group pull-right">
@@ -153,8 +142,6 @@
                     </ul>
                 </div>
             </div>
-        </div>
-    </div>
     <div class="clearfix">
     </div>
 </div>

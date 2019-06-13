@@ -49,16 +49,30 @@
             <g:render template="/common/nodefilterStringHelp"/>
         </div>
     </div>
-<div>
-<div>
-<div class="row">
-    <div class="col-xs-12 form-horizontal">
 
-    <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
-    <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
-    <div class="col-sm-2 control-label text-form-label">
-        <g:message code="Node.plural" />
-    </div>
+
+
+    <g:if test="${hideHead}">
+        <section>
+            <div class="row">
+                <g:render template="/scheduledExecution/execOptionsFormButtons"
+                          model="[scheduledExecution: scheduledExecution, hideCancel: hideCancel, showRunLater: true]"/>
+            </div>
+        </section>
+    </g:if>
+
+    <section class="form-horizontal section-pad-top-lg ${hideHead ? 'section-separator' : ''}">
+        <g:render template="editOptions"
+                  model="${[scheduledExecution: scheduledExecution, selectedoptsmap: selectedoptsmap, selectedargstring: selectedargstring, authorized: authorized, jobexecOptionErrors: jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
+    </section>
+
+
+    <section class="form-horizontal section-separator"
+             style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
+        <div class="form-group">
+            <label class="col-sm-2 control-label">
+                <g:message code="Node.plural"/>
+            </label>
 
 
         <div class="col-sm-10">
@@ -110,15 +124,6 @@
                         </label>
 
                     </div>
-
-
-%{--                        <label>--}%
-                            %{--                            <select name="extra.nodeoverride" data-bind="value: nodeOverride" class="form-control">--}%
-                            %{--                                <option disabled value="">-Choose-</option>--}%
-                            %{--                                <option value="cherrypick">Selecting Nodes</option>--}%
-                            %{--                                <option value="filter">Overriding Node Filter</option>--}%
-                            %{--                            </select>--}%
-%{--                        </label>--}%
 
                         <div class="radio radio-inline" data-bind="visible: changeTargetNodes() && canOverrideFilter()">
                             <input id="cherrypickradio"
@@ -343,11 +348,11 @@
                                         <span data-bind="if: total()>maxShown()">
                                             <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary"><g:message code="count.nodes.shown" /></span>
                                         </span>
-                                        <div class="pull-right">
-                                          <a class="btn btn-default btn-sm" data-bind="click: nodesPageView">
+                                        <span class="pull-right">
+                                            <a href="#" data-bind="attr: {href: nodesPageViewUrl }">
                                               <g:message code="view.in.nodes.page.prompt" />
                                           </a>
-                                        </div>
+                                        </span>
 
                                     </span>
                                 </div>
@@ -474,20 +479,13 @@
             </g:if>
 
     </div>
-    </div>
+        </div>
+    </section>
 
     <div class="error note" id="formerror" style="display:none">
 
     </div>
-</div>
-<g:if test="${hideHead}">
-<div class="col-xs-12">
-    <g:render template="/scheduledExecution/execOptionsFormButtons" model="[scheduledExecution:scheduledExecution,hideCancel:hideCancel,showRunLater:true]"/>
-</div>
-</g:if>
-</div>
-</div>
-</div>
+
 </div>
 
 <g:if test="${!hideHead}">
@@ -508,7 +506,6 @@
         jQuery('body').on('click', '.nodefilterlink', function (evt) {
             evt.preventDefault();
             nodeFilter.selectNodeFilterLink(this);
-            $('filterradio').checked=true;
         });
         jQuery('#nodesContent').on('click', '.closeoutput', function (evt) {
             evt.preventDefault();
