@@ -48,6 +48,7 @@ environments {
         feature.incubator.jobs = true
 
         rundeck.feature.'enhanced-nodes'.enabled = true
+        rundeck.feature.'option-values-plugin'.enabled = true
 
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
