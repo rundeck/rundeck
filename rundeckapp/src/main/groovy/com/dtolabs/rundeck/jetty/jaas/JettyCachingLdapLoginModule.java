@@ -394,7 +394,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             Object[] filterArguments = { _userObjectClass, _userIdAttribute, username };
             NamingEnumeration results = _rootContext.search(_userBaseDn, OBJECT_CLASS_FILTER, filterArguments, ctls);
 
-            LOG.debug("Found user?: " + results.hasMoreElements());
+            debug("Found user?: " + results.hasMoreElements());
 
             if (!results.hasMoreElements()) {
                 throw new LoginException("User not found.");
@@ -412,14 +412,14 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
                     ldapCredential = new String(value);
                 } catch (NamingException e) {
-                    LOG.debug("no password available under attribute: " + _userPasswordAttribute);
+                    LOG.info("no password available under attribute: " + _userPasswordAttribute);
                 }
             }
         } catch (NamingException e) {
             throw new LoginException("Root context binding failure.");
         }
 
-        LOG.debug("user cred is present: " + (ldapCredential != null));
+        debug("user cred is present: " + (ldapCredential != null));
 
         return ldapCredential;
     }
@@ -508,7 +508,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         if (roleList.size() < 1) {
             LOG.warn("JettyCachingLdapLoginModule: User '" + username + "' has no role membership; role query configuration may be incorrect");
         }else{
-            LOG.debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
+            debug("JettyCachingLdapLoginModule: User '" + username + "' has roles: " + roleList);
         }
 
         return roleList;
@@ -804,7 +804,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             CachedUserInfo cached = USERINFOCACHE.get(cacheToken);
             if (cached != null) {
                 if (System.currentTimeMillis() < cached.expires) {
-                    LOG.debug("Cache Hit for " + username + ".");
+                    debug("Cache Hit for " + username + ".");
                     userInfoCacheHits++;
                     JAASUserInfo jaasUserInfo = new JAASUserInfo(cached.userInfo);
                     try {
@@ -823,7 +823,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                     USERINFOCACHE.remove(cacheToken);
                 }
             } else {
-                LOG.debug("Cache Miss for " + username + ".");
+                debug("Cache Miss for " + username + ".");
             }
         }
 
@@ -838,7 +838,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         // use _rootContext to find roles, if configured to doso
         if ( _forceBindingLoginUseRootContextForRoles ) {
             dirContext = _rootContext;
-            LOG.debug("Using _rootContext for role lookup.");
+            debug("Using _rootContext for role lookup.");
         }
         List roles = getUserRolesByDn(dirContext, userDn, username);
 
@@ -847,7 +847,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
             USERINFOCACHE.put(cacheToken,
                 new CachedUserInfo(userInfo,
                     System.currentTimeMillis() + _cacheDuration));
-            LOG.debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
+            debug("Adding " + username + " set to expire: " + System.currentTimeMillis() + _cacheDuration);
         }
         JAASUserInfo jaasUserInfo = new JAASUserInfo(userInfo);
         try {
@@ -887,13 +887,13 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String filter = OBJECT_CLASS_FILTER;
 
-        LOG.debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
+        debug("Searching for users with filter: \'" + filter + "\'" + " from base dn: "
                 + _userBaseDn);
 
         Object[] filterArguments = new Object[] { _userObjectClass, _userIdAttribute, username };
         NamingEnumeration results = _rootContext.search(_userBaseDn, filter, filterArguments, ctls);
 
-        LOG.debug("Found user?: " + results.hasMoreElements());
+        debug("Found user?: " + results.hasMoreElements());
 
         if (!results.hasMoreElements()) {
             throw new LoginException("User not found.");
