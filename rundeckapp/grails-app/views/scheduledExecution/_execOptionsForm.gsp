@@ -82,7 +82,7 @@
             %{--show node filters--}%
             <div>
                 <span class="query form-control-static ">
-                   <span class="queryvalue text"><g:enc>${nodefilter}</g:enc></span>
+                   <code class="queryvalue text"><g:enc>${nodefilter}</g:enc></code>
                 </span>
             </div>
 
