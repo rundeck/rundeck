@@ -60,6 +60,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
+import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.util.Sizes
@@ -137,7 +138,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         render(view:"index",model:results)
     }
 
-    def nowrunning={ QueueQuery query->
+    @PackageScope
+    def nowrunning(QueueQuery query) {
         //find currently running executions
         
         if(params['Clear']){
@@ -3153,7 +3155,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
 
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
@@ -3177,6 +3178,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.offset){
             query.offset=params.int('offset')
         }
+
+        if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
+            query.jobIdFilter = params.jobIdFilter
+        }
+        
         def results = nowrunning(query)
 
         withFormat{
