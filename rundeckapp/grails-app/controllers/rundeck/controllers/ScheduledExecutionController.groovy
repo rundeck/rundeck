@@ -4475,6 +4475,7 @@ class ScheduledExecutionController  extends ControllerBase{
         String serverUUID=null
         boolean serverAll=false
         String project=null
+        def jobIds=[]
         def jobid=null
         if(request.format=='json' ){
             def data= request.JSON
@@ -4482,6 +4483,14 @@ class ScheduledExecutionController  extends ControllerBase{
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
             jobid = data?.job?.id?:null
+            if(jobid){
+                jobIds << jobid
+            }
+            if(data?.jobs){
+                data?.jobs.each{job->
+                    jobIds << job.id
+                }
+            }
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
@@ -4491,19 +4500,24 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
-                jobid = data.job?.'@id'?.text()?:null
+                if(data.job?.size()>0){
+                    data.job?.each{ job ->
+                        jobIds << job?.'@id'?.text()
+
+                    }
+                }
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID && !serverAll&& !jobid) {
+        if (!serverUUID && !serverAll && !jobIds) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobid)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
@@ -4549,6 +4563,11 @@ class ScheduledExecutionController  extends ControllerBase{
                         }
                         if(jobid){
                             delegate.'job'(id:jobid)
+                        }
+                        if(jobIds){
+                            jobIds.each { jid ->
+                                delegate.'job'(id:jid)
+                            }
                         }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {

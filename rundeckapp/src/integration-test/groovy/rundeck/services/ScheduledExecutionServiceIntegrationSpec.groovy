@@ -98,7 +98,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
 
         when:
-        def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project, jobUuid)
+        def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project, [jobUuid])
 //        ScheduledExecution.withSession { session ->
 //            session.flush()
 //            se.refresh()

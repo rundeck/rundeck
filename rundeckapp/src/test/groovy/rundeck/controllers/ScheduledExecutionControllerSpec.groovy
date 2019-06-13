@@ -379,7 +379,19 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * isClusterModeEnabled()>>true
         }
         controller.scheduledExecutionService=Mock(ScheduledExecutionService){
-            1 * reclaimAndScheduleJobs(requestUUID,allserver,project,jobid)>>[:]
+            if(jobid){
+                1 * reclaimAndScheduleJobs(requestUUID,allserver,project,_)>>{args ->
+                    def jobids = jobid.split(',')
+                    if(args[3]?.size()==jobids.size()){
+                        if(args[3].containsAll(jobids)){
+                            return [:]
+                        }
+                    }
+                    null
+                }
+            }else{
+                1 * reclaimAndScheduleJobs(requestUUID,allserver,project,null)>>[:]
+            }
             0 * _(*_)
         }
         when:
@@ -400,6 +412,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null
         '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                          | null        | true      | null    | 'ajobid'
         "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null
+        '<takeoverSchedule><server all="true" /><job id="ajobid"/><job id="ajobidb"/></takeoverSchedule>'       | null        | true      | null    | 'ajobid,ajobidb'
     }
 
 
