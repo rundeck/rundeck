@@ -203,6 +203,10 @@
 
         <g:render template="/common/mainbar"/>
 
+        <div class="vue-project-motd container-fluid">
+            <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}" style="margin-top:15px"></motd>
+        </div>
+
         <g:ifPageProperty name="page.subtitle">
             <nav id="subtitlebar" class="navbar navbar-default subtitlebar standard">
                 <div class="container-fluid">
@@ -227,9 +231,6 @@
         </g:ifPageProperty>
       <div class="content">
 
-        <div class="vue-project-motd">
-          <motd :event-bus="EventBus" tab-page="${enc(attr:pageProperty(name:'meta.tabpage'))}"></motd>
-        </div>
 
         <div id="layoutBody">
             <g:layoutBody/>
