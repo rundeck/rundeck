@@ -3233,6 +3233,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             def tokenList = AuthToken.findAllByUser(it)
             obj.tokens = tokenList?.size()
+            obj.loggedStatus = userService.getLoginStatus(it)
             userList.put(it.login,obj)
         }
 

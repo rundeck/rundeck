@@ -33,6 +33,9 @@ class User {
     }
     String dashboardPref
     String filterPref
+    Date lastLogin
+    Date lastLogout
+
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
     static constraints={
         login(matches: '^[a-zA-Z0-9\\.,@\\(\\)\\s_\\\\/-]+$')
@@ -44,5 +47,7 @@ class User {
         password(nullable:true)
         dashboardPref(nullable:true)
         filterPref(nullable:true)
+        lastLogin(nullable:true)
+        lastLogout(nullable:true)
     }
 }

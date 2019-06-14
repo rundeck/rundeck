@@ -130,4 +130,18 @@ class UserService {
 
         return roles
     }
+
+    //TODO: much conditions to handle yet
+    def getLoginStatus(User user){
+        if(user){
+            if(!user.lastLogin){
+                return "NOT LOGGED"
+            }else if(user.lastLogout && user.lastLogin.before(user.lastLogout)){
+                return "LOGGED OUT"
+            }else if(user.lastLogout && user.lastLogout.before(user.lastLogin)){
+                return "LOGGED IN"
+            }
+            return "LOGGED IN"
+        }
+    }
 }
