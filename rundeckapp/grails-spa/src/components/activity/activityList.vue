@@ -79,7 +79,7 @@
       </i18n>
 
       <div slot="footer">
-        <btn data-dismiss="modal">{{$t('cancel')}}</btn>
+        <btn data-dismiss="modal" @click="showBulkEditCleanSelections=false">{{$t('cancel')}}</btn>
         <button type="submit"
                 class="btn btn-default  "
                 data-dismiss="modal"
@@ -164,7 +164,7 @@
     </modal>
     <div class="card-content-full-width">
     <table class=" table table-hover table-condensed " >
-      <tbody  v-if="running && running.executions.length>0" class="running-executions">
+      <tbody  v-if="running && running.executions&& running.executions.length>0" class="running-executions">
         <tr
             v-for="exec in running.executions"
             :key="exec.id"
@@ -180,6 +180,7 @@
                 name="bulk_edit"
                 :value="exec.id"
                 v-model="bulkSelectedIds"
+                :disabled="exec.status==='running'"
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
@@ -187,11 +188,23 @@
                     <b class="fas fa-clock text-muted " v-else-if="exec.status==='scheduled'"></b>
                     <b class="exec-status icon" :data-execstate="executionStateCss(exec.status)" :data-statusstring="exec.status" v-else></b>
                 </td>
-
-                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="3">
-                      <progress-bar v-if="exec.status == 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" />
-                      <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width/>
-                      <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" />
+                <td class="right date " v-tooltip.bottom="runningStatusTooltip(exec)">
+                    <span v-if="exec.dateStarted.date" >
+                        <i class=" ">
+                            {{exec.dateStarted.date | moment(momentJobFormat)}}
+                        </i>
+                        <i class="timerel text-muted" v-if="isRecentCalendarDate(exec.dateStarted.date)">
+                            {{exec.dateStarted.date | moment('calendar',null)}}
+                        </i>
+                        <i class="timerel text-muted" v-else>
+                            {{exec.dateStarted.date | moment('from','now')}}
+                        </i>
+                    </span>
+                </td>
+                <td class="dateStarted date " v-tooltip="runningStatusTooltip(exec)" colspan="2">
+                      <progress-bar v-if="exec.status === 'scheduled'" :value="100" striped  type="default" label :label-text="$t('job.execution.starting.0',[runningStartedDisplay(exec.dateStarted.date)])" ></progress-bar>
+                      <progress-bar v-else-if="exec.job && exec.job.averageDuration" :value="jobDurationPercentage(exec)" striped active type="info" label min-width></progress-bar>
+                      <progress-bar v-else-if="exec.dateStarted.date" :value="100" striped active type="info" label :label-text="$t('running')" ></progress-bar>
                 </td>
 
                 <td class="  user text-right " style="white-space: nowrap;">
@@ -411,7 +424,7 @@ export default Vue.extend({
       activityPageHref:'',
       sinceUpdatedUrl:'',
       reports:[],
-      running: null as null|ExecutionListRunningResponse,
+      running: null as null|any,
       lastDate:-1,
       pagination:{
         offset:0,
@@ -550,10 +563,9 @@ export default Vue.extend({
         }else if(rpt.permalink){
           window.location=rpt.permalink
         }
-      }
-      if(rpt.executionId){
+      }else if(rpt.executionId){
         this.toggleSelectId(rpt.executionId)
-      }else if(rpt.id){
+      }else if(rpt.id && rpt.status!=='running'){
         this.toggleSelectId(rpt.id)
       }
     },
@@ -654,11 +666,27 @@ export default Vue.extend({
       }
     },
     async loadRunning(){
-      const rundeckContext = getRundeckContext()
-      this.loadingRunning=true
+      // const rundeckContext = getRundeckContext()
+      this.loadingRunning = true
+      let qparams: { [key: string]: string } = {}
+      if (this.query.jobIdFilter) {
+        qparams.jobIdFilter = this.query.jobIdFilter
+      }
       try{
-        this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
+        //this.running = await rundeckContext.rundeckClient.executionListRunning(this.projectName)
+        const response = await axios.get(this.nowrunningUrl,{
+            headers: {'x-rundeck-ajax': true},
+            params: qparams,
+            withCredentials: true
+        })
+
+        let executions = response.data.executions.map((e: any) => {
+          let {'date-started': dateStarted, 'date-completed': dateCompleted} = e
+          return Object.assign({dateStarted, dateCompleted}, e) as Execution
+        })
+        this.running={executions,paging:response.data.paging}
         this.loadingRunning=false
+        this.eventBus.$emit('activity-nowrunning-count', executions.length)
       }catch(error){
         this.loadingRunning=false
         this.loadError = error.message
@@ -708,7 +736,7 @@ export default Vue.extend({
       if(!this.loadingRunning && this.autorefresh){
         let delay: number = time ? (new Date().getTime() - time) : 0
         let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
-        ms = Math.min(60000, Math.max(ms, 5 * delay))
+        ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0
         this.autorefreshtimeout = setTimeout(() => {
           let cur = new Date()
           Promise.all([
@@ -799,7 +827,9 @@ export default Vue.extend({
       if(window._rundeck.data['viewOpts']){
         this.showBulkDelete= window._rundeck.data.viewOpts.showBulkDelete
       }
-      if(this.runningOpts['loadRunning']){
+      if (this.runningOpts['autorefresh']) {
+        this.autorefresh = true
+      }else if (this.runningOpts['loadRunning']) {
         this.loadRunning()
       }
     }
