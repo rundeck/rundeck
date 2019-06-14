@@ -1,5 +1,5 @@
 <template>
-  <span :class="clsStyle" class="label"  @click=activate v-if="hasMessage && display"  v-tooltip.bottom="showTitle?motdTitle:''" >
+  <span :class="clsStyle" class="label"  @click=activate v-if="hasMessage && display"  v-tooltip.bottom="!hasNewMessage &&showTitle?motdTitle:''" >
     <i class=" fas " :class=iconStyle></i>
     <span v-if="hasNewMessage && showTitle" v-html=motdTitle></span>
   </span>
