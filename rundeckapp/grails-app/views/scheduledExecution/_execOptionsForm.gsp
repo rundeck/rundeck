@@ -18,6 +18,7 @@
 
 <g:uploadForm controller="scheduledExecution" method="post" useToken="true"
               params="[project: scheduledExecution.project]" role="form" >
+<input type="hidden" name="id" value="${enc(attr:scheduledExecution?.extid)}"/>
 <div id="exec_options_form">
     <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
     <input type="text" style="display:none" class="ixnay">
