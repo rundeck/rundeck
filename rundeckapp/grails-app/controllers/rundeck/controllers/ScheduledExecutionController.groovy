@@ -4486,7 +4486,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if(jobid){
                 jobIds << jobid
             }
-            if(data?.jobs){
+            if(request.api_version >= ApiVersions.V31 && data?.jobs){
                 data?.jobs.each{job->
                     jobIds << job.id
                 }
@@ -4500,10 +4500,17 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
-                if(data.job?.size()>0){
-                    data.job?.each{ job ->
-                        jobIds << job?.'@id'?.text()
+                if(request.api_version >= ApiVersions.V31){
+                    if(data.job?.size()>0){
+                        data.job?.each{ job ->
+                            jobIds << job?.'@id'?.text()
 
+                        }
+                    }
+                }else{
+                    jobid = data.job?.'@id'?.text()?:null
+                    if(jobid){
+                        jobIds << jobid
                     }
                 }
             }
