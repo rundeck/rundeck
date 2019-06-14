@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import grails.testing.gorm.DataTest
 import groovy.json.JsonSlurper
 import groovy.mock.interceptor.MockFor
 import org.quartz.JobExecutionContext
@@ -702,6 +701,81 @@ class ExecutionControllerTests  {
         assert resp.duration.min == "2m"
         assert resp.duration.max == "9m"
 
+    }
+
+
+    /**
+     * Test execution mode status api
+     */
+    public void testApiExecutionsStatusWhenActive() {
+
+        def controller = new ExecutionController()
+
+        controller.request.api_version = 31
+        controller.request.contentType = "application/json"
+
+        def apiMock = new MockFor(ApiService, false)
+        apiMock.demand.requireVersion { request, response, int min ->
+            assertEquals(31, min)
+            return true
+        }
+        controller.apiService = apiMock.proxyInstance()
+
+        // mock exec service
+        controller.configurationService=mockWith(ConfigurationService){
+            getExecutionModeActive { ->true }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject { subj -> null }
+            authorizeApplicationResource {ctx, res, action -> true}
+        }
+
+            // Call controller
+        controller.apiExecutionModeStatus()
+
+        // Parse response.
+        def resp = new JsonSlurper().parseText(response.text)
+
+        // Check respose.
+        assert 200 == controller.response.status
+        assert resp.executionMode == "active"
+    }
+
+    /**
+     * Test execution mode status api
+     */
+    public void testApiExecutionsStatusWhenPassive() {
+
+        def controller = new ExecutionController()
+
+        controller.request.api_version = 31
+        controller.request.contentType = "application/json"
+
+        def apiMock = new MockFor(ApiService, false)
+        apiMock.demand.requireVersion { request, response, int min ->
+            assertEquals(31, min)
+            return true
+        }
+        controller.apiService = apiMock.proxyInstance()
+
+        // mock exec service
+        controller.configurationService=mockWith(ConfigurationService){
+            getExecutionModeActive { ->false }
+        }
+        controller.frameworkService=mockWith(FrameworkService) {
+            getAuthContextForSubject { subj -> null }
+            authorizeApplicationResource {ctx, res, action -> true}
+        }
+
+            // Call controller
+        controller.apiExecutionModeStatus()
+
+        // Parse response.
+        def resp = new JsonSlurper().parseText(response.text)
+
+        // Check respose.
+        assert 503 == controller.response.status
+        assert resp.executionMode == "passive"
     }
 
 

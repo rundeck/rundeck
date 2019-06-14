@@ -2255,6 +2255,46 @@ setTimeout(function(){
      *
      * @return
      */
+    def apiExecutionModeStatus() {
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+            return
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
+                AuthConstants.ACTION_READ)) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : "api.error.item.unauthorized",
+                            args  : ["Read execution status", "Rundeck", '']
+                    ])
+        }
+
+        def executionStatus = configurationService.executionModeActive
+        int respStatus = executionStatus ? HttpServletResponse.SC_OK : HttpServletResponse.SC_SERVICE_UNAVAILABLE
+
+        withFormat {
+            json {
+                render(status: respStatus,  contentType: "application/json") {
+                    delegate.executionMode(executionStatus ? 'active' : 'passive')
+                }
+            }
+            xml {
+                render(status: respStatus, contentType: "application/xml") {
+                    delegate.'executions'(executionMode: executionStatus ? 'active' : 'passive')
+                }
+            }
+        }
+
+
+    }
+
+    /**
+     *
+     * @return
+     */
     def apiExecutionModeActive() {
         apiExecutionMode(true)
     }
