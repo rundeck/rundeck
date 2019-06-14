@@ -736,7 +736,7 @@ export default Vue.extend({
       if(!this.loadingRunning && this.autorefresh){
         let delay: number = time ? (new Date().getTime() - time) : 0
         let ms = this.loadError ? (this.autorefreshms * 10) : this.autorefreshms
-        ms = Math.min(60000, Math.max(ms, 5 * delay))
+        ms = time > 0 ? Math.min(60000, Math.max(ms, 5 * delay)) : 0
         this.autorefreshtimeout = setTimeout(() => {
           let cur = new Date()
           Promise.all([
@@ -827,7 +827,9 @@ export default Vue.extend({
       if(window._rundeck.data['viewOpts']){
         this.showBulkDelete= window._rundeck.data.viewOpts.showBulkDelete
       }
-      if(this.runningOpts['loadRunning']){
+      if (this.runningOpts['autorefresh']) {
+        this.autorefresh = true
+      }else if (this.runningOpts['loadRunning']) {
         this.loadRunning()
       }
     }
