@@ -156,10 +156,25 @@
                                     </li>
                                     <g:if test="${hasEventReadAuth}">
                                     <li>
-                                        <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                        <a href="#history" data-toggle="tab">
+                                            <g:message code="page.section.Activity" />
+                                            <g:if test="${hasEventReadAuth}">
+                                                <span class="vue-project-activity">
+                                                <activity-running-indicator :event-bus="EventBus" class="text-info ">
+                                                    <template slot-scope="{count}">
+                                                        <b class="fas fa-circle"></b>
+                                                        <span v-if="count>1">{{count}}</span>
+                                                    </template>
+
+                                                </activity-running-indicator>
+                                                </span>
+                                            </g:if>
+                                        </a>
                                     </li>
                                     </g:if>
                                 </ul>
+
+
                             </div>
                         </div>
                         <div class="tab-content">
@@ -177,7 +192,7 @@
                             <g:if test="${hasEventReadAuth}">
                             <div class="tab-pane" id="history">
 
-                                <div data-ko-bind="history" class="_history_content vue-project-activity">
+                                <div class="_history_content vue-project-activity">
 
                                     <activity-list :event-bus="EventBus"></activity-list>
                                 </div>

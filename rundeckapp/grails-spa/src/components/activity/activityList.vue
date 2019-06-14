@@ -686,6 +686,7 @@ export default Vue.extend({
         })
         this.running={executions,paging:response.data.paging}
         this.loadingRunning=false
+        this.eventBus.$emit('activity-nowrunning-count', executions.length)
       }catch(error){
         this.loadingRunning=false
         this.loadError = error.message

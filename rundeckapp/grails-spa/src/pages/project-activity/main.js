@@ -4,6 +4,7 @@ import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import ActivityList from '../../components/activity/activityList.vue'
+import ActivityRunningIndicator from '../../components/activity/activityRunningIndicator.vue'
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
@@ -54,7 +55,7 @@ for (var i = 0; i < els.length; i++) {
         EventBus: EventBus
       }
     },
-    components: { ActivityList },
+    components: { ActivityList, ActivityRunningIndicator },
     i18n
   })
 }
