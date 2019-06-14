@@ -136,6 +136,11 @@ grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
 
+grails.plugin.springsecurity.logout.handlerNames = [
+        'rememberMeServices',
+        'securityContextLogoutHandler',
+        'userActionService']
+
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']

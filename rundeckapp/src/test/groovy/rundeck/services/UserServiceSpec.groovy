@@ -53,6 +53,33 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         user.email == "the@user.com"
     }
 
+    def "registerLogin"(){
+        setup:
+        String login = "theusername"
+        String sessionId = "exampleSessionId01"
+
+        when:
+        User user = service.registerLogin(login, sessionId)
+
+        then:
+        user.login == "theusername"
+        user.lastLogin
+        !user.lastLogout
+    }
+
+    def "registerLogout"(){
+        setup:
+        String login = "theusername"
+
+        when:
+        User user = service.registerLogout(login)
+
+        then:
+        user.login == "theusername"
+        !user.lastLogin
+        user.lastLogout
+    }
+
     def "Get User Group Source Plugin Roles"() {
         when:
         TestUserGroupSourcePlugin testPlugin = new TestUserGroupSourcePlugin(groups)
@@ -104,6 +131,23 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
 
     }
 
+    def "getLoginStatus" (){
+        setup:
+        String login = "theusername"
+        service.findOrCreateUser(login)
+
+        when:
+        User user = User.findByLogin(login)
+        !user.firstName
+        !user.lastName
+        !user.email
+        service.updateUserProfile(login,"User","The","the@user.com")
+        def logginStatus = service.getLoginStatus(user, new Date())
+        then:
+        logginStatus
+        logginStatus == UserService.LogginStatus.LOGGEDIN.value
+    }
+
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)
     class TestUserGroupSourcePlugin implements UserGroupSourcePlugin {
 
@@ -116,4 +160,5 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
             return groups
         }
     }
+
 }
