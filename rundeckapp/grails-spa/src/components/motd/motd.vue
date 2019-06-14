@@ -135,7 +135,13 @@ export default {
       this.message = this.project.readme.motdHTML
       this.hasNewMessage = this.checkMessage()
       this.showMessage = this.hasNewMessage && this.checkPage()
-      this.eventBus.$on('motd-indicator-activated',()=>this.showMessage=!this.showMessage)
+      this.eventBus.$on('motd-indicator-activated', () => {
+        if (!this.showMessage) {
+          this.showMessage = true
+        } else {
+          this.dismissMessage()
+        }
+      })
       this.eventBus.$emit('motd-message-available', {hasMessage:!!this.project.readme.motd,hasNewMessage:this.hasNewMessage,style:this.motdStyle,title:this.motdTitle,display:this.project.motdDisplay})
     }
   }
