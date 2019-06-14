@@ -79,7 +79,7 @@
       </i18n>
 
       <div slot="footer">
-        <btn data-dismiss="modal">{{$t('cancel')}}</btn>
+        <btn data-dismiss="modal" @click="showBulkEditCleanSelections=false">{{$t('cancel')}}</btn>
         <button type="submit"
                 class="btn btn-default  "
                 data-dismiss="modal"
