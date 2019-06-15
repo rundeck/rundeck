@@ -614,7 +614,8 @@ search
                                               <g:message code="execution.show.log.download.button.title"/>
                                           </li>
                                           <li>
-                                              <g:link class=""
+                                              <g:link class="_guess_tz_param"
+                                                      data-tz-url-param="timeZone"
                                                       title="${message(
                                                               code: 'execution.show.log.download.button.description',
                                                               default: 'Download {0} bytes',
