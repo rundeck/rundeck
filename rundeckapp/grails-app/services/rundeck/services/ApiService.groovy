@@ -1107,7 +1107,7 @@ class ApiService {
     }
 
     def w3cDateValue(Date date) {
-        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
         return dateFormater.format(date);
     }
