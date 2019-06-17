@@ -12,7 +12,7 @@ import moment from 'moment'
 import {
   EventBus
 } from '../../utilities/vueEventBus.js'
-import uivLang from '../../utilities/uiv18n'
+import uivLang from '../../utilities/uivi18n'
 
 
 Vue.config.productionTip = false

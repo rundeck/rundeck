@@ -5,7 +5,7 @@
 import Vue from 'vue'
 import * as uiv from 'uiv'
 import international from './i18n'
-import uivLang from '../../utilities/uiv18n'
+import uivLang from '../../utilities/uivi18n'
 import VueMoment from 'vue-moment'
 import moment from 'moment'
 // Component Files

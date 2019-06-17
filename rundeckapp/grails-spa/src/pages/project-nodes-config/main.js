@@ -20,7 +20,7 @@ Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 Vue.use(uiv)
 Vue.use(VueI18n)
-import uivLang from '../../utilities/uiv18n'
+import uivLang from '../../utilities/uivi18n'
 
 let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'

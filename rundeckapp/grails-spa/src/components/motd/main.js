@@ -7,7 +7,7 @@ import VueCookies from 'vue-cookies'
 import { EventBus } from '../../utilities/vueEventBus.js'
 import Motd from '@/components/motd/motd'
 import MotdIndicator from '@/components/motd/motdIndicator'
-import uivLang from '../../utilities/uiv18n'
+import uivLang from '../../utilities/uivi18n'
 
 let locale = window._rundeck.locale || 'en_US'
 let lang = window._rundeck.language || 'en'
