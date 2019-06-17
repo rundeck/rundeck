@@ -25,19 +25,21 @@ Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 
 let messages = international.messages
-let language = window._rundeck.language || 'en_US'
-
-moment.locale(language)
-
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+moment.locale(locale)
 Vue.use(VueMoment,{moment})
 
-let msglang=language
-if (!messages[language]) {
-  msglang = 'en_US'
-}
-
 // include any i18n injected in the page by the app
-messages = { [msglang]: Object.assign({}, uivLang[msglang] || {}, window.Messages, messages[msglang] || {}) }
+messages =
+    {
+      [locale]: Object.assign(
+          {},
+          uivLang[locale] || uivLang[lang] || {},
+          window.Messages,
+          messages[locale] || messages[lang] || messages['en_US'] || {}
+      )
+    }
 
 
 const els = document.body.getElementsByClassName('vue-project-activity')
@@ -48,7 +50,7 @@ for (var i = 0; i < els.length; i++) {
   // Create VueI18n instance with options
   const i18n = new VueI18n({
     silentTranslationWarn: true,
-    locale: msglang, // set locale
+    locale: locale, // set locale
     messages // set locale messages,
 
   })
