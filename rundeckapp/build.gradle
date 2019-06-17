@@ -139,6 +139,9 @@ dependencies {
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     compile "javax.xml.bind:jaxb-api:2.3.0"
+    compile 'org.grails.plugins:grails-spring-websocket:2.4.1'
+    implementation "org.springframework.security:spring-security-config"
+    implementation "org.springframework.security:spring-security-messaging"
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
