@@ -82,7 +82,7 @@
             <dl  class="execution-full-dates">
                 <dt>
                     <!-- ko if: !scheduled() -->
-                    Start
+                    <g:message code="start" />
                     (<span data-bind="text: startTimeAgo()"></span>)
                     <!-- /ko -->
                 </dt>
@@ -96,7 +96,7 @@
 
                 </dd>
                 <!-- ko if: completed() -->
-                <dt>End (<span data-bind="text: endTimeAgo()"></span>)</dt>
+                <dt><g:message code="end" /> (<span data-bind="text: endTimeAgo()"></span>)</dt>
                 <dd >
                     <span data-bind="text: endTime()">
                     <g:if test="${execution.dateCompleted}">
