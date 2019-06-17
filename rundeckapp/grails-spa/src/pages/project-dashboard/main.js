@@ -17,12 +17,15 @@ Vue.config.productionTip = false
 
 Vue.use(uiv)
 Vue.use(VueI18n)
-Vue.use(VueMoment)
 Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'
+
+moment.locale(language)
+
+Vue.use(VueMoment,{moment})
 
 if (!messages[language]) {
   language = 'en_US'
