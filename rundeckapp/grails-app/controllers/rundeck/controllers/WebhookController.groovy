@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.eventbus.EventBus
 import grails.converters.JSON
 import groovy.transform.PackageScope
 import rundeck.Webhook
@@ -16,6 +17,7 @@ class WebhookController {
     private static final ObjectMapper mapper = new ObjectMapper()
     def webhookService
     def frameworkService
+    EventBus webhookEventBus
 
     def index() { }
 
@@ -59,18 +61,14 @@ class WebhookController {
             return
         }
         if(params.project) {
-            try {
-                frameworkService.authorizeProjectResource(authContext,AuthConstants.RE)
-                frameworkService.getFrameworkProject(params.project)
-            } catch (NoSuchResourceException ex) {
+            if(!frameworkService.projectNames(authContext).contains(params.project)) {
                 response.setStatus(400)
-                def err = [error: ex.message]
+                def err = [error: "Invalid project: ${params.project}. Either it doesn't exist or you don't have access to it."]
                 render err as JSON
                 return
             }
         }
 
-        //TODO: authorize with API token
         String whkName = params.name
         Webhook hook = Webhook.findByName(whkName)
 

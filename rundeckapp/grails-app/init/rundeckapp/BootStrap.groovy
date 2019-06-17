@@ -31,10 +31,12 @@ import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
+import org.rundeck.utils.UUIDPropertyValidator
 
 import javax.servlet.ServletContext
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
+import java.util.concurrent.Executors
 
 class BootStrap {
 
@@ -289,6 +291,8 @@ class BootStrap {
          if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
              SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
          }
+         SpringSecurityUtils.clientRegisterFilter('csrfFilter',    SecurityFilterPosition.LAST.order + 10)
+
 
          if(!grailsApplication.config.rundeck.logout.redirect.url.isEmpty()) {
              log.debug("Setting logout url to: ${grailsApplication.config.rundeck.logout.redirect.url}")

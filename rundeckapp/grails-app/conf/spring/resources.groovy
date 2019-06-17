@@ -46,7 +46,9 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.server.plugins.webhook.JobRunWebhookEventPlugin
+import com.dtolabs.rundeck.server.plugins.webhook.LiveMessageWebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.webhook.LogWebhookEventPlugin
+import com.google.common.eventbus.EventBus
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
 import org.grails.spring.beans.factory.InstanceFactoryBean
@@ -64,6 +66,7 @@ import org.rundeck.security.RundeckJaasAuthenticationSuccessEventListener
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
 import org.rundeck.security.RundeckUserDetailsService
+import org.rundeck.security.RundeckWebsocketSecurityConfig
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -82,10 +85,15 @@ import org.springframework.security.web.authentication.session.CompositeSessionA
 import org.springframework.security.web.authentication.session.ConcurrentSessionControlAuthenticationStrategy
 import org.springframework.security.web.authentication.session.RegisterSessionAuthenticationStrategy
 import org.springframework.security.web.authentication.session.SessionFixationProtectionStrategy
+import org.springframework.security.web.csrf.CsrfFilter
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.LiveEventBusProviderService
+import rundeck.services.LiveEventWebsocketService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -392,6 +400,8 @@ beans={
     pluginRegistry['log-webhook-event'] = 'logWebhookEventPlugin'
     jobRunWebhookEventPlugin(JobRunWebhookEventPlugin)
     pluginRegistry['webhook-run-job'] = 'jobRunWebhookEventPlugin'
+    liveMessageWebhookEventPlugin(LiveMessageWebhookEventPlugin)
+    pluginRegistry['live-message-webhook'] = 'liveMessageWebhookEventPlugin'
 
     //list of plugin classes to generate factory beans for
     [
@@ -544,4 +554,18 @@ beans={
     }
 
     webhooksMenuItem(WebhooksMenuItem)
+    liveEventBus(EventBus) { bean ->
+        bean.singleton = true
+    }
+    liveEventWebsocketService(LiveEventWebsocketService) {
+        liveEventBus = ref('liveEventBus')
+    }
+    rundeckWebsocketSecurityConfig(RundeckWebsocketSecurityConfig)
+    csrfPathMatcher(AntPathRequestMatcher,"/stomp")
+    csrfFilter(CsrfFilter, new HttpSessionCsrfTokenRepository()) {
+        requireCsrfProtectionMatcher = ref('csrfPathMatcher')
+    }
+    liveEventBusProviderService(LiveEventBusProviderService) {
+        liveEventBus = ref('liveEventBus')
+    }
 }

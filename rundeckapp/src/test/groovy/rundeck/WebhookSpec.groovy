@@ -11,8 +11,4 @@ class WebhookSpec extends Specification implements DomainUnitTest<Webhook> {
     def cleanup() {
     }
 
-    void "test something"() {
-        expect:"fix me"
-            true == false
-    }
 }
