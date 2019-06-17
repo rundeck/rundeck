@@ -1220,6 +1220,19 @@ function _initTZParamGuess () {
     })
   }
 }
+
+/**
+ * set moment locale from meta tag
+ * @private
+ */
+function _initMomentLocale () {
+  if (typeof (moment) === 'function') {
+    let m = jQuery('html').attr('lang')
+    if (m) {
+      moment.locale(m)
+    }
+  }
+}
 (function () {
   window.markdeepOptions = {
     mode: 'script',
@@ -1233,6 +1246,7 @@ function _initTZParamGuess () {
     });
     jQuery(document).ready(function () {
       jQuery.support.transition = false;
+      _initMomentLocale()
       jQuery('.has_tooltip').tooltip({});
       jQuery('.has_popover').popover({});
       _initPopoverContentRef();
