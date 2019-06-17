@@ -8,6 +8,7 @@ import ActivityRunningIndicator from '../../components/activity/activityRunningI
 import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
+import moment from 'moment'
 import VueMoment from 'vue-moment'
 import {
   EventBus
@@ -20,19 +21,23 @@ Vue.config.productionTip = false
 
 Vue.use(uiv)
 Vue.use(VueI18n)
-Vue.use(VueMoment)
 Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 
 let messages = international.messages
 let language = window._rundeck.language || 'en_US'
 
+moment.locale(language)
+
+Vue.use(VueMoment,{moment})
+
+let msglang=language
 if (!messages[language]) {
-  language = 'en_US'
+  msglang = 'en_US'
 }
 
 // include any i18n injected in the page by the app
-messages = { [language]: Object.assign({}, uivLang[language] || {}, window.Messages, messages[language] || {}) }
+messages = { [msglang]: Object.assign({}, uivLang[msglang] || {}, window.Messages, messages[msglang] || {}) }
 
 
 const els = document.body.getElementsByClassName('vue-project-activity')
@@ -43,7 +48,7 @@ for (var i = 0; i < els.length; i++) {
   // Create VueI18n instance with options
   const i18n = new VueI18n({
     silentTranslationWarn: true,
-    locale: language, // set locale
+    locale: msglang, // set locale
     messages // set locale messages,
 
   })
