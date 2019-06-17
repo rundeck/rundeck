@@ -11,8 +11,4 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     def cleanup() {
     }
 
-    void "test something"() {
-        expect:"fix me"
-            true == false
-    }
 }
