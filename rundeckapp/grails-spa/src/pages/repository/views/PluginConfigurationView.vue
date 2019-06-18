@@ -288,6 +288,7 @@ export default {
     splitAtCapitalLetter: function(value) {
       if (!value) return "";
       value = value.toString();
+      if(value.match(/^[A-Z]+$/g)) return value;
       return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
     }
   },
