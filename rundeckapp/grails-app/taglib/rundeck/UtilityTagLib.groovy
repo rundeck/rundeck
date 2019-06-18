@@ -991,10 +991,10 @@ class UtilityTagLib{
     }
     def textBeforeLine={attrs,body->
         if(attrs.text && attrs.marker){
-            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
-            out<< (split.length>0?split[0]:attrs.text)
+            def split=attrs.text.toString().split("(^|\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
+            return (split.length>0?split[0]:attrs.text)
         }else{
-            out<<attrs.text
+            return attrs.text
         }
     }
     def textHasMarker = { attrs, body ->
@@ -1008,12 +1008,12 @@ class UtilityTagLib{
     }
     def textAfterLine={attrs,body->
         if(attrs.text && attrs.marker){
-            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            def split=attrs.text.toString().split("(^|\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
             if(split.length==2){
                 if(attrs.include){
-                    out<<attrs.marker
+                    return attrs.marker +"\n"+ split[1]
                 }
-                out<< split[1]
+                return split[1]
             }
         }
     }
