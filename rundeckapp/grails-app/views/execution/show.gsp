@@ -854,7 +854,7 @@ search
                                           </li>
                                           <g:if test="${hasEventReadAuth}">
                                               <li>
-                                                  <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                                  <a href="#history" data-toggle="tab"><g:message code="page.section.Activity" /></a>
                                               </li>
                                           </g:if>
                                       </ul>
