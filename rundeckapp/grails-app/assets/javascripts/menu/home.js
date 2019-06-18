@@ -188,8 +188,7 @@ function HomeData(data) {
                     if (self.pagingOffset() === -1) {
                         self.pagingOffset(0);
                     } else {
-                        setTimeout(self.load.curry(true), self.pagingDelay());
-                        return;
+                        setTimeout(function(){self.load(true);}, self.pagingDelay());
                     }
                 }
             }
@@ -298,7 +297,7 @@ function batchInitWaypoints(arr,handler,count){
     if(arr2.length>0) {
         jQuery(arr2).waypoint(handler, {context:'#main-panel',offset: '100%'});
         if (arr.length > 0) {
-            _waypointBatchTimer=setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
+            _waypointBatchTimer=setTimeout(function(){batchInitWaypoints(arr, handler,count);}, 1500);
         }
     }
 }
@@ -346,7 +345,7 @@ function init() {
     homedata.searchedProjects.subscribe(function(val){
         "use strict";
         //when search results change, refresh waypoints
-        ko.tasks.schedule(initWaypoints.curry(homedata,true));
+        ko.tasks.schedule(function(){initWaypoints(homedata,true);});
     });
     if(homedata.loadedProjectNames()){
         //load waypoints manually
