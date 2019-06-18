@@ -763,7 +763,7 @@ class ExecutionController extends ControllerBase{
             return
         }
         //default timezone is the server timezone
-        def reqTimezone = null
+        def reqTimezone = TimeZone.getDefault()
         if (params.timeZone) {
             reqTimezone = TimeZone.getTimeZone(params.timeZone)
         } else if (params.gmt) {
