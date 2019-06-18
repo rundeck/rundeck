@@ -976,16 +976,16 @@ class UtilityTagLib{
     def textFirstLine={attrs,body->
         if(attrs.text){
             def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
-            out<< (split.length>0?split[0]:attrs.text)
+            return  (split.length>0?split[0]:attrs.text)
         }else{
-            out<<attrs.text
+            return attrs.text
         }
     }
     def textRemainingLines={attrs,body->
         if(attrs.text){
             def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
             if(split.length==2){
-                out << split[1]
+                return split[1]
             }
         }
     }
