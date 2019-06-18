@@ -154,7 +154,7 @@ function HomeData(data) {
         for (var i = 0; i < projs.length; i++) {
             var newproj = projs[i];
             var found = self.projectForName(newproj.name);
-            if (found && found.name()==newproj.name) {
+            if (found && found.name() === newproj.name) {
                 ko.mapping.fromJS(newproj, null, found);
                 found.loaded(true);
             } else {
@@ -333,7 +333,7 @@ function init() {
         projectNames: projectNamesData.projectNames.sort(),
         projectNamesTotal: projectNamesData.projectNamesTotal || 0
     },statsdata));
-    homedata.loadedProjectNames(projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
+    homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
     homedata.pagingMax(pageparams.pagingInitialMax || 15);
