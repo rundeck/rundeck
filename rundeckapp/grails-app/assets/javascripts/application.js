@@ -1202,6 +1202,37 @@ function _initStopPropagationOnClick(){
     }
   });
 }
+
+/**
+ * Add timeZone url parameter to href from moment tz guess
+ * @private
+ */
+function _initTZParamGuess () {
+  if (typeof (moment) === 'function') {
+    let tz = moment.tz.guess()
+    jQuery('a._guess_tz_param').each(function () {
+      let anchor = jQuery(this)
+      let param = anchor.data('tzUrlParam') || 'timeZone'
+      let href = anchor.attr('href')
+      if (href.indexOf(param + '=') < 0) {
+        anchor.attr('href', _genUrl(href, {[param]: tz}))
+      }
+    })
+  }
+}
+
+/**
+ * set moment locale from meta tag
+ * @private
+ */
+function _initMomentLocale () {
+  if (typeof (moment) === 'function') {
+    let m = jQuery('html').attr('lang')
+    if (m) {
+      moment.locale(m)
+    }
+  }
+}
 (function () {
   window.markdeepOptions = {
     mode: 'script',
@@ -1215,6 +1246,7 @@ function _initStopPropagationOnClick(){
     });
     jQuery(document).ready(function () {
       jQuery.support.transition = false;
+      _initMomentLocale()
       jQuery('.has_tooltip').tooltip({});
       jQuery('.has_popover').popover({});
       _initPopoverContentRef();
@@ -1225,6 +1257,7 @@ function _initStopPropagationOnClick(){
       _initAnsiToggle();
       _initMarkdeep();
       _initStopPropagationOnClick();
+      _initTZParamGuess()
     });
   }
 })();

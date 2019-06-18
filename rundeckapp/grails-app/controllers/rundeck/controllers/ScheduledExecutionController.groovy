@@ -392,7 +392,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (model.nextExecution) {
 
-            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
             model.nextExecutionW3CTime = format.format(model.nextExecution)
         }
