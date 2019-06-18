@@ -36,10 +36,9 @@ class OptionsUtil {
      * ${job.PROPERTY} and ${option.PROPERTY}.  available properties are
      * limited
      */
-    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true) {
+    protected static String expandUrl(Option opt, String url, ScheduledExecution scheduledExecution,selectedoptsmap=[:],boolean isHttp=true, String username=null) {
         def invalid = []
         def frameworkService = getFrameworkServiceInstance()
-        def se = getHttpSessionInstance()
         def rundeckProps=[
                 'nodename':frameworkService.getFrameworkNodeName(),
                 'serverUUID':frameworkService.serverUUID?:''
@@ -47,8 +46,12 @@ class OptionsUtil {
         if(!isHttp) {
             rundeckProps.basedir= frameworkService.getRundeckBase()
         }
+        if(!username){
+            def se = getHttpSessionInstance()
+            username = se?.user?: "anonymous"
+        }
         def extraJobProps=[
-                'user.name': (se?.user?: "anonymous"),
+                'user.name': (username?: "anonymous"),
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
         Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
