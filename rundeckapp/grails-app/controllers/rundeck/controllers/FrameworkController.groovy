@@ -188,7 +188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     usedFilter = params.filterName
                 }
             }
-        } else if (prefs['nodes']) {
+        } else if (!query.filter && prefs['nodes']) {
             return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
 
@@ -527,12 +527,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodeSummaryAjax(String project){
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                             [AuthConstants.ACTION_READ],
-                                                             project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
-            return
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                          [AuthConstants.ACTION_READ],
+                                                          project
+        )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',project],
+                    format:'json'
+            ])
         }
         def User u = userService.findOrCreateUser(session.user)
         def defaultFilter = null
@@ -658,6 +663,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesQueryAjax(ExtNodeFilters query) {
         if (requireAjax(action: 'nodes', params: params)) {
             return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             [AuthConstants.ACTION_READ],
+                                                             query.project
+                )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',query.project],
+                    format:'json'
+            ])
         }
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
@@ -837,8 +855,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             errors << cleanerHistoryPeriodError
         }
 
-        if (params.defaultNodeExec) {
-            def ndx = params.defaultNodeExec
+        if (params.default_NodeExecutor) {
+            def ndx = 'default'
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
             if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "Default Node Executor provider name is invalid"
@@ -860,8 +878,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
         }
-        if (params.defaultFileCopy) {
-            def ndx = params.defaultFileCopy
+        if (params.default_FileCopier) {
+            def ndx = 'default'
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
             if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "Default File copier provider name is invalid"
@@ -1310,8 +1328,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             def Set<String> removePrefixes=[]
-            if (params.defaultNodeExec) {
-                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
+            if (params.default_NodeExecutor) {
+                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, 'default', "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
                 try {
                     execPasswordFieldsService.untrack(
                             [[config: [type: defaultNodeExec, props: nodeexec], index: 0]],
@@ -1323,8 +1341,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     errors << e.getMessage()
                 }
             }
-            if (params.defaultFileCopy) {
-                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, params.defaultFileCopy, "fcopy", frameworkService.getFileCopierService(),'File Copier')
+            if (params.default_FileCopier) {
+                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, 'default', "fcopy", frameworkService.getFileCopierService(),'File Copier')
                 try {
                     fcopyPasswordFieldsService.untrack(
                             [[config: [type: defaultFileCopy, props: fcopy], index: 0]],

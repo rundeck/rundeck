@@ -23,7 +23,6 @@
 
 <g:set var="rkey" value="${g.rkey()}"/>
 
-<input type="hidden" name="id" value="${enc(attr:scheduledExecution?.extid)}"/>
 <div class="note error" style="display: none" id="editerror">
 
 </div>

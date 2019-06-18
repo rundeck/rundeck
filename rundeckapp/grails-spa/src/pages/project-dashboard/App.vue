@@ -4,7 +4,7 @@
     <project-readme v-if="project && showReadme!=='false' " :project="project"></project-readme>
     <project-description v-if="project && project.description && showDescription!=='false'" :project="project"></project-description>
     <!-- <activity-list v-if="project" :project="project" :rdBase="rdBase" :eventBus="eventBus"></activity-list> -->
-    <activity-summary v-if="project  && showSummary!=='false'" :project="project" :rdBase="rdBase" ></activity-summary>
+    <activity-summary v-if="eventsAuth && project  && showSummary!=='false'" :project="project" :rdBase="rdBase" ></activity-summary>
   </div>
 </template>
 
@@ -32,12 +32,14 @@ export default {
   data () {
     return {
       project: null,
-      rdBase: null
+      rdBase: null,
+      eventsAuth:false
     }
   },
   async mounted () {
     if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
       this.rdBase = window._rundeck.rdBase
+      this.eventsAuth=window._rundeck.data && window._rundeck.data.projectEventsAuth
       const response = await getRundeckContext().rundeckClient.sendRequest({
         method: 'get',
         pathTemplate:"/menu/homeAjax",

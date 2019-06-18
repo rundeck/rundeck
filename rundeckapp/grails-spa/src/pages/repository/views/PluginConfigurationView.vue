@@ -1,14 +1,16 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12 col-sm-3">
-        <h2 style="margin: 0px;font-size: 2.3em;margin-top: 5px;">Installed Plugins</h2>
+      <div class="col-xs-12" style="margin-bottom:1em;">
+        <h3
+          style="margin: 0px;padding-bottom: 10px; border-bottom:1px solid black;"
+        >Installed Plugins</h3>
       </div>
-      <div class="col-xs-12 col-sm-3">
+      <div class="col-xs-12 col-sm-4">
         <select
           class="form-control"
           @change="changeServiceFacet"
-          style="height:46px"
+          style="height:30px"
           :disabled="view === 'detail'"
         >
           <option value>View All</option>
@@ -19,9 +21,9 @@
           >{{service.value}}</option>
         </select>
       </div>
-      <div class="col-xs-12 col-sm-3">
+      <div class="col-xs-12 col-sm-4">
         <form @submit.prevent="search">
-          <div class="input-group input-group-lg">
+          <div class="input-group input-group-sm">
             <input
               type="text"
               class="form-control"
@@ -47,26 +49,26 @@
           </div>
         </form>
       </div>
-      <div class="col-xs-12 col-sm-3 text-right">
-        <div class="btn-group btn-group-lg squareish-buttons" role="group">
-          <button
+      <div class="col-xs-12 col-sm-4 text-right">
+        <div class="btn-group btn-group-sm btn-group-justified squareish-buttons" role="group">
+          <a
             type="button"
             @click="view = 'grid'"
             class="btn btn-default"
             :class="{'active': view === 'grid'}"
-          >Grid</button>
-          <button
+          >Grid</a>
+          <a
             type="button"
             @click="view = 'list'"
             class="btn btn-default"
             :class="{'active': view === 'list'}"
-          >List</button>
-          <button
+          >List</a>
+          <a
             type="button"
             @click="view = 'detail'"
             class="btn btn-default"
             :class="{'active': view === 'detail'}"
-          >Detail</button>
+          >Detail</a>
         </div>
       </div>
     </div>

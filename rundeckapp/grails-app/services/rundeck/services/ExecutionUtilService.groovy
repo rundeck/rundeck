@@ -363,7 +363,7 @@ class ExecutionUtilService {
      * @return
      */
     def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)

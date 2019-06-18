@@ -1362,8 +1362,7 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         });
     };
     self.formatTimeAtDate=function(text){
-        //TODO: fix incorrect endTime/startTime format: it is not actually UTC time
-        return MomentUtil.formatTimeAtDateUTC(text);
+        return MomentUtil.formatTimeAtDate(text);
     };
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);

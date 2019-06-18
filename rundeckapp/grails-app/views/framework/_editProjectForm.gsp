@@ -20,7 +20,7 @@
    Created: 8/1/11 11:38 AM
 --%>
 
-<%@ page import="rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.UtilityTagLib; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" contentType="text/html;charset=UTF-8" %>
 <g:render template="/common/messages" model="[notDismissable:true]"/>
 <script type="text/javascript">
     function changeCronExpression(elem){
@@ -67,24 +67,22 @@
         }
     }
 </script>
-<div class="list-group">
   <g:if test="${editOnly}">
     <g:hiddenField name="project" value="${project}"/>
   </g:if>
+<div class="tab-pane active" id="tab_details">
   <g:if test="${!editOnly}">
-    <div class="list-group-item">
       <div class="form-group ${projectNameError?'has-error':''}">
         <label for="project" class="required">
           <g:message code="domain.Project.field.name" default="Project Name"/>
         </label>
-        <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"/>
+          <g:textField name="newproject" size="50" autofocus="true" value="${newproject}" class="form-control"
+                       data-bind="value: name"/>
         <g:if test="${projectNameError}">
           <div class="text-warning"><g:enc>${projectNameError}</g:enc></div>
         </g:if>
       </div>
-    </div>
   </g:if>
-  <div class="list-group-item">
     <div class="form-group ">
         <label for="label">
             <g:message code="domain.Project.label.label" default="Label"/>
@@ -102,7 +100,7 @@
     </div>
   </div>
 <feature:enabled name="cleanExecutionsHistoryJob">
-  <div class="list-group-item">
+  <div class="tab-pane" id="tab_history">
       <label class=" control-label"><g:message code="execution.history.cleanup.label" default="Execution History Clean"/>:</label>
       <div class="row">
           <div class="col-sm-4">
@@ -115,7 +113,7 @@
                           id="${nkey+'enable_cleaner_input'}"
                           onchange='cleanerchkbox(this)'
                           checked="${isSelected}"/>
-                  <label>
+                  <label for="${nkey+'enable_cleaner_input'}">
                       <b><g:enc>Enable</g:enc></b>
                   </label>
                   <span class="help-block"><g:enc>Enable cleaner executions history</g:enc></span>
@@ -151,7 +149,7 @@
             </g:if>
         </div>
         <div class="form-group">
-            %{--<div class="panel panel-default panel-tab-content crontab tabtarget"  >--}%
+            %{--<div class="panel panel-default panel-tab-pane crontab tabtarget"  >--}%
             <div class="${labelColSize}  control-label text-form-label">
                 <g:message code="execution.history.cleanup.schedule" default="Schedule clean history job (Cron expression). Default: 0 0 0 1/1 * ? * (Every days on 12:00 AM)"/>
             </div>
@@ -203,7 +201,7 @@
 </feature:enabled>
   <g:set var="categories" value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
   <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
-    <div class="list-group-item">
+    <div class="tab-pane" id="tab_category_${category}">
     <g:render template="projectConfigurableForm"
               model="${[extraConfigSet: extraConfig?.values(),
                           category      : category,
@@ -213,98 +211,121 @@
               ]}"/>
     </div>
   </g:each>
-  <g:if test="${nodeExecDescriptions}">
-    <div class="list-group-item">
-      <span class="h4">Default <g:message code="framework.service.NodeExecutor.label" /></span>
-      <span class="help-block"><g:message code="domain.Project.edit.NodeExecutor.explanation" /></span>
-      <g:each in="${nodeExecDescriptions}" var="description" status="nex">
-        <g:set var="nkey" value="${g.rkey()}"/>
-        <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
-        <div class="radio">
-          <g:radio
-            name="defaultNodeExec"
-            value="${nex}"
-            class="nexec"
-            id="${nkey+'_input'}"
-            checked="${isSelected}"/>
-            <label>
-              <b><g:enc>${description.title}</g:enc></b>
-            </label>
-            <span class="help-block"><g:enc>${description.description}</g:enc></span>
-        </div>
-        <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
-        <g:set var="nodeexecprefix" value="nodeexec.${nex}.config."/>
-        <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="false" targetSelector=".nexecDetails"/>
-        </wdgt:eventHandler>
-        <g:if test="${description && description.properties}">
-          <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-            <wdgt:action visible="true" target="${nkey+'_det'}"/>
-          </wdgt:eventHandler>
-          <div class="well well-sm nexecDetails" id="${enc(attr:nkey) + '_det'}" style="${wdgt.styleVisible(if: isSelected)}">
-            <div class="form-horizontal " >
-              <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                        service:com.dtolabs.rundeck.plugins.ServiceNameConstants.NodeExecutor,
-                        provider:description.name,
-                        properties:description.properties,
-                        report:nodeexecreport?.errors && isSelected ? nodeexecreport : null,
-                        prefix:nodeexecprefix,
-                        values:isSelected ? nodeexecconfig : null,
-                        fieldnamePrefix:nodeexecprefix,
-                        origfieldnamePrefix:'orig.' + nodeexecprefix,
-                        allowedScope: PropertyScope.Project
-              ]}"/>
+
+<g:each in="${serviceDefaultsList}" var="serviceDefaults">
+
+    <div class="tab-pane form-horizontal" id="tab_svc_${serviceDefaults.service}">
+
+        <div class="form-group">
+            <div class=" col-sm-12 help-block"><g:message
+                    code="domain.Project.edit.${serviceDefaults.service}.explanation"/>
             </div>
-          </div>
-        </g:if>
-      </g:each>
-    </div>
-  </g:if>
-  <g:if test="${fileCopyDescriptions}">
-    <div class="list-group-item">
-    <span class="h4">Default Node <g:message code="framework.service.FileCopier.label"/></span>
-    <span class="help-block"><g:message code="domain.Project.edit.FileCopier.explanation" /></span>
-    <g:each in="${fileCopyDescriptions}" var="description" status="nex">
-      <g:set var="nkey" value="${g.rkey()}"/>
-      <g:set var="isSelected" value="${defaultFileCopy == description.name}"/>
-      <div class="radio">
-        <g:radio
-            name="defaultFileCopy"
-            value="${nex}"
-            class="fcopy"
-            id="${nkey+'_input'}"
-            checked="${isSelected}"/>
-        <label>
-          <b><g:enc>${description.title}</g:enc></b>
-        </label>
-        <span class="help-block"><g:enc>${description.description}</g:enc></span>
-      </div>
-      <g:hiddenField name="fcopy.${nex}.type" value="${description.name}"/>
-      <g:set var="fcopyprefix" value="fcopy.${nex}.config."/>
-      <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="false" targetSelector=".fcopyDetails"/>
-      </wdgt:eventHandler>
+        </div>
+
+        <div class=" form-group spacing-lg">
+            <div class="col-sm-12">
+                <div class="btn-group btn-group-lg">
+                    <button type="button" class="btn btn-simple btn-hover  btn-secondary dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+
+                        <span class="caret"></span>
+
+                        <span data-bind="if: defaults['${serviceDefaults.service}'].type() ">
+
+                            <span data-bind="if: defaults['${serviceDefaults.service}'].description() ">
+                                <span data-bind="with: defaults['${serviceDefaults.service}'].description">
+                                <!-- ko if: iconSrc -->
+                                <img width="24px" height="24px" data-bind="attr: {src: iconSrc}"/>
+                                <!-- /ko -->
+                                <!-- ko if: glyphicon -->
+                                <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: faicon -->
+                                <i data-bind="css: 'fas fa-'+faicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: fabicon -->
+                                <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                                <!-- /ko -->
+                                <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
+                                <i class="rdicon icon-small plugin"></i>
+                                <!-- /ko -->
+                                <span data-bind="text: title"></span>
+                                </span>
+                            </span>
+                        </span>
+                        <span data-bind="if: !defaults['${serviceDefaults.service}'].type()">
+                            Select a <g:message
+                                    code="framework.service.${serviceDefaults.service}.label"/>
+                        </span>
+
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+
+
+                    <ul class="dropdown-menu ">
+
+                            <li data-bind="foreach: descriptions['${serviceDefaults.service}']">
+                                <a href="#" data-bind="click: function(){$parent.defaults['${serviceDefaults.service}'].type(type())}">
+                                    <!-- ko if: iconSrc -->
+                                    <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                                    <!-- /ko -->
+                                    <!-- ko if: glyphicon -->
+                                    <i data-bind="css: 'glyphicon glyphicon-'+glyphicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: faicon -->
+                                    <i data-bind="css: 'fas fa-'+faicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: fabicon -->
+                                    <i data-bind="css: 'fab fa-'+fabicon()"></i>
+                                    <!-- /ko -->
+                                    <!-- ko if: !iconSrc() && !glyphicon() && !faicon() && !fabicon() -->
+                                    <i class="rdicon icon-small plugin"></i>
+                                    <!-- /ko -->
+                                    <span data-bind="text: title"></span>
+
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+                <span data-bind="if: defaults['${serviceDefaults.service}'].description() ">
+                    <span data-bind="with: defaults['${serviceDefaults.service}'].description">
+                        <span class="text-info">
+                            <span data-bind="text: descriptionFirstLine"></span>
+                        </span>
+                    </span>
+                </span>
+                <input type="hidden" name="default_${serviceDefaults.service}" data-bind="value: defaults['${serviceDefaults.service}'].type"/>
+            </div>
+        </div>
+        <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
+            <g:set var="nkey" value="${g.rkey()}"/>
+            <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
+
+            <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
-        <wdgt:eventHandler state="checked" for="${nkey+'_input'}">
-          <wdgt:action visible="true" target="${nkey+'_det'}"/>
-        </wdgt:eventHandler>
-        <div class="well well-sm fcopyDetails" id="${enc(attr:nkey) + '_det'}" style="${wdgt.styleVisible(if: isSelected)}">
-          <div class="form-horizontal">
+          <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
+          <div class=" " id="${enc(attr: nkey) + '_det'}"
+               data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
+              <hr/>
+              <g:hiddenField name="${serviceDefaults.prefix}.default.type"
+                             value="${description.name}"/>
+
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                      service:com.dtolabs.rundeck.plugins.ServiceNameConstants.FileCopier,
-                      provider:description.name,
-                      properties:description.properties,
-                      report:fcopyreport?.errors && isSelected ? fcopyreport : null,
-                      prefix:fcopyprefix,
-                      values:isSelected?fcopyconfig:null,
-                      fieldnamePrefix:fcopyprefix,
-                      origfieldnamePrefix:'orig.'+fcopyprefix,
-                      allowedScope:PropertyScope.Project
+                    service            : serviceDefaults.service,
+                    provider           : description.name,
+                    properties         : description.properties,
+                    report             : serviceDefaults.errreport?.errors && isSelected ? serviceDefaults.errreport :
+                                         null,
+                    prefix             : fcopyprefix,
+                    values             : isSelected ? serviceDefaults.config : null,
+                    fieldnamePrefix    : fcopyprefix,
+                    origfieldnamePrefix: 'orig.' + fcopyprefix,
+                    allowedScope       : PropertyScope.Project
             ]}"/>
-          </div>
+
         </div>
       </g:if>
     </g:each>
     </div>
-  </g:if>
-</div>
+
+</g:each>

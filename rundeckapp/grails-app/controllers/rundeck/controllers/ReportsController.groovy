@@ -58,6 +58,21 @@ class ReportsController extends ControllerBase{
 
     public def index(){
 
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(
+                        authContext,
+                        AuthorizationUtil.resourceType('event'),
+                        [AuthConstants.ACTION_READ],
+                        params.project
+                ),
+                AuthConstants.ACTION_READ,
+                'Events in project',
+                params.project
+        )) {
+            return
+        }
     }
     public def index_old (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value

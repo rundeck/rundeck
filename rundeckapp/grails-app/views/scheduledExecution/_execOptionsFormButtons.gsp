@@ -16,8 +16,6 @@
 
 
 <div id="formbuttons" data-ko-bind="runformoptions">
-    <div class="">
-        <div>
 
             <div class="col-xs-12 col-sm-4">
                 <g:if test="${!hideCancel}">
@@ -31,36 +29,7 @@
                        id="extra_loglevel"
 
                 />
-                <div class="btn-group ">
-                    <button type="button" class="btn btn-simple btn-secondary dropdown-toggle" data-toggle="dropdown"
-                            aria-haspopup="true" aria-expanded="false">
-                        <g:message code="options.label" />
-                        <span class="caret"></span>
-                        <span class="sr-only">Toggle Dropdown</span>
-                    </button>
 
-                    <ul class="dropdown-menu ">
-                        <li>
-                            <a href="#" data-bind="click: function(){debug(!debug())}">
-                                <b class="fas fa-bug"></b>
-                                <g:message code="run.with.debug.output" />
-                                <b class="fas fa-check" data-bind="visible: debug()"></b>
-                            </a>
-                        </li>
-                        <g:if test="${showRunLater}">
-                        <li>
-
-                            <a data-toggle="modal"
-                               title="Set start time"
-                               href="#scheduler">
-                                <b class="glyphicon glyphicon-time"></b>
-                                <g:message code="run.job.later.ellipsis"/>
-                            </a>
-                        </li>
-                        </g:if>
-
-                    </ul>
-                </div>
                 <g:render template="/common/modal"
                           model="[modalid: 'scheduler', titleCode: 'run.job.later', buttons: [
                                   [
@@ -88,14 +57,9 @@
                 </g:render>
             </div>
 
-            <div class="col-xs-12 col-sm-5">
-                <div class="form-inline">
-                    <div class="">
-
-                        <input type="hidden" id="followoutputcheck" name="follow" value="true"/>
-
-
-                        <div class="form-group">
+            <div class="col-xs-12 col-sm-8">
+                <span class="form-inline" data-bind="if: follow">
+                     <span class="form-group">
                             <label>
 
                                 <g:message code="job.run.watch.output"/>
@@ -120,32 +84,64 @@
                                     </option>
                                 </select>
                             </label>
-                        </div>
-                    </div>
-
-                </div>
+                        </span>
+                </span>
 
 
 
-            </div>
 
-            <div class="col-xs-12 col-sm-3">
-
+                <input type="hidden" id="followoutputcheck" name="follow" value="true" data-bind="value: follow"/>
                 <div class="btn-group pull-right">
-
                     <button type="submit"
                             name="_action_runJobNow"
                             id="execFormRunButton"
                         ${scheduledExecution.hasExecutionEnabled() ? '' : 'disabled'}
                             class=" btn btn-success  ">
                         <b class="fas fa-bug"  data-bind="visible: debug()"></b>
+                        <b class="fas fa-eye"  data-bind="visible: follow()"></b>
+
                         <g:message code="run.job.now"/>
                         <b class="glyphicon glyphicon-play"></b>
                     </button>
+                    <button type="button" class="btn  btn-secondary dropdown-toggle" data-toggle="dropdown"
+                            aria-haspopup="true" aria-expanded="false">
+
+                        <span class="caret"></span>
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+
+
+                    <ul class="dropdown-menu ">
+                        <li>
+                            <a href="#" data-bind="click: function(){debug(!debug())}">
+                                <b class="fas fa-bug"></b>
+                                <g:message code="run.with.debug.output" />
+                                <b class="fas fa-check" data-bind="visible: debug()"></b>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" data-bind="click: function(){follow(!follow())}">
+                                <b class="fas fa-eye"></b>
+                                <g:message code="follow.output" />
+                                <b class="fas fa-check" data-bind="visible: follow()"></b>
+                            </a>
+                        </li>
+                        <g:if test="${showRunLater}">
+                            <li class="divider"></li>
+                            <li>
+
+                                <a data-toggle="modal"
+                                   title="Set start time"
+                                   href="#scheduler">
+                                    <b class="glyphicon glyphicon-time"></b>
+                                    <g:message code="run.job.later.ellipsis"/>
+                                </a>
+                            </li>
+                        </g:if>
+
+                    </ul>
                 </div>
             </div>
-        </div>
-    </div>
     <div class="clearfix">
     </div>
 </div>

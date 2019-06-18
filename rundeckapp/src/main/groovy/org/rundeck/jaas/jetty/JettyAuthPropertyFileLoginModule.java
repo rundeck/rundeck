@@ -119,13 +119,4 @@ public class JettyAuthPropertyFileLoginModule extends AbstractSharedLoginModule 
         return super.logout();
     }
 
-
-    /**
-     * Emit Debug message via System.err by default
-     *
-     * @param message
-     */
-    protected void debug(String message) {
-        logger.debug(message);
-    }
 }

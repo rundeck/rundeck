@@ -54,7 +54,7 @@ function WorkflowEditor() {
                     return ko.utils.unwrapObservable(data.type);
                 },
                 create: function (options) {
-                    return new StepFilterPlugin(options.data);
+                    return new PluginMetadata(options.data);
                 }
             }
         }, self);
@@ -422,38 +422,7 @@ function ScriptStep(data) {
     //bind in the input data
     ko.mapping.fromJS(data, {}, this);
 }
-/**
- * plugin description info
- * @param data
- * @constructor
- */
-function StepFilterPlugin(data) {
-    "use strict";
-    var self = this;
-    self.type = ko.observable(data.type);
-    self.title = ko.observable(data.title);
-    self.description = ko.observable(data.description);
-    self.iconSrc = ko.observable(data.iconSrc);
-    self.providerMeta = ko.observable(data.providerMeta)
-    self.selected = ko.observable(false);
-    self.glyphicon  = ko.computed(function () {
-        return self.providerMeta() && self.providerMeta().glyphicon
-    })
-    self.faicon = ko.computed(function () {
-        return self.providerMeta() && self.providerMeta().faicon
-    })
-    self.fabicon = ko.computed(function () {
-        return self.providerMeta() && self.providerMeta().fabicon
-    })
-    self.descriptionFirstLine = ko.computed(function () {
-        var desc = self.description();
-        if (desc) {
-            return desc.indexOf('\n') > 0 ? desc.substring(0, desc.indexOf('\n')) : desc;
-        }
-        return desc;
-    });
-    ko.mapping.fromJS(data, {}, this);
-}
+
 /**
  * A single filter instance,
  * @param data

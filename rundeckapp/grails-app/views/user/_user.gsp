@@ -22,7 +22,7 @@
    Created: Feb 2, 2010 3:16:55 PM
    $Id$
 --%>
-<g:set var="selfprofile" value="${user.login == request.remoteUser}"/>
+<g:set var="selfprofile" value="${user.login?.equalsIgnoreCase(request.remoteUser)}"/>
 
 <div class="row">
     <div class="col-sm-12">
@@ -79,7 +79,7 @@
 </div>
 
 
-<g:if test="${session.user == user.login && (tokenAdmin || serviceToken || selfToken)}">
+<g:if test="${session.user?.equalsIgnoreCase(user.login) && (tokenAdmin || serviceToken || selfToken)}">
     <div id="gentokensection">
         <div class="row ">
             <div class="col-sm-12">

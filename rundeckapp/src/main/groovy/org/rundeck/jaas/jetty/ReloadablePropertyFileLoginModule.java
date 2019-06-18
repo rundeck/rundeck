@@ -43,6 +43,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
         private int _refreshInterval = 0;
         private String _filename = DEFAULT_FILENAME;
         private boolean _reloadEnabled = true;
+        private boolean _debug = false;
 
 
         /**
@@ -76,7 +77,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
                 PropertyUserStore prev = _propertyUserStores.putIfAbsent(_filename, propertyUserStore);
                 if (prev == null)
                 {
-                    LOG.debug("setupPropertyUserStore: Starting new PropertyUserStore. PropertiesFile: " + _filename + " refreshInterval: " + _refreshInterval);
+                    debug("ReloadablePropertyFileLoginModule: setupPropertyUserStore: Starting new PropertyUserStore. PropertiesFile: " + _filename + " refreshInterval: " + _refreshInterval);
 
                     try
                     {
@@ -96,6 +97,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             _filename = (tmp == null? DEFAULT_FILENAME : tmp);
             tmp = (String)options.get("refreshInterval");
             _refreshInterval = (tmp == null?_refreshInterval:Integer.parseInt(tmp));
+            _debug = options.containsKey("debug") && options.get("debug").equals("true");
         }
 
         /**
@@ -111,7 +113,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             if (propertyUserStore == null)
                 throw new IllegalStateException("PropertyUserStore should never be null here!");
 
-            LOG.debug("Checking PropertyUserStore "+_filename+" for "+userName);
+            debug("ReloadablePropertyFileLoginModule: Checking PropertyUserStore "+_filename+" for "+userName);
             UserIdentity userIdentity = propertyUserStore.getUserIdentity(userName);
             if (userIdentity==null)
                 return null;
@@ -130,7 +132,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             }
 
             Credential credential = (Credential)userIdentity.getSubject().getPrivateCredentials().iterator().next();
-            LOG.debug("Found: " + userName + " in PropertyUserStore "+_filename);
+            debug("ReloadablePropertyFileLoginModule: Found: " + userName + " in PropertyUserStore "+_filename);
             return new UserInfo(userName, credential, roles);
         }
 
@@ -141,4 +143,19 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
     public void setReloadEnabled(final boolean enabled) {
         this._reloadEnabled = enabled;
     }
+
+    public boolean isDebug() {
+        return _debug;
+    }
+
+    /**
+     * Default behavior to emit to System.err
+     * @param message
+     */
+    protected void debug(String message) {
+        if(_debug) {
+            System.err.println(message);
+        }
+    }
+
 }

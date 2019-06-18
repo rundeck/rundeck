@@ -2,7 +2,7 @@
   <div v-if="displayCard">
     <div class="card result flex-col" @click="openInfo" style="cursor:pointer;">
       <div class="card-header">
-        <span class="current-version-number label label-default">{{provider.pluginVersion}}</span>
+        <div class="current-version-number">{{provider.pluginVersion}}</div>
         <!-- <span class="provider-builtin-icon" v-if="provider.builtin">
           <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
         </span>
@@ -26,10 +26,10 @@
       </div>
       <div class="card-footer">
         <span class="provider-builtin-icon" v-if="provider.builtin" v-tooltip.hover="`Built-In`">
-          <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
+          <i class="fa fa-briefcase" aria-hidden="true"></i>
         </span>
         <span class="provider-builtin-icon" v-else v-tooltip.hover="`Installed File`">
-          <i class="fa fa-file fa-2x" aria-hidden="true"></i>
+          <i class="fa fa-file" aria-hidden="true"></i>
         </span>
         <!-- <a @click="openInfo" style="cursor:pointer;">
           <i class="fas fa-file-code fa-2x"></i>
@@ -80,13 +80,14 @@ export default {
 .card.result {
   .card-header {
     background: #20201f;
-    padding: 3em 2em 2em;
+    padding: 1em;
     border-radius: 7px 7px 0 0;
     .card-title {
       margin: 0;
       color: white;
       font-weight: bold;
-      font-size: 2em;
+      font-size: 1.4em;
+      line-height: 1.1em;
     }
     .support-type {
       color: white;
@@ -94,19 +95,10 @@ export default {
       margin: 0 0 0.25em;
       // text-transform: uppercase;
     }
-    .provider-builtin-icon {
-      color: white;
-      position: absolute;
-      left: 1em;
-      top: 1em;
-    }
     .current-version-number {
-      position: absolute;
-      right: 1em;
-      top: 1em;
-      padding: 0.2em 1em;
-      font-size: 18px;
-      border-radius: 20px;
+      font-size: 12px;
+      color: white;
+      margin-bottom: 5px;
     }
     .requires-rundeck-version {
       color: #f7403a;
@@ -117,12 +109,13 @@ export default {
     }
   }
   .card-content {
-    padding: 2em 2em 1em;
+    padding: 1em;
     // min-height: 250px;
     .provides {
       list-style: none;
       margin: 2em 0 0;
       padding: 0;
+      font-size: 12px;
       li {
         display: inline-block;
         margin-right: 1em;
@@ -135,7 +128,7 @@ export default {
     }
   }
   .card-footer {
-    margin-bottom: 1em;
+    margin-bottom: 0;
     padding: 0 2em auto;
     border-radius: 0 0 7px 7px;
     .links {
@@ -152,6 +145,11 @@ export default {
     }
     .button-group {
       text-align: right;
+    }
+    .provider-builtin-icon {
+      i {
+        font-size: 18px;
+      }
     }
   }
 }

@@ -65,7 +65,7 @@ saved.filters
 search
 "/>
     <script type="text/javascript">
-        
+
         function showError(message){
              appendText('#error',message);
              jQuery("#error").show();
@@ -361,10 +361,10 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: appLinks.menuNowrunningAjax,
+            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
-            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
             filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
             filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
@@ -642,6 +642,8 @@ search
       </div>
     </div>
   </div>
+
+  <auth:resourceAllowed project="${projectName}" action="${[AuthConstants.ACTION_READ]}" kind="event">
   <div class="row">
     <div class="col-xs-12">
       <div class="card card-plain">
@@ -663,6 +665,7 @@ search
       </div>
     </div>
   </div>
+  </auth:resourceAllowed>
 </div>
 
 <div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">

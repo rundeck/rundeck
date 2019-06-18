@@ -214,14 +214,3 @@ data for configuring remote option cascading/dependencies
     <div class="info note">Not authorized to execute chosen job.</div>
     <g:if test="${selectedargstring}"><div>Old value: <g:enc>${selectedargstring}</g:enc></div></g:if>
 </g:elseif>
-<g:else>
-    <div class="form-group">
-        <div class="col-sm-2 control-label text-form-label">
-            <g:message code="input.options"/>
-        </div>
-
-        <div class="col-sm-10">
-            <p class="form-control-static text-primary"><g:message code="no.input.options.for.this.job"/></p>
-        </div>
-    </div>
-</g:else>

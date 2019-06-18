@@ -81,4 +81,23 @@ section {
   &.section-space-bottom-lg{
     margin-bottom: $padding-large-vertical;
   }
+
+  &.section-pad-top {
+    padding-top: $padding-base-vertical;
+  }
+  &.section-pad-bottom {
+    padding-bottom: $padding-base-vertical;
+  }
+  &.section-pad-top-sm {
+    padding-top: $padding-small-vertical;
+  }
+  &.section-pad-bottom-sm {
+    padding-bottom: $padding-small-vertical;
+  }
+  &.section-pad-top-lg {
+    padding-top: $padding-large-vertical;
+  }
+  &.section-pad-bottom-lg {
+    padding-bottom: $padding-large-vertical;
+  }
 }

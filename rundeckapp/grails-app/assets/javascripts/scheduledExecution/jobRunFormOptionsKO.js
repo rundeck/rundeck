@@ -18,6 +18,7 @@
 function JobRunFormOptions (data) {
     var self = this
     self.nodeFilter = data.nodeFilter
+    self.follow = ko.observable(typeof (data.follow) === 'undefined' || data.follow)
     self.debug = ko.observable(data.debug === true || data.debug === 'true')
     self.loglevel = ko.pureComputed(function () {
         return self.debug() ? 'DEBUG' : 'NORMAL'
@@ -27,6 +28,7 @@ function JobRunFormOptions (data) {
     self.changeTargetNodes = ko.observable(data.changeTargetNodes)
     self.nodeOverride = ko.observable(data.nodeOverride || 'cherrypick')
     self.hasSelectedNodes = ko.observable(data.hasSelectedNodes)
+    self.hasDynamicFilter = ko.observable(data.hasDynamicFilter)
     self.selectedNodes = ko.observableArray(data.selectedNodes || [])
     self.allNodes = data.allNodes || []
     self.groups = data.groups

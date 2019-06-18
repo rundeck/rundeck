@@ -64,6 +64,7 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
         if (null != caseInsensitiveStr) {
             this.caseInsensitive = Boolean.parseBoolean(caseInsensitiveStr.toString());
         }
+
         if(!options.containsKey("hotReload") || !options.get("hotReload").equals("true")) {
             module.setReloadEnabled(false);
         }
@@ -125,15 +126,6 @@ public class JettyRolePropertyFileLoginModule extends AbstractSharedLoginModule 
             }
         }
         return true;
-    }
-
-    /**
-     * Emit Debug message via logger
-     *
-     * @param message message
-     */
-    protected void debug(String message) {
-        logger.debug(message);
     }
 
     @Override

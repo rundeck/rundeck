@@ -110,7 +110,7 @@
 </g:if>
 <div class="executionshow ${inlineView ? 'card-content tight inlineexecution' : ''}">
   <div data-bind="if: logoutput().loadingFile">
-    <div class="card-content-full-width ">
+    <div class="card-content-full-width">
       <div class=" progress progress-embed progress-square flex-container flex-justify-start" >
         <div class="progress-bar progress-bar-info flex-basis-auto "
              role="progressbar"

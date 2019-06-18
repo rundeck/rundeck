@@ -20,6 +20,7 @@ const translationStrings = {
     'Auto refresh': 'Auto refresh',
     'error.message.0': 'An Error Occurred: {0}',
     'info.completed.0': 'Completed: {0}',
+    'info.completed.0.1': 'Completed: {0} {1}',
     'info.started.0': 'Started: {0}',
     'info.started.expected.0.1': 'Started: {0}, Estimated Finish: {1}',
     'info.scheduled.0': 'Scheduled; starting {0}',
@@ -35,6 +36,9 @@ const translationStrings = {
     'filter.save.name.prompt': 'Name:',
     'filter.save.validation.name.blank': 'Name Cannot be blank',
     'filter.save.button': 'Save Filter...',
+    'failed': 'failed',
+    'ok':'ok',
+    '0.total':'{0} total',
 
     period: {
       label: {

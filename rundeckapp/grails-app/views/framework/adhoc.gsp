@@ -28,6 +28,12 @@
   <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
   <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
 
+  <g:set var="eventReadAuth" value="${auth.resourceAllowedTest(
+          project: projectName,
+          action: AuthConstants.ACTION_READ,
+          kind: 'event'
+  )}"/>
+
   <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
@@ -76,10 +82,10 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: appLinks.menuNowrunningAjax,
+            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
-            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
             filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
             filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
@@ -112,7 +118,7 @@ search
 <content tag="subtitlesection">
   <div class="subtitle-head">
     <div class="subtitle-head-item">
-      <div class="row">
+      <div>
         <div class="col-xs-12 ">
           <div class="${emptyQuery ? 'active' : ''}" data-ko-bind="nodeFilter">
             <g:form action="adhoc" class="form form-horizontal" name="searchForm">
@@ -352,6 +358,7 @@ search
       <div id="runcontent" class="card card-modified  exec-output card-grey-header nodes_run_content"></div>
     </div>
 
+    <g:if test="${eventReadAuth}">
     <div class="col-xs-12">
 
       <div >
@@ -378,6 +385,7 @@ search
       </div>
 
     </div>
+    </g:if>
 
   </div>
     <div id="loaderror"></div>

@@ -148,10 +148,10 @@ search
             jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
             runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
             activityUrl: appLinks.reportsEventsAjax,
-            nowrunningUrl: appLinks.menuNowrunningAjax,
+            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
             bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
             activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
-            sinceUpdatedUrl:"${enc(js:g.createLink(action: 'since.json', params: [project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
             filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
             filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
             filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
@@ -542,12 +542,12 @@ search
                           </div>
                           <a href="#state"
                              data-bind="click: function(){activeTab('nodes')}, visible: activeTab()!=='nodes'"
-                             class="btn btn-simple btn-sm">
+                             class="btn btn-sm">
                               <g:message code="execution.page.show.tab.Nodes.title"/>  &raquo;
                           </a>
                           <a href="#output"
                              data-bind="click: function(){activeTab('output')}, visible: activeTab()!=='output'"
-                             class="btn btn-simple btn-sm">
+                             class="btn btn-sm">
                               <g:message code="execution.show.mode.Log.title"/> &raquo;
                           </a>
 
@@ -562,7 +562,7 @@ search
                                   </a>
 
                                   <span class="btn-group">
-                                      <button type="button" class="btn btn-simple btn-xs dropdown-toggle"
+                                      <button type="button" class="btn btn-xs dropdown-toggle"
                                               data-toggle="dropdown">
                                           <g:message code="execution.log" />
                                           <span class="caret"></span>
@@ -614,7 +614,8 @@ search
                                               <g:message code="execution.show.log.download.button.title"/>
                                           </li>
                                           <li>
-                                              <g:link class=""
+                                              <g:link class="_guess_tz_param"
+                                                      data-tz-url-param="timeZone"
                                                       title="${message(
                                                               code: 'execution.show.log.download.button.description',
                                                               default: 'Download {0} bytes',
@@ -834,6 +835,11 @@ search
                   </div>
           <g:if test="${scheduledExecution}">
 
+              <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(
+                      project: scheduledExecution.project,
+                      action: AuthConstants.ACTION_READ,
+                      kind: 'event'
+              )}"/>
               <div class="col-sm-12">
 
                   <div class="card" id="activity_section">
@@ -846,9 +852,11 @@ search
                                           <li class="active">
                                               <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
                                           </li>
-                                          <li>
-                                              <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
-                                          </li>
+                                          <g:if test="${hasEventReadAuth}">
+                                              <li>
+                                                  <a href="#history" data-toggle="tab"><g:message code="job.view.history.label" /></a>
+                                              </li>
+                                          </g:if>
                                       </ul>
                                   </div>
                               </div>
@@ -864,13 +872,15 @@ search
 
                                       <div id="_job_stats_extra_placeholder"></div>
                                   </div>
-                                  <div class="tab-pane" id="history">
+                                  <g:if test="${hasEventReadAuth}">
+                                      <div class="tab-pane" id="history">
 
-                                      <div data-ko-bind="history" class="_history_content vue-project-activity">
+                                          <div data-ko-bind="history" class="_history_content vue-project-activity">
 
-                                          <activity-list :event-bus="EventBus"></activity-list>
+                                              <activity-list :event-bus="EventBus"></activity-list>
+                                          </div>
                                       </div>
-                                  </div>
+                                  </g:if>
                               </div>
                           </div>
 
