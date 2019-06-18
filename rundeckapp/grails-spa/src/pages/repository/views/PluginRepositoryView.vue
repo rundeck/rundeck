@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="row">
-      <div class="col-xs-12 col-sm-4">
-        <h2 style="margin:0;line-height:45px;">Plugin Repositories</h2>
+      <div class="col-xs-12 col-sm-12" style="padding-bottom: 10px;">
+        <h3 style="margin: 0px;">Plugin Repositories</h3>
       </div>
-      <div class="col-xs-12 col-sm-4">
+      <div class="col-xs-12 col-sm-6">
         <form @submit.prevent="search">
-          <div class="input-group input-group-lg">
+          <div class="input-group input-group-sm">
             <input
               type="text"
               class="form-control"
@@ -26,9 +26,9 @@
           </div>
         </form>
       </div>
-      <div class="col-xs-12 col-sm-4 text-right">
+      <div class="col-xs-12 col-sm-6 text-right">
         <div
-          class="btn-group btn-group-lg btn-group-justified squareish-buttons"
+          class="btn-group btn-group-sm btn-group-justified squareish-buttons"
           role="group"
           aria-label="..."
         >

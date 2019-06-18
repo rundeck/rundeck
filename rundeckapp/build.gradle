@@ -172,6 +172,11 @@ grails{
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
         compile project(':rundeck:repository')
+        compile project(":pro-plugins:rundeckpro-acl-manager")
+        compile project(":pro-plugins:rundeckpro-license")
+        compile project(":pro-plugins:rundeckpro-cluster")
+        compile project(":pro-plugins:rundeckpro-plugins-ctl")
+        compile project(":rundeckpro-reactions")
     }
 }
 

@@ -2,16 +2,24 @@
   <div v-show="displayCard">
     <div class="card result flex-col">
       <div class="card-header">
-        <span class="current-version-number label label-default">{{result.currentVersion}}</span>
-        <h5 class="support-type">{{result.support}}</h5>
+        <div v-if="result.currentVersion">Version {{result.currentVersion}}</div>
         <h3 class="card-title">{{result.display || result.name}}</h3>
-        <h5
-          class="enterprise-required"
-          v-if="result.support === 'Enterprise Exclusive'"
-        >Requires Enterprise</h5>
+        <div style="margin-top:.5em;">{{result.support}}</div>
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
+          <div style="margin-bottom:1em;">
+            <a
+              class="btn btn-sm btn-block btn-success square-button"
+              v-if="!result.installed && canInstall && result.installId"
+              @click="handleInstall"
+            >Install</a>
+            <a
+              v-if="result.installed"
+              @click="handleUninstall"
+              class="btn btn-sm btn-block btn-danger square-button"
+            >Uninstall</a>
+          </div>
           <div
             class="requires-rundeck-version"
             v-if="result.rundeckCompatibility"
@@ -29,35 +37,23 @@
       </div>
       <div class="card-footer">
         <div class v-if="result.support !== 'Enterprise Exclusive'">
-          <div class="col-xs-12 col-sm-6">
-            <div class="links fa-2x">
-              <a v-if="result.sourceLink" :href="result.sourceLink" target="_blank">
-                <i class="fas fa-code-branch"></i>
-              </a>
-              <a
-                v-if="result.record && result.record.post_slug "
-                :href="`https://online.rundeck.com/plugins/${result.record.post_slug}/`"
-                target="_blank"
-              >
-                <i class="fas fa-file-alt"></i>
-              </a>
-              <a v-if="result.docsLink" :href="result.docsLink" target="_blank">
-                <i class="fas fa-file-alt"></i>
-              </a>
-            </div>
-          </div>
-          <div class="col-xs-12 col-sm-6">
-            <div class="button-group">
-              <a
-                class="btn btn-lg btn-success"
-                v-if="!result.installed && canInstall && result.installId"
-                @click="handleInstall"
-              >Install</a>
-              <a
-                v-if="result.installed"
-                @click="handleUninstall"
-                class="btn btn-lg btn-danger"
-              >Uninstall</a>
+          <div class="row">
+            <div class="col-xs-12 col-sm-12">
+              <div class="links fa-2x">
+                <a v-if="result.sourceLink" :href="result.sourceLink" target="_blank">
+                  <i class="fas fa-code-branch"></i>
+                </a>
+                <a
+                  v-if="result.record && result.record.post_slug "
+                  :href="`https://online.rundeck.com/plugins/${result.record.post_slug}/`"
+                  target="_blank"
+                >
+                  <i class="fas fa-file-alt"></i>
+                </a>
+                <a v-if="result.docsLink" :href="result.docsLink" target="_blank">
+                  <i class="fas fa-file-alt"></i>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -65,7 +61,7 @@
           <a
             href="https://www.rundeck.com/test-drive"
             target="_blank"
-            class="btn btn-default btn-lg btn-block"
+            class="btn btn-default btn-sm btn-block"
           >Learn More</a>
         </div>
       </div>
@@ -134,6 +130,15 @@ export default {
         plugin: this.result
       });
     }
+  },
+  filters: {
+    shorten: function(value) {
+      if (value.length > 200) {
+        return value.substr(0, 140) + "... click to read more";
+      } else {
+        return value;
+      }
+    }
   }
 };
 </script>
@@ -144,50 +149,28 @@ export default {
 .card.result {
   .card-header {
     background: #20201f;
-    padding: 3em 2em 2em;
+    padding: 1em;
     border-radius: 7px 7px 0 0;
+    color: white;
     .card-title {
-      margin: 0;
+      margin: 0.5em 0 0;
       color: white;
       font-weight: bold;
-      font-size: 2em;
-    }
-    .support-type {
-      color: white;
-      // font-weight: bold;
-      margin: 0 0 0.25em;
-      // text-transform: uppercase;
-    }
-    .current-version-number {
-      position: absolute;
-      right: 1em;
-      top: 1em;
-      padding: 0.2em 1em;
-      font-size: 18px;
-      border-radius: 20px;
-    }
-    .enterprise-required {
-      color: #f7403a;
-      // text-transform: capitalize;
-      // font-weight: bold;
-      margin: 0.7em 0 0;
-      height: 20px;
+      font-size: 1.4em;
+      line-height: 1.1em;
     }
   }
   .card-content {
-    padding: 2em 2em 1em;
-    // min-height: 250px;
+    padding: 1em;
     .requires-rundeck-version {
-      color: #f7403a;
       text-transform: uppercase;
-      // font-weight: bold;
       margin: 0 0 0.7em;
-      // height: 20px;
     }
     .provides {
       list-style: none;
       margin: 2em 0 0;
       padding: 0;
+      font-size: 12px;
       li {
         display: inline-block;
         margin-right: 1em;
@@ -200,7 +183,7 @@ export default {
     }
   }
   .card-footer {
-    margin-bottom: 1em;
+    // margin-bottom: 1em;
     padding: 0 2em auto;
     border-radius: 0 0 7px 7px;
     .links {
@@ -220,11 +203,7 @@ export default {
     }
   }
 }
-</style>
-<style lang="scss">
-.card.result .card-content p {
-  font-size: 1.3em;
-  line-height: 1.2em;
-  // font-weight: bold;
+.btn.square-button {
+  border-radius: 5px;
 }
 </style>

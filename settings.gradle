@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -40,6 +41,33 @@ include	'rundeck-storage',
     'grails-persistlocale',
     'grails-securityheaders',
     'rundeckapp:repository',
-    'docker'
+    'docker',
+    // 'pro-plugins:rundeckpro-encryptable-core-properties',
+    'pro-plugins:rundeckpro-license',
+	  'pro-plugins:rundeckpro-acl-manager',
+	  'pro-plugins:rundeckpro-cluster',
+	  'pro-plugins:rundeckpro-plugins-ctl',
+	  'license-util',
+	  'pro-util',
+    'rundeckpro-grails-common',
+    'rundeck-events:rundeck-events-api',
+    'rundeck-events:rundeck-events-plugins',
+    'plugins:rundeckpro-reactions:vue-spa',
+    'rundeckpro-reactions'
+
+project(":license-util").projectDir = file("../rundeck-pro-plugins/license-util")
+project(":pro-util").projectDir = file("../rundeck-pro-plugins/pro-util")
+
+project(":pro-plugins:rundeckpro-license").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-license")
+// project(":pro-plugins:rundeckpro-encryptable-core-properties").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-encryptable-core-properties")
+project(":pro-plugins:rundeckpro-acl-manager").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-acl-manager")
+project(":pro-plugins:rundeckpro-cluster").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-cluster")
+project(":pro-plugins:rundeckpro-plugins-ctl").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-plugins-ctl")
+
+project(":rundeck-events:rundeck-events-api").projectDir = file("../rundeck-pro-plugins/rundeck-events/rundeck-events-api")
+project(":rundeck-events:rundeck-events-plugins").projectDir = file("../rundeck-pro-plugins/rundeck-events/rundeck-events-plugins")
+project(":rundeckpro-reactions").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-reactions")
+project(":plugins:rundeckpro-reactions:vue-spa").projectDir = file("../rundeck-pro-plugins/plugins/rundeckpro-reactions/vue-spa")
+project(":rundeckpro-grails-common").projectDir = file("../rundeck-pro-plugins/rundeckpro-grails-common")
 
 project(":rundeckapp").name = "rundeck"
