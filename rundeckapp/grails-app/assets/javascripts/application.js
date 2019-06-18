@@ -1208,7 +1208,7 @@ function _initStopPropagationOnClick(){
  * @private
  */
 function _initTZParamGuess () {
-  if (typeof (moment) === 'function') {
+  if (typeof (moment) === 'function' && typeof (moment.tz) !== 'undefined') {
     let tz = moment.tz.guess()
     jQuery('a._guess_tz_param').each(function () {
       let anchor = jQuery(this)
