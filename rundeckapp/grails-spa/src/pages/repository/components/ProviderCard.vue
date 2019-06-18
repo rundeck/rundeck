@@ -1,14 +1,8 @@
 <template>
   <div v-if="displayCard">
-    <div class="card result flex-col" @click="openInfo" style="cursor:pointer;">
+    <div class="card result flex-col">
       <div class="card-header">
         <div class="current-version-number">{{provider.pluginVersion}}</div>
-        <!-- <span class="provider-builtin-icon" v-if="provider.builtin">
-          <i class="fa fa-briefcase fa-2x" aria-hidden="true"></i>
-        </span>
-        <span class="provider-builtin-icon" v-else>
-          <i class="fa fa-file fa-2x" aria-hidden="true"></i>
-        </span>-->
         <h3 class="card-title">
           <span v-if="provider.title">{{provider.title}}</span>
           <span v-else>{{provider.name}}</span>
@@ -16,12 +10,18 @@
       </div>
       <div class="card-content flex-grow">
         <div class="flexible">
-          <div v-if="provider.author" style="margin-bottom:1em;">Author: {{provider.author}}</div>
-          <div class="plugin-description" v-html="provider.description"></div>
+          <button
+            style="margin-bottom:1em;"
+            class="btn btn-sm btn-block square-button"
+            @click="handleUninstall(provider)"
+          >Uninstall</button>
 
+          <div v-if="provider.author" style="margin-bottom:1em;">Author: {{provider.author}}</div>
+          <div class="plugin-description">{{provider.description | shorten}}</div>
           <ul class="provides">
             <li>{{provider.service | splitAtCapitalLetter}}</li>
           </ul>
+          <!-- <button class="btn btn-sm btn-block square-button" @click="openInfo">More Info</button> -->
         </div>
       </div>
       <div class="card-footer">
@@ -31,9 +31,9 @@
         <span class="provider-builtin-icon" v-else v-tooltip.hover="`Installed File`">
           <i class="fa fa-file" aria-hidden="true"></i>
         </span>
-        <!-- <a @click="openInfo" style="cursor:pointer;">
-          <i class="fas fa-file-code fa-2x"></i>
-        </a>-->
+        <span class="info-icon" @click="openInfo">
+          <i class="fas fa-info-circle"></i>
+        </span>
       </div>
     </div>
   </div>
@@ -46,12 +46,15 @@ export default {
   name: "ProviderCard",
   props: ["provider"],
   methods: {
-    ...mapActions("plugins", ["getProviderInfo"]),
+    ...mapActions("plugins", ["getProviderInfo", "uninstallPlugin"]),
     openInfo() {
       this.getProviderInfo({
         serviceName: this.provider.service,
         providerName: this.provider.name
       });
+    },
+    handleUninstall(provider) {
+      this.uninstallPlugin(provider);
     }
   },
   computed: {
@@ -72,6 +75,13 @@ export default {
       if (!value) return "";
       value = value.toString();
       return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
+    },
+    shorten: function(value) {
+      if (value.length > 200) {
+        return value.substr(0, 140) + "... click to read more";
+      } else {
+        return value;
+      }
     }
   }
 };
@@ -99,13 +109,6 @@ export default {
       font-size: 12px;
       color: white;
       margin-bottom: 5px;
-    }
-    .requires-rundeck-version {
-      color: #f7403a;
-      // text-transform: capitalize;
-      // font-weight: bold;
-      margin: 0.7em 0 0;
-      height: 20px;
     }
   }
   .card-content {
@@ -138,26 +141,18 @@ export default {
         margin-right: 0.6em;
       }
     }
-    .btn {
-      border-radius: 6px;
-      font-weight: bold;
-      padding: 5px 30px;
-    }
-    .button-group {
-      text-align: right;
-    }
-    .provider-builtin-icon {
+    .provider-builtin-icon,
+    .info-icon {
       i {
         font-size: 18px;
       }
     }
+    .info-icon {
+      float: right;
+    }
   }
 }
-</style>
-<style lang="scss">
-.card.result .card-content p {
-  font-size: 1.3em;
-  line-height: 1.2em;
-  // font-weight: bold;
+.btn.square-button {
+  border-radius: 5px;
 }
 </style>

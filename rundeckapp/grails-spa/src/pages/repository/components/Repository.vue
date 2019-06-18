@@ -80,7 +80,7 @@ export default {
 .repo-header {
   background: #e5e2de;
   color: #5d5d5d;
-  padding: 1em 2em;
+  padding: 0.5em;
   margin-bottom: 1em;
   border-radius: 6px;
   display: block;
@@ -110,7 +110,7 @@ export default {
   }
 }
 .repo-meta {
-  padding-left: 1em;
+  // padding-left: 1em;
   margin-bottom: 1em;
 }
 </style>

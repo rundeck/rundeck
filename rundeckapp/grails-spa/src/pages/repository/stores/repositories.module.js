@@ -78,7 +78,6 @@ const actions = {
             resolve();
           }, 500)
         }, (error) => {
-          console.log('err', error)
           reject(error)
         });
       }
@@ -140,7 +139,7 @@ const actions = {
         headers: {
           "x-rundeck-ajax": true
         },
-        url: `${this.state.repositories.rdBase}repository/${properties.repo.repositoryName}/uninstall/${properties.plugin.installId}`,
+        url: `${this.state.repositories.rdBase}repository/uninstall/${properties.plugin.installId}`,
         withCredentials: true
       })
       .then(response => {
