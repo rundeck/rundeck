@@ -28,7 +28,7 @@ class JettyRolePropertyFileLoginModuleTest extends Specification {
         module.initialize(new Subject(), null, [:], [useFirstPass:"true"])
 
         then:
-        module.module instanceof PropertyFileLoginModule
+        !module.module.isReloadEnabled()
     }
 
     def "Initialize hotReload set to true"() {
@@ -37,6 +37,6 @@ class JettyRolePropertyFileLoginModuleTest extends Specification {
         module.initialize(new Subject(),null,[:],[useFirstPass:"true",hotReload:"true"])
 
         then:
-        module.module instanceof ReloadablePropertyFileLoginModule
+        module.module.isReloadEnabled()
     }
 }
