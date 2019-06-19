@@ -296,7 +296,7 @@ function batchInitWaypoints(arr,handler,count){
     "use strict";
     var arr2=arr.splice(0,count);
     if(arr2.length>0) {
-        jQuery(arr2).waypoint(handler, {offset: '100%'});
+        jQuery(arr2).waypoint(handler, {context:'#main-panel',offset: '100%'});
         if (arr.length > 0) {
             _waypointBatchTimer=setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
         }
