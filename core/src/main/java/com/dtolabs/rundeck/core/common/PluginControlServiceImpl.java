@@ -12,19 +12,19 @@ import java.util.stream.Collectors;
 public class PluginControlServiceImpl implements PluginControlService {
 
     public static final String DISABLED_PLUGINS = "disabled.plugins";
-    private final HashSet<String> disabledPlugins;
+    private HashSet<String> disabledPlugins;
+    private final IFramework framework;
+    private final String project;
 
-    private PluginControlServiceImpl(String config) {
-        disabledPlugins = new HashSet<>(parseConfig(config));
+    private PluginControlServiceImpl(IFramework framework, String project) {
+        this.framework = framework;
+        this.project = project;
     }
 
+
     public static PluginControlService forProject(IFramework framework, String project) {
-        IRundeckProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project);
-        String disabledPlugins =
-                frameworkProject.hasProperty(DISABLED_PLUGINS)
-                ? frameworkProject.getProperty(DISABLED_PLUGINS)
-                : null;
-        return new PluginControlServiceImpl(disabledPlugins);
+
+        return new PluginControlServiceImpl(framework, project);
     }
 
     /**
@@ -32,17 +32,29 @@ public class PluginControlServiceImpl implements PluginControlService {
      */
     @Override
     public List<String> listDisabledPlugins() {
-        return new ArrayList<>(disabledPlugins);
+        return new ArrayList<>(getDisabledPlugins());
     }
 
     @Override
     public Set<String> getDisabledPlugins() {
+        if (null == disabledPlugins) {
+            synchronized (this) {
+                if (null == disabledPlugins) {
+                    IRundeckProject frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project);
+                    String config =
+                            frameworkProject.hasProperty(DISABLED_PLUGINS)
+                            ? frameworkProject.getProperty(DISABLED_PLUGINS)
+                            : null;
+                    disabledPlugins = new HashSet<>(parseConfig(config));
+                }
+            }
+        }
         return disabledPlugins;
     }
 
-    private static List<String> parseConfig(final String disabledPlugins) {
-        if (disabledPlugins != null && !disabledPlugins.trim().isEmpty()) {
-            return Arrays.asList(disabledPlugins.split("\\s*,\\s*"));
+    private static List<String> parseConfig(final String pluginConfig) {
+        if (pluginConfig != null && !pluginConfig.trim().isEmpty()) {
+            return Arrays.asList(pluginConfig.split("\\s*,\\s*"));
         }
         return new ArrayList<>();
     }
