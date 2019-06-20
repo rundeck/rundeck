@@ -129,7 +129,7 @@ class SetUserInterceptor {
             }
         }
         subject.principals.addAll(roleset.collect{new Group(it)})
-        def user = userService.findOrCreateUser(principal.name)
+        def user = userService.registerLogin(principal.name)
         session.filterPref=UserService.parseKeyValuePref(user?.filterPref)
 
         subject

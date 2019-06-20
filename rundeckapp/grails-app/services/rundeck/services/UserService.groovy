@@ -22,10 +22,12 @@ import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import grails.gorm.transactions.Transactional
 import rundeck.User
 
+
 @Transactional
 class UserService {
 
     FrameworkService frameworkService
+    private static final int DEFAULT_TIMEOUT = 30
 
     def findOrCreateUser(String login) {
         def User user = User.findByLogin(login)
@@ -35,6 +37,30 @@ class UserService {
                 System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
             }
             user=u
+        }
+        return user
+    }
+
+    def registerLogin(String login){
+        User user = User.findByLogin(login)
+        if(!user){
+            user = new User(login:login)
+        }
+        user.lastLogin = new Date()
+        if(!user.save(flush:true)){
+            System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
+        }
+        return user
+    }
+
+    def registerLogout(String login){
+        User user = User.findByLogin(login)
+        if(!user){
+            user = new User(login:login)
+        }
+        user.lastLogout = new Date()
+        if(!user.save(flush:true)){
+            System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
         }
         return user
     }
@@ -131,17 +157,51 @@ class UserService {
         return roles
     }
 
-    //TODO: much conditions to handle yet
-    def getLoginStatus(User user){
+    def getLoginStatus(User user, Date lastExecution){
+        def status = 'NOT LOGGED'
         if(user){
-            if(!user.lastLogin){
-                return "NOT LOGGED"
-            }else if(user.lastLogout && user.lastLogin.before(user.lastLogout)){
-                return "LOGGED OUT"
-            }else if(user.lastLogout && user.lastLogout.before(user.lastLogin)){
-                return "LOGGED IN"
+            Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
+            if(lastDate != null){
+                int minutes = DEFAULT_TIMEOUT
+                if(frameworkService.getRundeckFramework().getPropertyLookup().hasProperty("framework.session.abandonned.minutes")){
+                    minutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandonned.minutes"))
+                }
+                Calendar calendar = Calendar.getInstance()
+                calendar.setTime(lastDate)
+                calendar.add(Calendar.MINUTE, minutes)
+                if(user.lastLogout != null){
+                    if(lastDate.after(user.lastLogout)){
+                        if(calendar.getTime().before(new Date())){
+                            status = "ABANDONNED"
+                        }else{
+                            status = "LOGGED IN"
+                        }
+                    }else{
+                        status = "LOGGED OUT"
+                    }
+                }else if(calendar.getTime().after(new Date())){
+                    status = "LOGGED IN"
+                }else{
+                    status = "ABANDONNED"
+                }
+            }else {
+                status = "NOT LOGGED"
             }
-            return "LOGGED IN"
+        }
+        status
+    }
+
+    def getLastDate(Date firstDt, Date secondDt){
+        if(firstDt == null){
+            return secondDt
+        }else if(secondDt == null){
+            return firstDt
+        }
+        if(firstDt.after(secondDt)){
+            return firstDt
+        }else{
+            return secondDt
         }
     }
+
 }

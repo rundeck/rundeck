@@ -33,7 +33,8 @@
                    </div>
                    <div class="form-group pull-right" style="display:inline-block;">
                        <div class="checkbox">
-                           <g:checkBox name="logged" value="true" checked="${params.logged=='true'}" class="loggedOnly" id="loggedOnly"/>
+                           <g:checkBox name="logged" value="true" checked="${params.logged=='true'}" class="loggedOnly" id="loggedOnly"
+                                onchange="togleLogged()"/>
                            <label for="loggedOnly">
                                Logged users only
                            </label>
@@ -147,5 +148,15 @@
        </div>
    </div>
 </div>
+<script type="text/javascript">
+function togleLogged() {
+    jQuery.ajax({
+        url: "${f.createLink(controller:'menu',action:'userSummary')}",
+        data: {selectedEncrypter:jQuery("#encrypter").val(), "test":'A'},
+        type: 'get',
+        success : function (data) { alert(data) }
+    })
+}
+</script>
 </body>
 </html>

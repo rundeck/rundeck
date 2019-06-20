@@ -3219,6 +3219,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def userList = [:]
+        boolean loggedOnly = false
+        if(params.loggedOnly){
+            loggedOnly = true
+        }
         User.listOrderByLogin().each {
             def obj = [:]
             obj.login = it.login
@@ -3233,8 +3237,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             def tokenList = AuthToken.findAllByUser(it)
             obj.tokens = tokenList?.size()
-            obj.loggedStatus = userService.getLoginStatus(it)
-            userList.put(it.login,obj)
+            obj.loggedStatus = userService.getLoginStatus(it, obj.lastJob)
+            if(loggedOnly && obj.loggedStatus.equals("LOGGED IN")){
+                userList.put(it.login,obj)
+            }else {
+                userList.put(it.login,obj)
+            }
         }
 
         [users:userList]

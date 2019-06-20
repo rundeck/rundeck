@@ -61,7 +61,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -1256,6 +1256,9 @@ class MenuControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.userService = Mock(UserService){
+            getLoginStatus(_,_) >> 'LOGGED IN'
         }
         def userToSearch = 'admin'
         def email = 'test@test.com'
