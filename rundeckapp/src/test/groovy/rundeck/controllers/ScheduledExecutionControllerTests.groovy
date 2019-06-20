@@ -1980,8 +1980,9 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
-            fwkControl.demand.getProjectGlobals { [:] }
+            fwkControl.demand.getPluginControlService { null }
             fwkControl.demand.projectNames { [] }
+            fwkControl.demand.getProjectGlobals { [:] }
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects { return [] }
             fwkControl.demand.getRundeckFramework {-> return null }
