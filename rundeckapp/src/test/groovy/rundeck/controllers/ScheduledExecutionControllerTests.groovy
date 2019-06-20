@@ -1954,7 +1954,21 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+            def se = new ScheduledExecution(
+                    uuid: 'testUUID',
+                    jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                    groupPath: 'testgroup',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [
+                                    new CommandExec([
+                                            adhocRemoteString: 'test buddy',
+                                            argString: '-delay 12 -monkey cheese -particle'
+                                    ])
+                            ]
+                    )
+            )
+
             se.save()
 
             assertNotNull se.id

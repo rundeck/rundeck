@@ -2113,15 +2113,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
-
-        def newScheduledExecution = new ScheduledExecution()
-
-        def origprops = [:]+scheduledExecution.properties
-        ScheduledExecution.transients.each{origprops.remove(it)}
-        newScheduledExecution.properties = origprops
+        def newScheduledExecution = ScheduledExecution.fromMap(scheduledExecution.toMap())
         if (newScheduledExecution.hasErrors()) {
             newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
         }
+        newScheduledExecution.project=scheduledExecution.project
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         newScheduledExecution.nextExecution=null
