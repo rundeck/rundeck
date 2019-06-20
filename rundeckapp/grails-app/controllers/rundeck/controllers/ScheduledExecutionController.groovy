@@ -1966,18 +1966,19 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
+        def pluginControlService=frameworkService.getPluginControlService(params.project)
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowNodeStep')
         }
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+            !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
@@ -1985,7 +1986,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def timeZones = scheduledExecutionService.getTimeZones()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+            !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
@@ -2112,15 +2113,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
-
-        def newScheduledExecution = new ScheduledExecution()
-
-        def origprops = [:]+scheduledExecution.properties
-        ScheduledExecution.transients.each{origprops.remove(it)}
-        newScheduledExecution.properties = origprops
+        def newScheduledExecution = ScheduledExecution.fromMap(scheduledExecution.toMap())
         if (newScheduledExecution.hasErrors()) {
             newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
         }
+        newScheduledExecution.project=scheduledExecution.project
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         newScheduledExecution.nextExecution=null
@@ -2138,22 +2135,34 @@ class ScheduledExecutionController  extends ControllerBase{
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
-        }
-        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+
+        def nodeSteps = frameworkService.getNodeStepPluginDescriptions()
+        def workflowSteps = frameworkService.getStepPluginDescriptions()
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+        def logFilterPluginDescs = pluginService.listPlugins(LogFilterPlugin)
+        def notificationPluginDescs = notificationService.listNotificationPlugins()
+
+        def pluginControlService = frameworkService.getPluginControlService(params.project)
+
+        def nodeStepTypes = nodeSteps?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowNodeStep')
         }
 
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+        def stepTypes = workflowSteps?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
-        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
+        def logFilterPlugins = logFilterPluginDescs.findAll{ k, v->
+            !pluginControlService?.isDisabledPlugin(k,'LogFilter')
+        }
+
+        def notificationPlugins = notificationPluginDescs.findAll{ k, v->
+            !pluginControlService?.isDisabledPlugin(k,'Notification')
+        }
+
         def fprojects = frameworkService.projectNames(authContext)
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
-        }
+        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
         render(
                 view: 'create',
                 model: [

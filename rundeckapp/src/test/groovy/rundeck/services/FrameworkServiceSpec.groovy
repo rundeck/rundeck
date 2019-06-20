@@ -433,28 +433,25 @@ class FrameworkServiceSpec extends Specification {
 
     def "get plugin control service"() {
         given:
-            service.rundeckFramework = Mock(Framework)
-
-            def ctrla = service.getPluginControlService('projectA')
-            def ctrlb = service.getPluginControlService('projectB')
-        when:
-            def pluga = ctrla.listDisabledPlugins()
-            def plugb = ctrlb.listDisabledPlugins()
-        then:
-            ctrla != ctrlb
-            pluga != plugb
-            2 * service.rundeckFramework.getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                1 * getFrameworkProject('projectA') >> Mock(IRundeckProject) {
-                    1 * hasProperty('disabled.plugins') >> true
-                    1 * getProperty('disabled.plugins') >> 'a,b,c'
-                }
-                1 * getFrameworkProject('projectB') >> Mock(IRundeckProject) {
-                    hasProperty('disabled.plugins') >> false
-
+            service.rundeckFramework = Mock(Framework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    1 * getFrameworkProject(project) >> Mock(IRundeckProject) {
+                        1 * hasProperty('disabled.plugins') >> hasProp
+                        getProperty('disabled.plugins') >> propVal
+                    }
                 }
             }
-            pluga == ['a', 'b', 'c']
-            plugb == []
+
+            def ctrla = service.getPluginControlService(project)
+        when:
+            def pluga = ctrla.listDisabledPlugins()
+        then:
+
+            pluga == expect
+        where:
+            project    | hasProp | propVal | expect
+            'projectA' | true    | 'a,b,c' | ['a', 'b', 'c']
+            'projectB' | false   | null    | []
     }
 
     @Unroll
