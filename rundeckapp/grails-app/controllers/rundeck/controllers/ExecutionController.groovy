@@ -2257,7 +2257,7 @@ setTimeout(function(){
      */
     def apiExecutionModeStatus() {
 
-        if (!apiService.requireVersion(request, response, ApiVersions.V31)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V32)) {
             return
         }
 

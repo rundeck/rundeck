@@ -711,12 +711,12 @@ class ExecutionControllerTests  {
 
         def controller = new ExecutionController()
 
-        controller.request.api_version = 31
+        controller.request.api_version = 32
         controller.request.contentType = "application/json"
 
         def apiMock = new MockFor(ApiService, false)
         apiMock.demand.requireVersion { request, response, int min ->
-            assertEquals(31, min)
+            assertEquals(32, min)
             return true
         }
         controller.apiService = apiMock.proxyInstance()
@@ -748,12 +748,12 @@ class ExecutionControllerTests  {
 
         def controller = new ExecutionController()
 
-        controller.request.api_version = 31
+        controller.request.api_version = 32
         controller.request.contentType = "application/json"
 
         def apiMock = new MockFor(ApiService, false)
         apiMock.demand.requireVersion { request, response, int min ->
-            assertEquals(31, min)
+            assertEquals(32, min)
             return true
         }
         controller.apiService = apiMock.proxyInstance()
