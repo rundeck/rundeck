@@ -15,22 +15,12 @@
  */
 package org.rundeck.jaas.jetty
 
-import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.security.auth.Subject
 
 
 class ReloadablePropertyFileLoginModuleSpec extends Specification {
-
-    @Shared
-    List<String> deleteAfterAllTests = []
-
-    def cleanupSpec() {
-        deleteAfterAllTests.each {
-            new File(it).delete()
-        }
-    }
 
     def "Ensure that only role principals are returned in getUserInfo"() {
         setup:
@@ -49,52 +39,4 @@ class ReloadablePropertyFileLoginModuleSpec extends Specification {
         tmpFile.delete()
     }
 
-    def "Check reloadable"() {
-        setup:
-        File tmpFile = File.createTempFile("realm",".properties")
-        tmpFile << "testuser:test,one,two\n"
-        deleteAfterAllTests.add(tmpFile.absolutePath)
-        ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule()
-
-        when:
-        module.setReloadEnabled(reloadEnabled)
-        module.initialize(new Subject(),null,[:],["file":tmpFile.absolutePath,"refreshInterval":"2"])
-        Thread.sleep(500)
-        tmpFile << "reloaduser2:test,agroup\n"
-        def attempt1 = module.getUserInfo("reloaduser2")
-        Thread.sleep(7500)
-        def attempt2 = module.getUserInfo("reloaduser2")
-
-        then:
-        attempt1 == attempt1Value
-        attempt2?.userName == attempt2Value
-
-        where:
-        reloadEnabled | attempt1Value | attempt2Value
-        true          | null          | "reloaduser2"
-        false          | null         | null
-    }
-
-//    def "Check reload disabled"() {
-//        setup:
-//        File tmpFile = File.createTempFile("realm",".properties")
-//        tmpFile << "testuser:test,one,two"
-//        ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule()
-//
-//        when:
-//        module.setReloadEnabled(false)
-//        module.initialize(new Subject(),null,[:],["file":tmpFile.absolutePath,"refreshInterval":"6"])
-//        Thread.sleep(500)
-//        tmpFile << "reloduser2:test,agroup"
-//        def attempt1 = module.getUserInfo("reloaduser2")
-//        Thread.sleep(7500)
-//        def attempt2 = module.getUserInfo("reloaduser2")
-//
-//        then:
-//        !attempt1
-//        attempt2
-//
-//        cleanup:
-//        tmpFile.delete()
-//    }
 }
