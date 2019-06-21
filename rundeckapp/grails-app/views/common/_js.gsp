@@ -72,6 +72,7 @@
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",
         adhocHistoryAjax: "${createLink(controller:'execution',action:'adhocHistoryAjax',params:projParams)}",
         menuJobs: "${createLink(controller:'menu',action:'jobs',params: projParams)}",
+        userProfile: "${createLink(controller:'user',action:'profile',params: projParams)}",
         userAddFilterPref: "${createLink(controller:'user',action:'addFilterPref',params:projParams)}",
         userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken',params:[format:'json'])}",
         userGenerateUserToken: "${g.createLink(controller: 'user', action: 'generateUserToken',params:[format:'json'])}",

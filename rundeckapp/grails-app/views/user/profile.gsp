@@ -19,11 +19,6 @@
   - limitations under the License.
   --}%
 
-    <g:set var="tokenAdmin" value="${auth.resourceAllowedTest(
-            kind: 'user',
-            action: [AuthConstants.ACTION_ADMIN],
-            context: 'application'
-    )}"/>
     <g:set var="selfToken" value="${auth.resourceAllowedTest(
             kind: 'apitoken',
             action: [AuthConstants.GENERATE_USER_TOKEN],
@@ -108,7 +103,7 @@
                   </div>
                   <div class="pageBody" id="userProfilePage">
                       <g:jsonToken id='api_req_tokens' url="${request.forwardURI}"/>
-                      <tmpl:user user="${user}" edit="${true}"/>
+                      <tmpl:user user="${user}" edit="${true}" tokens="${tokenList}" tokenTotal="${tokenTotal}" />
                   </div>
               </div>
           </div>

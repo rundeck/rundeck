@@ -89,6 +89,11 @@ function tokenAjaxError(msg) {
     jQuery('.gentokenerror').show();
 }
 
+
+/**
+ * @deprecated To correctly support gsp pagination reloading
+ * page will be reloaded instead of injecting new token to html table.
+ */
 function addTokenRow(elem, login, tokenid) {
     var table = $(elem).down('.apitokentable');
     var row = new Element('tbody');
@@ -103,6 +108,11 @@ function addTokenRow(elem, login, tokenid) {
     );
 }
 
+
+/**
+ * @deprecated To correctly support gsp pagination reloading
+ * clearToken will now be performed as post instead of ajax.
+ */
 function clearToken(elem) {
     var dom = jQuery(elem);
     var login = dom.find('input[name="login"]').val();
@@ -132,6 +142,8 @@ function clearToken(elem) {
         }
     }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
+
+
 function generateUserToken(login, elem, data) {
     var dom = jQuery('#' + elem);
     jQuery.ajax({
@@ -142,7 +154,8 @@ function generateUserToken(login, elem, data) {
         beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.result) {
-                addTokenRow(elem, login, data.tokenid);
+              // Reload current page.
+              window.location.reload();
             } else {
                 tokenAjaxError(data.error);
             }
@@ -189,11 +202,14 @@ jQuery(function () {
     jQuery(document).on('click', '.obs_reveal_token', function (e) {
         revealUserToken(data.user, jQuery(e.target));
     });
-    jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
-        e.preventDefault();
-        clearToken(jQuery(e.target).closest('.apitokenform')[0]);
-        return false;
-    });
+
+    // jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
+    //     e.preventDefault();
+    //     clearToken(jQuery(e.target).closest('.apitokenform')[0]);
+    //     return false;
+    // });
+
+
     var dom = jQuery('#gentokensection');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);

@@ -98,30 +98,76 @@ class UserController extends ControllerBase{
     def profile() {
         //check auth to view profile
         //default to current user profile
-        if(!params.login){
-            params.login=session.user
+        if (!params.login) {
+            params.login = session.user
         }
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
-                (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',
-                params.login)){
+
+        def tokenAdmin = frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)
+
+        if (unauthorizedResponse(
+                params.login == session.user || tokenAdmin,
+                AuthConstants.ACTION_ADMIN, 'Users', params.login)) {
             return
         }
+
         def User u = User.findByLogin(params.login)
-        if(!u && params.login==session.user){
+        if (!u && params.login == session.user) {
             //redirect to profile edit page, so user can setup their profile
-            flash.message="Please fill out your profile"
-            return redirect(action:'register')
+            flash.message = "Please fill out your profile"
+            return redirect(action: 'register')
         }
-        if(notFoundResponse(u, 'User', params['login'])){
+        if (notFoundResponse(u, 'User', params['login'])) {
             return
         }
+
+        def tokenTotal = AuthToken.createCriteria().count {
+            if (!tokenAdmin) {
+                eq("creator", u.login)
+            }
+        }
+
+        int max = (params.max && params.max.isInteger()) ? params.max.toInteger() : 10
+        int offset = (params.offset && params.offset.isInteger()) ? params.offset.toInteger() : 0
+
+        if(offset >= tokenTotal) {
+            offset = tokenTotal - (tokenTotal % max)
+        }
+
+        def tokenList = AuthToken.createCriteria().list {
+
+            if (!tokenAdmin) {
+                eq("creator", u.login)
+            }
+
+            if (offset) {
+                firstResult(offset)
+            }
+
+            if (max) {
+                maxResults(max)
+            }
+        }
+
+        params.max = max
+        params.offset = offset
+
         [
                 user              : u,
                 authRoles         : authContext.getRoles(),
-                tokenMaxExpiration: apiService.maxTokenDurationConfig()
+                tokenMaxExpiration: apiService.maxTokenDurationConfig(),
+                tokenAdmin        : tokenAdmin,
+                tokenList         : tokenList,
+                tokenTotal        : tokenTotal,
+                max               : max,
+                offset            : offset
         ]
     }
+
+
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
     }
@@ -647,7 +693,15 @@ class UserController extends ControllerBase{
             return
         }
 
-        return redirect(controller: 'user', action: 'profile', params: [login: login])
+        def redirParams = [login: login]
+        if (params.tokenPagingMax) {
+            redirParams.max = params.tokenPagingMax
+        }
+        if (params.tokenPagingOffset) {
+            redirParams.offset = params.tokenPagingOffset
+        }
+
+        return redirect(controller: 'user', action: 'profile', params: redirParams)
     }
     def clearApiToken(User user) {
         boolean valid = false
@@ -744,7 +798,11 @@ class UserController extends ControllerBase{
         if (result.error) {
             flash.error = result.error
         }
-        return redirect(controller: 'user', action: 'profile', params: [login: login])
+        return redirect(controller: 'user', action: 'profile', params: [
+                login: login,
+                max: params.tokenPagingMax,
+                offset: params.tokenPagingOffset
+        ])
 
     }
     def setDashboardPref={

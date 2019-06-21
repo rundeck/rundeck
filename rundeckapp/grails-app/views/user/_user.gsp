@@ -150,7 +150,8 @@
                         </div>
 
                         <div class="modal-footer">
-
+                            <g:hiddenField name="tokenPagingMax" value="${params.max}"></g:hiddenField>
+                            <g:hiddenField name="tokenPagingOffset" value="${params.offset}"></g:hiddenField>
                             <g:hiddenField name="login" value="${user.login}"/>
                             <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
                                     code="button.action.Cancel"/></button>
@@ -295,14 +296,28 @@
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
 
+        <div class="row">
+            <div class="col-sm-12">
+                <span class="help-block col-md-6">
+                    <g:set var="pageEnd" value="${}"/>
+                    <g:message code="userController.page.profile.pager.summary"
+                               args="[params.offset,
+                                      Math.min((params.offset.toInteger() + params.max.toInteger()), tokenTotal),
+                                      tokenTotal]"/>
+                </span>
+                <span class="col-md-6 text-right paginate">
+                <g:paginate
+                        total="${tokenTotal}"
+                        controller="user"
+                        action="profile"
+                />
+                </span>
+            </div>
+        </div>
         <div class="row userapitoken">
             <div class="col-sm-12">
-                <g:set var="tokens"
-                       value="${(tokenAdmin) ? rundeck.AuthToken.findAll() :
-                               rundeck.AuthToken.findAllByCreator(user.login)}"/>
 
                     <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
-
 
                 <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
                     <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -310,5 +325,6 @@
                 </div>
 
             </div>
-        </div></div>
+        </div>
+    </div>
 </g:if>
