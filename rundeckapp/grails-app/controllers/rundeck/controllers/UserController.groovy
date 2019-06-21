@@ -167,8 +167,6 @@ class UserController extends ControllerBase{
                 offset            : offset
         ]
     }
-
-
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
     }
