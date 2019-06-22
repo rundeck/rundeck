@@ -296,34 +296,17 @@
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
 
-        <div class="row">
-            <div class="col-sm-12">
 
-                <div class="col-md-6">
-                    <ul class="pagination pagination-sm">
-                        <bs:paginate
-                                total="${tokenTotal}"
-                                controller="user"
-                                action="profile"
-                                maxsteps="5"
-                                prev="&lt;"
-                                next="&gt;"
-                        />
-                    </ul>
-                </div>
-                <div class="help-block text-right align-botton col-md-6">
-                    <g:set var="pageEnd" value="${}"/>
+        <div class="row userapitoken">
+            <div class="col-sm-12">
+                <div class="help-block">
                     <g:message code="userController.page.profile.pager.summary"
                                args="[params.offset.toInteger() + 1,
                                       Math.min((params.offset.toInteger() + params.max.toInteger()), tokenTotal),
                                       tokenTotal]"/>
                 </div>
-            </div>
-        </div>
-        <div class="row userapitoken">
-            <div class="col-sm-12">
 
-                    <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
+                <g:render template="tokenList" model="${[user: user, tokenList: tokens, flashToken: flash.newtoken]}"/>
 
                 <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
                     <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
@@ -332,5 +315,21 @@
 
             </div>
         </div>
+
+        <div class="row">
+            <div class="col-sm-12">
+                <ul class="pagination pagination-sm">
+                    <bs:paginate
+                            total="${tokenTotal}"
+                            controller="user"
+                            action="profile"
+                            maxsteps="5"
+                            prev="&lt;"
+                            next="&gt;"/>
+                </ul>
+            </div>
+
+        </div>
+
     </div>
 </g:if>
