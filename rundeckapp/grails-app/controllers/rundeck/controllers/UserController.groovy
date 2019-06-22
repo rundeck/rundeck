@@ -33,6 +33,8 @@ import javax.servlet.http.HttpServletResponse
 
 class UserController extends ControllerBase{
 
+    private static final int DEFAULT_TOKEN_PAGE_SIZE = 100;
+
     UserService userService
     FrameworkService frameworkService
     GrailsApplication grailsApplication
@@ -130,7 +132,7 @@ class UserController extends ControllerBase{
             }
         }
 
-        int max = (params.max && params.max.isInteger()) ? params.max.toInteger() : 20
+        int max = (params.max && params.max.isInteger()) ? params.max.toInteger() : DEFAULT_TOKEN_PAGE_SIZE
         int offset = (params.offset && params.offset.isInteger()) ? params.offset.toInteger() : 0
 
         if(offset >= tokenTotal) {
