@@ -298,20 +298,26 @@
 
         <div class="row">
             <div class="col-sm-12">
-                <span class="help-block col-md-6">
+
+                <div class="col-md-6">
+                    <ul class="pagination pagination-sm">
+                        <bs:paginate
+                                total="${tokenTotal}"
+                                controller="user"
+                                action="profile"
+                                maxsteps="5"
+                                prev="&lt;"
+                                next="&gt;"
+                        />
+                    </ul>
+                </div>
+                <div class="help-block text-right align-botton col-md-6">
                     <g:set var="pageEnd" value="${}"/>
                     <g:message code="userController.page.profile.pager.summary"
-                               args="[params.offset,
+                               args="[params.offset.toInteger() + 1,
                                       Math.min((params.offset.toInteger() + params.max.toInteger()), tokenTotal),
                                       tokenTotal]"/>
-                </span>
-                <span class="col-md-6 text-right paginate">
-                <g:paginate
-                        total="${tokenTotal}"
-                        controller="user"
-                        action="profile"
-                />
-                </span>
+                </div>
             </div>
         </div>
         <div class="row userapitoken">
