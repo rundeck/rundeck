@@ -140,20 +140,16 @@ class UserController extends ControllerBase{
         }
 
         def tokenList = AuthToken.createCriteria().list {
-
             if (!tokenAdmin) {
                 eq("creator", u.login)
             }
-
             if (offset) {
                 firstResult(offset)
             }
-
             if (max) {
                 maxResults(max)
             }
         }
-
         params.max = max
         params.offset = offset
 

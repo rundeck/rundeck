@@ -89,11 +89,6 @@ function tokenAjaxError(msg) {
     jQuery('.gentokenerror').show();
 }
 
-
-/**
- * @deprecated To correctly support gsp pagination reloading
- * page will be reloaded instead of injecting new token to html table.
- */
 function addTokenRow(elem, login, tokenid) {
     var table = $(elem).down('.apitokentable');
     var row = new Element('tbody');
@@ -108,11 +103,6 @@ function addTokenRow(elem, login, tokenid) {
     );
 }
 
-
-/**
- * @deprecated To correctly support gsp pagination reloading
- * clearToken will now be performed as post instead of ajax.
- */
 function clearToken(elem) {
     var dom = jQuery(elem);
     var login = dom.find('input[name="login"]').val();
@@ -142,8 +132,6 @@ function clearToken(elem) {
         }
     }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
-
-
 function generateUserToken(login, elem, data) {
     var dom = jQuery('#' + elem);
     jQuery.ajax({
