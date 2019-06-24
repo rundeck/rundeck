@@ -1489,6 +1489,35 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
+    def "validate option values, opt enforced allowed values from Remote Url"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : ["A", "B", "C"],
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
+        ExecutionServiceValidationException e = thrown()
+        e.errors.containsKey('test1')
+
+        where:
+        opts                                           | _
+        ['test1': 'somevalue']                         | _
+
+    }
+
     def "validate option values, required opt with default storage, value missing"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
@@ -1691,11 +1720,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         final Option option = new Option(name: 'test1', enforced: true, multivalued: true, delimiter: ' ', regex: '^[abc]+$')
         se.addToOptions(option)
 
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+
         when:
 
         def validation = service.validateOptionValues(se, opts)
 
         then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : option,
+                    values       : [],
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
         validation
 
         where:
@@ -2733,6 +2773,125 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         then:
         res instanceof StepExecutionResultImpl
         !res.success
+
+
+    }
+
+    def "parent job fails if the job ref with enforced allowed values has non allowed values"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-test1 b',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'echo A']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        job.addToOptions(opt)
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+        service.notificationService = Mock(NotificationService)
+        def executionListener = Mock(ExecutionListener)
+        def framework = Mock(Framework)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> framework
+            getExecutionListener() >> executionListener
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['-test1', 'Asdd'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false
+        )
+
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>false
+        }
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                [result:wresult,interrupt:true]
+            }
+        }
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : ["A", "B", "C"],
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
+        1 * executionListener.log(_,_)
+        res instanceof StepExecutionResultImpl
+        !res.success
+        res.failureMessage == "Invalid options: [test1]"
 
 
     }

@@ -42,6 +42,7 @@ import grails.gorm.transactions.Transactional
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
@@ -63,6 +64,7 @@ import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
@@ -80,6 +82,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     def JobScheduleManager rundeckJobScheduleManager
+
+    public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -3934,6 +3938,210 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
     }
+
+
+    /**
+     * Load options values from remote URL
+     * @param scheduledExecution
+     * @param mapConfig
+     * @return option remote
+     */
+    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+        //load expand variables in URL source
+        Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
+        def realUrl = opt.realValuesUrl.toExternalForm()
+        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
+        String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
+        def remoteResult = [:]
+        def result = null
+        def remoteStats = [startTime: System.currentTimeMillis(), httpStatusCode: "", httpStatusText: "", contentLength: "", url: srcUrl, durationTime: "", finishTime: "", lastModifiedDateTime: ""]
+        def err = [:]
+        int timeout = 10
+        int contimeout = 0
+        int retryCount = 5
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout) {
+            try {
+                timeout = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout) {
+            try {
+                contimeout = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry) {
+            try {
+                retryCount = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (srcUrl.indexOf('#') >= 0 && srcUrl.indexOf('#') < srcUrl.size() - 1) {
+            def urlanchor = new HashMap<String, String>()
+            def anchor = srcUrl.substring(srcUrl.indexOf('#') + 1)
+            def parts = anchor.split(";")
+            parts.each { s ->
+                def subpart = s.split("=", 2)
+                if (subpart && subpart.length == 2 && subpart[0] && subpart[1]) {
+                    urlanchor[subpart[0]] = subpart[1]
+                }
+            }
+            if (urlanchor['timeout']) {
+                try {
+                    timeout = Integer.parseInt(urlanchor['timeout'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL timeout ${urlanchor['timeout']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+            if (urlanchor['contimeout']) {
+                try {
+                    contimeout = Integer.parseInt(urlanchor['contimeout'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL contimeout ${urlanchor['contimeout']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+            if (urlanchor['retry']) {
+                try {
+                    retryCount = Integer.parseInt(urlanchor['retry'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL retry ${urlanchor['retry']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+        }
+        try {
+            def framework = frameworkService.getRundeckFramework()
+            def projectConfig = framework.projectManager.loadProjectConfig(scheduledExecution.project)
+            boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+            remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+            result = remoteResult.json
+            if (remoteResult.stats) {
+                remoteStats.putAll(remoteResult.stats)
+            }
+        } catch (Exception e) {
+            err.message = "Failed loading remote option values"
+            err.exception = e
+            err.srcUrl = cleanUrl
+            log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+            e.printStackTrace()
+            remoteStats.finishTime = System.currentTimeMillis()
+            remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
+        }
+        if (remoteResult.error) {
+            err.message = "Failed loading remote option values"
+            err.exception = new Exception(remoteResult.error)
+            err.srcUrl = cleanUrl
+            log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+        }
+        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+        //validate result contents
+        boolean valid = true;
+        def validationerrors = []
+        if (result) {
+            if (result instanceof Collection) {
+                result.eachWithIndex { entry, i ->
+                    if (entry instanceof JSONObject) {
+                        if (!entry.name) {
+                            validationerrors << "Item: ${i} has no 'name' entry"
+                            valid = false;
+                        }
+                        if (!entry.value) {
+                            validationerrors << "Item: ${i} has no 'value' entry"
+                            valid = false;
+                        }
+                    } else if (!(entry instanceof String)) {
+                        valid = false;
+                        validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
+                    }
+                }
+            } else if (result instanceof JSONObject) {
+                JSONObject jobject = result
+                result = []
+                jobject.keys().sort().each { k ->
+                    result << [name: k, value: jobject.get(k)]
+                }
+            } else {
+                validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
+                valid = false
+            }
+            if (!valid) {
+                result = null
+                err.message = "Failed parsing remote option values: ${validationerrors.join('\n')}"
+                err.code = 'invalid'
+            }
+        } else if (!err) {
+            err.message = "Empty result"
+            err.code = 'empty'
+        }
+        return [
+                optionSelect : opt,
+                values       : result,
+                srcUrl       : cleanUrl,
+                err          : err
+        ]
+    }
+
+
+    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
+    private logRemoteOptionStats(stats,jobdata){
+        stats.keySet().each{k->
+            def v= stats[k]
+            if(v instanceof Date){
+                //TODO: reformat date
+                MDC.put(k,v.toString())
+                MDC.put("${k}Time",v.time.toString())
+            }else if(v instanceof String){
+                MDC.put(k,v?v:"-")
+            }else{
+                final string = v.toString()
+                MDC.put(k, string?string:"-")
+            }
+        }
+        jobdata.keySet().each{k->
+            final var = jobdata[k]
+            MDC.put(k,var?var:'-')
+        }
+        optionsLogger.info(stats.httpStatusCode + " " + stats.httpStatusText+" "+stats.contentLength+" "+stats.url)
+        stats.keySet().each {k ->
+            if (stats[k] instanceof Date) {
+                //reformat date
+                MDC.remove(k+'Time')
+            }
+            MDC.remove(k)
+        }
+        jobdata.keySet().each {k ->
+            MDC.remove(k)
+        }
+    }
+
 
     /**
      * Retrun a list of dates in a time lapse between now and the to Date.
