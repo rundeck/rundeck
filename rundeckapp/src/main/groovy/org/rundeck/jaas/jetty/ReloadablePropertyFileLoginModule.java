@@ -17,6 +17,7 @@ package org.rundeck.jaas.jetty;
 
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
+import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.security.PropertyUserStore;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.security.Credential;
@@ -41,6 +42,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
         private int _refreshInterval = 0;
         private String _filename = DEFAULT_FILENAME;
+        private boolean _reloadEnabled = true;
         private boolean _debug = false;
 
 
@@ -69,7 +71,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             if (_propertyUserStores.get(_filename) == null)
             {
                 PropertyUserStore propertyUserStore = new PropertyUserStore();
-                propertyUserStore.setHotReload(true);
+                propertyUserStore.setHotReload(_reloadEnabled);
                 propertyUserStore.setConfig(_filename);
 
                 PropertyUserStore prev = _propertyUserStores.putIfAbsent(_filename, propertyUserStore);
@@ -124,13 +126,23 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
             for ( Principal principal : principals )
             {
-                roles.add( principal.getName() );
+                if(principal instanceof AbstractLoginService.RolePrincipal) {
+                    roles.add(principal.getName());
+                }
             }
 
             Credential credential = (Credential)userIdentity.getSubject().getPrivateCredentials().iterator().next();
             debug("ReloadablePropertyFileLoginModule: Found: " + userName + " in PropertyUserStore "+_filename);
             return new UserInfo(userName, credential, roles);
         }
+
+    public boolean isReloadEnabled() {
+        return _reloadEnabled;
+    }
+
+    public void setReloadEnabled(final boolean enabled) {
+        this._reloadEnabled = enabled;
+    }
 
     public boolean isDebug() {
         return _debug;

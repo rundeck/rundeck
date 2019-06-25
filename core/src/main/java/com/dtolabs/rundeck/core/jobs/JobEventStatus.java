@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.core.jobs;
 
-public class JobLifeCycleStatus {
+public class JobEventStatus {
 
     private boolean successful;
     private String description;
@@ -21,10 +21,10 @@ public class JobLifeCycleStatus {
         this.description = description;
     }
 
-    public JobLifeCycleStatus(boolean successful, String description) {
+    public JobEventStatus(boolean successful, String description) {
         this.successful = successful;
         this.description = description;
     }
 
-    public JobLifeCycleStatus() {}
+    public JobEventStatus() {}
 }

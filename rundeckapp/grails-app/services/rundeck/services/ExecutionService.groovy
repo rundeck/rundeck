@@ -90,7 +90,6 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -125,7 +124,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    def jobLifeCycleServiceImplService
+    def jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1163,7 +1162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     item,
                     executioncontext,
                     workflowLogManager,
-                    jobLifeCycleServiceImplService
+                    jobPluginService
             )
 
             thread.start()
@@ -2621,6 +2620,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
+                        }
+                    }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -2641,6 +2646,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
 
                             return
+                        }
+                    }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
                         }
                     }
                     if (opt.enforced && opt.optionValues &&
@@ -3559,7 +3570,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newExecItem,
                     newContext,
                     null,
-                    jobLifeCycleServiceImplService
+                    jobPluginService
             )
 
             thread.start()

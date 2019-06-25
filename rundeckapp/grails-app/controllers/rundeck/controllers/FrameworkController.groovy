@@ -1448,7 +1448,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             final validation = frameworkService.validateServiceConfig(type, identifier+".${ndx}.config.", params, service)
             if (!validation.valid) {
                 report = validation.report
-                errors << validation.error ? "${title} configuration was invalid: " + validation.error : "${title} configuration was invalid"
+                errors << (
+                        validation.error ?
+                        "${title} configuration was invalid: " + validation.error :
+                        "${title} configuration was invalid"
+                )
             }
         }
         [type, config, report]
