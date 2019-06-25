@@ -1,6 +1,5 @@
 package com.dtolabs.rundeck.core.audit;
 
-import org.springframework.security.core.Authentication;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -16,12 +15,6 @@ public interface AuditEvent extends Serializable {
    * @return Timestamp of the event.
    */
   Date getTimestamp();
-
-  /**
-   *
-   * @return User authentication token.
-   */
-  Authentication getAuthentication();
 
   /**
    * Get the user principal.

@@ -16,13 +16,14 @@
 
 /*
 * TestdefaultFileCopierUtil.java
-* 
+*
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/24/11 4:20 PM
-* 
+*
 */
 package com.dtolabs.rundeck.core.execution.impl.common;
 
+import com.dtolabs.rundeck.core.audit.AuditEventService;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
@@ -422,6 +423,11 @@ public class TestDefaultFileCopierUtil extends TestCase {
 
         @Override
         public ServiceProviderLoader getPluginManager() {
+            return null;
+        }
+
+        @Override
+        public AuditEventService getAuditEventService() {
             return null;
         }
     }

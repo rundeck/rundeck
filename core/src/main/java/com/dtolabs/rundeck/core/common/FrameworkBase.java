@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.audit.AuditEventService;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -196,6 +197,11 @@ public class FrameworkBase implements IFramework{
     @Override
     public ServiceProviderLoader getPluginManager() {
         return frameworkServices.getPluginManager();
+    }
+
+    @Override
+    public AuditEventService getAuditEventService() {
+        return frameworkServices.getAuditEventService();
     }
 
     public static PropertyRetriever createPropertyRetriever(File basedir) {

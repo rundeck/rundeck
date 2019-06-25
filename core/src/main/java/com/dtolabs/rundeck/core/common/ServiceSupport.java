@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.audit.AuditEventService;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.ExecutionServiceFactory;
@@ -67,6 +68,7 @@ public class ServiceSupport implements IFrameworkServices {
         ResourceModelSourceService.getInstanceForFramework(getFramework());
         ResourceFormatParserService.getInstanceForFramework(getFramework());
         ResourceFormatGeneratorService.getInstanceForFramework(getFramework());
+        AuditEventService.getInstanceForFramework(getFramework());
     }
 
     /**
@@ -172,6 +174,10 @@ public class ServiceSupport implements IFrameworkServices {
         return null;
     }
 
+    @Override
+    public AuditEventService getAuditEventService() {
+        return AuditEventService.getInstanceForFramework(getFramework());
+    }
 
     public Framework getFramework() {
         return framework;
