@@ -42,7 +42,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
     static final char BACKSLASH = '\\' as char
     private static final ThreadLocal<DateFormat> w3cDateFormat = new ThreadLocal<DateFormat>() {
         protected DateFormat initialValue() {
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
             fmt.setTimeZone(TimeZone.getTimeZone("GMT"));
             return fmt;
         }

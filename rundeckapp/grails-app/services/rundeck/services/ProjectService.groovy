@@ -87,7 +87,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     def exportHistoryReport(ZipBuilder zip, BaseReport report, String name) throws ProjectServiceException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
@@ -114,7 +114,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     def exportFileRecord(ZipBuilder zip, JobFileRecord record, String name) throws ProjectServiceException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
@@ -280,7 +280,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     private void convertStringsToDates(object, final ArrayList<String> properties, identity=null) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         properties.each {dname ->
             def dobj = object[dname]
@@ -638,7 +638,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                     boolean scmConfigure
     ) throws ProjectServiceException
     {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         def Manifest manifest = new Manifest()

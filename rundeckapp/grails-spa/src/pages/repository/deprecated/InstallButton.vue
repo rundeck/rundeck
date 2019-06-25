@@ -24,9 +24,6 @@ import _ from "lodash";
 export default {
   name: "InstallButton",
   props: ["plugin", "installedPlugins", "installedPluginIds", "repo"],
-  created() {
-    console.log("plugin", this.plugin.object_id, this.plugin.post_title);
-  },
   data() {
     return {
       installed: false
@@ -61,20 +58,16 @@ export default {
     },
     sourceUrl() {
       if (this.plugin.source_link === " ") {
-        console.log("FALSE");
         return false;
       } else {
-        console.log("true");
         return this.plugin.source_link;
       }
     }
   },
   methods: {
     install() {
-      console.log("starting install");
       this.errors = null;
       const rdBase = window._rundeck.rdBase;
-      console.log("rdBase", rdBase);
       axios({
         method: "post",
         headers: { "x-rundeck-ajax": true },
@@ -84,7 +77,6 @@ export default {
         withCredentials: true
       })
         .then(response => {
-          console.log("done installing");
           this.installed = true;
         })
         .catch(error => {
@@ -92,7 +84,6 @@ export default {
         });
     },
     uninstall() {
-      console.log("start5ing uninstall");
       this.errors = null;
       const rdBase = window._rundeck.rdBase;
       const apiVer = window._rundeck.apiVersion;
@@ -105,7 +96,6 @@ export default {
         withCredentials: true
       })
         .then(response => {
-          console.log("done uninstalling");
           this.installed = false;
         })
         .catch(error => {

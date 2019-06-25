@@ -29,37 +29,40 @@ import spock.lang.Unroll
  */
 @TestFor(UtilityTagLib)
 class UtilityTagLibSpec extends Specification {
+    @Unroll
     def "text after"() {
-        given:
-        def text = '''abc
-123
-456
----
-789
-'''
+
         when:
         def result = tagLib.textAfterLine(text: text, marker: '---').toString()
 
         then:
-        result == '789\n'
+            result == expect
+        where:
+            text                        | expect
+            'abc\n123\n456\n---\n789\n' | '789\n'
+            'abc\n---\n789\n'           | '789\n'
+            '---\n789\n'                | '789\n'
 
     }
+
+    def "text remaining lines"() {
+
+        expect:
+            expect == tagLib.textRemainingLines(text: text).toString()
+        where:
+            text                        | expect
+            'abc\n123\n456\n---\n789\n' | '123\n' + '456\n' + '---\n' + '789\n'
+            'abc\n---\n789\n'           | '---\n' + '789\n'
+
+    }
+    @Unroll
     def "text before"() {
-        given:
-        def text = '''abc
-123
-456
----
-789
-'''
-        when:
-        def result = tagLib.textBeforeLine(text: text, marker: '---').toString()
-
-        then:
-        result == '''abc
-123
-456'''
-
+        expect:
+            expect == tagLib.textBeforeLine(text: text, marker: '---').toString()
+        where:
+            text                        | expect
+            'abc\n123\n456\n---\n789\n' | 'abc\n123\n456'
+            '---\n789\n' | ''
     }
 
     @Unroll
