@@ -44,7 +44,7 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
-    JobLifeCyclePluginService jobLifeCyclePluginService
+    JobPluginService jobPluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -90,7 +90,7 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
-        pluginDescs[jobLifeCyclePluginService.jobLifeCyclePluginProviderService.name]=jobLifeCyclePluginService.listJobLifeCyclePlugins().collect {
+        pluginDescs[jobPluginService.jobPluginProviderService.name]=jobPluginService.listJobPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
@@ -133,10 +133,14 @@ class PluginApiService {
         pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
         pluginDescs.each { svc, list ->
+            if(svc == "UI") return
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)

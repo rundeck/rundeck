@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
-import com.dtolabs.rundeck.plugins.jobs.JobLifeCyclePlugin;
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
@@ -90,7 +90,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
-        map.put(ServiceNameConstants.JobLifeCycle, JobLifeCyclePlugin.class);
+        map.put(ServiceNameConstants.JobPlugin, JobPlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

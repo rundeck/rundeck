@@ -154,7 +154,7 @@ function HomeData(data) {
         for (var i = 0; i < projs.length; i++) {
             var newproj = projs[i];
             var found = self.projectForName(newproj.name);
-            if (found && found.name()==newproj.name) {
+            if (found && found.name() === newproj.name) {
                 ko.mapping.fromJS(newproj, null, found);
                 found.loaded(true);
             } else {
@@ -188,8 +188,7 @@ function HomeData(data) {
                     if (self.pagingOffset() === -1) {
                         self.pagingOffset(0);
                     } else {
-                        setTimeout(self.load.curry(true), self.pagingDelay());
-                        return;
+                        setTimeout(function(){self.load(true);}, self.pagingDelay());
                     }
                 }
             }
@@ -296,9 +295,9 @@ function batchInitWaypoints(arr,handler,count){
     "use strict";
     var arr2=arr.splice(0,count);
     if(arr2.length>0) {
-        jQuery(arr2).waypoint(handler, {offset: '100%'});
+        jQuery(arr2).waypoint(handler, {context:'#main-panel',offset: '100%'});
         if (arr.length > 0) {
-            _waypointBatchTimer=setTimeout(batchInitWaypoints.curry(arr, handler,count), 1500);
+            _waypointBatchTimer=setTimeout(function(){batchInitWaypoints(arr, handler,count);}, 1500);
         }
     }
 }
@@ -334,7 +333,7 @@ function init() {
         projectNames: projectNamesData.projectNames.sort(),
         projectNamesTotal: projectNamesData.projectNamesTotal || 0
     },statsdata));
-    homedata.loadedProjectNames(projectNamesData.projectNames.length == projectNamesData.projectNamesTotal);
+    homedata.loadedProjectNames(projectNamesData.projectNames.length === projectNamesData.projectNamesTotal);
     ko.applyBindings(homedata);
 
     homedata.pagingMax(pageparams.pagingInitialMax || 15);
@@ -346,7 +345,7 @@ function init() {
     homedata.searchedProjects.subscribe(function(val){
         "use strict";
         //when search results change, refresh waypoints
-        ko.tasks.schedule(initWaypoints.curry(homedata,true));
+        ko.tasks.schedule(function(){initWaypoints(homedata,true);});
     });
     if(homedata.loadedProjectNames()){
         //load waypoints manually

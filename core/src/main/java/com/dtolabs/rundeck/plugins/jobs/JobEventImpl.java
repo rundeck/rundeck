@@ -2,11 +2,11 @@ package com.dtolabs.rundeck.plugins.jobs;
 
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.jobs.JobLifeCycleEvent;
+import com.dtolabs.rundeck.core.jobs.JobEvent;
 
 import java.util.Map;
 
-public class JobLifeCycleEventImpl implements JobLifeCycleEvent {
+public class JobEventImpl implements JobEvent {
 
     private StepExecutionContext executionContext;
 
@@ -19,11 +19,11 @@ public class JobLifeCycleEventImpl implements JobLifeCycleEvent {
         this.executionContext = executionContext;
     }
 
-    public JobLifeCycleEventImpl(StepExecutionContext executionContext) {
+    public JobEventImpl(StepExecutionContext executionContext) {
         this.executionContext = executionContext;
     }
 
-    public JobLifeCycleEventImpl() {
+    public JobEventImpl() {
     }
 
     @Override

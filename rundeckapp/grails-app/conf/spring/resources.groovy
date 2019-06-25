@@ -237,9 +237,9 @@ beans={
     }
 
     /**
-     * the JobLifeCycle plugin provider service
+     * the Job plugin provider service
      */
-    jobLifeCyclePluginProviderService(JobLifeCyclePluginProviderService){
+    jobPluginProviderService(JobPluginProviderService){
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
 

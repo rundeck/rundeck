@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-//= require moment.min
+//= require moment-with-locales
+//= require moment-timezone-with-data-10-year-range
 
  var MomentUtil =(function(){
      return {

@@ -11,7 +11,7 @@ import java.util.Map;
  * Date: 5/07/19
  */
 
-public interface JobLifeCycleEvent {
+public interface JobEvent {
 
     /**
      *
