@@ -762,7 +762,16 @@ class ExecutionController extends ControllerBase{
             log.error("Output file not available")
             return
         }
+        //default timezone is the server timezone
+        def reqTimezone = TimeZone.getDefault()
+        if (params.timeZone) {
+            reqTimezone = TimeZone.getTimeZone(params.timeZone)
+        } else if (params.gmt) {
+            reqTimezone = TimeZone.getTimeZone('GMT')
+        }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss",Locale.US);
+        dateFormater.timeZone = reqTimezone
+
         def dateStamp= dateFormater.format(e.dateStarted);
         response.setContentType("text/plain")
         if("inline"!=params.view){
@@ -774,7 +783,7 @@ class ExecutionController extends ControllerBase{
         }
 
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
-        logFormater.timeZone= TimeZone.getTimeZone("GMT")
+        logFormater.timeZone = reqTimezone
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")

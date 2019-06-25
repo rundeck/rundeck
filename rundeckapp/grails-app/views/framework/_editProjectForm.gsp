@@ -303,7 +303,7 @@
 
             <g:set var="fcopyprefix" value="${serviceDefaults.prefix}.default.config."/>
       <g:if test="${description && description.properties}">
-          <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
+          <g:set var="isSelected" value="${serviceDefaults.selectedType == description.name}"/>
           <div class=" " id="${enc(attr: nkey) + '_det'}"
                data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
               <hr/>

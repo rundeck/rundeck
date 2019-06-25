@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,28 @@
  */
 package org.rundeck.jaas.jetty
 
-import org.eclipse.jetty.jaas.spi.PropertyFileLoginModule
 import spock.lang.Specification
 
 import javax.security.auth.Subject
 
 
-class JettyAuthPropertyFileLoginModuleTest extends Specification {
-    def "Initialize without hotReload set"() {
+class ReloadablePropertyFileLoginModuleSpec extends Specification {
+
+    def "Ensure that only role principals are returned in getUserInfo"() {
+        setup:
+        File tmpFile = File.createTempFile("realm",".properties")
+        tmpFile << "testuser:test,one,two"
+
         when:
-        JettyAuthPropertyFileLoginModule module = new JettyAuthPropertyFileLoginModule()
-        module.initialize(new Subject(),null,[:],[:])
+        ReloadablePropertyFileLoginModule module = new ReloadablePropertyFileLoginModule()
+        module.initialize(new Subject(), null, [:], ["file":tmpFile.absolutePath])
+        def userInfo = module.getUserInfo("testuser")
 
         then:
-        !module.module.isReloadEnabled()
+        userInfo.roleNames == ["one","two"]
+
+        cleanup:
+        tmpFile.delete()
     }
 
-    def "Initialize hotReload set to true"() {
-        when:
-        JettyAuthPropertyFileLoginModule module = new JettyAuthPropertyFileLoginModule()
-        module.initialize(new Subject(),null,[:],[hotReload:"true"])
-
-        then:
-        module.module.isReloadEnabled()
-    }
 }

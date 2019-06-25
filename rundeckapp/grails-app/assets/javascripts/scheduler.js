@@ -1,4 +1,4 @@
-//= require moment.min
+//= require momentutil
 //= require bootstrap-datetimepicker.min
 
 /*

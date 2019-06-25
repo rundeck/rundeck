@@ -234,6 +234,7 @@ class ExecutionControllerTests  {
 
         ec.params.id = e1.id.toString()
         ec.params.formatted = 'true'
+        ec.params.timeZone = 'GMT'
 
         def result=ec.downloadOutput()
         assertNotNull(ec.response.getHeader('Content-Disposition'))

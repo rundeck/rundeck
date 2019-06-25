@@ -126,7 +126,7 @@
           <div class="card">
             <div class="card-content">
               <span data-bind="if: !loaded()">
-                  <asset:image class="loading-spinner" src="spinner-gray.gif" width="32px" height="32px"/>
+                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
               </span>
               <div data-bind="if: projectCount() > 1 && loaded()">
                 %{--app summary info--}%
@@ -217,7 +217,7 @@
           <div data-bind="if: !loadedProjectNames() && projectCount()<1">
             <div class="">
                 <g:message code="page.home.loading.projects" />
-                <asset:image class="loading-spinner" src="spinner-gray.gif" width="32px" height="32px"/>
+                <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-2x"></b>
             </div>
           </div>
           <div data-bind="if: projectCount()>0">
@@ -347,7 +347,7 @@
                       <div class="col-sm-12 col-md-2" >
                         <div class="pull-right">
                           <span data-bind="if: !$root.projectForName(project).loaded()">
-                              <g:img class="loading-spinner" file="spinner-gray.gif" width="24px" height="24px"/>
+                              <b class="fas fa-spinner fa-spin loading-spinner text-muted fa-lg"></b>
                           </span>
                           <div class="btn-group dropdown-toggle-hover" data-bind="if: $root.projectForName(project).auth().jobCreate">
                             <a href="#" class="as-block link-hover link-block-padded text-inverse dropdown-toggle" data-toggle="dropdown">

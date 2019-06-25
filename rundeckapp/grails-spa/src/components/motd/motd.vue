@@ -1,7 +1,7 @@
 <template>
   <div class="row" v-if="message && showMessage">
     <div class="col-xs-12">
-      <div :class="'alert '+alertStyle">
+      <div :class="'alert '+alertStyle" :style="styleCss">
         <button type="button" class="close" @click="dismissMessage" data-dismiss="alert">×</button>
         <h4 v-if="noTitle">Message of The Day</h4>
         <div class="motd-content" v-bind:class="{ full: showFullMOTD}">
@@ -117,6 +117,22 @@ export default {
      */
     alertStyle () {
       return `alert-${this.motdStyle}`
+    },
+    styleCss () {
+      let style = {}
+      if (!this.project.readme.motd) {
+        return style
+      }
+      const keys={fgcolor:'color',bgcolor:'backgroundColor'}
+      let regex = /<!--\s+(fgcolor|bgcolor):(#[a-fA-F0-9]{6})\s+-->/g
+      let found = regex.exec(this.project.readme.motd)
+      while (found) {
+        if(found.length>2 && keys[found[1]]) {
+          style[keys[found[1]]] = found[2]
+        }
+        found = regex.exec(this.project.readme.motd)
+      }
+      return style
     }
   },
   async mounted () {
@@ -135,7 +151,13 @@ export default {
       this.message = this.project.readme.motdHTML
       this.hasNewMessage = this.checkMessage()
       this.showMessage = this.hasNewMessage && this.checkPage()
-      this.eventBus.$on('motd-indicator-activated',()=>this.showMessage=!this.showMessage)
+      this.eventBus.$on('motd-indicator-activated', () => {
+        if (!this.showMessage) {
+          this.showMessage = true
+        } else {
+          this.dismissMessage()
+        }
+      })
       this.eventBus.$emit('motd-message-available', {hasMessage:!!this.project.readme.motd,hasNewMessage:this.hasNewMessage,style:this.motdStyle,title:this.motdTitle,display:this.project.motdDisplay})
     }
   }

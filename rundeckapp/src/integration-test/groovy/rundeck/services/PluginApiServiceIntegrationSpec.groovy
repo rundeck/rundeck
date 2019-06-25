@@ -23,6 +23,9 @@ class PluginApiServiceIntegrationSpec extends Specification {
     void "list plugins"() {
         when:
         def pluginList = pluginApiService.listPluginsDetailed()
+        pluginList.descriptions.each {
+            println it.key
+        }
 
         then:
         pluginList.descriptions.size() == 23

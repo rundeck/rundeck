@@ -90,8 +90,12 @@
         </div>
     </div>
 
+    <div id="projectHome-summary" class="project-dashboard-vue">
+      <App :event-bus="EventBus" show-description="false" show-readme="false"/>
+    </div>
+
     <div id="projectHome-content" class="project-dashboard-vue">
-      <App :event-bus="EventBus" show-description="false"/>
+      <App :event-bus="EventBus" show-description="false" show-summary="false"/>
     </div>
 
   </div>

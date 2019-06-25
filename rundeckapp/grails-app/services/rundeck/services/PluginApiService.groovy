@@ -133,10 +133,14 @@ class PluginApiService {
         pluginDescs['UserGroupSource']=pluginService.listPlugins(UserGroupSourcePlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
         pluginDescs.each { svc, list ->
+            if(svc == "UI") return
             list.each { desc ->
                 def provIdent = svc + ":" + desc.name
                 uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
