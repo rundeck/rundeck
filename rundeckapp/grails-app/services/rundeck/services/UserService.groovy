@@ -29,6 +29,17 @@ class UserService {
     FrameworkService frameworkService
     private static final int DEFAULT_TIMEOUT = 30
 
+    enum LogginStatus{
+        LIN('LOGGED IN'),LOUT('LOGGED OUT'),ABND('ABANDONNED'),NL('NOT LOGGED')
+        private final String value
+        LogginStatus(String value){
+            this.value = value
+        }
+        String getValue(){
+            this.value
+        }
+    }
+
     def findOrCreateUser(String login) {
         def User user = User.findByLogin(login)
         if(!user){
@@ -158,7 +169,7 @@ class UserService {
     }
 
     def getLoginStatus(User user, Date lastExecution){
-        def status = 'NOT LOGGED'
+        def status = LogginStatus.NL.value
         if(user){
             Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
             if(lastDate != null){
@@ -172,20 +183,20 @@ class UserService {
                 if(user.lastLogout != null){
                     if(lastDate.after(user.lastLogout)){
                         if(calendar.getTime().before(new Date())){
-                            status = "ABANDONNED"
+                            status = LogginStatus.ABND.value
                         }else{
-                            status = "LOGGED IN"
+                            status = LogginStatus.LIN.value
                         }
                     }else{
-                        status = "LOGGED OUT"
+                        status = LogginStatus.LOUT.value
                     }
                 }else if(calendar.getTime().after(new Date())){
-                    status = "LOGGED IN"
+                    status = LogginStatus.LIN.value
                 }else{
-                    status = "ABANDONNED"
+                    status = LogginStatus.ABND.value
                 }
             }else {
-                status = "NOT LOGGED"
+                status = LogginStatus.NL.value
             }
         }
         status
