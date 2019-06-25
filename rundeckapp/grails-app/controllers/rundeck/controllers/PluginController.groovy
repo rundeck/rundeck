@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.PluginValidator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.converters.JSON
 import groovy.transform.CompileStatic
 import org.springframework.web.multipart.MultipartFile
@@ -180,7 +181,13 @@ class PluginController extends ControllerBase {
         String service = params.service
         String appVer = servletContext.getAttribute('version.number')
 
-        def desc = pluginService.getPluginDescriptor(pluginName, service)?.description
+        def desc = null
+        if(service== "UI") {
+            desc = pluginService.listPlugins(UIPluginProviderService,uiPluginService.uiPluginProviderService).find { it.key == pluginName }.value.description
+        } else {
+            desc = pluginService.getPluginDescriptor(pluginName, service)?.description
+        }
+
         if(!desc) {
             def psvc = frameworkService.rundeckFramework.getService(service)
             desc = psvc?.listDescriptions()?.find { it.name == pluginName }
@@ -208,16 +215,18 @@ class PluginController extends ControllerBase {
             desc.description,
             RequestContextUtils.getLocale(request)
         )
-        def profile = uiPluginService.getProfileFor(service, pluginName)
-        if (profile.icon) {
-            terseDesc.iconUrl = createLink(
-                controller: 'plugin',
-                action: 'pluginIcon',
-                params: [service: service, name: pluginName]
-            )
-        }
-        if (profile.providerMetadata) {
-            terseDesc.providerMetadata = profile.providerMetadata
+        if(service != "UI") {
+            def profile = uiPluginService.getProfileFor(service, pluginName)
+            if (profile.icon) {
+                terseDesc.iconUrl = createLink(
+                        controller: 'plugin',
+                        action: 'pluginIcon',
+                        params: [service: service, name: pluginName]
+                )
+            }
+            if (profile.providerMetadata) {
+                terseDesc.providerMetadata = profile.providerMetadata
+            }
         }
         terseDesc.ver = meta?.pluginFileVersion ?: appVer
         terseDesc.rundeckCompatibilityVersion = meta?.rundeckCompatibilityVersion ?: 'unspecified'

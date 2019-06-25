@@ -2618,6 +2618,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
+                        }
+                    }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -2638,6 +2644,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
 
                             return
+                        }
+                    }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
                         }
                     }
                     if (opt.enforced && opt.optionValues &&

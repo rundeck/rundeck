@@ -2,9 +2,7 @@
   <div>
     <div class="row">
       <div class="col-xs-12" style="margin-bottom:1em;">
-        <h3
-          style="margin: 0px;padding-bottom: 10px; border-bottom:1px solid black;"
-        >Installed Plugins</h3>
+        <h3 style="margin: 0px;">Installed Plugins</h3>
       </div>
       <div class="col-xs-12 col-sm-4">
         <select
@@ -31,7 +29,7 @@
               :disabled="view === 'detail'"
               v-model="searchString"
             >
-            <span class="input-group-btn" v-if="searchResults.length > 0">
+            <span class="input-group-btn" v-if="searchResultPlugins.length > 0">
               <button @click="clearSearch" class="btn btn-default btn-fill" type="button">
                 <i class="fas fa-times"></i>
               </button>
@@ -74,30 +72,73 @@
     </div>
     <div class="row">
       <div class="col-xs-12">
-        <div v-if="searchResults.length" class="artifact-grid row row-flex row-flex-wrap">
+        <div
+          v-show="searchResultsCollection.length"
+          class="artifact-grid row row-flex row-flex-wrap"
+        >
           <ProviderCard
             v-show="view === 'grid'"
             :provider="plugin"
             class="artifact col-xs-12 col-sm-4"
-            v-for="(plugin, index) in searchResults"
+            v-for="(plugin, index) in searchResultsCollection"
             :key="index"
           />
-          <ProviderCardRow
-            v-show="view === 'list'"
-            :provider="plugin"
-            class="col-xs-12 col-sm-12"
-            v-for="(plugin, index) in searchResults"
-            :key="`card_row_${index}`"
-          />
+          <div class="col-xs-12" v-show="view === 'list'">
+            <div class="card col-xs-12" style="padding:0;">
+              <div class="card-content" style="padding:0;">
+                <table class="table table-hover table-condensed">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Name</th>
+                      <th>Provides</th>
+                      <th>Author</th>
+                      <th>Version</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ProviderCardRow
+                      :provider="plugin"
+                      class
+                      v-for="(plugin, index) in searchResultsCollection"
+                      :key="`card_row_${index}`"
+                    />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-else class="artifact-grid row row-flex row-flex-wrap">
-          <ProviderCardRow
-            v-show="view === 'list'"
-            :provider="plugin"
-            class="col-xs-12 col-sm-12"
-            v-for="(plugin, index) in plugins"
-            :key="`card_row_${index}`"
-          />
+        <div
+          v-show="!searchResultsCollection.length"
+          class="artifact-grid row row-flex row-flex-wrap"
+        >
+          <div class="col-xs-12" v-show="view === 'list'">
+            <div class="card col-xs-12" style="padding:0;">
+              <div class="card-content" style="padding:0;">
+                <table class="table table-hover table-condensed">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Name</th>
+                      <th>Provides</th>
+                      <th>Author</th>
+                      <th>Version</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <ProviderCardRow
+                      :provider="plugin"
+                      v-for="(plugin, index) in plugins"
+                      :key="`card_row_${index}`"
+                    />
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
           <ProviderCard
             v-show="view === 'grid'"
@@ -109,23 +150,25 @@
           <div v-show="view === 'detail'" class="col-sm-4 details-checkbox-column">
             <div
               style="max-height: 80vh;overflow-y: scroll; display:inline-block;"
-              class="flex-col"
+              class="flex-col card"
             >
-              <div v-for="(service, index) in pluginsByService" :key="index">
-                <div v-if="service.providers.length">
-                  <h4 class="checkbox-group-title">{{service.service | splitAtCapitalLetter }}</h4>
-                  <ul>
-                    <li v-for="(plugin, index) in service.providers" :key="index">
-                      <label>
-                        <input
-                          type="checkbox"
-                          v-model="checkedServiceProviders"
-                          :value="{serviceName: service.service, providerName: plugin.name}"
-                        >
-                        {{plugin.title}}
-                      </label>
-                    </li>
-                  </ul>
+              <div class="card-content">
+                <div v-for="(service, index) in pluginsByService" :key="index">
+                  <div v-if="service.providers.length">
+                    <h5 class="checkbox-group-title">{{service.service | splitAtCapitalLetter }}</h5>
+                    <ul>
+                      <li v-for="(plugin, index) in service.providers" :key="index">
+                        <label>
+                          <input
+                            type="checkbox"
+                            v-model="checkedServiceProviders"
+                            :value="{serviceName: service.service, providerName: plugin.name}"
+                          >
+                          {{plugin.title}}
+                        </label>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -138,7 +181,7 @@
               <div v-if="!providersDetails || providersDetails.length === 0">
                 <div class="card">
                   <div class="card-content" style="text-align:center">
-                    <h3 style="margin:0;">Select a Provider for more information.</h3>
+                    <h5 style="margin:0;">Select a Provider for more information.</h5>
                   </div>
                 </div>
               </div>
@@ -288,6 +331,7 @@ export default {
     splitAtCapitalLetter: function(value) {
       if (!value) return "";
       value = value.toString();
+      if(value.match(/^[A-Z]+$/g)) return value;
       return value.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
     }
   },
@@ -297,7 +341,8 @@ export default {
       "setServiceFacet",
       "getServices",
       "getProvidersListByService",
-      "getProvidersInfo"
+      "getProvidersInfo",
+      "setSearchResultPlugins"
     ]),
     ...mapActions("modal", ["closeModal"]),
     handleModalClose() {
@@ -307,19 +352,19 @@ export default {
       this.setServiceFacet(event.target.value);
     },
     clearSearch() {
-      this.searchResults = [];
+      this.setSearchResultPlugins([]);
     },
     search() {
       this.clearSearch();
       this.showWhichPlugins = null;
       if (this.searchString === "") {
-        this.searchResults = [];
+        this.setSearchResultPlugins([]);
         return;
       }
       let theRepo = this.plugins;
       this.$search(this.searchString, theRepo, FuseSearchOptions).then(
         results => {
-          this.searchResults = results;
+          this.setSearchResultPlugins(results);
         }
       );
     }
@@ -328,6 +373,7 @@ export default {
     ...mapState("modal", ["modalOpen"]),
     ...mapState("plugins", [
       "plugins",
+      "searchResultPlugins",
       "provider",
       "serviceName",
       "services",
@@ -343,6 +389,11 @@ export default {
           return this.modalOpen;
         });
       }
+    },
+    searchResultsCollection: {
+      get() {
+        return this.searchResultPlugins || [];
+      }
     }
   },
   created() {
@@ -355,7 +406,6 @@ export default {
       showWhichPlugins: null,
       searchString: "",
       searchIndex: [],
-      searchResults: [],
       selectedService: null,
       view: "grid",
       checkedServiceProviders: []
@@ -379,11 +429,20 @@ export default {
   }
 }
 .details-checkbox-column {
+  .card > .card-content > div:first-child > div > h5 {
+    padding-top: 0;
+    margin-top: 0;
+  }
+  .card > .card-content > div > div > h5 {
+    border-bottom: 1px solid #66615b;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+  }
   // margin-top: 1em;
   // max-height: 80vh;
   // overflow-y: scroll;
   // display: inline-block;
-  & > div > div:first-child > div > .checkbox-group-title {
+  > div > div:first-child > div > .checkbox-group-title {
     margin-top: 0;
   }
   ul {

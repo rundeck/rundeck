@@ -1,7 +1,9 @@
 import axios from 'axios'
-
+import _ from "lodash"
 const state = {
+  errors: null,
   plugins: [],
+  searchResultPlugins: [],
   pluginsByService: [],
   provider: null,
   providersDetails: null,
@@ -18,6 +20,9 @@ const getters = {
 const mutations = {
   SET_PLUGINS(state, plugins) {
     state.plugins = plugins
+  },
+  SET_SEARCH_RESULTS_PLUGINS(state, plugins) {
+    state.searchResultPlugins = plugins
   },
   SET_PROVIDER_INFO(state, provider) {
     state.provider = provider
@@ -39,6 +44,12 @@ const mutations = {
   },
   SET_PROVIDERS_DETAILS(state, payload) {
     state.providersDetails = payload
+  },
+  SET_CAN_INSTALL(state, canInstall) {
+    state.canInstall = canInstall
+  },
+  SET_ERRORS(state, errors) {
+    state.errors = errors
   }
 }
 const actions = {
@@ -187,6 +198,51 @@ const actions = {
         });
       }
     });
+  },
+  setSearchResultPlugins({
+    commit
+  }, plugins) {
+    commit("SET_SEARCH_RESULTS_PLUGINS", plugins)
+  },
+  uninstallPlugin({
+    commit,
+    dispatch
+  }, properties) {
+    commit('SET_ERRORS', null)
+    dispatch('overlay/openOverlay', {
+      loadingSpinner: true,
+      loadingMessage: `uninstalling ${properties.id}`
+    }, {
+      root: true
+    })
+    axios({
+        method: "post",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${window._rundeck.rdBase}repository/uninstall/${properties.id}`,
+        withCredentials: true
+      })
+      .then(response => {
+        let pluginCollectionWithoutTheRemovedPlugin = _.reject(this.state.plugins.plugins, {
+          'id': properties.id
+        })
+        let searchResultsCollectionWithoutTheRemovedPlugin = _.reject(this.state.plugins.searchResultPlugins, {
+          'id': properties.id
+        })
+        commit('SET_PLUGINS', pluginCollectionWithoutTheRemovedPlugin)
+        commit('SET_SEARCH_RESULTS_PLUGINS', searchResultsCollectionWithoutTheRemovedPlugin)
+        dispatch('overlay/openOverlay', false, {
+          root: true
+        })
+      })
+      .catch(error => {
+
+        commit("SET_ERRORS", error.response)
+        dispatch('overlay/openOverlay', true, {
+          root: true
+        })
+      });
   }
 }
 

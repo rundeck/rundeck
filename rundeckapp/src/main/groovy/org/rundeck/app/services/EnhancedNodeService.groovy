@@ -46,7 +46,7 @@ class EnhancedNodeService
     @Autowired FrameworkService frameworkService
     @Autowired PluginService pluginService
     @Autowired FeatureService featureService
-    private Map<String, ProjectNodesEnhancer> loadedPlugins = [:]
+    private Map<String, ProjectNodesEnhancer> loadedPlugins = Collections.synchronizedMap([:])
 
     private boolean enabled
 
@@ -63,13 +63,15 @@ class EnhancedNodeService
         if (!enabled) {
             return nodeService.getNodes(name)
         }
-        if (null == loadedPlugins[name]) {
-            loadPlugins(name)
+
+        def enhancer = loadedPlugins[name]
+        if (null == enhancer) {
+            enhancer = loadPlugins(name)
         }
-        return loadedPlugins[name].withProjectNodes(nodeService.getNodes(name))
+        return enhancer.withProjectNodes(nodeService.getNodes(name))
     }
 
-    private void loadPlugins(final String project) {
+    private ProjectNodesEnhancer loadPlugins(final String project) {
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.getFrameworkProjectMgr().loadProjectConfig(project)
         def plugins = ProjectNodeSupport.listPluginConfigurations(
@@ -115,6 +117,7 @@ class EnhancedNodeService
         }
         cacheItem.loadedTime = System.currentTimeMillis()
         loadedPlugins[project] = cacheItem
+        return cacheItem
     }
 
     @Override
