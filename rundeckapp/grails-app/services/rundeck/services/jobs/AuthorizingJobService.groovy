@@ -47,6 +47,17 @@ interface AuthorizingJobService {
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
 
     ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            String executionType,
+            Map<String, String> provenance,
+            String jobArgString,
+            String jobFilter,
+            String asUser
+    )
+            throws JobNotFound, JobExecutionError
+
+    ExecutionReference runJob(
         UserAndRolesAuthContext auth,
         JobReference jobReference,
         String jobArgString,
@@ -54,6 +65,17 @@ interface AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError
+
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            String executionType,
+            Map<String, String> provenance,
+            Map optionData,
+            String jobFilter,
+            String asUser
+    )
+            throws JobNotFound, JobExecutionError
 
     ExecutionReference runJob(
             UserAndRolesAuthContext auth,

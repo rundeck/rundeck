@@ -16,6 +16,10 @@
 
 package rundeck.services
 
+import spock.lang.Unroll
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthContextEvaluator
@@ -505,6 +509,47 @@ class JobStateServiceSpec extends HibernateSpec implements ServiceUnitTest<JobSt
             ref.id == e1.id.toString()
             ref.job
             ref.job.id == jobUuid
+    }
+
+    @Unroll
+    void "start job with provenance"() {
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project = projectName
+        job.id = jobUuid
+        def auth = new SubjectAuthContext(null, null)
+
+        service.frameworkService = Stub(FrameworkService) {
+            authorizeProjectJobAll(null, !null, !null, !null) >>> [true, true]
+            authorizeProjectJobAny(null, !null, !null, !null) >>> [true, true]
+            authorizeProjectJobAny(!null, !null, !null, !null) >>> [true, true]
+            filterAuthorizedProjectExecutionsAll(null, !null, !null) >> { authx, exec, actions ->
+                return exec
+            }
+            kickJob(!null, !null, null, { it.provenance == provenance && it.executionType == expectedExecType }) >> {
+                Map<String, Object> ret = new HashMap<>()
+                ret.success = true
+                ret.executionId = '1'
+                ret
+            }
+        }
+        given:
+            setTestExecutions(projectName, jobUuid)
+
+        when:
+            def ref = service.runJob(auth, job, execType, provenance, (String) null, null, null)
+        then:
+            ref
+            ref.id == '1'
+            ref.job
+            ref.job.id == jobUuid
+        where:
+            execType | provenance      | expectedExecType
+            'user'   | [source: 'xyz'] | 'user'
+            'xyz'    | [source: 'xyz'] | 'xyz'
+            null     | [source: 'xyz'] | 'user'
+            null     | null            | 'user'
     }
 
     void "start job without auth"(){

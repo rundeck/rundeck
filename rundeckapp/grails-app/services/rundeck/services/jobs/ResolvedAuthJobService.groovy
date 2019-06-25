@@ -78,6 +78,30 @@ class ResolvedAuthJobService implements JobService {
         }
     }
 
+    @Override
+    ExecutionReference runJob(
+            final JobReference jobReference,
+            final String executionType,
+            final Map<String, String> provenance,
+            final String jobArgString,
+            final String jobFilter,
+            final String asUser
+    ) throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, jobReference, executionType, provenance, jobArgString, jobFilter, asUser)
+    }
+
+    @Override
+    ExecutionReference runJob(
+            final JobReference jobReference,
+            final String executionType,
+            final Map<String, String> provenance,
+            final Map optionData,
+            final String jobFilter,
+            final String asUser
+    ) throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, jobReference, executionType, provenance, optionData, jobFilter, asUser)
+    }
+
     ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError {
         authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser)

@@ -972,6 +972,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionType = execution.executionType
+        def provenanceMeta = execution.provenanceInfo.meta
+        if (provenanceMeta) {
+            provenanceMeta.each { k, v ->
+                jobcontext.put('provenance.' + k, v)
+            }
+        }
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
         jobcontext.serverUUID = execution.serverNodeUUID
@@ -1117,6 +1123,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     workflowlogger
             );
 
+            //todo: hook for wf state listener
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,
                     framework,
@@ -1961,6 +1968,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       workflow:params.workflow,
                                       argString:params.argString,
                                       executionType: params.executionType ?: 'scheduled',
+                                      provenance: params.provenance ?: [:],
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
@@ -2116,7 +2124,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
 
             Map allowedOptions = input.subMap(
-                    ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
+                    ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType','provenance',
                      'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','retryPrevId','meta']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
@@ -2185,6 +2193,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                                'nodeoverride', 'nodefilter',
                                                'executionType',
                                                'meta',
+                                               'provenance',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
@@ -2353,11 +2362,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
-        if (input && input['executionType']) {
-            props.executionType = input['executionType']
-        } else {
+        if (!(input && input['executionType'])) {
             throw new ExecutionServiceException("executionType is required")
         }
+        props.executionType = input['executionType']
+        props.provenance = input['provenance']||[:]
+
         if(input['meta'] instanceof Map){
             props['extraMetadataMap'] = input['meta']
         }
@@ -2896,17 +2906,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def input = [
                     argString    : execution.argString,
                     executionType: execution.executionType,
-                    loglevel     : execution.loglevel,
-                    filter       : execution.filter //TODO: failed nodes?
-                ]
-                def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
-                                             retryContext.user, input, retryContext.secureOpts,
-                                             retryContext.secureOptsExposed, count + 1,execution.id,originalId)
-                if (result.success) {
-                    execution.retryExecution = result.execution
+                    provenance   : execution.provenance,
+                            loglevel     : execution.loglevel,
+                            filter       : execution.filter //TODO: failed nodes?
+                    ]
+                    def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
+                            retryContext.user, input, retryContext.secureOpts,
+                            retryContext.secureOptsExposed, count + 1,execution.id,originalId)
+                    if (result.success) {
+                        execution.retryExecution = result.execution
+                    }
                 }
             }
-        }
 
         if (execution.save(flush: true)) {
             log.debug("saved execution status. id: ${execution.id}")

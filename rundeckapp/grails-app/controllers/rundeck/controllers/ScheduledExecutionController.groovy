@@ -2717,6 +2717,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (runAtTime) {
             inputOpts['runAtTime'] = runAtTime
+            inputOpts['provenance'] = [source: 'gui', user: session.user, remoteAddr: request.remoteHost]
 
             def scheduleResult = executionService.scheduleAdHocJob(
                     scheduledExecution,
@@ -2736,6 +2737,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return scheduleResult
         } else {
             inputOpts['executionType'] = 'user'
+            inputOpts['provenance'] = [source: 'gui', user: session.user, remoteAddr: request.remoteHost]
 
             def result = executionService.executeJob(scheduledExecution, authContext, session.user, inputOpts)
 
@@ -3229,12 +3231,14 @@ class ScheduledExecutionController  extends ControllerBase{
         def result
         if (request.api_version > ApiVersions.V17 && jobRunAtTime) {
             inputOpts["runAtTime"] = jobRunAtTime
+            inputOpts['provenance'] = [source: 'api', user: session.user]
             result = executionService.scheduleAdHocJob(scheduledExecution,
                         authContext, username, inputOpts)
         }
 
         if (request.api_version <= ApiVersions.V17 || !jobRunAtTime) {
             inputOpts['executionType'] = 'user'
+            inputOpts['provenance'] = [source: 'api', user: session.user]
             result = executionService.executeJob(scheduledExecution,
                         authContext, username, inputOpts)
         }

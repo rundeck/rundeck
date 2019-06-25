@@ -438,6 +438,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         request.api_version = 18
         request.method = 'POST'
         params.id = 'ajobid'
+        session.user = 'aUser'
         def result = controller.apiJobRun()
 
         then:
@@ -452,7 +453,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                [executionType: 'user']
+                [executionType: 'user', provenance: [source: 'api', user: 'aUser']]
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -471,6 +472,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
         request.method = 'POST'
         params.id = 'ajobid'
         params.runAtTime = 'timetorun'
+        session.user='aUser'
         def result = controller.apiJobRun()
 
         then:
@@ -485,7 +487,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                [runAtTime: 'timetorun']
+                [runAtTime: 'timetorun', provenance: [source: 'api', user: 'aUser']]
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
@@ -507,6 +509,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 runAtTime:'timetorun'
         ]
         params.id='ajobid'
+        session.user='aUser'
         def result=controller.apiJobRun()
 
         then:
@@ -521,7 +524,7 @@ class ScheduledExecutionControllerSpec extends HibernateSpec implements Controll
                 _,
                 _,
                 _,
-                [runAtTime: 'timetorun']
+                [runAtTime: 'timetorun', provenance: [source: 'api', user: 'aUser']]
         ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)

@@ -122,6 +122,27 @@ public interface JobService extends AppService {
     /**
      * Run a job
      * @param jobReference reference to a job
+     * @param executionType type of invocation
+     * @param provenance    invocation provenance information
+     * @param jobArgString argString for the execution
+     * @param jobFilter filter for the execution
+     * @param asUser user to execute the job(null for the same user)
+     * @return Id of the result execution
+     * @throws JobNotFound if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(
+            JobReference jobReference,
+            String executionType,
+            Map<String, String> provenance,
+            String jobArgString,
+            String jobFilter,
+            String asUser
+    )
+            throws JobNotFound, JobExecutionError;
+    /**
+     * Run a job
+     * @param jobReference reference to a job
      * @param jobArgString argString for the execution
      * @param jobFilter filter for the execution
      * @param asUser user to execute the job(null for the same user)
@@ -132,6 +153,28 @@ public interface JobService extends AppService {
     ExecutionReference runJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError;
 
+    /**
+     * Run a job
+     *
+     * @param jobReference  reference to a job
+     * @param executionType type of invocation
+     * @param provenance    invocation provenance information
+     * @param optionData    option values
+     * @param jobFilter     filter for the execution
+     * @param asUser        user to execute the job(null for the same user)
+     * @return Id of the result execution
+     * @throws JobNotFound       if the specified job was not found
+     * @throws JobExecutionError if an error occurred executing the job
+     */
+    ExecutionReference runJob(
+            JobReference jobReference,
+            String executionType,
+            Map<String, String> provenance,
+            Map optionData,
+            String jobFilter,
+            String asUser
+    )
+            throws JobNotFound, JobExecutionError;
     /**
      * Run a job
      *
