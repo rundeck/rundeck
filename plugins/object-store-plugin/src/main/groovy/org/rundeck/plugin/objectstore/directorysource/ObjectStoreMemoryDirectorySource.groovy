@@ -46,8 +46,12 @@ class ObjectStoreMemoryDirectorySource implements ObjectStoreDirectorySource {
     }
 
     private init() {
-        if(mClient.bucketExists(bucket)) {
-            resyncDirectory()
+        try {
+            if (mClient.bucketExists(bucket)) {
+                resyncDirectory()
+            }
+        } catch(SocketTimeoutException stex) {
+            throw new RuntimeException("Unable to connect to the server. Please check your firewall, or make sure your server is accepting connections.")
         }
     }
 

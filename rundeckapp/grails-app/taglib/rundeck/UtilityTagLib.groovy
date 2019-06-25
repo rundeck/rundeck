@@ -976,25 +976,25 @@ class UtilityTagLib{
     def textFirstLine={attrs,body->
         if(attrs.text){
             def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
-            out<< (split.length>0?split[0]:attrs.text)
+            return  (split.length>0?split[0]:attrs.text)
         }else{
-            out<<attrs.text
+            return attrs.text
         }
     }
     def textRemainingLines={attrs,body->
         if(attrs.text){
             def split=attrs.text.toString().split(/(\r\n?|\n)/,2)
             if(split.length==2){
-                out << split[1]
+                return split[1]
             }
         }
     }
     def textBeforeLine={attrs,body->
         if(attrs.text && attrs.marker){
-            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
-            out<< (split.length>0?split[0]:attrs.text)
+            def split=attrs.text.toString().split("(^|\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)", 2)
+            return (split.length>0?split[0]:attrs.text)
         }else{
-            out<<attrs.text
+            return attrs.text
         }
     }
     def textHasMarker = { attrs, body ->
@@ -1008,12 +1008,12 @@ class UtilityTagLib{
     }
     def textAfterLine={attrs,body->
         if(attrs.text && attrs.marker){
-            def split=attrs.text.toString().split("(\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
+            def split=attrs.text.toString().split("(^|\n|\r\n)"+Pattern.quote(attrs.marker)+"(\n|\r\n)",2)
             if(split.length==2){
                 if(attrs.include){
-                    out<<attrs.marker
+                    return attrs.marker +"\n"+ split[1]
                 }
-                out<< split[1]
+                return split[1]
             }
         }
     }
@@ -1032,15 +1032,21 @@ class UtilityTagLib{
     }
     /**
      * Embed i18n messages available to javascript in the Messages object
-     * @attr code a i18n message code, or comma separated list
+     * @attr code a i18n message code, or comma or whitespace separated list
+     * @attr codes a list of message codes
      * @attr id element id to use (optional)
      */
     def jsMessages = { attrs, body ->
-        def id = attrs.id ?: 'i18nmessages'
+        def id = attrs.id ?: ('i18nmessages_'+rkey())
         def msgs = [:]
         if (attrs.code) {
-            attrs.code.split(',').each {
-                msgs[it] = g.message(code: it, default: it)
+            attrs.code.split(/(?s)([,\s\r\n]+)/).each {
+                msgs[it] = g.message(code: it.trim(), default: it.trim())
+            }
+        }
+        if(attrs.codes){
+            attrs.codes.each{
+                msgs[it] = g.message(code: it.trim(), default: it.trim())
             }
         }
         embedJSON.call([id: id, data: msgs],null)

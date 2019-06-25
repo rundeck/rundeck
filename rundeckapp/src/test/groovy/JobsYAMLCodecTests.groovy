@@ -870,9 +870,9 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
             assertTrue "wrong option name", opt1.enforced
             assertTrue "wrong option name", opt1.required
-            assertNotNull "wrong option values", opt1.values
-            assertEquals "wrong option values size", 2, opt1.values.size()
-            ArrayList valuesList = new ArrayList(opt1.values)
+            assertNotNull "wrong option values", opt1.optionValues
+            assertEquals "wrong option values size", 2, opt1.optionValues.size()
+            ArrayList valuesList = new ArrayList(opt1.optionValues)
             assertEquals "wrong option values[0]", 'a', valuesList[0]
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 
@@ -961,9 +961,9 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
         assertTrue "wrong option name", opt1.enforced
         assertTrue "wrong option name", opt1.required
-        assertNotNull "wrong option values", opt1.values
-        assertEquals "wrong option values size", 2, opt1.values.size()
-        ArrayList valuesList = new ArrayList(opt1.values)
+        assertNotNull "wrong option values", opt1.optionValues
+        assertEquals "wrong option values size", 2, opt1.optionValues.size()
+        ArrayList valuesList = new ArrayList(opt1.optionValues)
         assertEquals "wrong option values[0]", 'a', valuesList[0]
         assertEquals "wrong option values[1]", 'b', valuesList[1]
         def opt2 = iterator.next()
@@ -972,7 +972,7 @@ public class JobsYAMLCodecTests  {
         assertNull "wrong option defaultValue", opt2.defaultValue
         assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
         assertFalse "wrong option name", opt2.required != null && opt2.required
-        assertNull "wrong option values", opt2.values
+        assertNull "wrong option values", opt2.optionValues
         assertNotNull "missing valuesUrl ", opt2.realValuesUrl
         assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
@@ -1084,9 +1084,9 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
             assertTrue "wrong option name", opt1.enforced
             assertTrue "wrong option name", opt1.required
-            assertNotNull "wrong option values", opt1.values
-            assertEquals "wrong option values size", 2, opt1.values.size()
-            ArrayList valuesList = new ArrayList(opt1.values)
+            assertNotNull "wrong option values", opt1.optionValues
+            assertEquals "wrong option values size", 2, opt1.optionValues.size()
+            ArrayList valuesList = new ArrayList(opt1.optionValues)
             assertEquals "wrong option values[0]", 'a', valuesList[0]
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 
@@ -1233,9 +1233,9 @@ public class JobsYAMLCodecTests  {
         assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
         assertTrue "wrong option name", opt1.enforced
         assertTrue "wrong option name", opt1.required
-        assertNotNull "wrong option values", opt1.values
-        assertEquals "wrong option values size", 2, opt1.values.size()
-        ArrayList valuesList = new ArrayList(opt1.values)
+        assertNotNull "wrong option values", opt1.optionValues
+        assertEquals "wrong option values size", 2, opt1.optionValues.size()
+        ArrayList valuesList = new ArrayList(opt1.optionValues)
         assertEquals "wrong option values[0]", 'a', valuesList[0]
         assertEquals "wrong option values[1]", 'b', valuesList[1]
         def opt2 = iterator.next()
@@ -1244,7 +1244,7 @@ public class JobsYAMLCodecTests  {
         assertNull "wrong option defaultValue", opt2.defaultValue
         assertFalse "wrong option name", opt2.enforced != null && opt2.enforced
         assertFalse "wrong option name", opt2.required != null && opt2.required
-        assertNull "wrong option values", opt2.values
+        assertNull "wrong option values", opt2.optionValues
         assertNotNull "missing valuesUrl ", opt2.realValuesUrl
         assertEquals "missing valuesUrl ", "http://something.com", opt2.realValuesUrl.toExternalForm()
         assertEquals "wrong option regex", "\\d+", opt2.regex
@@ -1456,9 +1456,9 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option defaultValue", "xyz", opt1.defaultValue
             assertTrue "wrong option name", opt1.enforced
             assertTrue "wrong option name", opt1.required
-            assertNotNull "wrong option values", opt1.values
-            assertEquals "wrong option values size", 2, opt1.values.size()
-            ArrayList valuesList = new ArrayList(opt1.values)
+            assertNotNull "wrong option values", opt1.optionValues
+            assertEquals "wrong option values size", 2, opt1.optionValues.size()
+            ArrayList valuesList = new ArrayList(opt1.optionValues)
             assertEquals "wrong option values[0]", 'a', valuesList[0]
             assertEquals "wrong option values[1]", 'b', valuesList[1]
 

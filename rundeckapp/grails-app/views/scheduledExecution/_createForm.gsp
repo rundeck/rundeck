@@ -24,10 +24,11 @@
             controller="scheduledExecution" action="save" params="[project: params.project]"
             class="form-horizontal">
         <div class="card">
-        <div class="card-header">
+        <div class="card-header" data-ko-bind="jobeditor">
             <div class="row">
                 <h4 class="col-sm-10 card-title">
-                  <g:message code="ScheduledExecution.page.create.title" />
+                    <span data-bind="css: {'text-secondary colon-after': jobName}"><g:message code="ScheduledExecution.page.create.title" /></span>
+                    <span data-bind="text: jobName, attr: {title: groupPath}, bootstrapTooltip: groupPath"></span>
                 </h4>
                 <div class="col-sm-2 ">
                     <g:link controller="scheduledExecution" action="upload"
@@ -40,7 +41,8 @@
             </div>
         </div>
         <div class="card-content">
-          <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
+            <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
+                           command="${command}"/>
         </div>
         <div class="card-footer">
             <g:javascript>

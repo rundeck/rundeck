@@ -23,7 +23,6 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.storage.NamespacedStorage
-import grails.transaction.NotTransactional
 import grails.transaction.Transactional
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.Path
@@ -251,15 +250,12 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
-    @NotTransactional
     boolean deleteResource(String ns,Path path) {
         Storage storage1 = findResource(ns,path)
         if (!storage1) {
             throw StorageException.deleteException(path, "Not found")
         }
-        Storage.withNewTransaction {
-            storage1.delete(flush: true)
-        }
+        storage1.delete(flush: true)
         return true
     }
 
@@ -268,7 +264,6 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
-    @NotTransactional
     Resource<ResourceMeta> createResource(String ns,Path path, ResourceMeta content) {
         if (path.path.contains('../')) {
             throw StorageException.createException(path, "Invalid path: ${path.path}")
@@ -287,40 +282,36 @@ class DbStorageService implements NamespacedStorage{
         Storage saved=null;
         def data = content.getInputStream().bytes
         def saveStorage={
-            Storage.withNewTransaction {
-                try {
-                    if (id) {
-                        storage = Storage.findById(id, [lock: true])
-                        storage.refresh()
-                    } else {
-                        storage = new Storage()
-                    }
+            try {
+                if (id) {
+                    storage = Storage.get(id)
+                } else {
+                    storage = new Storage()
+                }
 
-                    storage.namespace = namespace ? namespace : null
-                    storage.path = path.path
-                    Map<String, String> newdata = storage.storageMeta?:[:]
-                    storage.storageMeta = newdata + content.meta
-                    storage.data = data
-                    saved = storage.save(flush: true)
-                    if (!saved) {
-                        throw new StorageException("Failed to save content at path ${path}: validation error: " +
-                                storage.errors.allErrors.collect { it.toString() }.join("; "),
-                                StorageException.Event.valueOf(event.toUpperCase()),
-                                path)
-                    }
+                storage.namespace = namespace ? namespace : null
+                storage.path = path.path
+                Map<String, String> newdata = storage.storageMeta?:[:]
+                storage.storageMeta = newdata + content.meta
+                storage.data = data
+                saved = storage.save(flush: true)
+                if (!saved) {
+                    throw new StorageException("Failed to save content at path ${path}: validation error: " +
+                            storage.errors.allErrors.collect { it.toString() }.join("; "),
+                            StorageException.Event.valueOf(event.toUpperCase()),
+                            path)
+                }
 
-                    retry = false
-                    return true;
-                } catch (org.springframework.dao.ConcurrencyFailureException e) {
-                    if (!retry) {
-                        throw new StorageException("Failed to save content at path ${path}: content was modified", e,
-                                StorageException.Event.valueOf(event.toUpperCase()),
-                                path)
-                    } else {
-                        log.warn("exception catch: ${e.getClass()}")
-                        log.warn("saveStorage optimistic locking failure for ${path}, retrying...")
-                        Thread.sleep(1000)
-                    }
+                retry = false
+                return true;
+            } catch (org.springframework.dao.ConcurrencyFailureException e) {
+                if (!retry) {
+                    throw new StorageException("Failed to save content at path ${path}: content was modified", e,
+                            StorageException.Event.valueOf(event.toUpperCase()),
+                            path)
+                } else {
+                    log.warn("saveStorage optimistic locking failure for ${path}, retrying...")
+                    Thread.sleep(1000)
                 }
             }
             return false;
@@ -344,7 +335,6 @@ class DbStorageService implements NamespacedStorage{
     }
 
     @Override
-    @NotTransactional
     Resource<ResourceMeta> updateResource(String ns,Path path, ResourceMeta content) {
         if (path.path.contains('../')) {
             throw StorageException.updateException(path, "Invalid path: ${path.path}")

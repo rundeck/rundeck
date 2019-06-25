@@ -303,6 +303,7 @@ class UrlMappings {
         "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
         "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
         "/plugin/list"(controller: 'plugin', action: 'listPlugins')
+        "/plugin/listByService"(controller: 'plugin', action: 'listPluginsByService')
         "/plugin/providers/$service"(controller: 'plugin', action: 'pluginServiceDescriptions')
         "/plugin/detail/$service/$name"(controller: 'plugin', action: 'pluginDetail')
         "/plugin/validate/$service/$name"(controller: 'plugin', action: 'pluginPropertiesValidateAjax')
@@ -319,6 +320,7 @@ class UrlMappings {
         "/search-plugins"(controller:'SearchPluginsController', action:'index')
 
         "404"(view: '/404')
+        "405"(view: '/405')
         "500"(view: '/error')
     }
 }

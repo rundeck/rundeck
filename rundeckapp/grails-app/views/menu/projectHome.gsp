@@ -32,20 +32,72 @@
     <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
     <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+                context: 'application', type: 'project', name: params.project, action: AuthConstants.ACTION_ADMIN)}"/>
+        <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+                params.project, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+        <g:set var="projectEventsAuth" value="${auth.resourceAllowedTest(kind: 'event', project: params.project, action: AuthConstants.ACTION_READ) || projAdminAuth}"/>
+    <g:javascript>
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectEventsAuth:${enc(js:projectEventsAuth)},
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:params.project]))}"
+        }
+    })
+    </g:javascript>
+    <style type="text/css">
+
+    .subtitlebar.no-min-height {
+        min-height: auto;
+    }
+    .text-project-description{
+        margin: 5px 0;
+        font-style: italic;
+        display: block;
+    }
+    </style>
     <asset:javascript src="menu/projectHome.js"/>
 </head>
 
 <body>
-  <div class="container-fluid">
+<content tag="subtitlecss">plain no-min-height</content>
+<content tag="subtitlesection">
+
+<div class="container-fluid" >
+<div class="row">
+<div class="col-xs-12">
+<div data-ko-bind="projectHome">
+    <span class="text-h3 text-secondary text-project-description" >
+        <span data-bind="text: project().description"></span>
+    </span>
+</div>
+</div>
+</div>
+
+</div>
+</content>
+  <div class="conntainer-fluid">
     <div class="row">
         <div class="col-xs-12">
             <g:render template="/common/messages"/>
         </div>
     </div>
 
-    <div id="projectHome-content">
-      <div id=project-dashboard-vue></div>
+    <div id="projectHome-summary" class="project-dashboard-vue">
+      <App :event-bus="EventBus" show-description="false" show-readme="false"/>
     </div>
+
+    <div id="projectHome-content" class="project-dashboard-vue">
+      <App :event-bus="EventBus" show-description="false" show-summary="false"/>
+    </div>
+
   </div>
   <asset:javascript src="static/pages/project-dashboard.js"/>
 </body>

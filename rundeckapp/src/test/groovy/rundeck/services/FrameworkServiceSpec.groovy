@@ -25,7 +25,10 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.common.PropertyRetriever
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionService
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -35,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import org.rundeck.app.spi.Services
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.PluginStep
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -429,27 +433,55 @@ class FrameworkServiceSpec extends Specification {
 
     def "get plugin control service"() {
         given:
-            service.rundeckFramework = Mock(Framework)
-
-            def ctrla = service.getPluginControlService('projectA')
-            def ctrlb = service.getPluginControlService('projectB')
-        when:
-            def pluga = ctrla.listDisabledPlugins()
-            def plugb = ctrlb.listDisabledPlugins()
-        then:
-            ctrla != ctrlb
-            pluga != plugb
-            2 * service.rundeckFramework.getFrameworkProjectMgr() >> Mock(ProjectManager) {
-                1 * getFrameworkProject('projectA') >> Mock(IRundeckProject) {
-                    1 * hasProperty('disabled.plugins') >> true
-                    1 * getProperty('disabled.plugins') >> 'a,b,c'
-                }
-                1 * getFrameworkProject('projectB') >> Mock(IRundeckProject) {
-                    hasProperty('disabled.plugins') >> false
-
+            service.rundeckFramework = Mock(Framework){
+                getFrameworkProjectMgr() >> Mock(ProjectManager) {
+                    1 * getFrameworkProject(project) >> Mock(IRundeckProject) {
+                        1 * hasProperty('disabled.plugins') >> hasProp
+                        getProperty('disabled.plugins') >> propVal
+                    }
                 }
             }
-            pluga == ['a', 'b', 'c']
-            plugb == []
+
+            def ctrla = service.getPluginControlService(project)
+        when:
+            def pluga = ctrla.listDisabledPlugins()
+        then:
+
+            pluga == expect
+        where:
+            project    | hasProp | propVal | expect
+            'projectA' | true    | 'a,b,c' | ['a', 'b', 'c']
+            'projectB' | false   | null    | []
+    }
+
+    @Unroll
+    def "get plugin description for step item nodeStep #nodeStep description #descriptor"() {
+        given:
+            service.rundeckFramework = Mock(Framework)
+            service.pluginService = Mock(PluginService)
+            def step = new PluginStep(type: 'atype', nodeStep: nodeStep)
+            def nodeStepService = Mock(NodeStepExecutionService)
+            def wfStepService = Mock(StepExecutionService)
+            def desc = DescriptionBuilder.builder().name('atype').build()
+        when:
+            def result = service.getPluginDescriptionForItem(step)
+        then:
+            if (nodeStep) {
+                1 * service.rundeckFramework.getNodeStepExecutorService() >> nodeStepService
+                1 * service.pluginService.getPluginDescriptor('atype', nodeStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            } else {
+                1 * service.rundeckFramework.getStepExecutionService() >> wfStepService
+                1 * service.pluginService.getPluginDescriptor('atype', wfStepService) >>
+                (descriptor ? new DescribedPlugin(_, desc, 'atype') : null)
+            }
+            result == (descriptor ? desc : null)
+
+        where:
+            nodeStep | descriptor
+            true     | true
+            true     | false
+            false    | true
+            false    | false
     }
 }

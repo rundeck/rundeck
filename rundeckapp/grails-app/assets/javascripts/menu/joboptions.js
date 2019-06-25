@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-//= require momentutil
-//= require knockout.min
-//= require knockout-mapping
-//= require knockout-foreachprop
-//= require menu/job-remote-options
-//= require ko/binding-popover
-//= require ko/binding-datetimepicker
 
 /**
  * Selectable value with name/value pair

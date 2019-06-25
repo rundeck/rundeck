@@ -20,7 +20,7 @@
    Created: Dec 29, 2010 6:28:51 PM
 --%>
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
@@ -28,11 +28,63 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code:'configuration')}"/>
+    <meta name="projconfigselected" content="edit-project"/>
     <title><g:message code="edit.configuration" /></title>
-
+    <g:set var="projectName" value="${params.project ?: request.project}"/>
+    <g:set var="nodeExecutorPluginsData" value="${nodeExecDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'NodeExecutor', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'NodeExecutor', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}"/>
+    <g:set var="fileCopierPluginsData" value="${fileCopyDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'FileCopier', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'FileCopier', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}" />
+    <g:embedJSON id="projectDataJSON" data="${[
+            project          : projectName,
+            defaultFileCopier: defaultFileCopy,
+            defaultNodeExec  : defaultNodeExec,
+            descriptions: [
+                    NodeExecutor: nodeExecutorPluginsData,
+                    FileCopier: fileCopierPluginsData,
+            ]
+    ]}"/>
     <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
-    <asset:javascript src="storageBrowseKO.js"/>
+    <asset:javascript src="framework/editProject.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
@@ -60,24 +112,45 @@
     <g:form action="saveProject" method="post" useToken="true" onsubmit="return configControl.checkForm();" class="form">
     <div class="col-xs-12">
       <div class="card"  id="createform">
-        <div class="card-header">
+          <div class="card-header" data-ko-bind="editProject">
           <h3 class="card-title">
-            <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
+              <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${projectName}</g:enc>
             <g:link controller="framework" action="editProjectConfig"
-              params="[project: params.project ?: request.project]"
-              class="has_tooltip pull-right btn btn-sm"
-              data-placement="bottom"
-              title="${message(
+                    params="[project: projectName]"
+                    class="has_tooltip pull-right btn btn-sm"
+                    data-placement="bottom"
+                    title="${message(
                       code: 'page.admin.EditProjectConfigFile.title',
                       default: 'Advanced: Edit config file directly'
               )}">
-              <!-- <g:icon name="file"/> -->
-              <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+
+                <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
             </g:link>
           </h3>
         </div>
         <div class="card-content">
-          <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
+            <g:set var="serviceDefaultsList" value="${[
+                    [
+                            service     : ServiceNameConstants.NodeExecutor,
+                            descriptions: nodeExecDescriptions,
+                            prefix      : 'nodeexec',
+                            errreport   : nodeexecreport,
+                            selectedType: defaultNodeExec,
+                            config      : nodeexecconfig
+
+                    ],
+                    [
+                            service     : ServiceNameConstants.FileCopier,
+                            descriptions: fileCopyDescriptions,
+                            prefix      : 'fcopy',
+                            errreport   : fcopyreport,
+                            selectedType: defaultFileCopy,
+                            config      : fcopyconfig
+
+                    ]
+            ]}"/>
+            <g:render template="editProjectFormTabs"
+                      model="${[editOnly: true, project: projectName, serviceDefaultsList: serviceDefaultsList]}"/>
         </div>
         <div class="card-footer">
           <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>

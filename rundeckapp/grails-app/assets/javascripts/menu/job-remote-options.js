@@ -277,10 +277,14 @@ function RemoteOptionLoader(data) {
             url: _genUrl(self.url, params),
             success: function (data, status, jqxhr) {
                 //show loading spinner at least for a little while
-                setTimeout(opt.loading.curry(false),200);
+                setTimeout(function () {
+                    opt.loading(false)
+                },200);
             },
             error: function (jqxhr, status, message) {
-                setTimeout(opt.loading.curry(false),200);
+                setTimeout(function () {
+                    opt.loading(false)
+                },200);
                 opt.remoteError({error: "ERROR loading result from Rundeck server: " + status + ": " + message});
             }
         });

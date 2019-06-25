@@ -36,10 +36,20 @@
     <g:jsMessages code="Node,Node.plural"/>
 </head>
 <body>
-
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
+<content tag="subtitlecss">plain</content>
+<content tag="subtitlesection">
+    <div>
+        <div class="col-xs-12 subtitle-head">
+            <div class="subtitle-head-item input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
+                <g:render template="nodeFilterInputGroup"
+                          model="[filterset: filterset, filtvalue: filtvalue, filterName: filterName, showInputTitle: true, autofocus: true]"/>
+            </div>
+        </div>
+    </div>
+</content>
 
 <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
 <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
@@ -55,26 +65,6 @@
   </div>
 
   <div class="container-fluid">
-    <div class="row">
-      <div class="col-xs-12">
-        <div class="card">
-          <!-- <div class="card-header">
-            <h4 class="card-title">
-              <g:message code="browse" />
-            </h4>
-          </div> -->
-          <div class="card-content">
-            <div class="row">
-              <div class="col-xs-12">
-                <div class="input-group multiple-control-input-group input-group-lg" style="margin-bottom:0;">
-                  <g:render template="nodeFilterInputGroup" model="[filterset: filterset, filtvalue:filtvalue,filterName:filterName, showInputTitle:true]"/>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="row">
       <div class="col-xs-12">
         <div class="card">
@@ -113,42 +103,7 @@
                           </button>
                           <ul class="dropdown-menu" role="menu">
 
-                              <li class="dropdown-header" data-bind="visible: filterName()">
-                                  <g:message code="filter" /><span data-bind="text: filterNameDisplay()"></span>
-                              </li>
-                              <li data-bind="visible: canSaveFilter">
-                                  <a href="#"
-                                     data-toggle="modal"
-                                     data-target="#saveFilterModal">
-                                      <i class="glyphicon glyphicon-plus"></i>
-                                      <g:message code="save.filter.ellipsis" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canDeleteFilter">
-                                  <a href="#"
-                                     class="textbtn textbtn-danger"
-                                     data-bind="click: deleteFilter">
-                                      <i class="glyphicon glyphicon-remove"></i>
-                                      <g:message code="delete.this.filter.ellipsis" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canSetDefaultFilter">
-                                  <a href="#"
-                                     class="textbtn textbtn-success"
-                                     data-bind="click: setDefaultFilter">
-                                      <i class="glyphicon glyphicon-filter"></i>
-                                      <g:message code="set.as.default.filter" />
-                                  </a>
-                              </li>
-                              <li data-bind="visible: canRemoveDefaultFilter">
-                                  <a href="#"
-                                     class="btn btn-default"
-                                     data-bind="click: nodeSummary().removeDefault">
-                                      <i class="glyphicon glyphicon-ban-circle"></i>
-                                      <g:message code="remove.default.filter" />
-                                  </a>
-                              </li>
-                              <li class="divider" ></li>
+
                               <g:if test="${g.executionMode(is:'active',project:params.project)}">
 
                                   <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
@@ -221,7 +176,8 @@
                         </h5>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li style="display:inline;">
-                                <node-filter-link class="label label-default" params="
+                                <node-filter-link  params="
+                                    classnames: 'label label-muted',
                                     filterkey: 'tags',
                                     filterval: tag,
                                     tag: tag,

@@ -61,7 +61,7 @@ used by _editOptions.gsp template
                                               dateFormat         : optionSelect.dateFormat,
                                               optionType         : optionSelect.optionType,
 //                                              config             : optionSelect.configMap,
-                                              values             : optionSelect.optionValuesPluginType ? optionSelect.valuesFromPlugin.collect { it.value } : optionSelect.values,
+                                              values             : optionSelect.optionValuesPluginType ? optionSelect.valuesFromPlugin.collect { it.value } : optionSelect.optionValues,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,
                                               multivalued        : optionSelect.multivalued,
@@ -77,7 +77,7 @@ used by _editOptions.gsp template
                                               optionDepsMet      : !optiondependencies[optName] || selectedoptsmap &&
                                                       optiondependencies[optName].every { selectedoptsmap[it] },
                                               secureInput        : optionSelect.secureInput,
-                                              hasExtended        : !optionSelect.secureInput && (values || optionSelect.values ||
+                                              hasExtended        : !optionSelect.secureInput && (values || optionSelect.optionValues ||
                                                       optionSelect.multivalued || optionSelect.valuesFromPlugin),
                                               value              : selectedvalue ? selectedvalue :
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?
@@ -152,7 +152,7 @@ data for configuring remote option cascading/dependencies
     </div>
 
 
-    <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT}">
+    <g:if test="${grails.util.Environment.current == grails.util.Environment.DEVELOPMENT && params.debug}">
       <div class="col-xs-12 col-sm-10-col-sm-offset-2">
         <div class="well">
           <div data-bind="foreach: {data: options(), as: 'option' }" class="text-primary">
@@ -214,14 +214,3 @@ data for configuring remote option cascading/dependencies
     <div class="info note">Not authorized to execute chosen job.</div>
     <g:if test="${selectedargstring}"><div>Old value: <g:enc>${selectedargstring}</g:enc></div></g:if>
 </g:elseif>
-<g:else>
-    <div class="form-group">
-        <div class="col-sm-2 control-label text-form-label">
-            <g:message code="input.options"/>
-        </div>
-
-        <div class="col-sm-10">
-            <p class="form-control-static text-primary"><g:message code="no.input.options.for.this.job"/></p>
-        </div>
-    </div>
-</g:else>

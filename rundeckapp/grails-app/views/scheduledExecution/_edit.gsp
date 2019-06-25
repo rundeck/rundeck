@@ -17,7 +17,7 @@
 <%@ page import="rundeck.ScheduledExecution; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
-<div class="list-group">
+
 <g:if test="${flash.message}">
     <div class="list-group-item">
       <div class="alert alert-info">
@@ -40,13 +40,17 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
-<asset:javascript src="prototype/scriptaculous"/>
+
 <asset:javascript src="prototype/effects"/>
 <asset:javascript src="prototype/dragdrop"/>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <g:embedJSON id="filterParamsJSON"
              data="${[filterName: params.filterName, filter: scheduledExecution?.asFilter(),filterExcludeName: params.filterExcludeName, filterExclude: scheduledExecution?.asExcludeFilter(),nodeExcludePrecedence: scheduledExecution?.nodeExcludePrecedence, excludeFilterUncheck: scheduledExecution?.excludeFilterUncheck]}"/>
-<div id="page_job_edit">
+<g:embedJSON id="jobDefinitionJSON"
+             data="${[jobName:scheduledExecution?.jobName,groupPath:scheduledExecution?.groupPath, uuid: scheduledExecution?.uuid,
+                     href:scheduledExecution?.id?createLink(controller:'scheduledExecution',action:'show',params:[project:scheduledExecution.project,id:scheduledExecution.extid]):null
+             ]}"/>
+
   <g:if test="${scheduledExecution && scheduledExecution.id}">
       <input type="hidden" name="id" value="${enc(attr:scheduledExecution.extid)}"/>
   </g:if>
@@ -55,7 +59,8 @@
 
   </div>
 
-      <div class="list-group-item">
+  <div class="tab-pane active" id="tab_details" data-ko-bind="jobeditor">
+  <section class="section-space-lg">
           %{--name--}%
       <div class="form-group ${g.hasErrors(bean:scheduledExecution,field:'jobName','has-error')}" id="schedJobNameLabel">
           <label for="schedJobName"
@@ -68,6 +73,7 @@
                            value="${scheduledExecution?.jobName}"
                            id="schedJobName"
                            class="form-control"
+                  data-bind="value: jobName"
               />
               <g:hasErrors bean="${scheduledExecution}" field="jobName">
                   <i alt="Error" id="schedJobNameErr" class="glyphicon glyphicon-warning-sign"></i>
@@ -87,21 +93,29 @@
                       </span>
                   </g:hasErrors>
                   <input type='text' name="groupPath" value="${enc(attr:scheduledExecution?.groupPath)}"
+                      data-bind="value: groupPath"
                          id="schedJobGroup"
                       class="form-control"
                       placeholder="${g.message(code:'scheduledExecution.groupPath.description')}"
                   />
 
                   <span class="input-group-btn">
-                      <span class="btn btn-default" data-loading-text="Loading..."
-                            id="groupChooseBtn" title="Click on the name of the group to use">
-                          <g:message code="choose.action.label" /> <i class="caret"></i>
+                      <span class="btn btn-default"
+                            data-toggle="modal"
+                            data-target="#groupChooseModal"
+                            title="${message(code:"job.edit.groupPath.choose.text")}">
+                          <g:message code="choose.action.label" />
                       </span>
                   </span>
               </div>
 
 
           </div>
+          <g:render template="/common/modal" model="[modalid:'groupChooseModal',titleCode:'job.edit.groupPath.choose.text']">
+                <div id="groupChooseModalContent">
+
+                </div>
+          </g:render>
       </div>
 
           %{--description--}%
@@ -172,13 +186,15 @@
               </g:javascript>
           </div>
       </div>
-  </div><!--/.nput-group-item -->
+  </section><!--/.nput-group-item -->
+  </div><!-- end #tab_details -->
 
       <g:set var="projectName" value="${scheduledExecution.project?scheduledExecution.project.toString():params.project ?: request.project?: projects?.size() == 1 ? projects[0].name : ''}" />
       <g:hiddenField id="schedEditFrameworkProject" name="project" value="${projectName}" />
 
       %{--Options--}%
-      <div id="optionsContent" class=" list-group-item" >
+    <div class="tab-pane" id="tab_workflow">
+      <section id="optionsContent" class=" section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize} control-label text-form-label"><span id="optsload"></span><g:message code="options.label" /></div>
               <div class="${fieldColSize}">
@@ -197,10 +213,10 @@
                   </div>
               </div>
           </div>
-      </div>%{--//Options--}%
+      </section>%{--//Options--}%
 
       %{--Workflow--}%
-      <div id="workflowContent" class="list-group-item" >
+      <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
               <div class="${fieldColSize}">
@@ -218,10 +234,12 @@
                   </g:if>
               </div>
           </div>
-      </div>%{--//Workflow--}%
+      </section>%{--//Workflow--}%
+</div><!-- end#tab_workflow -->
 
   %{--Node Dispatch--}%
-  <div class="list-group-item node_filter_link_holder" id="nodegroupitem">
+    <div class="tab-pane" id="tab_nodes">
+  <section class="section-space-lg node_filter_link_holder" id="nodegroupitem">
   <div class="form-group">
       <label class="${labelColSize} control-label">
           <g:message code="Node.plural" />
@@ -407,18 +425,24 @@
               <g:message code="matched.nodes.prompt" />
           </label>
 
-          <div class=" col-sm-10  ">
+          <div class=" col-sm-10  container-fluid">
 
-              <div class="well well-sm embed matchednodes">
+              <div class="well well-sm matchednodes">
                   <div class="row">
                       <div class="col-sm-6">
-                          <span class="text-primary" data-bind="if: loaded">
+                          <span class="text-info" data-bind="if: loaded() && !loading()">
                               <span data-bind="messageTemplate: [total,nodesTitle]"><g:message
                                       code="count.nodes.matched"/></span>
                           </span>
-                          <span data-bind="visible: loading() " class="text-info">
+                          <span data-bind="visible: loading() " class="text-muted">
                               <i class="glyphicon glyphicon-time"></i>
                               <g:message code="loading.matched.nodes"/>
+                          </span>
+
+                          <span data-bind="if: total()>maxShown()">
+                              <span data-bind="messageTemplate: [maxShown(), total()]" class="text-primary">
+                                  <g:message code="count.nodes.shown"/>
+                              </span>
                           </span>
                       </div>
 
@@ -435,8 +459,10 @@
                       </div>
                   </div>
                   <div id='matchednodes' class="clearfix row">
-                      <g:render template="/framework/nodesEmbedKO"
-                                model="[showLoading: false, showTruncated: true, showExcludeFilterLinks: true]"/>
+                      <div class="col-sm-12 container-fluid">
+                          <g:render template="/framework/nodesEmbedKO"
+                                    model="[showLoading: false, showTruncated: false, showExcludeFilterLinks: true]"/>
+                      </div>
                   </div>
               </div>
           </div>
@@ -618,19 +644,23 @@
   </div>
 
   </div>%{--//Node Dispatch--}%
-  </div>
+  </section>
+  </div><!-- end#tab_nodes-->
 
       %{--Notifications--}%
-      <div class="list-group-item"  >
+      <div class="tab-pane" id="tab_notifications"  >
+      <section class="section-space-lg"  >
               <g:set var="adminauth"
                   value="${auth.resourceAllowedTest(type: 'project', name: scheduledExecution.project, action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_READ], context: 'application')}"/>
 
           <g:render template="editNotificationsForm" model="[scheduledExecution:scheduledExecution, notificationPlugins: notificationPlugins,adminauth:adminauth]"/>
 
-      </div>%{--//Notifications--}%
+      </section>%{--//Notifications--}%
+      </div><!-- end#tab_notifications -->
 
   %{--Schedule--}%
-  <div class="list-group-item">
+    <div class="tab-pane" id="tab_schedule">
+  <section class="section-space-lg">
 
       <div class="form-group">
           <div class="${labelColSize}  control-label text-form-label">
@@ -756,11 +786,13 @@
               </div>
           </div>
       </g:if>
-  </div>%{--//Schedule--}%
+  </section>%{--//Schedule--}%
+</div><!-- end#tab_schedule -->
 
 
   %{--Log level--}%
-  <div class="list-group-item">
+  <div class="tab-pane" id="tab_other">
+  <section class="section-space-lg">
       <div class="form-group">
           <label class="${labelColClass}" for="loglevel">
             <g:message code="scheduledExecution.property.loglevel.label" />
@@ -934,21 +966,14 @@
 
           <div class="${fieldColSize}">
               <div class="radio radio-inline">
-                <g:radio value="summary" name="defaultTab"
-                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                <g:radio value="nodes" name="defaultTab"
+                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab in ['summary','monitor','nodes']}"
                          id="tabSummary"/>
                 <label for="tabSummary">
-                    <g:message code="execution.page.show.tab.Summary.title"/>
+                    <g:message code="execution.page.show.tab.Nodes.title"/>
                 </label>
               </div>
-              <div class="radio radio-inline">
-                <g:radio name="defaultTab" value="monitor"
-                         checked="${scheduledExecution.defaultTab=='monitor'}"
-                         id="tabMonitor"/>
-                <label for="tabMonitor">
-                    <g:message code="report"/>
-                </label>
-              </div>
+
               <div class="radio radio-inline">
                 <g:radio name="defaultTab" value="output"
                          checked="${scheduledExecution.defaultTab=='output'}"
@@ -999,8 +1024,8 @@
               </g:else>
           </div>
       </div>
-  </div>%{--//Log level--}%
-</div>
+  </section>%{--//Log level--}%
+</div><!-- end#tab_other -->
 
 <script type="text/javascript">
 //<!CDATA[
@@ -1099,7 +1124,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         nodefilterLinkId:root,
                         project: selFrameworkProject,
@@ -1126,7 +1151,7 @@ function getCurSEID(){
                     appLinks.frameworkAdhoc,
                     appLinks.scheduledExecutionCreate,
                     appLinks.frameworkNodes,
-                    Object.extend(filterParams, {
+                    Object.assign(filterParams, {
                         nodeSummary:nodeSummary,
                         maxShown:100,
                         nodefilterLinkId: '#nodegroupitem',
@@ -1152,6 +1177,9 @@ function getCurSEID(){
                 nodeFilter.updateMatchedNodes();
             })
             ;
+            const jobDef = loadJsonData('jobDefinitionJSON')
+            window.jobeditor = new JobEditor(jobDef)
+            initKoBind(null,{jobeditor:jobeditor})
         }
 
         jQuery(pageinit);
@@ -1168,4 +1196,4 @@ function getCurSEID(){
 <div id="msg"></div>
 
     <g:render template="/framework/storageBrowseModalKO"/>
-</div>
+

@@ -1024,6 +1024,13 @@ class ScheduledExecutionControllerTests  {
                 assert 'view' in actions
                 true
             }
+            authorizeProjectResourceAll(1) { ctx, res, actions, proj ->
+                assert res == [type: 'resource', kind: 'event']
+                assert proj == se.project
+                assert 'read' in actions
+
+                true
+            }
         }
 
         sec.executionService = mockWith(ExecutionService) {
@@ -1947,7 +1954,21 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
         if (true) {//test basic copy action
 
-            def se = new ScheduledExecution(jobName: 'monkey1', project: 'testProject', description: 'blah2')
+            def se = new ScheduledExecution(
+                    uuid: 'testUUID',
+                    jobName: 'monkey1', project: 'testProject', description: 'blah2',
+                    groupPath: 'testgroup',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [
+                                    new CommandExec([
+                                            adhocRemoteString: 'test buddy',
+                                            argString: '-delay 12 -monkey cheese -particle'
+                                    ])
+                            ]
+                    )
+            )
+
             se.save()
 
             assertNotNull se.id
@@ -1959,8 +1980,9 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
-            fwkControl.demand.getProjectGlobals { [:] }
+            fwkControl.demand.getPluginControlService { null }
             fwkControl.demand.projectNames { [] }
+            fwkControl.demand.getProjectGlobals { [:] }
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects { return [] }
             fwkControl.demand.getRundeckFramework {-> return null }
@@ -3049,11 +3071,11 @@ class ScheduledExecutionControllerTests  {
         Option opt = job.options.iterator().next()
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.values
-        assertEquals 3, opt.values.size()
-        assertTrue opt.values.contains("a")
-        assertTrue opt.values.contains("b")
-        assertTrue opt.values.contains("c")
+        assertNotNull opt.optionValues
+        assertEquals 3, opt.optionValues.size()
+        assertTrue opt.optionValues.contains("a")
+        assertTrue opt.optionValues.contains("b")
+        assertTrue opt.optionValues.contains("c")
     }
 
     public void testUploadOptions2() {
@@ -3145,11 +3167,11 @@ class ScheduledExecutionControllerTests  {
         Option opt = job.options.iterator().next()
         assertEquals "testopt", opt.name
         assertEquals "`ls -t1 /* | head -n1`", opt.defaultValue
-        assertNotNull opt.values
-        assertEquals 3, opt.values.size()
-        assertTrue opt.values.contains("a")
-        assertTrue opt.values.contains("b")
-        assertTrue opt.values.contains("c")
+        assertNotNull opt.optionValues
+        assertEquals 3, opt.optionValues.size()
+        assertTrue opt.optionValues.contains("a")
+        assertTrue opt.optionValues.contains("b")
+        assertTrue opt.optionValues.contains("c")
     }
 
     public void testUploadShouldCreate() {

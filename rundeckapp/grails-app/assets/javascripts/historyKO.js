@@ -340,7 +340,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
             data: JSON.stringify({"ids": self.bulkSelectedIds()}),
             contentType: 'application/json',
             dataType:'json',
-            beforeSend:_ajaxSendTokens.curry('history_tokens'),
+            beforeSend:_createAjaxSendTokensHandler('history_tokens'),
             success:function(data,status,xhr){
                 self.selectedIds = [];
                 self.bulkEditProgress(false);
@@ -358,7 +358,7 @@ function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {
                 self.bulkEditResults({error:"Request did not succeed: "+((xhr.responseJSON && xhr.responseJSON.message)? xhr.responseJSON.message:err)});
                 jQuery(resultmodal).modal('show');
             }
-        }).success(_ajaxReceiveTokens.curry('history_tokens'));
+        }).success(_createAjaxReceiveTokensHandler('history_tokens'));
     };
 
     //load dataset again

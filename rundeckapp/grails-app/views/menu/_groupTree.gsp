@@ -24,27 +24,7 @@
 <%-- //TODO review timerEnd for removal from this template --%>
 <g:timerStart key="gtx"/>
 <div class="job-display-tree jobGroups ${subtree?' subdirs':'topgroup'} expandComponent" ${subtree && !expanded && !(wasfiltered) ?'style="display:none"':''}>
-<g:if test="${!prefix && wasfiltered && paginateParams.groupPath}">
-    <div style="margin-bottom:1em; margin-top:1em;">
-        <g:if test="${paginateParams.groupPath.indexOf('/')>0}">
-            <g:set var="uplevel" value="${paginateParams.groupPath.substring(0,paginateParams.groupPath.lastIndexOf('/'))}"/>
-            <g:set var="newparams" value="${paginateParams}"/>
-            %{
-                newparams['groupPath']=uplevel
-            }%
-            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Previous level" params="${newparams+[project:params.project]}">
-                <i class="glyphicon glyphicon-arrow-up"></i>
-                Up
-            </g:link>
-        </g:if>
-        <g:else>
-            <g:link controller="menu" action="jobs" class="groupname btn btn-default btn-xs" title="Top level" params="[project: params.project]">
-                <i class="glyphicon glyphicon-arrow-up"></i>
-                Top
-            </g:link>
-        </g:else>
-    </div>
-</g:if>
+
 <g:set var="gkeys" value="${g.sortGroupKeys(groups: jobgroups.grep {it.key != ''})}"/>
 <g:timerEnd key="gtx"/>
 <g:set var="prevkey" value="${null}"/>
@@ -90,35 +70,39 @@
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
     <g:set var="groupopen" value="${(wasfiltered || jscallback || (level.size()<= jobExpandLevel || jobExpandLevel<0))}"/>
-    ${raw("<")}div class="expandComponentHolder panel panel-default ${groupopen ? 'expanded' : ''} " style="" ${raw(">")}
+    ${raw("<")}div class="expandComponentHolder  ${groupopen ? 'expanded' : ''} " style="" ${raw(">")}
         %{divcounts++;}%
-        <div class="panel-heading">
+        <div class="job_list_group_header hover-reveal-hidden">
         <g:if test="${jscallback}">
             <span class="expandComponentControl textbtn textbtn-success groupname jobgroupexpand"
                   title="Select this group"
                   onclick="groupChosen('${enc(js:prefix ? prefix + '/' + group.key : group.key)}'); return false;"
-                  style="padding-left:4px;">
+                  >
               <i class="glyphicon glyphicon-folder-close"></i> <g:enc>${displaygroup}</g:enc>
             </span>
         </g:if>
         <g:else>
             <g:set var="jsfunc" value="Expander.toggle(this,null,'.expandComponentHolder.sub_${currkey}_group');"/>
-            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true" style="padding-left:4px;" classnames="jobgroupexpand textbtn-secondary">
-                <span class="foldertoggle">&nbsp;</span>
-                <g:if test="${jobsjscallback}">
-                    <g:enc>${displaygroup}</g:enc>
+            <g:expander open="${groupopen?'true':'false'}" jsfunc="${jsfunc}" imgfirst="true"  classnames="jobgroupexpand text-secondary autoclickable" iconCss="text-muted">
+
+                <g:enc>${displaygroup}</g:enc>
+
+                <g:if test="${!jobsjscallback}">
+                    <a class="groupname text-primary visibility-hidden "
+                    title="Browse job group: ${enc(attr:prefix ? prefix + '/' + group.key : group.key)}"
+                        href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><i class="glyphicon glyphicon-folder-open"></i></a>
                 </g:if>
             </g:expander>
             <g:if test="${!jobsjscallback}">
-            <a class="groupname secondary panel-title" href="${createLink(controller: 'menu', action: 'jobs', params: [project:params.project,groupPath: prefix ? prefix + '/' + group.key : group.key])}"><g:enc>${displaygroup}</g:enc></a>
+
                 <g:if test="${jobgroups[group.key]}">
                 <span class="" data-bind="visible: enabled">
                     &bull;
-                    <a href="#" class="btn btn-xs btn-simple" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
+                    <a href="#" class="btn btn-xs btn-simple btn-hover" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectAll($element);}">
                         <g:icon name="check"/>
                         <g:message code="select.all" />
                     </a>
-                    <a href="#" class="btn btn-xs btn-simple" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
+                    <a href="#" class="btn btn-xs btn-simple btn-hover" data-job-group="${group.key}" data-bind="click: function(){jobGroupSelectNone($element);}">
                         <g:icon name="unchecked"/>
                         <g:message code="select.none" />
                     </a>
@@ -130,10 +114,10 @@
         </div>
 
         <g:timerEnd key="prepare"/>
-    ${raw("<")}div class="expandComponent panel-collapse sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${raw(">")}
+    ${raw("<")}div class="expandComponent  sub_${currkey}_group sub_group" style="${wdgt.styleVisible(if: groupopen)}"${raw(">")}
         %{ divcounts++;}%
         <g:if test="${jobgroups[group.key]}">
-            <div class="jobGroups subjobs list-group ">
+            <div class="jobGroups subjobs  ">
             <g:render template="jobslist" model="[hideSummary:true,jobslist:jobgroups[group.key],total:jobgroups[group.key]?.size(), clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,headers:false,wasfiltered:wasfiltered,small:small?true:false,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]"/>
             </div>
         </g:if>

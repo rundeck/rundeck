@@ -49,6 +49,7 @@
       </tr>
       <tr>
           %{--OS details--}%
+          <!-- ko if: $root.nodeSet().hasOsData(attributes) -->
           <td class="key">
               <g:message code="node.metadata.os"/>
           </td>
@@ -66,6 +67,7 @@
               </span>
 
           </td>
+          <!-- /ko -->
 
           <!-- ko if: $root.useDefaultColumns -->
           <td class="key"><g:message code="node.metadata.username-at-hostname"/></td>
@@ -95,17 +97,16 @@
 
       </tr>
       %{-- unless exclude tags --}%
-      <tr>
+      <tr data-bind="if: tags().length > 0">
           <td class="key">
             <g:message code="node.metadata.tags"/>
-              <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
           </td>
           <td class="" colspan="3">
               <span data-bind="if: tags">
                   <span class="nodetags">
                       <span data-bind="foreach: tags">
 
-                          <span class="label label-default">
+                          <span class="label label-muted">
                               <span data-bind="text: $data"></span>
 
                               <node-filter-link params="
@@ -173,7 +174,7 @@
       <tr class="">
           <td class="key namespace">
               <a href="#"
-                 data-bind="attr: { href: '#ns_'+$index()+'_'+$parentContext.$index()}"
+                 data-bind="attr: { href: '#ns_${crefText}_'+$index()+'_'+$parentContext.$index()}"
                   data-toggle="collapse"
                     class="textbtn textbtn-muted textbtn-saturated ">
                   <span data-bind="text: namespace.ns"></span>
@@ -181,10 +182,10 @@
               </a>
           </td>
           <td colspan="3" class="text-muted">
-              <span data-bind="text: namespace.values.size()"></span>
+              <span data-bind="text: namespace.values.length"></span>
           </td>
       </tr>
-          <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_'+$index()+'_'+$parentContext.$index()}" >
+          <tbody class="subattrs collapse collapse-expandable" data-bind="attr: {id: 'ns_${crefText}_'+$index()+'_'+$parentContext.$index()}" >
           <!-- ko foreach: { data: $data.values , as: 'nsattr' } -->
                 <tr  class="hover-action-holder">
 

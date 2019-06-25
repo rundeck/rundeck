@@ -32,6 +32,7 @@ import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
+import rundeck.services.ExecutionServiceException
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
@@ -115,6 +116,14 @@ class ExecutionJob implements InterruptableJob {
         def Map initMap
         try{
             initMap= initialize(context,context.jobDetail.jobDataMap)
+        } catch (ExecutionServiceException es) {
+            if (es.code == 'conflict') {
+                log.error("Unable to start Job execution: ${es.message ?: 'no message'}")
+                return
+            } else {
+                log.error("Unable to start Job execution: ${es.message ?: 'no message'}", es)
+                throw es
+            }
         }catch(Throwable t){
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
@@ -390,6 +399,7 @@ class ExecutionJob implements InterruptableJob {
                                                                     thread?.context?.dataContext
                                     )
 
+        def context = execmap?.thread?.context
         boolean never=true
         while (thread.isAlive() || never) {
             never=false
@@ -405,7 +415,7 @@ class ExecutionJob implements InterruptableJob {
                             execmap.scheduledExecution.id,
                             [
                                     execution: execmap.execution,
-                                    context:execmap
+                                    context:context
                             ]
                     )
                     avgNotificationSent=true

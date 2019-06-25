@@ -59,11 +59,12 @@
     .open > &.dropdown-toggle {
       background-color: $transparent-bg;
       color: $btn-states-color;
+
+      .caret {
+        border-top-color: $btn-states-color;
+      }
     }
 
-    .caret {
-      border-top-color: $white-color;
-    }
   }
 
   .caret {

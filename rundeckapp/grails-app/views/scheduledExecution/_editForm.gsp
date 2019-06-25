@@ -28,11 +28,15 @@
         class="form-horizontal"
         onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}">
 
-<div class="card obs_delete_hide" id="editForm">
-    <div class="card-header">
+<div class="card " id="editForm">
+    <div class="card-header" data-ko-bind="jobeditor">
         <div class="row">
             <h4 class="col-sm-10 card-title">
-              <g:message code="ScheduledExecution.page.edit.title" />
+                <span class="text-secondary colon-after"><g:message code="ScheduledExecution.page.edit.title" /></span>
+                <a href="#" data-bind="text: jobName, attr: {href: href, title: groupPath}, bootstrapTooltip: groupPath">
+
+                </a>
+                <span class=" text-muted" data-bind="text: uuid"></span>
             </h4>
 
             <auth:resourceAllowed action="${AuthConstants.ACTION_CREATE}"
@@ -51,7 +55,8 @@
     </div>
 
     <div class="card-content">
-        <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
+        <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
+                       command="${command}"/>
     </div>
 
     <div class="card-footer">
@@ -65,21 +70,3 @@
 </div>
 
 </g:form>
-<g:javascript>
-fireWhenReady('editForm',function(){
-    $$('.behavior_delete_show').each(function(e){
-        Event.observe(e,'click',function(evt){
-            evt.stop();
-            $$('.obs_delete_hide').each(Element.hide);
-            $$('.obs_delete_show').each(Element.show);
-        })
-    });
-    $$('.behavior_delete_hide').each(function(e){
-        Event.observe(e,'click',function(evt){
-            evt.stop();
-            $$('.obs_delete_hide').each(Element.show);
-            $$('.obs_delete_show').each(Element.hide);
-        })
-    });
-});
-</g:javascript>

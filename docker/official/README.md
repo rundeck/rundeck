@@ -17,6 +17,14 @@ The simplest way to persist data between container starts/upgrades is to
 utilize named volumes:  
 `$ docker run --name some-rundeck -v data:/home/rundeck/server/data rundeck/rundeck`
 
+## Security
+
+**Environment variables**  
+Locally run jobs run as the `rundeck` user, the same as the server, and may carry the
+environment variables used when starting the server. By default all environment variables
+starting with `RUNDECK_` are unset before starting Rundeck. See `RUNDECK_ENVARS_UNSETALL` and
+`RUNDECK_ENVARS_UNSETS` below for unset options.
+
 ## ssh keys
 
 You can provide private ssh keys by mounting them into `/home/rundeck/.ssh`:  
@@ -87,6 +95,8 @@ See the [Docker Zoo Exhibit](https://github.com/rundeck/docker-zoo/tree/master/c
 
 ## Environment Variables
 
+Not all rundeck configuration listed in the official documentation is available for setup yet. Please take a look at the templates to see all available variables.
+
 ### `JVM_MAX_RAM_FRACTION=1`
 
 The JVM will use `1/x` of the max RAM for heap. For example, a setting of `2` will cause
@@ -102,6 +112,16 @@ to a default for getting started, this should be set manually for more advanced 
 
 Controls the base URL the app will use for links, redirects, etc.
 This is the URL users will use to access the site.
+
+### `RUNDECK_SERVER_CONTEXTPATH=/`
+
+Set to path Rundeck is running under(i.e. `http://localhost/rundeck`). Useful if running Rundeck
+behind a reverse proxy under a path on the hostname.
+
+### `RUNDECK_SERVER_FORWARDED=false`
+
+Set to `true` if running behind a reverse proxy. `X-Forwarded-Proto` header must be set
+if running behind a TLS terminating proxy.
 
 ### `RUNDECK_GRAILS_UPLOAD_MAXSIZE`
 
@@ -182,3 +202,11 @@ Default from address.
 
 ### `RUNDECK_MAIL_PROPS`
 Mail properties that get passed through to Grails. For example, to use StartTLS(required by many servers including AWS SES), `["mail.smtp.starttls.enable":"true","mail.smtp.port":"587"]`.
+
+
+### `RUNDECK_ENVARS_UNSETALL=true`
+Unsets all environment variables starting with `RUNDECK_` before starting Rundeck. Set to `false`
+to utilize the `RUNDECK_ENVARS_UNSETS` option.
+
+### `RUNDECK_ENVARS_UNSETS`
+Set to a space-separated list of environment variables to unset before starting Rundeck.

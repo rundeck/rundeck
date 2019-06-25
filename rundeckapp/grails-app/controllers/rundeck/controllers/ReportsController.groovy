@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
@@ -24,7 +25,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
-import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
@@ -50,11 +50,31 @@ class ReportsController extends ControllerBase{
     def ApiService apiService
     def MetricService metricService
     static allowedMethods = [
-            deleteFilter:'POST',
-            storeFilter:'POST'
+            deleteFilter    : 'POST',
+            storeFilter     : 'POST',
+            saveFilterAjax  : 'POST',
+            deleteFilterAjax: 'POST',
     ]
 
-    public def index (ExecQuery query) {
+    public def index(){
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectResourceAll(
+                        authContext,
+                        AuthorizationUtil.resourceType('event'),
+                        [AuthConstants.ACTION_READ],
+                        params.project
+                ),
+                AuthConstants.ACTION_READ,
+                'Events in project',
+                params.project
+        )) {
+            return
+        }
+    }
+    public def index_old (ExecQuery query) {
         //data binding allows '123' followed by any characters to bind as integer 123, prevent additional chars after the integer value
         if (params.max != null && params.max != query.max.toString()) {
             query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
@@ -296,7 +316,7 @@ class ReportsController extends ControllerBase{
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
-        def results = index(query)
+        def results = index_old(query)
         results.params=params
         return results
     }
@@ -314,7 +334,7 @@ class ReportsController extends ControllerBase{
             response.status=400
             return render(contentType: 'application/json', text:  [errors: query.errors] as JSON)
         }
-        def results = index(query)
+        def results = index_old(query)
         results.reports=results?.reports.collect{
             def map=it.toMap()
             map.duration= (it.dateCompleted ?: new Date()).time - it.dateStarted.time
@@ -353,7 +373,9 @@ class ReportsController extends ControllerBase{
             map.executionString= map.remove('title')
             return map
         }
-        results.params=params
+//        results.params=params
+        results.query=null
+
         render(contentType: 'application/json', text: results as JSON)
     }
 
@@ -400,6 +422,107 @@ class ReportsController extends ControllerBase{
         }
     }
 
+    public def saveFilterAjax(ExecQueryFilterCommand query) {
+        withForm {
+
+            g.refreshFormTokensHeader()
+            if (query.hasErrors()) {
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+
+            def User u = userService.findOrCreateUser(session.user)
+            def ReportFilter filter
+            def boolean saveuser = false
+            if (query.newFilterName && !query.existsFilterName) {
+                if (ReportFilter.findByNameAndUser(query.newFilterName, u)) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'request.error.conflict.already-exists.message',
+                            args  : ["Job Filter", query.newFilterName]
+                    ]
+                    )
+                }
+                filter = ReportFilter.fromQuery(query)
+                filter.name = query.newFilterName
+                filter.user = u
+                if (!filter.validate()) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.invalid.request',
+                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                    ]
+                    )
+                }
+                u.addToReportfilters(filter)
+                saveuser = true
+            } else if (query.existsFilterName) {
+                filter = ReportFilter.findByNameAndUser(query.existsFilterName, u)
+                if (filter) {
+                    filter.properties = query.properties
+//                    filter.fix()
+                }
+            }
+
+            if (!filter.save(flush: true)) {
+                flash.errors = filter.errors
+//                params.saveFilter = true
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            if (saveuser) {
+                if (!u.save(flush: true)) {
+                    return renderErrorView([beanErrors: filter.errors])
+                }
+            }
+
+            render(contentType: 'application/json') {
+                success true
+                filterName query.newFilterName
+            }
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
+    def listFiltersAjax(String project) {
+        if(!project){
+
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.required',
+                    args  : ['project']
+            ]
+            )
+        }
+        def User u = userService.findOrCreateUser(session.user)
+        def filterset = u.reportfilters?.findAll { it.projFilter == project } ?: []
+
+        render(contentType: 'application/json') {
+            success true
+            filters filterset*.toMap()
+        }
+    }
+
+
     def deleteFilter(){
         withForm{
             def User u = userService.findOrCreateUser(session.user)
@@ -416,6 +539,40 @@ class ReportsController extends ControllerBase{
                     controller: 'reports',
                     action: 'index',
                     params: [filterName: params.delFilterName, project: params.project]
+            )
+        }
+    }
+
+    def deleteFilterAjax(String project) {
+        withForm {
+            g.refreshFormTokensHeader()
+
+            if(!params.delFilterName){
+
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.parameter.required',
+                        args  : ['delFilterName']
+                ]
+                )
+            }
+            def User u = userService.findOrCreateUser(session.user)
+            def filtername = params.delFilterName
+            final def ffilter = ReportFilter.findByNameAndUserAndProjFilter(filtername, u, project)
+            if (ffilter) {
+                ffilter.delete(flush: true)
+            }
+
+            render(contentType: 'application/json') {
+                success true
+            }
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
             )
         }
     }

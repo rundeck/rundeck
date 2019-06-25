@@ -1,6 +1,9 @@
 package rundeckapp
 
 import com.codahale.metrics.MetricRegistry
+import com.codahale.metrics.health.HealthCheck
+import com.codahale.metrics.health.HealthCheckRegistry
+import com.dtolabs.launcher.Setup
 
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
@@ -17,9 +20,6 @@ import com.codahale.metrics.MetricRegistry
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import com.codahale.metrics.health.HealthCheck
-import com.codahale.metrics.health.HealthCheckRegistry
-import com.dtolabs.launcher.Setup
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
@@ -274,9 +274,13 @@ class BootStrap {
              authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
          }
 
+         if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled
+            || grailsApplication.config.grails.plugin.springsecurity.useX509 in [true,'true']){
+             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
+         }
+
          if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled){
              SpringSecurityUtils.clientRegisterFilter("rundeckPreauthFilter", SecurityFilterPosition.PRE_AUTH_FILTER.order - 10)
-             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
              log.info("Preauthentication is enabled")
          } else {
              log.info("Preauthentication is disabled")
@@ -329,6 +333,12 @@ class BootStrap {
          maxLastLines = maxLastLines instanceof String ? maxLastLines.toInteger() : maxLastLines
          if(!maxLastLines || !(maxLastLines instanceof Integer) || maxLastLines < 1){
              grailsApplication.config.rundeck.gui.execution.tail.lines.max = 500
+         }
+         if(grailsApplication.config.rundeck.feature.cleanExecutionsHistoryJob.enabled){
+             log.warn("Feature 'cleanExecutionHistoryJob' is enabled")
+            frameworkService.rescheduleAllCleanerExecutionsJob()
+         } else {
+             log.info("Feature 'cleanExecutionHistoryJob' is disabled")
          }
          healthCheckRegistry?.register("quartz.scheduler.threadPool",new HealthCheck() {
              @Override

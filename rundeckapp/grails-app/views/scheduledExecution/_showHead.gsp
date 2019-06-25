@@ -17,6 +17,11 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
 
 <div class="jobInfoSection">
+    <g:if test="${scheduledExecution.groupPath}">
+        <section class="text-secondary">
+            <g:render template="/scheduledExecution/groupBreadcrumbs" model="[groupPath:scheduledExecution.groupPath,project:scheduledExecution.project, linkCss:'text-secondary']"/>
+        </section>
+    </g:if>
   <section class="${scheduledExecution.groupPath?'section-space':''}" id="jobInfo_">
     <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
             context: 'application',
@@ -35,7 +40,12 @@
     <g:set var="exportStatus" value="${authProjectExport && scmExportEnabled ? scmExportStatus?.get(scheduledExecution.extid) :null}"/>
     <g:set var="importStatus" value="${authProjectImport && scmImportEnabled ? scmImportStatus?.get(scheduledExecution.extid):null}"/>
 
-      <h3 class="card-title">
+      <span class="${linkCss ?: 'card-title h3'}">
+      <g:if test="${includeExecStatus}">
+          <b class="exec-status icon "
+             data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
+          </b>
+      </g:if>
         <g:link controller="scheduledExecution" action="${jobAction?:'show'}"
             class="text-primary"
             params="[project: scheduledExecution.project]"
@@ -44,11 +54,12 @@
             <g:enc>${scheduledExecution?.jobName}</g:enc>
         </g:link>
         <g:if test="${jobActionButtons}">
-          <div class="" style="position:absolute; top: 0; right: 0;">
-            <g:render template="/scheduledExecution/jobActionButton" model="[scheduledExecution:scheduledExecution]"/>
+            <div class="job-action-button">
+                <g:render template="/scheduledExecution/jobActionButton"
+                          model="[scheduledExecution: scheduledExecution, hideTitle: true, btnClass: 'btn btn-secondary btn-sm']"/>
           </div>
         </g:if>
-      </h3>
+      </span>
       <g:render template="/scm/statusBadge"
                 model="[
                         showClean:true,
@@ -64,6 +75,13 @@
                         importCommit  : importStatus?.commit,
                 ]"/>
 
+      <g:if test="${ !scheduledExecution.hasExecutionEnabled()}">
+          <span class=" label label-warning has_tooltip" data-toggle="tooltip"
+                data-placement="auto bottom" title="${message(code:'scheduleExecution.execution.disabled')}">
+              <i class="glyphicon ${scheduledExecution.scheduled?'glyphicon-time':'glyphicon-ban-circle'}"></i>
+              <span class="detail"><g:message code="disabled" /></span>
+          </span>
+      </g:if>
       <g:if test="${scheduledExecution.scheduled && nextExecution}">
           <span class="scheduletime">
               <g:if test="${serverNodeUUID && !remoteClusterNodeUUID}">
@@ -84,22 +102,33 @@
               </span>
               <g:if test="${remoteClusterNodeUUID}">
                   on
-                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}" class="rundeck-server-uuid text-primary">
+                  <span data-server-uuid="${remoteClusterNodeUUID}" data-server-name="${remoteClusterNodeUUID}"
+                        data-name-truncated="8"
+                        data-uuid-label-none="true"
+                        class="rundeck-server-uuid text-secondary">
+                      <i class="fas fa-dot-circle text-muted cluster-status-icon"></i>
                   </span>
               </g:if>
           </span>
       </g:if>
       <g:elseif test="${scheduledExecution.scheduled && !g.executionMode(is:'active',project:scheduledExecution.project)}">
-          <span class="scheduletime disabled has_tooltip" data-toggle="tooltip"
-              data-placement="auto left"
+          <span class="label label-secondary has_tooltip" data-toggle="tooltip"
+              data-placement="auto bottom"
                 title="${g.message(code: 'disabled.schedule.run')}">
               <i class="glyphicon glyphicon-time"></i>
               <span class="detail"><g:message code="disabled.schedule.run" /></span>
           </span>
       </g:elseif>
-      <g:elseif test="${scheduledExecution.scheduled && !nextExecution}">
-          <span class="scheduletime willnotrun has_tooltip" data-toggle="tooltip"
-              data-placement="auto left"
+      <g:elseif test="${scheduledExecution.scheduled && !scheduledExecution.hasScheduleEnabled()}">
+          <span class=" label label-muted has_tooltip" data-toggle="tooltip"
+                data-placement="auto bottom" title="${message(code:'scheduleExecution.schedule.disabled')}">
+              <i class="glyphicon glyphicon-time"></i>
+              <span class="detail"><g:message code="disabled" /></span>
+          </span>
+      </g:elseif>
+      <g:elseif test="${scheduledExecution.scheduled && scheduledExecution.shouldScheduleExecution() && !nextExecution}">
+          <span class="label label-warning  has_tooltip" data-toggle="tooltip"
+              data-placement="auto bottom"
                 title="${g.message(code: 'job.schedule.will.never.fire')}">
               <i class="glyphicon glyphicon-time"></i>
               <span class="detail"><g:message code="never" /></span>
@@ -107,30 +136,8 @@
       </g:elseif>
 
   </section>
-<g:if test="${scheduledExecution.groupPath}">
-    <section>
-        <g:set var="parts" value="${scheduledExecution.groupPath.split('/')}"/>
-        <g:each in="${parts}" var="part" status="i">
-            <g:if test="${i != 0}">/</g:if>
-            <g:set var="subgroup" value="${parts[0..i].join('/')}"/>
-            <g:if test="${groupBreadcrumbMode!='static'}">
-            <g:link controller="menu"
-                    action="jobs"
-                    class="secondary"
-                    params="${[groupPath: subgroup, project: scheduledExecution.project]}"
-                    title="${'View ' + g.message(code: 'domain.ScheduledExecution.title') + 's in this group'}"
-                    absolute="${absolute ? 'true' : 'false'}">
-                <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
-                <g:enc>${part}</g:enc></g:link>
-            </g:if>
-            <g:if test="${groupBreadcrumbMode=='static'}">
-                <g:if test="${i==0}"><g:if test="${!noimgs}"><b class="glyphicon glyphicon-folder-close"></b></g:if></g:if>
-                <g:enc>${part}</g:enc>
-            </g:if>
-        </g:each>
-    </section>
-</g:if>
-<section class="section-space">
+
+    <section class="section-space">
         <g:render template="/scheduledExecution/description"
                   model="[
                           description : scheduledExecution.description,

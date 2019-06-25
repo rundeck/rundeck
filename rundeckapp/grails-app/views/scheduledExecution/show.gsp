@@ -14,61 +14,67 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants; grails.util.Environment" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
+    <meta name="skipPrototypeJs" content="true"/>
+
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
-    <asset:javascript src="prototype/effects"/>
-    <asset:javascript src="menu/joboptions.js"/>
-    <asset:javascript src="menu/jobs.js"/>
+
+
+    <asset:javascript src="scheduledExecution/show.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
+    <asset:javascript src="util/tab-router.js"/>
+
+    <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
+    <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
+    <g:jsMessages code="search.ellipsis
+jobquery.title.titleFilter
+jobquery.title.jobFilter
+jobquery.title.jobIdFilter
+jobquery.title.userFilter
+jobquery.title.statFilter
+jobquery.title.filter
+jobquery.title.recentFilter
+jobquery.title.startbeforeFilter
+jobquery.title.startafterFilter
+jobquery.title.endbeforeFilter
+jobquery.title.endafterFilter
+saved.filters
+search
+"/>
     <g:embedJSON id="jobParams"
                  data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
                          ?:
                          request.project]}"/>
     <g:embedJSON id="jobDetail"
                  data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
-                          project: params.project ?: request.project]}"/>
+                          project: params.project ?:
+                                   request.project, scheduled: scheduledExecution?.scheduled, scheduleEnabled: scheduledExecution?.
+                         hasScheduleEnabled(), executionEnabled: scheduledExecution?.hasExecutionEnabled()]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <script type="text/javascript">
-        var pagehistory;
         var joboptions;
         var remotecontroller;
-        function loadTab(anchor) {
-            "use strict";
-            var tabs = jQuery('#jobtabs').find('a[data-toggle="tab"]').map(function (i, e) {
-                return jQuery(e).attr('href');
-            }).get();
-            if (tabs.indexOf(anchor)>=0) {
-                jQuery('a[href="' + anchor + '"]').tab('show');
-            }
-        }
+
         function init() {
             "use strict";
             var params = loadJsonData('jobParams');
             var jobNodeFilters = initJobNodeFilters(params);
-            var elementById = document.getElementById('definition');
-            if(elementById){
-                ko.applyBindings(jobNodeFilters, elementById);
-            }
 
-            pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-            ko.applyBindings(pagehistory, document.getElementById('activity_section'));
-            setupActivityLinks('activity_section', pagehistory);
+
 
             //setup option edit
             var joboptiondata = loadJsonData('jobOptionData');
             joboptions = new JobOptions(joboptiondata);
 
-            if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
-            }
+
 
 
             var remoteoptionloader = new RemoteOptionLoader({
@@ -87,24 +93,75 @@
                 return noenter(evt);
             });
 
-            loadTab(document.location.hash);
-            jQuery(window).on('hashchange', function () {
-                loadTab(document.location.hash);
-            });
-            jQuery(window).on('show.bs.tab', function (e) {
-                var t = jQuery(e.target);
-                if (t.attr('href').startsWith('#')) {
-                    document.location.hash = t.attr('href');
-                }
-            });
+            setupTabRouter('#jobtabs');
 
             PageActionHandlers.registerHandler('copy_other_project',function(el){
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+
+            initKoBind(null,
+                {
+                    jobNodeFilters: jobNodeFilters,
+                    joboptions: joboptions,
+                },
+                // 'job/show'
+            )
         }
         jQuery(init);
     </script>
+    <g:set var="projectName" value="${scheduledExecution.project}"/>
+    <g:set var="projAdminAuth" value="${auth.resourceAllowedTest(
+            context: 'application', type: 'project', name: projectName, action: AuthConstants.ACTION_ADMIN)}"/>
+    <g:set var="deleteExecAuth" value="${auth.resourceAllowedTest(context: 'application', type: 'project', name:
+            projectName, action: AuthConstants.ACTION_DELETE_EXECUTION) || projAdminAuth}"/>
+    <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
+    <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
+    <g:embedJSON id="authJson"
+                 data="${[
+                         projectAdmin: projAdminAuth,
+                         deleteExec  : deleteExecAuth,
+                         jobRun      : runAccess,
+                         jobRead     : readAccess
+                 ]}"/>
+
+
+    <g:javascript>
+    window._rundeck = Object.assign(window._rundeck || {}, {
+        data:{
+            projectAdminAuth:${enc(js:projAdminAuth)},
+            deleteExecAuth:${enc(js:deleteExecAuth)},
+            jobslistDateFormatMoment:"${enc(js:g.message(code:'jobslist.date.format.ko'))}",
+            runningDateFormatMoment:"${enc(js:g.message(code:'jobslist.running.format.ko'))}",
+            activityUrl: appLinks.reportsEventsAjax,
+            nowrunningUrl: "${createLink(uri:"/api/${com.dtolabs.rundeck.app.api.ApiVersions.API_CURRENT_VERSION}/project/${projectName}/executions/running")}",
+            bulkDeleteUrl: appLinks.apiExecutionsBulkDelete,
+            activityPageHref:"${enc(js:createLink(controller:'reports',action:'index',params:[project:projectName]))}",
+            sinceUpdatedUrl:"${enc(js:g.createLink(controller:'reports',action: 'since.json', params: [project:projectName]))}",
+            filterListUrl:"${enc(js:g.createLink(controller:'reports',action: 'listFiltersAjax', params: [project:projectName]))}",
+            filterSaveUrl:"${enc(js:g.createLink(controller:'reports',action: 'saveFilterAjax', params: [project:projectName]))}",
+            filterDeleteUrl:"${enc(js:g.createLink(controller:'reports',action: 'deleteFilterAjax', params: [project:projectName]))}",
+            autorefreshms:30000,
+            pagination:{
+                max: ${enc(js:params.max?params.int('max',10):10)}
+            },
+            query:{
+                jobIdFilter:"${enc(js:scheduledExecution.extid)}"
+            },
+            filterOpts: {
+                showFilter: false,
+                showRecentFilter: true,
+                showSavedFilter: false
+            },
+            runningOpts: {
+                loadRunning: true,
+                autorefresh:true,
+                allowAutoRefresh: true
+            }
+    }
+})
+    </g:javascript>
+    <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
 </head>
 
 <body>

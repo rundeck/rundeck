@@ -86,16 +86,16 @@ jobs:
     - script_block 'sync-artifacts' fetch_common_artifacts
     - script_block 'api-test' 'bash test/run-docker-tomcat-tests.sh 7-jre8'
 
-  - stage: test
-    env: JOB='Test deb install'
-    script:
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+  # - stage: test
+  #   env: JOB='Test deb install'
+  #   script:
+  #   - script_block 'sync-artifacts' fetch_common_artifacts
+  #   - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
   
-  - env: JOB='Test rpm install'
-    script:
-    - script_block 'sync-artifacts' fetch_common_artifacts
-    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
+  # - env: JOB='Test rpm install'
+  #   script:
+  #   - script_block 'sync-artifacts' fetch_common_artifacts
+  #   - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
 
   - env: JOB='Docker tests'
     script:
@@ -133,10 +133,10 @@ jobs:
     - script_block 'docker.pull' pull_rdtest
     - script_block 'docker-pam-test' 'bash test/run-docker-pam-tests.sh'
 
-  - env: JOB='Docker Selenium tests'
-    script:
-    - script_block 'docker.pull' pull_rundeck
-    - script_block 'selenium' 'bash test/selenium/travis.sh'
+  # - env: JOB='Docker Selenium tests'
+  #   script:
+  #   - script_block 'docker.pull' pull_rundeck
+  #   - script_block 'selenium' 'bash test/selenium/travis.sh'
 
   # # Stage: snapshot release publishes snapshot artifacts to external repositories
   - stage: snapshot release
@@ -147,12 +147,12 @@ jobs:
     - script_block 'sync.commit' sync_commit_to_s3
     - export VCS_URL=https://github.com/rundeck/rundeck.git
     # Delete existing packages
-    - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck  dev-deb rundeck'
-    - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck'
+    # - script_block 'delete.deb' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck  dev-deb rundeck'
+    # - script_block 'delete.rpm-rundeck' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck'
     - script_block 'delete.mavan-rpm-config' 'bash scripts/delete-bintray-package.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm rundeck-config'
     # Deploy new snapshot packages
-    - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-deb'
-    - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm'
+    # - script_block 'publish.deb' 'bash scripts/deploy-deb-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-deb'
+    # - script_block 'publish.rpm' 'bash scripts/deploy-rpm-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-rpm'
     - script_block 'publish.maven' 'bash scripts/deploy-maven-snapshots.sh "${BINTRAY_USER}" "${BINTRAY_API_KEY}" rundeck dev-maven "${RUNDECK_BUILD_NUMBER}"'
     # Seal artifacts
     - script_block 'seal-artifacts' seal_artifacts
@@ -178,8 +178,8 @@ jobs:
   - stage: fork
     script:
     - script_block 'build' 'bash scripts/travis-build.sh buildFork'
-    - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
-    - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
+    # - script_block 'deb-test' 'bash test/test-docker-install-deb.sh'
+    # - script_block 'rpm-test' 'bash test/test-docker-install-rpm.sh'
     - script_block 'api-test' 'DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash test/run-docker-api-tests.sh'
     - script_block 'docker-test' 'bash test/run-docker-tests.sh'
     - script_block 'docker-ssl-test' 'bash test/run-docker-ssl-tests.sh'

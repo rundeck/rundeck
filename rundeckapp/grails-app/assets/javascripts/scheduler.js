@@ -1,4 +1,4 @@
-//= require moment.min
+//= require momentutil
 //= require bootstrap-datetimepicker.min
 
 /*
@@ -107,7 +107,11 @@ function onSchedulerPopover() {
 
 // Initialise the popover for scheduling
 jQuery(document).ready(function() {
-    jQuery('#showScheduler').popover({
-        html: true
-    }).on('shown.bs.popover', onSchedulerPopover);
+    jQuery('#scheduleSubmitButton').click(onScheduleSubmit);
+    jQuery('#datetimepicker').datetimepicker({
+        format: 'ddd, MMM D YYYY, HH:mm',
+        minDate: moment(),
+        inline: true,
+        sideBySide: true
+    }).on('dp.change',onDateChanged);
 });

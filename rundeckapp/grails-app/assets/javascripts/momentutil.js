@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-//= require moment.min
+//= require moment-with-locales
+//= require moment-timezone-with-data-10-year-range
 
  var MomentUtil =(function(){
      return {
@@ -48,6 +49,9 @@
         }
         var now = moment();
         var ms = now.diff(time);
+        if(ms < 0 ){
+            ms = -ms
+        }
         var since = moment.duration(ms);
         if (since.asDays() < 1 && now.month() == time.month()) {
             //same date

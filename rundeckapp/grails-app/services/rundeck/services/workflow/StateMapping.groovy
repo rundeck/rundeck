@@ -176,7 +176,7 @@ class StateMapping {
         steps.each{step->
             def stepStateForCtx = stepStateForCtx(map, StateUtils.stepIdentifierFromString(step.stepctx),node)
             if(stepStateForCtx) {
-                def found = stepStateForCtx.nodeStates?.get(node)
+                def found = stepStateForCtx.nodeStates?.containsKey(node) ? stepStateForCtx.nodeStates?.get(node) : null
                 if (found) {
                     def newfound=new HashMap(found)
                     newfound.stepctx = step.stepctx
@@ -324,14 +324,14 @@ class StateMapping {
         if (!date) {
             return null;
         }
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
         sdf.format(date)
     }
 
     static Date decodeDate(String date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-        sdf.setTimeZone(TimeZone.getDefault());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
         sdf.parse(date)
     }
 

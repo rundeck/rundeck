@@ -1,6 +1,6 @@
 log4j.appender.stdout=org.apache.log4j.ConsoleAppender
 log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
-log4j.appender.stdout.layout.ConversionPattern=%d{ISO8601} %-5p %c{1} - %m%n
+log4j.appender.stdout.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n
 # Enable logging for everything. Rarely useful
 log4j.rootLogger=warn, stdout, file
 
@@ -72,7 +72,7 @@ log4j.appender.file.file=${rundeck.log.dir}${file.separator}rundeck.log
 log4j.appender.file.datePattern='.'yyyy-MM-dd
 log4j.appender.file.append=true
 log4j.appender.file.layout=org.apache.log4j.PatternLayout
-log4j.appender.file.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
+log4j.appender.file.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} [%t] - %m%n
 
 
 #log4j.logger.org.codehaus.groovy.grails.plugins.quartz=debug,stdout
@@ -85,7 +85,7 @@ log4j.appender.audit=org.apache.log4j.DailyRollingFileAppender
 log4j.appender.audit.file=${rundeck.log.dir}${file.separator}rundeck.audit.log
 log4j.appender.audit.append=true
 log4j.appender.audit.layout=org.apache.log4j.PatternLayout
-log4j.appender.audit.layout.ConversionPattern=%d{ISO8601} - %m%n
+log4j.appender.audit.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n
 
 
 #
@@ -163,4 +163,4 @@ log4j.appender.project=org.apache.log4j.DailyRollingFileAppender
 log4j.appender.project.file=${rundeck.log.dir}${file.separator}rundeck.project.log
 log4j.appender.project.append=true
 log4j.appender.project.layout=org.apache.log4j.PatternLayout
-log4j.appender.project.layout.ConversionPattern=%d{ISO8601} - %m%n
+log4j.appender.project.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n

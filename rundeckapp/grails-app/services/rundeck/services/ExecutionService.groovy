@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -58,6 +59,8 @@ import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
+import org.hibernate.criterion.CriteriaSpecification
+import org.hibernate.type.StandardBasicTypes
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
@@ -79,6 +82,7 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.nio.charset.Charset
+import java.sql.Time
 import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
@@ -86,6 +90,7 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
+import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -363,6 +368,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Date nowDate = new Date()
 
         def allProjectsQuery=query.projFilter=='*';
+        def multiProjectsQuery = query.projFilter?.indexOf(',') > 0
 
         def crit = Execution.createCriteria()
         def runlist = crit.list{
@@ -384,9 +390,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 if(!allProjectsQuery){
-                    eqfilters.each{ key,val ->
-                        if(query["${key}Filter"]){
-                            eq(val,query["${key}Filter"])
+
+                    eqfilters.each { filtPrefix, fieldName ->
+                        if (query["${filtPrefix}Filter"]) {
+                            if (!multiProjectsQuery) {
+                                eq(fieldName, query["${filtPrefix}Filter"])
+                            } else {
+                                or {
+                                    query["${filtPrefix}Filter"].split(/,/).each { xval ->
+                                        eq(fieldName, xval.trim())
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -450,7 +465,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 //                }else if (query.dostartafterFilter && query.startafterFilter ){
 //                    ge('dateStarted',query.startafterFilter)
 //                }
-                
+
 //                if(query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter){
 //                    between('dateCompleted',query.endafterFilter,query.endbeforeFilter)
 //                }
@@ -503,9 +518,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
                  if(!allProjectsQuery){
-                     eqfilters.each{ key,val ->
-                         if(query["${key}Filter"]){
-                             eq(val,query["${key}Filter"])
+                     eqfilters.each { filtPrefix, fieldName ->
+                         if (query["${filtPrefix}Filter"]) {
+                             if (!multiProjectsQuery) {
+                                 eq(fieldName, query["${filtPrefix}Filter"])
+                             } else {
+                                 or {
+                                     query["${filtPrefix}Filter"].split(/,/).each { xval ->
+                                         eq(fieldName, xval.trim())
+                                     }
+                                 }
+                             }
                          }
                      }
                  }
@@ -668,7 +691,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
     * Return a dataset: [nowrunning: (list of Execution), jobs: [map of id->ScheduledExecution for scheduled jobs],
-     *  total: total number of running executions, max: input max] 
+     *  total: total number of running executions, max: input max]
      */
     def listNowRunning(Framework framework, int max=10){
         //find currently running executions
@@ -1002,13 +1025,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             // debug output)
             def rootoverride = new OverridableStreamingLogWriter(loghandler)
 
+            def globalConfig = getGlobalPluginConfigurations(execution.project)
+
             def rootLogManager = new LoggingManagerImpl(
                     rootoverride,
                     directLogger,
                     logFilterPluginLoader,
-                    //TODO:  global/project filter plugins
-                    [
-                    ]
+                    globalConfig
             )
 
 
@@ -1027,8 +1050,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
                                     execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
-                            ) :
-                            []
+                            ) + globalConfig :
+                            globalConfig
             )
 
 
@@ -1446,7 +1469,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != extraParams) {
             privatecontext.put("option", extraParams)
         }
-        
+
         def OrchestratorConfig orchestrator
         if(execMap.orchestrator){
             orchestrator = new OrchestratorConfig(execMap.orchestrator.type, execMap.orchestrator.configuration);
@@ -1865,12 +1888,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             execution.userRoles = params.userRoles
 
-            
+
             //parse options
             if(!execution.loglevel){
                 execution.loglevel=defaultLogLevel
             }
-                
+
         } else {
             throw new IllegalArgumentException("insufficient params to create a new Execution instance: " + params)
         }
@@ -2223,11 +2246,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
                 def nset = filtersAsNodeSet(filterprops)
                 input.filter = NodeSet.generateFilter(nset)
+                input.filterExclude=""
                 input.doNodedispatch=true
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -2594,14 +2618,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (opt.enforced && opt.values && optparams[opt.name]) {
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
+                        }
+                    }
+                    if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
                             val = [optparams[opt.name]].flatten();
                         } else {
                             val = optparams[opt.name].toString().split(Pattern.quote(opt.delimiter))
                         }
-                        if (!opt.values.containsAll(val.grep { it })) {
+                        if (!opt.optionValues.containsAll(val.grep { it })) {
                             invalidOpt opt,lookupMessage("domain.Option.validation.allowed.values",[opt.name,optparams[opt.name],opt.values])
                             return
                         }
@@ -2616,10 +2646,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
-                    if (opt.enforced && opt.values &&
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values
+                        }
+                    }
+                    if (opt.enforced && opt.optionValues &&
                             optparams[opt.name] &&
                             optparams[opt.name] instanceof String &&
-                            !opt.values.contains(optparams[opt.name])) {
+                            !opt.optionValues.contains(optparams[opt.name])) {
                         invalidOpt opt,  opt.secureInput ?
                                 lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
                                 : lookupMessage("domain.Option.validation.allowed.invalid",[opt.name,optparams[opt.name],opt.values])
@@ -2824,6 +2860,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
+                    scheduledExecution.serverNodeUUID = scheduledExecutionService.nextExecNode(scheduledExecution)
                     if (scheduledExecution.save(flush: true)) {
                         log.info("updated scheduled Execution nextExecution")
                     } else {
@@ -3435,7 +3472,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                   throw new StepException(msg, JobReferenceFailureReason.NotFound)
                 }
             }
-                                 
+
             if (!schedlist || 1 != schedlist.size()) {
                 def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
                 executionContext.getExecutionListener().log(0, msg)
@@ -3449,7 +3486,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 executionContext.getExecutionListener().log(0, msg)
                 throw new StepException(msg, JobReferenceFailureReason.NotFound)
             }
-            
+
             def enableSe = true
             se = ScheduledExecution.get(id)
             enableSe = se.executionEnabled
@@ -3678,292 +3715,136 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     /**
      * Query executions
-     * @param query query
+     * @param criteriaClosure criteriaClos
      * @param offset paging offset
      * @param max paging max
      * @return result map [total: int, result: List<Execution>]
      */
-    def queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
-        def state = query.statusFilter
-        def txtfilters = ScheduledExecutionQuery.TEXT_FILTERS
-        def eqfilters = ScheduledExecutionQuery.EQ_FILTERS
-        def boolfilters = ScheduledExecutionQuery.BOOL_FILTERS
-        def filters = ScheduledExecutionQuery.ALL_FILTERS
-        def excludeTxtFilters = ['excludeJob': 'jobName']
-        def excludeEqFilters = ['excludeJobExact': 'jobName']
-
-        def jobqueryfilters = ['jobListFilter', 'jobIdListFilter', 'excludeJobListFilter', 'excludeJobIdListFilter', 'jobFilter', 'jobExactFilter', 'groupPath', 'groupPathExact', 'descFilter', 'excludeGroupPath', 'excludeGroupPathExact', 'excludeJobFilter', 'excludeJobExactFilter']
-
-        def convertids = { String s ->
-            try {
-                return Long.valueOf(s)
-            } catch (NumberFormatException e) {
-                return s
-            }
-        }
-        def idlist = query.jobIdListFilter?.collect(convertids)
-        def xidlist = query.excludeJobIdListFilter?.collect(convertids)
-
-        def hasJobFilters = jobqueryfilters.any { query[it] }
-        if (hasJobFilters && query.adhoc) {
-            flash.errorCode = "api.error.parameter.error"
-            flash.errorArgs = [message(code: 'api.executions.jobfilter.adhoc.conflict')]
-            return chain(controller: 'api', action: 'renderError')
-        }
-        def criteriaClos = { isCount ->
-            if (query.adhoc) {
-                isNull('scheduledExecution')
-            } else if (null != query.adhoc || hasJobFilters) {
-                isNotNull('scheduledExecution')
-            }
-            if (!query.adhoc && hasJobFilters) {
-                delegate.'scheduledExecution' {
-                    //begin related ScheduledExecution query
-                    if (idlist) {
-                        def idq = {
-                            idlist.each { theid ->
-                                if (theid instanceof Long) {
-                                    eq("id", theid)
-                                } else {
-                                    eq("uuid", theid)
-                                }
-                            }
-                        }
-                        if (idlist.size() > 1) {
-
-                            or {
-                                idq.delegate = delegate
-                                idq()
-                            }
-                        } else {
-                            idq.delegate = delegate
-                            idq()
-                        }
-                    }
-                    if (xidlist) {
-                        not {
-                            xidlist.each { theid ->
-                                if (theid instanceof Long) {
-                                    eq("id", theid)
-                                } else {
-                                    eq("uuid", theid)
-                                }
-                            }
-                        }
-                    }
-                    if (query.jobListFilter || query.excludeJobListFilter) {
-                        if (query.jobListFilter) {
-                            or {
-                                query.jobListFilter.each {
-                                    def z = it.split("/") as List
-                                    if (z.size() > 1) {
-                                        and {
-                                            eq('jobName', z.pop())
-                                            eq('groupPath', z.join("/"))
-                                        }
-                                    } else {
-                                        and {
-                                            eq('jobName', z.pop())
-                                            or {
-                                                eq('groupPath', "")
-                                                isNull('groupPath')
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        if (query.excludeJobListFilter) {
-                            not {
-                                or {
-                                    query.excludeJobListFilter.each {
-                                        def z = it.split("/") as List
-                                        if (z.size() > 1) {
-                                            and {
-                                                eq('jobName', z.pop())
-                                                eq('groupPath', z.join("/"))
-                                            }
-                                        } else {
-                                            and {
-                                                eq('jobName', z.pop())
-                                                or {
-                                                    eq('groupPath', "")
-                                                    isNull('groupPath')
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-
-                    txtfilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            ilike(val, '%' + query["${key}Filter"] + '%')
-                        }
-                    }
-
-                    eqfilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            eq(val, query["${key}Filter"])
-                        }
-                    }
-                    boolfilters.each { key, val ->
-                        if (null != query["${key}Filter"]) {
-                            eq(val, query["${key}Filter"])
-                        }
-                    }
-                    excludeTxtFilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            not {
-                                ilike(val, '%' + query["${key}Filter"] + '%')
-                            }
-                        }
-                    }
-                    excludeEqFilters.each { key, val ->
-                        if (query["${key}Filter"]) {
-                            not {
-                                eq(val, query["${key}Filter"])
-                            }
-                        }
-                    }
-
-
-                    if ('-' == query['groupPath']) {
-                        or {
-                            eq("groupPath", "")
-                            isNull("groupPath")
-                        }
-                    } else if (query["groupPath"] && '*' != query["groupPath"]) {
-                        or {
-                            like("groupPath", query["groupPath"] + "/%")
-                            eq("groupPath", query['groupPath'])
-                        }
-                    }
-                    if ('-' == query['excludeGroupPath']) {
-                        not {
-                            or {
-                                eq("groupPath", "")
-                                isNull("groupPath")
-                            }
-                        }
-                    } else if (query["excludeGroupPath"]) {
-                        not {
-                            or {
-                                like("groupPath", query["excludeGroupPath"] + "/%")
-                                eq("groupPath", query['excludeGroupPath'])
-                            }
-                        }
-                    }
-                    if (query["groupPathExact"]) {
-                        if ("-" == query["groupPathExact"]) {
-                            or {
-                                eq("groupPath", "")
-                                isNull("groupPath")
-                            }
-                        } else {
-                            eq("groupPath", query['groupPathExact'])
-                        }
-                    }
-                    if (query["excludeGroupPathExact"]) {
-                        if ("-" == query["excludeGroupPathExact"]) {
-                            not {
-                                or {
-                                    eq("groupPath", "")
-                                    isNull("groupPath")
-                                }
-                            }
-                        } else {
-                            or {
-                                ne("groupPath", query['excludeGroupPathExact'])
-                                isNull("groupPath")
-                            }
-                        }
-                    }
-
-                    //end related ScheduledExecution query
-                }
-            }
-            if(query.projFilter) {
-                eq('project', query.projFilter)
-            }
-            if (query.userFilter) {
-                eq('user', query.userFilter)
-            }
-            if (state == EXECUTION_RUNNING) {
-                isNull('dateCompleted')
-            } else if (state == EXECUTION_SCHEDULED) {
-                eq('status', EXECUTION_SCHEDULED)
-            } else if (state == EXECUTION_ABORTED) {
-                isNotNull('dateCompleted')
-                eq('cancelled', true)
-            } else if (state == EXECUTION_TIMEDOUT) {
-                isNotNull('dateCompleted')
-                eq('timedOut', true)
-            }else if (state == EXECUTION_FAILED_WITH_RETRY) {
-                isNotNull('dateCompleted')
-                eq('willRetry', true)
-            } else if(state == EXECUTION_FAILED){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                or{
-                    eq('status',  'failed')
-                    eq('status',  'false')
-                }
-            }else if(state == EXECUTION_SUCCEEDED){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                or{
-                    eq('status',  'true')
-                    eq('status',  'succeeded')
-                }
-            }else if(state){
-                isNotNull('dateCompleted')
-                eq('cancelled', false)
-                eq('status',  state)
-            }
-            if (query.executionTypeFilter) {
-                eq('executionType', query.executionTypeFilter)
-            }
-            if (query.abortedbyFilter) {
-                eq('abortedby', query.abortedbyFilter)
-            }
-            if (query.dostartafterFilter && query.dostartbeforeFilter && query.startbeforeFilter && query.startafterFilter) {
-                between('dateStarted', query.startafterFilter, query.startbeforeFilter)
-            } else if (query.dostartbeforeFilter && query.startbeforeFilter) {
-                le('dateStarted', query.startbeforeFilter)
-            } else if (query.dostartafterFilter && query.startafterFilter) {
-                ge('dateStarted', query.startafterFilter)
-            }
-
-            if (query.doendafterFilter && query.doendbeforeFilter && query.endafterFilter && query.endbeforeFilter) {
-                between('dateCompleted', query.endafterFilter, query.endbeforeFilter)
-            } else if (query.doendbeforeFilter && query.endbeforeFilter) {
-                le('dateCompleted', query.endbeforeFilter)
-            }
-            if (query.doendafterFilter && query.endafterFilter) {
-                ge('dateCompleted', query.endafterFilter)
-            }
-
-            if (!isCount) {
-                if (offset) {
-                    firstResult(offset)
-                }
-                if (max && max>0) {
-                    maxResults(max)
-                }
-                and {
-                    order('dateCompleted', 'desc')
-                    order('dateStarted', 'desc')
-                }
-            }
-        }
+    def queryExecutions(Closure criteriaClos){
         def result = Execution.createCriteria().list(criteriaClos.curry(false))
         def total = Execution.createCriteria().count(criteriaClos.curry(true))
         return [result:result,total:total]
     }
+
+  /**
+   * Query executions
+   * @param query query
+   * @param offset paging offset
+   * @param max paging max
+   * @return result map [total: int, result: List<Execution>]
+   */
+  def queryExecutions(ExecutionQuery query, int offset = 0, int max = -1) {
+    def criteriaClos = { isCount ->
+
+      // Run main query criteria
+      def queryCriteria = query.createCriteria(delegate)
+      queryCriteria()
+
+      if (!isCount) {
+        if (offset) {
+          firstResult(offset)
+        }
+        if (max && max > 0) {
+          maxResults(max)
+        }
+        and {
+          order('dateCompleted', 'desc')
+          order('dateStarted', 'desc')
+        }
+      }
+    }
+    def result = Execution.createCriteria().list(criteriaClos.curry(false))
+    def total = Execution.createCriteria().count(criteriaClos.curry(true))
+    return [result: result, total: total]
+  }
+
+
+  /**
+     * Return statistics over a Query resultset.
+     * @param query query
+     * @return result map [total: long, duration: Map[average: double, max: long, min: long]]
+     */
+    def queryExecutionMetrics(ExecutionQuery query) {
+
+        // Prepare Query Criteria
+
+        def metricCriteria = {
+
+            // Run main query criteria
+            def baseQueryCriteria = query.createCriteria(delegate)
+            baseQueryCriteria()
+
+            resultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+            projections {
+
+                /* Group by Calculated Status */
+//                groupProperty("state") // state field added as formula on Execution.groovy
+//                property("state", "state")
+
+/*
+                // Exec Status sql expression. This works if added as a derived property on Execution.groovy.
+                sqlProjection "CASE " +
+                    "WHEN cancelled THEN '${ExecutionService.EXECUTION_ABORTED}'" +
+                    "WHEN date_completed IS NULL AND status = '${ExecutionService.EXECUTION_SCHEDULED}' THEN '${ExecutionService.EXECUTION_SCHEDULED}'" +
+                    "WHEN date_completed IS NULL THEN '${ExecutionService.EXECUTION_RUNNING}'" +
+                    "WHEN status IN ('true', 'succeeded') THEN '${ExecutionService.EXECUTION_SUCCEEDED}'" +
+                    "WHEN will_retry THEN '${ExecutionService.EXECUTION_FAILED_WITH_RETRY}'" +
+                    "WHEN timed_out THEN '${ExecutionService.EXECUTION_TIMEDOUT}'" +
+                    "WHEN status IN ('false', 'failed') THEN '${ExecutionService.EXECUTION_FAILED}'" +
+                    "ELSE '${ExecutionService.EXECUTION_STATE_OTHER}' END as estado",
+                    'estado',
+                    StandardBasicTypes.STRING
+*/
+
+                rowCount("count")
+                sqlProjection 'sum(date_completed - date_started) as durationSum',
+                    'durationSum',
+                    StandardBasicTypes.TIME
+                sqlProjection 'min(date_completed - date_started) as durationMin',
+                    'durationMin',
+                    StandardBasicTypes.TIME
+                sqlProjection 'max(date_completed - date_started) as durationMax',
+                    'durationMax',
+                    StandardBasicTypes.TIME
+
+            }
+        }
+
+        // get data and calculate
+        def metricsData = Execution.createCriteria().get(metricCriteria)
+
+        def totalCount = metricsData?.count ? metricsData.count : 0
+
+        Long maxDuration = sqlTimeToMillis(metricsData?.durationMax)
+        Long minDuration = sqlTimeToMillis(metricsData?.durationMin)
+        Long durationSum = sqlTimeToMillis(metricsData?.durationSum)
+        double avgDuration = totalCount != 0 ? durationSum / totalCount : 0
+
+        // Build response
+        def metrics = [
+            total: totalCount,
+
+            duration: [
+                average: avgDuration,
+                max: maxDuration,
+                min: minDuration
+            ]
+        ]
+
+    }
+
+    /**
+     * Convert a java.sql.Time from its hh:mm:ss form to number of milliseconds without TZ issues.
+     * @param t
+     * @return
+     */
+    static long sqlTimeToMillis(Time t) {
+        if (t == null) return 0
+        def arr = t.toString().split(":")
+        return ((Long.parseLong(arr[0]) * 3600) + (Long.parseLong(arr[1]) * 60) + (Long.parseLong(arr[2]))) * 1000
+    }
+
+
     /**
      * Execute the node step, the executionItem is expected to be a {@link JobExecutionItem} to execute a Job reference
      * as a node step on a single node.
@@ -4005,5 +3886,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     boolean avgDurationExceeded(schedId, Map content){
         notificationService.triggerJobNotification('avgduration',schedId, content)
+    }
+
+    List<PluginConfiguration> getGlobalPluginConfigurations(String project){
+        def list = []
+
+        def fwPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'framework.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+
+        def projPlugins = ProjectNodeSupport.listPluginConfigurations(
+                frameworkService.getProjectProperties(project),
+                'project.globalfilter',
+                ServiceNameConstants.LogFilter,
+                true
+        )
+        list = list + projPlugins
+        list = list + fwPlugins
+
+        return list
     }
 }

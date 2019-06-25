@@ -134,6 +134,11 @@ public class AclRuleBuilder {
         return this;
     }
 
+    public AclRuleBuilder by(final boolean isBy){
+        aclRuleImpl.by=isBy;
+        return this;
+    }
+
     public AclRule build() {
         return new AclRuleImpl(aclRuleImpl);
     }

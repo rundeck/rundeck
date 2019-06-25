@@ -27,9 +27,11 @@ import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
 import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
@@ -58,6 +60,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
+import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.util.Sizes
@@ -116,6 +119,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter                : 'POST',
             storeJobfilter                 : 'POST',
+            deleteJobFilterAjax            : 'POST',
+            saveJobFilterAjax              : 'POST',
             apiJobDetail                   : 'GET',
             apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
@@ -133,7 +138,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         render(view:"index",model:results)
     }
 
-    def nowrunning={ QueueQuery query->
+    @PackageScope
+    def nowrunning(QueueQuery query) {
         //find currently running executions
         
         if(params['Clear']){
@@ -822,6 +828,105 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
 
+    def deleteJobFilterAjax(String project, String filtername) {
+        withForm {
+            g.refreshFormTokensHeader()
+            def User u = userService.findOrCreateUser(session.user)
+            final def ffilter = ScheduledExecutionFilter.findByNameAndUser(filtername, u)
+            if (ffilter) {
+                ffilter.delete(flush: true)
+            }
+            render(contentType: 'application/json') {
+                success true
+            }
+        }.invalidToken {
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
+    def saveJobFilterAjax(ScheduledExecutionQueryFilterCommand query) {
+        withForm {
+            g.refreshFormTokensHeader()
+            if (query.hasErrors()) {
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [query.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            def User u = userService.findOrCreateUser(session.user)
+            def ScheduledExecutionFilter filter
+            def boolean saveuser = false
+            if (query.newFilterName && !query.existsFilterName) {
+                if (ScheduledExecutionFilter.findByNameAndUser(query.newFilterName, u)) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'request.error.conflict.already-exists.message',
+                            args  : ["Job Filter", query.newFilterName]
+                    ]
+                    )
+                }
+                filter = ScheduledExecutionFilter.fromQuery(query)
+                filter.name = query.newFilterName
+                filter.user = u
+                if (!filter.validate()) {
+                    return apiService.renderErrorFormat(
+                            response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.invalid.request',
+                            args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                    ]
+                    )
+                }
+                u.addToJobfilters(filter)
+                saveuser = true
+            } else if (query.existsFilterName) {
+                filter = ScheduledExecutionFilter.findByNameAndUser(query.existsFilterName, u)
+                if (filter) {
+                    filter.properties = query.properties
+                    filter.fix()
+                }
+            }
+            if (!filter.save(flush: true)) {
+                flash.errors = filter.errors
+//                params.saveFilter = true
+                return apiService.renderErrorFormat(
+                        response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : [filter.errors.allErrors.collect { it.toString() }.join("; ")]
+                ]
+                )
+            }
+            if (saveuser) {
+                if (!u.save(flush: true)) {
+                    return renderErrorView([beanErrors: filter.errors])
+                }
+            }
+
+            render(contentType: 'application/json') {
+                success true
+                filterName query.newFilterName
+            }
+        }.invalidToken {
+
+            return apiService.renderErrorFormat(
+                    response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'request.error.invalidtoken.message',
+            ]
+            )
+        }
+    }
+
     def executionMode(){
         def executionModeActive=configurationService.executionModeActive
 
@@ -1266,7 +1371,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             meta.count = policiesvalidation?.policies?.countPolicies()
             //
             meta.policies = policiesvalidation?.policies?.policies.collect(){
-                def by = 'by:'
+                def by = it.isBy()?'by:':'notBy:'
                 if(it.groups?.size()>0){
                     by = by+' group: '+it.groups.join(", ")
                 }
@@ -2318,6 +2423,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
+            def eventAuth=frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil.resourceType('event'), [AuthConstants.ACTION_READ], project.name)
+            if(!eventAuth){
+                summary[project.name].putAll([ execCount: 0, failedCount: 0,userSummary: [], userCount: 0])
+            }
             if(!params.refresh) {
                 summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)
                 summary[project.name].motdDisplay = menuService.getMotdDisplay(project)
@@ -3046,7 +3155,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         //test valid project
-        Framework framework = frameworkService.getRundeckFramework()
 
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
@@ -3070,6 +3178,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.offset){
             query.offset=params.int('offset')
         }
+
+        if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
+            query.jobIdFilter = params.jobIdFilter
+        }
+        
         def results = nowrunning(query)
 
         withFormat{

@@ -38,10 +38,11 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
-import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.gorm.transactions.Transactional
+import grails.plugins.quartz.listeners.SessionBinderJobListener
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
@@ -60,10 +61,11 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
+import rundeck.quartzjobs.ExecutionsCleanUp
 import rundeck.services.events.ExecutionPrepareEvent
 import org.rundeck.core.projects.ProjectConfigurable
+import rundeck.utils.OptionsUtil
 
-import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -78,6 +80,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
+
+    def JobScheduleManager rundeckJobScheduleManager
+
+    public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -111,6 +117,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
+    public static final String CLEANER_EXECUTIONS_JOB_GROUP_NAME = "cleanerExecutionsJob"
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -629,13 +636,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //verify cluster member is schedule owner
 
             def nextdate = null
+            def nextExecNode = null
             try {
-                nextdate = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
+            if(nextExecNode){
+                newsched.serverNodeUUID = nextExecNode
+            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -675,7 +686,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                def nexttime = scheduleJob(se, null, null)
+                def nexttime = null
+                def nextExecNode = null
+                (nexttime, nextExecNode) = scheduleJob(se, null, null)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -693,30 +706,49 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(project) {
             results = results.withProject(project)
         }
+        def executionList = results.list()
+
+        def adhocRescheduleResult = rescheduleOnetimeExecutions(executionList)
+
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: adhocRescheduleResult.executions, failedExecutions: adhocRescheduleResult.failedExecutions]
+    }
+
+    /**
+     * Reschedule the provided one-time executions. Invalid executions will be cleaned up.
+     * @param executionList The list of executions to reschedule.
+     * @return A map with: <pre>
+     *   [executions: List, // succeeded executions<br>
+     *   failedExecutions: List] // failed executions
+     * </pre>
+     */
+    def rescheduleOnetimeExecutions(List<Execution> executionList) {
+
+        Date now = new Date()
+        // Reschedule any executions which were scheduled for one time execution.
 
         List<Execution> cleanupExecutions   = []
         def succeedExecutions = []
-        def executionList = results.list()
+
         executionList.each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
 
             if (se.options.find { it.secureInput } != null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
                     "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
-                    "the ad hoc schedule time has past")
+                log.error("One-time execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "the schedule time has past")
                 ok = false
             }
 
             if (ok) {
-                log.info("Rescheduling ad hoc execution of: " +
+                log.info("Rescheduling one-time execution of: " +
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
@@ -738,7 +770,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         succeedExecutions << [execution: e, time: nexttime]
                     }
                 } catch (Exception ex) {
-                    log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
+                    log.error("One Time job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
                 }
             }
@@ -749,11 +781,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!cleanupExecutions.isEmpty()) {
-            log.error("${cleanupExecutions.size()} ad hoc scheduled executions " +
+            log.error("${cleanupExecutions.size()} one-time scheduled executions " +
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
-        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
+        [executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**
@@ -828,19 +860,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 map.remove('configuration')
             }
             if(step instanceof JobExec) {
-                ScheduledExecution refjob
+                ScheduledExecution refjob = step.findJob(project)
                 if(!step.useName && step.uuid){
-                    refjob = ScheduledExecution.findByUuid(step.uuid)
                     if(refjob) {
                         map.jobref.name = refjob.jobName
                         map.jobref.group = refjob.groupPath
                     }
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            step.jobProject?step.jobProject:project,
-                            step.jobName,
-                            step.jobGroup
-                    )
                 }
 
                 if(refjob){
@@ -858,16 +883,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def eh = step.errorHandler
 
             if(eh instanceof JobExec) {
-                ScheduledExecution refjob
-                if(!eh.useName && eh.uuid){
-                    refjob = ScheduledExecution.findByUuid(eh.uuid)
-                }else{
-                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                            eh.jobProject?eh.jobProject:project,
-                            eh.jobName,
-                            eh.jobGroup
-                    )
-                }
+                ScheduledExecution refjob = eh.findJob(project)
                 if(refjob){
                     map.ehJobId=refjob.extid
                     boolean doload=(null==jobids[map.ehJobId])
@@ -1043,6 +1059,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobSchedulerService.deleteJobSchedule(jobname, groupname)
     }
 
+    def deleteCleanerExecutionsJob(String projectName){
+        jobSchedulerService.deleteJobSchedule(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME)
+    }
+
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
         return frameworkService.authorizeProjectJobAll(authContext,se,[AuthConstants.ACTION_READ],se.project)
     }
@@ -1056,19 +1076,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
             log.warn("$jobDesc, but executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if(!shouldScheduleInThisProject(se.project)){
             log.warn("$jobDesc, but project executions are disabled.")
-            return null
+            return [null, null]
         }
 
         if (!se.shouldScheduleExecution()) {
             log.warn(
                     "$jobDesc, but job execution is disabled."
             )
-            return null;
+            return [null, null];
         }
 
         def jobDetail = createJobDetail(se)
@@ -1081,7 +1101,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if ( hasJobScheduled(se) ) {
             log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
-            
+
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
             log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
@@ -1089,7 +1109,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
-        return nextTime
+        return [nextTime, jobDetail?.getJobDataMap()?.get("serverUUID")]
     }
 
     /**
@@ -1169,6 +1189,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } catch (JobScheduleFailure exc) {
             throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
+    }
+
+    def Date scheduleCleanerExecutionsJob(String projectName, String cronExpression, Map config) {
+        def Date nextTime
+        def trigger = createTrigger(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, cronExpression, 1)
+        JobDetail jobDetail = createCleanerExecutionJobDetail(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME, config)
+
+        if ( hasJobScheduled(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME) ) {
+            log.info("rescheduling existing cleaner execution job in project ${projectName}")
+
+            nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(projectName, CLEANER_EXECUTIONS_JOB_GROUP_NAME), trigger)
+        } else {
+            log.info("scheduling new cleaner execution job in project ${projectName}")
+            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+        }
+
+        log.info("scheduled cleaner executions job next run: " + nextTime.toString())
+        return nextTime
     }
 
     /**
@@ -1388,7 +1426,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                data.put("serverUUID", frameworkService.getServerUUID())
+//                data.put("serverUUID", frameworkService.getServerUUID())
+                data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -1403,6 +1442,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
 
         return jobDetailBuilder.build()
+    }
+
+    def JobDetail createCleanerExecutionJobDetail(String jobname, String jobgroup, Map config) {
+        String description = "Cleaner executions job"
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionsCleanUp)
+                                         .withIdentity(jobname, jobgroup)
+                                         .withDescription(description)
+                                         .usingJobData(new JobDataMap(config))
+
+
+        return jobDetailBuilder.build()
+    }
+
+    def Trigger createTrigger(String jobName, String jobGroup, String cronExpression, int priority = 5) {
+        def Trigger trigger
+        try {
+            trigger = TriggerBuilder.newTrigger().withIdentity(jobName, jobGroup)
+                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                    .withPriority(priority)
+                    .build()
+
+        } catch (java.text.ParseException ex) {
+            throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
+        }
+        return trigger
     }
 
     def Trigger createTrigger(ScheduledExecution se) {
@@ -1426,6 +1490,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def boolean hasJobScheduled(ScheduledExecution se) {
         return quartzScheduler.checkExists(JobKey.jobKey(se.generateJobScheduledName(),se.generateJobGroupName()))
+    }
+
+    def boolean hasJobScheduled(String jobName, String jobGroup) {
+        return quartzScheduler.checkExists(JobKey.jobKey(jobName, jobGroup))
     }
 
     /**
@@ -1496,6 +1564,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Date tempNextExecutionTime(ScheduledExecution se){
         def trigger = createTrigger(se)
         return trigger.getFireTimeAfter(new Date())
+    }
+
+    def String nextExecNode(ScheduledExecution se){
+        rundeckJobScheduleManager.determineExecNode(se.jobName, se.groupPath, se.toMap(), se.project)
     }
 
     /**
@@ -1913,12 +1985,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     static def parseOrchestratorFromParams(params){
-        
+
         if (params.orchestratorId) {
             params.orchestrator = parseParamOrchestrator(params)
         }
     }
-    
+
     static Orchestrator parseParamOrchestrator(params){
         Orchestrator orchestrator = new Orchestrator(type:params.orchestratorId)
         def plugin = params.orchestratorPlugin[params.orchestratorId];
@@ -1946,6 +2018,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def ScheduledExecution scheduledExecution = getByIDorUUID(params.id)
         if (!scheduledExecution) {
             return [success: false]
+        }
+        if(changeinfo){
+            def extraInfo = " flags:"
+            if(params.executionEnabled){
+                extraInfo+= " executionEnabled: "+params.executionEnabled
+            }
+            if(params.scheduleEnabled){
+                extraInfo+= " scheduleEnabled: "+params.scheduleEnabled
+            }
+            logJobChange(changeinfo+[extraInfo: extraInfo],scheduledExecution.properties)
         }
 
 
@@ -2465,7 +2547,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -2528,13 +2610,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -2752,7 +2838,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
                 (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
-        
+
         def addedNotifications=[]
         params.notifications.each {notif ->
             def trigger = notif.eventTrigger
@@ -3056,7 +3142,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
 
         }
-        
+
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
             scheduledExecution.orchestrator.save()
@@ -3113,13 +3199,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
+                def nextExecNode = null
                 try {
-                    nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
+                    (nextdate, nextExecNode) = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
                 } catch (SchedulerException e) {
                     log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
+                if(nextExecNode){
+                    newsched.serverNodeUUID = nextExecNode
+                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3656,7 +3746,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
-        
+
         parseOrchestratorFromParams(params)
         if(params.orchestrator){
             def result = _updateOrchestratorData(params, scheduledExecution)
@@ -3667,7 +3757,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             scheduledExecution.orchestrator = null
         }
-        
+
         parseNotificationsFromParams(params)
         if (params.notifications) {
             //create notifications
@@ -3848,6 +3938,210 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
     }
+
+
+    /**
+     * Load options values from remote URL
+     * @param scheduledExecution
+     * @param mapConfig
+     * @return option remote
+     */
+    def Map loadOptionsRemoteValues(ScheduledExecution scheduledExecution, Map mapConfig, def username) {
+        //load expand variables in URL source
+        Option opt = scheduledExecution.options.find { it.name == mapConfig.option }
+        def realUrl = opt.realValuesUrl.toExternalForm()
+        String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, mapConfig.extra?.option, realUrl.matches(/(?i)^https?:.*$/), username)
+        String cleanUrl = srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@", '$1$2:****@');
+        def remoteResult = [:]
+        def result = null
+        def remoteStats = [startTime: System.currentTimeMillis(), httpStatusCode: "", httpStatusText: "", contentLength: "", url: srcUrl, durationTime: "", finishTime: "", lastModifiedDateTime: ""]
+        def err = [:]
+        int timeout = 10
+        int contimeout = 0
+        int retryCount = 5
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout) {
+            try {
+                timeout = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout) {
+            try {
+                contimeout = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry) {
+            try {
+                retryCount = Integer.parseInt(
+                        grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
+                )
+            } catch (NumberFormatException e) {
+                log.warn(
+                        "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
+                                + e.message
+                )
+            }
+        }
+        if (srcUrl.indexOf('#') >= 0 && srcUrl.indexOf('#') < srcUrl.size() - 1) {
+            def urlanchor = new HashMap<String, String>()
+            def anchor = srcUrl.substring(srcUrl.indexOf('#') + 1)
+            def parts = anchor.split(";")
+            parts.each { s ->
+                def subpart = s.split("=", 2)
+                if (subpart && subpart.length == 2 && subpart[0] && subpart[1]) {
+                    urlanchor[subpart[0]] = subpart[1]
+                }
+            }
+            if (urlanchor['timeout']) {
+                try {
+                    timeout = Integer.parseInt(urlanchor['timeout'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL timeout ${urlanchor['timeout']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+            if (urlanchor['contimeout']) {
+                try {
+                    contimeout = Integer.parseInt(urlanchor['contimeout'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL contimeout ${urlanchor['contimeout']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+            if (urlanchor['retry']) {
+                try {
+                    retryCount = Integer.parseInt(urlanchor['retry'])
+                } catch (NumberFormatException e) {
+                    log.warn(
+                            "URL retry ${urlanchor['retry']} is not a valid integer: "
+                                    + e.message
+                    )
+                }
+            }
+        }
+        try {
+            def framework = frameworkService.getRundeckFramework()
+            def projectConfig = framework.projectManager.loadProjectConfig(scheduledExecution.project)
+            boolean disableRemoteOptionJsonCheck = projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+            remoteResult = ScheduledExecutionController.getRemoteJSON(srcUrl, timeout, contimeout, retryCount, disableRemoteOptionJsonCheck)
+            result = remoteResult.json
+            if (remoteResult.stats) {
+                remoteStats.putAll(remoteResult.stats)
+            }
+        } catch (Exception e) {
+            err.message = "Failed loading remote option values"
+            err.exception = e
+            err.srcUrl = cleanUrl
+            log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
+            e.printStackTrace()
+            remoteStats.finishTime = System.currentTimeMillis()
+            remoteStats.durationTime = remoteStats.finishTime - remoteStats.startTime
+        }
+        if (remoteResult.error) {
+            err.message = "Failed loading remote option values"
+            err.exception = new Exception(remoteResult.error)
+            err.srcUrl = cleanUrl
+            log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
+        }
+        logRemoteOptionStats(remoteStats, [jobName: scheduledExecution.generateFullName(), id: scheduledExecution.extid, jobProject: scheduledExecution.project, optionName: mapConfig.option, user: username])
+        //validate result contents
+        boolean valid = true;
+        def validationerrors = []
+        if (result) {
+            if (result instanceof Collection) {
+                result.eachWithIndex { entry, i ->
+                    if (entry instanceof JSONObject) {
+                        if (!entry.name) {
+                            validationerrors << "Item: ${i} has no 'name' entry"
+                            valid = false;
+                        }
+                        if (!entry.value) {
+                            validationerrors << "Item: ${i} has no 'value' entry"
+                            valid = false;
+                        }
+                    } else if (!(entry instanceof String)) {
+                        valid = false;
+                        validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
+                    }
+                }
+            } else if (result instanceof JSONObject) {
+                JSONObject jobject = result
+                result = []
+                jobject.keys().sort().each { k ->
+                    result << [name: k, value: jobject.get(k)]
+                }
+            } else {
+                validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
+                valid = false
+            }
+            if (!valid) {
+                result = null
+                err.message = "Failed parsing remote option values: ${validationerrors.join('\n')}"
+                err.code = 'invalid'
+            }
+        } else if (!err) {
+            err.message = "Empty result"
+            err.code = 'empty'
+        }
+        return [
+                optionSelect : opt,
+                values       : result,
+                srcUrl       : cleanUrl,
+                err          : err
+        ]
+    }
+
+
+    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
+    private logRemoteOptionStats(stats,jobdata){
+        stats.keySet().each{k->
+            def v= stats[k]
+            if(v instanceof Date){
+                //TODO: reformat date
+                MDC.put(k,v.toString())
+                MDC.put("${k}Time",v.time.toString())
+            }else if(v instanceof String){
+                MDC.put(k,v?v:"-")
+            }else{
+                final string = v.toString()
+                MDC.put(k, string?string:"-")
+            }
+        }
+        jobdata.keySet().each{k->
+            final var = jobdata[k]
+            MDC.put(k,var?var:'-')
+        }
+        optionsLogger.info(stats.httpStatusCode + " " + stats.httpStatusText+" "+stats.contentLength+" "+stats.url)
+        stats.keySet().each {k ->
+            if (stats[k] instanceof Date) {
+                //reformat date
+                MDC.remove(k+'Time')
+            }
+            MDC.remove(k)
+        }
+        jobdata.keySet().each {k ->
+            MDC.remove(k)
+        }
+    }
+
 
     /**
      * Retrun a list of dates in a time lapse between now and the to Date.

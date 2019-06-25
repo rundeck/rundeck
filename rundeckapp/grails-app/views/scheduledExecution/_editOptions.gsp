@@ -23,7 +23,6 @@
 
 <g:set var="rkey" value="${g.rkey()}"/>
 
-<input type="hidden" name="id" value="${enc(attr:scheduledExecution?.extid)}"/>
 <div class="note error" style="display: none" id="editerror">
 
 </div>
@@ -33,7 +32,7 @@
         <g:renderErrors bean="${scheduledExecution}" as="list" field="argString"/>
     </div>
 </g:hasErrors>
-<div id="optionSelect">
+<div id="optionSelect" data-ko-bind="joboptions">
     <g:render template="/framework/jobOptionsKO"
               model="[
                       paramsPrefix        : 'extra.',
@@ -52,35 +51,13 @@
 </div>
 
 
-<div class="form-group">
-    <label class="col-sm-2 control-label" for="extra.loglevel">Log level</label>
-
-    <div class="col-sm-10">
-      <div class="radio radio-inline">
-        <g:radio id="logLevelNormal" name="extra.loglevel" value="INFO" checked="${scheduledExecution?.loglevel != 'DEBUG'}"/>
-        <label for="logLevelNormal">
-            <g:message code="loglevel.normal" />
-        </label>
-      </div>
-      <div class="radio radio-inline">
-        <g:radio id="logLevelDebug" name="extra.loglevel" value="DEBUG" checked="${scheduledExecution?.loglevel == 'DEBUG'}"/>
-        <label for="logLevelDebug">
-            <g:message code="loglevel.debug" />
-        </label>
-      </div>
-      <div class="help-block">
-          <g:message code="scheduledExecution.property.loglevel.help" />
-      </div>
-    </div>
-</div>
-
 <g:javascript>
     fireWhenReady('optionSelect', function() {
-        $$('input[type=text]').each(function(e) {
-            Event.observe(e, 'keydown', noenter);
+        jQuery('input[type=text]').each(function (i, e) {
+            jQuery(e).on('keydown', noenter);
         });
-        $$('input[type=password]').each(function(e) {
-            Event.observe(e, 'keydown', noenter);
+        jQuery('input[type=password]').each(function (i, e) {
+            jQuery(e).on('keydown', noenter);
         });
     });
 </g:javascript>

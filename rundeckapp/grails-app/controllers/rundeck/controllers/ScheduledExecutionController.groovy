@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
@@ -127,7 +128,6 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONRETRYABLEFAILURE_URL
     ]
 
-    public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
 
     def Scheduler quartzScheduler
     def ExecutionService executionService
@@ -391,7 +391,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (model.nextExecution) {
 
-            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
             format.setTimeZone(TimeZone.getTimeZone("GMT"));
             model.nextExecutionW3CTime = format.format(model.nextExecution)
         }
@@ -709,191 +709,37 @@ class ScheduledExecutionController  extends ControllerBase{
         if (scheduledExecution.options && scheduledExecution.options.find {it.name == params.option}) {
             Option opt = scheduledExecution.options.find {it.name == params.option}
             if (opt.realValuesUrl) {
-                //load expand variables in URL source
-
-                def realUrl = opt.realValuesUrl.toExternalForm()
-                String srcUrl = OptionsUtil.expandUrl(opt, realUrl, scheduledExecution, params.extra?.option,realUrl.matches(/(?i)^https?:.*$/))
-                String cleanUrl=srcUrl.replaceAll("^(https?://)([^:@/]+):[^@/]*@",'$1$2:****@');
-                def remoteResult=[:]
-                def result=null
-                def remoteStats=[startTime: System.currentTimeMillis(), httpStatusCode: "", httpStatusText: "", contentLength: "", url: srcUrl,durationTime:"",finishTime:"", lastModifiedDateTime:""]
-                def err = [:]
-                int timeout=10
-                int contimeout=0
-                int retryCount=5
-                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlTimeout){
-                    try {
-                        timeout = Integer.parseInt(
-                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlTimeout?.toString()
-                        )
-                    }catch(NumberFormatException e) {
-                        log.warn(
-                                "Configuration value rundeck.jobs.options.remoteUrlTimeout is not a valid integer: "
-                                        + e.message
-                        )
-                    }
+                Map optionRemoteValues = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, params, session.user)
+                def model = [optionSelect : optionRemoteValues.optionSelect,
+                             values       : optionRemoteValues.values,
+                             srcUrl       : optionRemoteValues.srcUrl,
+                             err          : optionRemoteValues.err,
+                             fieldPrefix  : params.fieldPrefix,
+                             selectedvalue: params.selectedvalue]
+                if (params.extra?.option?.get(opt.name)) {
+                    model.selectedoptsmap = [(opt.name): params.extra.option.get(opt.name)]
                 }
-                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlConnectionTimeout){
-                    try {
-                        contimeout = Integer.parseInt(
-                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlConnectionTimeout?.toString()
-                        )
-                    }catch(NumberFormatException e) {
-                        log.warn(
-                                "Configuration value rundeck.jobs.options.remoteUrlConnectionTimeout is not a valid integer: "
-                                        + e.message
-                        )
-                    }
-                }
-                if(grailsApplication.config.rundeck?.jobs?.options?.remoteUrlRetry){
-                    try {
-                        retryCount = Integer.parseInt(
-                                grailsApplication?.config?.rundeck?.jobs?.options?.remoteUrlRetry?.toString()
-                        )
-                    }catch(NumberFormatException e) {
-                        log.warn(
-                                "Configuration value rundeck.jobs.options.remoteUrlRetry is not a valid integer: "
-                                        + e.message
-                        )
-                    }
-                }
-                if(srcUrl.indexOf('#')>=0 &&srcUrl.indexOf('#')<srcUrl.size()-1){
-                    def urlanchor=new HashMap<String,String>()
-                    def anchor=srcUrl.substring(srcUrl.indexOf('#')+1)
-                    def parts=anchor.split(";")
-                    parts.each{s->
-                        def subpart=s.split("=",2)
-                        if(subpart && subpart.length==2 && subpart[0] && subpart[1]){
-                            urlanchor[subpart[0]]=subpart[1]
-                        }
-                    }
-                    if(urlanchor['timeout']){
-                        try {
-                            timeout = Integer.parseInt(urlanchor['timeout'])
-                        }catch(NumberFormatException e) {
-                            log.warn(
-                                    "URL timeout ${urlanchor['timeout']} is not a valid integer: "
-                                            + e.message
-                            )
-                        }
-                    }
-                    if(urlanchor['contimeout']){
-                        try {
-                            contimeout = Integer.parseInt(urlanchor['contimeout'])
-                        }catch(NumberFormatException e) {
-                            log.warn(
-                                    "URL contimeout ${urlanchor['contimeout']} is not a valid integer: "
-                                            + e.message
-                            )
-                        }
-                    }
-                    if(urlanchor['retry']){
-                        try {
-                            retryCount = Integer.parseInt(urlanchor['retry'])
-                        }catch(NumberFormatException e) {
-                            log.warn(
-                                    "URL retry ${urlanchor['retry']} is not a valid integer: "
-                                            + e.message
-                            )
-                        }
-                    }
-                }
-                try {
-                    def framework = frameworkService.getRundeckFramework()
-                    def projectConfig = framework.projectManager.loadProjectConfig(scheduledExecution.project)
-                    boolean disableRemoteOptionJsonCheck= projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
-
-                    remoteResult = getRemoteJSON(srcUrl, timeout, contimeout, retryCount,disableRemoteOptionJsonCheck)
-                    result=remoteResult.json
-                    if(remoteResult.stats){
-                        remoteStats.putAll(remoteResult.stats)
-                    }
-                } catch (Exception e) {
-                    err.message = "Failed loading remote option values"
-                    err.exception = e
-                    err.srcUrl = cleanUrl
-                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${e.message}");
-                    e.printStackTrace()
-                    remoteStats.finishTime=System.currentTimeMillis()
-                    remoteStats.durationTime= remoteStats.finishTime- remoteStats.startTime
-                }
-                if(remoteResult.error){
-                    err.message = "Failed loading remote option values"
-                    err.exception = new Exception(remoteResult.error)
-                    err.srcUrl = cleanUrl
-                    log.error("getRemoteJSON error: URL ${cleanUrl} : ${remoteResult.error}");
-                }
-                logRemoteOptionStats(remoteStats,[jobName:scheduledExecution.generateFullName(),id:scheduledExecution.extid, jobProject:scheduledExecution.project,optionName:params.option,user:session.user])
-                //validate result contents
-                boolean valid = true;
-                def validationerrors=[]
-                if(result){
-                    if( result instanceof Collection){
-                        result.eachWithIndex { entry,i->
-                            if(entry instanceof JSONObject){
-                                if(!entry.name){
-                                    validationerrors<<"Item: ${i} has no 'name' entry"
-                                    valid=false;
-                                }
-                                if(!entry.value){
-                                    validationerrors<<"Item: ${i} has no 'value' entry"
-                                    valid = false;
-                                }
-                            }else if(!(entry instanceof String)){
-                                valid = false;
-                                validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
-                            }
-                        }
-                    } else if (result instanceof JSONObject) {
-                        JSONObject jobject = result
-                        result = []
-                        jobject.keys().sort().each {k ->
-                            result << [name: k, value: jobject.get(k)]
-                        }
-                    }else{
-                        validationerrors << "Expected top-level list with format: [{name:\"..\",value:\"..\"},..], or ['value','value2',..] or simple object with {name:\"value\",...}"
-                        valid=false
-                    }
-                    if(!valid){
-                        result=null
-                        err.message="Failed parsing remote option values: ${validationerrors.join('\n')}"
-                        err.code='invalid'
-                    }
-                }else if(!err){
-                    err.message = "Empty result"
-                    err.code='empty'
-                }
-                def model= [optionSelect: opt,
-                            values: result,
-                            srcUrl: cleanUrl,
-                            err: err,
-                            fieldPrefix: params.fieldPrefix,
-                            selectedvalue: params.selectedvalue]
-                if(params.extra?.option?.get(opt.name)){
-                    model.selectedoptsmap=[(opt.name):params.extra.option.get(opt.name)]
-                }
-                withFormat{
-                    html{
+                withFormat {
+                    html {
                         return render(template: "/framework/optionValuesSelect", model: model);
                     }
-                    json{
+                    json {
                         model.remove('optionSelect')
-                        model.name=opt.name
-                        if(model.err?.exception){
-                            model.err.exception=model.err.exception.toString()
+                        model.name = opt.name
+                        if (model.err?.exception) {
+                            model.err.exception = model.err.exception.toString()
                         }
                         render(contentType: 'application/json', text: model as JSON)
                     }
                 }
-
             } else {
 
-                withFormat{
-                    html{
+                withFormat {
+                    html {
                         return renderErrorFragment("not a url option: " + params.option)
                     }
-                    json{
-                        render(contentType: 'application/json', text: [err:[message:"not a url option: " + params.option]] as JSON)
+                    json {
+                        render(contentType: 'application/json', text: [err: [message: "not a url option: " + params.option]] as JSON)
                     }
                 }
             }
@@ -909,38 +755,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
     }
-    static Logger optionsLogger = Logger.getLogger("com.dtolabs.rundeck.remoteservice.http.options")
-    private logRemoteOptionStats(stats,jobdata){
-        stats.keySet().each{k->
-            def v= stats[k]
-            if(v instanceof Date){
-                //TODO: reformat date
-                MDC.put(k,v.toString())
-                MDC.put("${k}Time",v.time.toString())
-            }else if(v instanceof String){
-                MDC.put(k,v?v:"-")
-            }else{
-                final string = v.toString()
-                MDC.put(k, string?string:"-")
-            }
-        }
-        jobdata.keySet().each{k->
-            final var = jobdata[k]
-            MDC.put(k,var?var:'-')
-        }
-        optionsLogger.info(stats.httpStatusCode + " " + stats.httpStatusText+" "+stats.contentLength+" "+stats.url)
-        stats.keySet().each {k ->
-            if (stats[k] instanceof Date) {
-                //reformat date
-                MDC.remove(k+'Time')
-            }
-            MDC.remove(k)
-        }
-        jobdata.keySet().each {k ->
-            MDC.remove(k)
-        }
-    }
-
     /**
      * Map of descriptive property name to ScheduledExecution domain class property names
      * used by expandUrl for embedded property references in remote options URL
@@ -1965,18 +1779,19 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
+        def pluginControlService=frameworkService.getPluginControlService(params.project)
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowNodeStep')
         }
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+            !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
@@ -1984,7 +1799,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def timeZones = scheduledExecutionService.getTimeZones()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+            !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
@@ -2111,15 +1926,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
             return
         }
-
-        def newScheduledExecution = new ScheduledExecution()
-
-        def origprops = [:]+scheduledExecution.properties
-        ScheduledExecution.transients.each{origprops.remove(it)}
-        newScheduledExecution.properties = origprops
+        def newScheduledExecution = ScheduledExecution.fromMap(scheduledExecution.toMap())
         if (newScheduledExecution.hasErrors()) {
             newScheduledExecution.errors.allErrors.each{log.warn("job copy data binding: "+it)}
         }
+        newScheduledExecution.project=scheduledExecution.project
         newScheduledExecution.id=null
         newScheduledExecution.uuid=null
         newScheduledExecution.nextExecution=null
@@ -2137,22 +1948,34 @@ class ScheduledExecutionController  extends ControllerBase{
         if(newScheduledExecution.scheduled){
             crontab=newScheduledExecution.timeAndDateAsBooleanMap()
         }
-        def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
-        }
-        def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+
+        def nodeSteps = frameworkService.getNodeStepPluginDescriptions()
+        def workflowSteps = frameworkService.getStepPluginDescriptions()
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+        def logFilterPluginDescs = pluginService.listPlugins(LogFilterPlugin)
+        def notificationPluginDescs = notificationService.listNotificationPlugins()
+
+        def pluginControlService = frameworkService.getPluginControlService(params.project)
+
+        def nodeStepTypes = nodeSteps?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowNodeStep')
         }
 
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+        def stepTypes = workflowSteps?.findAll{
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
-        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
+        def logFilterPlugins = logFilterPluginDescs.findAll{ k, v->
+            !pluginControlService?.isDisabledPlugin(k,'LogFilter')
+        }
+
+        def notificationPlugins = notificationPluginDescs.findAll{ k, v->
+            !pluginControlService?.isDisabledPlugin(k,'Notification')
+        }
+
         def fprojects = frameworkService.projectNames(authContext)
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
-        }
+        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
         render(
                 view: 'create',
                 model: [
@@ -4375,6 +4198,23 @@ class ScheduledExecutionController  extends ControllerBase{
                             status: HttpServletResponse.SC_FORBIDDEN,
                             code: 'api.error.item.unauthorized',
                             args: ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!frameworkService.authorizeProjectResourceAll(
+                authContext,
+                AuthConstants.RESOURCE_TYPE_EVENT,
+                [AuthConstants.ACTION_READ],
+                scheduledExecution.project
+        )
+        ) {
+
+            return apiService.renderErrorFormat(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code: 'api.error.item.unauthorized',
+                            args: ['Read', 'Events in Project', scheduledExecution.project]
                     ]
             )
         }

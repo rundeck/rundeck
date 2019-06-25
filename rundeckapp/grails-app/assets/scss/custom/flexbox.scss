@@ -1,23 +1,110 @@
-// .flex-grid {
-//   box-sizing: border-box;
-//   display: flex;
-//   flex: 0 1 auto;
-//   flex-direction: row;
-//   flex-wrap: wrap;
+.flex-container {
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: row wrap;
 
-//   &.reverse {
-//     flex-direction: row-reverse;
-//   }
+  justify-content: center;
+  align-items: flex-start;
 
-//   .col {
-//     // flex:1;
-//     flex: 0 0 auto;
+  &.flex-justify-start {
+    justify-content: start;
+  }
+  &.flex-justify-space-between {
+    justify-content: space-between;
+  }
+  &.column {
+    flex-direction: column;
 
-//     &.reverse {
-//       flex-direction: column-reverse;
-//     }
-//   }
-// }
+    &.reverse {
+      flex-direction: column-reverse;
+    }
+  }
+  &.reverse {
+    flex-direction: row-reverse;
+  }
+
+  &.flex-align-items-stretch {
+    align-items: stretch;
+  }
+  &.flex-align-items-baseline {
+    align-items: baseline;
+  }
+  &.flex-align-items-flex-end {
+    align-items: flex-end;
+  }
+
+  .flex-item {
+    &.flex-grow-1 {
+      flex-grow: 1;
+    }
+
+    &.flex-grow-2 {
+      flex-grow: 2;
+    }
+
+    &.flex-grow-3 {
+      flex-grow: 3;
+    }
+
+    &.flex-shrink-1 {
+      flex-shrink: 1;
+    }
+
+    &.flex-shrink-2 {
+      flex-shrink: 2;
+    }
+
+    &.flex-shrink-3 {
+      flex-shrink: 3;
+    }
+
+    &.flex-basis-0 {
+      flex-basis: 0;
+    }
+
+    &.flex-basis-auto {
+      flex-basis: auto;
+    }
+  }
+  .flex-item-1 {
+    flex: 1 1 0;
+  }
+
+  .flex-item-2 {
+    flex: 2 2 0;
+  }
+
+  .flex-item-3 {
+    flex: 3 3 0;
+  }
+
+  .flex-item-auto {
+    flex: 1 1 auto;
+  }
+
+  &.col {
+    flex-direction: column;
+    &.reverse {
+      flex-direction: column-reverse;
+    }
+  }
+
+  /* Medium screens */
+  @media all and (max-width: $screen-md) {
+
+    /* When on medium sized screens, we center it by evenly distributing empty space around items */
+    justify-content: space-around;
+
+  }
+
+  /* Small screens */
+  @media all and (max-width: $screen-sm) {
+
+    /* On small screens, we are no longer using row direction but column */
+    flex-direction: column;
+
+  }
+}
 
 .row-flex,
 .row-flex>div[class*='col-'] {

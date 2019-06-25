@@ -70,7 +70,7 @@ class ExecutionUtilService {
     def  finishExecutionLogging(Map execMap) {
         def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
-        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true',null]
         if(exportJobDef){
             //creating xml file
             String parentFolder = loghandler.filepath.getParent()
@@ -337,7 +337,7 @@ class ExecutionUtilService {
     File getExecutionXmlFileForExecution(Execution execution, String path = null) {
         File executionXmlfile
         if(path){
-            executionXmlfile  = new File(path, "execution-${execution.id}.xml")
+            executionXmlfile  = new File(path, "${execution.id}.execution.xml")
         }else{
             executionXmlfile = File.createTempFile("execution-${execution.id}", ".xml")
         }
@@ -363,7 +363,7 @@ class ExecutionUtilService {
      * @return
      */
     def exportExecutionXml(Execution exec, Writer writer, String logfilepath =null){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
         def dateConvert = {
             sdf.format(it)
@@ -377,7 +377,7 @@ class ExecutionUtilService {
             map.outputfilepath = logfilepath
         }
         JobsXMLCodec.convertWorkflowMapForBuilder(map.workflow)
-        def exportJobDef = grailsApplication.config?.rundeck?.backup?.jobs?.enabled in [true,'true']
+        def exportJobDef = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.generateExecutionXml in [true,'true', null]
         if(exportJobDef && exec.scheduledExecution){
             map.fullJob = JobsXMLCodec.convertJobMap(exec.scheduledExecution.toMap())
         }

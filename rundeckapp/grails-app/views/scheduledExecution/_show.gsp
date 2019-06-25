@@ -15,123 +15,199 @@
   --}%
 
 <%@ page import="rundeck.ScheduledExecution; com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.Execution" %>
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="card">
-        <div class="card-content">
-          <g:render template="/scheduledExecution/showHead"
-                    model="[scheduledExecution: scheduledExecution,
-                            followparams      : [mode: followmode, lastlines: params.lastlines],
-                            jobDescriptionMode:'expanded',
-                            jobActionButtons  : true,
-                            scmExportEnabled  : scmExportEnabled,
-                            scmExportStatus   : scmExportStatus,
-                            scmImportEnabled  : scmImportEnabled,
-                            scmImportStatus   : scmImportStatus
-                    ]"/>
 
+<g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
+<g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
+<g:set var="runEnabled" value="${g.executionMode(is: 'active', project: scheduledExecution.project) && scheduledExecution.hasExecutionEnabled()}"/>
+<g:set var="canRunJob" value="${runAccess && runEnabled}"/>
+<g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
+<g:set var="rundoctext"
+       value="${extendeddesc ? g.textAfterLine(text: extendeddesc, marker: ScheduledExecution.RUNBOOK_MARKER) : null}"/>
+<content tag="subtitlecss">job-page</content>
+<content tag="subtitlesection">
+
+    <div class="  subtitle-head flex-container flex-align-items-stretch">
+        <div class="subtitle-head-item  flex-item-auto">
+            <g:render template="/scheduledExecution/showHead"
+                      model="[scheduledExecution: scheduledExecution,
+                              followparams      : [mode: followmode, lastlines: params.lastlines],
+                              jobDescriptionMode: 'expanded',
+                              jobActionButtons  : false,
+                              linkCss           : 'text-h4',
+                              scmExportEnabled  : scmExportEnabled,
+                              scmExportStatus   : scmExportStatus,
+                              scmImportEnabled  : scmImportEnabled,
+                              scmImportStatus   : scmImportStatus
+                      ]"/>
+
+            <section class="section-space">
+                <small class="uuid text-secondary">${scheduledExecution.extid}</small>
+            </section>
         </div>
-      </div>
-    </div>
-  </div>
-  <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
-  <g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
-  <g:set var="runEnabled" value="${g.executionMode(is:'active',project:scheduledExecution.project)}"/>
-  <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
-  <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
-  <g:set var="rundoctext" value="${extendeddesc?g.textAfterLine(text: extendeddesc, marker:ScheduledExecution.RUNBOOK_MARKER):null}"/>
-  <div class="row">
-      <div class="col-sm-12">
-        <div class="card">
-          <div class="card-content">
-            <div class="vue-tabs">
-              <div class="nav-tabs-navigation">
-                <div class="nav-tabs-wrapper">
-                  <ul class="nav nav-tabs" id="jobtabs">
-                      <g:if test="${canRunJob}">
-                          <li class="active"><a href="#runjob" data-toggle="tab"><g:message
-                                  code="scheduledExecution.show.run.tab.name"/></a></li>
-                      </g:if>
-                      <g:else>
-                          <li class="disabled">
-                              <a href="#"
-                                 title="${message(code:!runEnabled?'disabled.job.run':'unauthorized.job.run')}"
-                                 class="has_tooltip"
-                                 data-placement="bottom">
-                                  <g:message code="scheduledExecution.show.run.tab.name"/>
-                              </a>
-                          </li>
-                      </g:else>
-                      <g:if test="${readAccess}">
-                      <li class="${canRunJob ? '' : 'active'}"><a href="#definition"
-                                                                  data-toggle="tab"><g:message code="definition"/></a></li>
-                      </g:if>
-                      <g:if test="${rundoctext}">
-                          <li class="${(canRunJob||readAccess) ? '' : 'active'}">
-                              <a href="#runbook" data-toggle="tab"><g:message code="runbook" /></a>
-                          </li>
-                      </g:if>
-                  </ul>
-                </div>
-              </div>
-              <div class="tab-content">
-                  <g:if test="${canRunJob}">
-                      <div class="tab-pane active" id="runjob">
-                          <tmpl:execOptionsForm
-                                  model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
-                                  hideHead="${true}"
-                                  hideCancel="${true}"
-                                  defaultFollow="${true}"/>
-                      </div>
-                  </g:if>
-                  <g:if test="${readAccess}">
-                  <div id="definition" class="tab-pane ${canRunJob ? '' : 'active'}">
-                    <g:render template="/execution/execDetails" model="[execdata: scheduledExecution, strategyPlugins:strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
-                  </div>
-                  </g:if>
-                  <g:if test="${rundoctext}">
-                      <div id="runbook" class="tab-pane  ${(canRunJob || readAccess) ? '' : 'active'}">
-                          <div class="markdeep">${rundoctext}</div>
-                      </div>
-                  </g:if>
-              </div>
-              <!-- end tab content -->
+
+        <div class="subtitle-head-item  flex-container column flex-justify-space-between flex-align-items-flex-end">
+
+            <div class="job-action-button ">
+                <g:render template="/scheduledExecution/jobActionButton"
+                          model="[scheduledExecution: scheduledExecution,
+                                  hideTitle         : false,
+                                  dropdownClass     : 'dropdown-menu-right',
+                                  btnClass          : 'btn btn-secondary btn-sm']"/>
             </div>
 
-          </div>
-        </div>
-      </div>
-  </div>
+            <g:if test="${readAccess}">
+                <section class="section-space">
+                    <a href="#job-definition-modal" data-toggle="modal" class="btn btn-secondary btn-sm ">
 
-  <div class="row">
-    <div class="col-xs-12">
-      <div class="card card-plain">
-        <div class="card-header">
-          <h3 class="card-title">
-            <g:message code="statistics" />
-          </h3>
+                        <g:if test="${rundoctext}">
+                            <i class="glyphicon glyphicon-book"></i>
+                            <g:message code="runbook"/>
+                        </g:if>
+                        <g:else>
+                            <i class="glyphicon glyphicon-info-sign"></i>
+                            <g:message code="definition"/>
+                        </g:else>
+                    </a>
+                </section>
+
+                <g:render template="/common/modal"
+                          model="[modalid   : 'job-definition-modal',
+                                  modalsize : 'modal-lg',
+                                  title     : scheduledExecution.jobName,
+                                  cancelCode: 'close'
+                          ]">
+                    <div class="vue-tabs">
+                        <div class="nav-tabs-navigation">
+                            <div class="nav-tabs-wrapper">
+                                <ul class="nav nav-tabs" id="detailtabs">
+                                    <g:if test="${rundoctext}">
+                                        <li class="active">
+                                            <a href="#runbook" data-toggle="tab"><g:message code="runbook"/></a>
+                                        </li>
+                                    </g:if>
+                                    <li class="${rundoctext ? '' : 'active'}">
+                                        <a href="#detailtable" data-toggle="tab"><g:message code="definition"/></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="tab-content">
+                            <div data-ko-bind="jobNodeFilters" id="detailtable"
+                                 class="tab-pane ${rundoctext ? '' : 'active'}">
+                                <g:render template="/execution/execDetails"
+                                          model="[execdata: scheduledExecution, strategyPlugins: strategyPlugins, showEdit: true, hideOptions: true, knockout: true]"/>
+                            </div>
+
+                            <g:if test="${rundoctext}">
+                                <div id="runbook" class="tab-pane  active">
+                                    <div class="markdeep">${rundoctext}</div>
+                                </div>
+                            </g:if>
+                    </div>
+                    </div>
+                </g:render>
+            </g:if>
+
         </div>
-      </div>
     </div>
-    <g:render template="/scheduledExecution/renderJobStats" model="${[scheduledExecution: scheduledExecution]}"/>
+</content>
 
-  </div>
+<div class="container-fluid">
+    <g:if test="${!runAccess}">
+        <section class=" alert alert-warning">
+            <b class="glyphicon glyphicon-warning-sign"></b>
+            <g:message code="unauthorized.job.run"/>
+        </section>
+    </g:if>
+    <g:if test="${canRunJob}">
+        <div class="row">
+            <div class="col-xs-12">
+                <div class="card">
+                    <div class="card-content">
 
-  <div class="row" id="activity_section">
-      <div class="col-sm-12">
-        <div class="card">
-          <div class="card-header">
-            <h4>
-              <g:message code="page.section.Activity.for.this.job" />
-            </h4>
-          </div>
-          <div class="card-content">
-            <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true, includeJobRef:(scheduledExecution.getRefExecCountStats()?true:false)]"/>
-          </div>
+                        <div class="tab-pane active" id="runjob">
+                            <tmpl:execOptionsForm
+                                    model="${[scheduledExecution: scheduledExecution, crontab: crontab, authorized: authorized]}"
+                                    hideHead="${true}"
+                                    hideCancel="${true}"
+                                    defaultFollow="${true}"/>
+                        </div>
+
+                        <div id="_job_content_placeholder" class="tab-pane"></div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+    </g:if>
+    <div class="row" id="_job_main_placeholder">
+        <div class="col-xs-12">
+            <g:set var="hasEventReadAuth" value="${auth.resourceAllowedTest(project:scheduledExecution.project, action:AuthConstants.ACTION_READ, kind: 'event')}"/>
+
+            <div class="card" id="activity_section">
+                <div class="card-content">
+
+                    <div class="vue-tabs">
+                        <div class="nav-tabs-navigation">
+                            <div class="nav-tabs-wrapper">
+                                <ul class="nav nav-tabs activity_links">
+                                    <li class="active">
+                                        <a href="#stats" data-toggle="tab"><g:message code="job.view.stats.label" /></a>
+                                    </li>
+                                    <g:if test="${hasEventReadAuth}">
+                                    <li>
+                                        <a href="#history" data-toggle="tab">
+                                            <g:message code="page.section.Activity" />
+                                            <g:if test="${hasEventReadAuth}">
+                                                <span class="vue-project-activity">
+                                                <activity-running-indicator :event-bus="EventBus" class="text-info ">
+                                                    <template slot-scope="{count}">
+                                                        <b class="fas fa-circle"></b>
+                                                        <span v-if="count>1">{{count}}</span>
+                                                    </template>
+
+                                                </activity-running-indicator>
+                                                </span>
+                                            </g:if>
+                                        </a>
+                                    </li>
+                                    </g:if>
+                                </ul>
+
+
+                            </div>
+                        </div>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="stats">
+
+
+                                <section class="_jobstats_content section-space-bottom-lg container-fluid" id="_job_stats_main">
+                                    <g:render template="/scheduledExecution/renderJobStats"
+                                              model="${[scheduledExecution: scheduledExecution]}"/>
+                                </section>
+
+
+                                <div id="_job_stats_extra_placeholder"></div>
+                            </div>
+                            <g:if test="${hasEventReadAuth}">
+                            <div class="tab-pane" id="history">
+
+                                <div class="_history_content vue-project-activity">
+
+                                    <activity-list :event-bus="EventBus"></activity-list>
+                                </div>
+                            </div>
+                            </g:if>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
   </div>
+
+
 
 </div>
 

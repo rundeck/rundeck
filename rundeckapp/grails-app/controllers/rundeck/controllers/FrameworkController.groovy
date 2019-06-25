@@ -16,9 +16,13 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.api.project.sources.Source
+import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.app.api.project.sources.Resources
+import com.dtolabs.rundeck.app.api.project.sources.Source
 import com.dtolabs.rundeck.app.api.project.sources.Sources
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
+import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -32,11 +36,16 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.plugins.ExtPluginConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
+import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import grails.converters.XML
 import grails.web.servlet.mvc.GrailsParameterMap
@@ -82,6 +91,19 @@ import rundeck.services.UserService
 import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
+    public static final Integer MAX_DAYS_TO_KEEP = 60
+    public static final Integer MINIMUM_EXECUTION_TO_KEEP = 50
+    public static final Integer MAXIMUM_DELETION_SIZE = 500
+    public static final String SCHEDULE_DEFAULT = "0 0 0 1/1 * ? *"
+    public static final Map CRON_MODELS_SELECT_VALUES = [
+            "0 0 0 1/1 * ? *"    : "Dayly at 00:00",
+            "0 0 23 ? * FRI *"   : "Weekly (Every Fridays 11PM)",
+            "0 0 0 ? * WED,SUN *": "Weekly (Two days a week)",
+            "0 30 1 1,15 * ? *"  : "Every 2 weeks",
+            "0 0 12 1 1/1 ? *"   : "Monthly (All first day of month)",
+            "0 0 0 1 1/2 ? *"    : "Every 2 months (Day 1)",
+            "0 0 12 1 1/3 ? *"   : "Every 3 months (Day 1)"
+    ]
     FrameworkService frameworkService
     ExecutionService executionService
     ScheduledExecutionService scheduledExecutionService
@@ -166,7 +188,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     usedFilter = params.filterName
                 }
             }
-        } else if (prefs['nodes']) {
+        } else if (!query.filter && prefs['nodes']) {
             return redirect(action: 'nodes', params: params + [filterName: prefs['nodes']])
         }
 
@@ -505,12 +527,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodeSummaryAjax(String project){
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,project)
-        if (unauthorizedResponse(
-                frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                                                             [AuthConstants.ACTION_READ],
-                                                             project),
-                AuthConstants.ACTION_READ, 'Project', 'nodes',true)) {
-            return
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                          [AuthConstants.ACTION_READ],
+                                                          project
+        )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',project],
+                    format:'json'
+            ])
         }
         def User u = userService.findOrCreateUser(session.user)
         def defaultFilter = null
@@ -637,6 +664,19 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (requireAjax(action: 'nodes', params: params)) {
             return
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
+                                                             [AuthConstants.ACTION_READ],
+                                                             query.project
+                )) {
+
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'request.error.unauthorized.message',
+                    args:['read','Nodes for Project',query.project],
+                    format:'json'
+            ])
+        }
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorFragment([beanErrors:query.errors])
@@ -760,6 +800,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!requestHasValidToken()) {
             return
         }
+        //cancel modification
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'home', )
+        }
+
         //only attempt project create if form POST is used
         def prefixKey = 'plugin'
         def project = params.newproject
@@ -776,6 +821,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def resourcesUrl
         def projectNameError
         def projectDescriptionError
+        def cleanerHistoryPeriodError
         def Properties projProps = new Properties()
         if(params.description) {
             projProps['project.description'] = params.description
@@ -783,13 +829,34 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.label) {
             projProps['project.label'] = params.label
         }
+
+        boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
+        projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
+
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+            projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
+            projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
+            projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+        }else{
+            projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
+            projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
+            projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
+            projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+        }
         def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
         final defaultFileCopy = FileCopierService.DEFAULT_REMOTE_PROVIDER
 
-        if (params.defaultNodeExec) {
-            def ndx = params.defaultNodeExec
+        if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled
+                && (params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0)) {
+            cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+            errors << cleanerHistoryPeriodError
+        }
+
+        if (params.default_NodeExecutor) {
+            def ndx = 'default'
             (defaultNodeExec, nodeexec) = parseServiceConfigInput(params, "nodeexec", ndx)
             if (!(defaultNodeExec =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "Default Node Executor provider name is invalid"
@@ -811,8 +878,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
             }
         }
-        if (params.defaultFileCopy) {
-            def ndx = params.defaultFileCopy
+        if (params.default_FileCopier) {
+            def ndx = 'default'
             (defaultFileCopy, fcopy) = parseServiceConfigInput(params, "fcopy", ndx)
             if (!(defaultFileCopy =~ /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)) {
                 errors << "Default File copier provider name is invalid"
@@ -867,6 +934,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def proj
             (proj, errors)=frameworkService.createFrameworkProject(project,projProps)
             if (!errors && proj) {
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : -1,
+                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : 0,
+                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : 500,
+                            params.crontabString)
+                }
                 frameworkService.refreshSessionProjects(authContext, session)
                 flash.message = message(code: "project.0.was.created.flash.message", args: [proj.name])
                 return redirect(controller: 'framework', action: 'projectNodeSources', params: [project: proj.name])
@@ -934,7 +1007,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeExecDescriptions: nodeexecdescriptions,
             fileCopyDescriptions: filecopydescs,
             prefixKey:prefixKey,
-            extraConfig:extraConfig
+            extraConfig:extraConfig,
+            cronModelValues: CRON_MODELS_SELECT_VALUES,
+            cronValues: [:]
         ]
     }
 
@@ -1187,7 +1262,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
         def prefixKey= 'plugin'
-
+        def cleanerHistoryPeriodError
         def project=params.project
         if (!project) {
             return renderErrorView("Project parameter is required")
@@ -1231,10 +1306,30 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.label']=''
             }
 
+            boolean cleanerHistoryEnabled = params.cleanerHistory == 'on'
+            projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
+
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true)
+                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0){
+                cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+                errors << cleanerHistoryPeriodError
+            }
+
+            if(featureService.featurePresent('cleanExecutionsHistoryJob', true) && cleanerHistoryEnabled) {
+                projProps['project.execution.history.cleanup.retention.days'] = params.cleanperiod ?: MAX_DAYS_TO_KEEP.toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = params.minimumtokeep ?: MINIMUM_EXECUTION_TO_KEEP.toString()
+                projProps['project.execution.history.cleanup.batch'] = params.maximumdeletionsize ?: MAXIMUM_DELETION_SIZE.toString()
+                projProps['project.execution.history.cleanup.schedule'] = params.crontabString ?: SCHEDULE_DEFAULT
+            }else{
+                projProps['project.execution.history.cleanup.retention.days'] = MAX_DAYS_TO_KEEP.toString()
+                projProps['project.execution.history.cleanup.retention.minimum'] = MINIMUM_EXECUTION_TO_KEEP.toString()
+                projProps['project.execution.history.cleanup.batch'] = MAXIMUM_DELETION_SIZE.toString()
+                projProps['project.execution.history.cleanup.schedule'] = SCHEDULE_DEFAULT
+            }
 
             def Set<String> removePrefixes=[]
-            if (params.defaultNodeExec) {
-                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
+            if (params.default_NodeExecutor) {
+                (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, 'default', "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
                 try {
                     execPasswordFieldsService.untrack(
                             [[config: [type: defaultNodeExec, props: nodeexec], index: 0]],
@@ -1246,8 +1341,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     errors << e.getMessage()
                 }
             }
-            if (params.defaultFileCopy) {
-                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, params.defaultFileCopy, "fcopy", frameworkService.getFileCopierService(),'File Copier')
+            if (params.default_FileCopier) {
+                (defaultFileCopy, fcopy, fcopyreport) = parseDefaultPluginConfig(errors, 'default', "fcopy", frameworkService.getFileCopierService(),'File Copier')
                 try {
                     fcopyPasswordFieldsService.untrack(
                             [[config: [type: defaultFileCopy, props: fcopy], index: 0]],
@@ -1310,6 +1405,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
+                if(featureService.featurePresent('cleanExecutionsHistoryJob', true)){
+                    frameworkService.scheduleCleanerExecutions(project, cleanerHistoryEnabled, cleanerHistoryEnabled && params.cleanperiod ? Integer.parseInt(params.cleanperiod) : MAX_DAYS_TO_KEEP,
+                            params.minimumtokeep ? Integer.parseInt(params.minimumtokeep) : MINIMUM_EXECUTION_TO_KEEP,
+                            params.maximumdeletionsize ? Integer.parseInt(params.maximumdeletionsize) : MAXIMUM_DELETION_SIZE,
+                            params.crontabString ?: SCHEDULE_DEFAULT)
+                }
                 frameworkService.refreshSessionProjects(authContext, session)
                 return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
@@ -1347,7 +1448,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             final validation = frameworkService.validateServiceConfig(type, identifier+".${ndx}.config.", params, service)
             if (!validation.valid) {
                 report = validation.report
-                errors << validation.error ? "${title} configuration was invalid: " + validation.error : "${title} configuration was invalid"
+                errors << (
+                        validation.error ?
+                        "${title} configuration was invalid: " + validation.error :
+                        "${title} configuration was invalid"
+                )
             }
         }
         [type, config, report]
@@ -2213,6 +2318,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             project: project,
             projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
             projectLabel:fwkProject.getProjectProperties().get("project.label"),
+            cleanerHistoryPeriod:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.days") ?: MAX_DAYS_TO_KEEP,
+            minimumExecutionToKeep:fwkProject.getProjectProperties().get("project.execution.history.cleanup.retention.minimum") ?: MINIMUM_EXECUTION_TO_KEEP,
+            maximumDeletionSize:fwkProject.getProjectProperties().get("project.execution.history.cleanup.batch") ?: MAXIMUM_DELETION_SIZE,
+            enableCleanHistory:["true", true].contains(fwkProject.getProjectProperties().get("project.execution.history.cleanup.enabled")),
+            cronExression:fwkProject.getProjectProperties().get("project.execution.history.cleanup.schedule") ?: SCHEDULE_DEFAULT,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,
@@ -2220,7 +2330,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             nodeExecDescriptions: execDesc,
             fileCopyDescriptions: filecopyDesc,
             prefixKey: 'plugin',
-            extraConfig:extraConfig
+            extraConfig:extraConfig,
+            cronModelValues: CRON_MODELS_SELECT_VALUES,
+            cronValues: [:]
         ]
     }
     def editProjectFile (){

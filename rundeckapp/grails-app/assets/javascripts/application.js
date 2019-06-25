@@ -22,7 +22,11 @@
 // methods for modifying inner html or text content
 
 function clearHtml(elem) {
-  $(elem).innerHTML = '';
+  if (typeof (jQuery) !== 'undefined') {
+    jQuery(elem).html('')
+  } else if (typeof ($) !== 'undefined') {
+    $(elem).innerHTML = ''
+  }
 }
 
 function setHtml(elem, html) {
@@ -40,7 +44,11 @@ function setText(elem, text) {
 }
 
 function appendText(elem, text) {
-  $(elem).appendChild(document.createTextNode(text));
+  if(typeof(jQuery)!=='undefined'){
+    jQuery(elem).append(document.createTextNode(text))
+  }else if(typeof($)!=='undefined'){
+    $(elem).appendChild(document.createTextNode(text));
+  }
 }
 /**
  * take escaped text and unescape html encoding
@@ -93,129 +101,122 @@ function toggleDisclosure(id, iconid, closeUrl, openUrl) {
 
 
 function myToggleClassName(elem, name) {
-  if ($(elem).hasClassName(name)) {
-    $(elem).removeClassName(name);
-  } else {
-    $(elem).addClassName(name);
-  }
+
+    jQuery(elem).toggleClass(name)
+
 }
 
 
 var Expander = {
   toggle: function (elem, contain, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+
     var holder;
     var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
       if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     } else {
-      if (e.hasClassName('expandComponentControl')) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
         if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
     var value = false;
-    if (content) {
-      value = !Element.visible(content);
+    if (content.length) {
+      value = !content.is(':visible')
     } else if (icnh) {
-      var icn = icnh.down('.glyphicon');
+      var icn = icnh.find('.glyphicon')
       if (icn) {
-        value = icn.hasClassName('glyphicon-chevron-down');
+        value = icn.hasClass('glyphicon-chevron-down')
       }
     }
     Expander.setOpen(elem, contain, value, expression);
     return value;
   },
   setOpen: function (elem, contain, value, expression) {
-    var e = $(elem);
-    if (!e) {
+    var e = typeof (elem) === 'string' ? jQuery('#' + elem) : jQuery(elem)
+    if (e.length < 1) {
       return;
     }
-    var content;
-    if ($(contain)) {
-      content = $(contain);
-    }
-    var holder;
-    var icnh;
-    if (!content) {
-      holder = e.up(".expandComponentHolder");
-      if (holder) {
-        content = holder.down(".expandComponent");
-        icnh = holder.down(".expandComponentControl");
+    var content = typeof(contain)==='string'?jQuery('#' + contain):contain?jQuery(contain):[]
+    var holder = []
+    var icnh = []
+    if (content.length < 1) {
+      holder = e.closest(".expandComponentHolder")
+      if (holder.length) {
+        content = holder.find(".expandComponent")
+        icnh = holder.find(".expandComponentControl")
       }
     }
-    if (!holder || !icnh) {
-      if (e.hasClassName('expandComponentControl')) {
+    if (!holder.length || !icnh.length) {
+      if (e.hasClass('expandComponentControl')) {
         icnh = e;
       }
-      if (e.hasClassName('expandComponentHolder')) {
+      if (e.hasClass('expandComponentHolder')) {
         holder = e;
-        if (!icnh) {
-          icnh = holder.down(".expandComponentControl");
+        if (icnh.length) {
+          icnh = holder.find(".expandComponentControl")
         }
       } else {
-        holder = e.up(".expandComponentHolder");
+        holder = e.closest(".expandComponentHolder")
       }
     }
-    if (content) {
+    if ( content.length) {
       if (value) {
-        Element.show(content);
+        content.show()
       } else {
-        Element.hide(content);
+        content.hide()
       }
       if (null != expression) {
         //also set open related expression match
-        $$(expression).each(function (e) {
+        jQuery(expression).each(function (i, e) {
           if (value) {
-            Element.show(e);
+            jQuery(e).show()
           } else {
-            Element.hide(e);
+            jQuery(e).hide()
           }
         });
       }
     }
-    if (holder) {
+    if (holder.length) {
       if (value) {
-        Element.addClassName(holder, "expanded");
+        holder.addClass("expanded")
       } else {
-        Element.removeClassName(holder, "expanded");
+        holder.removeClass("expanded")
       }
-    } else if (icnh && content) {
+    } else if (icnh.length && content.length) {
       if (value) {
-        Element.addClassName(icnh, "expanded");
-        Element.removeClassName(icnh, "closed");
+        icnh.addClass("expanded")
+        icnh.removeClass("closed")
       } else {
-        Element.removeClassName(icnh, "expanded");
-        Element.addClassName(icnh, "closed");
+        icnh.removeClass("expanded")
+        icnh.addClass("closed")
       }
     }
-    if (icnh) {
-      var icn = icnh.down('.glyphicon');
-      if (icn) {
+    if (icnh.length) {
+      var icn = icnh.find('.glyphicon')
+      if (icn.length) {
         if (value) {
-          icn.addClassName('glyphicon-chevron-down');
-          icn.removeClassName('glyphicon-chevron-right');
+          icn.addClass('glyphicon-chevron-down')
+          icn.removeClass('glyphicon-chevron-right')
         } else {
-          icn.addClassName('glyphicon-chevron-right');
-          icn.removeClassName('glyphicon-chevron-down');
+          icn.addClass('glyphicon-chevron-right')
+          icn.removeClass('glyphicon-chevron-down')
         }
       }
     }
@@ -233,13 +234,24 @@ function _isIe(version) {
 }
 
 
+function stopEvent (e) {
+  if (e.preventDefault) {
+    e.preventDefault()
+    e.stopPropagation()
+  } else {
+    e.returnValue = false
+    e.cancelBubble = true
+  }
+}
+
 /**
  * keypress handler which disallows Return key
  * @param e event
  */
 function noenter(e) {
   if (e && e.keyCode == Event.KEY_RETURN) {
-    Event.stop(e);
+
+    stopEvent(e)
   }
   return !(e && e.keyCode == Event.KEY_RETURN);
 }
@@ -252,7 +264,7 @@ function noenter(e) {
 function nochars(chars, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && chars.indexOf(String.fromCharCode(kCode)) >= 0);
 }
@@ -261,12 +273,11 @@ function _applyAce(e, height) {
   if (_isIe(8) || _isIe(7) || _isIe(6)) {
     return;
   }
-  $(e).setStyle({
-    width: "100%",
-    height: height != null ? height : "200px"
-  });
-  $(e).addClassName('ace_editor');
-  var editor = ace.edit(e.identify());
+  jQuery(e).width( "100%")
+      .height( height != null ? height : "200px");
+
+  jQuery(e).addClass('ace_editor');
+  var editor = ace.edit(generateId(e));
   editor.setTheme("ace/theme/" + (jQuery(e).data('aceSessionTheme') || 'chrome'));
   editor.getSession().setMode("ace/mode/" + (jQuery(e).data('aceSessionMode') || 'sh'));
   editor.setReadOnly(true);
@@ -482,7 +493,7 @@ function controlkeycode(e) {
 function onlychars(regex, e) {
   var kCode = e.keyCode ? e.keyCode : e.charCode;
   if (e && kCode != 0 && !String.fromCharCode(kCode).match(regex)) {
-    Event.stop(e);
+    stopEvent(e)
   }
   return !(e && kCode != 0 && !String.fromCharCode(kCode).match(regex));
 }
@@ -496,6 +507,23 @@ function fireWhenReady(elem, func) {
 }
 
 /**
+ * Generate a URL query string
+ * @param params
+ * @returns {string}
+ * @private
+ */
+function _genUrlQuery (params) {
+  var urlparams = []
+  if (typeof (params) == 'string') {
+    urlparams = [params]
+  } else if (typeof (params) == 'object') {
+    for (var e in params) {
+      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]))
+    }
+  }
+  return urlparams.join("&")
+}
+/**
  * Generate a URL
  * @param url
  * @param params
@@ -503,15 +531,8 @@ function fireWhenReady(elem, func) {
  * @private
  */
 function _genUrl(url, params) {
-  var urlparams = [];
-  if (typeof (params) == 'string') {
-    urlparams = [params];
-  } else if (typeof (params) == 'object') {
-    for (var e in params) {
-      urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
-    }
-  }
-  return url + (urlparams.length ? ((url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
+  let paramString = _genUrlQuery(params)
+  return url + (paramString.length ? ((url.indexOf('?') > 0 ? '&' : '?') + paramString) : '')
 }
 /**
  * Generate a link
@@ -821,7 +842,9 @@ function _initPopoverContentRef(parent, options) {
     var opts = {
       html: true,
       content: function () {
-        return jQuery(ref).html();
+        const id = generateId()
+        const html = jQuery(ref).html()
+        return html.replace(/\$CREF\$/g, id)
       },
       trigger: jQuery(e).data('trigger') || options.trigger || 'click'
     };
@@ -834,8 +857,14 @@ function _initPopoverContentRef(parent, options) {
     }
     jQuery(e).popover(opts).on('shown.bs.popover', function () {
       jQuery(e).toggleClass('active');
+      if (typeof (options.onShown) === 'function') {
+        options.onShown(e)
+      }
     }).on('hidden.bs.popover', function () {
       jQuery(e).toggleClass('active');
+      if (typeof (options.onHidden) === 'function') {
+        options.onHidden(e)
+      }
     });
     jQuery(e).data('popover-content-ref-inited', 'true');
   });
@@ -874,14 +903,14 @@ function _initPopoverContentFor(parent, options) {
 function _initAffix() {
   //affixed elements
   jQuery("a[href='#top']").click(function () {
-    jQuery("html, body").animate({
+    jQuery("#main-panel").animate({
       scrollTop: 0
     }, "slow");
     return false;
   });
   jQuery("a[href='#bottom']").click(function () {
     //window.scrollTo(0, document.documentElement.scrollHeight || document.body.scrollHeight);
-    var body = jQuery("html, body");
+    var body = jQuery("#main-panel")
     body.animate({
       scrollTop: body[0].scrollHeight
     }, "fast");
@@ -957,6 +986,9 @@ function _initCollapseExpander() {
 
 function _toggleAnsiColor(e) {
   var test = jQuery(this).find('input')[0].checked;
+  _setAnsiColor(test)
+}
+function _setAnsiColor(test){
   var ansicolor = jQuery('.ansicolor');
   if (!test) {
     ansicolor.removeClass('ansicolor-on');
@@ -969,6 +1001,20 @@ function _initAnsiToggle() {
   jQuery('.ansi-color-toggle').on('change', _toggleAnsiColor);
   jQuery('.nodes_run_content').on('change', '.ansi-color-toggle', _toggleAnsiColor);
 }
+/**
+ * Create a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
+ * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
+ * embedded int the body of the element.
+ * @param id id of embedded token json script element
+ * @returns {boolean}
+ * @private
+ */
+function _createAjaxSendTokensHandler (id) {
+  return function (jqxhr, settings) {
+    return _ajaxSendTokens(id, jqxhr, settings)
+  }
+}
+
 /**
  * Use as a beforeSend ajax handler to include request tokens in ajax request. The tokens are either read from
  * data stored in the dom on the element with given id, by the _ajaxReceiveTokens, or by loading json text
@@ -1004,6 +1050,17 @@ function _ajaxSendTokens(id, jqxhr, settings) {
   }
 
 }
+/**
+ * Create a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
+ * @param id
+ * @private
+ */
+function _createAjaxReceiveTokensHandler (id) {
+  return function (data, status, jqxhr) {
+    return _ajaxReceiveTokens(id, data, status, jqxhr);
+  }
+}
+
 /**
  * Use as a ajaxSuccess event handler for ajax requests, to replace request tokens for an element in the dom.
  * @param id
@@ -1125,6 +1182,57 @@ function _initMarkdeep() {
     });
   }
 }
+
+function _initPopoverMousedownCatch (sel, allowed, callback) {
+  jQuery(sel || 'body').on('mousedown', function (e) {
+    if (jQuery(e.target).closest(allowed).length < 1) {
+
+      jQuery(sel || 'body').off('mousedown')
+      if (typeof (callback) === 'function') {
+        callback(e)
+      }
+    }
+  })
+}
+function _initStopPropagationOnClick(){
+  jQuery('body').on('click',function(event){
+    let closest = jQuery(event.target).closest('[data-click-stop-propagation]')
+    if(closest.length>0){
+      event.stopPropagation()
+    }
+  });
+}
+
+/**
+ * Add timeZone url parameter to href from moment tz guess
+ * @private
+ */
+function _initTZParamGuess () {
+  if (typeof (moment) === 'function' && typeof (moment.tz) !== 'undefined') {
+    let tz = moment.tz.guess()
+    jQuery('a._guess_tz_param').each(function () {
+      let anchor = jQuery(this)
+      let param = anchor.data('tzUrlParam') || 'timeZone'
+      let href = anchor.attr('href')
+      if (href.indexOf(param + '=') < 0) {
+        anchor.attr('href', _genUrl(href, {[param]: tz}))
+      }
+    })
+  }
+}
+
+/**
+ * set moment locale from meta tag
+ * @private
+ */
+function _initMomentLocale () {
+  if (typeof (moment) === 'function') {
+    let m = jQuery('html').attr('lang')
+    if (m) {
+      moment.locale(m)
+    }
+  }
+}
 (function () {
   window.markdeepOptions = {
     mode: 'script',
@@ -1138,6 +1246,7 @@ function _initMarkdeep() {
     });
     jQuery(document).ready(function () {
       jQuery.support.transition = false;
+      _initMomentLocale()
       jQuery('.has_tooltip').tooltip({});
       jQuery('.has_popover').popover({});
       _initPopoverContentRef();
@@ -1147,6 +1256,8 @@ function _initMarkdeep() {
       _initCollapseExpander();
       _initAnsiToggle();
       _initMarkdeep();
+      _initStopPropagationOnClick();
+      _initTZParamGuess()
     });
   }
 })();
@@ -1185,8 +1296,8 @@ var _setLoading = function (element, text) {
   } else {
     var sp = new Element('span');
     sp.addClassName('loading');
-    var img = new Element('img');
-    img.src = appLinks.iconSpinner;
+    var img = new Element('i');
+    img.addClassName('fas fa-spinner fa-pulse')
     $(sp).appendChild(img);
     appendText(sp, ' ' + text);
     clearHtml(element);
@@ -1251,7 +1362,7 @@ function setFilter(name, value, callback) {
     url: _genUrl(appLinks.userAddFilterPref, {
       filterpref: str
     }),
-    beforeSend: _ajaxSendTokens.curry('filter_select_tokens'),
+    beforeSend: _createAjaxSendTokensHandler('filter_select_tokens'),
     success: function (data, status, jqxhr) {
       if (typeof (callback) === 'function') {
         callback(data, name);
@@ -1261,7 +1372,7 @@ function setFilter(name, value, callback) {
         } catch (e) {}
       }
     }
-  }).success(_ajaxReceiveTokens.curry('filter_select_tokens'));
+  }).success(_createAjaxReceiveTokensHandler('filter_select_tokens'));
 }
 var generateId = (function () {
   var counter = 0;
@@ -1384,3 +1495,53 @@ jQuery.fn.scrollTo = function (speed) {
     }, speed || 1000);
   });
 };
+
+/**
+ * Extract form data
+ * @param selected
+ * @param rmprefixes Array of form field name prefixes to remove
+ * @param reqprefixes Array of form field name prefixes to require (only fields with these prefixes will be serialized)
+ * @returns {{}}
+ */
+function jQueryFormData(selected, rmprefixes,reqprefixes, rmkeyprefixes) {
+  const data = {};
+  selected.find('input, textarea, select').each(function (n, el) {
+    let name = jQuery(el).attr('name');
+    const attr = jQuery(el).attr('type');
+    if ((attr === 'checkbox' || attr === 'radio') && !el.checked) {
+      return;
+    }
+    if(name) {
+      if(reqprefixes){
+        if (!ko.utils.arrayFirst(reqprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmkeyprefixes){
+        if (ko.utils.arrayFirst(rmkeyprefixes, function (el) {
+          return name.startsWith(el);
+        })) {
+          return;
+        }
+      }
+      if(rmprefixes) {
+        rmprefixes.forEach(function (val) {
+          if (name.startsWith(val)) {
+            name = name.substring(val.length);
+          }
+        });
+      }
+      if (data[name] && typeof(data[name]) === 'string') {
+        data[name] = [data[name], jQuery(el).val()];
+      } else if (data[name] && jQuery.isArray(data[name])) {
+        data[name].push(jQuery(el).val());
+      } else {
+        data[name] = jQuery(el).val();
+      }
+    }
+
+  });
+  return data
+}

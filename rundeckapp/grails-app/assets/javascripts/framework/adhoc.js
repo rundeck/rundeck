@@ -19,10 +19,12 @@
 //= require knockout-mapping
 //= require knockout-foreachprop
 //= require workflow
-//= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
 //= require executionStateKO
+//= require executionLogOutputKO
+//= require koBind
+
 
 /*
  Manifest for "framework/adhoc.gsp" page
@@ -39,17 +41,7 @@ function showError(message) {
  * START run execution code
  */
 
-    function disableRunBar(runnning) {
-        var runbox = jQuery('#runbox');
-        if (runnning) {
-            runbox.find('button.runbutton').button('loading');
-        }
-    }
-function enableRunBar() {
-    var runbox = jQuery('#runbox');
-    runbox.find('button.runbutton')
-        .button('reset');
-}
+
 var running = false;
 function runStarted() {
     running = true;
@@ -82,13 +74,12 @@ function runFormSubmit(elem) {
     }
     var data = jQuery('#' + elem + " :input").serialize();
     adhocCommand.running(true);
-    disableRunBar(true);
     runStarted();
     $('runcontent').loading('Starting Execution…');
     jQuery.ajax({
         type: 'POST',
         url: _genUrl(appLinks.scheduledExecutionRunAdhocInline, data),
-        beforeSend: _ajaxSendTokens.curry('adhoc_req_tokens'),
+        beforeSend: _createAjaxSendTokensHandler('adhoc_req_tokens'),
         success: function (data, status, xhr) {
             try {
                 startRunFollow(data);
@@ -100,7 +91,7 @@ function runFormSubmit(elem) {
         error: function (data, jqxhr, err) {
             requestFailure(jqxhr);
         }
-    }).success(_ajaxReceiveTokens.curry('adhoc_req_tokens'));
+    }).success(_createAjaxReceiveTokensHandler('adhoc_req_tokens'));
     return false;
 }
 /**
@@ -122,7 +113,9 @@ function startRunFollow(data) {
                 Element.show('runcontent');
                 _initAffix();
                 var nodeflowvm=continueRunFollow(data);
-                ko.applyBindings(nodeflowvm,jQuery('#runcontent .executionshow')[0]);
+                jQuery('#runcontent .executionshow').each(function(index,el){
+                    ko.applyBindings(nodeflowvm,el);
+                })
             } else {
                 requestFailure(jqxhr);
             }
@@ -140,7 +133,6 @@ function continueRunFollow(data) {
     var followControl = new FollowControl(data.id, 'runcontent', {
         workflow:workflow,
         parentElement: 'commandPerform',
-        viewoptionsCompleteId: 'viewoptionscomplete',
         cmdOutputErrorId: 'cmdoutputerror',
         outfileSizeId: 'outfilesize',
         extraParams: pageParams.disableMarkdown,
@@ -151,6 +143,7 @@ function continueRunFollow(data) {
         killjobauth: pageParams.adhocKillAllowed,
         //showFinalLine: {value: false, changed: false},
         colStep: {value: false},
+        colNode: {value: false},
         collapseCtx: {value: false, changed: false},
         groupOutput:{value:false},
         tailmode: true,
@@ -162,14 +155,26 @@ function continueRunFollow(data) {
         execData: {},
         appLinks: appLinks,
         onComplete: onRunComplete,
-        dobind: true
+        // dobind: true
     });
     var nodeflowvm=new NodeFlowViewModel(
         workflow,
         null,
         null,
         null,
-        {followControl:followControl,executionId:data.id}
+        {
+            followControl: followControl,
+            executionId: data.id,
+            logoutput: new LogOutput({
+                followControl: followControl,
+                bindFollowControl: true,
+                options: {
+                    followmode: "tail",
+                    showStep: false,
+                    showNodeCol: false
+                }
+            })
+        }
     );
     var flowState = new FlowState(data.id,null,{
         workflow:workflow,
@@ -179,7 +184,7 @@ function continueRunFollow(data) {
         reloadInterval:1500
     });
     nodeflowvm.followFlowState(flowState);
-    followControl.beginFollowingOutput(data.id);
+    nodeflowvm.logoutput().beginFollowingOutput(data.id);
     flowState.beginFollowing();
     var oldControl=adhocCommand.followControl;
     adhocCommand.followControl=followControl;
@@ -190,7 +195,6 @@ function continueRunFollow(data) {
 }
 function onRunComplete() {
     adhocCommand.running(false);
-    enableRunBar();
     afterRun();
 }
 
@@ -202,10 +206,8 @@ var adhocCommand;
  */
 function _updateBoxInfo(name, data) {
     if (data.total && data.total != "0" && !running) {
-        enableRunBar();
         adhocCommand.canRun(true);
     } else if (!running) {
-        disableRunBar(false);
         adhocCommand.canRun(false);
     }
     if (null != data.total && typeof(nodeFilter) != 'undefined') {
@@ -258,14 +260,6 @@ function init() {
         }
     });
 
-    //history tabs binding
-    var history = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-    ko.applyBindings(history, document.getElementById('activity_section'));
-    setupActivityLinks('activity_section', history);
-    //if empty query, automatically load first activity_link
-    if (pageParams.emptyQuery == 'true') {
-        history.activateNowRunningTab();
-    }
 
     //setup node filters knockout bindings
     var filterParams = loadJsonData('filterParamsJSON');
@@ -277,18 +271,15 @@ function init() {
         jQuery.extend(filterParams, {
             nodeSummary:nodeSummary,
             view: 'embed',
-            maxShown: 100,
+            maxShown: 50,
             emptyMode: 'blank',
             project: pageParams.project,
             nodesTitleSingular: message('Node'),
             nodesTitlePlural: message('Node.plural')
         }));
-    ko.applyBindings(nodeFilter, document.getElementById('actionButtonArea'));
-    ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-    ko.applyBindings(nodeFilter, document.getElementById('nodefiltersHidden'));
+
 
     adhocCommand = new AdhocCommand({commandString:pageParams.runCommand}, nodeFilter);
-    ko.applyBindings(adhocCommand, document.getElementById('adhocInput'));
 
     //show selected named filter
     nodeFilter.filterName.subscribe(function (val) {
@@ -299,10 +290,9 @@ function init() {
     });
     nodeFilter.total.subscribe(function(val){
         if (val && val != "0" && !running) {
-            enableRunBar();
             adhocCommand.canRun(true);
         } else if (!running) {
-            disableRunBar(false);
+
             adhocCommand.canRun(false);
         }
     });
@@ -311,5 +301,7 @@ function init() {
     jQuery('.act_adhoc_history_dropdown').click(function () {
         adhocCommand.loadRecentCommands();
     });
+
+    initKoBind(null, {nodeFilter: nodeFilter, adhocCommand: adhocCommand})
 }
 jQuery(document).ready(init);

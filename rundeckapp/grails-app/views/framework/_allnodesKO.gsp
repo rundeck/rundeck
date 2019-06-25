@@ -18,7 +18,7 @@
     <div id="nodes_tags" data-bind="if: nodeSet().tagsummary">
             <span data-bind="foreach: nodeSet().tagsummary">
                 <span class="summary nodetags">
-                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-default', tag: tag"></node-filter-link>
+                    <node-filter-link params="filterkey: 'tags', filterval: tag, suffix: ' ('+ko.unwrap(value)+')', linktext: tag, classnames: 'label label-muted', tag: tag"></node-filter-link>
                 </span>
             </span>
     </div>
@@ -93,10 +93,11 @@
                         <span class="value" data-bind="if: $parent.attributes[$data]">
                             <span data-bind="if: $data=='tags'">
                                 <span class="nodetags">
-                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().size()>0}"></i> -->
+                                    <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': $parent.tags().length > 0}"></i> -->
                                     <span data-bind="foreach: $parent.tags">
 
-                                        <node-filter-link class="label label-default" params="
+                                        <node-filter-link params="
+                                                    classnames: 'label label-muted',
                                                     filterkey: 'tags',
                                                     filterval: $data,
                                                     tag: $data
@@ -122,7 +123,7 @@
                     <td  title="Tags" class="nodetags" >
                         <span data-bind="if: tags">
                             <span class="nodetags">
-                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().size()>0}"></i> -->
+                                <!-- <i class="" data-bind="css: {'glyphicon glyphicon-tags text-primary': tags().length > 0}"></i> -->
                                 <span data-bind="foreach: tags">
                                     <node-filter-link params="
                                                     filterkey: 'tags',

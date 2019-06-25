@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <g:set var="rkey" value="${g.rkey()}"/>
@@ -22,12 +22,65 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
+    <g:set var="nodeExecutorPluginsData" value="${nodeExecDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'NodeExecutor', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'NodeExecutor', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'NodeExecutor',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}"/>
+    <g:set var="fileCopierPluginsData" value="${fileCopyDescriptions.collect {
+        [
+                type       : it.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'FileCopier', name: it.name),
+                providerMeta    : stepplugin.pluginProviderMeta(service: 'FileCopier', name: it.name),
+                title      :
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.title',
+                                default: it.title
+                        ),
+                description:
+                        stepplugin.messageText(
+                                service: 'FileCopier',
+                                name: it.name,
+                                code: 'plugin.description',
+                                default: it.description
+                        )
+        ]
+    }}" />
+    <g:embedJSON id="projectDataJSON" data="${[
+            create: true,
+            name:params.newproject,
+            defaultFileCopier:defaultFileCopy,
+            defaultNodeExec:defaultNodeExec,
+            descriptions: [
+                    NodeExecutor: nodeExecutorPluginsData,
+                    FileCopier: fileCopierPluginsData,
+            ]
+    ]}"/>
 
     <asset:javascript src="prototype/effects"/>
-    <asset:javascript src="storageBrowseKO.js"/>
+    <asset:javascript src="framework/editProject.js"/>
     <g:javascript>
 
     function init(){
+
         $$('input').each(function(elem){
             if(elem.type=='text'){
                 elem.observe('keypress',noenter);
@@ -53,14 +106,36 @@
       <div class="col-xs-12">
         <div class="card" id="createform">
           <g:form action="createProject" useToken="true" method="post" onsubmit="return configControl.checkForm();">
-            <div class="card-header">
+            <div class="card-header" data-ko-bind="editProject">
               <h4 class="card-title"><g:message code="domain.Project.create.message" default="Create a new Project"/></h4>
             </div>
             <div class="card-content">
-              <tmpl:editProjectForm/>
+
+                <g:set var="serviceDefaultsList" value="${[
+                        [
+                                service     : ServiceNameConstants.NodeExecutor,
+                                descriptions: nodeExecDescriptions,
+                                prefix      : 'nodeexec',
+                                errreport   : nodeexecreport,
+                                selectedType: defaultNodeExec,
+                                config      : nodeexecconfig
+
+                        ],
+                        [
+                                service     : ServiceNameConstants.FileCopier,
+                                descriptions: fileCopyDescriptions,
+                                prefix      : 'fcopy',
+                                errreport   : fcopyreport,
+                                selectedType: defaultFileCopy,
+                                config      : fcopyconfig
+
+                        ]
+                ]}"/>
+              <tmpl:editProjectFormTabs serviceDefaultsList="${serviceDefaultsList}"/>
             </div>
             <div class="card-footer">
-              <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-default"/>
+              <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}" class="btn btn-default"/>
+              <g:submitButton name="create" value="${g.message(code: 'button.action.Create', default: 'Create')}" class="btn btn-primary"/>
             </div>
           </div>
         </g:form>

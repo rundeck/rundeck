@@ -147,7 +147,7 @@ class ReportsControllerSpec extends Specification {
         when:
         params.includeJobRef = true
         params.jobIdFilter = job.id
-        def result = controller.index()
+        def result = controller.index_old()
 
 
         then:

@@ -4,15 +4,63 @@ import Vue from 'vue'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import App from './App'
+import * as uiv from 'uiv'
+import international from '../project-activity/i18n'
+import VueI18n from 'vue-i18n'
+import VueMoment from 'vue-moment'
+import moment from 'moment'
+import {
+  EventBus
+} from '../../utilities/vueEventBus.js'
+import uivLang from '../../utilities/uivi18n'
+
 
 Vue.config.productionTip = false
 
+Vue.use(uiv)
+Vue.use(VueI18n)
 Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 
-/* eslint-disable no-new */
-new Vue({
-  el: '#project-dashboard-vue',
-  components: { App },
-  template: '<App/>'
-})
+let messages = international.messages
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+moment.locale(locale)
+Vue.use(VueMoment,{moment})
+
+// include any i18n injected in the page by the app
+messages =
+    {
+      [locale]: Object.assign(
+          {},
+          uivLang[locale] || uivLang[lang] || {},
+          window.Messages,
+          messages[locale] || messages[lang] || messages['en_US'] || {}
+      )
+    }
+const els = document.body.getElementsByClassName('project-dashboard-vue')
+
+for (var i = 0; i < els.length; i++) {
+  const e = els[i]
+
+  // Create VueI18n instance with options
+  const i18n = new VueI18n({
+    silentTranslationWarn: true,
+    locale: locale, // set locale
+    messages // set locale messages,
+
+  })
+  /* eslint-disable no-new */
+  new Vue({
+    el: e,
+    data(){
+      return{
+        EventBus: EventBus
+      }
+    },
+    components: { App },
+    i18n
+  })
+
+
+}

@@ -159,7 +159,7 @@ class UserService {
                                 frameworkService.getFrameworkPropertyResolver(),
                                 PropertyScope.Unspecified
                         )
-                roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))
+                if(configuredPlugin && configuredPlugin.instance) roles.addAll(configuredPlugin.instance.getGroups(username,configuredPlugin.configuration))
             } catch(Exception ex) {
                 log.error("Unable to get groups from plugin: " + prov.key, ex)
             }

@@ -19,7 +19,10 @@
 //= require knockout-onenter
 //= require ko/binding-url-path-param
 //= require ko/binding-message-template
+//= require ko/handler-bootstrapPopover
+//= require ko/handler-bootstrapTooltip
 //= require menu/project-model
+//= require koBind
 
 function ProjectHome(name, data) {
     "use strict";
@@ -53,5 +56,6 @@ function init() {
         new Project({name: data.project, page: 'projectHome'})
     );
     projectHome.load();
+    initKoBind(null,{projectHome:projectHome})
 }
 jQuery(init);

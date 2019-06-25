@@ -17,6 +17,7 @@ package org.rundeck.jaas.jetty;
 
 import org.eclipse.jetty.jaas.spi.AbstractLoginModule;
 import org.eclipse.jetty.jaas.spi.UserInfo;
+import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.security.PropertyUserStore;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.util.security.Credential;
@@ -41,7 +42,8 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
         private int _refreshInterval = 0;
         private String _filename = DEFAULT_FILENAME;
-
+        private boolean _reloadEnabled = true;
+        private boolean _debug = false;
 
 
         /**
@@ -69,13 +71,13 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             if (_propertyUserStores.get(_filename) == null)
             {
                 PropertyUserStore propertyUserStore = new PropertyUserStore();
-                propertyUserStore.setHotReload(true);
+                propertyUserStore.setHotReload(_reloadEnabled);
                 propertyUserStore.setConfig(_filename);
 
                 PropertyUserStore prev = _propertyUserStores.putIfAbsent(_filename, propertyUserStore);
                 if (prev == null)
                 {
-                    LOG.debug("setupPropertyUserStore: Starting new PropertyUserStore. PropertiesFile: " + _filename + " refreshInterval: " + _refreshInterval);
+                    debug("ReloadablePropertyFileLoginModule: setupPropertyUserStore: Starting new PropertyUserStore. PropertiesFile: " + _filename + " refreshInterval: " + _refreshInterval);
 
                     try
                     {
@@ -95,6 +97,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             _filename = (tmp == null? DEFAULT_FILENAME : tmp);
             tmp = (String)options.get("refreshInterval");
             _refreshInterval = (tmp == null?_refreshInterval:Integer.parseInt(tmp));
+            _debug = options.containsKey("debug") && options.get("debug").equals("true");
         }
 
         /**
@@ -110,7 +113,7 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
             if (propertyUserStore == null)
                 throw new IllegalStateException("PropertyUserStore should never be null here!");
 
-            LOG.debug("Checking PropertyUserStore "+_filename+" for "+userName);
+            debug("ReloadablePropertyFileLoginModule: Checking PropertyUserStore "+_filename+" for "+userName);
             UserIdentity userIdentity = propertyUserStore.getUserIdentity(userName);
             if (userIdentity==null)
                 return null;
@@ -123,12 +126,36 @@ public class ReloadablePropertyFileLoginModule extends AbstractLoginModule {
 
             for ( Principal principal : principals )
             {
-                roles.add( principal.getName() );
+                if(principal instanceof AbstractLoginService.RolePrincipal) {
+                    roles.add(principal.getName());
+                }
             }
 
             Credential credential = (Credential)userIdentity.getSubject().getPrivateCredentials().iterator().next();
-            LOG.debug("Found: " + userName + " in PropertyUserStore "+_filename);
+            debug("ReloadablePropertyFileLoginModule: Found: " + userName + " in PropertyUserStore "+_filename);
             return new UserInfo(userName, credential, roles);
         }
 
+    public boolean isReloadEnabled() {
+        return _reloadEnabled;
     }
+
+    public void setReloadEnabled(final boolean enabled) {
+        this._reloadEnabled = enabled;
+    }
+
+    public boolean isDebug() {
+        return _debug;
+    }
+
+    /**
+     * Default behavior to emit to System.err
+     * @param message
+     */
+    protected void debug(String message) {
+        if(_debug) {
+            System.err.println(message);
+        }
+    }
+
+}

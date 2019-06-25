@@ -20,3 +20,9 @@
 .buttons .btn + .btn{
   margin-left: 1em;
 }
+
+.btn, .btn.btn-simple {
+  &.btn-hover:hover {
+    background-color: lighten($bg-primary, 20%)
+  }
+}

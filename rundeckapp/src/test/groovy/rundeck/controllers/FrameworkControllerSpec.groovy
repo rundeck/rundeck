@@ -617,6 +617,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -650,6 +651,7 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.featureService = Mock(FeatureService)
         controller.scheduledExecutionService = Mock(ScheduledExecutionService){
             isProjectExecutionEnabled(_) >> true
         }
@@ -673,6 +675,73 @@ class FrameworkControllerSpec extends Specification {
         },_) >> [success:true]
         1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
+    }
+
+    @Unroll
+    def "save project default file copier"() {
+        setup:
+            def fwkService = Mock(FrameworkService)
+            controller.frameworkService = fwkService
+            controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+            controller.userService = Mock(UserService)
+            controller.featureService = Mock(FeatureService)
+            controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+                isProjectExecutionEnabled(_) >> true
+            }
+
+            params.project = "TestSaveProject"
+            params."default_${service}" = 'blah'
+            def defaultsConfig = [
+                    specialvalue1: "foobar",
+                    specialvalue2: "barfoo",
+                    specialvalue3: "fizbaz"
+            ]
+            params."$prefix" = [
+                    "default": [
+                            type  : type,
+                            config: defaultsConfig
+                    ]
+            ]
+
+            setupFormTokens(params)
+        when:
+            request.method = "POST"
+            controller.saveProject()
+
+        then:
+            response.status == 302
+            request.errors == null
+            1 * fwkService.authResourceForProject(_)
+            1 * fwkService.getAuthContextForSubject(_)
+            1 * fwkService.authorizeApplicationResourceAny(null, null, ['configure', 'admin']) >> true
+            1 * fwkService.validateServiceConfig('foobar', "${prefix}.default.config.", _, _) >> [valid: true]
+            if (service == 'FileCopier') {
+                1 * controller.fcopyPasswordFieldsService.untrack(
+                        [[config: [type: type, props: defaultsConfig], index: 0]],
+                        _
+                )
+                1 * fwkService.addProjectFileCopierPropertiesForType(type, _, defaultsConfig, _)
+            } else {
+                1 * controller.execPasswordFieldsService.untrack(
+                        [[config: [type: type, props: defaultsConfig], index: 0]],
+                        _
+                )
+                1 * fwkService.addProjectNodeExecutorPropertiesForType(type, _, defaultsConfig, _)
+            }
+            1 * fwkService.listDescriptions() >> [null, null, null]
+            1 * fwkService.updateFrameworkProjectConfig(
+                    _, {
+                it['project.description'] == ''
+            }, _
+            ) >> [success: true]
+            1 * fwkService.validateProjectConfigurableInput(_, _, { !it.test('resourceModelSource') }) >> [:]
+
+        where:
+            service        | type     | prefix
+            'FileCopier'   | 'foobar' | 'fcopy'
+            'NodeExecutor' | 'foobar' | 'nodeexec'
     }
     def "get project resources, project dne"(){
         setup:
@@ -985,6 +1054,7 @@ class FrameworkControllerSpec extends Specification {
     @Unroll
     def "save project updating passive mode"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         defineBeans {
             testConfigurableBean(TestConfigurableBean) {
                 projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
@@ -1071,6 +1141,7 @@ class FrameworkControllerSpec extends Specification {
     def "create project invalid name"(){
         setup:
         controller.metricService = Mock(MetricService)
+        controller.featureService = Mock(FeatureService)
         def rdframework=Mock(Framework){
         }
         controller.frameworkService=Mock(FrameworkService){
@@ -1100,6 +1171,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description empty"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = ''
@@ -1119,6 +1191,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name with invalid characters"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         controller.metricService = Mock(MetricService)
         def rdframework=Mock(Framework){
         }
@@ -1149,6 +1222,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with space"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = ' Project Desc'
@@ -1168,6 +1242,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with numbers"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
         def description = '1 Project Desc'
@@ -1188,6 +1263,7 @@ class FrameworkControllerSpec extends Specification {
 
     def "create project description name starting with parenthesis"(){
         setup:
+        controller.featureService = Mock(FeatureService)
         setupNewProjectWithDescriptionOkTest()
 
 
@@ -1233,6 +1309,30 @@ class FrameworkControllerSpec extends Specification {
             [filter: 'tags:xyz', name: 'filter2', project: project],
             [filter: 'abc', name: 'filter1', project: project],
         ]
+    }
+
+
+    def "node page with filter param doesn't redirect"() {
+        given:
+            def project = 'testProj'
+            controller.userService = Mock(UserService)
+            controller.frameworkService = Mock(FrameworkService)
+            def testUser = new User(login: 'auser').save()
+            [
+                    new NodeFilter(user: testUser, filter: 'abc', name: 'filter1', project: project),
+                    new NodeFilter(user: testUser, filter: 'tags:xyz', name: 'filter2', project: project),
+                    new NodeFilter(user: testUser, filter: 'tags:basdf', name: 'filter3', project: 'otherProject'),
+
+            ]*.save(flush: true)
+            def query = new ExtNodeFilters(project: project, filter: 'tags:abc')
+        when:
+            params.project = project
+            def result = controller.nodes(query)
+        then:
+            1 * controller.userService.findOrCreateUser(_) >> testUser
+            1 * controller.userService.getFilterPref(_) >> [nodes: 'filter1']
+            response.status == 200
+            result.filter == 'tags:abc'
     }
 
     def "save project node sources"() {

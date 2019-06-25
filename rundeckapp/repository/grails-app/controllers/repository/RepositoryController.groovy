@@ -3,7 +3,10 @@ package repository
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.rundeck.repository.artifact.RepositoryArtifact
+import com.rundeck.repository.client.exceptions.ArtifactNotFoundException
 import com.rundeck.repository.client.manifest.search.ManifestSearchBuilder
+import com.rundeck.repository.definition.RepositoryDefinition
 import com.rundeck.repository.manifest.search.ManifestSearch
 import grails.converters.JSON
 import groovy.transform.PackageScope
@@ -42,6 +45,7 @@ class RepositoryController {
                     it.installed = it.installId ? installedPluginIds.keySet().contains(it.installId) : false
                     if(it.installed) {
                         it.updatable = checkUpdatable(installedPluginIds[it.installId],it.currentVersion)
+                        it.installedVersion = installedPluginIds[it.installId]
                     }
                 }
             }
@@ -99,10 +103,11 @@ class RepositoryController {
         }
 
         def listPluginTypes() {
-            SortedSet<String> types = [] as SortedSet
+            def types = []
             ServiceTypes.getPluginTypesMap().keySet().each { name ->
-                types.add(name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, ''))
+                types.add([name:name,value:name.replaceAll(/([A-Z]+)/, ' $1').replaceAll(/^ /, '')])
             }
+            types.sort { a,b -> a.name <=> b.name }
             render types as JSON
         }
 
@@ -123,10 +128,9 @@ class RepositoryController {
                 render successMsg as JSON
             } else {
                 def pkg = [:]
-                def errors = [:]
+                def errors = []
                 result.messages.each {
-                    errors.code = it.code
-                    errors.msg = it.message
+                    errors.add([code:it.code,msg:it.message])
                 }
                 pkg.errors = errors
                 response.setStatus(400)
@@ -154,10 +158,9 @@ class RepositoryController {
                 render successMsg as JSON
             } else {
                 def pkg = [:]
-                def errors = [:]
+                def errors = []
                 result.messages.each {
-                    errors.code = it.code
-                    errors.msg = it.message
+                    errors.add([code:it.code,msg:it.message])
                 }
                 pkg.errors = errors
                 response.setStatus(400)
@@ -170,14 +173,22 @@ class RepositoryController {
                 specifyUnauthorizedError()
                 return
             }
-            String repoName = params.repoName ?: getOnlyRepoInListOrNullIfMultiple()
-            if(!repoName) {
-                specifyRepoError()
-                return
+            if(!params.artifactId) {
+                response.setStatus(400)
+                def err = [error:"You must specify an artifact id"]
+                render err as JSON
             }
+            String installedVersion = pluginApiService.listInstalledPluginIds()[params.artifactId]
             def responseMsg = [:]
             try {
-                def artifact = repoClient.getArtifact(repoName, params.artifactId,null)
+                RepositoryArtifact artifact = null
+                for(RepositoryDefinition repoDef : repoClient.listRepositories()) {
+                    try {
+                        artifact = repoClient.getArtifact(repoDef.repositoryName, params.artifactId, installedVersion)
+                    } catch(ArtifactNotFoundException anfe) {} //the repository does not have the artifact. That could be normal.
+                    if(artifact) break;
+                }
+                if(!artifact) throw new Exception("Could not find artifact information for: ${params.artifactId}. Please check that the supplied artifact id is correct.")
                 repositoryPluginService.uninstallArtifact(artifact)
                 responseMsg.msg = "Plugin Uninstalled"
             } catch(Exception ex) {

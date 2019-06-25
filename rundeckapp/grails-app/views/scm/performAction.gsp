@@ -169,12 +169,12 @@
                                 <g:if test="${jobs.size() > 1}">
                                     <div class=" row row-spacing">
                                         <div class=" col-sm-12">
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-simple btn-hover"
                                                   onclick="jQuery('input[name=id]').prop('checked', true)">
                                                 <g:message code="select.all"/>
                                             </span>
                                         &bull;
-                                            <span class="btn btn-default"
+                                            <span class="btn btn-simple btn-hover"
                                                   onclick="jQuery('input[name=id]').prop('checked', false)">
                                                 <g:message code="select.none"/>
                                             </span>
