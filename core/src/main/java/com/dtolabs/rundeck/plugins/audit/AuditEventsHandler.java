@@ -5,7 +5,7 @@ import com.dtolabs.rundeck.core.audit.AuditEvent;
 /**
  * Interface for implementing an Audit event handler plugin.
  */
-public interface AuditEventHandler {
+public interface AuditEventsHandler {
 
 
   /**

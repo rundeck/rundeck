@@ -7,37 +7,39 @@ import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.audit.AuditEventHandler;
-import com.dtolabs.rundeck.plugins.audit.SystemAuditEventHandler;
+import com.dtolabs.rundeck.plugins.audit.AuditEventsHandler;
+import com.dtolabs.rundeck.plugins.audit.SystemAuditEventsHandler;
 
 import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 
-public class AuditEventService
-extends PluggableProviderRegistryService<AuditEventHandler>
-implements PluggableProviderService<AuditEventHandler>,
-    JavaClassProviderLoadable<AuditEventHandler> {
+public class AuditEventsService
+extends PluggableProviderRegistryService<AuditEventsHandler>
+implements PluggableProviderService<AuditEventsHandler>,
+    JavaClassProviderLoadable<AuditEventsHandler> {
 
-  public static final String SERVICE_NAME = ServiceNameConstants.AuditEventHandler;
+  public static final String SERVICE_NAME = ServiceNameConstants.AuditEventsHandler;
 
-  public AuditEventService(Framework framework) {
+  public AuditEventsService(Framework framework) {
     super(framework, true);
-    registry.put(SystemAuditEventHandler.SERVICE_PROVIDER_TYPE, SystemAuditEventHandler.class);
+    registry.put(SystemAuditEventsHandler.SERVICE_PROVIDER_TYPE, SystemAuditEventsHandler.class);
   }
+
+
 
   @Override
   public String getName() {
     return SERVICE_NAME;
   }
 
-  public static AuditEventService getInstanceForFramework(Framework framework) {
+  public static AuditEventsService getInstanceForFramework(Framework framework) {
     if (null == framework.getService(SERVICE_NAME)) {
-      final AuditEventService service = new AuditEventService(framework);
+      final AuditEventsService service = new AuditEventsService(framework);
       framework.setService(SERVICE_NAME, service);
       return service;
     }
-    return (AuditEventService) framework.getService(SERVICE_NAME);
+    return (AuditEventsService) framework.getService(SERVICE_NAME);
   }
 
 
@@ -53,9 +55,9 @@ implements PluggableProviderService<AuditEventHandler>,
             throw new RuntimeException(e.getMessage(), e);
           }
         })
-        .forEach(auditEventHandler -> {
-          System.err.println("   !!! AEH: " + auditEventHandler.toString());
-          auditEventHandler.onLoginSuccessful(new AuditEvent() {
+        .forEach(auditEventsHandler -> {
+          System.err.println("   !!! AEH: " + auditEventsHandler.toString());
+          auditEventsHandler.onLoginSuccessful(new AuditEvent() {
             @Override
             public Date getTimestamp() {
               return null;
@@ -94,11 +96,11 @@ implements PluggableProviderService<AuditEventHandler>,
 
   @Override
   public boolean isValidProviderClass(Class clazz) {
-    return AuditEventHandler.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
+    return AuditEventsHandler.class.isAssignableFrom(clazz) && hasValidProviderSignature(clazz);
   }
 
   @Override
-  public <X extends AuditEventHandler> AuditEventHandler createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
+  public <X extends AuditEventsHandler> AuditEventsHandler createProviderInstance(Class<X> clazz, String name) throws PluginException, ProviderCreationException {
     return createProviderInstanceFromType(clazz, name);
   }
 }

@@ -96,6 +96,14 @@ class UserController extends ControllerBase{
     }
 
     def profile() {
+
+
+
+        frameworkService.getRundeckFramework().getAuditEventService().lol();
+
+        frameworkService.pluginService.listPlugins()
+
+
         //check auth to view profile
         //default to current user profile
         if(!params.login){
