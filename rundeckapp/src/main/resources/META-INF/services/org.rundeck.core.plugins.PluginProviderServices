@@ -2,3 +2,4 @@ com.dtolabs.rundeck.server.plugins.services.TourLoaderPluginProviderService
 com.dtolabs.rundeck.server.plugins.services.OptionValuesPluginProviderService
 com.dtolabs.rundeck.server.plugins.services.UserGroupSourcePluginProviderService
 com.dtolabs.rundeck.server.plugins.services.FileUploadPluginProviderService
+com.dtolabs.rundeck.server.plugins.services.PasswordUtilityEncrypterPluginProviderService

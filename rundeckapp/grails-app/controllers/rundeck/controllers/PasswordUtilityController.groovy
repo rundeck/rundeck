@@ -3,6 +3,8 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 
 class PasswordUtilityController {
+    def passwordUtilityEncrypterLoaderService
+
     Map<String,PasswordUtilityEncrypter> encrypters = [:]
     PasswordUtilityController() {
         ServiceLoader<PasswordUtilityEncrypter> encrypterServices = ServiceLoader.load(
@@ -12,6 +14,12 @@ class PasswordUtilityController {
     }
 
     def index() {
+        def plugins = passwordUtilityEncrypterLoaderService.listPlugins()
+        plugins.each({ plugin->
+            def pluginInstance = plugin.value
+            encrypters[pluginInstance.name()]=pluginInstance
+        })
+
         if(!flash.encrypter) flash.encrypter = encrypters.keySet().toSorted()[0]
         return ["encrypters":encrypters]
     }

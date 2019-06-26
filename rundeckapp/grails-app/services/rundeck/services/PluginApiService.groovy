@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -87,6 +88,10 @@ class PluginApiService {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
+
+        pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypter).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
         //web-app level plugin descriptions
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
