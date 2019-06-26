@@ -56,6 +56,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
+import java.awt.Frame
 
 /**
  * Created by greg on 3/15/16.
@@ -1244,13 +1245,10 @@ class MenuControllerSpec extends Specification {
 
         then:
         model
-        model.users
-        model.users.admin
-        model.users.admin.login=='admin'
 
     }
 
-    def "user summary with last exec"() {
+    def "loadUsersList summary with last exec"() {
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
         controller.frameworkService=Mock(FrameworkService){
@@ -1258,7 +1256,7 @@ class MenuControllerSpec extends Specification {
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
         controller.userService = Mock(UserService){
-            getLoginStatus(_,_) >> 'LOGGED IN'
+            getLoginStatus(_,_) >> UserService.LogginStatus.LIN.value
         }
         def userToSearch = 'admin'
         def email = 'test@test.com'
@@ -1290,13 +1288,63 @@ class MenuControllerSpec extends Specification {
         ).save()
 
         when:
-        def model = controller.userSummary()
+        def users = controller.loadUsersList()
 
         then:
-        model
-        model.users
-        model.users.admin
-        model.users.admin.lastJob
+        response.json.users
+        response.json.users.admin
+        response.json.users.admin.lastJob
+
+    }
+
+    def "loadUsersList summary with logged in status"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.userService = Mock(UserService){
+            getLoginStatus(_,_) >> UserService.LogginStatus.LIN.value
+        }
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        User u = new User(login: userToSearch)
+        u.save()
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: userToSearch,
+                project: 'AProject'
+        ).save()
+
+        when:
+        def users = controller.loadUsersList()
+
+
+        then:
+        response.json.users
+        response.json.users.admin
+        response.json.users.admin.lastJob
+        response.json.users.admin.loggedStatus == UserService.LogginStatus.LIN.value
 
     }
 

@@ -3331,6 +3331,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
         }
+        [users: [:]]
     }
 
     def loadUsersList(){

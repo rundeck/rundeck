@@ -174,7 +174,7 @@ class UserService {
             Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
             if(lastDate != null){
                 int minutes = DEFAULT_TIMEOUT
-                if(frameworkService.getRundeckFramework().getPropertyLookup().hasProperty("framework.session.abandonned.minutes")){
+                if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandonned.minutes")){
                     minutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandonned.minutes"))
                 }
                 Calendar calendar = Calendar.getInstance()
