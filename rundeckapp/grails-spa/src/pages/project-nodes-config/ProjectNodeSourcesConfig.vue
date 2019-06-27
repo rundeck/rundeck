@@ -1,16 +1,19 @@
 <template>
-  <project-plugin-config config-prefix="resources.source"
-                         service-name="ResourceModelSource"
-                         :help="help"
-                         @saved="pluginsConfigWasSaved"
-                         @modified="pluginsConfigWasModified"
-                         @reset="pluginsConfigWasReset"
-                         :edit-button-text="$t('Edit Node Sources')"
-                         :edit-mode="editMode"
-                         :mode-toggle="modeToggle"
-                         >
+  <project-plugin-config
+    config-prefix="resources.source"
+    service-name="ResourceModelSource"
+    :help="help"
+    @saved="pluginsConfigWasSaved"
+    @modified="pluginsConfigWasModified"
+    @reset="pluginsConfigWasReset"
+    :edit-button-text="$t('Edit Node Sources')"
+    :edit-mode="editMode"
+    :mode-toggle="modeToggle"
+  >
     <div slot="item-extra" slot-scope="{plugin,mode}">
-      <div v-if="isWriteable(plugin.origIndex) && (showWriteableLinkMode==='any' || showWriteableLinkMode===mode)">
+      <div
+        v-if="isWriteable(plugin.origIndex) && (showWriteableLinkMode==='any' || showWriteableLinkMode===mode)"
+      >
         <a :href="editPermalink(plugin.origIndex)" class="btn btn-sm btn-default">
           <i class="glyphicon glyphicon-pencil"></i>
           {{$t('Edit Nodes')}}
@@ -25,85 +28,94 @@
         </div>
       </div>
     </div>
-
   </project-plugin-config>
 </template>
 <script lang="ts">
+import Vue from "vue";
+import { getRundeckContext, RundeckContext } from "@rundeck/ui-trellis";
 
-import Vue from 'vue'
-import {
-    getRundeckContext,
-    RundeckContext
-} from "@rundeck/ui-trellis"
-
-import ProjectPluginConfig from './ProjectPluginConfig.vue'
-import {getProjectNodeSources,NodeSource} from './nodeSourcesUtil'
+import ProjectPluginConfig from "./ProjectPluginConfig.vue";
+import { getProjectNodeSources, NodeSource } from "./nodeSourcesUtil";
 
 export default Vue.extend({
-  props:{
-    help:{
-      type:String,
-      required:false
+  props: {
+    help: {
+      type: String,
+      required: false
     },
-    editMode:{
-      type:Boolean, default:false
+    editMode: {
+      type: Boolean,
+      default: false
     },
-    modeToggle:{
-      type:Boolean, default:true
+    modeToggle: {
+      type: Boolean,
+      default: true
     },
-    showWriteableLinkMode:{
-      type:String, default: 'show'
+    showWriteableLinkMode: {
+      type: String,
+      default: "show"
     },
-    eventBus:{type:Vue,required:false}
+    eventBus: { type: Vue, required: false }
   },
-  components:{
+  components: {
     ProjectPluginConfig
   },
 
-  data () {
-      return {
-          project: '',
-          rundeckContext: {} as RundeckContext,
-          sourcesData:[] as NodeSource[]
-      }
+  data() {
+    return {
+      project: "",
+      rundeckContext: {} as RundeckContext,
+      sourcesData: [] as NodeSource[]
+    };
   },
   methods: {
-    isWriteable(index:number): boolean{
-        return this.sourcesData.length>index && this.sourcesData[index].resources.writeable
+    isWriteable(index: number): boolean {
+      return (
+        this.sourcesData.length > index &&
+        this.sourcesData[index].resources.writeable
+      );
     },
-    editPermalink(index:number): string|undefined {
-        return this.sourcesData.length>index && this.sourcesData[index].resources.editPermalink ? this.sourcesData[index].resources.editPermalink : '#'
+    editPermalink(index: number): string | undefined {
+      return this.sourcesData.length > index &&
+        this.sourcesData[index].resources.editPermalink
+        ? this.sourcesData[index].resources.editPermalink
+        : "#";
     },
-    sourceErrors(index:number) :string|undefined{
-        return this.sourcesData.length>index?this.sourcesData[index].errors:undefined
+    sourceErrors(index: number): string | undefined {
+      return this.sourcesData.length > index
+        ? this.sourcesData[index].errors
+        : undefined;
     },
-    pluginsConfigWasSaved(){
-      this.$emit('saved')
-      this.$emit('reset')
-      this.loadNodeSourcesData().then()
+    pluginsConfigWasSaved() {
+      this.$emit("saved");
+      this.$emit("reset");
+      this.loadNodeSourcesData().then();
     },
-    pluginsConfigWasModified(){
-       this.$emit('modified')
+    pluginsConfigWasModified() {
+      this.$emit("modified");
     },
-    pluginsConfigWasReset(){
-       this.$emit('reset')
+    pluginsConfigWasReset() {
+      this.$emit("reset");
     },
-    async loadNodeSourcesData(){
+    async loadNodeSourcesData() {
       try {
-        this.sourcesData = await getProjectNodeSources()
-      }
-      catch (e) {
-        return console.warn('Error getting node sources list', e);
+        this.sourcesData = await getProjectNodeSources();
+      } catch (e) {
+        return console.warn("Error getting node sources list", e);
       }
     }
   },
 
-    mounted () {
-        this.rundeckContext = getRundeckContext()
-        const self=this
-        if (window._rundeck && window._rundeck.rdBase && window._rundeck.projectName) {
-          this.loadNodeSourcesData()
-        }
+  mounted() {
+    this.rundeckContext = getRundeckContext();
+    const self = this;
+    if (
+      window._rundeck &&
+      window._rundeck.rdBase &&
+      window._rundeck.projectName
+    ) {
+      this.loadNodeSourcesData();
     }
-})
+  }
+});
 </script>
