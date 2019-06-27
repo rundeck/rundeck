@@ -30,7 +30,7 @@ public interface AuditEventsHandler {
 
 
   /**
-   * Handles a Project access event.
+   * Handles a project home access event.
    * @param event Event descriptor.
    */
   default void onProjectAccessEvent(AuditEvent event){}
