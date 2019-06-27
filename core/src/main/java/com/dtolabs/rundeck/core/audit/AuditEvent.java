@@ -31,8 +31,9 @@ public interface AuditEvent extends Serializable {
   List<String> getUserRoles();
 
   /**
-   * The type of the event, as described by {@link Action}
+   * The type of action that generated the event.
    *
+   * @see Action
    * @return Event type.
    */
   Action getAction();
@@ -53,13 +54,13 @@ public interface AuditEvent extends Serializable {
    * The type of resource associated with the event.
    */
   enum ResourceType {
-    project,
-    user
+    user,
+    project
   }
 
 
   /**
-   * The kind of action that triggered an event.
+   * Types of actions that generate audit events.
    */
   enum Action {
     login_success,

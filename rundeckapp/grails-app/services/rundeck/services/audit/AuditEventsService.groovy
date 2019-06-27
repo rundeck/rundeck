@@ -293,7 +293,7 @@ class AuditEventsService
         }
 
         /**
-         * Sets the project name associated with this event.
+         * Sets the resource type associated with this event.
          * @param projectName
          * @return
          */
@@ -303,7 +303,7 @@ class AuditEventsService
         }
 
         /**
-         * Sets the project name associated with this event.
+         * Sets the resource name or ID associated with this event.
          * @param projectName
          * @return
          */

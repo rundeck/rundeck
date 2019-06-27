@@ -11,7 +11,7 @@ public interface AuditEventListener {
 
 
   /**
-   * Called when any kind of event if fired by the system.
+   * Called when any kind of event is fired by the system.
    * This method is called always and before any other method of this listener.
    *
    * @param event The event descriptor fired by the system.
