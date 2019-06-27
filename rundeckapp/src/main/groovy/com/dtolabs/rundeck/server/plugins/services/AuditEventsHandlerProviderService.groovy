@@ -17,36 +17,35 @@ package com.dtolabs.rundeck.server.plugins.services
 
 import com.dtolabs.rundeck.core.plugins.*
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.audit.AuditEventsHandler
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import org.rundeck.core.plugins.PluginProviderServices
 
 
 class AuditEventsHandlerPluginProviderService implements PluginProviderServices {
 
-    public static final String SERVICE_NAME = ServiceNameConstants.AuditEventsHandler
+    public static final String SERVICE_NAME = ServiceNameConstants.AuditEventListener
 
 
     @Override
     <T> boolean hasServiceFor(Class<T> serviceType, String serviceName) {
-        return serviceType == AuditEventsHandler.class && serviceName.equals(SERVICE_NAME)
+        return serviceType == AuditEventListener.class && serviceName.equals(SERVICE_NAME)
     }
 
     @Override
     <T> PluggableProviderService<T> getServiceProviderFor(Class<T> serviceType, String serviceName, ServiceProviderLoader loader) {
-        if (serviceType == AuditEventsHandler.class && SERVICE_NAME.equals(serviceName)) {
+        if (serviceType == AuditEventListener.class && SERVICE_NAME.equals(serviceName)) {
             return (PluggableProviderService<T>) new AuditEventsHandlerProviderService(loader)
         }
         return null
     }
 
-
     class AuditEventsHandlerProviderService
-            extends BasePluggableProviderService<AuditEventsHandler> {
+            extends BasePluggableProviderService<AuditEventListener> {
 
         private ServiceProviderLoader pluginManager
 
         AuditEventsHandlerProviderService(final ServiceProviderLoader pluginManager) {
-            super(SERVICE_NAME, AuditEventsHandler.class)
+            super(SERVICE_NAME, AuditEventListener.class)
             this.pluginManager = pluginManager
         }
 

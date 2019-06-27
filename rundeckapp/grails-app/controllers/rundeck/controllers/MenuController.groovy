@@ -243,8 +243,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
 
         // Trigger project home access event
-        auditEventsService.buildEvent(AuditEvent.AuditEventType.PROJECT_ACCESS)
-            .setProjectName(params.project)
+        auditEventsService.eventBuilder()
+            .setResourceType(AuditEvent.ResourceType.project)
+            .setResourceName(params.project)
+            .setAction(AuditEvent.Action.view)
             .publish()
 
         switch (startpage){

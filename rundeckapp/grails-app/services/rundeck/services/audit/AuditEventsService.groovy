@@ -1,8 +1,7 @@
 package rundeck.services.audit
 
 import com.dtolabs.rundeck.core.audit.AuditEvent
-import com.dtolabs.rundeck.core.audit.AuditEvent.AuditEventType
-import com.dtolabs.rundeck.plugins.audit.AuditEventsHandler
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 import org.springframework.context.event.EventListener
@@ -19,6 +18,11 @@ import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.stream.Collectors
 
+/**
+ *
+ * Service for capturing and firing auditing events like login, logout or resource access
+ *
+ */
 @Transactional
 class AuditEventsService
         implements LogoutHandler {
@@ -44,9 +48,12 @@ class AuditEventsService
      */
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
-        buildEvent(AuditEventType.LOGIN_SUCCESS)
+        eventBuilder()
                 .setUsername(extractUsername(event.authentication))
-                .setRoles(extractAuthorities(event.authentication))
+                .setUserRoles(extractAuthorities(event.authentication))
+                .setAction(AuditEvent.Action.login_success)
+                .setResourceType(AuditEvent.ResourceType.user)
+                .setResourceName(extractUsername(event.authentication))
                 .publish()
     }
 
@@ -57,16 +64,18 @@ class AuditEventsService
             return
         }
 
-        buildEvent(AuditEventType.LOGIN_FAILED)
+        eventBuilder()
                 .setUsername(extractUsername(event.authentication))
-                .setRoles(extractAuthorities(event.authentication))
+                .setUserRoles(extractAuthorities(event.authentication))
+                .setAction(AuditEvent.Action.login_failed)
+                .setResourceType(AuditEvent.ResourceType.user)
+                .setResourceName(extractUsername(event.authentication))
                 .publish()
-
     }
 
 
     /**
-     * Handles a logout event.
+     * Captures logout events.
      *
      */
     @Override
@@ -76,22 +85,26 @@ class AuditEventsService
             return
         }
 
-        buildEvent(AuditEventType.LOGOUT)
+        eventBuilder()
                 .setUsername(extractUsername(authentication))
-                .setRoles(extractAuthorities(authentication))
+                .setUserRoles(extractAuthorities(authentication))
+                .setAction(AuditEvent.Action.login_failed)
+                .setResourceType(AuditEvent.ResourceType.user)
+                .setResourceName(extractUsername(authentication))
                 .publish()
     }
 
 
     /**
-     * Creates a new event builder of the specified type.
-     * After the builder is set, call {@link AuditEventBuilder#publish()} to publish the event.
+     * Creates a new event builder.
+     * After the builder is configured, call {@link AuditEventBuilder#publish()} to publish the event.
+     * The builder can be published several times.
      *
      * @param eventType
      * @return
      */
-    AuditEventBuilder buildEvent(AuditEventType eventType) {
-        return new AuditEventBuilder(eventType);
+    AuditEventBuilder eventBuilder() {
+        return new AuditEventBuilder()
     }
 
 
@@ -107,14 +120,13 @@ class AuditEventsService
             eventBuilder.setRoles(extractAuthorities(auth))
         }
 
-        AuditEvent event = eventBuilder.build();
-        System.out.println("DISPATCHNG EVENT!!!!!!!   " + event)
+        AuditEvent event = eventBuilder.build()
 
-        // Dispatch to plugins.
-        LOG.debug("Dispatching event to plugin handlers.")
+        if (LOG.isDebugEnabled())
+            LOG.debug("Dispatching audit event: " + event)
 
         asyncTaskExecutor.execute {
-            frameworkService.pluginService.listPlugins(AuditEventsHandler.class)
+            frameworkService.pluginService.listPlugins(AuditEventListener.class)
                     .values().stream()
                     .peek {
                         if (LOG.isDebugEnabled()) {
@@ -134,30 +146,37 @@ class AuditEventsService
     }
 
 
-    private static dispatchToHandler(AuditEvent event, AuditEventsHandler handler) {
-
-        // Call specific callbacks
-        switch (event.eventType) {
-            case AuditEventType.LOGIN_SUCCESS:
-                handler.onLoginSuccessfulEvent(event)
-                break
-
-            case AuditEventType.LOGIN_FAILED:
-                handler.onLoginFailureEvent(event)
-                break
-
-            case AuditEventType.LOGOUT:
-                handler.onLogoutSuccessfulEvent(event)
-                break
-
-            case AuditEventType.PROJECT_ACCESS:
-                handler.onProjectAccessEvent(event)
-                break
-
-        }
+    /**
+     * Dispatch an event to a listener.
+     */
+    private static dispatchToHandler(AuditEvent event, AuditEventListener listener) {
 
         // Call general callback
-        handler.onEvent(event)
+        listener.onEvent(event)
+
+        // Call specific callbacks
+        if (AuditEvent.ResourceType.user.equals(event.resourceType)) {
+            switch (event.action) {
+                case AuditEvent.Action.login_success:
+                    listener.onLoginSuccess(event)
+                    break
+
+                case AuditEvent.Action.login_failed:
+                    listener.onLoginFailed(event)
+                    break
+
+                case AuditEvent.Action.logout:
+                    listener.onLogout(event)
+                    break
+            }
+        } else if (AuditEvent.ResourceType.project.equals(event.resourceType)) {
+            switch (event.action) {
+                case AuditEvent.Action.view:
+                    listener.onProjectView(event)
+                    break
+            }
+        }
+
     }
 
 
@@ -188,34 +207,25 @@ class AuditEventsService
     /**
      * Builds a new Audit Event
      */
-    public class AuditEventBuilder {
+    class AuditEventBuilder {
 
-        private Date timestamp = new Date()
         private String username = null
-        private Collection<String> roles = []
-        private String projectName = null
-        private AuditEventType eventType
+        private Collection<String> userRoles = []
+        private AuditEvent.Action action = null
+        private AuditEvent.ResourceType resourceType = null
+        private String resourceName = null
 
 
-        private AuditEventBuilder(AuditEventType eventType) {
-            this.eventType = eventType
+        private AuditEventBuilder() {
         }
 
         /**
          * Triggers this event publishing.
+         * A new event will be generated and published with an immutable copy of the data in this builder.
+         * Multiple calls to this method will cause multiple events to be published.
          */
         public void publish() {
             dispatchEvent(this)
-        }
-
-        /**
-         * Sets the event timestamp. Default is the current time.
-         * @param timestamp
-         * @return
-         */
-        AuditEventBuilder setTimestamp(Date timestamp) {
-            this.timestamp = timestamp
-            return this
         }
 
         /**
@@ -234,8 +244,18 @@ class AuditEventsService
          * @param roles
          * @return
          */
-        AuditEventBuilder setRoles(List<String> roles) {
-            this.roles = roles
+        AuditEventBuilder setUserRoles(List<String> roles) {
+            this.userRoles = roles
+            return this
+        }
+
+        /**
+         * Sets the event action.
+         * @param eventType
+         * @return
+         */
+        AuditEventBuilder setAction(AuditEvent.Action action) {
+            this.action = action
             return this
         }
 
@@ -244,38 +264,35 @@ class AuditEventsService
          * @param projectName
          * @return
          */
-        AuditEventBuilder setProjectName(String projectName) {
-            this.projectName = projectName
+        AuditEventBuilder setResourceType(AuditEvent.ResourceType resourceType) {
+            this.resourceType = resourceType
             return this
         }
 
         /**
-         * Changes the event type.
-         * @param eventType
+         * Sets the project name associated with this event.
+         * @param projectName
          * @return
          */
-        AuditEventBuilder setEventType(AuditEventType eventType) {
-            this.eventType = eventType
+        AuditEventBuilder setResourceName(String name) {
+            this.resourceName = name
             return this
         }
 
         /**
-         * Builds the event adapter as a read-only object.
+         * Builds a new immutable event object
          * @return
          */
         private AuditEvent build() {
 
-            final etype = eventType
-            final ts = timestamp
-            final user = username
-            final userroles = Collections.unmodifiableList(roles)
-            final projName = projectName
-
             return new AuditEvent() {
-                @Override
-                AuditEventType getEventType() {
-                    return etype
-                }
+                // Copy the data.
+                final ts = new Date()
+                final user = username
+                final roles = Collections.unmodifiableList(new ArrayList(userRoles))
+                final action = action
+                final rtype = resourceType
+                final rname = resourceName
 
                 @Override
                 Date getTimestamp() {
@@ -289,26 +306,38 @@ class AuditEventsService
 
                 @Override
                 List<String> getUserRoles() {
-                    return userroles
+                    return roles
                 }
 
                 @Override
-                String getProjectName() {
-                    return projName
+                AuditEvent.Action getAction() {
+                    return action
+                }
+
+                @Override
+                AuditEvent.ResourceType getResourceType() {
+                    return rtype
+                }
+
+                @Override
+                String getResourceName() {
+                    return rname
                 }
 
 
                 @Override
                 String toString() {
-                    return "AuditEvent{" +
-                            "timestamp=" + getTimestamp() +
-                            ", username='" + getUsername() + '\'' +
-                            ", roles=" + getUserRoles() +
-                            ", projectName='" + getProjectName() + '\'' +
-                            ", eventType=" + getEventType() +
+                    return "AuditEvent {" +
+                            "ts=" + ts +
+                            ", user=" + user +
+                            ", roles=" + roles +
+                            ", action=" + action +
+                            ", rtype=" + rtype +
+                            ", rname=" + rname +
                             '}'
                 }
             }
         }
+
     }
 }
