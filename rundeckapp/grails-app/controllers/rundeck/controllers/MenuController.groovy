@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
@@ -35,28 +34,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
-import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
-import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.StepPlugin
-import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
-import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
@@ -263,7 +243,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
 
         // Trigger project home access event
-        auditEventsService.newEvent(AuditEvent.AuditEventType.PROJECT_ACCESS)
+        auditEventsService.buildEvent(AuditEvent.AuditEventType.PROJECT_ACCESS)
             .setProjectName(params.project)
             .publish()
 

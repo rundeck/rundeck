@@ -6,6 +6,8 @@ import com.dtolabs.rundeck.plugins.audit.AuditEventsHandler
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 import org.springframework.context.event.EventListener
+import org.springframework.core.task.AsyncTaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
@@ -24,9 +26,15 @@ class AuditEventsService
     static final Logger LOG = Logger.getLogger(AuditEventsService.class)
 
     final FrameworkService frameworkService
+    final AsyncTaskExecutor asyncTaskExecutor
 
     AuditEventsService(FrameworkService frameworkService) {
         this.frameworkService = frameworkService
+
+        asyncTaskExecutor = new ThreadPoolTaskExecutor()
+        asyncTaskExecutor.setCorePoolSize(1)
+        asyncTaskExecutor.setMaxPoolSize(1)
+        asyncTaskExecutor.initialize()
     }
 
 
@@ -36,7 +44,7 @@ class AuditEventsService
      */
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
-        newEvent(AuditEventType.LOGIN_SUCCESS)
+        buildEvent(AuditEventType.LOGIN_SUCCESS)
                 .setUsername(extractUsername(event.authentication))
                 .setRoles(extractAuthorities(event.authentication))
                 .publish()
@@ -49,7 +57,7 @@ class AuditEventsService
             return
         }
 
-        newEvent(AuditEventType.LOGIN_FAILED)
+        buildEvent(AuditEventType.LOGIN_FAILED)
                 .setUsername(extractUsername(event.authentication))
                 .setRoles(extractAuthorities(event.authentication))
                 .publish()
@@ -68,7 +76,7 @@ class AuditEventsService
             return
         }
 
-        newEvent(AuditEventType.LOGOUT)
+        buildEvent(AuditEventType.LOGOUT)
                 .setUsername(extractUsername(authentication))
                 .setRoles(extractAuthorities(authentication))
                 .publish()
@@ -82,7 +90,7 @@ class AuditEventsService
      * @param eventType
      * @return
      */
-    AuditEventBuilder newEvent(AuditEventType eventType) {
+    AuditEventBuilder buildEvent(AuditEventType eventType) {
         return new AuditEventBuilder(eventType);
     }
 
@@ -99,25 +107,30 @@ class AuditEventsService
             eventBuilder.setRoles(extractAuthorities(auth))
         }
 
-
         AuditEvent event = eventBuilder.build();
         System.out.println("DISPATCHNG EVENT!!!!!!!   " + event)
 
         // Dispatch to plugins.
-        // TODO this should be done on other thread.
-        // TODO error control.
-        frameworkService.pluginService.listPlugins(AuditEventsHandler.class)
-                .values().stream()
-                .peek {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Dispatching event to handler {" + it.name + "}: " + event)
-                    }
-                }
-                .map { it.instance }
-                .forEach { handler ->
-                    dispatchToHandler(event, handler)
-                }
+        LOG.debug("Dispatching event to plugin handlers.")
 
+        asyncTaskExecutor.execute {
+            frameworkService.pluginService.listPlugins(AuditEventsHandler.class)
+                    .values().stream()
+                    .peek {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Dispatching event to handler {" + it.name + "}: " + event)
+                        }
+                    }
+                    .map { it.instance }
+                    .forEach { handler ->
+                        try {
+                            dispatchToHandler(event, handler)
+                        }
+                        catch (Exception e) {
+                            LOG.error("Error dispatching event to handler plugin: " + e.getMessage(), e)
+                        }
+                    }
+        }
     }
 
 
@@ -297,7 +310,5 @@ class AuditEventsService
                 }
             }
         }
-
-
     }
 }
