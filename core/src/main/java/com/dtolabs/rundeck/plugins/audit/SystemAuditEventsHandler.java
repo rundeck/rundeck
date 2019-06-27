@@ -18,18 +18,18 @@ public class SystemAuditEventsHandler implements AuditEventsHandler {
   }
 
   @Override
-  public void onLoginSuccessful(AuditEvent event) {
+  public void onLoginSuccessfulEvent(AuditEvent event) {
     System.err.println("SYSPL: " + event.toString());
   }
 
   @Override
-  public void onLoginFailure(AuditEvent event) {
+  public void onLoginFailureEvent(AuditEvent event) {
     System.err.println("SYSPL: " + event.toString());
   }
 
 
   @Override
-  public void onProjectAccess(AuditEvent event) {
+  public void onProjectAccessEvent(AuditEvent event) {
     System.err.println("SYSPL: " + event.toString());
   }
 }

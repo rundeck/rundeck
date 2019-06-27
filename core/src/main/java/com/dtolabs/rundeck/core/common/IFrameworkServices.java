@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.audit.AuditEventsService;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
@@ -79,6 +78,4 @@ public interface IFrameworkServices {
     ResourceFormatGeneratorService getResourceFormatGeneratorService();
 
     ServiceProviderLoader getPluginManager();
-
-    AuditEventsService getAuditEventService();
 }

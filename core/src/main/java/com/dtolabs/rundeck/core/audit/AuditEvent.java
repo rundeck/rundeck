@@ -4,6 +4,7 @@ package com.dtolabs.rundeck.core.audit;
 import java.io.Serializable;
 import java.security.Principal;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Describes an audit event.
@@ -12,21 +13,27 @@ public interface AuditEvent extends Serializable {
 
   /**
    *
+   * @return Event type.
+   */
+  AuditEventType getEventType();
+
+  /**
+   *
    * @return Timestamp of the event.
    */
   Date getTimestamp();
 
   /**
-   * Get the user principal.
+   * Gets the username
    * @return
    */
-  Principal getPrincipal();
+  String getUsername();
 
   /**
-   *
-   * @return Event type.
+   * The roles associated with the user
+   * @return
    */
-  AuditEventType getEventType();
+  List<String> getUserRoles();
 
   /**
    *

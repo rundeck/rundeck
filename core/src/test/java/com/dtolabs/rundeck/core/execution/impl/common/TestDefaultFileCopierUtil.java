@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.execution.impl.common;
 
-import com.dtolabs.rundeck.core.audit.AuditEventsService;
 import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.common.*;
@@ -423,11 +422,6 @@ public class TestDefaultFileCopierUtil extends TestCase {
 
         @Override
         public ServiceProviderLoader getPluginManager() {
-            return null;
-        }
-
-        @Override
-        public AuditEventsService getAuditEventService() {
             return null;
         }
     }

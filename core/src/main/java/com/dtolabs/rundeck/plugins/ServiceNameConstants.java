@@ -68,5 +68,5 @@ public class ServiceNameConstants {
     public static final String OptionValues            = "OptionValues";
     public static final String NodeEnhancer            = "NodeEnhancer";
     public static final String UserGroupSource         = "UserGroupSource";
-    public static final String AuditEventsHandler = "AuditEventsHandler";
+    public static final String AuditEventsHandler      = "AuditEventsHandler";
 }

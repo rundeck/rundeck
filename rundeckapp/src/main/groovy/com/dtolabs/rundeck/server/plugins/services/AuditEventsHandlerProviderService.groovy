@@ -21,7 +21,7 @@ import com.dtolabs.rundeck.plugins.audit.AuditEventsHandler
 import org.rundeck.core.plugins.PluginProviderServices
 
 
-class AuditEventHandlerPluginProviderService implements PluginProviderServices {
+class AuditEventsHandlerPluginProviderService implements PluginProviderServices {
 
     public static final String SERVICE_NAME = ServiceNameConstants.AuditEventsHandler
 

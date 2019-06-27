@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.audit.AuditEventsService;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -35,6 +34,7 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService;
 import com.dtolabs.rundeck.core.utils.IPropertyLookup;
+import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -196,11 +196,6 @@ public class FrameworkBase implements IFramework{
     @Override
     public ServiceProviderLoader getPluginManager() {
         return frameworkServices.getPluginManager();
-    }
-
-    @Override
-    public AuditEventsService getAuditEventService() {
-        return frameworkServices.getAuditEventService();
     }
 
     public static PropertyRetriever createPropertyRetriever(File basedir) {
