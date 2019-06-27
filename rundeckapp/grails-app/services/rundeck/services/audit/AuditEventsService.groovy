@@ -16,11 +16,14 @@ import rundeck.services.FrameworkService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.stream.Collectors
 
 /**
  *
  * Service for capturing and firing auditing events like login, logout or resource access
+ *
+ * @author Alberto Hormazabal
  *
  */
 @Transactional
@@ -31,6 +34,7 @@ class AuditEventsService
 
     final FrameworkService frameworkService
     final AsyncTaskExecutor asyncTaskExecutor
+    final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
     AuditEventsService(FrameworkService frameworkService) {
         this.frameworkService = frameworkService
@@ -109,6 +113,23 @@ class AuditEventsService
 
 
     /**
+     * Add a new listener to the internal register.
+     * @param listener
+     */
+    void addListener(AuditEventListener listener) {
+        internalListeners.add(listener)
+    }
+
+    /**
+     * Removes the listener from the internal listener register.
+     * @param listener
+     */
+    void removeListener(AuditEventListener listener) {
+        internalListeners.remove(listener)
+    }
+
+
+    /**
      * Dispatch the event.
      */
     private dispatchEvent(AuditEventBuilder eventBuilder) {
@@ -126,22 +147,25 @@ class AuditEventsService
             LOG.debug("Dispatching audit event: " + event)
 
         asyncTaskExecutor.execute {
+
+            // dispatch internal listeners.
+            internalListeners.each { listener ->
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Dispatching event to internal listener {" + listener + "}: " + event)
+                }
+                dispatchToListener(event, listener)
+            }
+
+            // dispatch to plugins
             frameworkService.pluginService.listPlugins(AuditEventListener.class)
                     .values().stream()
                     .peek {
                         if (LOG.isDebugEnabled()) {
-                            LOG.debug("Dispatching event to handler {" + it.name + "}: " + event)
+                            LOG.debug("Dispatching event to plugin handler {" + it.name + "}: " + event)
                         }
                     }
                     .map { it.instance }
-                    .forEach { handler ->
-                        try {
-                            dispatchToHandler(event, handler)
-                        }
-                        catch (Exception e) {
-                            LOG.error("Error dispatching event to handler plugin: " + e.getMessage(), e)
-                        }
-                    }
+                    .forEach { dispatchToListener(event, it) }
         }
     }
 
@@ -149,34 +173,40 @@ class AuditEventsService
     /**
      * Dispatch an event to a listener.
      */
-    private static dispatchToHandler(AuditEvent event, AuditEventListener listener) {
+    private static dispatchToListener(AuditEvent event, AuditEventListener listener) {
 
-        // Call general callback
-        listener.onEvent(event)
+        try {
 
-        // Call specific callbacks
-        if (AuditEvent.ResourceType.user.equals(event.resourceType)) {
-            switch (event.action) {
-                case AuditEvent.Action.login_success:
-                    listener.onLoginSuccess(event)
-                    break
+            // Call general callback
+            listener.onEvent(event)
 
-                case AuditEvent.Action.login_failed:
-                    listener.onLoginFailed(event)
-                    break
+            // Call specific callbacks
+            if (AuditEvent.ResourceType.user.equals(event.resourceType)) {
+                switch (event.action) {
+                    case AuditEvent.Action.login_success:
+                        listener.onLoginSuccess(event)
+                        break
 
-                case AuditEvent.Action.logout:
-                    listener.onLogout(event)
-                    break
+                    case AuditEvent.Action.login_failed:
+                        listener.onLoginFailed(event)
+                        break
+
+                    case AuditEvent.Action.logout:
+                        listener.onLogout(event)
+                        break
+                }
+            } else if (AuditEvent.ResourceType.project.equals(event.resourceType)) {
+                switch (event.action) {
+                    case AuditEvent.Action.view:
+                        listener.onProjectView(event)
+                        break
+                }
             }
-        } else if (AuditEvent.ResourceType.project.equals(event.resourceType)) {
-            switch (event.action) {
-                case AuditEvent.Action.view:
-                    listener.onProjectView(event)
-                    break
-            }
+
         }
-
+        catch (Exception e) {
+            LOG.error("Error dispatching event to handler plugin: " + e.getMessage(), e)
+        }
     }
 
 
