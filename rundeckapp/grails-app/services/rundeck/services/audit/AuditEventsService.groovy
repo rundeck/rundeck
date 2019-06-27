@@ -88,7 +88,7 @@ class AuditEventsService
         eventBuilder()
                 .setUsername(extractUsername(authentication))
                 .setUserRoles(extractAuthorities(authentication))
-                .setAction(AuditEvent.Action.login_failed)
+                .setAction(AuditEvent.Action.logout)
                 .setResourceType(AuditEvent.ResourceType.user)
                 .setResourceName(extractUsername(authentication))
                 .publish()
@@ -117,7 +117,7 @@ class AuditEventsService
         if (!eventBuilder.username) {
             Authentication auth = SecurityContextHolder.context.authentication
             eventBuilder.setUsername(extractUsername(auth))
-            eventBuilder.setRoles(extractAuthorities(auth))
+            eventBuilder.setUserRoles(extractAuthorities(auth))
         }
 
         AuditEvent event = eventBuilder.build()
@@ -223,6 +223,9 @@ class AuditEventsService
          * Triggers this event publishing.
          * A new event will be generated and published with an immutable copy of the data in this builder.
          * Multiple calls to this method will cause multiple events to be published.
+         * <p>
+         *     If the username is not set, the user and roles will be set
+         *     from the current security context.
          */
         public void publish() {
             dispatchEvent(this)
@@ -288,11 +291,11 @@ class AuditEventsService
             return new AuditEvent() {
                 // Copy the data.
                 final ts = new Date()
-                final user = username
-                final roles = Collections.unmodifiableList(new ArrayList(userRoles))
-                final action = action
-                final rtype = resourceType
-                final rname = resourceName
+                final user = AuditEventBuilder.this.username
+                final roles = Collections.unmodifiableList(new ArrayList(AuditEventBuilder.this.userRoles))
+                final action = AuditEventBuilder.this.action
+                final rtype = AuditEventBuilder.this.resourceType
+                final rname = AuditEventBuilder.this.resourceName
 
                 @Override
                 Date getTimestamp() {
@@ -328,12 +331,12 @@ class AuditEventsService
                 @Override
                 String toString() {
                     return "AuditEvent {" +
-                            "ts=" + ts +
-                            ", user=" + user +
-                            ", roles=" + roles +
+                            "timestamp=" + ts +
+                            ", username=" + user +
+                            ", userRoles=" + roles +
                             ", action=" + action +
-                            ", rtype=" + rtype +
-                            ", rname=" + rname +
+                            ", resourceType=" + rtype +
+                            ", resourceName=" + rname +
                             '}'
                 }
             }
