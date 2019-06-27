@@ -467,6 +467,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getPluginControlService {  }
         fwkControl.demand.getNodeStepPluginDescriptions { [] }
         fwkControl.demand.getStepPluginDescriptions { [] }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -534,6 +535,7 @@ class ScheduledExecutionControllerTests  {
             //try to do update of the ScheduledExecution
             def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getPluginControlService {  }
         fwkControl.demand.getNodeStepPluginDescriptions { [] }
         fwkControl.demand.getStepPluginDescriptions { [] }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -3353,9 +3355,8 @@ class ScheduledExecutionControllerTests  {
         def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
+        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
         fwkControl.demand.getNodeStepPluginDescriptions { [[name:'test'],[name:'test2']] }
-        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
-        fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
         fwkControl.demand.getStepPluginDescriptions { [] }
         fwkControl.demand.getProjectGlobals { [:] }
         fwkControl.demand.projectNames { [] }
