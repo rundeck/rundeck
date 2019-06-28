@@ -112,7 +112,6 @@ grails.plugin.springsecurity.interceptUrlMap = [
 
 grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/user/login',     filters: 'none'],
-        [pattern: '/user/logout',    filters: 'none'],
         [pattern: '/error',          filters: 'none'],
         [pattern: '/user/error',     filters: 'none'],
         [pattern: '/common/error',   filters: 'none'],
@@ -136,6 +135,11 @@ grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
 grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
 grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
+
+grails.plugin.springsecurity.logout.handlerNames = [
+        'rememberMeServices',
+        'securityContextLogoutHandler',
+        'userActionService']
 
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',
