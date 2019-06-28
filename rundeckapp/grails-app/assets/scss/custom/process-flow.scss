@@ -3,69 +3,95 @@
 div {
   &.pflowlist {
     ol {
-      padding-left:0;
-      li{
+      padding-left: 0;
+
+      li {
         margin-left: 20px;
       }
-      li.draggableitem.droppableitem{
+
+      li.draggableitem.droppableitem {
         border: 1px solid #cfcfca;
         padding: 10px !important;
         margin-bottom: 10px;
         border-radius: 5px;
       }
     }
+
     &.edit {
-      ol.flowlist li {
-        .wfitem{
-          border:1px solid transparent;
-          &.autohilite.autoedit:hover{
-            border: 1px dotted #68B3C8;
+      ol.flowlist {
+        li {
+          .wfitem {
+            border: 1px solid transparent;
+
+            &.autohilite.autoedit:hover {
+              border: 1px dotted #68B3C8;
+            }
           }
+        }
+
+        ul.dropdown-menu li {
+          margin-left: 0;
         }
       }
     }
-    &.rounded.adhoc {
-    }
+
+    &.rounded.adhoc {}
   }
-  &.adhoc ol.flowlist li {
-  }
+
+  &.adhoc ol.flowlist li {}
+
   &.pflow {
-    &.static {
-    }
+    &.static {}
+
     &.inactive {
       color: gray;
+
       a {
         color: gray;
       }
     }
-    &.running, &.ok {}
-    &.warn, &.error {
+
+    &.running,
+    &.ok {}
+
+    &.warn,
+    &.error {
       color: red;
       cursor: pointer;
     }
-    &.missing, &.missingfail {
+
+    &.missing,
+    &.missingfail {
       color: gray;
       font-style: italic;
     }
+
     div.error_msg {
       color: black;
       background: #eee;
     }
+
     span {
       &.nodename {
         color: gray;
       }
+
       &.item span.cmdname a {
         /*color:blue;*/
         font-weight: normal;
+
         &:hover {
           text-decoration: underline;
         }
       }
     }
-    &.inactive span.item span.cmdname a, &.missing span.item span.cmdname a, &.missingfail span.item span.cmdname a {
+
+    &.inactive span.item span.cmdname a,
+    &.missing span.item span.cmdname a,
+    &.missingfail span.item span.cmdname a {
       color: gray;
     }
+
     pre {
       margin: 0;
     }
