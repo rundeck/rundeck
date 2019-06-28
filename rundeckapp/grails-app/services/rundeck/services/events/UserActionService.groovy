@@ -17,8 +17,10 @@ class UserActionService implements LogoutHandler{
 
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
-        if(extractUsername(event.authentication) != null){
+        if(extractUsername(event?.authentication) != null){
             userService.registerLogin(extractUsername(event.authentication))
+        }else{
+            log.error("Null user name on handleAuthenticationSuccessEvent")
         }
     }
 
@@ -26,11 +28,14 @@ class UserActionService implements LogoutHandler{
     void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
         if(extractUsername(authentication) != null){
             userService.registerLogout(extractUsername(authentication))
+        }else{
+            log.error("Null user name on logout event")
         }
     }
 
-    private static String extractUsername(Authentication authentication) {
-        if (!authentication) {
+    private String extractUsername(Authentication authentication) {
+        if (!authentication){
+            log.error("Null authentication on event")
             return null
         }
         return authentication.name ?: authentication.principal.name ?: null
