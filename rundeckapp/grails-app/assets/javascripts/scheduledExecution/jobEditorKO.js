@@ -21,4 +21,22 @@ function JobEditor(data){
     self.groupPath=ko.observable(data.groupPath)
     self.uuid=ko.observable(data.uuid)
     self.href=ko.observable(data.href)
+    self.errorTabs = ko.observableArray()
+
+    self.optionError=ko.pureComputed(function () {
+        return self.errorTabs.indexOf('option') >= 0
+    })
+    self.workflowError=ko.pureComputed(function () {
+        return self.errorTabs.indexOf('workflow') >= 0
+    })
+    self.clearError = function (name) {
+        if (self.errorTabs.indexOf(name) >= 0) {
+            self.errorTabs.remove(name)
+        }
+    }
+    self.addError = function (name) {
+        if (self.errorTabs.indexOf(name) < 0) {
+            self.errorTabs.push(name)
+        }
+    }
 }
