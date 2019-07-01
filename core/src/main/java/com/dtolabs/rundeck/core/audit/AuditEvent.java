@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.core.audit;
 
 
+import com.dtolabs.rundeck.core.common.Framework;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -10,6 +12,14 @@ import java.util.List;
  *
  */
 public interface AuditEvent extends Serializable {
+
+
+  /**
+   *
+   * @return The system framework interface..
+   */
+  Framework getFramework();
+
 
   /**
    * @return Timestamp of the event.

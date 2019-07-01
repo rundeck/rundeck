@@ -1,6 +1,7 @@
 package rundeck.services.audit
 
 import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
@@ -134,6 +135,7 @@ class AuditEventsService
      */
     private dispatchEvent(AuditEventBuilder eventBuilder) {
 
+
         // If no user specified, set the user from the current context.
         if (!eventBuilder.username) {
             Authentication auth = SecurityContextHolder.context.authentication
@@ -235,7 +237,20 @@ class AuditEventsService
 
 
     /**
-     * Builds a new Audit Event
+     * Helper to build new Audit Events.
+     *      <p>
+     *     To create a builder, use the {@link AuditEventsService#eventBuilder()} method,
+     *     ant then complete the data using the returned builder.
+     *     </p>
+     *     <p> Once the data is set, call the {@link AuditEventBuilder#publish()} method to trigger
+     *     the event publishing.</p>
+     *     <p>
+     *         When the event is published, the data is copied and an immutable event object is created,
+     *         this allows developers to set-up a "base" builder, and then modify it and publish many times,
+     *         without compromising the data on past events.
+     *     </p>
+     *
+     *
      */
     class AuditEventBuilder {
 
@@ -257,7 +272,7 @@ class AuditEventsService
          *     If the username is not set, the user and roles will be set
          *     from the current security context.
          */
-        public void publish() {
+        void publish() {
             dispatchEvent(this)
         }
 
@@ -326,6 +341,11 @@ class AuditEventsService
                 final action = AuditEventBuilder.this.action
                 final rtype = AuditEventBuilder.this.resourceType
                 final rname = AuditEventBuilder.this.resourceName
+
+                @Override
+                Framework getFramework() {
+                    return frameworkService.rundeckFramework as Framework
+                }
 
                 @Override
                 Date getTimestamp() {
