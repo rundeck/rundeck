@@ -1,4 +1,6 @@
 /** Process Flow view styles **/
+// Technical Debt - Tech Debt
+// This file includes "!important" modifiers. These should be removed as soon as possible
 
 div {
   &.pflowlist {
@@ -11,6 +13,15 @@ div {
         padding: 10px !important;
         margin-bottom: 10px;
         border-radius: 5px;
+      }
+
+      ul.dropdown-menu {
+        li {
+          padding: 0 !important;
+          border-radius: 0;
+          border: none;
+          margin-bottom: 0;
+        }
       }
     }
 
@@ -31,14 +42,9 @@ div {
         }
       }
     }
-
-    &.rounded.adhoc {}
   }
 
-  &.adhoc ol.flowlist li {}
-
   &.pflow {
-    &.static {}
 
     &.inactive {
       color: gray;
@@ -47,9 +53,6 @@ div {
         color: gray;
       }
     }
-
-    &.running,
-    &.ok {}
 
     &.warn,
     &.error {
