@@ -77,9 +77,9 @@ dependencies {
         'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
-        'com.fasterxml.jackson.core:jackson-databind:2.8.11.2',
-        'com.fasterxml.jackson.core:jackson-core:2.8.11',
-        'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
+        "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}",
+        "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}",
+        "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}",
         'org.yaml:snakeyaml:1.17',
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
@@ -135,7 +135,7 @@ jar.doFirst {
     manifest {
         attributes 'Rundeck-Version': version,
                    'Rundeck-Tools-Dependencies': configurations.runtime.files.collect { "$it.name" }.join(" ")
-                   
+
     }
 }
 
