@@ -308,14 +308,4 @@ public class WorkflowEngine implements WorkflowSystem {
                    (null != success ? success : null != throwable ? throwable.getClass().getSimpleName() : "?");
         }
     }
-
-
-
-    private Map<String, String> map(final String key, final String value) {
-        HashMap<String, String> map = new HashMap<>();
-        map.put(key, value);
-        return map;
-    }
-
-
 }
