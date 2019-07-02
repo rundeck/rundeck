@@ -512,7 +512,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String fromServerUUID = null,
             boolean selectAll = false,
             String projectFilter = null,
-            String jobid = null
+            List<String> jobids = null
     )
     {
         Map claimed = [:]
@@ -555,8 +555,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (queryProject) {
                     eq('project', queryProject)
                 }
-                if (jobid){
-                    eq('uuid', jobid)
+                if (jobids){
+                    'in'('uuid', jobids)
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
@@ -793,12 +793,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param fromServerUUID server UUID to claim scheduling of jobs from
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
-    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null) {
+    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, List<String> ids=null) {
         def toServerUuid = frameworkService.getServerUUID()
         if (toServerUuid == fromServerUUID) {
             return [:]
         }
-        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, id)
+        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, ids)
         if (claimed.find { it.value.success }) {
             rescheduleJobs(toServerUuid)
         }

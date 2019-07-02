@@ -366,7 +366,7 @@ class ScheduledExecutionControllerSpec extends Specification {
     }
 
     @Unroll
-    def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String jobid){
+    def "api scheduler takeover XML input"(String requestXml, String requestUUID, boolean allserver, String project, String[] jobid, int api_version){
         given:
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -385,6 +385,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         when:
         request.method='PUT'
         request.XML=requestXml
+        request.api_version = api_version
         response.format='xml'
         def result=controller.apiJobClusterTakeoverSchedule()
 
@@ -392,14 +393,16 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status==200
 
         where:
-        requestXml                                                                                              | requestUUID | allserver | project | jobid
-        "<server uuid='${TEST_UUID1}' />".toString()                                                            | TEST_UUID1  | false     | null    | null
-        "<server all='true' />".toString()                                                                      | null        | true      | null    | null
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null    | null
-        "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null    | null
-        '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null
-        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                          | null        | true      | null    | 'ajobid'
-        "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null
+        requestXml                                                                                              | requestUUID | allserver | project | jobid             | api_version
+        "<server uuid='${TEST_UUID1}' />".toString()                                                            | TEST_UUID1  | false     | null    | null              | 17
+        "<server all='true' />".toString()                                                                      | null        | true      | null    | null              | 17
+        "<takeoverSchedule><server uuid='${TEST_UUID1}' /></takeoverSchedule>".toString()                       | TEST_UUID1  | false     | null    | null              | 17
+        "<takeoverSchedule><server all='true' /></takeoverSchedule>".toString()                                 | null        | true      | null    | null              | 17
+        '<takeoverSchedule><server all="true" /><project name="asdf"/></takeoverSchedule>'                      | null        | true      | 'asdf'  | null              | 17
+        '<takeoverSchedule><server all="true" /><job id="ajobid"/></takeoverSchedule>'                          | null        | true      | null    | ['ajobid']          | 17
+        "<takeoverSchedule><server uuid='${TEST_UUID1}' /><project name='asdf'/></takeoverSchedule>".toString() | TEST_UUID1  | false     | 'asdf'  | null              | 17
+        '<takeoverSchedule><server all="true" /><job id="ajobid"/><job id="ajobidb"/></takeoverSchedule>'       | null        | true      | null    | ['ajobid','ajobidb']  | 31
+
     }
 
 
