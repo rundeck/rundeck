@@ -38,6 +38,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     @Getter private boolean didRun = false;
+    @Getter private final String identity;
 
     public StepOperation(
             final int stepNum,
@@ -52,6 +53,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         this.stepNum = stepNum;
         this.label = label;
         this.callable = callable;
+        this.identity = String.format("[%d]%s", stepNum, label != null ? label : "");
         this.startTriggerState = startTriggerState;
         this.startTriggerConditions = startTriggerConditions;
         this.skipTriggerConditions = skipTriggerConditions;
@@ -153,7 +155,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             }
         }
 
-        return new OperationCompleted(stepNum, stateChanges, stepResultCapture);
+        return new OperationCompleted(getIdentity(), stepNum, stateChanges, stepResultCapture);
     }
 
     @Override

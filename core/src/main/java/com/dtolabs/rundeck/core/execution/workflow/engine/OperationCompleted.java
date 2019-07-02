@@ -27,6 +27,7 @@ import lombok.Value;
  */
 @Value
 public class OperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedContext> {
+    private String stepIdentity;
     private int stepNum;
     private StateObj newState;
     private BaseWorkflowExecutor.StepResultCapture stepResultCapture;
