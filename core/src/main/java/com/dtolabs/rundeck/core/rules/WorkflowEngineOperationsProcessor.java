@@ -153,6 +153,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                         return;
                     }
                 }
+
                 processOperations(results::add);
             }
         } catch (InterruptedException e) {
