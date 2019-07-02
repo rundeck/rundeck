@@ -24,6 +24,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import lombok.RequiredArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -39,11 +41,15 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 {
     private StateWorkflowSystem workflowEngine;
     private WorkflowSystemEventHandler eventHandler;
-    private final Set<OP> operations;
-    private final WorkflowSystem.SharedData<DAT> sharedData;
-    private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<>());
-    private final Set<WorkflowSystem.Operation> skipped = new HashSet<>();
-    private final Set<OP> pending;
+    @Getter private final Set<OP> operations;
+    @Getter private final WorkflowSystem.SharedData<DAT> sharedData;
+    @Getter private final Set<WorkflowSystem.Operation>
+            inProcess =
+            Collections.synchronizedSet(new HashSet<>());
+    @Getter private final Set<WorkflowSystem.Operation> skipped = new HashSet<>();
+    @Getter private final Set<OP> pending;
+    @Setter
+    @Getter
     private volatile boolean interrupted;
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
@@ -51,7 +57,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final LinkedBlockingQueue<WorkflowSystem.OperationCompleted<DAT>> stateChangeQueue
             = new LinkedBlockingQueue<>();
 
-    private final Set<WorkflowSystem.OperationResult<DAT, RES, OP>> results
+    @Getter private final Set<WorkflowSystem.OperationResult<DAT, RES, OP>> results
             = Collections.synchronizedSet(new HashSet<WorkflowSystem.OperationResult<DAT, RES, OP>>());
 
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
@@ -435,35 +441,4 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
     }
 
-    public Set<OP> getOperations() {
-        return operations;
-    }
-
-    public WorkflowSystem.SharedData<DAT> getSharedData() {
-        return sharedData;
-    }
-
-    public Set<WorkflowSystem.Operation> getInProcess() {
-        return inProcess;
-    }
-
-    public Set<WorkflowSystem.Operation> getSkipped() {
-        return skipped;
-    }
-
-    public boolean isInterrupted() {
-        return interrupted;
-    }
-
-    public void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
-    }
-
-    public Set<OP> getPending() {
-        return pending;
-    }
-
-    public Set<WorkflowSystem.OperationResult<DAT, RES, OP>> getResults() {
-        return results;
-    }
 }
