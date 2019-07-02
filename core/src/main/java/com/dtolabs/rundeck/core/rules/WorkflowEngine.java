@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.core.rules;
 
 import com.google.common.util.concurrent.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -21,43 +23,41 @@ public class WorkflowEngine
         implements StateWorkflowSystem, WorkflowSystemEventHandler
 {
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
+    @Getter
     private final MutableStateObj state;
-    private final RuleEngine engine;
+    @Getter
+    private final RuleEngine ruleEngine;
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 
+    @Getter
+    @Setter
     private WorkflowSystemEventListener listener;
+    @Getter
+    @Setter
     private volatile boolean interrupted;
 
     /**
      * Create engine
      *
-     * @param engine   rule engine to process state changes via rules
+     * @param ruleEngine   rule engine to process state changes via rules
      * @param state    initial state
      * @param executor executor to process operations, which should be multithreaded to process operations concurrently
      */
     public WorkflowEngine(
-            final RuleEngine engine,
+            final RuleEngine ruleEngine,
             final MutableStateObj state,
             final ExecutorService executor
 
     )
     {
-        this.engine = engine;
+        this.ruleEngine = ruleEngine;
         this.state = state;
         executorService = MoreExecutors.listeningDecorator(executor);
         manager = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
-    @Override
-    public MutableStateObj getState() {
-        return state;
-    }
 
-    @Override
-    public RuleEngine getRuleEngine() {
-        return engine;
-    }
 
     static class Sleeper {
         private long orig = 250;
@@ -218,22 +218,6 @@ public class WorkflowEngine
     public boolean isWorkflowEndState() {
         return getState().hasState(Workflows.getWorkflowEndState());
     }
-
-    @Override
-    public WorkflowSystemEventListener getListener() {
-        return listener;
-    }
-
-    @Override
-    public void setListener(WorkflowSystemEventListener listener) {
-        this.listener = listener;
-    }
-
-    @Override
-    public boolean isInterrupted() {
-        return interrupted;
-    }
-
 
     static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
             OperationResult<D, T, X>
