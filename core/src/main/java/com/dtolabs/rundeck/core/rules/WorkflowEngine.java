@@ -132,6 +132,41 @@ public class WorkflowEngine implements WorkflowSystem {
         return results;
     }
 
+    /**
+     * Handle the state changes for the rule engine
+     *
+     * @param changes
+     * @return true to continue processing, false if end state is reached
+     */
+    boolean processStateChanges(final Map<String, String> changes) {
+        event(WorkflowSystemEventType.WillProcessStateChange,
+              String.format("saw state changes: %s", changes), changes
+        );
+
+        getState().updateState(changes);
+
+        boolean update = Rules.update(getRuleEngine(), getState());
+        event(
+                WorkflowSystemEventType.DidProcessStateChange,
+                String.format(
+                        "applied state changes and rules (changed? %s): %s",
+                        update,
+                        getState()
+                ),
+                getState()
+        );
+
+        if (isWorkflowEndState(getState())) {
+            event(
+                    WorkflowSystemEventType.WorkflowEndState,
+                    "Workflow end state reached.",
+                    getState()
+            );
+            return false;
+        }
+        return true;
+    }
+
     void eventLoopProgress(
             final int origPendingCount,
             final int skipcount,

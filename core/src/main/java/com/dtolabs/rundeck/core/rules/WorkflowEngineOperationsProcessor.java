@@ -122,12 +122,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 
 
                 //handle state changes
-                processStateChanges(changes);
-
-                if (workflowEngine.isWorkflowEndState(workflowEngine.getState())) {
-                    workflowEngine.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                    return;
+                if(!workflowEngine.processStateChanges(changes)){
+                    break;
                 }
+
                 processOperations(results::add);
             }
         } catch (InterruptedException e) {
@@ -307,30 +305,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
 
         getAvailableChanges(changes);
-    }
-
-    /**
-     * Handle the state changes for the rule engine
-     *
-     * @param changes
-     */
-    private void processStateChanges(final Map<String, String> changes) {
-        workflowEngine.event(WorkflowSystemEventType.WillProcessStateChange,
-                             String.format("saw state changes: %s", changes), changes
-        );
-
-        workflowEngine.getState().updateState(changes);
-
-        boolean update = Rules.update(workflowEngine.getRuleEngine(), workflowEngine.getState());
-        workflowEngine.event(
-                WorkflowSystemEventType.DidProcessStateChange,
-                String.format(
-                        "applied state changes and rules (changed? %s): %s",
-                        update,
-                        workflowEngine.getState()
-                ),
-                workflowEngine.getState()
-        );
     }
 
     /**
