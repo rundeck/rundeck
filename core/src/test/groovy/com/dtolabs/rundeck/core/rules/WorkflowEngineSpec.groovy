@@ -33,6 +33,7 @@ class WorkflowEngineSpec extends Specification {
         Long id
         boolean hasRun = false
         Map input = null
+        String identity
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -76,6 +77,7 @@ class WorkflowEngineSpec extends Specification {
         Long id
         boolean hasRun = false
         WFSharedContext input = null
+        String identity
 
         @Override
         boolean shouldRun(final StateObj state) {
