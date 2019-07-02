@@ -2751,6 +2751,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -2859,6 +2860,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -2971,6 +2973,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -3083,6 +3086,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 failOnDisable,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -3322,6 +3326,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
                 )
 
@@ -3432,6 +3437,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -3944,6 +3950,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -4053,6 +4060,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -4311,6 +4319,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -4490,5 +4499,116 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2 != null
         e2.filter == "name: SelectedNode"
         e2.filterExclude == null
+    }
+
+    def "skip notification property on job ref"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                true
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        0 * service.notificationService.triggerJobNotification('start', _, _)
+        0 * service.notificationService.triggerJobNotification(trigger, _, _)
+        where:
+        success      | trigger
+        true         | 'success'
+        false        | 'failure'
     }
 }
