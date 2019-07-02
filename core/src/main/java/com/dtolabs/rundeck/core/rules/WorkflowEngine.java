@@ -30,7 +30,7 @@ public class WorkflowEngine implements WorkflowSystem {
 
     @Getter
     @Setter
-    private WorkflowSystemEventListener listener;
+    private List<WorkflowSystemEventListener> listeners;
     @Getter
     @Setter
     private volatile boolean interrupted;
@@ -222,8 +222,8 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
     private void event(final WorkflowSystemEvent event) {
-        if (null != listener) {
-            listener.onEvent(event);
+        if (null != listeners && !listeners.isEmpty()) {
+            listeners.forEach(a -> a.onEvent(event));
         }
     }
 
