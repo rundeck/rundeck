@@ -98,6 +98,10 @@ public interface WorkflowSystem {
      */
     public static interface Operation<X, T extends OperationCompleted> extends Function<X, T> {
         /**
+         * Identifier for the operation
+         */
+        String getIdentity();
+        /**
          * @param state current state
          *
          * @return true if the operation should run given the state shown
