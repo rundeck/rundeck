@@ -3336,4 +3336,121 @@ class ExecutionServiceSpec extends Specification {
         0 * executionListener.log(_)
         ret.success
     }
+
+    def "createJobReferenceContext default values"() {
+        given:
+        def context = ExecutionContextImpl.builder()
+                                          .
+                threadCount(1)
+                                          .
+                keepgoing(false)
+                                          .
+                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                                          .
+                privateDataContext(['option': [:],])
+                                          .
+                user('aUser')
+                                          .
+                build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        null != se
+        def opt1 = new Option(name: 'test1', enforced: false, required: false, defaultValue: "test123.")
+        assert opt1.validate()
+        se.addToOptions(opt1)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                [] as String[],
+                null, null, null, null, null, null, false, false, true
+        )
+
+        then:
+        newCtxt.dataContext['option'] == ['test1': 'test123.']
+    }
+
+    def "createJobReferenceContext default multi-values"() {
+        given:
+        def context = ExecutionContextImpl.builder()
+                                          .
+                threadCount(1)
+                                          .
+                keepgoing(false)
+                                          .
+                dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                                          .
+                privateDataContext(['option': [:],])
+                                          .
+                user('aUser')
+                                          .
+                build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        null != se
+        def opt1 = new Option(name: 'test1', multivalued: true, delimiter: "," , enforced: false, required: false, defaultValue: "A,B")
+        assert opt1.validate()
+        se.addToOptions(opt1)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                [] as String[],
+                null, null, null, null, null, null, false, false, true
+        )
+
+        then:
+        newCtxt.dataContext['option'] == ['test1.delimiter':',', 'test1':'A,B']
+
+    }
 }

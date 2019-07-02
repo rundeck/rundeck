@@ -1341,8 +1341,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //add delimiter to option variables
         if(null !=optsmap){
+            def se=null
             if(execMap  instanceof Execution && null!=execMap.scheduledExecution){
-                execMap.scheduledExecution.options.sort().each{option->
+                se=execMap.scheduledExecution
+            }else if(execMap instanceof ScheduledExecution){
+                se=execMap
+            }
+
+            if( null!=se){
+                se.options?.sort().each{option->
                     if(option.multivalued){
                         optsmap["${option.name}.delimiter"]=option.delimiter
                     }
@@ -3098,6 +3105,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     false,
                     false
             )
+        }
+
+        if (!newargs){
+            def props = [:]
+            HashMap optparams = validateJobInputOptions(props, se, null)
+            optparams = removeSecureOptionEntries(se, optparams)
+
+            newargs = generateJobArgline(se, optparams)
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
