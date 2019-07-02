@@ -9,9 +9,9 @@ import java.util.function.Supplier;
  * Created by greg on 5/18/16.
  */
 public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
-    RuleEngine engine;
-    MutableStateObj state;
-    Supplier<ExecutorService> executor;
+    private RuleEngine engine;
+    private MutableStateObj state;
+    private Supplier<ExecutorService> executor;
     private List<WorkflowSystemEventListener> listeners = new ArrayList<>();
 
     public static WorkflowEngineBuilder builder(WorkflowEngineBuilder source) {
