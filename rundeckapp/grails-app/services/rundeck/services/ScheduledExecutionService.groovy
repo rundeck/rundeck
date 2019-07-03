@@ -644,9 +644,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
-            if(nextExecNode){
-                newsched.serverNodeUUID = nextExecNode
-            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -1426,8 +1423,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-//                data.put("serverUUID", frameworkService.getServerUUID())
-                data.put("serverUUID", nextExecNode(se))
+                data.put("serverUUID", frameworkService.getServerUUID())
+                //data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -2618,9 +2615,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3207,9 +3201,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
