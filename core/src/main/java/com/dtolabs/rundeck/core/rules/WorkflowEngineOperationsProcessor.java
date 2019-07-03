@@ -95,7 +95,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 getAvailableChanges(changes);
 
                 if (changes.isEmpty()) {
-                    if (inProcess.isEmpty()) {
+                    if (detectNoMoreChanges()) {
                         //no pending operations, signalling no new state changes will occur
                         workflowEngine.event(
                                 WorkflowSystemEventType.EndOfChanges,
@@ -134,6 +134,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             interrupted = Thread.interrupted();
         }
         awaitFutures();
+    }
+
+    boolean detectNoMoreChanges() {
+        return inProcess.isEmpty() && stateChangeQueue.isEmpty();
     }
 
     /**
