@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import lombok.RequiredArgsConstructor;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -225,45 +226,60 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     String.format("operation starting: %s", operation),
                     operation
             );
-            final ListenableFuture<RES> submit = executorService.submit(() -> operation.apply(inputData));
-            inProcess.add(operation);
-            futures.add(submit);
-            FutureCallback<RES> callback = new FutureCallback<RES>() {
-                @Override
-                public void onSuccess(final RES successResult) {
-                    workflowEngine.event(
-                            WorkflowSystemEventType.OperationSuccess,
-                            String.format("operation succeeded: %s", successResult),
-                            successResult
-                    );
-                    assert successResult != null;
-                    WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
-                    resultConsumer.accept(result);
-                    stateChangeQueue.add(successResult);
-                    inProcess.remove(operation);
-                }
-
-                @Override
-                public void onFailure(final Throwable t) {
-                    workflowEngine.event(
-                            WorkflowSystemEventType.OperationFailed,
-                            String.format("operation failed: %s", t),
-                            t
-                    );
-                    WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
-                    resultConsumer.accept(result);
-                    StateObj newFailureState = operation.getFailureState(t);
-                    if (null != newFailureState && newFailureState.getState().size() > 0) {
-                        WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(
-                                newFailureState);
-                        stateChangeQueue.add(objectOperationCompleted);
-                    }
-                    inProcess.remove(operation);
-                }
-            };
-
+            final ListenableFuture<RES> submit = beginOperation(inputData, operation);
+            FutureCallback<RES> callback = new OperationFutureCallback(eventHandler, operation, resultConsumer);
             Futures.addCallback(submit, callback, manager);
         }
+    }
+
+    @RequiredArgsConstructor
+    class OperationFutureCallback
+            implements FutureCallback<RES>
+    {
+        final WorkflowSystemEventHandler eventHandler;
+        final OP operation;
+        final Consumer<WorkflowSystem.OperationResult<DAT, RES, OP>> resultConsumer;
+
+        @Override
+        public void onSuccess(final RES successResult) {
+            eventHandler.event(
+                    WorkflowSystemEventType.OperationSuccess,
+                    String.format("operation succeeded: %s", successResult),
+                    successResult
+            );
+            assert successResult != null;
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
+            resultConsumer.accept(result);
+            finishedOperation(successResult, operation);
+        }
+
+        @Override
+        public void onFailure(final Throwable t) {
+            eventHandler.event(
+                    WorkflowSystemEventType.OperationFailed,
+                    String.format("operation failed: %s", t),
+                    t
+            );
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
+            resultConsumer.accept(result);
+            StateObj newFailureState = operation.getFailureState(t);
+            if (null == newFailureState) {
+                newFailureState = new DataState();
+            }
+            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState), operation);
+        }
+    }
+
+    private ListenableFuture<RES> beginOperation(final DAT inputData, final OP operation) {
+        final ListenableFuture<RES> submit = executorService.submit(() -> operation.apply(inputData));
+        inProcess.add(operation);
+        futures.add(submit);
+        return submit;
+    }
+
+    private void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+        stateChangeQueue.add(e);
+        inProcess.remove(operation);
     }
 
     private <D, T extends WorkflowSystem.OperationCompleted<D>, X extends WorkflowSystem.Operation<D, T>>
