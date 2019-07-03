@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
 class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.OperationCompleted<DAT>, OP extends
         WorkflowSystem.Operation<DAT, RES>>
 {
-    private WorkflowEngine workflowEngine;
+    private StateWorkflowSystem workflowEngine;
+    private WorkflowSystemEventHandler eventHandler;
     private final Set<OP> operations;
     private final WorkflowSystem.SharedData<DAT> sharedData;
     private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<WorkflowSystem
@@ -58,7 +59,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
 
     public WorkflowEngineOperationsProcessor(
-            final WorkflowEngine workflowEngine,
+            final StateWorkflowSystem workflowEngine,
+            final WorkflowSystemEventHandler eventHandler,
             final Set<OP> operations,
             final WorkflowSystem.SharedData<DAT> sharedData,
             ListeningExecutorService executorService,
@@ -66,6 +68,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     )
     {
         this.workflowEngine = workflowEngine;
+        this.eventHandler = eventHandler;
         this.operations = operations;
         this.sharedData = sharedData;
         this.pending = new HashSet<>(operations);
@@ -77,7 +80,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Process the operations from a begin state
      */
     public void beginProcessing() {
-        workflowEngine.event(WorkflowSystemEventType.Begin, "Workflow begin");
+        eventHandler.event(WorkflowSystemEventType.Begin, "Workflow begin");
         initialize();
         continueProcessing();
     }
@@ -97,7 +100,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 if (changes.isEmpty()) {
                     if (detectNoMoreChanges()) {
                         //no pending operations, signalling no new state changes will occur
-                        workflowEngine.event(
+                        eventHandler.event(
                                 WorkflowSystemEventType.EndOfChanges,
                                 "No more state changes expected, finishing workflow."
                         );
@@ -119,8 +122,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 //handle state changes
                 processStateChanges(changes);
 
-                if (workflowEngine.isWorkflowEndState(workflowEngine.getState())) {
-                    workflowEngine.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
+                if (workflowEngine.isWorkflowEndState()) {
+                    eventHandler.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
                     return;
                 }
                 processOperations(results::add);
@@ -129,7 +132,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             Thread.currentThread().interrupt();
         }
         if (Thread.currentThread().isInterrupted()) {
-            workflowEngine.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
+            eventHandler.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
             cancelFutures();
             interrupted = Thread.interrupted();
         }
@@ -218,7 +221,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             }
             pending.remove(operation);
 
-            workflowEngine.event(
+            eventHandler.event(
                     WorkflowSystemEventType.WillRunOperation,
                     String.format("operation starting: %s", operation),
                     operation
@@ -314,14 +317,14 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * @param changes
      */
     private void processStateChanges(final Map<String, String> changes) {
-        workflowEngine.event(WorkflowSystemEventType.WillProcessStateChange,
-                             String.format("saw state changes: %s", changes), changes
+        eventHandler.event(WorkflowSystemEventType.WillProcessStateChange,
+                           String.format("saw state changes: %s", changes), changes
         );
 
         workflowEngine.getState().updateState(changes);
 
         boolean update = Rules.update(workflowEngine.getRuleEngine(), workflowEngine.getState());
-        workflowEngine.event(
+        eventHandler.event(
                 WorkflowSystemEventType.DidProcessStateChange,
                 String.format(
                         "applied state changes and rules (changed? %s): %s",
@@ -364,7 +367,16 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         pending.removeAll(shouldskip);
         skipped.addAll(shouldskip);
 
-        workflowEngine.eventLoopProgress(origPendingCount, shouldskip.size(), shouldrun.size(), pending.size());
+        eventHandler.event(
+                WorkflowSystemEventType.LoopProgress,
+                String.format(
+                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
+                        origPendingCount,
+                        shouldrun.size() - shouldskip.size(),
+                        shouldskip.size(),
+                        pending.size()
+                )
+        );
     }
 
     /**
@@ -374,7 +386,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      */
     private void processSkippedOperations(final List<OP> shouldskip) {
         for (final OP operation : shouldskip) {
-            workflowEngine.event(
+            eventHandler.event(
                     WorkflowSystemEventType.WillSkipOperation,
                     String.format("Skip condition statisfied for operation: %s, skipping", operation),
                     operation
