@@ -57,6 +57,19 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
+    private boolean
+            endStateBreak =
+            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateBreak", "false"));
+    private boolean
+            endStateCancel =
+            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateCancel", "false"));
+    private boolean
+            endStateCancelInterrupt =
+            Boolean.parseBoolean(System.getProperty(
+                    "WorkflowEngineOperationsProcessor.endStateCancelInterrupt",
+                    "false"
+            ));
+    ;
 
     public WorkflowEngineOperationsProcessor(
             final StateWorkflowSystem workflowEngine,
@@ -90,6 +103,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Continue processing from current state
      */
     private void continueProcessing() {
+        boolean cancel = false;
+        boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 HashMap<String, String> changes = new HashMap<>();
@@ -124,7 +139,13 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 
                 if (workflowEngine.isWorkflowEndState()) {
                     eventHandler.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                    return;
+                    if (endStateBreak) {
+                        cancel = endStateCancel;
+                        cancelInterrupt = endStateCancelInterrupt;
+                        break;
+                    } else {
+                        return;
+                    }
                 }
                 processOperations(results::add);
             }
@@ -133,8 +154,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
         if (Thread.currentThread().isInterrupted()) {
             eventHandler.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
-            cancelFutures();
+            cancelFutures(true);
             interrupted = Thread.interrupted();
+        } else if (cancel) {
+            cancelFutures(cancelInterrupt);
         }
         awaitFutures();
     }
@@ -192,8 +215,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
     }
 
-    private void cancelFutures() {
-        futures.forEach(future -> future.cancel(true));
+    private void cancelFutures(final boolean mayInterruptIfRunning) {
+        futures.forEach(future -> future.cancel(mayInterruptIfRunning));
     }
 
     public void initialize() {
