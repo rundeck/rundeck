@@ -40,8 +40,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private WorkflowSystemEventHandler eventHandler;
     private final Set<OP> operations;
     private final WorkflowSystem.SharedData<DAT> sharedData;
-    private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<WorkflowSystem
-            .Operation>());
+    private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<>());
     private final Set<WorkflowSystem.Operation> skipped = new HashSet<>();
     private final Set<OP> pending;
     private volatile boolean interrupted;
