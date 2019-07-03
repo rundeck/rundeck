@@ -19,7 +19,9 @@ import java.util.concurrent.*;
  * state, and any that can are queued to be executed.  Workflow processing stops when no operations
  * are currently running, no new state changes are available, and no pending operations can be run.
  */
-public class WorkflowEngine implements WorkflowSystem {
+public class WorkflowEngine
+        implements StateWorkflowSystem, WorkflowSystemEventHandler
+{
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
     @Getter
     private final MutableStateObj state;
@@ -55,7 +57,6 @@ public class WorkflowEngine implements WorkflowSystem {
         manager = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
-    
 
     static class Sleeper {
         private long orig = 250;
@@ -88,6 +89,7 @@ public class WorkflowEngine implements WorkflowSystem {
     Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
 
         WorkflowEngineOperationsProcessor<DAT, RES, OP> processor = new WorkflowEngineOperationsProcessor<>(
+                this,
                 this,
                 operations,
                 sharedData,
@@ -134,13 +136,8 @@ public class WorkflowEngine implements WorkflowSystem {
         return results;
     }
 
-    /**
-     * Handle the state changes for the rule engine
-     *
-     * @param changes
-     * @return true to continue processing, false if end state is reached
-     */
-    boolean processStateChanges(final Map<String, String> changes) {
+    @Override
+    public boolean processStateChanges(final Map<String, String> changes) {
         event(WorkflowSystemEventType.WillProcessStateChange,
               String.format("saw state changes: %s", changes), changes
         );
@@ -158,7 +155,7 @@ public class WorkflowEngine implements WorkflowSystem {
                 getState()
         );
 
-        if (isWorkflowEndState(getState())) {
+        if (isWorkflowEndState()) {
             event(
                     WorkflowSystemEventType.WorkflowEndState,
                     "Workflow end state reached.",
@@ -250,23 +247,33 @@ public class WorkflowEngine implements WorkflowSystem {
         };
     }
 
-    void event(final WorkflowSystemEventType endOfChanges, final String message) {
-        event(endOfChanges, message, null);
+    @Override
+    public void event(final WorkflowSystemEventType eventType, final String message) {
+        event(eventType, message, null);
     }
 
-    void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
+    @Override
+    public void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
         event(Event.with(eventType, message, data));
     }
 
-    private void event(final WorkflowSystemEvent event) {
+    @Override
+    public void event(final WorkflowSystemEvent event) {
         if (null != listeners && !listeners.isEmpty()) {
             listeners.forEach(a -> a.onEvent(event));
         }
     }
 
-    protected boolean isWorkflowEndState(final MutableStateObj state) {
-        return state.hasState(Workflows.getWorkflowEndState());
+    @Override
+    public boolean isWorkflowEndState() {
+        return getState().hasState(Workflows.getWorkflowEndState());
     }
+
+    @Override
+    public boolean isInterrupted() {
+        return interrupted;
+    }
+
 
     static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
             OperationResult<D, T, X>
