@@ -1490,7 +1490,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "validate option values, opt enforced allowed values from Remote Url"() {
+    def "invalid option values, opt enforced allowed values from Remote Url"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
         Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
@@ -1510,17 +1510,44 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             ]
         }
 
-        validation == validationResult
 
         ExecutionServiceValidationException e = thrown()
-        if(!validationResult) e.errors.containsKey('test1')
+        e.errors.containsKey('test1')
 
 
         where:
-        opts                                           | remoteValues                                                                                                     | validationResult
-        ['test1': 'somevalue']                         | ["A", "B", "C"]                                                                                                  | null
-        ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")] | null
-        ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")] | true
+        opts                                           | remoteValues
+        ['test1': 'somevalue']                         | ["A", "B", "C"]
+        ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+
+    }
+
+    def "valid option values, opt enforced allowed values from Remote Url"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : ["A", "B", "C"],
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
+        noExceptionThrown()
+
+
+        where:
+        opts                                           | remoteValues
+        ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
 
     }
 
