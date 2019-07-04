@@ -43,6 +43,7 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
+import org.grails.web.json.JSONObject
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -1509,12 +1510,17 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             ]
         }
 
+        validation == validationResult
+
         ExecutionServiceValidationException e = thrown()
-        e.errors.containsKey('test1')
+        if(!validationResult) e.errors.containsKey('test1')
+
 
         where:
-        opts                                           | _
-        ['test1': 'somevalue']                         | _
+        opts                                           | remoteValues                                                                                                     | validationResult
+        ['test1': 'somevalue']                         | ["A", "B", "C"]                                                                                                  | null
+        ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")] | null
+        ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")] | true
 
     }
 
