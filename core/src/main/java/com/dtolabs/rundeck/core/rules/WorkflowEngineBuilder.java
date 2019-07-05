@@ -53,6 +53,12 @@ public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
     }
 
     @Override
+    public WorkflowSystemBuilder listeners(final List<WorkflowSystemEventListener> listeners) {
+        this.listeners.addAll(listeners);
+        return this;
+    }
+
+    @Override
     public WorkflowSystem build() {
         if (null == engine || null == state || null == executor) {
             throw new IllegalArgumentException();
