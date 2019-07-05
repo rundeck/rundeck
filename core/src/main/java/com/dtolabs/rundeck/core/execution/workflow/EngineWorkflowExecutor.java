@@ -240,14 +240,24 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         logDebug.log("Create rule engine with rules: " + ruleEngine);
         logDebug.log("Create workflow engine with state: " + state);
 
+        List<WorkflowSystemEventListener> list = new ArrayList<>();
+        WorkflowSystemEventListener logger = event -> {
+            logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
+        };
+        list.add(logger);
+        if (null != executionContext.getComponentList()) {
+            executionContext.getComponentList().forEach(obj -> {
+                if (obj instanceof WorkflowSystemEventListener) {
+                    list.add((WorkflowSystemEventListener) obj);
+                }
+            });
+        }
         WorkflowSystem workflowEngine = buildWorkflowSystem(
                 state,
                 ruleEngine,
                 strategyForWorkflow.getThreadCount(),
                 getWorkflowSystemBuilderSupplier(),
-                event -> {
-                    logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
-                }
+                list
         );
 
 
@@ -356,7 +366,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final RuleEngine ruleEngine,
             final int wfThreadcount,
             final Supplier<WorkflowSystemBuilder> workflowSystemBuilder,
-            final WorkflowSystemEventListener workflowSystemEventListener
+            final List<WorkflowSystemEventListener> workflowSystemEventListeners
     )
     {
         return workflowSystemBuilder.get()
@@ -366,7 +376,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                                                     : Executors.newCachedThreadPool()
                                     )
                                     .state(state)
-                                    .listener(workflowSystemEventListener)
+                                    .listeners(workflowSystemEventListeners)
                                     .build();
     }
 
