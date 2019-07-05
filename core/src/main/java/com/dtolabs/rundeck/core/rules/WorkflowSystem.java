@@ -86,6 +86,10 @@ public interface WorkflowSystem {
      * Indicates an operation completed, supplies a new set of state data to update the mutable state with
      */
     public static interface OperationCompleted<T> {
+        /**
+         * Identifier for the operation
+         */
+        String getIdentity();
         StateObj getNewState();
 
         T getResult();
