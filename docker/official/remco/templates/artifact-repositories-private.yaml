@@ -1,0 +1,21 @@
+{% set pluginProviderBase = "/rundeck/repository/artifacts/provider" %}
+
+repositories:
+  - repositoryName: official
+    enabled: true
+    type: HTTP
+    owner: RUNDECK
+
+  {%- macro plugin_provider(provider) %}
+  {%- set type = getv(printf("%s/type", provider), "file") %}
+  {%- set index = provider | base %}
+
+  - repositoryName: {% set name = printf("%s/name", provider) %} {{ getv(name, index)}}
+    type: STORAGE_TREE
+    configProperties:
+      storageTreePath: {% set path = printf("%s/path", provider) %} {{ getv(path, "/")}}
+  {% endmacro %}
+  {%- for p in lsdir(pluginProviderBase) -%}
+  {% set provider = printf("%s/%s", pluginProviderBase, p) -%}
+  {{ plugin_provider(provider) }}
+  {%- endfor %}
