@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -1862,20 +1863,22 @@ class ScheduledExecutionController  extends ControllerBase{
                     params[it]='false'
                 }
             }
+            def pluginControlService = frameworkService.getPluginControlService(params.project)
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+                !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowNodeStep')
             }
             def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+                !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowStep')
             }
             def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-            def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+                !pluginControlService?.isDisabledPlugin(k, 'LogFilter')
             }
             def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-                !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+                !pluginControlService?.isDisabledPlugin(k, 'Notification')
             }
+
+            def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
@@ -2121,25 +2124,27 @@ class ScheduledExecutionController  extends ControllerBase{
             session.removeAttribute('undoOPTS');
             session.removeAttribute('redoOPTS');
         }
+        def pluginControlService = frameworkService.getPluginControlService(params.project)
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+            !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowNodeStep')
         }
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+            !pluginControlService?.isDisabledPlugin(it.name, 'WorkflowStep')
         }
-        log.debug("ScheduledExecutionController: create : now returning model data to view...")
-        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll { k, v ->
+            !pluginControlService?.isDisabledPlugin(k, 'LogFilter')
+        }
+        def notificationPlugins = notificationService.listNotificationPlugins().findAll { k, v ->
+            !pluginControlService?.isDisabledPlugin(k, 'Notification')
+        }
 
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+
+        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
-        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
-        }
         def fprojects = frameworkService.projectNames(authContext)
-        def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
-        }
+
         return ['scheduledExecution':scheduledExecution, params:params, crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins : notificationPlugins,
@@ -2344,21 +2349,22 @@ class ScheduledExecutionController  extends ControllerBase{
                 request.message=g.message(code:'ScheduledExecutionController.save.failed')
             }
         }
-
+        def pluginControlService = frameworkService.getPluginControlService(params.project)
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowNodeStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowNodeStep')
         }
         def stepTypes = frameworkService.getStepPluginDescriptions()?.findAll{
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(it.name,'WorkflowStep')
+            !pluginControlService?.isDisabledPlugin(it.name,'WorkflowStep')
         }
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'LogFilter')
+            !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
         def notificationPlugins = notificationService.listNotificationPlugins().findAll{k,v->
-            !frameworkService.getPluginControlService(params.project)?.isDisabledPlugin(k,'Notification')
+            !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
+
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
@@ -4297,6 +4303,7 @@ class ScheduledExecutionController  extends ControllerBase{
         String serverUUID=null
         boolean serverAll=false
         String project=null
+        def jobIds=[]
         def jobid=null
         if(request.format=='json' ){
             def data= request.JSON
@@ -4304,6 +4311,14 @@ class ScheduledExecutionController  extends ControllerBase{
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
             jobid = data?.job?.id?:null
+            if(jobid){
+                jobIds << jobid
+            }
+            if(request.api_version >= ApiVersions.V31 && data?.jobs){
+                data?.jobs.each{job->
+                    jobIds << job.id
+                }
+            }
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
@@ -4313,19 +4328,31 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
-                jobid = data.job?.'@id'?.text()?:null
+                if(request.api_version >= ApiVersions.V31){
+                    if(data.job?.size()>0){
+                        data.job?.each{ job ->
+                            jobIds << job?.'@id'?.text()
+
+                        }
+                    }
+                }else{
+                    jobid = data.job?.'@id'?.text()?:null
+                    if(jobid){
+                        jobIds << jobid
+                    }
+                }
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID && !serverAll&& !jobid) {
+        if (!serverUUID && !serverAll && !jobIds) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobid)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
@@ -4371,6 +4398,11 @@ class ScheduledExecutionController  extends ControllerBase{
                         }
                         if(jobid){
                             delegate.'job'(id:jobid)
+                        }
+                        if(jobIds){
+                            jobIds.each { jid ->
+                                delegate.'job'(id:jid)
+                            }
                         }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {

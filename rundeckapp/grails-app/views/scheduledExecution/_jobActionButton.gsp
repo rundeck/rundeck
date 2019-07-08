@@ -232,11 +232,12 @@ jQuery(function(){
                                                   any="true">
                                 <div class="form-group">
                                     <div class="col-sm-10 col-sm-offset-2">
-                                        <label class="checkbox">
-                                            <input type="checkbox" name="deleteExecutions"
-                                                   value="true"/>
+                                        <div class="checkbox">
+                                        <input type="checkbox" name="deleteExecutions" id="deleteExecutions" value="true"/>
+                                        <label for="deleteExecutions">
                                             <g:message code="delete.all.executions.of.this.job"/>
                                         </label>
+                                        </div>
                                     </div>
                                 </div>
                             </auth:resourceAllowed>

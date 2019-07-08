@@ -59,12 +59,15 @@
                        command="${command}"/>
     </div>
 
-    <div class="card-footer">
+    <div class="card-footer" data-ko-bind="jobeditor">
       <g:actionSubmit id="editFormCancelButton" value="${g.message(code: 'cancel')}"
                       onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm "/>
+        <span data-bind="if: errorTabs().length" class="text-warning">
+            <g:message code="job.editor.workflow.unsavedchanges.warning" />
+        </span>
     </div>
 
 </div>
