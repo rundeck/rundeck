@@ -83,11 +83,16 @@ public class WorkflowEngine
         }
     }
 
+    @Override
     public <DAT,
             RES extends OperationCompleted<DAT>,
             OP extends Operation<DAT, RES>
             >
-    Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
+    Set<OperationResult<DAT, RES, OP>> processOperations(
+            final Set<OP> operations,
+            final SharedData<DAT, Map<String, String>> sharedData
+    )
+    {
 
         WorkflowEngineOperationsProcessor<DAT, RES, OP> processor = new WorkflowEngineOperationsProcessor<>(
                 this,

@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * Process a set of Operations, by use of a RuleEngine to determine when/if operations should run,
  * and by updating a shared state object with new state changes returned by each operation.
  */
-public interface WorkflowSystem {
+public interface WorkflowSystem<P> {
 
     /**
      * Process the operations and return results when all runnable operations are complete.
@@ -23,7 +23,7 @@ public interface WorkflowSystem {
      */
     <D, T extends OperationCompleted<D>, X extends Operation<D, T>> Set<OperationResult<D, T, X>> processOperations(
             final Set<X> operations,
-            final SharedData<D> shared
+            final SharedData<D, P> shared
     );
 
     /**
@@ -52,7 +52,7 @@ public interface WorkflowSystem {
      *
      * @param <T> data type
      */
-    public static interface SharedData<T> {
+    interface SharedData<T, Y> {
         /**
          * Add a data item
          *
@@ -67,8 +67,13 @@ public interface WorkflowSystem {
          */
         T produceNext();
 
-        static <T> SharedData<T> with(Consumer<T> adder, Supplier<T> producer) {
-            return new SharedData<T>() {
+        /**
+         * Produce wf state data from the shared data
+         */
+        Y produceState();
+
+        static <T, Y> SharedData<T, Y> with(Consumer<T> adder, Supplier<T> producer, Supplier<Y> stateProducer) {
+            return new SharedData<T, Y>() {
                 @Override
                 public void addData(final T item) {
                     adder.accept(item);
@@ -77,6 +82,11 @@ public interface WorkflowSystem {
                 @Override
                 public T produceNext() {
                     return producer.get();
+                }
+
+                @Override
+                public Y produceState() {
+                    return stateProducer.get();
                 }
             };
         }

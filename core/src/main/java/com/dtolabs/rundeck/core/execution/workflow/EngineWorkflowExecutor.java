@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 
@@ -261,17 +260,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
-
-        WorkflowSystem.SharedData<WFSharedContext>
+        //                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
+        WorkflowSystem.SharedData<WFSharedContext, Map<String, String>>
                 dataContextSharedData = WorkflowSystem.SharedData.with(
-                (data) -> {
-                    sharedContext.merge(data);
-//                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
-                },
-                () -> {
-//                    System.err.println("produce next shared data " + sharedContext);
-                    return sharedContext;
-                }
+                sharedContext::merge,
+                () -> sharedContext,
+                () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
         );
 
         Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>

@@ -20,7 +20,7 @@ package com.dtolabs.rundeck.core.rules;
  * Uses a mutable state and rule engine
  */
 public interface StateWorkflowSystem
-        extends WorkflowSystem
+        extends WorkflowSystem<Map<String, String>>
 {
     /**
      * state object

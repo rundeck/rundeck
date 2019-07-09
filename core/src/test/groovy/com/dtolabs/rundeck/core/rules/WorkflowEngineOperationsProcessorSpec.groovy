@@ -77,7 +77,8 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
             Map shared = [:]
             WorkflowSystem.SharedData<Map> sharedData = WorkflowSystem.SharedData.<Map> with(
                     { Map d -> shared.putAll(d) },
-                    { -> shared }
+                    { -> shared },
+                    {->[:]}
             )
             def executor = Mock(ListeningExecutorService)
             def manager = Mock(ListeningExecutorService)

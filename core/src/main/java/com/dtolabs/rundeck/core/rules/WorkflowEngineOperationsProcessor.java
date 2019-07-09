@@ -42,7 +42,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private StateWorkflowSystem workflowEngine;
     private WorkflowSystemEventHandler eventHandler;
     @Getter private final Set<OP> operations;
-    @Getter private final WorkflowSystem.SharedData<DAT> sharedData;
+    @Getter private final WorkflowSystem.SharedData<DAT, Map<String, String>> sharedData;
     @Getter private final Set<WorkflowSystem.Operation>
             inProcess =
             Collections.synchronizedSet(new HashSet<>());
@@ -81,7 +81,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             final StateWorkflowSystem workflowEngine,
             final WorkflowSystemEventHandler eventHandler,
             final Set<OP> operations,
-            final WorkflowSystem.SharedData<DAT> sharedData,
+            final WorkflowSystem.SharedData<DAT, Map<String, String>> sharedData,
             ListeningExecutorService executorService,
             ListeningExecutorService manager
     )
