@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.rules;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Uses a mutable state and rule engine
@@ -36,12 +37,246 @@ public interface StateWorkflowSystem
     RuleEngine getRuleEngine();
 
     /**
+     * state change for given identity
+     */
+    interface StateChange<D> {
+        /**
+         * identity for change
+         */
+        String getIdentity();
+
+        /**
+         * @return new state data
+         */
+        Map<String, String> getState();
+
+        /**
+         * @return shared data
+         */
+        SharedData<D, Map<String, String>> getSharedData();
+    }
+
+    /**
+     * Create State Change
+     *
+     * @param identity
+     * @param stateSupplier
+     * @param sharedData
+     * @param <D>
+     */
+    static <D> StateChange<D> stateChange(
+            String identity,
+            Supplier<Map<String, String>> stateSupplier,
+            SharedData<D, Map<String, String>> sharedData
+    )
+    {
+        return new StateWorkflowSystem.StateChange<D>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
+            @Override
+            public Map<String, String> getState() {
+                return stateSupplier.get();
+            }
+
+            @Override
+            public SharedData<D, Map<String, String>> getSharedData() {
+                return sharedData;
+            }
+        };
+    }
+
+    /**
+     * state change for given identity
+     */
+    interface StateEvent<D> {
+
+        /**
+         * Current state
+         */
+        MutableStateObj getState();
+
+        SharedData<D, Map<String, String>> getSharedData();
+    }
+
+
+    /**
+     * Create StateEvent
+     *
+     * @param state
+     * @param sharedData
+     * @param <D>
+     */
+    static <D> StateEvent<D> stateEvent(
+
+            MutableStateObj state,
+            WorkflowSystem.SharedData<D, Map<String, String>> sharedData
+    )
+    {
+        return new StateWorkflowSystem.StateEvent<D>() {
+
+            @Override
+            public MutableStateObj getState() {
+                return state;
+            }
+
+            @Override
+            public SharedData<D, Map<String, String>> getSharedData() {
+                return sharedData;
+            }
+        };
+    }
+
+    /**
+     * state change event for given identity
+     */
+    interface StateChangeEvent<D> {
+        /**
+         * Current state
+         */
+        public MutableStateObj getState();
+
+        /**
+         * State change
+         */
+        StateChange<D> getStateChange();
+    }
+
+    /**
+     * Create StateChangeEvent
+     *
+     * @param state
+     * @param stateChange
+     * @param <D>
+     */
+    static <D> StateChangeEvent<D> stateChangeEvent(
+            MutableStateObj state,
+            StateChange<D> stateChange
+    )
+    {
+        return new StateWorkflowSystem.StateChangeEvent<D>() {
+
+            @Override
+            public MutableStateObj getState() {
+                return state;
+            }
+
+            @Override
+            public StateChange<D> getStateChange() {
+                return stateChange;
+            }
+        };
+    }
+
+    /**
+     * operation event with identity
+     */
+    interface OperationEvent<D>
+            extends StateEvent<D>
+    {
+        /**
+         * Get operation identity
+         */
+        String getIdentity();
+    }
+
+
+    /**
+     * Create OperationEvent
+     *
+     * @param identity
+     * @param state
+     * @param sharedData
+     * @param <D>
+     */
+    static <D> OperationEvent<D> operationEvent(
+            String identity,
+            MutableStateObj state,
+            WorkflowSystem.SharedData<D, Map<String, String>> sharedData
+    )
+    {
+        return new StateWorkflowSystem.OperationEvent<D>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
+            @Override
+            public MutableStateObj getState() {
+                return state;
+            }
+
+            @Override
+            public SharedData<D, Map<String, String>> getSharedData() {
+                return sharedData;
+            }
+        };
+    }
+
+
+    /**
+     * operation completed event
+     */
+    interface OperationCompleteEvent<D, RES extends OperationCompleted<D>, OP extends Operation<D, RES>>
+            extends OperationEvent<D>
+    {
+        /**
+         * @return result of operation
+         */
+        WorkflowSystem.OperationResult<D, RES, OP> getResult();
+    }
+
+
+    /**
+     * Create OperationCompleteEvent
+     * @param identity
+     * @param state
+     * @param sharedData
+     * @param result
+     * @param <D>
+     * @param <RES>
+     * @param <OP>
+     * @return
+     */
+    static <D, RES extends OperationCompleted<D>, OP extends Operation<D, RES>> OperationCompleteEvent<D, RES, OP> operationCompleteEvent(
+            String identity,
+            MutableStateObj state,
+            WorkflowSystem.SharedData<D, Map<String, String>> sharedData,
+            final OperationResult<D, RES, OP> result
+    )
+    {
+        return new StateWorkflowSystem.OperationCompleteEvent<D, RES, OP>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
+            @Override
+            public MutableStateObj getState() {
+                return state;
+            }
+
+            @Override
+            public SharedData<D, Map<String, String>> getSharedData() {
+                return sharedData;
+            }
+
+            @Override
+            public OperationResult<D, RES, OP> getResult() {
+                return result;
+            }
+        };
+    }
+
+    /**
      * Handle the state changes for the rule engine
      *
-     * @param changes
-     * @return true to continue processing, false if end state is reached
+     * @param change a single change
+     * @return true if internal state was changed
      */
-    boolean processStateChanges(Map<String, String> changes);
+    boolean processStateChange(WorkflowEngine.StateChange<?> change);
 
     /**
      * @return true if the state indicates the workflow should end

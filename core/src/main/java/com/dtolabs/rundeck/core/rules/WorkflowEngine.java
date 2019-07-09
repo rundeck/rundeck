@@ -138,57 +138,45 @@ public class WorkflowEngine
                     processor.getPending()
             );
         }
-        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results));
+        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results),
+              StateWorkflowSystem.stateEvent(getState(), sharedData)
+        );
         return results;
     }
 
+    /**
+     * @param change
+     * @return true if state was changed
+     */
     @Override
-    public boolean processStateChanges(final Map<String, String> changes) {
-        event(WorkflowSystemEventType.WillProcessStateChange,
-              String.format("saw state changes: %s", changes), changes
+    public boolean processStateChange(final StateChange<?> change) {
+        event(
+                WorkflowSystemEventType.WillProcessStateChange,
+                String.format("state changes: %s ", change.getIdentity()),
+                StateWorkflowSystem.stateChangeEvent(getState(), change)
         );
 
-        getState().updateState(changes);
+        Map<String, String> newState = change.getState();
+        boolean update = getState().updateState(newState);
 
-        boolean update = Rules.update(getRuleEngine(), getState());
+        update |= Rules.update(getRuleEngine(), getState());
         event(
                 WorkflowSystemEventType.DidProcessStateChange,
                 String.format(
-                        "applied state changes and rules (changed? %s): %s",
+                        "applied state changes and rules (changed? %s): %s - %s",
                         update,
+                        change.getIdentity(),
                         getState()
                 ),
-                getState()
-        );
-
-        if (isWorkflowEndState()) {
-            event(
-                    WorkflowSystemEventType.WorkflowEndState,
-                    "Workflow end state reached.",
-                    getState()
-            );
-            return false;
-        }
-        return true;
-    }
-
-    void eventLoopProgress(
-            final int origPendingCount,
-            final int skipcount,
-            final int toruncount,
-            final int pendingcount
-    )
-    {
-        event(
-                WorkflowSystemEventType.LoopProgress,
-                String.format(
-                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
-                        origPendingCount,
-                        toruncount - skipcount,
-                        skipcount,
-                        pendingcount
+                StateWorkflowSystem.stateChangeEvent(
+                        getState(),
+                        StateWorkflowSystem.stateChange(change.getIdentity(),
+                                                        () -> newState,
+                                                        change.getSharedData())
                 )
         );
+
+        return update;
     }
 
     @ToString
@@ -213,8 +201,13 @@ public class WorkflowEngine
     }
 
 
-    static <T> OperationCompleted<T> dummyResult(final StateObj state) {
+    static <T> OperationCompleted<T> dummyResult(final StateObj state, final String identity) {
         return new OperationCompleted<T>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
             @Override
             public StateObj getNewState() {
                 return state;

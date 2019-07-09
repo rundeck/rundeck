@@ -51,6 +51,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     @Setter
     @Getter
     private volatile boolean interrupted;
+    @Setter @Getter private StateObj initialState = Workflows.getWorkflowStartState();
+
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 
@@ -99,7 +101,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Process the operations from a begin state
      */
     public void beginProcessing() {
-        eventHandler.event(WorkflowSystemEventType.Begin, "Workflow begin");
+        eventHandler.event(
+                WorkflowSystemEventType.Begin,
+                "Workflow begin",
+                StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
+        );
         initialize();
         continueProcessing();
     }
@@ -113,35 +119,37 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
-                HashMap<String, String> changes = new HashMap<>();
+                boolean changed = false;
 
-                //load all changes already in the queue
-                getAvailableChanges(changes);
+                //wait for changes
+                changed |= processCompletedChanges(waitForChanges());
 
-                if (changes.isEmpty()) {
+                if (!changed) {
                     if (detectNoMoreChanges()) {
                         //no pending operations, signalling no new state changes will occur
                         eventHandler.event(
                                 WorkflowSystemEventType.EndOfChanges,
-                                "No more state changes expected, finishing workflow."
+                                "No more state changes expected, finishing workflow.",
+                                StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
                         );
                         return;
                     }
                     if (Thread.currentThread().isInterrupted()) {
                         break;
                     }
-                    waitForChanges(changes);
-                }
-                if (changes.isEmpty()) {
                     //no changes within sleep time, try again
                     continue;
                 }
 
-                getContextGlobalData(changes);
 
+                if (workflowEngine.isWorkflowEndState()) {
+                    //end state reached
+                    eventHandler.event(
+                            WorkflowSystemEventType.WorkflowEndState,
+                            "Workflow end state reached.",
+                            StateWorkflowSystem.stateEvent(workflowEngine.getState(), sharedData)
+                    );
 
-                //handle state changes
-                if(!workflowEngine.processStateChanges(changes)){
                     if (endStateBreak) {
                         cancel = endStateCancel;
                         cancelInterrupt = endStateCancelInterrupt;
@@ -151,6 +159,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     }
                 }
 
+                //some changes made to state, so review pending operations
                 processOperations(results::add);
             }
         } catch (InterruptedException e) {
@@ -166,45 +175,49 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         awaitFutures();
     }
 
+    private boolean processCompletedChanges(
+            final List<WorkflowSystem.OperationCompleted<DAT>> operationCompleteds
+    )
+    {
+        if (operationCompleteds == null) {
+            return false;
+        }
+        boolean changed = false;
+        for (WorkflowSystem.OperationCompleted<DAT> task : operationCompleteds) {
+            DAT result = task.getResult();
+            Map<String, String> state = new HashMap<>(task.getNewState().getState());
+            changed |=
+                    workflowEngine.processStateChange(
+                            StateWorkflowSystem.stateChange(
+                                    task.getIdentity(),
+                                    () -> {
+                                        if (null != sharedData && null != result) {
+                                            sharedData.addData(result);
+                                            Map<String, String> sharedState = sharedData.produceState();
+                                            state.putAll(sharedState);
+                                        }
+                                        return state;
+                                    },
+                                    sharedData
+                            )
+                    );
+        }
+        return changed;
+    }
+
     boolean detectNoMoreChanges() {
         return inProcess.isEmpty() && stateChangeQueue.isEmpty();
     }
 
-    /**
-     * Poll for changes from the queue, and process all changes that are immediately available without waiting
-     * @param changes changes map
-     */
-    private void getAvailableChanges( final Map<String, String> changes) {
+
+    private List<WorkflowSystem.OperationCompleted<DAT>> pollChanges() {
+        List<WorkflowSystem.OperationCompleted<DAT>> changes = new ArrayList<>();
         WorkflowSystem.OperationCompleted<DAT> task = stateChangeQueue.poll();
         while (task != null && task.getNewState() != null) {
-            changes.putAll(task.getNewState().getState());
-            DAT result = task.getResult();
-            if (null != sharedData && null != result) {
-                sharedData.addData(result);
-            }
+            changes.add(task);
             task = stateChangeQueue.poll();
         }
-    }
-
-    private void getContextGlobalData(final Map<String, String> changes){
-        DAT inputData = null != sharedData ? sharedData.produceNext() : null;
-        if(inputData != null && inputData instanceof WFSharedContext) {
-            DataContext globals = ((WFSharedContext) inputData).getData().get(ContextView.global());
-            if (null != globals) {
-                HashMap<String, String> stringStringHashMap = new HashMap<>();
-                for (String s : globals.keySet()) {
-                    Map<String, String> map = globals.get(s);
-                    for (String key : map.keySet()) {
-
-                        if(!workflowEngine.getState().getState().containsKey(s + "." + key) ||
-                                !workflowEngine.getState().getState().get(s + "." + key).equals(map.get(key))){
-                            stringStringHashMap.put(s + "." + key, map.get(key));
-                        }
-                    }
-                }
-                changes.putAll(stringStringHashMap);
-            }
-        }
+        return changes;
     }
 
     private void awaitFutures() {
@@ -225,7 +238,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 
     public void initialize() {
         //initial state change to start workflow
-        stateChangeQueue.add(WorkflowEngine.dummyResult(Workflows.getWorkflowStartState()));
+        stateChangeQueue.add(WorkflowEngine.dummyResult(initialState, "init"));
     }
 
     /**
@@ -251,7 +264,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             eventHandler.event(
                     WorkflowSystemEventType.WillRunOperation,
                     String.format("operation starting: %s", operation),
-                    operation
+                    StateWorkflowSystem.operationEvent(operation.getIdentity(), workflowEngine.getState(), sharedData)
             );
             final ListenableFuture<RES> submit = beginOperation(inputData, operation);
             FutureCallback<RES> callback = new OperationFutureCallback(eventHandler, operation, resultConsumer);
@@ -269,31 +282,41 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 
         @Override
         public void onSuccess(final RES successResult) {
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
             eventHandler.event(
                     WorkflowSystemEventType.OperationSuccess,
                     String.format("operation succeeded: %s", successResult),
-                    successResult
+                    StateWorkflowSystem.operationCompleteEvent(
+                            operation.getIdentity(),
+                            workflowEngine.getState(),
+                            sharedData,
+                            result
+                    )
             );
             assert successResult != null;
-            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
             resultConsumer.accept(result);
             finishedOperation(successResult, operation);
         }
 
         @Override
         public void onFailure(final Throwable t) {
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
             eventHandler.event(
                     WorkflowSystemEventType.OperationFailed,
                     String.format("operation failed: %s", t),
-                    t
+                    StateWorkflowSystem.operationCompleteEvent(
+                            operation.getIdentity(),
+                            workflowEngine.getState(),
+                            sharedData,
+                            result
+                    )
             );
-            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
             resultConsumer.accept(result);
             StateObj newFailureState = operation.getFailureState(t);
             if (null == newFailureState) {
                 newFailureState = new DataState();
             }
-            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState), operation);
+            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState, operation.getIdentity()), operation);
         }
     }
 
@@ -326,31 +349,25 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     }
 
     /**
-     * Sleep until changes are available on the queue, if any are found then consume remaining and
-     * return false, otherwise return true
+     * Sleep for some time until changes are available on the queue, if any are found then consume remaining return all
+     * results
      *
-     * @param changes
-     *
-     * @return true if no changes found in the sleep time.
-     *
-     * @throws InterruptedException
+     * @return list of
+     * @throws InterruptedException during sleep
      */
-    private void waitForChanges(final Map<String, String> changes) throws InterruptedException {
+    private List<WorkflowSystem.OperationCompleted<DAT>> waitForChanges() throws InterruptedException {
+        List<WorkflowSystem.OperationCompleted<DAT>> results = new ArrayList<>();
         WorkflowSystem.OperationCompleted<DAT> take = stateChangeQueue.poll(sleeper.time(), sleeper.unit());
         if (null == take || take.getNewState().getState().isEmpty()) {
             sleeper.backoff();
-            return;
+            return results;
+        } else {
+            sleeper.reset();
         }
 
-        sleeper.reset();
-
-        changes.putAll(take.getNewState().getState());
-
-        if (null != sharedData) {
-            sharedData.addData(take.getResult());
-        }
-
-        getAvailableChanges(changes);
+        results.add(take);
+        results.addAll(pollChanges());
+        return results;
     }
 
     /**
@@ -377,13 +394,9 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         //shared data
         DAT inputData = null != sharedData ? sharedData.produceNext() : null;
 
-
         processRunnableOperations(resultConsumer, shouldrun, shouldskip, inputData);
 
         processSkippedOperations(shouldskip);
-
-        pending.removeAll(shouldskip);
-        skipped.addAll(shouldskip);
 
         eventHandler.event(
                 WorkflowSystemEventType.LoopProgress,
@@ -407,11 +420,17 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             eventHandler.event(
                     WorkflowSystemEventType.WillSkipOperation,
                     String.format("Skip condition statisfied for operation: %s, skipping", operation),
-                    operation
+                    StateWorkflowSystem.operationEvent(operation.getIdentity(), workflowEngine.getState(), sharedData)
             );
             StateObj newstate = operation.getSkipState(workflowEngine.getState());
-            WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(newstate);
+            WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(
+                    newstate,
+                    operation.getIdentity()
+            );
             stateChangeQueue.add(objectOperationCompleted);
+
+            pending.remove(operation);
+            skipped.add(operation);
         }
     }
 
