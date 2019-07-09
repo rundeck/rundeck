@@ -710,10 +710,6 @@
         <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
         <div class="floatr" style="margin:10px 0;">
             <g:set var="msgItem" value="${isErrorHandler ? 'stepErrorHandler' : 'step'}"/>
-            <span class="warn note cancelsavemsg" style="display:none;">
-                <g:message code="scheduledExecution.workflow.${msgItem}.Item.unsaved.warning"
-                           default="Discard or save changes to this Workflow Step before completing changes to the job"/>
-            </span>
             <g:if test="${newitemtype||newitem}">
                 <g:hiddenField name="newitem" value="true"/>
                 <g:hiddenField name="newitemtype" value="${newitemtype}"/>
@@ -738,6 +734,10 @@
                 <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
                       title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
             </g:else>
+            <span class="text-warning cancelsavemsg" style="display:none;">
+                <g:message code="scheduledExecution.workflow.${msgItem}.Item.unsaved.warning"
+                           default="Discard or save changes to this Workflow Step before completing changes to the job"/>
+            </span>
         </div>
         <div class="clear"></div>
     </div>

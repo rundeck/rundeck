@@ -19,7 +19,7 @@
 <div class="vue-tabs">
     <div class="nav-tabs-navigation">
         <div class="nav-tabs-wrapper">
-            <ul class="nav nav-tabs" id="job_edit_tabs">
+            <ul class="nav nav-tabs" id="job_edit_tabs" data-ko-bind="jobeditor">
                 <li class="active">
                     <a href="#tab_details" data-toggle="tab">
                         <g:message code="job.edit.page.tab.details.title"/>
@@ -28,6 +28,9 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
+                        <!-- ko if: workflowError() || optionError() -->
+                        <b class="text-warning fas fa-exclamation-circle"></b>
+                        <!-- /ko -->
                     </a>
                 </li>
                 <li>

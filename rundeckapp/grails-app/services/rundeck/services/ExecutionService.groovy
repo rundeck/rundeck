@@ -58,6 +58,7 @@ import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -2621,7 +2622,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if(opt.enforced && !opt.optionValues){
                         Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
                         if(!remoteOptions.err && remoteOptions.values){
-                            opt.optionValues = remoteOptions.values
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
                         }
                     }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
@@ -2649,7 +2656,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if(opt.enforced && !opt.optionValues){
                         Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
                         if(!remoteOptions.err && remoteOptions.values){
-                            opt.optionValues = remoteOptions.values
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
                         }
                     }
                     if (opt.enforced && opt.optionValues &&

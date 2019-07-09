@@ -1048,25 +1048,26 @@ function getCurSEID(){
          *
          */
          function validateJobEditForm(form){
-             var wfitem=$(form).down('div.wfitemEditForm');
-             if(wfitem && !wascancelled){
-                 doyft(wfitem.identify());
-                 $(wfitem).scrollTo();
-                 if ($(wfitem).down("span.cancelsavemsg")) {
-                     $(wfitem).down("span.cancelsavemsg").show();
+             var wfitem=jQuery(form).find('div.wfitemEditForm');
+             let valid=true
+             if(wfitem.length && !wascancelled){
+                 jobeditor.addError('workflow');
+                 wfitem.addClass('alert-warning')
+                 if (wfitem.find("span.cancelsavemsg").length) {
+                     wfitem.find("span.cancelsavemsg").show();
                  }
-                 return false;
+                 valid= false;
              }
-            var optedit= $(form).down('div.optEditForm');
-            if (optedit && !wascancelled) {
-                doyft(optedit.identify());
-                $(optedit).scrollTo();
-                if($(optedit).down("span.cancelsavemsg")){
-                    $(optedit).down("span.cancelsavemsg").show();
+            var optedit= jQuery(form).find('div.optEditForm');
+            if (optedit.length && !wascancelled) {
+                jobeditor.addError('option');
+                optedit.addClass('alert-warning')
+                if(optedit.find("span.cancelsavemsg").length){
+                    optedit.find("span.cancelsavemsg").show();
                 }
-                return false;
+                valid= false;
             }
-             return true;
+             return valid;
          }
         function _updateBoxInfo(name, data) {
 
