@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContextImpl;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 
 import java.util.Map;
 
@@ -60,7 +61,27 @@ public class WFSharedContext extends MultiDataContextImpl<ContextView, DataConte
         return kdMultiDataContext;
     }
 
+    public static WFSharedContext with(final MultiDataContext<ContextView, DataContext> base) {
+        WFSharedContext kdMultiDataContext = new WFSharedContext(base);
+        return kdMultiDataContext;
+    }
+
+    @Override
+    protected DataContext newData() {
+        return DataContextUtils.context();
+    }
+
     public void merge(WFSharedContext input) {
         super.merge(input);
+    }
+
+    @Override
+    public WFSharedContext consolidate() {
+        WFSharedContext consolidated = new WFSharedContext();
+        if (null != getBase()) {
+            consolidated.merge(getBase().consolidate());
+        }
+        consolidated.merge(this);
+        return consolidated;
     }
 }
