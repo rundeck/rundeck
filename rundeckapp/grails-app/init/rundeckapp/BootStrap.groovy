@@ -291,8 +291,6 @@ class BootStrap {
          if(grailsApplication.config.rundeck.security.enforceMaxSessions in [true,'true']) {
              SpringSecurityUtils.clientRegisterFilter("concurrentSessionFilter", SecurityFilterPosition.CONCURRENT_SESSION_FILTER.order)
          }
-         SpringSecurityUtils.clientRegisterFilter('csrfFilter',    SecurityFilterPosition.LAST.order + 10)
-
 
          if(!grailsApplication.config.rundeck.logout.redirect.url.isEmpty()) {
              log.debug("Setting logout url to: ${grailsApplication.config.rundeck.logout.redirect.url}")
