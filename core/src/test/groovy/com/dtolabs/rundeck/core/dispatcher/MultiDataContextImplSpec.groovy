@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.dispatcher
 
 import com.dtolabs.rundeck.core.data.DataContext
 import com.dtolabs.rundeck.core.data.MultiDataContextImpl
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
 
 /**
@@ -28,7 +29,7 @@ class MultiDataContextImplSpec extends Specification {
     def "merge null data"() {
 
         given:
-        def impl = new MultiDataContextImpl<ContextView, DataContext>()
+        def impl = new WFSharedContext()
         when:
         impl.merge(ContextView.global(), null)
         then:
