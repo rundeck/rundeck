@@ -17,7 +17,6 @@ class WebhookController {
     private static final ObjectMapper mapper = new ObjectMapper()
     def webhookService
     def frameworkService
-    EventBus webhookEventBus
 
     def index() { }
 
