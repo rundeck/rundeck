@@ -14,6 +14,7 @@ import rundeck.services.UserService
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
+import java.nio.charset.StandardCharsets
 
 class SetUserInterceptor {
     @Autowired
@@ -61,6 +62,19 @@ class SetUserInterceptor {
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
             def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
+            if(grailsApplication.config.rundeck.security.allowBasicAuthWithApiToken in ['true',true]) {
+                String basicAuth = request.getHeader("Authorization")
+                if (basicAuth && basicAuth.startsWith("Basic")) {
+                    try {
+                        byte[] credDecoded = Base64.getDecoder().decode(basicAuth.substring("Basic".length()).trim());
+                        String credentials = new String(credDecoded, StandardCharsets.UTF_8);
+                        authtoken = credentials.tokenize(":")[1]
+                    } catch(Exception ex) {
+                        log.error("Error parsing token from Basic Authentication header: ${basicAuth}",ex)
+                    }
+                }
+            }
+
             String user = lookupToken(authtoken, servletContext)
             List<String> roles = lookupTokenRoles(authtoken, servletContext)
 
