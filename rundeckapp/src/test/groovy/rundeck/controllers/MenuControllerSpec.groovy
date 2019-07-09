@@ -1401,6 +1401,7 @@ class MenuControllerSpec extends Specification {
         job1.save()
 
         when:
+        request.api_version = 32
         params.id=testUUID
         params.past='true'
         response.format='json'

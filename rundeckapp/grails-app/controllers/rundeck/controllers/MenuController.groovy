@@ -2871,7 +2871,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //future scheduled executions forecast
         def time = params.time? params.time : '1d'
 
-        def retro = params.past=='true'
+        def retro = ((request.api_version >= ApiVersions.V32) && (params.past=='true'))
 
         Date futureDate = futureRelativeDate(time,retro)
 
