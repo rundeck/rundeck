@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.rules
 
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
 
@@ -457,7 +458,7 @@ class WorkflowEngineSpec extends Specification {
         [export: [a: "b"]]          | 'export.a'    | 'b'
     }
 
-    static class SharedMap implements WorkflowSystem.SharedData<Map> {
+    static class SharedMap implements WorkflowSystem.SharedData<Map, Map> {
         List<Map> addedData = []
 
         @Override
@@ -469,19 +470,30 @@ class WorkflowEngineSpec extends Specification {
         Map produceNext() {
             addedData.isEmpty() ? [:] : addedData.last()
         }
+
+        @Override
+        Map produceState() {
+            [:]
+        }
     }
 
-    static class Sharedcontext implements WorkflowSystem.SharedData<WFSharedContext> {
+    static class Sharedcontext implements WorkflowSystem.SharedData<WFSharedContext, Map<String, String>> {
         WFSharedContext data = new WFSharedContext()
-
+        Map<String, String> state = [:]
         @Override
         void addData(final WFSharedContext item) {
             data.merge(item)
+            state.putAll(DataContextUtils.flattenDataContext(item.getData(ContextView.global())))
         }
 
         @Override
         WFSharedContext produceNext() {
             data
+        }
+
+        @Override
+        Map<String, String> produceState() {
+            state
         }
     }
 
