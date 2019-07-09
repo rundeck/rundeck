@@ -40,14 +40,16 @@
     </script>
     <g:set var="currentLang" value="${response.locale?.toString() ?: request.locale?.toString()}"/>
     <g:embedJSON
-        data="${[user         : user.login,
-                 roles        : authRoles,
-                 adminAuth    : tokenAdmin,
-                 userTokenAuth: selfToken,
-                 svcTokenAuth : serviceToken,
-                 language     : currentLang
+            data="${[user             : user.login,
+                     roles            : authRoles,
+                     adminAuth        : tokenAdmin,
+                     userTokenAuth    : selfToken,
+                     svcTokenAuth     : serviceToken,
+                     language         : currentLang,
+                     tokenPagingMax   : params.max,
+                     tokenPagingOffset: params.offset
             ]}"
-        id="genPageData"/>
+            id="genPageData"/>
 </head>
 <body>
 <div class="container-fluid">

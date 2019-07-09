@@ -134,7 +134,11 @@ class UserController extends ControllerBase{
         int offset = (params.offset && params.offset.isInteger()) ? params.offset.toInteger() : 0
 
         if(offset >= tokenTotal) {
-            offset = tokenTotal - (tokenTotal % max)
+            def diff = (tokenTotal % max)
+            if( diff == 0 && tokenTotal > 0) {
+                diff = max
+            }
+            offset = tokenTotal - diff
         }
 
         def tokenList = AuthToken.createCriteria().list {

@@ -90,6 +90,17 @@ function tokenAjaxError(msg) {
 }
 
 function addTokenRow(elem, login, tokenid) {
+
+    var context = loadJsonData('genPageData');
+    var currentRows = getNumRows();
+
+    // If we will exceed the table page length, then
+    // reload the page instead of inserting.
+    if(currentRows >= context.tokenPagingMax) {
+      window.location.reload();
+      return;
+    }
+
     var table = $(elem).down('.apitokentable');
     var row = new Element('tbody');
     table.insert(row);
@@ -102,6 +113,10 @@ function addTokenRow(elem, login, tokenid) {
         }
     );
 }
+
+function getNumRows() {
+  return jQuery('.apitokenform').length;
+};
 
 function clearToken(elem) {
     var dom = jQuery(elem);
@@ -142,8 +157,7 @@ function generateUserToken(login, elem, data) {
         beforeSend: _createAjaxSendTokensHandler('api_req_tokens'),
         success: function (data, status, jqxhr) {
             if (data.result) {
-              // Reload current page.
-              window.location.reload();
+                addTokenRow(elem, login, data.tokenid);
             } else {
                 tokenAjaxError(data.error);
             }
@@ -190,14 +204,11 @@ jQuery(function () {
     jQuery(document).on('click', '.obs_reveal_token', function (e) {
         revealUserToken(data.user, jQuery(e.target));
     });
-
     // jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
     //     e.preventDefault();
     //     clearToken(jQuery(e.target).closest('.apitokenform')[0]);
     //     return false;
     // });
-
-
     var dom = jQuery('#gentokensection');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);
