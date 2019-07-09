@@ -3,6 +3,7 @@ package com.dtolabs.rundeck.core.rules;
 import com.google.common.util.concurrent.*;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -190,10 +191,11 @@ public class WorkflowEngine
         );
     }
 
+    @ToString
     static class Event implements WorkflowSystemEvent {
-        private WorkflowSystemEventType eventType;
-        private String message;
-        private Object data;
+        @Getter @Setter private WorkflowSystemEventType eventType;
+        @Getter @Setter private String message;
+        @Getter @Setter private Object data;
 
         Event(final WorkflowSystemEventType eventType, final String message, final Object data) {
             this.eventType = eventType;
@@ -207,33 +209,6 @@ public class WorkflowEngine
 
         static Event with(WorkflowSystemEventType type, String message, Object data) {
             return new Event(type, message, data);
-        }
-
-        @Override
-        public WorkflowSystemEventType getEventType() {
-            return eventType;
-        }
-
-        public void setEventType(WorkflowSystemEventType eventType) {
-            this.eventType = eventType;
-        }
-
-        @Override
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-        @Override
-        public Object getData() {
-            return data;
-        }
-
-        public void setData(Object data) {
-            this.data = data;
         }
     }
 
