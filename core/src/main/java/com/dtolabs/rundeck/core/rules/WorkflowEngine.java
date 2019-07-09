@@ -59,7 +59,6 @@ public class WorkflowEngine
     }
 
 
-
     static class Sleeper {
         private long orig = 250;
         private long mult = 2;
@@ -139,10 +138,48 @@ public class WorkflowEngine
                     processor.getPending()
             );
         }
-        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results));
+        event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results),
+              StateWorkflowSystem.stateEvent(getState(), sharedData)
+        );
         return results;
     }
 
+    /**
+     * @param change
+     * @return true if state was changed
+     */
+    @Override
+    public boolean processStateChange(final StateChange<?> change) {
+        event(
+                WorkflowSystemEventType.WillProcessStateChange,
+                String.format("state changes: %s ", change.getIdentity()),
+                StateWorkflowSystem.stateChangeEvent(getState(), change)
+        );
+
+        Map<String, String> newState = change.getState();
+        boolean update = getState().updateState(newState);
+
+        update |= Rules.update(getRuleEngine(), getState());
+        event(
+                WorkflowSystemEventType.DidProcessStateChange,
+                String.format(
+                        "applied state changes and rules (changed? %s): %s - %s",
+                        update,
+                        change.getIdentity(),
+                        getState()
+                ),
+                StateWorkflowSystem.stateChangeEvent(
+                        getState(),
+                        StateWorkflowSystem.stateChange(change.getIdentity(),
+                                                        () -> newState,
+                                                        change.getSharedData())
+                )
+        );
+
+        return update;
+    }
+
+    @ToString
     static class Event implements WorkflowSystemEvent {
         @Getter @Setter private WorkflowSystemEventType eventType;
         @Getter @Setter private String message;
@@ -164,8 +201,13 @@ public class WorkflowEngine
     }
 
 
-    static <T> OperationCompleted<T> dummyResult(final StateObj state) {
+    static <T> OperationCompleted<T> dummyResult(final StateObj state, final String identity) {
         return new OperationCompleted<T>() {
+            @Override
+            public String getIdentity() {
+                return identity;
+            }
+
             @Override
             public StateObj getNewState() {
                 return state;
