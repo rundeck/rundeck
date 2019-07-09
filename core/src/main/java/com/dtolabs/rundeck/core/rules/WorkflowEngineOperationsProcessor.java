@@ -60,7 +60,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             = new LinkedBlockingQueue<>();
 
     @Getter private final Set<WorkflowSystem.OperationResult<DAT, RES, OP>> results
-            = Collections.synchronizedSet(new HashSet<WorkflowSystem.OperationResult<DAT, RES, OP>>());
+            = Collections.synchronizedSet(new HashSet<>());
 
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
@@ -77,7 +77,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     "WorkflowEngineOperationsProcessor.endStateCancelInterrupt",
                     "false"
             ));
-    ;
+
 
     public WorkflowEngineOperationsProcessor(
             final StateWorkflowSystem workflowEngine,
