@@ -431,8 +431,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            shared.addData(WFSharedContext.with(ContextView.global(), new BaseDataContext(map)))
-                            return new TestOpCompletedB(newState: States.state('akey', 'avalue'), result: null)
+                            return new TestOpCompletedB(newState: States.state('akey', 'avalue'), result: WFSharedContext.with(ContextView.global(), new BaseDataContext(map)))
                         }
                 ),
                 new TestOperationB(
