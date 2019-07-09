@@ -29,7 +29,6 @@ import org.rundeck.app.spi.ServicesProvider
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.JobStateService
-import rundeck.services.LiveEventBusProviderService
 import rundeck.services.StorageService
 
 @CompileStatic
@@ -37,9 +36,8 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired JobStateService jobStateService
     @Autowired StorageService storageService
     @Autowired DirectNodeExecutionService directNodeExecutionService
-    @Autowired LiveEventBusProviderService liveEventBusProviderService
     ServicesProvider baseServices
-    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)NodeExecutionService, (Class)LiveEventBusProviderService]
+    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)NodeExecutionService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
@@ -73,9 +71,6 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
             }
             if (type == NodeExecutionService) {
                 return (T) directNodeExecutionService.nodeExecutionServiceWithAuth(authContext)
-            }
-            if (type == LiveEventBusProviderService) {
-                return (T) liveEventBusProviderService
             }
             throw new IllegalStateException("Required service " + type.getName() + " was not available");
         }
