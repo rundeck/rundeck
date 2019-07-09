@@ -3,30 +3,30 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 
 /**
- * JobLifeCycleException thrown when an error occurs during execution of a JobLifeCyclePlugin.
+ * JobPluginException thrown when an error occurs during execution of a JobPlugin.
  *
  * @author rnavarro
  * @version $Revision$
  */
-public class JobLifeCycleException extends Exception {
+public class JobPluginException extends Exception {
 
-    public JobLifeCycleException() {
+    public JobPluginException() {
         super();
     }
 
-    public JobLifeCycleException(String msg) {
+    public JobPluginException(String msg) {
         super(msg);
     }
 
-    public JobLifeCycleException(Exception cause) {
+    public JobPluginException(Exception cause) {
         super(cause);
     }
 
-    public JobLifeCycleException(String msg, Exception cause) {
+    public JobPluginException(String msg, Exception cause) {
         super(msg, cause);
     }
 
-    public JobLifeCycleException(final String message, final FailureReason failureReason) {
+    public JobPluginException(final String message, final FailureReason failureReason) {
         super(message);
         this.setFailureReason(failureReason);
     }

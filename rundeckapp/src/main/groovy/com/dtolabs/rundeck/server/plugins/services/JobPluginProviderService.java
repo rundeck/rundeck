@@ -19,21 +19,21 @@ package com.dtolabs.rundeck.server.plugins.services;
 import com.dtolabs.rundeck.core.plugins.BasePluggableProviderService;
 import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.dtolabs.rundeck.plugins.jobs.JobLifeCyclePlugin;
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin;
 
 /**
- * Provider service for JobLifeCyclePlugin
+ * Provider service for JobPlugin
  * Created by rnavarro
  * Date: 5/07/19
  * Time: 10:32 AM
  */
-public class JobLifeCyclePluginProviderService extends BasePluggableProviderService<JobLifeCyclePlugin> {
+public class JobPluginProviderService extends BasePluggableProviderService<JobPlugin> {
 
-    public static final String SERVICE_NAME = ServiceNameConstants.JobLifeCycle;
+    public static final String SERVICE_NAME = ServiceNameConstants.JobPlugin;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
-    public JobLifeCyclePluginProviderService() {
-        super(SERVICE_NAME, JobLifeCyclePlugin.class);
+    public JobPluginProviderService() {
+        super(SERVICE_NAME, JobPlugin.class);
     }
 
     public ServiceProviderLoader getPluginManager() {
