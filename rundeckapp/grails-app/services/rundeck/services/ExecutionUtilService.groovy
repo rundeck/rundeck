@@ -275,7 +275,8 @@ class ExecutionUtilService {
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions,
                     jobcmditem.uuid,
-                    jobcmditem.useName
+                    jobcmditem.useName,
+                    jobcmditem.ignoreNotifications
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep

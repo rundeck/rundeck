@@ -155,6 +155,22 @@
                     <label class="col-sm-2 control-label"></label>
                     <div class="col-sm-10">
                         <div class="checkbox">
+                            <g:checkBox name="ignoreNotifications"
+                                        checked="${item?.ignoreNotifications}"
+                                        id="ignoreNotificationsCheck" value="true"
+                            />
+                            <label for="ignoreNotificationsCheck">
+                                <g:message code="Workflow.Step.jobreference.ignore.notifications.label" />
+                            </label>
+                            <span class="text-primary"><g:message code="Workflow.Step.jobreference.ignore.notifications.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
                             <g:checkBox name="failOnDisable"
                                         checked="${item?.failOnDisable}"
                                         id="failOnDisableCheck" value="true"
