@@ -46,10 +46,13 @@ repositories {
     flatDir dirs: "$rootDir/locallib"
 }
 
-// Customize spring-boot dependencies.
-// see https://github.com/spring-projects/spring-boot/blob/v2.1.6.RELEASE/spring-boot-project/spring-boot-dependencies/pom.xml
+// Customize spring-boot dependencies versions.
+// see https://github.com/spring-projects/spring-boot/blob/1.5.x/spring-boot-dependencies/pom.xml
+//
+ext['jackson.version'] = jacksonVersion
 ext['logback.version'] = '1.2.3'
 ext['spring-security.version'] = '4.2.13.RELEASE'
+
 
 dependencies {
 
@@ -103,12 +106,6 @@ dependencies {
 //    compile "org.grails:grails-test-mixins:3.3.0"
 //    compile "org.grails:grails-plugin-testing:3.2.11"
 
-    // Declare jackson explicitly to override version set by grails.
-    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
-    compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
-    compile "com.fasterxml.jackson.core:jackson-annotations:${jacksonVersion}"
-    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${jacksonVersion}"
-
     // Defined by create-app
     compile "org.grails.plugins:hibernate5:${gormVersion}"
     compile "org.hibernate:hibernate-core:${hibernateVersion}"
@@ -149,7 +146,7 @@ dependencies {
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
-    runtime "com.h2database:h2:1.4.197"
+    runtime "com.h2database:h2:1.4.199"
 
     // Database drivers
     runtime 'mysql:mysql-connector-java:5.1.47'
