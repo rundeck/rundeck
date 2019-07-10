@@ -2873,7 +2873,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    scheduledExecution.serverNodeUUID = scheduledExecutionService.nextExecNode(scheduledExecution)
                     if (scheduledExecution.save(flush: true)) {
                         log.info("updated scheduled Execution nextExecution")
                     } else {
