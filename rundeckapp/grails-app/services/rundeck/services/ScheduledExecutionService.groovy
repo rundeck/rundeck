@@ -644,9 +644,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
-            if(nextExecNode){
-                newsched.serverNodeUUID = nextExecNode
-            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -1426,8 +1423,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-//                data.put("serverUUID", frameworkService.getServerUUID())
-                data.put("serverUUID", nextExecNode(se))
+                data.put("serverUUID", frameworkService.getServerUUID())
+                //data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -2618,9 +2615,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3207,9 +3201,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -4148,12 +4139,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param to Date in the future
      * @return list of dates
      */
-    List<Date> nextExecutions(ScheduledExecution se, Date to){
+    List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
         def trigger = createTrigger(se)
         Calendar cal = new BaseCalendar()
         if(se.timeZone){
             cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
         }
-        return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
+        if(past){
+            return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
+        }else {
+            return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
+        }
     }
 }
