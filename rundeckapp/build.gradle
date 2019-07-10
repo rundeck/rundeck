@@ -79,8 +79,9 @@ dependencies {
     compile project(':rundeck-storage:rundeck-storage-filesys')
 
     // From BuildConfig.groovy.
-    compile 'org.quartz-scheduler:quartz:2.3.0'
+    compile 'org.quartz-scheduler:quartz:2.3.1'
     compile 'org.grails.plugins:quartz:2.0.13'
+
     //
     //TODO: update to official mail plugin 2.0.1 once released
     //compile 'org.grails.plugins:mail:2.0.1'
@@ -154,7 +155,7 @@ dependencies {
     runtime 'mysql:mysql-connector-java:5.1.47'
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
-    runtime 'org.postgresql:postgresql:42.2.2'
+    runtime 'org.postgresql:postgresql:42.2.6'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
 
