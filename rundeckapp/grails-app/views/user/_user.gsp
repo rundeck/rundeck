@@ -300,6 +300,7 @@
         <div class="row userapitoken">
             <div class="col-sm-12">
                 <div class="help-block"  data-bind="text: tokenTableSummaryText">
+
                 </div>
 
                 <g:render template="tokenList" model="${[user: user, tokenList: tokens, flashToken: flash.newtoken]}"/>
