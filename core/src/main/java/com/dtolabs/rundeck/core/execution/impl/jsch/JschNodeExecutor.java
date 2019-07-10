@@ -108,6 +108,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String FWK_PROP_SET_PTY = FWK_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
     public static final String PROJ_PROP_SET_PTY = PROJ_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
 
+    public static final String NODE_BRIND_ADDRESS = "bind-address";
+    public static final String FWK_PROP_BRIND_ADDRESS = FWK_PROP_PREFIX + NODE_BRIND_ADDRESS;
+    public static final String PROJ_PROP_BRIND_ADDRESS = PROJ_PROP_PREFIX + NODE_BRIND_ADDRESS;
+
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
     public static final String PROJ_PROP_SSH_AUTHENTICATION = PROJ_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
 
@@ -175,6 +179,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_SET_PTY = "always-set-pty";
     public static final String CONFIG_CON_TIMEOUT = "ssh-connection-timeout";
     public static final String CONFIG_COMMAND_TIMEOUT = "ssh-command-timeout";
+    public static final String CONFIG_BIND_ADDRESS = "ssh-bind-address";
 
     static final Description DESC ;
 
@@ -239,6 +244,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             "0"
     );
 
+
+    public static final Property PROP_BIND_ADDRESS = PropertyUtil.string(
+            CONFIG_BIND_ADDRESS,
+            "Bind Address",
+            "Set a bind address from the server",
+            false,
+            null
+    );
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(SERVICE_PROVIDER_TYPE)
@@ -254,6 +268,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(ALWAYS_SET_PTY);
         builder.property(PROP_CON_TIMEOUT);
         builder.property(PROP_COMMAND_TIMEOUT);
+        builder.property(PROP_BIND_ADDRESS);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
@@ -274,6 +289,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
         builder.mapping(CONFIG_COMMAND_TIMEOUT, PROJ_PROP_COMMAND_TIMEOUT);
         builder.frameworkMapping(CONFIG_COMMAND_TIMEOUT, FWK_PROP_COMMAND_TIMEOUT);
+
+        builder.mapping(CONFIG_BIND_ADDRESS, PROJ_PROP_BRIND_ADDRESS);
+        builder.frameworkMapping(CONFIG_BIND_ADDRESS, FWK_PROP_BRIND_ADDRESS);
 
         DESC=builder.build();
     }

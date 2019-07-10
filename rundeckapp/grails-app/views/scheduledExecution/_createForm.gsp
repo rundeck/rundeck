@@ -44,20 +44,17 @@
             <tmpl:tabsEdit scheduledExecution="${scheduledExecution}" crontab="${crontab}" authorized="${authorized}"
                            command="${command}"/>
         </div>
-        <div class="card-footer">
-            <g:javascript>
-                <wdgt:eventHandlerJS for="scheduledTrue" state="unempty" >
-                    <wdgt:action visible="true" targetSelector=".cformAllowSaveOnly"/>
-                    <wdgt:action visible="false" targetSelector=".cformAllowRun"/>
-                </wdgt:eventHandlerJS>
-            </g:javascript>
+        <div class="card-footer" data-ko-bind="jobeditor">
             <div id="schedCreateButtons">
                 <g:actionSubmit id="createFormCancelButton" value="${g.message(code:'cancel')}"
                                 onclick="if(typeof(jobEditCancelled)=='function'){jobEditCancelled();}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create" value="${g.message(code: 'button.action.Create')}"
-                                    class="cformAllowSave cformAllowSaveOnly btn btn-primary reset_page_confirm" />
+                                    class="btn btn-primary reset_page_confirm" />
 
+                <span data-bind="if: errorTabs().length" class="text-warning">
+                    <g:message code="job.editor.workflow.unsavedchanges.warning" />
+                </span>
             </div>
             <div id="schedCreateSpinner" class="spinner block" style="display:none;">
                 <img src="${resource(dir:'images',file:'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>

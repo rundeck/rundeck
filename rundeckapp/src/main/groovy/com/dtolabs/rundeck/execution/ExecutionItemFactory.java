@@ -247,6 +247,7 @@ public class ExecutionItemFactory {
                 false,
                 false,
                 null,
+                false,
                 false
         );
     }
@@ -279,7 +280,8 @@ public class ExecutionItemFactory {
             final Boolean failOnDisable,
             final Boolean importOptions,
             final String uuid,
-            final Boolean useName
+            final Boolean useName,
+            final Boolean ignoreNotifications
     )
     {
 
@@ -300,7 +302,8 @@ public class ExecutionItemFactory {
                 failOnDisable,
                 importOptions,
                 uuid,
-                useName
+                useName,
+                ignoreNotifications
         );
     }
 
@@ -630,6 +633,7 @@ public class ExecutionItemFactory {
         private final Boolean importOptions;
         private final String uuid;
         private final Boolean useName;
+        private final Boolean ignoreNotifications;
 
         public JobReferenceItem(
                 final String label,
@@ -648,7 +652,8 @@ public class ExecutionItemFactory {
                 final Boolean failOnDisable,
                 final Boolean importOptions,
                 final String uuid,
-                final Boolean useName
+                final Boolean useName,
+                final Boolean ignoreNotifications
         )
         {
             this.label = label;
@@ -668,6 +673,7 @@ public class ExecutionItemFactory {
             this.importOptions = importOptions;
             this.uuid = uuid;
             this.useName = useName;
+            this.ignoreNotifications = ignoreNotifications;
         }
 
         @Override
@@ -742,6 +748,10 @@ public class ExecutionItemFactory {
         public String getUuid(){return uuid;}
 
         public Boolean isUseName(){return useName;}
+
+        public Boolean isIgnoreNotifications(){
+            return ignoreNotifications;
+        }
 
 
         @Override

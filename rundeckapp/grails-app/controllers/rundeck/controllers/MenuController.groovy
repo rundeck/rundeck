@@ -1296,7 +1296,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
-        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+        if(!grailsApplication.config.dataSource.jndiName &&
+                grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
         }
         [rundeckFramework: frameworkService.rundeckFramework]
@@ -1970,7 +1971,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
-        if(grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
+        if(!grailsApplication.config.dataSource.jndiName &&
+                grailsApplication.config.dataSource.driverClassName=='org.h2.Driver'){
             flash.error=message(code: "development.mode.warning")
         }
 
@@ -2871,7 +2873,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //future scheduled executions forecast
         def time = params.time? params.time : '1d'
 
-        Date futureDate = futureRelativeDate(time)
+        def retro = ((request.api_version >= ApiVersions.V32) && (params.past=='true'))
+
+        Date futureDate = futureRelativeDate(time,retro)
 
         def max = null
         if (params.max) {
@@ -2882,7 +2886,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         if (scheduledExecution.shouldScheduleExecution()) {
-            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate)
+            extra.futureScheduledExecutions = scheduledExecutionService.nextExecutions(scheduledExecution, futureDate, retro)
             if (max
                     && extra.futureScheduledExecutions
                     && extra.futureScheduledExecutions.size() > max) {
@@ -2904,7 +2908,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
 
-    private Date futureRelativeDate(String recentFilter){
+    private Date futureRelativeDate(String recentFilter, boolean negative=false){
         Calendar n = GregorianCalendar.getInstance()
         n.setTime(new Date())
         def matcher = recentFilter =~ /^(\d+)([hdwmyns])$/
@@ -2934,8 +2938,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     ndx = Calendar.YEAR
                     break
             }
-            n.add(ndx, i)
-
+            if(negative){
+                n.add(ndx, i*-1)
+            }else {
+                n.add(ndx, i)
+            }
             return n.getTime()
         }
         null

@@ -133,7 +133,6 @@
 
                               <div class="panel panel-default">
                                 <div class="panel-heading">
-
                                   <g:link controller="framework" action="editProjectNodeSources"
                                           params="[project: params.project ?: request.project]"
                                           class=" btn btn-info btn-sm">

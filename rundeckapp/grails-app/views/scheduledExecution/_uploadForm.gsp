@@ -149,12 +149,12 @@
             </div>
             <div class="form-group">
               <div class="radio">
-                <g:radio name="fileformat" value="xml"  checked="${params.fileformat?params.fileformat=='xml':true}"/>
-                <label>XML format</label>
+                <g:radio name="fileformat" value="xml"  checked="${params.fileformat?params.fileformat=='xml':true}" id="fileformat_xml"/>
+                <label for="fileformat_xml">XML format</label>
               </div>
               <div class="radio">
-                <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}"/>
-                <label class="radio-inline">YAML format</label>
+                <g:radio name="fileformat" value="yaml"  checked="${params.fileformat?params.fileformat=='yaml':false}" id="fileformat_yaml"/>
+                <label class="radio-inline" for="fileformat_yaml">YAML format</label>
               </div>              
             </div>
             <div class="form-group">
@@ -162,43 +162,43 @@
                 When a <g:message code="domain.ScheduledExecution.title"/> with the same name already exists:
               </div>
               <div class="radio">
-                <g:radio name="dupeOption" value="update" checked="${params.dupeOption?params.dupeOption=='update':true}"/>
-                <label>
+                <g:radio name="dupeOption" value="update" checked="${params.dupeOption?params.dupeOption=='update':true}" id="dupeOption_update"/>
+                <label for="dupeOption_update">
                   <em>Update</em> the existing <g:message code="domain.ScheduledExecution.title"/>
                 </label>
               </div>
               <div class="radio">
-                <g:radio name="dupeOption" value="skip"  checked="${params.dupeOption=='skip'}"/>
-                <label><em>Skip</em> the uploaded <g:message code="domain.ScheduledExecution.title"/></label>
+                <g:radio name="dupeOption" value="skip"  checked="${params.dupeOption=='skip'}" id="dupeOption_skip"/>
+                <label for="dupeOption_skip"><em>Skip</em> the uploaded <g:message code="domain.ScheduledExecution.title"/></label>
               </div>
               <div class="radio">
-                <g:radio name="dupeOption" value="create" checked="${params.dupeOption=='create'}"/>
-                <label>Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
+                <g:radio name="dupeOption" value="create" checked="${params.dupeOption=='create'}" id="dupeOption_create"/>
+                <label for="dupeOption_create">Always <em>Create</em> a new <g:message code="domain.ScheduledExecution.title"/></label>
               </div>
             </div>
             <div class="form-group">
               <div class="control-label text-form-label">Imported Jobs:</div>
               <div class="radio">
-                <input type="radio" name="uuidOption" value="preserve" checked/>
-                <label><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
+                <input type="radio" name="uuidOption" value="preserve" checked id="uuidOption_preserve"/>
+                <label for="uuidOption_preserve"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
                 <div class="help-block"><g:message code="project.archive.import.jobUuidOption.preserve.description"/></div>
               </div>
               <div class="radio">
-                <input type="radio" name="uuidOption" value="remove"/>
-                <label><g:message code="project.archive.import.jobUuidOption.remove.label"/></label>
+                <input type="radio" name="uuidOption" value="remove" id="uuidOption_remove"/>
+                <label for="uuidOption_remove"><g:message code="project.archive.import.jobUuidOption.remove.label"/></label>
                 <div class="help-block"><g:message code="project.archive.import.jobUuidOption.remove.description"/></div>
               </div>
             </div>
             <div class="form-group">
               <div class="control-label text-form-label">Validate Referenced Jobs:</div>
               <div class="radio">
-                <input type="radio" name="validateJobref" value="false" checked/>
-                <label><g:message code="archive.import.importJobRef.false.title"/></label>
+                <input type="radio" name="validateJobref" value="false" checked id="validateJobref_false"/>
+                <label for="validateJobref_false"><g:message code="archive.import.importJobRef.false.title"/></label>
                 <div class="help-block"><g:message code="archive.import.importJobRef.false.help"/></div>
               </div>
               <div class="radio">
-                <input type="radio" name="validateJobref" value="true"/>
-                <label><g:message code="archive.import.importJobRef.true.title"/></label>
+                <input type="radio" name="validateJobref" value="true" id="validateJobref_true"/>
+                <label for="validateJobref_true"><g:message code="archive.import.importJobRef.true.title"/></label>
                 <div class="help-block"><g:message code="archive.import.importJobRef.true.help"/></div>
               </div>
             </div>

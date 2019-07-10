@@ -80,6 +80,7 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     private Boolean enableSSHAgent=false;
     private Integer ttlSSHAgent=0;
     private SSHAgentProcess sshAgentProcess=null;
+    private String bindAddress;
 
     public static final String COMMAND_TIMEOUT_MESSAGE =
         "Timeout period exceeded, connection dropped.";
@@ -665,5 +666,15 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     @Override
     public Integer getTtlSSHAgent() {
       return this.ttlSSHAgent;
+    }
+
+    @Override
+    public void setBindAddress(String bindAddress) {
+        this.bindAddress=bindAddress;
+    }
+
+    @Override
+    public String getBindAddress() {
+        return bindAddress;
     }
 }

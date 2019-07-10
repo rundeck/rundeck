@@ -639,6 +639,8 @@ function _showWFItemControls() {
     _enableWFDragdrop();
     _updateEmptyMessage();
     _iseditting=null;
+
+    jobeditor.clearError('workflow')
 }
 function _hideWFItemControlsAddEH(num){
     var lielem=jQuery('#wfli_'+num);
@@ -939,6 +941,7 @@ function _showOptControls() {
     _showOptEmptyMessage();
     _enableOptDragDrop();
     clearHtml('optsload');
+    jobeditor.clearError('option')
 }
 
 var optsDragger;
