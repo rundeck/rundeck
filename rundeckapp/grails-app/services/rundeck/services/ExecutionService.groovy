@@ -124,7 +124,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    def jobPluginServiceImplService
+    def jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1162,7 +1162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     item,
                     executioncontext,
                     workflowLogManager,
-                    jobPluginServiceImplService
+                    jobPluginService
             )
 
             thread.start()
@@ -3570,7 +3570,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newExecItem,
                     newContext,
                     null,
-                    jobPluginServiceImplService
+                    jobPluginService
             )
 
             thread.start()

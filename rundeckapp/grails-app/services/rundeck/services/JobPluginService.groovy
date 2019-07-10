@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobPluginException
+import com.dtolabs.rundeck.core.jobs.IJobPluginService
 import com.dtolabs.rundeck.core.jobs.JobEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -20,7 +21,7 @@ import org.springframework.context.ApplicationContextAware
  * Time: 10:32 AM
  */
 
-public class JobPluginService implements ApplicationContextAware, ProjectConfigurable {
+public class JobPluginService implements ApplicationContextAware, ProjectConfigurable, IJobPluginService{
 
     ApplicationContext applicationContext
     PluginService pluginService

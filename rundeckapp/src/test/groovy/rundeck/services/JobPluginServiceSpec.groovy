@@ -29,7 +29,7 @@ class JobPluginServiceSpec extends Specification {
     def item = Mock(WorkflowExecutionItem)
     def iRundeckProject = Mock(IRundeckProject){
         hasProperty("project.enable.jobPlugin.TestPlugin") >> true
-        getProperty("project.enable.jobPlugin.TestPlugin") >> 'beforeJob,afterJob'
+        getProperty("project.enable.jobPlugin.TestPlugin") >> 'true'
     }
     def projectManager = Mock(ProjectManager) {
         getFrameworkProject("Test") >> iRundeckProject

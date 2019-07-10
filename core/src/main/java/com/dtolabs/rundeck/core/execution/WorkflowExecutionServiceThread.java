@@ -28,7 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
-import com.dtolabs.rundeck.core.jobs.CoreJobPluginService;
+import com.dtolabs.rundeck.core.jobs.IJobPluginService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.plugins.jobs.JobEventImpl;
@@ -44,21 +44,21 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     private StepExecutionContext context;
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
-    private CoreJobPluginService coreJobPluginService;
+    private IJobPluginService iJobPluginService;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager,
-            CoreJobPluginService coreJobPluginService
+            IJobPluginService iJobPluginService
     )
     {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
         this.loggingManager = loggingManager;
-        this.coreJobPluginService = coreJobPluginService;
+        this.iJobPluginService = iJobPluginService;
     }
 
     public void run() {
@@ -82,14 +82,14 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
-            coreJobPluginService.beforeJobStarts(new JobEventImpl(context));
+            iJobPluginService.beforeJobStarts(new JobEventImpl(context));
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(context, weitem));
             success = getResult().isSuccess();
             if (null != getResult().getException()) {
                 thrown = getResult().getException();
             }
-            coreJobPluginService.afterJobEnds(new JobEventImpl(context));
+            iJobPluginService.afterJobEnds(new JobEventImpl(context));
             return getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);
