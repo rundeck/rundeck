@@ -17,7 +17,9 @@ import java.util.concurrent.*;
  * state, and any that can are queued to be executed.  Workflow processing stops when no operations
  * are currently running, no new state changes are available, and no pending operations can be run.
  */
-public class WorkflowEngine implements WorkflowSystem {
+public class WorkflowEngine
+        implements StateWorkflowSystem, WorkflowSystemEventHandler
+{
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
     private final MutableStateObj state;
     private final RuleEngine engine;
@@ -47,11 +49,13 @@ public class WorkflowEngine implements WorkflowSystem {
         manager = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
-    MutableStateObj getState() {
+    @Override
+    public MutableStateObj getState() {
         return state;
     }
 
-    RuleEngine getRuleEngine() {
+    @Override
+    public RuleEngine getRuleEngine() {
         return engine;
     }
 
@@ -86,6 +90,7 @@ public class WorkflowEngine implements WorkflowSystem {
     Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
 
         WorkflowEngineOperationsProcessor<DAT, RES, OP> processor = new WorkflowEngineOperationsProcessor<>(
+                this,
                 this,
                 operations,
                 sharedData,
@@ -128,25 +133,6 @@ public class WorkflowEngine implements WorkflowSystem {
         }
         event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results));
         return results;
-    }
-
-    void eventLoopProgress(
-            final int origPendingCount,
-            final int skipcount,
-            final int toruncount,
-            final int pendingcount
-    )
-    {
-        event(
-                WorkflowSystemEventType.LoopProgress,
-                String.format(
-                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
-                        origPendingCount,
-                        toruncount - skipcount,
-                        skipcount,
-                        pendingcount
-                )
-        );
     }
 
     static class Event implements WorkflowSystemEvent {
@@ -211,38 +197,41 @@ public class WorkflowEngine implements WorkflowSystem {
         };
     }
 
-    void event(final WorkflowSystemEventType endOfChanges, final String message) {
-        event(endOfChanges, message, null);
+    @Override
+    public void event(final WorkflowSystemEventType eventType, final String message) {
+        event(eventType, message, null);
     }
 
-    void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
+    @Override
+    public void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
         event(Event.with(eventType, message, data));
     }
 
-    private void event(final WorkflowSystemEvent event) {
+    @Override
+    public void event(final WorkflowSystemEvent event) {
         if (null != listener) {
             listener.onEvent(event);
         }
     }
 
-    protected boolean isWorkflowEndState(final MutableStateObj state) {
-        return state.hasState(Workflows.getWorkflowEndState());
+    @Override
+    public boolean isWorkflowEndState() {
+        return getState().hasState(Workflows.getWorkflowEndState());
     }
 
+    @Override
     public WorkflowSystemEventListener getListener() {
         return listener;
     }
 
+    @Override
     public void setListener(WorkflowSystemEventListener listener) {
         this.listener = listener;
     }
 
+    @Override
     public boolean isInterrupted() {
         return interrupted;
-    }
-
-    public void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
     }
 
 
