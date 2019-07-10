@@ -1536,7 +1536,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
             [
                     optionSelect : opt,
-                    values       : ["A", "B", "C"],
+                    values       : remoteValues,
                     srcUrl       : "cleanUrl",
                     err          : null
             ]
@@ -1548,6 +1548,37 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         where:
         opts                                           | remoteValues
         ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+
+    }
+
+    def "opt enforced allowed values from Remote Url with or without default value"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, defaultValue: defaultValue, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : remoteValues,
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+        when:
+
+        HashMap optparams = service.parseJobOptionInput([:], se, null)
+
+        then:
+
+
+        optparams[opt.name] == optValue
+
+
+        where:
+        defaultValue | optValue                                       | remoteValues
+        "B"          | "B"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        null         | "A"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
 
     }
 
