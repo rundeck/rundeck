@@ -38,6 +38,9 @@
         window.location.href = url + "?lang=" + jQuery("#language").val();
     }
     </script>
+
+    <g:jsMessages code="userController.page.profile.pager.summary"/>
+
     <g:set var="currentLang" value="${response.locale?.toString() ?: request.locale?.toString()}"/>
     <g:embedJSON
             data="${[user             : user.login,
@@ -47,7 +50,14 @@
                      svcTokenAuth     : serviceToken,
                      language         : currentLang,
                      tokenPagingMax   : params.max,
-                     tokenPagingOffset: params.offset
+                     tokenPagingOffset: params.offset,
+                     tokenTotal       : tokenTotal,
+                     tokenTableSummaryText: message(code: "userController.page.profile.pager.summary",
+                             args: [
+                                     params.offset.toInteger() + 1,
+                                     Math.min((params.offset.toInteger() + params.max.toInteger()), tokenTotal),
+                                     tokenTotal
+                             ])
             ]}"
             id="genPageData"/>
 </head>

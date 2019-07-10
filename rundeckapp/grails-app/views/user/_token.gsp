@@ -22,6 +22,7 @@
 
 <g:set var="ukey" value="${g.rkey()}"/>
 <tr class="apitokenform ${token.token == flashToken ? 'newtoken' : ''}"
+    id="token-${token.uuid}"
     style="${token.token == flashToken ? 'opacity:0;' : ''}">
     <td width="20%" class="token-data-holder">
         <g:if test="${token.uuid}">

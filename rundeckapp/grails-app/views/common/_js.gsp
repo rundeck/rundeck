@@ -77,6 +77,7 @@
         userGenerateUserToken: "${g.createLink(controller: 'user', action: 'generateUserToken',params:[format:'json'])}",
         userRevealTokenData: "${g.createLink(controller: 'user', action: 'renderUsertoken',params:[format:'json'])}",
         userRenderApiToken: "${g.createLink(controller: 'user', action: 'renderApiToken')}",
+        userProfilePage: "${g.createLink(controller: 'user', action: 'profile')}",
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
         workflowCopy: '${createLink(controller:"workflow",action:"copy",params:projParams)}',
