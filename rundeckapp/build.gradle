@@ -46,8 +46,10 @@ repositories {
     flatDir dirs: "$rootDir/locallib"
 }
 
-def springBootVersion = "1.5.12.RELEASE"
-//ext['jackson.version'] = '2.8.11'
+// Customize spring-boot dependencies.
+// see https://github.com/spring-projects/spring-boot/blob/v2.1.6.RELEASE/spring-boot-project/spring-boot-dependencies/pom.xml
+ext['logback.version'] = '1.2.3'
+ext['spring-security.version'] = '4.2.13.RELEASE'
 
 dependencies {
 
@@ -138,8 +140,6 @@ dependencies {
     compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
     compile 'org.grails.plugins:spring-security-core:3.2.3'
-    compile "org.springframework.security:spring-security-core:${springSecurityVersion}"
-    compile "org.springframework.security:spring-security-web:${springSecurityVersion}"
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
