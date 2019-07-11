@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.common.PluginControlService;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.execution.component.ContextComponent;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.jobs.JobService;
@@ -39,7 +40,10 @@ import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ExecutionContext is ...
@@ -72,6 +76,11 @@ public interface ExecutionContext {
      * @return the job service
      */
     public JobService getJobService();
+
+    /**
+     * @return context components
+     */
+    public List<ContextComponent<?>> getComponentList();
 
     /**
      * @return the node service
@@ -135,6 +144,16 @@ public interface ExecutionContext {
      */
     public Map<String, Map<String, String>> getDataContext();
     public DataContext getDataContextObject();
+
+    <T> Collection<T> componentsForType(Class<T> type);
+
+    /**
+     * @param <T>
+     * @param type
+     * @return a single component for the given type
+     */
+    <T> Optional<T> componentForType(Class<T> type);
+
     /**
      * @return the node specific context data keyed by node name
      */

@@ -27,17 +27,17 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.data.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.component.ContextComponent;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -76,6 +76,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     private OrchestratorConfig orchestrator;
     private PluginControlService pluginControlService;
+    @Getter private List<ContextComponent<?>> componentList;
 
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
@@ -84,6 +85,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         privateDataContext = new BaseDataContext();
         sharedDataContext = new WFSharedContext();
         outputContext = SharedDataContextUtils.outputContext(ContextView.global());
+        componentList = new ArrayList<>();
     }
 
     public static Builder builder() {
@@ -94,6 +96,24 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
     public static Builder builder(StepExecutionContext context) {
         return new Builder(context);
+    }
+
+    @Override
+    public <T> Collection<T> componentsForType(Class<T> type) {
+        return componentList
+                .stream()
+                .filter(comp -> type.isAssignableFrom(comp.getType()))
+                .map(contextComponent -> type.cast(contextComponent.getObject()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> Optional<T> componentForType(final Class<T> type) {
+        return componentList
+                .stream()
+                .filter(comp -> type.isAssignableFrom(comp.getType()))
+                .map(contextComponent -> type.cast(contextComponent.getObject()))
+                .findFirst();
     }
 
     @Override
@@ -184,6 +204,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 }
                 ctx.pluginControlService =
                     PluginControlServiceImpl.forProject(original.getFramework(), original.getFrameworkProject());
+                ctx.componentList = original.getComponentList();
             }
         }
 
@@ -452,6 +473,21 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder sharedDataContextClear() {
             ctx.sharedDataContext = new WFSharedContext();
+            return this;
+        }
+
+        public <T> Builder addComponent(String name, T object, Class<T> type) {
+            addComponent(ContextComponent.with(name, object, type));
+            return this;
+        }
+
+        public Builder addComponent(ContextComponent component) {
+            ctx.componentList.add(component);
+            return this;
+        }
+
+        public Builder addComponents(Collection<ContextComponent<?>> components) {
+            ctx.componentList.addAll(components);
             return this;
         }
 
