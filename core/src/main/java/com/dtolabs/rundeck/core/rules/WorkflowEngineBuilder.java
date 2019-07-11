@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.rules;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
@@ -59,7 +60,7 @@ public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
     }
 
     @Override
-    public WorkflowSystem build() {
+    public WorkflowSystem<Map<String,String>> build() {
         if (null == engine || null == state || null == executor) {
             throw new IllegalArgumentException();
         }
