@@ -240,17 +240,13 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         logDebug.log("Create workflow engine with state: " + state);
 
         List<WorkflowSystemEventListener> list = new ArrayList<>();
-        WorkflowSystemEventListener logger = event -> {
+
+        list.add(event -> {
             logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
-        };
-        list.add(logger);
-        if (null != executionContext.getComponentList()) {
-            executionContext.getComponentList().forEach(obj -> {
-                if (obj instanceof WorkflowSystemEventListener) {
-                    list.add((WorkflowSystemEventListener) obj);
-                }
-            });
-        }
+        });
+
+        list.addAll(executionContext.componentsForType(WorkflowSystemEventListener.class));
+
         WorkflowSystem workflowEngine = buildWorkflowSystem(
                 state,
                 ruleEngine,
