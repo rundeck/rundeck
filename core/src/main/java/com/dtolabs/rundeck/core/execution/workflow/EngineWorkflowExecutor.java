@@ -247,7 +247,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         list.addAll(executionContext.componentsForType(WorkflowSystemEventListener.class));
 
-        WorkflowSystem workflowEngine = buildWorkflowSystem(
+        WorkflowSystem<Map<String, String>> workflowEngine = buildWorkflowSystem(
                 state,
                 ruleEngine,
                 strategyForWorkflow.getThreadCount(),
