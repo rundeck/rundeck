@@ -68,4 +68,26 @@ public class ServiceFactory {
                 providerClass
         );
     }
+
+    /**
+     * Creates a pluggable service using a provider loader
+     *
+     * @param serviceName
+     * @param providerClass
+     * @param serviceProviderLoader
+     * @param <T>
+     */
+    public static <T> PluggableProviderService<T> pluginService(
+            final String serviceName,
+            final Class<T> providerClass,
+            final ServiceProviderLoader serviceProviderLoader
+    )
+    {
+        return new
+                BasePluggableProviderServiceImpl<T>(
+                serviceName,
+                providerClass,
+                serviceProviderLoader
+        );
+    }
 }
