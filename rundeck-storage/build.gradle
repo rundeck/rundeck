@@ -184,8 +184,7 @@ project(':rundeck-storage:rundeck-storage-conf') {
 project(':rundeck-storage:rundeck-storage-filesys') {
     dependencies {
         compile project(':rundeck-storage:rundeck-storage-data')
-        compile "com.fasterxml.jackson.core:jackson-core:${jacksonVersion}"
-        compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+        compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
     }
 
     bintray {

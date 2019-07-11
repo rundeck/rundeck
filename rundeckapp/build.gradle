@@ -46,13 +46,6 @@ repositories {
     flatDir dirs: "$rootDir/locallib"
 }
 
-// Customize spring-boot dependencies versions.
-// see https://github.com/spring-projects/spring-boot/blob/1.5.x/spring-boot-dependencies/pom.xml
-//
-ext['jackson.version'] = jacksonVersion
-ext['logback.version'] = '1.2.3'
-ext['spring-security.version'] = '4.2.13.RELEASE'
-
 
 dependencies {
 
@@ -82,9 +75,8 @@ dependencies {
     compile project(':rundeck-storage:rundeck-storage-filesys')
 
     // From BuildConfig.groovy.
-    compile 'org.quartz-scheduler:quartz:2.3.1'
+    compile 'org.quartz-scheduler:quartz:2.3.0'
     compile 'org.grails.plugins:quartz:2.0.13'
-
     //
     //TODO: update to official mail plugin 2.0.1 once released
     //compile 'org.grails.plugins:mail:2.0.1'
@@ -99,6 +91,7 @@ dependencies {
     compile 'org.owasp.encoder:encoder:1.2.1'
     compile 'org.grails.plugins:external-config:1.1.2'
     compile 'commons-fileupload:commons-fileupload:1.3.3'
+
 
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
@@ -134,9 +127,12 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compile "com.google.code.gson:gson:2.8.2"
-    compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
-    compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
-    compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    compile "com.fasterxml.jackson.core:jackson-core"
+    compile "com.fasterxml.jackson.core:jackson-annotations"
+    compile "org.eclipse.jetty:jetty-jaas"
+    compile "org.eclipse.jetty:jetty-util"
+    compile "org.eclipse.jetty:jetty-security"
     compile 'org.grails.plugins:spring-security-core:3.2.3'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
