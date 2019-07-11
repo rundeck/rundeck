@@ -162,34 +162,47 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     private static interface LogOut {
         void log(String message);
     }
+
+    /**
+     * Can augment behavior of this workflow executor
+     */
+    public interface Augmentor {
+        MutableStateObj getInitialState(
+                final WorkflowExecutionItem item,
+                final StepExecutionContext executionContext
+        );
+
+        WFSharedContext getSharedContext(final StepExecutionContext executionContext);
+    }
+
     @Override
     public WorkflowExecutionResult executeWorkflowImpl(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item
     )
     {
-        StateObj newWorkflowState = Workflows.getNewWorkflowState();
-        final String workflowId = newWorkflowState.getState().get(Workflows.WORKFLOW_STATE_ID_KEY);
-        MutableStateObj
-                mutable =
-                States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+        Augmentor component = executionContext.componentForType(Augmentor.class).orElseGet(DefaultAugmentor::new);
+        MutableStateObj mutable = component.getInitialState(item, executionContext);
+        final WFSharedContext sharedContext = component.getSharedContext(executionContext);
+
+        final String workflowId = mutable.getState().get(Workflows.WORKFLOW_STATE_ID_KEY);
+
         ExecutionListener executionListener = executionContext.getExecutionListener();
         LogOut logDebug = createDebugLog(workflowId, executionListener);
         LogOut logWarn = createWarnLog(workflowId, executionListener);
         LogOut logErr = createErrLog(workflowId, executionListener);
         logDebug.log("Start EngineWorkflowExecutor");
-        final IWorkflow workflow = item.getWorkflow();
 
+        MutableStateObj state = new StateLogger(mutable, logDebug::log);
+
+        final IWorkflow workflow = item.getWorkflow();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
         final List<StepExecutionResult> stepResults = new ArrayList<>();
-        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        String strategy = workflow.getStrategy();
 
-        //define a new shared context inheriting from any injected data context
-        final WFSharedContext sharedContext = WFSharedContext.withBase(executionContext.getSharedDataContext());
+
         WorkflowStrategy strategyForWorkflow;
         try {
-            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy, getFramework());
+            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, getFramework());
         } catch (ExecutionServiceException e) {
             logErr.log("Exception: " + e.getClass() + ": " + e.getMessage());
             return new BaseWorkflowExecutionResult(
@@ -203,12 +216,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         }
 
 
-        mutable.updateState(newWorkflowState);
-
-        mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(workflow.isKeepgoing()));
-
-        MutableStateObj state = new StateLogger(mutable, logDebug::log);
-
         RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
 
         WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
@@ -216,6 +223,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             profile = new SequentialStrategyProfile();
         }
 
+        final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         Set<StepOperation> operations = buildOperations(
                 this,
                 executionContext,
@@ -450,7 +458,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
-            final String strategy,
             final IFramework framework
     ) throws ExecutionServiceException
     {
@@ -460,7 +467,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         if (pluginConfig1 != null) {
             Object o = pluginConfig1.get(ServiceNameConstants.WorkflowStrategy);
             if (o instanceof Map) {
-                Object o1 = ((Map<String, Object>) o).get(strategy);
+                Object o1 = ((Map<String, Object>) o).get(workflow.getStrategy());
                 if (o1 instanceof Map) {
                     pluginConfig = (Map<String, Object>) o1;
                 }
@@ -563,4 +570,28 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
+    public static class DefaultAugmentor
+            implements Augmentor
+    {
+
+        @Override
+        public MutableStateObj getInitialState(
+                final WorkflowExecutionItem item,
+                final StepExecutionContext executionContext
+        )
+        {
+            MutableStateObj
+                    mutable =
+                    States.mutable(DataContextUtils.flattenDataContext(executionContext.getDataContext()));
+            mutable.updateState(Workflows.getNewWorkflowState());
+            mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(item.getWorkflow().isKeepgoing()));
+            return mutable;
+        }
+
+        @Override
+        public WFSharedContext getSharedContext(final StepExecutionContext executionContext) {
+            //define a new shared context inheriting from any injected data context
+            return WFSharedContext.withBase(executionContext.getSharedDataContext());
+        }
+    }
 }
