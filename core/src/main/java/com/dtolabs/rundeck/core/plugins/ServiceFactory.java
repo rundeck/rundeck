@@ -47,6 +47,20 @@ public class ServiceFactory {
         };
     }
 
+    public static <T> ProviderRegistryService<T> builtinService(
+
+            final String serviceName,
+            final Map<String, Class<? extends T>> classes
+    )
+    {
+        return new AbstractProviderRegistryService<T>(classes) {
+            @Override
+            public String getName() {
+                return serviceName;
+            }
+        };
+    }
+
     /**
      * @param serviceName
      * @param framework
