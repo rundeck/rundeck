@@ -33,6 +33,8 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.common.base.Throwables;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -96,7 +98,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_CONTROL_SKIP_KEY = "step.#.skip";
     public static final String STEP_CONTROL_START = "start";
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
-    private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
+    @Getter @Setter private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
 
     public EngineWorkflowExecutor(final Framework framework) {
         super(framework);
@@ -126,16 +128,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             state.updateState(stringStringHashMap);
         }
     }
-
-
-    public Supplier<WorkflowSystemBuilder> getWorkflowSystemBuilderSupplier() {
-        return workflowSystemBuilderSupplier;
-    }
-
-    public void setWorkflowSystemBuilderSupplier(Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier) {
-        this.workflowSystemBuilderSupplier = workflowSystemBuilderSupplier;
-    }
-
 
     /**
      * Base profile which provides initial states
