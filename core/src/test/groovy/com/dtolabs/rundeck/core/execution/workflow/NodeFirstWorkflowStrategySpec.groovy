@@ -107,6 +107,9 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             getDataContext()>>dataContext
             getDataContextObject()>>dataContext
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            getComponentList()>>[]
         }
         framework.getStepExecutionService().registerClass('typeA', TestFailStepExecutor)
         framework.getStepExecutionService().registerClass('typeB', TestSuccessNodeExecutor)
