@@ -227,12 +227,6 @@ public class WorkflowEngine
         return getState().hasState(Workflows.getWorkflowEndState());
     }
 
-    @Override
-    public boolean isInterrupted() {
-        return interrupted;
-    }
-
-
     static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
             OperationResult<D, T, X>
     {
