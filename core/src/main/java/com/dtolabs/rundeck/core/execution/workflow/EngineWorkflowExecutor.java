@@ -255,17 +255,17 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 list
         );
 
-
-        //                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
         WorkflowSystem.SharedData<WFSharedContext, Map<String, String>>
-                dataContextSharedData = WorkflowSystem.SharedData.with(
-                sharedContext::merge,
-                () -> sharedContext,
-                () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
-        );
+                dataContextSharedData =
+                WorkflowSystem.SharedData.with(
+                        sharedContext::merge,
+                        () -> sharedContext,
+                        () -> DataContextUtils.flattenDataContext(sharedContext.getData(ContextView.global()))
+                );
 
         Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
-                operationResults = workflowEngine.processOperations(operations, dataContextSharedData);
+                operationResults =
+                workflowEngine.processOperations(operations, dataContextSharedData);
 
 
         String statusString = null;
