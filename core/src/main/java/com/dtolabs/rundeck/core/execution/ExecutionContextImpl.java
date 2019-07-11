@@ -82,7 +82,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         nodes = new NodeSetImpl();
         dataContext = new BaseDataContext();
         privateDataContext = new BaseDataContext();
-        sharedDataContext = new MultiDataContextImpl<>();
+        sharedDataContext = new WFSharedContext();
         outputContext = SharedDataContextUtils.outputContext(ContextView.global());
     }
 
@@ -176,7 +176,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
                 ctx.outputContext = original.getOutputContext();
-                ctx.sharedDataContext = MultiDataContextImpl.with(original.getSharedDataContext());
+                ctx.sharedDataContext = WFSharedContext.with(original.getSharedDataContext());
                 ctx.loggingManager = original.getLoggingManager();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
@@ -524,7 +524,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
-            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            ctx.sharedDataContext = new WFSharedContext(shared);
             if (null != ctx.dataContext) {
                 ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
             }
@@ -536,7 +536,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContextClear() {
-            ctx.sharedDataContext = new MultiDataContextImpl<>();
+            ctx.sharedDataContext = new WFSharedContext();
             return this;
         }
 
