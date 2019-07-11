@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
@@ -68,7 +69,7 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
         registry.put(WorkflowExecutor.PARALLEL, EngineWorkflowExecutor.class);
 
         final ProviderService<WorkflowExecutor> primaryService = ServiceFactory.builtinService(
-                framework,
+                (IFramework) framework,
                 SERVICE_NAME,
                 registry
         );

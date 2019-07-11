@@ -26,6 +26,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.NodesetEmptyException;
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -61,7 +62,7 @@ import java.util.*;
 public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
     static final Logger logger = Logger.getLogger(NodeFirstWorkflowExecutor.class.getName());
 
-    public NodeFirstWorkflowExecutor(final Framework framework) {
+    public NodeFirstWorkflowExecutor(final IFramework framework) {
         super(framework);
     }
 
