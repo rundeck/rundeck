@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.rules;
 
 import com.google.common.util.concurrent.*;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.apache.log4j.Logger;
