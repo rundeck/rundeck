@@ -201,23 +201,8 @@ public class WorkflowEngine
     }
 
 
-    static <T> OperationCompleted<T> dummyResult(final StateObj state, final String identity) {
-        return new OperationCompleted<T>() {
-            @Override
-            public String getIdentity() {
-                return identity;
-            }
-
-            @Override
-            public StateObj getNewState() {
-                return state;
-            }
-
-            @Override
-            public T getResult() {
-                return null;
-            }
-        };
+    static <T> OperationCompleted<T> dummyResult(final StateObj state, final String identity, final boolean success) {
+        return new WFOperationCompleted<>(identity, state, success);
     }
 
     @Override
@@ -282,6 +267,20 @@ public class WorkflowEngine
             return operation +
                    ": " +
                    (null != success ? success : null != throwable ? throwable.getClass().getSimpleName() : "?");
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class WFOperationCompleted<T>
+            implements OperationCompleted<T>
+    {
+        @Getter private final String identity;
+        @Getter private final StateObj newState;
+        @Getter private final boolean success;
+
+        @Override
+        public T getResult() {
+            return null;
         }
     }
 }

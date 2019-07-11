@@ -102,6 +102,7 @@ public interface WorkflowSystem<P> {
         String getIdentity();
         StateObj getNewState();
 
+        boolean isSuccess();
         T getResult();
     }
 

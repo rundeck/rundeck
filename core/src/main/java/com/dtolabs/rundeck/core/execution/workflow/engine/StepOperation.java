@@ -155,7 +155,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             }
         }
 
-        return new OperationCompleted(getIdentity(), stepNum, stateChanges, stepResultCapture);
+        return new OperationCompleted(getIdentity(), stepNum, stateChanges, stepResultCapture, success);
     }
 
     @Override

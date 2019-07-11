@@ -31,6 +31,7 @@ public class OperationCompleted implements WorkflowSystem.OperationCompleted<WFS
     private int stepNum;
     private StateObj newState;
     private BaseWorkflowExecutor.StepResultCapture stepResultCapture;
+    private boolean success;
 
     @Override
     public WFSharedContext getResult() {
