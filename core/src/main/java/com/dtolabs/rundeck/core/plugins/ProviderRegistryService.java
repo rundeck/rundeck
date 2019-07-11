@@ -16,12 +16,14 @@
 
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.common.ProviderService;
+
 /**
  * can register classes and instances for providers
  *
  * @param <T>
  */
-public interface ProviderRegistryService<T> {
+public interface ProviderRegistryService<T> extends ProviderService<T> {
     /**
      * Register a class for a provider
      *
