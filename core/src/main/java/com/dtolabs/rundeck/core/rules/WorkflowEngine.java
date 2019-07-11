@@ -219,7 +219,13 @@ public class WorkflowEngine
     @Override
     public void event(final WorkflowSystemEvent event) {
         if (null != listeners && !listeners.isEmpty()) {
-            listeners.forEach(a -> a.onEvent(event));
+            listeners.forEach(a -> {
+                try {
+                    a.onEvent(event);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
