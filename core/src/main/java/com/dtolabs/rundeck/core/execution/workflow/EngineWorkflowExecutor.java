@@ -355,7 +355,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         };
     }
 
-    private static WorkflowSystem buildWorkflowSystem(
+    private static WorkflowSystem<Map<String, String>> buildWorkflowSystem(
             final MutableStateObj state,
             final RuleEngine ruleEngine,
             final int wfThreadcount,
