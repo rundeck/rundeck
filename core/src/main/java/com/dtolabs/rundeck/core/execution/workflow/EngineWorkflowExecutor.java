@@ -100,7 +100,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_DATA_RESULT_KEY_PREFIX = "step.#.result.";
     @Getter @Setter private Supplier<WorkflowSystemBuilder> workflowSystemBuilderSupplier;
 
-    public EngineWorkflowExecutor(final Framework framework) {
+    public EngineWorkflowExecutor(final IFramework framework) {
         super(framework);
         this.setWorkflowSystemBuilderSupplier(Workflows::builder);
     }
