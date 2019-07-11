@@ -48,7 +48,6 @@ public class ServiceFactory {
     }
 
     public static <T> ProviderRegistryService<T> builtinService(
-
             final String serviceName,
             final Map<String, Class<? extends T>> classes
     )
