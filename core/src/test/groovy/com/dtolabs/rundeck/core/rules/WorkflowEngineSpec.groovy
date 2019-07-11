@@ -17,12 +17,14 @@ class WorkflowEngineSpec extends Specification {
         StateObj newState
         Map result
         String identity
+        boolean success
     }
 
     class TestOpCompletedB implements WorkflowSystem.OperationCompleted<WFSharedContext> {
         StateObj newState
         WFSharedContext result
         String identity
+        boolean success
     }
 
     class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {

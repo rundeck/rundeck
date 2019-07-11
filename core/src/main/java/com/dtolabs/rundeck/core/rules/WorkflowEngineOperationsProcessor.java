@@ -238,7 +238,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
 
     public void initialize() {
         //initial state change to start workflow
-        stateChangeQueue.add(WorkflowEngine.dummyResult(initialState, "init"));
+        stateChangeQueue.add(WorkflowEngine.dummyResult(initialState, "init", true));
     }
 
     /**
@@ -284,8 +284,14 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         public void onSuccess(final RES successResult) {
             WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
             eventHandler.event(
-                    WorkflowSystemEventType.OperationSuccess,
-                    String.format("operation succeeded: %s", successResult),
+                    result.getSuccess().isSuccess()
+                    ? WorkflowSystemEventType.OperationSuccess
+                    : WorkflowSystemEventType.OperationFailed,
+                    String.format(
+                            "operation completed, success? %s: %s",
+                            result.getSuccess().isSuccess(),
+                            successResult
+                    ),
                     StateWorkflowSystem.operationCompleteEvent(
                             operation.getIdentity(),
                             workflowEngine.getState(),
@@ -316,7 +322,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             if (null == newFailureState) {
                 newFailureState = new DataState();
             }
-            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState, operation.getIdentity()), operation);
+            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState, operation.getIdentity(), false), operation);
         }
     }
 
@@ -425,7 +431,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             StateObj newstate = operation.getSkipState(workflowEngine.getState());
             WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(
                     newstate,
-                    operation.getIdentity()
+                    operation.getIdentity(),
+                    true
             );
             stateChangeQueue.add(objectOperationCompleted);
 

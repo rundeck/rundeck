@@ -25,6 +25,7 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
         StateObj newState
         Map result
         String identity
+        boolean success
     }
 
     class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {
