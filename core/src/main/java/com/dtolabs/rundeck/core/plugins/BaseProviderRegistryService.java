@@ -36,7 +36,7 @@ import java.util.Map;
  * argument
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
- * @deprecated use {@link NewBaseProviderRegistryService}
+ * @deprecated use {@link IFrameworkProviderRegistryService}
  */
 @Deprecated
 public abstract class BaseProviderRegistryService<T>

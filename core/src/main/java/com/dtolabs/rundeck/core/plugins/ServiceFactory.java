@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 
 import java.util.Map;
 
@@ -9,6 +10,15 @@ import java.util.Map;
  */
 public class ServiceFactory {
 
+    /**
+     *
+     * @param framework
+     * @param serviceName
+     * @param classes
+     * @param <T>
+     * @return
+     * @deprecated
+     */
     public static <T> BaseProviderRegistryService<T> builtinService(
             final Framework framework,
             final String serviceName,
@@ -23,6 +33,28 @@ public class ServiceFactory {
         };
     }
 
+    public static <T> IFrameworkProviderRegistryService<T> builtinService(
+            final IFramework framework,
+            final String serviceName,
+            final Map<String, Class<? extends T>> classes
+    )
+    {
+        return new IFrameworkProviderRegistryService<T>(framework, classes) {
+            @Override
+            public String getName() {
+                return serviceName;
+            }
+        };
+    }
+
+    /**
+     * @param serviceName
+     * @param framework
+     * @param providerClass
+     * @param <T>
+     * @deprecated use {@link #pluginService(String, Class, ServiceProviderLoader)}
+     */
+    @Deprecated
     public static <T> PluggableProviderService<T> pluginService(
             final String serviceName,
             final Framework framework,
