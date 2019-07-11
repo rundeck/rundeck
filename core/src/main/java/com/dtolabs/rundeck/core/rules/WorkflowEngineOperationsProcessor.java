@@ -16,9 +16,6 @@
 
 package com.dtolabs.rundeck.core.rules;
 
-import com.dtolabs.rundeck.core.data.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
