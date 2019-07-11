@@ -154,7 +154,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final boolean isFirstStep
         )
         {
-            return Collections.emptySet();
+            return Collections.singleton(Rules.equalsCondition(stepKey(STEP_COMPLETED_KEY, stepNum), VALUE_TRUE));
         }
 
     }
