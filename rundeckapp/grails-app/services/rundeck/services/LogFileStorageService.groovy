@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
@@ -44,20 +45,19 @@ import rundeck.LogFileStorageRequest
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileProducer
+import org.rundeck.app.services.ExecutionFile
+import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionFileUtil
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
 
+import javax.validation.constraints.NotNull
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -88,6 +88,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
     ApplicationContext applicationContext
     def metricService
     def configurationService
+    def jobStateService
 
     /**
      * Queue of log storage requests ids, for incomplet requests being resumed
@@ -991,6 +992,21 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         }
     }
     /**
+     * Return the local file path for a stored file for the execution given the filetype
+     * @param execution the execution
+     * @param filetype filetype (extension)
+     * @param useStoredPath if true, use the original path stored in the execution (support pre 1.6 rundeck), otherwise generate the path dynamically based on the execution/job
+     * @return the file
+     */
+    def File getFileForExecutionFiletype(
+            ExecutionReference execution,
+            String filetype,
+            boolean partial = false
+    )
+    {
+         getFileForLocalPath(generateLocalPathForExecutionFile(execution, filetype, partial))
+    }
+    /**
      * Generate a relative path for log file of the given execution
      * @param execution
      * @return
@@ -1007,6 +1023,23 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         } else {
             return "${execution.project}/run/logs/${execution.id}." + extension +
                     (partial ? '.part' : '')
+        }
+    }
+    /**
+     * Generate a relative path for log file of the given execution
+     * @param execution
+     * @return
+     */
+    public static String generateLocalPathForExecutionFile(
+            ExecutionReference execution,
+            String extension,
+            boolean partial = false
+    )
+    {
+        if (execution.job) {
+            return "$execution.project/job/$execution.job.id/logs/${execution.id}.${extension}${partial ? '.part' : ''}"
+        } else {
+            return "$execution.project/run/logs/${execution.id}.${extension}${partial ? '.part' : ''}"
         }
     }
 
@@ -1635,7 +1668,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
     boolean areAllExecutionFilesPresent(Execution execution) {
         for (def bean : listExecutionFileProducers()) {
             if (!bean.isExecutionFileGenerated()) {
-                if (!bean.produceStorageFileForExecution(execution).localFile.exists()) {
+                if (!bean.produceStorageFileForExecution(execution.asReference()).localFile.exists()) {
                     return false
                 }
             }
@@ -1643,13 +1676,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
         true
     }
 
-    Map<String, ExecutionFile> getExecutionFiles(Execution execution, List<String> filters, boolean checkpoint) {
+    Map<String, ExecutionFile> getExecutionFiles(@NotNull Execution execution, List<String> filters, boolean checkpoint) {
         Collection<ExecutionFileProducer> beans = listExecutionFileProducers(filters)
         def result = [:]
         beans?.each { bean ->
             result[bean.getExecutionFileType()] = checkpoint ?
-                    bean.produceStorageCheckpointForExecution(execution) :
-                    bean.produceStorageFileForExecution(execution)
+                    bean.produceStorageCheckpointForExecution(execution.asReference()) :
+                    bean.produceStorageFileForExecution(execution.asReference())
         }
         log.debug("found beans of ExecutionFileProducer result: $result")
         result?:[:]

@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.net.model.ProjectImportStatus
 import com.dtolabs.rundeck.net.api.Client
 import com.dtolabs.rundeck.util.XmlParserUtil
@@ -44,13 +45,12 @@ import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobFileRecord
-import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileDeletePolicy
-import rundeck.services.logging.ExecutionFileProducer
+import org.rundeck.app.services.ExecutionFile
+
+import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ProducedExecutionFile
 
 import java.text.ParseException
@@ -142,15 +142,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     }
 
     @Override
-    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+    ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
         return null
     }
 
     @Override
-    ExecutionFile produceStorageFileForExecution(final Execution e) {
-        File localfile = executionUtilService.getExecutionXmlFileForExecution(e)
+    ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
+        File localfile = executionUtilService.getExecutionXmlFileForExecution(Execution.get(e.id))
 
-        new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS)
+        new ProducedExecutionFile(localFile: localfile, fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS)
     }
 
     def exportExecution(ZipBuilder zip, Execution exec, String name) throws ProjectServiceException {
