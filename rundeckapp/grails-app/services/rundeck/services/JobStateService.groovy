@@ -256,7 +256,8 @@ class JobStateService implements AuthorizingJobService {
             jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
                     project: se.project)
         }
-        new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
+        new ExecutionReferenceImpl(
+                project: exec.project, id: exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
                 dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList,
                 dateCompleted:exec.dateCompleted, failedNodeList: exec.failedNodeList)
 
@@ -424,7 +425,8 @@ class JobStateService implements AuthorizingJobService {
             } else {
                 jobRef = null
             }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
+            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(
+                    project: exec.project, id: exec.id, options: exec.argString,
                     filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, dateCompleted:exec.dateCompleted,
                     status: exec.status, succeededNodeList: exec.succeededNodeList,
                     failedNodeList: exec.failedNodeList)
