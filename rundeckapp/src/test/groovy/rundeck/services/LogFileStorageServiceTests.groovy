@@ -874,7 +874,7 @@ class LogFileStorageServiceTests  {
         if (null != clos) {
             service.with(clos)
         }
-        def task = [id: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
+        def task = [execId: e.id.toString(), file: testfile, storage: test, filetype: filetype,request:request,requestId:request.id]
         service.runStorageRequest(task)
         return task
     }
