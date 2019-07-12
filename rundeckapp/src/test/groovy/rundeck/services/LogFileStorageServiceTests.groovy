@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import grails.config.Config
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 
@@ -47,17 +47,13 @@ import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.logging.EventStreamingLogWriter
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileDeletePolicy
-import rundeck.services.logging.ExecutionFileProducer
+import org.rundeck.app.services.ExecutionFile
+
+import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
-
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 
 @TestFor(LogFileStorageService)
 @Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
@@ -814,12 +810,12 @@ class LogFileStorageServiceTests  {
         boolean executionFileGenerated = false
         boolean checkpointable = false
         @Override
-        ExecutionFile produceStorageFileForExecution(final Execution e) {
-            new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFileDeletePolicy.NEVER)
+        ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
+            new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFile.DeletePolicy.NEVER)
         }
 
         @Override
-        ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+        ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
             produceStorageFileForExecution e
         }
     }

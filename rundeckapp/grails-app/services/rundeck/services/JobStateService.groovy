@@ -21,10 +21,9 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeFilter
-import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -177,45 +176,29 @@ class JobStateService implements AuthorizingJobService {
         }
         executions = frameworkService.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
 
-        ArrayList<ExecutionReference> list = new ArrayList<>()
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         def frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
         INodeSet allNodes = frameworkProject.getNodeSet()
-
-        executions.each { exec ->
-            ScheduledExecution job = exec.scheduledExecution
-            JobReferenceImpl jobRef = null
-            if(job) {
-                jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
-                        groupPath: job.groupPath, project: job.project)
+        def fwkNode = framework.frameworkNodeName
+        def genTargetNode = { Execution exec ->
+            if (!exec.filter) {
+                return fwkNode
+            } else {
+                NodeSet filterNodeSet = filtersAsNodeSet(
+                        [
+                                filter               : exec.filter,
+                                nodeExcludePrecedence: exec.nodeExcludePrecedence,
+                                nodeThreadcount      : exec.nodeThreadcount,
+                                nodeKeepgoing        : exec.nodeKeepgoing
+                        ]
+                )
+                INodeSet nodeSet = NodeFilter.filterNodes(filterNodeSet, allNodes)
+                return nodeSet.nodes*.nodename.join(',')
             }
-            StringBuilder targetNode = new StringBuilder()
-            if(!exec.filter){
-                targetNode.append(framework.getFrameworkNodeName())
-            }else{
-                NodeSet filterNodeSet = filtersAsNodeSet([
-                        filter:exec.filter,
-                        nodeExcludePrecedence:exec.nodeExcludePrecedence,
-                        nodeThreadcount: exec.nodeThreadcount,
-                        nodeKeepgoing: exec.nodeKeepgoing
-                ])
-                INodeSet nodeSet =  NodeFilter.filterNodes(filterNodeSet, allNodes)
-                Iterator<INodeEntry> it = nodeSet.getNodes().iterator()
-                while(it.hasNext()){
-                    INodeEntry node = it.next()
-                    targetNode.append(node.nodename)
-                    if(it.hasNext()){
-                        targetNode.append(',')
-                    }
-                }
-            }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
-                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, status: exec.status,
-                    succeededNodeList: exec.succeededNodeList, failedNodeList: exec.failedNodeList,
-                    targetNodes: targetNode.toString())
-            list.add(execRef)
         }
-        return list
+        return executions.collect { exec ->
+            exec.asReference genTargetNode
+        }
     }
 
     NodeSet filtersAsNodeSet(Map econtext) {
