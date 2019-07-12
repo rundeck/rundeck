@@ -18,7 +18,12 @@ public class KeyValueEqualsCondition implements Condition {
         if (value == null) {
             return anObject == null;
         }
-        return value.equals(anObject);
+        String nValue = input.getState().get(value);
+        if(nValue == null){
+            return value.equals(anObject);
+        }else{
+            return nValue.equals(anObject);
+        }
     }
 
     @Override

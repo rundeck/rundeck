@@ -198,4 +198,37 @@ class RulesSpec extends Specification {
 
 
     }
+
+    def "numeric equals condition key value using state"() {
+        given:
+        def cond = Rules.eqCondition("a", "b")
+
+        expect:
+        cond.test(States.state(a: '1', b: '1'))
+        cond.test(States.state("a", "b"))
+        !cond.test(States.state("a", "1"))
+        !cond.test(States.state(a: '0', b: '1'))
+    }
+
+    def "less than condition key value using state"() {
+        given:
+        def cond = Rules.ltCondition("a", "b")
+
+        expect:
+        cond.test(States.state(a: '1', b: '2'))
+        !cond.test(States.state(a: '1', b: '1'))
+        !cond.test(States.state(a: '2', b: '1'))
+
+    }
+
+    def "greater than condition key value using state "() {
+        given:
+        def cond = Rules.gtCondition("a", "b")
+
+        expect:
+        !cond.test(States.state(a: '1', b: '2'))
+        !cond.test(States.state(a: '1', b: '1'))
+        cond.test(States.state(a: '2', b: '1'))
+
+    }
 }
