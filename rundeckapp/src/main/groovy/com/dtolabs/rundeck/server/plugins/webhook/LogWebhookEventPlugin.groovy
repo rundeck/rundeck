@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory
 @Plugin(name = "log-webhook-event",service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Log Webhook Events",description = "Can be used to log any incoming webhook events")
 class LogWebhookEventPlugin implements WebhookEventPlugin {
+    Map config
+
     private static final Logger LOG = LoggerFactory.getLogger(LogWebhookEventPlugin)
 
     @PluginProperty(title="Supplemental Text")

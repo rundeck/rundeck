@@ -25,10 +25,18 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext;
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin;
 import org.apache.log4j.Logger;
 
+import java.util.Map;
+
 public class ScriptWebhookEvent extends BaseScriptPlugin implements WebhookEventPlugin {
+    Map config;
+
     private static final Logger                LOG = Logger.getLogger(ScriptWebhookEvent.class);
 
     private final        ServiceProviderLoader pluginManager;
+
+    public void setConfig(Map map) {
+        config = map;
+    }
 
     protected ScriptWebhookEvent(
             final ScriptPluginProvider provider,

@@ -9,4 +9,8 @@ class Webhook {
     String name
     String eventPlugin
     String pluginConfigurationJson
+
+    static mapping = {
+        pluginConfigurationJson type: 'text'
+    }
 }

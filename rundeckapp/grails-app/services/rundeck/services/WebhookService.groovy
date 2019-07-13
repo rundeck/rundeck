@@ -28,7 +28,10 @@ class WebhookService {
         WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, webhookPluginProviderService, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
                                                                   PropertyScope.Instance).instance
 
+        plugin.setConfig(pluginConfig)
+
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
+        //TODO: Process in thread/task outside of request/reponse
         plugin.onEvent(context,data)
     }
 

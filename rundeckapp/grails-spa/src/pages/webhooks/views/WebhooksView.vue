@@ -74,13 +74,14 @@
               <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin" @change="setSelectedPlugin()">
                 <option v-for="plugin in webhookPlugins" v-bind:value="plugin.name">{{plugin.name}}</option>
               </select></div>
-              <div v-if="selectedPlugin">
+              
+              <!-- <div v-if="selectedPlugin">
                 <h5>Plugin Configuration</h5>
                 <hr>
                 <div v-for="(prop,index) in selectedPlugin.configProps" :key="index">
                   <label>{{prop}}</label><input type="text" v-model="curHook.config[prop]">
                 </div>
-              </div>
+              </div> -->
               <div class="row">
                 <div class="col-sm-6">
                   <a
@@ -96,6 +97,18 @@
               </div>
             </div>
           </div>
+
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <h5 style="margin:0;">Plugin Config</h5>
+          </div>
+          <hr>
+          <div class="card-content">
+            <div v-if="selectedPlugin && selectedPlugin.name == 'pagerduty-run-job' ">
+                <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="curHook"></pager-duty-config>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -106,6 +119,7 @@
 </template>
 
 <script>
+  import PagerDutyConfig from './PagerDutyConfig'
   import axios from 'axios'
   var rdBase = "http://localhost:4440"
   var apiVersion = "31"
@@ -123,6 +137,9 @@
             selectedPlugin: null,
             basePostUrl: `${rdBase}api/${apiVersion}/webhook/`
           }
+        },
+        components: {
+          PagerDutyConfig,
         },
         methods: {
           getHooks() {
@@ -147,6 +164,8 @@
                 withCredentials: true
               }).then(response => {
                 this.webhookPlugins = response.data
+                // this.selectedPlugin = this.webhookPlugins.find(p => p.name == 'pagerduty-run-job')
+                // this.curHook = this.selectedPlugin
               })
           },
           select(selected) {
@@ -199,7 +218,7 @@
             })
           },
           addNewHook() {
-            this.curHook = {name: "NewHook",config:{}}
+            this.curHook = {name: "NewHook"}
           }
         },
         mounted() {
