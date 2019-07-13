@@ -1,4 +1,4 @@
-.dropdown-menu{
+.dropdown-menu {
   background-color: $white-color;
   border: 0 none;
   border-radius: $border-radius-extreme;
@@ -9,7 +9,7 @@
   .dropdown &,
   .bootstrap-table .btn-group &,
   .btn-group &,
-  .dropup &{
+  .dropup & {
     @include transform-translate-y(-30px);
     @include transition($fast-transition-time, $transition-linear);
     @include opacity(0);
@@ -20,14 +20,13 @@
   .dropdown.open &,
   &.bootstrap-datetimepicker-widget.open,
   .bootstrap-table .btn-group.open &,
-  .btn-group.open &{
+  .btn-group.open & {
     @include transform-translate-y(0);
     @include opacity(1);
     visibility: visible;
   }
 
-  .dropup &
-  {
+  .dropup & {
     @include transform-translate-y(30px);
     @include transition($fast-transition-time, $transition-linear);
     @include opacity(0);
@@ -36,24 +35,24 @@
   }
 
   .dropup.open &,
-  &.bootstrap-datetimepicker-widget.top.open{
+  &.bootstrap-datetimepicker-widget.top.open {
     @include transform-translate-y(0);
     @include opacity(1);
     visibility: visible;
   }
 
-  .dropup &{
+  .dropup & {
     margin-bottom: 5px;
 
-    >.active > a,
-    >.active > a:hover,
-    >.active > a:focus{
-      background-color: $pale-bg;
+    >.active>a,
+    >.active>a:hover,
+    >.active>a:focus {
+      background-color: $smoke-bg;
       color: $font-color;
     }
 
-    > li > a:hover,
-    > li > a:focus {
+    >li>a:hover,
+    >li>a:focus {
       background-color: $default-color;
       color: $fill-font-color;
       opacity: 1;
@@ -66,7 +65,7 @@
   // Why: because I hate the triangle that points to the bottom.
   // It means you have to align the dropup/down UI over a very particular part
   // of the UI and that's not as easy as it sounds
-  // 
+  //
   // &:before{
   //   border-bottom: 11px solid $medium-pale-bg;
   //   border-left: 11px solid rgba(0, 0, 0, 0);
@@ -91,8 +90,8 @@
 
 
   .dropup &,
-  &.bootstrap-datetimepicker-widget.top{
-    &:before{
+  &.bootstrap-datetimepicker-widget.top {
+    &:before {
       border-top: 11px solid $medium-pale-bg;
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
@@ -106,7 +105,7 @@
       bottom: -12px;
     }
 
-    &:after{
+    &:after {
       border-top: 11px solid $white-color;
       border-left: 11px solid rgba(0, 0, 0, 0);
       border-right: 11px solid rgba(0, 0, 0, 0);
@@ -121,110 +120,116 @@
     }
   }
 
-  &.dropdown-menu-left{
-    &:after{
+  &.dropdown-menu-left {
+    &:after {
       left: 12px;
       right: auto;
     }
-    &:before{
+
+    &:before {
       left: 12px;
       right: auto;
     }
   }
 
-  .divider{
+  .divider {
     background-color: $medium-pale-bg;
     margin: 0px;
   }
 
-  .dropdown-header{
+  .dropdown-header {
     color: $dark-gray;
     font-size: $font-size-small;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
   }
 
-  > li > a {
+  >li>a {
     color: $font-color;
     font-size: $font-size-base;
     padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
     @include transition-none();
 
-    img{
+    img {
       margin-top: -3px;
     }
   }
-  > li > a:focus{
+
+  >li>a:focus {
     outline: 0 !important;
   }
 
-  .btn-group.select &{
+  .btn-group.select & {
     min-width: 100%;
   }
 
-  > li:first-child > a{
+  >li:first-child>a {
     border-top-left-radius: $border-radius-extreme;
     border-top-right-radius: $border-radius-extreme;
   }
 
-  > li:last-child > a{
+  >li:last-child>a {
     border-bottom-left-radius: $border-radius-extreme;
     border-bottom-right-radius: $border-radius-extreme;
   }
 
-  > li > a:hover,
-  > li > a:focus {
+  >li>a:hover,
+  >li>a:focus {
     background-color: $default-color;
     color: $fill-font-color;
     opacity: 1;
     text-decoration: none;
   }
 
-  &.dropdown-primary > li:not(.disabled)
-  {
-    > a:hover,
-    > a:focus{
+  &.dropdown-primary>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
       background-color: $primary-color;
     }
   }
-  &.dropdown-info > li:not(.disabled)
-  {
-    > a:hover,
-    > a:focus{
+
+  &.dropdown-info>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
       background-color: $info-color;
     }
   }
 
-  &.dropdown-success > li:not(.disabled)
-  {
-    > a:hover,
-    > a:focus{
+  &.dropdown-success>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
       background-color: $success-color;
     }
   }
-  &.dropdown-warning > li:not(.disabled)
-  {
-    > a:hover,
-    > a:focus{
+
+  &.dropdown-warning>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
       background-color: $warning-color;
     }
   }
-  &.dropdown-danger > li:not(.disabled)
-  {
-    > a:hover,
-    > a:focus{
+
+  &.dropdown-danger>li:not(.disabled) {
+
+    >a:hover,
+    >a:focus {
       background-color: $danger-color;
     }
   }
 
   //     Styles for the dropdown footer
-  > li.dropdown-footer{
+  >li.dropdown-footer {
     background-color: $background-light-grey;
     border-radius: 0 0 $border-radius-extreme $border-radius-extreme;
 
-    > ul{
+    >ul {
       list-style: outside none none;
       padding: 0px 5px;
-      > li{
+
+      >li {
         display: inline-block;
         text-align: left;
         padding: 0 10px;
@@ -235,7 +240,8 @@
           line-height: 35px;
         }
       }
-      > li:hover a{
+
+      >li:hover a {
         color: $font-hover-background-light-grey;
       }
     }
@@ -243,49 +249,54 @@
 
 }
 
-.select{
+.select {
+
   .no-style:hover,
   .no-style:active,
-  .no-style:focus{
+  .no-style:focus {
     background-color: $white-color;
     color: $font-color;
 
-    .caret{
+    .caret {
       border-top-color: $font-color;
     }
   }
 }
+
 .open {
-  .no-style{
+  .no-style {
     background-color: $white-color !important;
     color: $font-color !important;
-    .caret{
+
+    .caret {
       border-top-color: $font-color !important;
     }
   }
 }
 
 //fix bug for the select items in btn-group
-.btn-group.select{
+.btn-group.select {
   overflow: hidden;
 }
-.btn-group.select.open{
+
+.btn-group.select.open {
   overflow: visible;
 }
 
 // Style for notifications in dropdown
-.notification-bubble{
+.notification-bubble {
   left: 25px;
   position: absolute;
   top: 13px;
 }
-.dropdown-notification{
 
-  .dropdown-header{
+.dropdown-notification {
+
+  .dropdown-header {
     border-bottom: 1px solid $medium-pale-bg;
   }
 
-  .no-notification{
+  .no-notification {
     color: $dark-gray;
     font-size: 1.2em;
     padding: 30px 30px;
@@ -294,9 +305,9 @@
 
 }
 
-.dropdown-notification-list{
+.dropdown-notification-list {
 
-  > li{
+  >li {
     border-bottom: 1px solid $medium-pale-bg;
     color: $font-color;
     font-size: $font-size-base;
@@ -304,30 +315,34 @@
     padding: 10px 5px;
   }
 
-  > li > a{
+  >li>a {
     color: $font-color;
     white-space: normal;
 
-    .notification-text{
+    .notification-text {
       padding-left: 40px;
       position: relative;
     }
-    .label{
+
+    .label {
       display: block;
       position: absolute;
       top: 50%;
       margin-top: -12px;
       left: 7px;
     }
-    .message{
+
+    .message {
       font-size: 0.9em;
       line-height: 0.7;
     }
-    .time{
+
+    .time {
       color: $dark-gray;
       font-size: 0.7em;
     }
-    .read-notification{
+
+    .read-notification {
       font-size: 12px;
       opacity: 0;
       position: absolute;
@@ -337,76 +352,87 @@
     }
   }
 
-  > li:hover,
-  > li:focus {
+  >li:hover,
+  >li:focus {
     background-color: $background-lighter-grey;
     color: $font-color;
     opacity: 1;
     text-decoration: none;
 
-    .read-notification{
+    .read-notification {
       opacity: 1;
     }
   }
 
 }
-.scroll-area{
+
+.scroll-area {
   max-height: 310px;
   overflow-y: scroll;
   list-style: outside none none;
   padding: 0px;
 }
-.dropdown-sharing{
 
-  li{
+.dropdown-sharing {
+
+  li {
     color: $font-color;
     font-size: $font-size-base;
 
-    .social-line{
+    .social-line {
       line-height: 28px;
       padding: 10px 20px 5px 20px;
 
-      [class*="icon-"]{
+      [class*="icon-"] {
         font-size: 20px;
       }
     }
   }
 
   li:hover,
-  li:focus{
+  li:focus {
+
     .social-line,
     a,
-    .action-line{
-      background-color: $pale-bg;
+    .action-line {
+      background-color: $smoke-bg;
       color: $font-color;
       opacity: 1;
       text-decoration: none;
     }
   }
 }
-.dropdown-actions{
-  li{
-    .action-line{
+
+.dropdown-actions {
+  li {
+    .action-line {
       line-height: 24px;
       padding: 10px 20px;
       font-weight: bold;
-      [class*="icon-"]{
+
+      [class*="icon-"] {
         font-size: 24px;
       }
-      .col-xs-9{
+
+      .col-xs-9 {
         line-height: 34px;
       }
     }
-    .link-danger{
+
+    .link-danger {
       color: $danger-color;
-      &:hover, &:active, &:focus{
+
+      &:hover,
+      &:active,
+      &:focus {
         color: $danger-color;
       }
     }
   }
+
   li:hover,
-  li:focus{
-    a{
+  li:focus {
+    a {
       background-color: $background-lighter-grey;
       color: $font-color;
       opacity: 1;
