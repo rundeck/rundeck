@@ -90,14 +90,26 @@
             </div>
           </div>
         </div>
+        <div class="card">
+          <div class="card-header">
+            <h5 style="margin:0;">Plugin Config</h5>
+          </div>
+          <hr>
+          <div class="card-content">
+            <div v-if="selectedPlugin && selectedPlugin.name == 'pagerduty-run-job' ">
+                <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="curHook"></pager-duty-config>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+  import PagerDutyConfig from './PagerDutyConfig'
   import axios from 'axios'
-  import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue";
+  import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
   import {getServiceProviderDescription,
           getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
 
@@ -111,7 +123,7 @@
   }
   export default {
     name: "WebhooksView",
-    components: {PluginConfig},
+    components: {PluginConfig, PagerDutyConfig},
     data() {
       return {
         webhooks: [],

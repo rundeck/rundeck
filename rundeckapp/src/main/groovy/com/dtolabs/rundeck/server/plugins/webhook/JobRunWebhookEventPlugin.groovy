@@ -44,6 +44,8 @@ import rundeck.Webhook
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Webhook Run Job",description="Run a job on webhook event")
 class JobRunWebhookEventPlugin implements WebhookEventPlugin {
+    Map config
+
     static final String JSON_DATA_TYPE = "application/json"
     static final ObjectMapper mapper = new ObjectMapper()
 

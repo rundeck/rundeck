@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import com.dtolabs.rundeck.server.plugins.webhook.JobRunWebhookEventPlugin
+import com.dtolabs.rundeck.server.plugins.webhook.PagerDutyWebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.webhook.LogWebhookEventPlugin
 import com.google.common.eventbus.EventBus
 import grails.plugin.springsecurity.SpringSecurityUtils
@@ -392,6 +393,8 @@ beans={
     pluginRegistry['log-webhook-event'] = 'logWebhookEventPlugin'
     jobRunWebhookEventPlugin(JobRunWebhookEventPlugin)
     pluginRegistry['webhook-run-job'] = 'jobRunWebhookEventPlugin'
+    pagerDutyWebhookEventPlugin(PagerDutyWebhookEventPlugin)
+    pluginRegistry['pagerduty-run-job'] = 'pagerDutyWebhookEventPlugin'
 
     //list of plugin classes to generate factory beans for
     [
