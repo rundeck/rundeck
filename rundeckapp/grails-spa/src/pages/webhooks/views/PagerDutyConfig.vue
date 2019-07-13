@@ -46,10 +46,10 @@
                     <option>any</option>
                 </select>
                 <div v-for="(condition,index) in rulesSet.conditions" :key="index">
-                    <div class="form-inline">
-                        <div class="form-group">
-                            <input class="form-control" type="text" v-model="condition.path" placeholder="Path">
-    
+                    <div class="form-inline"  style="width:100%">
+                        <div class="form-group" style="width:100%">
+                            <input class="form-control" type="text" v-model="condition.path" placeholder="Path" style="width: 30%">
+
                             <select class="form-control" v-model="condition.condition">
                                 <option>contains</option>
                                 <option>matches</option>

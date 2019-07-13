@@ -128,6 +128,9 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compile "com.google.code.gson:gson:2.8.2"
+
+    compile "com.jayway.jsonpath:json-path:2.4.0"
+
     compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
