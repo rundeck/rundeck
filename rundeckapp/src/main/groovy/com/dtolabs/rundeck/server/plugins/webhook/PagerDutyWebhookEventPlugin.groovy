@@ -41,6 +41,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Webhook
 
+import com.jayway.jsonpath.JsonPath
 
 @Plugin(name='pagerduty-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="PagerDuty Webhook Run Job",description="Run a job on webhook event")
@@ -90,15 +91,14 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
 
                 Map<String, Map<String, String>> localDataContext = DataContextUtils.context("webhook", webhookMap)
                 if (m instanceof Map) {
-                    toStringMap(m)
-                    eventData = m
+                    eventData = toStringMap(m)
                 }
 
                 def flatMap = flattenMap(eventData)
                 localDataContext = DataContextUtils.addContext("data", flatMap, localDataContext)
 
                 conf.rules.each { r ->
-                    if (! isRuleMatch(r, flatMap))
+                    if (! isRuleMatch(r, m))
                         return
 
                     def jobId = r.jobId
@@ -157,7 +157,7 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         }
     }
 
-    boolean isRuleMatch(RoutingRule rule, Map<String, Map<String, String>> event) {
+    boolean isRuleMatch(RoutingRule rule, Map event) {
         if (rule.conditions.empty)
             return true
 
@@ -182,16 +182,18 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         }
     }
 
-    boolean contains(Condition condition, Map<String, Map<String, String>> event) {
-        def value = event.get(condition.path)
+    boolean contains(Condition condition, Map event) {
+        def value = JsonPath.read(event, condition.path)
+//        def value = event.get(condition.path)
 
         value instanceof String ?
             value.contains(condition.value) :
             false
     }
 
-    boolean matches(Condition condition, Map<String, Map<String, String>> event) {
-        def value = event.get(condition.path)
+    boolean matches(Condition condition, Map event) {
+        def value = JsonPath.read(event, condition.path)
+//        def value = event.get(condition.path)
 
         value instanceof String ?
             value == condition.value :
@@ -209,13 +211,24 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         } as Map<String, String>
     }
 
-    void toStringMap(Map map) {
-        map.each { k, v ->
-            if (v instanceof Map)
-                toStringMap(v)
-            else
-                map[k] = v.toString()
-        } as Map<String, Map<String, String>>
+    Map<String, Map<String, String>> toStringMap(Map map) {
+        def nuMap = new HashMap()
+
+        def doStringMap
+        doStringMap = { Map oldMap, Map newMap ->
+            oldMap.each { k, v ->
+                if (v instanceof Map) {
+                    newMap[k] = new HashMap()
+                    doStringMap(v, newMap[k])
+                }
+                else {
+                    newMap[k] = v.toString()
+                }
+
+            } as Map<String, Map<String, String>>
+        }
+        doStringMap(map, nuMap)
+        nuMap
     }
 
     static enum WebhookJobRunHandlerFailureReason implements FailureReason {

@@ -134,6 +134,9 @@ dependencies {
     compile "org.eclipse.jetty:jetty-jaas"
     compile "org.eclipse.jetty:jetty-util"
     compile "org.eclipse.jetty:jetty-security"
+
+    compile "com.jayway.jsonpath:json-path:2.4.0"
+
     compile 'org.grails.plugins:spring-security-core:3.2.3'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
