@@ -15,17 +15,20 @@
                 <div class="form-inline">
                     <!-- <div class="form-group"> -->
                         <div class="input-group" style="margin-bottom:0;">
-                            <input class="form-control" v-model="rulesSet.name" placeholder="New Name">
+                            <input class="form-control" v-model="rulesSet.name" placeholder="Rule Name">
                             <div class="input-group-addon btn btn-md btn-danger"
                                 @click="handleDeleteRuleSet(rulesSet)">
                                 DELETE
                             </div>
                         </div>
                     <!-- </div> -->
+                    <div class="btn btn-primary pull-right" type="button" data-toggle="collapse" :data-target="'#' + index + 'rulePanel'" aria-expanded="false" aria-controls="collapseExample" style="display:inline;">
+                        <i class="glyphicon glyphicon-edit"></i>
+                    </div>
                 </div>
                 
             </div>
-            <div class="panel-body">
+            <div class="panel-body collapse" :id="index + 'rulePanel'">
                 
                 <div class="form-group">
                     <label class="control-label">JobID</label>
@@ -69,12 +72,12 @@
                             </select>
 
                             <input class="form-control" type="text" v-model="condition.value" placeholder="Value">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <div class="btn btn-md btn-danger"
-                                @click="handleDeleteCondition(rulesSet,condition)">
-                                    Delete
+                            <div class="form-group" style="margin:0 5px 0;">
+                                <div class="btn btn-squircle btn-md btn-danger"
+                                    @click="handleDeleteCondition(rulesSet,condition)">
+                                        Delete
+                                </div>
                             </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -169,3 +172,10 @@ export default {
     }
 }
 </script>
+
+
+<style lang="scss" scoped>
+  .btn-squircle {
+    border-radius: 5px;
+  }
+</style>
