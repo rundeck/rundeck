@@ -36,7 +36,7 @@ public class Workflow {
     List<WorkflowStep> commands
     String strategy="node-first"
     String pluginConfig
-    static belongsTo = [Execution]
+    static belongsTo = [Execution, ScheduledExecution]
     static hasMany=[commands:WorkflowStep]
     static constraints = {
         strategy(nullable:false, maxSize: 256)
