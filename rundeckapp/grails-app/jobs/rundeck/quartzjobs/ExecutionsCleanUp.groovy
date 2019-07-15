@@ -39,9 +39,10 @@ class ExecutionsCleanUp implements InterruptableJob {
         ExecutionService executionService = fetchExecutionService(context.jobDetail.jobDataMap)
         FileUploadService fileUploadService = fetchFileUploadService(context.jobDetail.jobDataMap)
         LogFileStorageService logFileStorageService = fetchLogFileStorageService(context.jobDetail.jobDataMap)
+        JobSchedulerService jobSchedulerService = fetchJobSchedulerService(context.jobDetail.jobDataMap)
 
         if(!wasInterrupted) {
-            List execIdsToExclude = searchExecutions(frameworkService, executionService, project,
+            List execIdsToExclude = searchExecutions(frameworkService, executionService, jobSchedulerService, project,
                     maxDaysToKeep ? Integer.parseInt(maxDaysToKeep) : 0,
                     minimumExecutionToKeep ? Integer.parseInt(minimumExecutionToKeep) : 0,
                     maximumDeletionSize ? Integer.parseInt(maximumDeletionSize) : 500)
@@ -139,47 +140,85 @@ class ExecutionsCleanUp implements InterruptableJob {
         return result
     }
 
-    private List<Execution> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, String project, Integer maxDaysToKeep,
+    private List<Execution> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
                                              Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
         List collectedExecutions= []
+        List<String> listDeadMembers = null
+        Integer totalToExclude = 0
+        List<Execution> result= null
+        def serverUUID = frameworkService.getServerUUID()
 
         if(frameworkService.isClusterModeEnabled()){
-            logger.info("searching executions of node ID: ${frameworkService.getServerUUID()}")
+            listDeadMembers = jobSchedulerService.getDeadMembers(serverUUID);
+            logger.info("searching executions of node ID: ${serverUUID}")
+            if(listDeadMembers){
+                logger.info("list dead nodes to size: ${listDeadMembers.size()}")
+                logger.info("list dead nodes to check: ${listDeadMembers.toString()}")
+            }
         }
 
         Map jobList = executionService.queryExecutions(createCriteria(
                 project,
                 maxDaysToKeep,
                 maximumDeletionSize,
-                frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null))
+                frameworkService.isClusterModeEnabled()?serverUUID:null,
+                frameworkService.isClusterModeEnabled()?listDeadMembers:null)
+        )
 
         if(null != jobList && null != jobList.get("total")) {
-            Integer totalToExclude = (Integer) jobList.get("total")
-            logger.info("found ${totalToExclude} executions")
-            if(totalToExclude >0) {
-                List<Execution> result = ((List<Execution>)jobList.get("result")).sort{a,b -> b.dateCompleted <=> a.dateCompleted}
-                if(minimumExecutionToKeep > 0){
-                    int totalExecutions = this.totalAllExecutions(executionService, project)
-                    int sub = totalExecutions - totalToExclude
-                    logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
-                    logger.info("total exections of project ${project}: ${totalExecutions}")
-                    logger.info("total to exclude: ${totalToExclude}")
-                    if(sub < minimumExecutionToKeep) {
-                        int jump = minimumExecutionToKeep - sub
-                        logger.info("${jump} executions can not be removed")
-                        result = jump < result.size() ? result[jump..totalToExclude - 1] : []
-                        logger.info("${result.size()} executions will be removed")
-                    }
-                }
-                for (Execution exec: result) {
-                    if(exec.getStatus() != null) { //exclude running executions
-                        collectedExecutions.add(exec)
-                        logger.info(exec.toString())
-                    }else{
-                        logger.info("Running execution: ${exec.toString()}")
-                    }                }
+            totalToExclude = (Integer) jobList.get("total")
+            result = (List<Execution>)jobList.get("result")
+        }
+
+        //check if there are execution with serverUUID equal null on cluster mode
+        if(frameworkService.isClusterModeEnabled() && totalToExclude<maximumDeletionSize && listDeadMembers && listDeadMembers.contains("null")){
+
+            Map jobListNull = executionService.queryExecutions(createCriteria(
+                    project,
+                    maxDaysToKeep,
+                    maximumDeletionSize-totalToExclude,
+                    frameworkService.isClusterModeEnabled()?serverUUID:null,
+                    null, true)
+            )
+
+            if(jobListNull!=null && null != jobListNull.get("total")){
+                totalToExclude = totalToExclude + (Integer) jobListNull.get("total")
+                List<Execution> resultNull = (List<Execution>)jobListNull.get("result")
+                result.addAll(resultNull)
+
             }
         }
+
+        logger.info("found ${totalToExclude} executions")
+        if(totalToExclude >0) {
+            result.sort{a,b -> b.dateCompleted <=> a.dateCompleted}
+
+            if(minimumExecutionToKeep > 0){
+                int totalExecutions = this.totalAllExecutions(executionService, project)
+                int sub = totalExecutions - totalToExclude
+                logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
+                logger.info("total exections of project ${project}: ${totalExecutions}")
+                logger.info("total to exclude: ${totalToExclude}")
+                if(sub < minimumExecutionToKeep) {
+                    int jump = minimumExecutionToKeep - sub
+                    logger.info("${jump} executions can not be removed")
+                    //possible bug, totalToExclude will have the total number of executions that match with the criteria, but result array will that just the maximumDeletionSize size
+                    //result = jump < result.size() ? result[jump..totalToExclude - 1] : []
+                    result = jump < result.size() ? result[jump..maximumDeletionSize - 1] : []
+                    logger.info("${result.size()} executions will be removed")
+                }
+            }
+            for (Execution exec: result) {
+                if(exec.getStatus() != null) { //exclude running executions
+                    collectedExecutions.add(exec)
+                    logger.info(exec.toString())
+                }else{
+                    logger.info("Running execution: ${exec.toString()}")
+                }
+            }
+        }
+
+
         if(collectedExecutions.size()==0){
             logger.info("No executions to delete")
         }
@@ -192,11 +231,20 @@ class ExecutionsCleanUp implements InterruptableJob {
         return null != result ? result.total : 0
     }
 
-    private Closure createCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null){
+    private Closure createCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null, List<String> deadMembers = null, boolean removeNullServerUUID = false){
         Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
         return {isCount ->
             if(serverNodeUUID){
-                eq('serverNodeUUID', serverNodeUUID)
+                if(removeNullServerUUID){
+                    isNull('serverNodeUUID')
+                }else{
+                    if(!deadMembers){
+                        eq('serverNodeUUID', serverNodeUUID)
+                    }else{
+                        deadMembers.add(serverNodeUUID)
+                        'in'('serverNodeUUID',deadMembers)
+                    }
+                }
             } else {
                 isNull('serverNodeUUID')
             }
@@ -298,5 +346,17 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
         return fws
 
+    }
+
+
+    private JobSchedulerService fetchJobSchedulerService(def jobDataMap){
+        def jobSchedulerService = jobDataMap.get("jobSchedulerService")
+        if (jobSchedulerService==null) {
+            throw new RuntimeException("jobSchedulerService could not be retrieved from JobDataMap!")
+        }
+        if (! (jobSchedulerService instanceof JobSchedulerService)) {
+            throw new RuntimeException("JobDataMap contained invalid JobSchedulerService type: " + jobSchedulerService.getClass().getName())
+        }
+        return jobSchedulerService
     }
 }
