@@ -103,7 +103,7 @@
           <div class="card-header">
             <h5 style="margin:0;">Plugin Config</h5>
           </div>
-          <hr>
+          <hr style="margin-bottom:0;">
           <div class="card-content">
             <div v-if="selectedPlugin && selectedPlugin.name == 'pagerduty-run-job' ">
                 <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="curHook"></pager-duty-config>
