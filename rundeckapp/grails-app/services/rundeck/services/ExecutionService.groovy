@@ -91,7 +91,6 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -126,6 +125,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    def jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1162,8 +1162,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     framework.getWorkflowExecutionService(),
                     item,
                     executioncontext,
-                    workflowLogManager
+                    workflowLogManager,
+                    jobPluginService
             )
+
             thread.start()
             log.debug("started thread")
             return [
@@ -3579,7 +3581,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     wservice,
                     newExecItem,
                     newContext,
-                    null
+                    null,
+                    jobPluginService
             )
 
             thread.start()
