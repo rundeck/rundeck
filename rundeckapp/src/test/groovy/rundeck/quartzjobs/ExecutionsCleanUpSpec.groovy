@@ -68,7 +68,7 @@ class ExecutionsCleanUpSpec extends Specification {
         def executionService = Mock(ExecutionService) {
             queryExecutions(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec], total: 1]
+                    return [result: [exec.id], total: 1]
                 }
 
                 [result: [], total: 0]
@@ -193,7 +193,8 @@ class ExecutionsCleanUpSpec extends Specification {
         job.execute(context)
 
         then:
-        2*executionService.queryExecutions(_)
+        1*jobSchedulerService.getDeadMembers(_)
+        1*executionService.queryExecutions(_)
 
     }
 }

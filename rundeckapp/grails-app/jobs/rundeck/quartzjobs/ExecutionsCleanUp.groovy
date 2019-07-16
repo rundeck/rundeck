@@ -51,12 +51,12 @@ class ExecutionsCleanUp implements InterruptableJob {
         }
     }
 
-    private Map deleteBulkExecutionIds(List<Execution> execs, FileUploadService fileUploadService,
+    private Map deleteBulkExecutionIds(List<Long> execs, FileUploadService fileUploadService,
                                 LogFileStorageService logFileStorageService) {
         def failures=[]
         def failed=false
         def count=0
-        for (Execution exec : execs) {
+        for (Long exec : execs) {
             def result
             if (!exec) {
                 result = [success: false, message: 'Execution Not found: ' + exec, id: exec]
@@ -75,12 +75,15 @@ class ExecutionsCleanUp implements InterruptableJob {
         return [success:!failed, failures:failures, successTotal:count]
     }
 
-    private Map deleteExecution(Execution e, FileUploadService fileUploadService, LogFileStorageService logFileStorageService){
+    private Map deleteExecution(Long execId, FileUploadService fileUploadService, LogFileStorageService logFileStorageService){
         Map result
         try {
+            Execution e = Execution.findById(execId)
+
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
+
             ReferencedExecution.findAllByExecution(e).each{ re ->
                 re.delete()
             }
@@ -140,20 +143,25 @@ class ExecutionsCleanUp implements InterruptableJob {
         return result
     }
 
-    private List<Execution> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
+    private List<Long> searchExecutions(FrameworkService frameworkService, ExecutionService executionService, JobSchedulerService jobSchedulerService, String project, Integer maxDaysToKeep,
                                              Integer minimumExecutionToKeep, Integer maximumDeletionSize = 500){
         List collectedExecutions= []
         List<String> listDeadMembers = null
-        Integer totalToExclude = 0
-        List<Execution> result= null
         def serverUUID = frameworkService.getServerUUID()
+        def removeNullServerUUID = false
 
         if(frameworkService.isClusterModeEnabled()){
             listDeadMembers = jobSchedulerService.getDeadMembers(serverUUID);
             logger.info("searching executions of node ID: ${serverUUID}")
+
             if(listDeadMembers){
                 logger.info("list dead nodes to size: ${listDeadMembers.size()}")
                 logger.info("list dead nodes to check: ${listDeadMembers.toString()}")
+
+                if(listDeadMembers.contains("null")){
+                    removeNullServerUUID=true
+                    listDeadMembers.remove("null")
+                }
             }
         }
 
@@ -162,59 +170,34 @@ class ExecutionsCleanUp implements InterruptableJob {
                 maxDaysToKeep,
                 maximumDeletionSize,
                 frameworkService.isClusterModeEnabled()?serverUUID:null,
-                frameworkService.isClusterModeEnabled()?listDeadMembers:null)
+                frameworkService.isClusterModeEnabled()?listDeadMembers:null,
+                removeNullServerUUID)
+
         )
 
         if(null != jobList && null != jobList.get("total")) {
-            totalToExclude = (Integer) jobList.get("total")
-            result = (List<Execution>)jobList.get("result")
-        }
+            Integer totalToExclude = (Integer) jobList.get("total")
 
-        //check if there are execution with serverUUID equal null on cluster mode
-        if(frameworkService.isClusterModeEnabled() && totalToExclude<maximumDeletionSize && listDeadMembers && listDeadMembers.contains("null")){
+            logger.info("found ${totalToExclude} executions")
+            if(totalToExclude >0) {
+                List result = (List)jobList.get("result")
+                //result.sort{a,b -> b.dateCompletedgreg  <=> a.dateCompleted}
 
-            Map jobListNull = executionService.queryExecutions(createCriteria(
-                    project,
-                    maxDaysToKeep,
-                    maximumDeletionSize-totalToExclude,
-                    frameworkService.isClusterModeEnabled()?serverUUID:null,
-                    null, true)
-            )
-
-            if(jobListNull!=null && null != jobListNull.get("total")){
-                totalToExclude = totalToExclude + (Integer) jobListNull.get("total")
-                List<Execution> resultNull = (List<Execution>)jobListNull.get("result")
-                result.addAll(resultNull)
-
-            }
-        }
-
-        logger.info("found ${totalToExclude} executions")
-        if(totalToExclude >0) {
-            result.sort{a,b -> b.dateCompleted <=> a.dateCompleted}
-
-            if(minimumExecutionToKeep > 0){
-                int totalExecutions = this.totalAllExecutions(executionService, project)
-                int sub = totalExecutions - totalToExclude
-                logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
-                logger.info("total exections of project ${project}: ${totalExecutions}")
-                logger.info("total to exclude: ${totalToExclude}")
-                if(sub < minimumExecutionToKeep) {
-                    int jump = minimumExecutionToKeep - sub
-                    logger.info("${jump} executions can not be removed")
-                    //possible bug, totalToExclude will have the total number of executions that match with the criteria, but result array will that just the maximumDeletionSize size
-                    //result = jump < result.size() ? result[jump..totalToExclude - 1] : []
-                    result = jump < result.size() ? result[jump..maximumDeletionSize - 1] : []
-                    logger.info("${result.size()} executions will be removed")
+                if (minimumExecutionToKeep > 0) {
+                    int totalExecutions = this.totalAllExecutions(executionService, project)
+                    int sub = totalExecutions - totalToExclude
+                    logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
+                    logger.info("total exections of project ${project}: ${totalExecutions}")
+                    logger.info("total to exclude: ${totalToExclude}")
+                    if (sub < minimumExecutionToKeep) {
+                        int jump = minimumExecutionToKeep - sub
+                        logger.info("${jump} executions can not be removed")
+                        result = jump < result.size() ? result[jump..result.size() - 1] : []
+                        logger.info("${result.size()} executions will be removed")
+                    }
                 }
-            }
-            for (Execution exec: result) {
-                if(exec.getStatus() != null) { //exclude running executions
-                    collectedExecutions.add(exec)
-                    logger.info(exec.toString())
-                }else{
-                    logger.info("Running execution: ${exec.toString()}")
-                }
+
+                collectedExecutions.addAll(result)
             }
         }
 
@@ -227,23 +210,40 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     private int totalAllExecutions(ExecutionService executionService, String project){
         ExecutionQuery query = new ExecutionQuery(projFilter: project)
-        Map result = executionService.queryExecutions(query)
-        return null != result ? result.total : 0
+        def criteriaClos = { isCount ->
+            // Run main query criteria
+            def queryCriteria = query.createCriteria(delegate)
+            queryCriteria()
+        }
+        def total = Execution.createCriteria().count(criteriaClos.curry(true))
+        return null != total ? total : 0
     }
 
     private Closure createCriteria(String project, Integer maxDaysToKeep = 0, Integer maxDetetionSize = 500, String serverNodeUUID = null, List<String> deadMembers = null, boolean removeNullServerUUID = false){
         Date endDate=ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d")
         return {isCount ->
+            if(!isCount){
+                projections {
+                    //just return the ID on the select
+                    property('id')
+                }
+            }
+
             if(serverNodeUUID){
-                if(removeNullServerUUID){
-                    isNull('serverNodeUUID')
+                if(!deadMembers){
+                    eq('serverNodeUUID', serverNodeUUID)
                 }else{
-                    if(!deadMembers){
-                        eq('serverNodeUUID', serverNodeUUID)
+                    deadMembers.add(serverNodeUUID)
+                    if(removeNullServerUUID){
+                        //if deadMembers contain null, it will also remove the serverNodeUUID=null
+                        or {
+                            isNull('serverNodeUUID')
+                            'in'('serverNodeUUID', deadMembers)
+                        }
                     }else{
-                        deadMembers.add(serverNodeUUID)
-                        'in'('serverNodeUUID',deadMembers)
+                        'in'('serverNodeUUID', deadMembers)
                     }
+
                 }
             } else {
                 isNull('serverNodeUUID')
@@ -251,18 +251,19 @@ class ExecutionsCleanUp implements InterruptableJob {
 
             eq('project', project)
             le('dateCompleted', endDate)
+            //remove running execution
+            isNotNull('dateCompleted')
+            ne('status',ExecutionService.EXECUTION_SCHEDULED)
             maxResults(maxDetetionSize)
             if (!isCount) {
                 and {
                     order('dateCompleted', 'asc')
-                    order('dateStarted', 'asc')
-
                 }
             }
         }
     }
 
-    private int deleteByExecutionList(List<Execution> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {
+    private int deleteByExecutionList(List<Long> collectedExecutions, FileUploadService fileUploadService, LogFileStorageService logFileStorageService) {
         logger.info("Start to delete ${collectedExecutions.size()} executions")
         if(collectedExecutions.size()>0) {
             Map result = deleteBulkExecutionIds(collectedExecutions, fileUploadService, logFileStorageService)
