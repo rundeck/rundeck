@@ -16,14 +16,15 @@
 
 /*
 * ExecutionContextImpl.java
-* 
+ *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/23/11 1:47 PM
-* 
+ *
 */
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.data.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
@@ -62,7 +63,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private WorkflowExecutionListener workflowExecutionListener;
     private ExecutionLogger executionLogger;
     private Framework framework;
-    private AuthContext authContext;
+    private UserAndRolesAuthContext authContext;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
     private int stepNumber = 1;
@@ -122,10 +123,15 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     public AuthContext getAuthContext() {
+        return getUserAndRolesAuthContext();
+    }
+
+    @Override
+    public UserAndRolesAuthContext getUserAndRolesAuthContext() {
         return authContext;
     }
 
-    public void setAuthContext(AuthContext authContext) {
+    public void setAuthContext(UserAndRolesAuthContext authContext) {
         this.authContext = authContext;
     }
 
@@ -186,7 +192,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
                 ctx.executionLogger = original.getExecutionLogger();
                 ctx.framework = original.getFramework();
-                ctx.authContext = original.getAuthContext();
+                ctx.authContext = original.getUserAndRolesAuthContext();
                 ctx.threadCount = original.getThreadCount();
                 ctx.keepgoing = original.isKeepgoing();
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
@@ -481,7 +487,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
-        public Builder authContext(AuthContext authContext) {
+        public Builder authContext(UserAndRolesAuthContext authContext) {
             ctx.authContext = authContext;
             return this;
         }
@@ -515,7 +521,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.stepContext = stepContext;
             return this;
         }
-        
+
         public Builder orchestrator(OrchestratorConfig orchestrator) {
             ctx.orchestrator = orchestrator;
             return this;
@@ -525,7 +531,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.pluginControlService = pluginControlService;
             return this;
         }
-        
+
         public Builder pushContextStep(final int step) {
             ctx.stepContext.add(ctx.stepNumber);
             ctx.stepNumber = step;

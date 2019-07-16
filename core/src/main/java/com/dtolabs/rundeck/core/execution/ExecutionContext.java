@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
@@ -66,8 +67,11 @@ public interface ExecutionContext {
 
     /**
      * @return the authorization context
+     * @deprecated use {@link #getUserAndRolesAuthContext()}
      */
     public AuthContext getAuthContext();
+
+    public UserAndRolesAuthContext getUserAndRolesAuthContext();
     /**
      * @return the storage service
      */

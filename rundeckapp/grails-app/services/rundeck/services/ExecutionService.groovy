@@ -985,9 +985,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
-    def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
-                              ScheduledExecution scheduledExecution=null, Map extraParams = null,
-                              Map extraParamsExposed = null, int retryAttempt=0){
+    def Map executeAsyncBegin(
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            Execution execution,
+            ScheduledExecution scheduledExecution = null,
+            Map extraParams = null,
+            Map extraParamsExposed = null,
+            int retryAttempt = 0
+    ) {
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
@@ -1380,7 +1386,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ExecutionContext execMap,
             StepExecutionContext origContext,
             Framework framework,
-            AuthContext authContext,
+            UserAndRolesAuthContext authContext,
             String userName = null,
             Map<String, String> jobcontext,
             ExecutionListener listener,
