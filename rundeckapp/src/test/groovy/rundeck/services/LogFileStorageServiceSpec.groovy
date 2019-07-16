@@ -28,21 +28,19 @@ import grails.test.mixin.TestFor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
-import rundeck.services.logging.ExecutionLogState
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.ScheduledExecutorService
 
-import static rundeck.services.logging.ExecutionLogState.AVAILABLE
-import static rundeck.services.logging.ExecutionLogState.AVAILABLE_PARTIAL
-import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE
-import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE_PARTIAL
-import static rundeck.services.logging.ExecutionLogState.NOT_FOUND
-import static rundeck.services.logging.ExecutionLogState.PENDING_REMOTE
-import static rundeck.services.logging.ExecutionLogState.WAITING
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_PARTIAL
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE_PARTIAL
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.NOT_FOUND
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.PENDING_REMOTE
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.WAITING
 
 /**
  * Created by greg on 3/28/16.

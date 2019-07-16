@@ -37,7 +37,7 @@ import org.rundeck.app.services.ExecutionFile
 import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LineCountingLogWriter
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
@@ -246,9 +246,9 @@ class LoggingService implements ExecutionFileProducer {
                 def plugin = result.instance
                 try {
                     if (plugin.initialize(jobcontext)) {
-                        return new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: plugin)
+                        return new ExecutionLogReader(state: ExecutionFileState.AVAILABLE, reader: plugin)
                     } else {
-                        return new ExecutionLogReader(state: ExecutionLogState.WAITING, reader: null)
+                        return new ExecutionLogReader(state: ExecutionFileState.WAITING, reader: null)
                     }
                 } catch (Throwable e) {
                     log.error("Failed to initialize reader plugin ${pluginName}: " + e.message)
