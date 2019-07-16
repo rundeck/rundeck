@@ -272,7 +272,8 @@ class RoutingRule {
             return true
 
         def evaluations = conditions.collect {c ->
-            c.isMatch(event)
+            println(c.isMatch(event))
+            return c.isMatch(event)
         }
 
         switch (policy) {
@@ -304,18 +305,18 @@ class Condition {
     }
 
     boolean contains(Map event) {
-        def value = JsonPath.read(event, path)
+        def res = JsonPath.read(event, path)
 
-        value instanceof String ?
-                value.contains(value) :
+        res instanceof String ?
+                res.contains(value) :
                 false
     }
 
     boolean matches(Map event) {
-        def value = JsonPath.read(event, path)
+        def res = JsonPath.read(event, path)
 
-        value instanceof String ?
-                value == value :
+        res instanceof String ?
+                res == value :
                 false
     }
 }
