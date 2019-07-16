@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -184,8 +185,9 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService): ref('clusterInfoService'),
-                (ApiInfo)           : ref('rundeckApiInfoService')
+                (ClusterInfoService)         : ref('clusterInfoService'),
+                (ApiInfo)                    : ref('rundeckApiInfoService'),
+                (ExecutionFileManagerService): ref('logFileStorageService')
         ]
     }
 
