@@ -19,27 +19,19 @@ import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.apache.log4j.Logger
 
 @Plugin(name = "log-webhook-event",service= ServiceNameConstants.WebhookEvent)
-@PluginDescription(title="Log Webhook Events",description = "Can be used to log any incoming webhook events")
+@PluginDescription(title="Log Webhook Events",description = "Can be used to log any incoming webhook events to log4j logger 'org.rundeck.plugin.webhook.event'")
 class LogWebhookEventPlugin implements WebhookEventPlugin {
-    private static final Logger LOG = LoggerFactory.getLogger(LogWebhookEventPlugin)
-
-    @PluginProperty(title="Supplemental Text")
-    String supplementalText
+    private static final Logger LOG = Logger.getLogger("org.rundeck.plugin.webhook.event")
 
     @Override
     void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
-        //LOG.info("Webhook Event: ${data.webhook} ${data.project} ${data.timestamp} ${data.sender}")
-        //LOG.info(data.data.text)
-        println("Webhook Event: ${data.webhook} ${data.project} ${data.timestamp} ${data.sender}")
-        println "supplemental text: ${supplementalText}"
-        println(data.data.text)
+        LOG.info("Webhook Event: ${data.webhook} ${data.project ? "project: "+data.project : ""} ${data.timestamp} ${data.sender}")
+        LOG.info(data.data.text)
     }
 }

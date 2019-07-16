@@ -300,6 +300,9 @@
         <div class="row userapitoken">
             <div class="col-sm-12">
                 <div class="help-block"  data-bind="text: tokenTableSummaryText">
+                <g:set var="tokens"
+                       value="${(tokenAdmin) ? rundeck.AuthToken.findAllByType(rundeck.AuthToken.TOKEN_TYPE_USER) :
+                               rundeck.AuthToken.findAllByCreatorAndType(user.login,rundeck.AuthToken.TOKEN_TYPE_USER)}"/>
 
                 </div>
 

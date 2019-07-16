@@ -91,7 +91,7 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration) {
+    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
 
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
@@ -104,7 +104,8 @@ class ApiService {
                 user: u,
                 expiration: expiration,
                 uuid: uuid,
-                creator: ownerUsername
+                creator: ownerUsername,
+                type: webhookToken ? AuthToken.TOKEN_TYPE_WEBHOOK : AuthToken.TOKEN_TYPE_USER
         )
 
         if (token.save(flush:true)) {

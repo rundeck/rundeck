@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.UserService
+import rundeck.services.WebhookService
 
 import javax.security.auth.Subject
 import javax.servlet.ServletContext
@@ -62,21 +63,11 @@ class SetUserInterceptor {
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
             def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
-            if(grailsApplication.config.rundeck.security.allowBasicAuthWithApiToken in ['true',true]) {
-                String basicAuth = request.getHeader("Authorization")
-                if (basicAuth && basicAuth.startsWith("Basic")) {
-                    try {
-                        byte[] credDecoded = Base64.getDecoder().decode(basicAuth.substring("Basic".length()).trim());
-                        String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-                        authtoken = credentials.tokenize(":")[1]
-                    } catch(Exception ex) {
-                        log.error("Error parsing token from Basic Authentication header: ${basicAuth}",ex)
-                    }
-                }
-            }
 
-            String user = lookupToken(authtoken, servletContext)
-            List<String> roles = lookupTokenRoles(authtoken, servletContext)
+            String tokenType = controllerName == "webhook" ? AuthToken.TOKEN_TYPE_WEBHOOK : AuthToken.TOKEN_TYPE_USER
+            String user = lookupToken(authtoken, servletContext,tokenType)
+            List<String> roles = lookupTokenRoles(authtoken, servletContext,tokenType)
+
 
             if (user){
                 session.user = user
@@ -169,7 +160,7 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
-    private String lookupToken(String authtoken, ServletContext context) {
+    private String lookupToken(String authtoken, ServletContext context, String tokenType) {
         if(!authtoken){
             return null
         }
@@ -183,7 +174,7 @@ class SetUserInterceptor {
                 return user
             }
         }
-        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        def tokenobj = authtoken ? AuthToken.findByTokenAndType(authtoken,tokenType) : null
         if (tokenobj) {
             if (tokenobj.tokenIsExpired()) {
                 log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");
@@ -202,7 +193,7 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
-    private List<String> lookupTokenRoles(String authtoken, ServletContext context) {
+    private List<String> lookupTokenRoles(String authtoken, ServletContext context, String tokenType) {
         if(!authtoken){
             return null
         }
@@ -218,7 +209,7 @@ class SetUserInterceptor {
                 return roles
             }
         }
-        AuthToken tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        AuthToken tokenobj = authtoken ? AuthToken.findByTokenAndType(authtoken,tokenType) : null
         if (tokenobj) {
             roles = tokenobj?.authRoles?.split(",") as List
             log.debug("loginCheck found roles ${roles} via DB, ${tokenobj}");
