@@ -201,7 +201,7 @@ jQuery(function(){
             Add a ${g.message(code:'Workflow.step.label')}
         </span>
     </div>
-    <div id="wfnewtypes" style="display:none; margin-top:10px;" class="panel panel-default">
+    <div id="wfnewtypes" style="display:none; margin-top:10px; margin-left:20px;" class="panel panel-default">
         <g:render template="/execution/wfAddStep"
             model="[addMessage:'Workflow.step.label.add',chooseMessage:'Workflow.step.label.choose.the.type']"
         />

@@ -24,7 +24,7 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
     <g:if test="${edit}">
-        <div id="optundoredo" class="undoredocontrols">
+        <div id="optundoredo" class="undoredocontrols" style="margin-top:1em">
             <g:render template="/common/undoRedoControls" model="[key: 'opts']"/>
         </div>
     </g:if>
