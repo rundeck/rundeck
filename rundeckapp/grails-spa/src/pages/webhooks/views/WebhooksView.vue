@@ -32,7 +32,6 @@
           </div>
           <div class="col-sm-8 details-output">
             <div
-              style="display: inline-block;max-height: 80vh;overflow-y: scroll;"
               class="flex-col"
             >
               <div class="card">
@@ -56,14 +55,21 @@
                     <div><label>Webhook Roles:</label><input v-model="curHook.roles" class="form-control"></div>
                     <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin"
                                                                      @change="setSelectedPlugin()" class="form-control">
-                      <option v-for="plugin in webhookPlugins" v-bind:value="plugin.name">{{plugin.name}}</option>
+                      <option v-for="plugin in webhookPlugins" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
-                    <div v-if="selectedPlugin && selectedPlugin.configProps.length > 0">
+                    <div v-if="selectedPlugin && showPluginConfig">
                       <h5>Plugin Configuration</h5>
                       <hr>
-                      <div v-for="(prop,index) in selectedPlugin.configProps" :key="index">
-                        <label>{{prop}}</label><input type="text" v-model="curHook.config[prop]">
-                      </div>
+                      <plugin-config
+                        :mode="'edit'"
+                        :serviceName="'WebhookEvent'"
+                        v-model="selectedPlugin"
+                        :provider="curHook.eventPlugin"
+                        :key="curHook.eventPlugin"
+                        :show-title="false"
+                        :show-description="false"
+                      >
+                      </plugin-config>
                     </div>
                     <div class="row" style="margin-top: 10px;">
                       <div class="col-sm-6">
@@ -91,6 +97,9 @@
 
 <script>
   import axios from 'axios'
+  import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue";
+  import {getServiceProviderDescription,
+          getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
 
   var rdBase = "http://localhost:4440"
   var apiVersion = "31"
@@ -102,12 +111,13 @@
   }
   export default {
     name: "WebhooksView",
-    components: {},
+    components: {PluginConfig},
     data() {
       return {
         webhooks: [],
         webhookPlugins: [],
         curHook: null,
+        showPluginConfig: false,
         selectedPlugin: null,
         apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
         popup: {
@@ -169,9 +179,15 @@
         this.setSelectedPlugin()
       },
       setSelectedPlugin() {
-        this.selectedPlugin = this.webhookPlugins.find(p => p.name === this.curHook.eventPlugin)
+        this.selectedPlugin = {type:this.curHook.eventPlugin,config:this.curHook.config}
+        getServiceProviderDescription("WebhookEvent",this.curHook.eventPlugin).then(data => {this.showPluginConfig = data.props.length > 0})
       },
       handleSave() {
+        if(!this.curHook.eventPlugin) {
+          this.setError("You must select a Webhook plugin before saving")
+          return
+        }
+        this.curHook.config = this.selectedPlugin.config
         axios({
           method: "post",
           headers: {
@@ -187,6 +203,10 @@
           } else {
             this.setMessage("Saved!")
             this.getHooks()
+          }
+        }).catch(err => {
+          if (err.response.data.err) {
+            this.setError("Failed to save! " + err.response.data.err)
           }
         })
       },
@@ -207,18 +227,23 @@
             this.getHooks()
             this.setMessage("Deleted!")
           }
-        }).catch(response => {
-          if (response.data.err) {
-            this.setError("Failed to delete! " + response.data.err)
+        }).catch(err => {
+          if (err.response.data.err) {
+            this.setError("Failed to delete! " + err.response.data.err)
           }
         })
       },
       addNewHook() {
+        this.showPluginConfig = false
         this.curHook = {name: "NewHook", user: curUser, roles: curUserRoles, config: {}}
       }
     },
     mounted() {
-      this.getPlugins()
+      getPluginProvidersForService("WebhookEvent").then(data => {
+        data.descriptions.forEach(desc => {
+          this.webhookPlugins.push({name:desc.name,title:desc.title})
+        })
+      })
       this.getHooks()
     }
   }

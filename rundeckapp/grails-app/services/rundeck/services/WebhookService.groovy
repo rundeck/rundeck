@@ -26,6 +26,7 @@ class WebhookService {
     def frameworkService
     def rundeckAuthorizedServicesProvider
     def apiService
+    def messageSource
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookData data, UserAndRolesAuthContext authContext) {
         LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
@@ -57,22 +58,21 @@ class WebhookService {
         hook.name = hookData.name
         hook.eventPlugin = hookData.eventPlugin
         hook.pluginConfigurationJson = hookData.config ? mapper.writeValueAsString(hookData.config) : "{}"
-        hook.save(failOnError:true)
-        return [msg:"saved"]
+        if(hook.save()) {
+            return [msg: "saved"]
+        } else {
+            return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
+        }
     }
 
     def delete(Long id) {
         Webhook hook = Webhook.get(id)
         String name = hook.name
         if(!hook) return [err:"Webhook does not exist"]
-        hook.delete(flush:true,failOnError: true)
-        return [msg:"deleted ${name} webhook"]
-    }
-
-    def listWebhookPlugins() {
-        return pluginService.listPlugins(WebhookEventPlugin).collect {
-            [name:it.value.name,
-            configProps: it.value.description.properties.collect { it.name }]
+        if(hook.delete()) {
+            return [msg: "deleted ${name} webhook"]
+        } else {
+            return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
     }
 

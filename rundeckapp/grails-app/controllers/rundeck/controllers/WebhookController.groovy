@@ -24,29 +24,23 @@ class WebhookController {
             sendJsonError("You are not authorized to perform this action")
             return
         }
-        def msg = [:]
-        try {
-            msg = webhookService.saveHook(authContext,request.JSON)
-        } catch(Exception ex) {
-            response.status = 500
-            msg.err = ex.message
-        }
+        def msg = webhookService.saveHook(authContext,request.JSON)
+        if(msg.err) response.status = 500
+
         render msg as JSON
     }
 
     def remove() {
-        try {
-            UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-            if (!authorized(authContext, AuthConstants.RESOURCE_TYPE_WEBHOOK, AuthConstants.ACTION_DELETE)) {
-                sendJsonError("You are not authorized to perform this action")
-                return
-            }
-            def output = webhookService.delete(params.id.toLong())
-            render output as JSON
-        } catch(Exception ex) {
-            response.status = 500
-            render new HashMap([err:ex.message]) as JSON
+
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!authorized(authContext, AuthConstants.RESOURCE_TYPE_WEBHOOK, AuthConstants.ACTION_DELETE)) {
+            sendJsonError("You are not authorized to perform this action")
+            return
         }
+        def output = webhookService.delete(params.id.toLong())
+        if(output.err) response.status = 500
+        render output as JSON
+
     }
 
     def list() {
@@ -76,10 +70,6 @@ class WebhookController {
         Webhook.findAll().collect {
             [id:it.id, name:it.name, user:it.authToken.user.login, roles: it.authToken.authRoles, authToken:it.authToken.token, eventPlugin:it.eventPlugin, config:mapper.readValue(it.pluginConfigurationJson, HashMap)]
         }
-    }
-
-    def webhookPlugins() {
-        render webhookService.listWebhookPlugins() as JSON
     }
 
     def post() {
