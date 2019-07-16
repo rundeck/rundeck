@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.app.internal.workflow.ExceptionHandlingMutableWorkflowState
 import com.dtolabs.rundeck.app.support.ExecutionContext
-import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -148,7 +148,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @return
      */
     def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, Workflow wf, String project,
-                                                    Framework framework, AuthContext authContext, Map jobcontext,
+                                                    Framework framework,
+                                                    UserAndRolesAuthContext authContext,
+                                                    Map jobcontext,
                                                     Map secureOptions) {
         //create a context used for workflow execution
         def context = executionService.createContext(execContext, null, framework,authContext, execContext.user,
@@ -226,8 +228,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * Create and return a listener for changes to the workflow state for an execution
      * @param execution
      */
-    def WorkflowExecutionListener createWorkflowStateListenerForExecution(Execution execution, Framework framework,
-            AuthContext authContext, Map jobcontext, Map secureOpts) {
+    def WorkflowExecutionListener createWorkflowStateListenerForExecution(
+            Execution execution,
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            Map jobcontext,
+            Map secureOpts
+    ) {
         final long id = execution.id
 
         MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
