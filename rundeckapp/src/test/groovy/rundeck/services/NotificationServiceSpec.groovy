@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.RuntimePropertyResolver
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import grails.plugins.mail.MailMessageBuilder
 import grails.plugins.mail.MailService
@@ -43,7 +42,7 @@ import rundeck.ScheduledExecutionStats
 import rundeck.User
 import rundeck.Workflow
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import spock.lang.Specification
 
 /**
@@ -369,7 +368,7 @@ class NotificationServiceSpec extends Specification {
             _ * link(*_) >> 'alink'
         }
 
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
                 [
                         new DefaultLogEvent(

@@ -46,7 +46,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.WorkflowStateFileLoader
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -295,7 +295,7 @@ class ExecutionControllerSpec extends Specification {
         controller.metaClass.checkAllowUnsanitized = { final String project -> false }
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -350,7 +350,7 @@ class ExecutionControllerSpec extends Specification {
         controller.configurationService = Mock(ConfigurationService) {
             getBoolean('gui.execution.logs.renderConvertedContent',true) >> true
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -401,7 +401,7 @@ class ExecutionControllerSpec extends Specification {
             controller.configurationService = Mock(ConfigurationService)
             controller.apiService = Mock(ApiService)
             controller.frameworkService = Mock(FrameworkService)
-            def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+            def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
             reader.reader = new TestReader(
                 logs:
                     [
@@ -485,7 +485,7 @@ class ExecutionControllerSpec extends Specification {
             requireExists(*_) >> true
             0 * _(*_)
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
         def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
         sdf.timeZone=TimeZone.getTimeZone('GMT')
@@ -607,7 +607,7 @@ class ExecutionControllerSpec extends Specification {
             }
             0 * _(*_)
         }
-        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.AVAILABLE)
         def date1 = new Date(90000000)
         def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
         sdf.timeZone=TimeZone.getTimeZone('GMT')
@@ -722,7 +722,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        def reader = new ExecutionLogReader(state: ExecutionLogState.NOT_FOUND)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.NOT_FOUND)
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
@@ -767,7 +767,7 @@ class ExecutionControllerSpec extends Specification {
 
         )
         e1.save() != null
-        def reader = new ExecutionLogReader(state: ExecutionLogState.PENDING_REMOTE)
+        def reader = new ExecutionLogReader(state: ExecutionFileState.PENDING_REMOTE)
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
@@ -828,8 +828,8 @@ class ExecutionControllerSpec extends Specification {
         response.header('Content-Encoding') == resultHeader
         controller.frameworkService.authorizeProjectExecutionAny(_, _, _) >> true
         controller.workflowService.requestStateSummary(_, _, _) >> new WorkflowStateFileLoader(
-            state: ExecutionLogState.AVAILABLE,
-            workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
+                state: ExecutionFileState.AVAILABLE,
+                workflowState: [nodeSummaries: [anode: 'summaries'], nodeSteps: [anode: 'steps']]
         )
 
         where:

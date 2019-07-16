@@ -45,7 +45,7 @@ import rundeck.WorkflowStep
 import org.rundeck.app.services.ExecutionFile
 
 import org.rundeck.app.services.ExecutionFileProducer
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
@@ -328,13 +328,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def state1 = activeStates[e.id]
         if (state1) {
             def state= stateMapping.mapOf(e.id, state1)
-            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionFileState.AVAILABLE)
         }
 
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
         if (statemap) {
-            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionFileState.AVAILABLE)
         }
 
         //request file via file storage
@@ -370,14 +370,14 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if (state1) {
             def state= stateMapping.mapOf(e.id, state1)
             state=stateMapping.summarize(new HashMap(state),nodes,selectedOnly,stepStates)
-            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionFileState.AVAILABLE)
         }
 
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
         if (statemap) {
             statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly,stepStates)
-            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionFileState.AVAILABLE)
         }
 
         //request file via file storage
@@ -386,7 +386,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if (loader.file) {
             //cache local data
             statemap = deserializeState(loader.file)
-            if (loader.state == ExecutionLogState.AVAILABLE) {
+            if (loader.state == ExecutionFileState.AVAILABLE) {
                 //final state, so cache result.  If AVAILABLE_PARTIAL, do not cache it
                 stateCache.put(e.id, statemap)
             }

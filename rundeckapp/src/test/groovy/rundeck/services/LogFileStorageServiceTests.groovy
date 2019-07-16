@@ -51,7 +51,7 @@ import org.rundeck.app.services.ExecutionFile
 
 import org.rundeck.app.services.ExecutionFileProducer
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
 
@@ -960,7 +960,7 @@ class LogFileStorageServiceTests  {
 
         def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.NOT_FOUND,reader.state)
+        assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
     }
 
@@ -978,7 +978,7 @@ class LogFileStorageServiceTests  {
 
         def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false)
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.WAITING, reader.state)
+        assertEquals(ExecutionFileState.WAITING, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -997,7 +997,7 @@ class LogFileStorageServiceTests  {
         def reader = performReaderRequest(test, true, testLogFileDNE, false, e, false)
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1019,7 +1019,7 @@ class LogFileStorageServiceTests  {
         assert !test.initializeCalled
 
         assert null != (reader)
-        assert ExecutionLogState.AVAILABLE == reader.state
+        assert ExecutionFileState.AVAILABLE == reader.state
         assert null != (reader.reader)
         assert (reader.reader instanceof FSStreamingLogReader)
     }
@@ -1039,7 +1039,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.PENDING_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1057,7 +1057,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.AVAILABLE_REMOTE, reader.state)
+        assertEquals(ExecutionFileState.AVAILABLE_REMOTE, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1076,7 +1076,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.ERROR, reader.state)
+        assertEquals(ExecutionFileState.ERROR, reader.state)
         assertEquals('execution.log.storage.state.ERROR', reader.errorCode)
         assertEquals(['test1','testStoragePlugin.available'], reader.errorData)
         assertNull(reader.reader)
@@ -1091,7 +1091,7 @@ class LogFileStorageServiceTests  {
 
         def e = createExecution()
         def reader = performReaderRequest(test, false, testLogFileDNE, true, e, false) { LogFileStorageService svc ->
-            svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionLogState.PENDING_LOCAL]
+            svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionFileState.PENDING_LOCAL]
         }
 
         //initialize should have been called
@@ -1099,7 +1099,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
+        assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
 
@@ -1119,7 +1119,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.NOT_FOUND, reader.state)
+        assertEquals(ExecutionFileState.NOT_FOUND, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime
@@ -1142,7 +1142,7 @@ class LogFileStorageServiceTests  {
         assert test.context!=null
 
         assertNotNull(reader)
-        assertEquals(ExecutionLogState.PENDING_LOCAL, reader.state)
+        assertEquals(ExecutionFileState.PENDING_LOCAL, reader.state)
         assertNull(reader.reader)
     }
     @DirtiesRuntime

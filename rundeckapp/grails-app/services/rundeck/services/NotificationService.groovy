@@ -45,8 +45,7 @@ import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.User
-import rundeck.controllers.ExecutionController
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import java.text.SimpleDateFormat
 
@@ -146,8 +145,8 @@ public class NotificationService implements ApplicationContextAware{
      */
     def File copyExecOutputToTempFile(Execution e, boolean isFormatted, String attachedExtension){
         def reader = loggingService.getLogReader(e)
-        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
-                ExecutionLogState.AVAILABLE) {
+        if (reader.state == ExecutionFileState.NOT_FOUND|| reader.state == ExecutionFileState.ERROR|| reader.state !=
+            ExecutionFileState.AVAILABLE) {
             return null
         }
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -180,8 +179,8 @@ public class NotificationService implements ApplicationContextAware{
 
         StringBuffer output = new StringBuffer()
         def reader = loggingService.getLogReader(e)
-        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
-                ExecutionLogState.AVAILABLE) {
+        if (reader.state == ExecutionFileState.NOT_FOUND|| reader.state == ExecutionFileState.ERROR|| reader.state !=
+            ExecutionFileState.AVAILABLE) {
             return null
         }
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
