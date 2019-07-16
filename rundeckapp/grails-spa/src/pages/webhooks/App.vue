@@ -7,9 +7,7 @@
 <script>
 export default {
   name: "WebhooksApplication",
-  components: {
-
-  },
+  components: {},
   computed: {},
   methods: {}
 };

@@ -9,18 +9,26 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
+import org.apache.log4j.Logger
+import org.rundeck.app.spi.AppService
+import org.rundeck.app.spi.Services
+import rundeck.AuthToken
+import rundeck.User
 import rundeck.Webhook
 
 @Transactional
 class WebhookService {
+    private static final Logger LOG4J_LOGGER = Logger.getLogger("org.rundeck.webhooks")
     private static final ObjectMapper mapper = new ObjectMapper()
 
     def rundeckPluginRegistry
     def pluginService
     def frameworkService
     def rundeckAuthorizedServicesProvider
+    def apiService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookData data, UserAndRolesAuthContext authContext) {
+        LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
         PluggableProviderService webhookPluginProviderService = rundeckPluginRegistry.createPluggableService(
                 WebhookEventPlugin.class)
 
@@ -32,13 +40,19 @@ class WebhookService {
         plugin.onEvent(context,data)
     }
 
-    def saveHook(def hookData) {
+    def saveHook(UserAndRolesAuthContext authContext,def hookData) {
         Webhook hook
+        User user = hookData.user ? User.findByLogin(hookData.user) : authContext.username
+        if (!user) return [err: "Webhook user '${hookData.user}' not found"]
         if(hookData.id) {
             hook = Webhook.get(hookData.id)
+            hook.authToken.user = user
+            hook.authToken.authRoles = hookData.roles
             if (!hook) return [err: "Webhook not found"]
         } else {
             hook = new Webhook()
+            Set<String> roles = hookData.roles ? AuthToken.parseAuthRoles(hookData.roles) : authContext.roles
+            hook.authToken = apiService.generateAuthToken(authContext.username,user,roles, null, true)
         }
         hook.name = hookData.name
         hook.eventPlugin = hookData.eventPlugin
@@ -60,5 +74,9 @@ class WebhookService {
             [name:it.value.name,
             configProps: it.value.description.properties.collect { it.name }]
         }
+    }
+
+    Webhook getWebhook(String webhookName) {
+        return Webhook.findByName(webhookName)
     }
 }

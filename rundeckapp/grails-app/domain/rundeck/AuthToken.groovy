@@ -16,9 +16,14 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 import java.time.Clock
 
 class AuthToken {
+    public static final TOKEN_TYPE_USER    = 'user'
+    public static final TOKEN_TYPE_WEBHOOK = 'webhook'
+
     String token
     String authRoles
     String uuid
@@ -26,6 +31,7 @@ class AuthToken {
     Date expiration
     Date dateCreated
     Date lastUpdated
+    String type = TOKEN_TYPE_USER
     static belongsTo = [user:User]
     static transients = ['printableToken']
     static constraints = {
@@ -37,9 +43,15 @@ class AuthToken {
         expiration(nullable: true)
         lastUpdated(nullable: true)
         dateCreated(nullable: true)
+        type(nullable: false)
     }
     static mapping = {
         authRoles type: 'text'
+        'type' defaultValue: "'user'"
+
+        DomainIndexHelper.generate(delegate) {
+            index 'IDX_TYPE', ['type']
+        }
     }
 
     Set<String> authRolesSet() {
