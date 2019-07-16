@@ -23,25 +23,23 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.core.utils.MapData
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
-import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.PathNotFoundException
+import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.rundeck.utils.UUIDPropertyValidator
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import rundeck.Webhook
 
 import com.jayway.jsonpath.JsonPath
+
 
 @Plugin(name='pagerduty-run-job',service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="PagerDuty Webhook Run Job",description="Run a job on webhook event")
@@ -55,12 +53,15 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
 
     @Override
     void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
-
-        Config conf = mapper.convertValue(config, Config.class)
-
-
         if(JSON_DATA_TYPE != data.contentType) {
             throw new WebhookEventException("Posted data was not json",WebhookJobRunHandlerFailureReason.InvalidContentType)
+        }
+
+        Config conf
+        try {
+            conf = mapper.convertValue(config, Config.class)
+        } catch(Exception ex) {
+            throw new WebhookEventException("Unable to load config: ${ex.message}", WebhookJobRunHandlerFailureReason.ConfigLoadError)
         }
 
         JobService jobService = context.services.getService(JobService)
@@ -75,7 +76,7 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
                 webhookMap.put("project", data.project)
             }
 
-            Object webhookdata
+            Map webhookdata
 
             try {
                 webhookdata = mapper.readValue(data.data, HashMap)
@@ -83,50 +84,36 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
                 throw new WebhookEventException("Unable to parse posted JSON data: ${ex.message}",WebhookJobRunHandlerFailureReason.JsonParseError)
             }
 
-            List<Object> messages = webhookdata.get('messages')
+            List<Map> messages = extractMessageBatches(conf.batchKey, webhookdata)
 
             messages.each { m ->
-                Map<String, Map<String, String>> eventData = new HashMap<>()
-                webhookMap.put("raw", mapper.writeValueAsString(m))
-
-                Map<String, Map<String, String>> localDataContext = DataContextUtils.context("webhook", webhookMap)
-                if (m instanceof Map) {
-                    eventData = toStringMap(m)
-                }
-
-                def flatMap = flattenMap(eventData)
-                localDataContext = DataContextUtils.addContext("data", flatMap, localDataContext)
-
                 conf.rules.each { r ->
-                    if (! isRuleMatch(r, m))
+                    if (! r.isMatch(m))
                         return
 
                     def jobId = r.jobId
 
 
-                    def expandedJobId = DataContextUtils.replaceDataReferencesInString(
-                            jobId,
-                            localDataContext
-                    )
+                    def expandedJobId = template(jobId, m)
 
                     JobReference jobReference = jobService.jobForID(
                             expandedJobId, data.project
                     )
 
-                    def expandedNodeFilter = DataContextUtils.replaceDataReferencesInString(r.nodeFilter, localDataContext)
-                    def expandedAsUser = DataContextUtils.replaceDataReferencesInString("", localDataContext)
-                    //TODO: switch to use Map instead of String
-                    String[] args = r.jobOpts ? OptsUtil.burst(r.jobOpts) : new String[0]
-                    String[] expandedArgs = DataContextUtils.replaceDataReferencesInArray(args, localDataContext)
-                    String expandedArgString = OptsUtil.join(expandedArgs)
+                    def expandedNodeFilter = template(r.nodeFilter, m)
+                    def expandedAsUser = ''
+
+                    def options = processJobOptions(r.jobOptions, m)
+
                     log.info(
-                            "starting job ${expandedJobId} with args: ${expandedArgString}, " +
+                            "starting job ${expandedJobId} with args: ${options}, " +
                                     "nodeFilter: ${expandedNodeFilter} asUser: ${expandedAsUser}"
                     )
+
                     ExecutionReference exec =
                             jobService.runJob(
                                     jobReference,
-                                    expandedArgString,
+                                    options,
                                     expandedNodeFilter,
                                     expandedAsUser
                             )
@@ -157,50 +144,35 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         }
     }
 
-    boolean isRuleMatch(RoutingRule rule, Map event) {
-        if (rule.conditions.empty)
-            return true
-
-        def evaluations = rule.conditions.collect {c ->
-            if (c.path == null || c.path.empty)
-                return true
-
-            switch (c.condition) {
-                case "contains":
-                    return contains(c, event)
-                case "matches":
-                    return matches(c, event)
-
-            }
+    static List<Map> extractMessageBatches(String batchKey, Map data) {
+        List<Map> messages = []
+        try {
+            if ( ! batchKey.empty )
+                messages = JsonPath.read(data, batchKey)
+            else
+                messages = [data]
+        } catch(PathNotFoundException ex) {
+            //TODO: ???
+        } catch(GroovyCastException) {
+            //TODO: Not a List
         }
 
-        switch (rule.policy) {
-            case "any":
-                return evaluations.any {e -> e}
-            case "all":
-                return evaluations.every {e -> e}
+        return messages
+    }
+
+    static Map<String, String> processJobOptions(List<JobOption> options, Map event) {
+        Map<String, String> retOptions = new HashMap<String, String>()
+
+        options.each { o ->
+            def renderedValue = template(o.value, event)
+
+            retOptions.put(o.name, renderedValue)
         }
+
+        return retOptions
     }
 
-    boolean contains(Condition condition, Map event) {
-        def value = JsonPath.read(event, condition.path)
-//        def value = event.get(condition.path)
-
-        value instanceof String ?
-            value.contains(condition.value) :
-            false
-    }
-
-    boolean matches(Condition condition, Map event) {
-        def value = JsonPath.read(event, condition.path)
-//        def value = event.get(condition.path)
-
-        value instanceof String ?
-            value == condition.value :
-            false
-    }
-
-    Map<String, String> flattenMap(Map<String, Map<String, String>> map) {
+    static Map<String, String> flattenMap(Map map) {
         map.collectEntries { k, v ->
             v instanceof Map ?
                     flattenMap(v).collectEntries { k1, v1 ->
@@ -211,8 +183,8 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         } as Map<String, String>
     }
 
-    Map<String, Map<String, String>> toStringMap(Map map) {
-        def nuMap = new HashMap()
+    static Map<String, Map<String, String>> toStringMap(Map map) {
+        final Map<String, Map<String, String>> nuMap = new HashMap()
 
         def doStringMap
         doStringMap = { Map oldMap, Map newMap ->
@@ -231,40 +203,124 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
         nuMap
     }
 
+    static String template(String input, Map data, Object defaultValue = '') {
+        if (input.startsWith('$') ) {
+            def val = JsonPath.read(data, input)
+
+            if (val instanceof List || val instanceof Map)
+                return mapper.writeValueAsString(val)
+            else
+                return val.toString()
+
+        } else {
+            String value
+            if ( input.startsWith('\$') )
+                value = input.substring(1)
+            else
+                value = input
+
+            return groovyTemplate(value, data, defaultValue)
+        }
+    }
+
+    static String groovyTemplate(String input, Map data, Object defaultValue = '') {
+        def engine = new groovy.text.SimpleTemplateEngine()
+
+        try {
+
+            def template = engine.createTemplate(input)
+
+            template.make([
+                    data: data.withDefault { defaultValue },
+                    path: { String p ->
+                        JsonPath.read(data, p)
+                    }
+            ].withDefault { defaultValue }).toString()
+        } catch(GroovyRuntimeException ex) {
+            //TODO: Template parse may have failed or possibly during make
+        }
+    }
+
     static enum WebhookJobRunHandlerFailureReason implements FailureReason {
         InvalidContentType,
         JsonParseError,
         JobNotFound,
-        ExecutionError
+        ExecutionError,
+        ConfigLoadError,
     }
 
 }
 
-
-enum PolicyType {
-    ANY("any"),
-    ALL("all")
-}
-
-enum ConditionType {
-    CONTAINS("contains"),
-    EQUALS("equals")
+class JobOption {
+    public String name
+    public String value
 }
 
 class RoutingRule {
+    public String name
+    public String description
     public String policy
     public String jobId
-    public String jobOpts
+    public String jobArgString
+    public List<JobOption> jobOptions
     public String nodeFilter
+    public String user
     public List<Condition> conditions
+
+    boolean isMatch(Map event) {
+        if (conditions.empty)
+            return true
+
+        def evaluations = conditions.collect {c ->
+            c.isMatch(event)
+        }
+
+        switch (policy) {
+            case "any":
+                return evaluations.any {e -> e}
+            case "all":
+                return evaluations.every {e -> e}
+        }
+    }
 }
 
 class Condition {
     public String path
     public String value
     public String condition
+
+    boolean isMatch(Map event) {
+        // Handle empty conditions until better validation
+        if (path == null || path.empty)
+            return true
+
+        switch (condition) {
+            case "contains":
+                return contains(event)
+            case "matches":
+                return matches(event)
+
+        }
+    }
+
+    boolean contains(Map event) {
+        def value = JsonPath.read(event, path)
+
+        value instanceof String ?
+                value.contains(value) :
+                false
+    }
+
+    boolean matches(Map event) {
+        def value = JsonPath.read(event, path)
+
+        value instanceof String ?
+                value == value :
+                false
+    }
 }
 
 class Config {
+    String batchKey
     List<RoutingRule> rules
 }
