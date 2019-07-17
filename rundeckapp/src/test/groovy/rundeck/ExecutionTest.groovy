@@ -16,6 +16,9 @@
 
 package rundeck
 
+import grails.test.mixin.Mock
+import rundeck.services.FrameworkService
+
 import static org.junit.Assert.*
 
 //import grails.test.GrailsUnitTestCase
@@ -29,6 +32,7 @@ import rundeck.services.ExecutionService
  * Time: 11:25 AM
  */
 @TestFor(Execution)
+@Mock([Execution, FrameworkService, Workflow, WorkflowStep, ScheduledExecution,CommandExec])
 class ExecutionTest {
     void testValidateBasic() {
         Execution se = createBasicExecution()
@@ -578,5 +582,46 @@ class ExecutionTest {
         assertEquals(12, map.retryAttempt)
         assertEquals(exec1.id, map.retryExecutionId)
         assertEquals(true, map.willRetry)
+    }
+
+    void testDeleteExecutionWorkflowCascadeAll() {
+
+        WorkflowStep workflowStep = new CommandExec([adhocRemoteString: 'test1 buddy', argString: '-delay 12 -monkey cheese -particle'])
+
+        ScheduledExecution se1 = new ScheduledExecution(
+                uuid: 'test1',
+                jobName: 'red color',
+                project: 'Test',
+                groupPath: 'some',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [workflowStep]).save(),
+        )
+
+        assert null != se1.save(flush: true)
+
+        Workflow workflow = new Workflow(keepgoing: true, commands: [workflowStep]).save(flush:true)
+
+        Execution e1 = new Execution(
+                scheduledExecution: se1,
+                project: "Test",
+                status: "false",
+                dateStarted: new Date(),
+                dateCompleted: new Date(),
+                user: 'adam',
+                workflow: workflow
+
+        )
+        assert null != e1.save(flush: true)
+
+        assertNotNull Execution.findByScheduledExecution(se1)
+        assertNotNull Workflow.findById(e1.workflowId)
+        assertFalse workflow.commands.isEmpty()
+
+        e1.delete(flush: true)
+
+        assertNull Execution.findByScheduledExecution(se1)
+        assertFalse Workflow.findAll().any {Workflow w -> w.id == e1.workflowId}
+        assertTrue workflow.commands.isEmpty()
     }
 }

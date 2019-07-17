@@ -1,0 +1,4 @@
+[[template]]
+    src         = "${REMCO_TEMPLATE_DIR}/rundeck-config-plugin-repository.properties"
+    dst         = "${REMCO_TMP_DIR}/rundeck-config/rundeck-config-plugin-repository.properties"
+    mode        = "0644"

@@ -1,0 +1,4 @@
+[[template]]
+    src         = "${REMCO_TEMPLATE_DIR}/artifact-repositories-private.yaml"
+    dst         = "${REMCO_TMP_DIR}/artifact-repositories/artifact-repositories-private.yaml"
+    mode        = "0644"
