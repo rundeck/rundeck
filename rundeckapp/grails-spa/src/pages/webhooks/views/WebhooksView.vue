@@ -20,7 +20,7 @@
                   </tr>
                   </thead>
                   <tbody>
-                  <tr v-for="hook in webhooks" :key="id" @click="select(hook)" class="clickable"
+                  <tr v-for="hook in webhooks" :key="hook.id" @click="select(hook)" class="clickable"
                       v-bind:class="{selected: curHook === hook}">
                     <td>{{hook.name}}</td>
                     <td>{{hook.eventPlugin}}</td>
@@ -55,7 +55,7 @@
                     <div><label>Webhook Roles:</label><input v-model="curHook.roles" class="form-control"></div>
                     <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin"
                                                                      @change="setSelectedPlugin()" class="form-control">
-                      <option v-for="plugin in webhookPlugins" v-bind:value="plugin.name">{{plugin.title}}</option>
+                      <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
                     <div v-if="selectedPlugin && showPluginConfig">
                       <h5>Plugin Configuration</h5>
@@ -98,160 +98,160 @@
 </template>
 
 <script>
-  import PagerDutyConfig from './PagerDutyConfig'
-  import axios from 'axios'
-  import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
-  import {getServiceProviderDescription,
-          getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
+import PagerDutyConfig from './PagerDutyConfig'
+import axios from 'axios'
+import PluginConfig from "@rundeck/ui-trellis/src/components/plugins/pluginConfig.vue"
+import {getServiceProviderDescription,
+  getPluginProvidersForService} from '@rundeck/ui-trellis/src/modules/pluginService'
 
-  var rdBase = "http://localhost:4440"
-  var apiVersion = "31"
-  var curUser = ""
-  var curUserRoles = ""
-  if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
-    rdBase = window._rundeck.rdBase;
-    apiVersion = window._rundeck.apiVersion
-  }
-  export default {
-    name: "WebhooksView",
-    components: {PluginConfig, PagerDutyConfig},
-    data() {
-      return {
-        webhooks: [],
-        webhookPlugins: [],
-        curHook: null,
-        showPluginConfig: false,
-        selectedPlugin: null,
-        apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
-        popup: {
-          error: null,
-          showing: false,
-          message: null
-        }
+var rdBase = "http://localhost:4440"
+var apiVersion = "31"
+var curUser = ""
+var curUserRoles = ""
+if (window._rundeck && window._rundeck.rdBase && window._rundeck.apiVersion) {
+  rdBase = window._rundeck.rdBase;
+  apiVersion = window._rundeck.apiVersion
+}
+export default {
+  name: "WebhooksView",
+  components: {PluginConfig, PagerDutyConfig},
+  data() {
+    return {
+      webhooks: [],
+      webhookPlugins: [],
+      curHook: null,
+      showPluginConfig: false,
+      selectedPlugin: null,
+      apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
+      popup: {
+        error: null,
+        showing: false,
+        message: null
       }
-    },
-    methods: {
-      setMessage(msg) {
-        this.popup.message = msg
-        this.popup.showing = true
-        setTimeout(() => {
-          this.popup.showing = false
-          this.popup.message = ""
-        }, 2000)
-      },
-      setError(err) {
-        this.popup.error = err
-        this.popup.showing = true
-      },
-      closeOverlay() {
-        this.popup.message = null;
-        this.popup.error = null;
-        this.popup.showing = false;
-      },
-      getHooks() {
-        axios({
-          method: "get",
-          headers: {
-            "x-rundeck-ajax": true
-          },
-          url: `${rdBase}api/${apiVersion}/webhook-admin/uiData`,
-          withCredentials: true
-        }).then(response => {
-          curUser = response.data.username
-          curUserRoles = response.data.roles
-          this.webhooks = response.data.hooks
-          if (this.curHook) {
-            this.curHook = this.webhooks.find(hk => hk.name === this.curHook.name)
-          }
-        })
-      },
-      getPlugins() {
-        axios({
-          method: "get",
-          headers: {
-            "x-rundeck-ajax": true
-          },
-          url: `${rdBase}api/${apiVersion}/webhook-admin/listWebhookPlugins`,
-          withCredentials: true
-        }).then(response => {
-          this.webhookPlugins = response.data
-        })
-      },
-      select(selected) {
-        this.curHook = selected
-        this.setSelectedPlugin()
-      },
-      setSelectedPlugin() {
-        this.selectedPlugin = {type:this.curHook.eventPlugin, config:this.curHook.config}
-        getServiceProviderDescription("WebhookEvent",this.curHook.eventPlugin).then(data => {
-          this.showPluginConfig = data.props.length > 0 || this.curHook.eventPlugin === 'pagerduty-run-job'
-        })
-      },
-      handleSave() {
-        if(!this.curHook.eventPlugin) {
-          this.setError("You must select a Webhook plugin before saving")
-          return
-        }
-        this.curHook.config = this.selectedPlugin.config
-        axios({
-          method: "post",
-          headers: {
-            "x-rundeck-ajax": true,
-            "Content-Type": "application/json"
-          },
-          url: `${rdBase}webhook-admin/save`,
-          data: JSON.stringify(this.curHook),
-          withCredentials: true
-        }).then(response => {
-          if (response.data.err) {
-            this.setError("Failed to save! " + response.data.err)
-          } else {
-            this.setMessage("Saved!")
-            this.getHooks()
-          }
-        }).catch(err => {
-          if (err.response.data.err) {
-            this.setError("Failed to save! " + err.response.data.err)
-          }
-        })
-      },
-      handleDelete() {
-        axios({
-          method: "delete",
-          headers: {
-            "x-rundeck-ajax": true
-          },
-          url: `${rdBase}webhook-admin/delete/${this.curHook.id}`,
-          withCredentials: true
-        }).then(response => {
-          if (response.data.err) {
-            this.setError("Failed to delete! " + response.data.err)
-          } else {
-            this.curHook = null
-            this.selectedPlugin = null
-            this.getHooks()
-            this.setMessage("Deleted!")
-          }
-        }).catch(err => {
-          if (err.response.data.err) {
-            this.setError("Failed to delete! " + err.response.data.err)
-          }
-        })
-      },
-      addNewHook() {
-        this.showPluginConfig = false
-        this.curHook = {name: "NewHook", user: curUser, roles: curUserRoles, config: {}}
-      }
-    },
-    mounted() {
-      getPluginProvidersForService("WebhookEvent").then(data => {
-        data.descriptions.forEach(desc => {
-          this.webhookPlugins.push({name:desc.name,title:desc.title})
-        })
-      })
-      this.getHooks()
     }
+  },
+  methods: {
+    setMessage(msg) {
+      this.popup.message = msg
+      this.popup.showing = true
+      setTimeout(() => {
+        this.popup.showing = false
+        this.popup.message = ""
+      }, 2000)
+    },
+    setError(err) {
+      this.popup.error = err
+      this.popup.showing = true
+    },
+    closeOverlay() {
+      this.popup.message = null;
+      this.popup.error = null;
+      this.popup.showing = false;
+    },
+    getHooks() {
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${rdBase}api/${apiVersion}/webhook-admin/uiData`,
+        withCredentials: true
+      }).then(response => {
+        curUser = response.data.username
+        curUserRoles = response.data.roles
+        this.webhooks = response.data.hooks
+        if (this.curHook) {
+          this.curHook = this.webhooks.find(hk => hk.name === this.curHook.name)
+        }
+      })
+    },
+    getPlugins() {
+      axios({
+        method: "get",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${rdBase}api/${apiVersion}/webhook-admin/listWebhookPlugins`,
+        withCredentials: true
+      }).then(response => {
+        this.webhookPlugins = response.data
+      })
+    },
+    select(selected) {
+      this.curHook = selected
+      this.setSelectedPlugin()
+    },
+    setSelectedPlugin() {
+      this.selectedPlugin = {type: this.curHook.eventPlugin, config: this.curHook.config}
+      getServiceProviderDescription("WebhookEvent", this.curHook.eventPlugin).then(data => {
+        this.showPluginConfig = data.props.length > 0 || this.curHook.eventPlugin === 'pagerduty-run-job'
+      })
+    },
+    handleSave() {
+      if(!this.curHook.eventPlugin) {
+        this.setError("You must select a Webhook plugin before saving")
+        return
+      }
+      this.curHook.config = this.selectedPlugin.config
+      axios({
+        method: "post",
+        headers: {
+          "x-rundeck-ajax": true,
+          "Content-Type": "application/json"
+        },
+        url: `${rdBase}webhook-admin/save`,
+        data: JSON.stringify(this.curHook),
+        withCredentials: true
+      }).then(response => {
+        if (response.data.err) {
+          this.setError("Failed to save! " + response.data.err)
+        } else {
+          this.setMessage("Saved!")
+          this.getHooks()
+        }
+      }).catch(err => {
+        if (err.response.data.err) {
+          this.setError("Failed to save! " + err.response.data.err)
+        }
+      })
+    },
+    handleDelete() {
+      axios({
+        method: "delete",
+        headers: {
+          "x-rundeck-ajax": true
+        },
+        url: `${rdBase}webhook-admin/delete/${this.curHook.id}`,
+        withCredentials: true
+      }).then(response => {
+        if (response.data.err) {
+          this.setError("Failed to delete! " + response.data.err)
+        } else {
+          this.curHook = null
+          this.selectedPlugin = null
+          this.getHooks()
+          this.setMessage("Deleted!")
+        }
+      }).catch(err => {
+        if (err.response.data.err) {
+          this.setError("Failed to delete! " + err.response.data.err)
+        }
+      })
+    },
+    addNewHook() {
+      this.showPluginConfig = false
+      this.curHook = {name: "NewHook", user: curUser, roles: curUserRoles, config: {}}
+    }
+  },
+  mounted() {
+    getPluginProvidersForService("WebhookEvent").then(data => {
+      data.descriptions.forEach(desc => {
+        this.webhookPlugins.push({name: desc.name, title: desc.title})
+      })
+    })
+    this.getHooks()
   }
+}
 </script>
 
 <style lang="scss" scoped>

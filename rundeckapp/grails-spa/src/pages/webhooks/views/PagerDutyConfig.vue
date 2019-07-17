@@ -12,7 +12,7 @@
                     Add
                 </div>
             </div>
-            
+
         </div>
 
         <div class="panel panel-default" v-for="(rule, index) in config.rules" :key="index">
@@ -31,7 +31,7 @@
                         <i class="glyphicon glyphicon-edit"></i>
                     </div>
                 </div>
-                
+
             </div>
             <div class="panel-body collapse" :id="index + 'rulePanel'">
                 <div class="form-group">
@@ -56,11 +56,11 @@
                         Add
                     </div>
                 </div>
-                
+
                 <div style="padding-left:10px;">
                     <div v-for="(option, index) in rule.jobOptions" :key="`options-${index}`">
                         <div style="width:100%;margin-bottom:5px;display:flex;align-items:center;">
-                            
+
                             <input class="form-control" type="text" v-model="option.name" placeholder="Name">
 
                             <input class="form-control" type="text" v-model="option.value" placeholder="Value/JsonPath" style="margin-left:5px;">
@@ -93,7 +93,7 @@
                     </div>
                     <div v-for="(condition,index) in rule.conditions" :key="index">
                         <div style="width:100%;margin-bottom:5px;display:flex;align-items:center;">
-                            
+
                                 <input class="form-control" type="text" v-model="condition.path" placeholder="Path">
 
                                 <select class="form-control input-sm" v-model="condition.condition" style="width:100px;margin:0px 5px 0px;">
@@ -122,96 +122,82 @@
 
 <script>
 export default {
-    name: "PagerDutyConfig",
-    props: {
-        curHook: Object,
-    },
-    watch: {
-        // Ensure the config gets setup if the parent changes the hook
-        curHook: function(newVal, oldVal) {
-            this.init()
-        }
-    },
-    data() {
-        return {
-            webhooks: [],
-            webhookPlugins: [],
-            config: null,
-        }
-    },
-    created: function() {
-        this.init()
-    },
+  name: "PagerDutyConfig",
+  props: {
+    curHook: Object
+  },
+  watch: {
+    // Ensure the config gets setup if the parent changes the hook
+    curHook: function(newVal, oldVal) {
+      this.init()
+    }
+  },
+  data() {
+    return {
+      webhooks: [],
+      webhookPlugins: [],
+      config: null
+    }
+  },
+  created: function() {
+    this.init()
+  },
 
-    methods: {
-        /**
+  methods: {
+    /**
          * Construct the config template if not set
          */
-        init() {
-            if (this.curHook.config == undefined || Object.keys(this.curHook.config).length == 0) {
-                this.curHook.config = {
-                    rules: [{
-                        name: '',
-                        description: '',
-                        jobId: '',
-                        policy: '',
-                        jobArgString: '',
-                        jobOptions: [],
-                        nodeFilter: '',
-                        conditions: []
-                    }]
-                }
-            }
-            this.config = this.curHook.config
-        },
-        addNewRule(side) {
-            if (! this.config.rules instanceof Array)
-                this.config.rules = []
-
-            let rule ={
-                jobId: '',
-                policy: 'any',
-                conditions: []
-            }
-
-            if (side == 'front')
-                this.config.rules.unshift(rule)
-            else if (side == 'end')
-                this.config.rules.push(rule)
-            else
-                console.error('Side must be front|end; not sure why I am checking this')
-
-        },
-        addNewCondition(rule) {
-            rule.conditions.push({})
-        },
-        handleDeleteRuleSet(prop) {
-            let index = this.config.rules.indexOf(prop)
-            if (index >  -1)
-                this.config.rules.splice(index, 1)
-        },
-        handleDeleteCondition(prop, condition) {
-            let index = prop.conditions.indexOf(condition)
-            if (index >  -1)
-                prop.conditions.splice(index, 1)
-        },
-
-        handleDeleteOption(rule, option) {
-            let index = rule.jobOptions.indexOf(option)
-            if (index > -1)
-                rule.jobOptions.splice(index, 1)
-        },
-        addNewJobOption(rule) {
-            if (rule.jobOptions == undefined)
-                this.$set(rule, 'jobOptions', [{}])
-            else
-                rule.jobOptions.push({})
+    init() {
+      if (this.curHook.config === undefined || Object.keys(this.curHook.config).length === 0) {
+        this.curHook.config = {
+          rules: [{
+            name: '',
+            description: '',
+            jobId: '',
+            policy: '',
+            jobArgString: '',
+            jobOptions: [],
+            nodeFilter: '',
+            conditions: []
+          }]
         }
+      }
+      this.config = this.curHook.config
+    },
+    addNewRule(side) {
+      if (!(this.config.rules instanceof Array)) { this.config.rules = [] }
 
+      let rule = {
+        jobId: '',
+        policy: 'any',
+        conditions: []
+      }
+
+      if (side === 'front') { this.config.rules.unshift(rule) } else if (side === 'end') { this.config.rules.push(rule) } else { console.error('Side must be front|end; not sure why I am checking this') }
+    },
+    addNewCondition(rule) {
+      rule.conditions.push({})
+    },
+    handleDeleteRuleSet(prop) {
+      let index = this.config.rules.indexOf(prop)
+      if (index > -1) { this.config.rules.splice(index, 1) }
+    },
+    handleDeleteCondition(prop, condition) {
+      let index = prop.conditions.indexOf(condition)
+      if (index > -1) { prop.conditions.splice(index, 1) }
+    },
+
+    handleDeleteOption(rule, option) {
+      let index = rule.jobOptions.indexOf(option)
+      if (index > -1) { rule.jobOptions.splice(index, 1) }
+    },
+    addNewJobOption(rule) {
+      if (rule.jobOptions === undefined) { this.$set(rule, 'jobOptions', [{}]) } else { rule.jobOptions.push({}) }
     }
+
+  }
 }
 </script>
-
 
 <style lang="scss" scoped>
   .btn-squircle {
