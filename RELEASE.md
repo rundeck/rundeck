@@ -1,45 +1,45 @@
-Release 3.0.23
+Release 3.0.24
 ===========
 
-Date: 2019-06-19
+Date: 2019-07-19
 
-Name: <span style="color: powderblue"><span class="glyphicon glyphicon-sunglasses"></span> "jalapeño popper powderblue sunglasses"</span>
+Name: <span style="color: rebeccapurple"><span class="glyphicon glyphicon-tent"></span> "jalapeño popper rebeccapurple tent"</span>
 
 ## Notes
 
-Bug Fixes
+### Enhancements
 
-## Contributors
+* User profile API tokens pagination
 
-* Greg Schueler (gschueler)
-* Luis Toledo (ltamaster)
-* ProTip
-* Stephen Joyner (sjrd218)
+### Bug Fixes
 
-## Bug Reporters
-
-* DiegoQueiroz
-* ProTip
-* gschueler
-* jfillman
-* ltamaster
-* sjrd218
+* Fixed node enhancers not working when using filesystem project config [#5066](https://github.com/rundeck/rundeck/pull/5066)
+* Fix potential NPE in node enhancer [#5068](https://github.com/rundeck/rundeck/pull/5068)
+* Numeruous CVEs addressed by library version bumps in [#5048](https://github.com/rundeck/rundeck/pull/5048)
+* (Enterprise) Fixed failure in **File Transfer Plugin** when using backup source with non-default port
 
 ## Issues
 
-[Milestone 3.0.23](https://github.com/rundeck/rundeck/milestone/108)
+[Milestone 3.0.24](https://github.com/rundeck/rundeck/milestone/111)
 
-* [\[3.0.x backport\] fix #4149 correctly trigger project ui loading](https://github.com/rundeck/rundeck/pull/4978)
-* [\[3.0.x backport\] remove reference to scriptaculous](https://github.com/rundeck/rundeck/pull/4964)
-* [\[3.0.x backport\] Fix: #4742 Updating project settings doesn't refresh…](https://github.com/rundeck/rundeck/pull/4951)
-* [\[3.0.x backport\] Fix: #4284 job schedule display is incorrect](https://github.com/rundeck/rundeck/pull/4939)
-* [\[3.0.x backport\] fix: js console error 404 "manifest.js" #4873](https://github.com/rundeck/rundeck/pull/4938)
-* [Fix issue where a mis-configured user group source plugin would emit an NPE.](https://github.com/rundeck/rundeck/pull/4926)
-* [\[3.0.x backport\] Fix #4684 #4922 node state doesn't load](https://github.com/rundeck/rundeck/pull/4924)
-* [\[3.0.x\] Job execution display broken for some jobs](https://github.com/rundeck/rundeck/issues/4922)
-* [\[Docker\] unset envars before starting Rundeck](https://github.com/rundeck/rundeck/pull/4913)
-* [\[3.0.x\] Job "Definition" tab in the GUI is Showing Incorrect Schedule Information](https://github.com/rundeck/rundeck/issues/4898)
-* [Rundeck returns a HTTP 404 trying to load assets/prototype/scriptaculous.js](https://github.com/rundeck/rundeck/issues/4893)
-* [\[Docker\] Add template option for setting contextPath](https://github.com/rundeck/rundeck/pull/4875)
-* [\[3.0.x\] manifest.js 404 Not Found](https://github.com/rundeck/rundeck/issues/4873)
-* [Option values plugin does not work with enforce from allowed values (backport) Fixes #4857](https://github.com/rundeck/rundeck/pull/4864)
+* [\[3.0.x backport\] fix potential npe caused by race condition in node enhancer](https://github.com/rundeck/rundeck/pull/5068)
+* [Backport PR #5005 - EnhancedNodeService bean was not loaded](https://github.com/rundeck/rundeck/pull/5066)
+* [Backport PR #4990 - Adds pagination of tokens on user profile](https://github.com/rundeck/rundeck/pull/5065)
+* [Backport PR #4990 - Adds pagination of tokens on user profile](https://github.com/rundeck/rundeck/pull/5062)
+* [backport of PR #5047 - Update library dependencies to address CVEs](https://github.com/rundeck/rundeck/pull/5048)
+* [\[3.0.x\] Job execution might fail, with NPE stacktrace in service log (node enhancer feature)](https://github.com/rundeck/rundeck/issues/5018)
+* [rundeck "CVE-2019-11272" Spring Security Update Plz~](https://github.com/rundeck/rundeck/issues/5002)
+
+## Contributors
+
+* Alberto Hormazabal
+* Greg Schueler (gschueler)
+* Greg Zapp (ProTip)
+* carlos (carlosrfranco)
+
+## Bug Reporters
+
+* ahormazabal
+* carlosrfranco
+* gschueler
+* happylie
