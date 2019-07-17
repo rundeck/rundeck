@@ -90,9 +90,11 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
-        pluginDescs[jobPluginService.jobPluginProviderService.name]=jobPluginService.listJobPlugins().collect {
-            it.value.description
-        }.sort { a, b -> a.name <=> b.name }
+        if(featureService.featurePresent("job-plugin")) {
+            pluginDescs[jobPluginService.jobPluginProviderService.name]=jobPluginService.listJobPlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }

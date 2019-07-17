@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -46,6 +47,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -2266,6 +2268,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //evaluate embedded Job options for validation
         HashMap optparams = validateJobInputOptions(props, se, authContext)
+        checkBeforeJobExecution(optparams, se, props)
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
@@ -3927,5 +3930,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         list = list + fwPlugins
 
         return list
+    }
+
+    def checkBeforeJobExecution(optparams,
+                             ScheduledExecution se,
+                             props){
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl()
+        event.setUserName(props.user)
+        event.setScheduledExecutionMap(se.toMap())
+        event.setOptionsValues(optparams)
+        event.setProjectName(props.project)
+        try{
+            jobPluginService.beforeJobExecution(event)
+        }catch(JobPluginException jpe){
+            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+        }
+
     }
 }

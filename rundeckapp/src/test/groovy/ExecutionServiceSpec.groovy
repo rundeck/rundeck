@@ -63,6 +63,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
     }
 
+    def setup(){
+        service.jobPluginService = Mock(JobPluginService)
+    }
+
     private Map createJobParams(Map overrides = [:]) {
         [
                 jobName       : 'blue',

@@ -1,30 +1,13 @@
 package com.dtolabs.rundeck.core.jobs;
 
-public class JobEventStatus {
+public interface JobEventStatus {
 
-    private boolean successful;
-    private String description;
-
-    public boolean isSuccessful() {
-        return successful;
+    public default boolean isSuccessful() {
+        return true;
     }
 
-    public void setSuccessful(boolean successful) {
-        this.successful = successful;
+    public default String getDescription() {
+        return null;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public JobEventStatus(boolean successful, String description) {
-        this.successful = successful;
-        this.description = description;
-    }
-
-    public JobEventStatus() {}
 }

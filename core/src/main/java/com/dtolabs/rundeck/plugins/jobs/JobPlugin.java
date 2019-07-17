@@ -1,8 +1,9 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
 import com.dtolabs.rundeck.core.execution.JobPluginException;
-import com.dtolabs.rundeck.core.jobs.JobEvent;
+import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 
 
 /**
@@ -13,12 +14,22 @@ import com.dtolabs.rundeck.core.jobs.JobEventStatus;
  */
 public interface JobPlugin {
 
+
+    /**
+     * It triggers before the job execution context exist
+     * @param event event execution data
+     * @return JobEventStatus
+     */
+    default public JobEventStatus beforeJobExecution(JobPreExecutionEvent event) throws JobPluginException{
+        return null;
+    }
+
     /**
      * It triggers before the job starts
      * @param event event execution data
      * @return JobEventStatus
      */
-    default public JobEventStatus beforeJobStarts(JobEvent event) throws JobPluginException{
+    default public JobEventStatus beforeJobStarts(JobExecutionEvent event) throws JobPluginException{
         return null;
     }
 
@@ -27,7 +38,7 @@ public interface JobPlugin {
      * @param event event execution data
      * @return JobEventStatus
      */
-    default public JobEventStatus afterJobEnds(JobEvent event) throws JobPluginException{
+    default public JobEventStatus afterJobEnds(JobExecutionEvent event) throws JobPluginException{
         return null;
     }
 

@@ -11,8 +11,13 @@ import java.util.Map;
  * Date: 5/07/19
  */
 
-public interface JobEvent {
+public interface JobExecutionEvent {
 
+    /**
+     *
+     * @return String project name.
+     */
+    String getProjectName();
     /**
      *
      * @return StepExecutionContext of the event.
