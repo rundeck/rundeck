@@ -61,6 +61,7 @@ dependencies {
     }
     compile 'org.apache.ant:ant:1.8.3',
         'log4j:log4j:1.2.17',
+        'log4j:apache-log4j-extras:1.2.17',
         'commons-codec:commons-codec:1.10',
         'commons-beanutils:commons-beanutils:1.9.3',
         'commons-collections:commons-collections:3.2.2',
