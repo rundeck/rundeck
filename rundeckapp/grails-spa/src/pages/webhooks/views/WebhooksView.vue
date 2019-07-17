@@ -96,8 +96,8 @@
           </div>
           <hr style="margin-bottom:0;">
           <div class="card-content">
-            <div v-if="selectedPlugin && selectedPlugin.name == 'pagerduty-run-job' ">
-                <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="curHook"></pager-duty-config>
+            <div v-if="selectedPlugin && selectedPlugin.type == 'pagerduty-run-job' ">
+                <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="selectedPlugin"></pager-duty-config>
             </div>
           </div>
         </div>
@@ -191,7 +191,9 @@
         this.setSelectedPlugin()
       },
       setSelectedPlugin() {
-        this.selectedPlugin = {type:this.curHook.eventPlugin,config:this.curHook.config}
+        console.log(this.curHook.config)
+        this.selectedPlugin = {type:this.curHook.eventPlugin, config:this.curHook.config}
+        console.log(this.selectedPlugin)
         getServiceProviderDescription("WebhookEvent",this.curHook.eventPlugin).then(data => {this.showPluginConfig = data.props.length > 0})
       },
       handleSave() {

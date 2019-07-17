@@ -68,50 +68,49 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
 
         JobService jobService = context.services.getService(JobService)
 
+        //expand values in the argString/jobOptions map
+
+        final Map<String, String> webhookMap = new HashMap<>()
+        webhookMap.put("id", data.id)
+        if (null != data.project) {
+            webhookMap.put("project", data.project)
+        }
+
+        Map webhookdata
+
         try {
+            webhookdata = mapper.readValue(data.data, HashMap)
+        } catch(Exception ex) {
+            throw new WebhookEventException("Unable to parse posted JSON data: ${ex.message}",WebhookJobRunHandlerFailureReason.JsonParseError)
+        }
 
-            //expand values in the argString/jobOptions map
+        List<Map> messages = extractMessageBatches(conf.batchKey, webhookdata)
 
-            final Map<String, String> webhookMap = new HashMap<>()
-            webhookMap.put("id", data.id)
-            if (null != data.project) {
-                webhookMap.put("project", data.project)
-            }
+        messages.each { m ->
+            conf.rules.each { r ->
+                if (! r.isMatch(m))
+                    return
 
-            Map webhookdata
-
-            try {
-                webhookdata = mapper.readValue(data.data, HashMap)
-            } catch(Exception ex) {
-                throw new WebhookEventException("Unable to parse posted JSON data: ${ex.message}",WebhookJobRunHandlerFailureReason.JsonParseError)
-            }
-
-            List<Map> messages = extractMessageBatches(conf.batchKey, webhookdata)
-
-            messages.each { m ->
-                conf.rules.each { r ->
-                    if (! r.isMatch(m))
-                        return
-
-                    def jobId = r.jobId
+                def jobId = r.jobId
 
 
-                    def expandedJobId = template(jobId, m)
+                def expandedJobId = template(jobId, m)
 
-                    JobReference jobReference = jobService.jobForID(
-                            expandedJobId, data.project
-                    )
+                JobReference jobReference = jobService.jobForID(
+                        expandedJobId, data.project
+                )
 
-                    def expandedNodeFilter = template(r.nodeFilter, m)
-                    def expandedAsUser = ''
+                def expandedNodeFilter = template(r.nodeFilter, m)
+                def expandedAsUser = ''
 
-                    def options = processJobOptions(r.jobOptions, m)
+                def options = processJobOptions(r.jobOptions, m)
 
-                    log.info(
-                            "starting job ${expandedJobId} with args: ${options}, " +
-                                    "nodeFilter: ${expandedNodeFilter} asUser: ${expandedAsUser}"
-                    )
+                log.info(
+                        "starting job ${expandedJobId} with args: ${options}, " +
+                                "nodeFilter: ${expandedNodeFilter} asUser: ${expandedAsUser}"
+                )
 
+                try {
                     ExecutionReference exec =
                             jobService.runJob(
                                     jobReference,
@@ -120,29 +119,28 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
                                     expandedAsUser
                             )
                     log.info("job result: ${exec}")
+                } catch (JobNotFound nf) {
+                    log.error("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}")
+
+                    throw new WebhookEventException("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}",
+                            WebhookJobRunHandlerFailureReason.JobNotFound
+                    )
+                } catch (JobExecutionError nf) {
+                    if(log.isDebugEnabled()) {
+                        log.debug(
+                                "Error attempting to run job: ${expandedJobId} in project ${data.project}: ${nf}",
+
+                                nf
+                        )
+                    }else{
+                        log.error("Error attempting to run job: ${expandedJobId} in project ${data.project}: " +
+                                "${nf}")
+                    }
+                    throw new WebhookEventException("Error attempting to run job: $expandedJobId in project $data.project: $nf",
+                            WebhookJobRunHandlerFailureReason.ExecutionError,
+                    )
                 }
-
             }
-        } catch (JobNotFound nf) {
-            log.error("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}")
-
-            throw new WebhookEventException("Cannot run job, not found: ${expandedJobId} in project ${data.project}: ${nf}",
-                    WebhookJobRunHandlerFailureReason.JobNotFound
-            )
-        } catch (JobExecutionError nf) {
-            if(log.isDebugEnabled()) {
-                log.debug(
-                        "Error attempting to run job: ${expandedJobId} in project ${data.project}: ${nf}",
-
-                        nf
-                )
-            }else{
-                log.error("Error attempting to run job: ${expandedJobId} in project ${data.project}: " +
-                          "${nf}")
-            }
-            throw new WebhookEventException("Error attempting to run job: $expandedJobId in project $data.project: $nf",
-                    WebhookJobRunHandlerFailureReason.ExecutionError,
-            )
         }
     }
 

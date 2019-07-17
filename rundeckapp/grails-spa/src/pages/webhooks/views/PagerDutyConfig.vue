@@ -150,7 +150,7 @@ export default {
          */
         init() {
             console.log(this.curHook)
-            if (this.curHook.config == undefined) {
+            if (this.curHook.config == undefined || Object.keys(this.curHook.config).length == 0) {
                 this.curHook.config = {
                     rules: [{
                         name: '',
