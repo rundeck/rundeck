@@ -15,7 +15,6 @@ public interface JobEventStatus {
     public default boolean useNewValues(){ return false; }
 
     /**
-     *
      * @return StepExecutionContext of the event.
      */
     StepExecutionContext getExecutionContext();
