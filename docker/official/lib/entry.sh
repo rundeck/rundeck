@@ -19,6 +19,7 @@ export REMCO_TMP_DIR=/tmp/remco-partials
 # Create temporary directories for config partials
 mkdir -p ${REMCO_TMP_DIR}/framework
 mkdir -p ${REMCO_TMP_DIR}/rundeck-config
+mkdir -p ${REMCO_TMP_DIR}/artifact-repositories
 
 remco -config ${REMCO_HOME}/config.toml
 
@@ -31,6 +32,7 @@ echo "rundeck.server.uuid = ${RUNDECK_SERVER_UUID}" > ${REMCO_TMP_DIR}/framework
 # Combine partial config files
 cat ${REMCO_TMP_DIR}/framework/* >> etc/framework.properties
 cat ${REMCO_TMP_DIR}/rundeck-config/* >> server/config/rundeck-config.properties
+cat ${REMCO_TMP_DIR}/artifact-repositories/* >> server/config/artifact-repositories.yaml
 
 
 # Store settings that may be unset in script variables
