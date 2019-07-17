@@ -75,14 +75,6 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Condition Policy</label>
-                    <select class="form-control" v-model="rule.policy">
-                        <option>all</option>
-                        <option>any</option>
-                    </select>
-                </div>
-
                 <div class="h4">
                     <span>Conditions</span>
 
@@ -92,6 +84,13 @@
                 </div>
 
                 <div style="padding-left:10px;">
+                    <div class="form-group">
+                        <label>Policy</label>
+                        <select v-model="rule.policy">
+                            <option>all</option>
+                            <option>any</option>
+                        </select>
+                    </div>
                     <div v-for="(condition,index) in rule.conditions" :key="index">
                         <div style="width:100%;margin-bottom:5px;display:flex;align-items:center;">
                             
@@ -99,6 +98,7 @@
 
                                 <select class="form-control input-sm" v-model="condition.condition" style="width:100px;margin:0px 5px 0px;">
                                     <option>contains</option>
+                                    <option>exists</option>
                                     <option>matches</option>
                                 </select>
 

@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.jayway.jsonpath.Configuration
+import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.PathNotFoundException
 import org.codehaus.groovy.runtime.typehandling.GroovyCastException
 import org.rundeck.utils.UUIDPropertyValidator
@@ -157,7 +159,7 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
             //TODO: Not a List
         }
 
-        return messages
+        return messages.flatten()
     }
 
     static Map<String, String> processJobOptions(List<JobOption> options, Map event) {
@@ -204,22 +206,26 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
     }
 
     static String template(String input, Map data, Object defaultValue = '') {
-        if (input.startsWith('$') ) {
-            def val = JsonPath.read(data, input)
+        try {
+            if (input.startsWith('$')) {
+                def val = JsonPath.read(data, input)
 
-            if (val instanceof List || val instanceof Map)
-                return mapper.writeValueAsString(val)
-            else
-                return val.toString()
+                if (val instanceof List || val instanceof Map)
+                    return mapper.writeValueAsString(val)
+                else
+                    return val.toString()
 
-        } else {
-            String value
-            if ( input.startsWith('\$') )
-                value = input.substring(1)
-            else
-                value = input
+            } else {
+                String value
+                if (input.startsWith('\$'))
+                    value = input.substring(1)
+                else
+                    value = input
 
-            return groovyTemplate(value, data, defaultValue)
+                return groovyTemplate(value, data, defaultValue)
+            }
+        } catch(PathNotFoundException ex) {
+            return defaultValue
         }
     }
 
@@ -290,6 +296,8 @@ class Condition {
     public String value
     public String condition
 
+    private jpath = JsonPath.using(Configuration.defaultConfiguration().addOptions(Option.DEFAULT_PATH_LEAF_TO_NULL))
+
     boolean isMatch(Map event) {
         // Handle empty conditions until better validation
         if (path == null || path.empty)
@@ -300,12 +308,14 @@ class Condition {
                 return contains(event)
             case "matches":
                 return matches(event)
+            case "exists":
+                return exists(event)
 
         }
     }
 
     boolean contains(Map event) {
-        def res = JsonPath.read(event, path)
+        def res = jpath.parse(event).read(path)
 
         res instanceof String ?
                 res.contains(value) :
@@ -313,11 +323,20 @@ class Condition {
     }
 
     boolean matches(Map event) {
-        def res = JsonPath.read(event, path)
+        def res = jpath.parse(event).read(path)
 
         res instanceof String ?
                 res == value :
                 false
+    }
+
+    boolean exists(Map event) {
+        def res = jpath.parse(event).read(path)
+
+        if (res == null)
+            return false
+
+        return true
     }
 }
 
