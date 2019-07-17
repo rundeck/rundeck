@@ -15,7 +15,6 @@
  */
 package com.dtolabs.rundeck.server.plugins.webhook
 
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.jobs.JobExecutionError
@@ -23,7 +22,6 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
@@ -34,22 +32,18 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.jayway.jsonpath.Configuration
 import com.jayway.jsonpath.Option
 import com.jayway.jsonpath.PathNotFoundException
-import org.codehaus.groovy.runtime.typehandling.GroovyCastException
-import org.rundeck.utils.UUIDPropertyValidator
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import rundeck.Webhook
 
 import com.jayway.jsonpath.JsonPath
+import org.apache.log4j.Logger
 
 
 @Plugin(name='pagerduty-run-job',service= ServiceNameConstants.WebhookEvent)
-@PluginDescription(title="PagerDuty Webhook Run Job",description="Run a job on webhook event")
+@PluginDescription(title="PagerDuty Webhook Run Job",description="Run a job in response to a PagerDuty webhook event")
 class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
     static final String JSON_DATA_TYPE = "application/json"
     static final ObjectMapper mapper = new ObjectMapper()
 
-    static Logger log = LoggerFactory.getLogger(JobRunWebhookEventPlugin)
+    static Logger log = Logger.getLogger(PagerDutyWebhookEventPlugin)
 
     Map config
 
@@ -276,7 +270,6 @@ class RoutingRule {
             return true
 
         def evaluations = conditions.collect {c ->
-            println(c.isMatch(event))
             return c.isMatch(event)
         }
 

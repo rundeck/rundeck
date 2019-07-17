@@ -124,7 +124,6 @@
 export default {
     name: "PagerDutyConfig",
     props: {
-        selectedPlugin: Object,
         curHook: Object,
     },
     watch: {
@@ -149,7 +148,6 @@ export default {
          * Construct the config template if not set
          */
         init() {
-            console.log(this.curHook)
             if (this.curHook.config == undefined || Object.keys(this.curHook.config).length == 0) {
                 this.curHook.config = {
                     rules: [{
@@ -165,10 +163,6 @@ export default {
                 }
             }
             this.config = this.curHook.config
-            console.log(this.config)
-        },
-        setSelectedPlugin() {
-           this.selectedPlugin = this.webhookPlugins.find(p => p.name === this.curHook.eventPlugin)
         },
         addNewRule(side) {
             if (! this.config.rules instanceof Array)
@@ -190,7 +184,6 @@ export default {
         },
         addNewCondition(rule) {
             rule.conditions.push({})
-            console.log(rule.conditions)
         },
         handleDeleteRuleSet(prop) {
             let index = this.config.rules.indexOf(prop)

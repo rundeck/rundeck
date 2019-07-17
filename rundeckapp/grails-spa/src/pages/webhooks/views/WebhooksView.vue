@@ -68,8 +68,10 @@
                         :key="curHook.eventPlugin"
                         :show-title="false"
                         :show-description="false"
+                        v-if="selectedPlugin.type !== 'pagerduty-run-job' "
                       >
                       </plugin-config>
+                      <pager-duty-config :curHook="selectedPlugin" v-if="selectedPlugin.type === 'pagerduty-run-job' "></pager-duty-config>
                     </div>
                     <div class="row" style="margin-top: 10px;">
                       <div class="col-sm-6">
@@ -87,17 +89,6 @@
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-header">
-            <h5 style="margin:0;">Plugin Config</h5>
-          </div>
-          <hr style="margin-bottom:0;">
-          <div class="card-content">
-            <div v-if="selectedPlugin && selectedPlugin.type == 'pagerduty-run-job' ">
-                <pager-duty-config :selectedPlugin="selectedPlugin" :curHook="selectedPlugin"></pager-duty-config>
             </div>
           </div>
         </div>
@@ -191,10 +182,10 @@
         this.setSelectedPlugin()
       },
       setSelectedPlugin() {
-        console.log(this.curHook.config)
         this.selectedPlugin = {type:this.curHook.eventPlugin, config:this.curHook.config}
-        console.log(this.selectedPlugin)
-        getServiceProviderDescription("WebhookEvent",this.curHook.eventPlugin).then(data => {this.showPluginConfig = data.props.length > 0})
+        getServiceProviderDescription("WebhookEvent",this.curHook.eventPlugin).then(data => {
+          this.showPluginConfig = data.props.length > 0 || this.curHook.eventPlugin === 'pagerduty-run-job'
+        })
       },
       handleSave() {
         if(!this.curHook.eventPlugin) {
