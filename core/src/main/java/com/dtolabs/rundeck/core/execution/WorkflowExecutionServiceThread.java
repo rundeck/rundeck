@@ -46,13 +46,15 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
     private IJobPluginService iJobPluginService;
+    private ExecutionReference executionReference;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager,
-            IJobPluginService iJobPluginService
+            IJobPluginService iJobPluginService,
+            ExecutionReference executionReference
     )
     {
         this.weservice = eservice;
@@ -60,6 +62,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
         this.context = econtext;
         this.loggingManager = loggingManager;
         this.iJobPluginService = iJobPluginService;
+        this.executionReference = executionReference;
     }
 
     public void run() {
@@ -83,7 +86,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
-            JobEventStatus jobEventStatus = iJobPluginService.beforeJobStarts(new JobExecutionEventImpl(context));
+            JobEventStatus jobEventStatus = iJobPluginService.beforeJobStarts(new JobExecutionEventImpl(context,executionReference));
             StepExecutionContext executionContext = jobEventStatus.getExecutionContext();
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(executionContext != null ? executionContext : context, weitem));
@@ -91,7 +94,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             if (null != getResult().getException()) {
                 thrown = getResult().getException();
             }
-            iJobPluginService.afterJobEnds(new JobExecutionEventImpl(executionContext != null ? executionContext: context));
+            iJobPluginService.afterJobEnds(new JobExecutionEventImpl(executionContext != null ? executionContext: context,executionReference));
             return getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);

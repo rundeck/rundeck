@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
+import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 
 import java.util.Map;
@@ -48,11 +49,12 @@ public interface JobExecutionEvent {
      * @return String job execution id.
      */
     String getExecutionId();
-
     /**
      *
      * @return INodeSet node set where the job will run
      */
     INodeSet getNodes();
+
+    ExecutionReference getExecution();
 
 }

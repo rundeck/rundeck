@@ -16,6 +16,7 @@
 
 package rundeck.quartzjobs
 
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
@@ -33,10 +34,11 @@ class TestWEServiceThread extends WorkflowExecutionServiceThread {
             final WorkflowExecutionItem eitem,
             final StepExecutionContext econtext,
             LoggingManager loggingManager,
-            IJobPluginService iJobPluginService
+            IJobPluginService iJobPluginService,
+            ExecutionReference executionReference
     )
     {
-        super(eservice, eitem, econtext, loggingManager, iJobPluginService)
+        super(eservice, eitem, econtext, loggingManager, iJobPluginService, executionReference)
     }
 
     void setSuccessful(boolean success){

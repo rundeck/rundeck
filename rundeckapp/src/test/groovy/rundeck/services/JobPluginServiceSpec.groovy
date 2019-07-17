@@ -80,7 +80,7 @@ class JobPluginServiceSpec extends Specification {
             listPlugins(_,_) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext))
+        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
         then:
         result.isSuccessful()
     }
@@ -100,7 +100,7 @@ class JobPluginServiceSpec extends Specification {
             listPlugins(JobPlugin, jobPluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext))
+        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
         then:
         thrown(JobPluginException)
     }
@@ -115,7 +115,7 @@ class JobPluginServiceSpec extends Specification {
             listPlugins(JobPlugin, jobPluginProviderService) >> ["TestPlugin":describedPlugin]
         }
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext))
+        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
         then:
         thrown(JobPluginException)
     }
