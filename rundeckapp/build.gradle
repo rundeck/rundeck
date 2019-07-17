@@ -46,8 +46,6 @@ repositories {
     flatDir dirs: "$rootDir/locallib"
 }
 
-def springBootVersion = "1.5.12.RELEASE"
-//ext['jackson.version'] = '2.8.11'
 
 dependencies {
 
@@ -94,6 +92,7 @@ dependencies {
     compile 'org.grails.plugins:external-config:1.1.2'
     compile 'commons-fileupload:commons-fileupload:1.3.3'
 
+
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
 
@@ -128,9 +127,12 @@ dependencies {
     compile "org.grails.plugins:events"
     compile "org.grails.plugins:gsp"
     compile "com.google.code.gson:gson:2.8.2"
-    compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
-    compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
-    compile "org.eclipse.jetty:jetty-security:${jettyVersion}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}"
+    compile "com.fasterxml.jackson.core:jackson-core"
+    compile "com.fasterxml.jackson.core:jackson-annotations"
+    compile "org.eclipse.jetty:jetty-jaas"
+    compile "org.eclipse.jetty:jetty-util"
+    compile "org.eclipse.jetty:jetty-security"
     compile 'org.grails.plugins:spring-security-core:3.2.3'
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
@@ -140,13 +142,13 @@ dependencies {
     profile "org.grails.profiles:web"
 //    runtime "org.springframework:spring-test:5.0.3.RELEASE"
     runtime "org.glassfish.web:el-impl:2.1.2-b03"
-    runtime "com.h2database:h2:1.4.197"
+    runtime "com.h2database:h2:1.4.199"
 
     // Database drivers
     runtime 'mysql:mysql-connector-java:5.1.47'
     runtime 'com.microsoft.sqlserver:mssql-jdbc:6.4.0.jre8'
     runtime 'org.mariadb.jdbc:mariadb-java-client:1.7.4'
-    runtime 'org.postgresql:postgresql:42.2.2'
+    runtime 'org.postgresql:postgresql:42.2.6'
     runtime 'org.rundeck.hibernate:rundeck-oracle-dialect:1.0.0'
 
 

@@ -256,7 +256,7 @@ class PluginController extends ControllerBase {
         if (requireAjax(controller: 'menu', action: 'index')) {
             return
         }
-        if (requireParams(['project', 'service', 'name'])) {
+        if (requireParams(['service', 'name'])) {
             return
         }
         Map config = [:]

@@ -36,10 +36,8 @@ class PluginControllerSpec extends Specification implements ControllerUnitTest<P
             request.contentType = 'application/json'
             request.method = 'POST'
             request.addHeader('x-rundeck-ajax', 'true')
-            def project = 'Aproject'
             def service = 'AService'
             def name = 'someproperty'
-            params.project = project
             params.service = service
             params.name = name
             controller.pluginService = Mock(PluginService)
