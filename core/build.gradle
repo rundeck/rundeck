@@ -77,12 +77,10 @@ dependencies {
         'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
-        'com.fasterxml.jackson.core:jackson-databind:2.8.11.2',
-        'com.fasterxml.jackson.core:jackson-core:2.8.11',
-        'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
+        "com.fasterxml.jackson.core:jackson-databind:${jacksonDatabindVersion}",
         'org.yaml:snakeyaml:1.17',
-        'com.squareup.retrofit2:retrofit:2.2.0',
-        'com.squareup.retrofit2:converter-jackson:2.2.0'
+        'com.squareup.retrofit2:retrofit:2.6.0',
+        'com.squareup.retrofit2:converter-jackson:2.6.0'
 
 
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
@@ -94,7 +92,7 @@ dependencies {
 
     testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
-    testCompile "com.squareup.retrofit2:retrofit-mock:2.2.0"
+    testCompile "com.squareup.retrofit2:retrofit-mock:2.6.0"
     testCompile "cglib:cglib-nodep:2.2.2"
 
 }
@@ -135,7 +133,7 @@ jar.doFirst {
     manifest {
         attributes 'Rundeck-Version': version,
                    'Rundeck-Tools-Dependencies': configurations.runtime.files.collect { "$it.name" }.join(" ")
-                   
+
     }
 }
 
