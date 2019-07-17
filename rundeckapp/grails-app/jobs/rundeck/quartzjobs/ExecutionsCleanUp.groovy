@@ -210,12 +210,10 @@ class ExecutionsCleanUp implements InterruptableJob {
 
     private int totalAllExecutions(ExecutionService executionService, String project){
         ExecutionQuery query = new ExecutionQuery(projFilter: project)
-        def criteriaClos = { isCount ->
-            // Run main query criteria
+        def total = Execution.createCriteria().count{
             def queryCriteria = query.createCriteria(delegate)
             queryCriteria()
         }
-        def total = Execution.createCriteria().count(criteriaClos.curry(true))
         return null != total ? total : 0
     }
 
