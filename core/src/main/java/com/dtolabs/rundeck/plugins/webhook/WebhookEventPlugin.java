@@ -21,5 +21,4 @@ import java.util.Map;
 
 public interface WebhookEventPlugin {
     public void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
-    public void setConfig(Map config);
 }

@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.webhook.WebhookEventContextImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
@@ -37,10 +38,9 @@ class WebhookService {
         WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, webhookPluginProviderService, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
                                                                   PropertyScope.Instance).instance
 
-        plugin.setConfig(pluginConfig)
+        PluginAdapterUtility.setConfig(plugin, pluginConfig)
 
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
-        //TODO: Process in thread/task outside of request/reponse
         plugin.onEvent(context,data)
     }
 

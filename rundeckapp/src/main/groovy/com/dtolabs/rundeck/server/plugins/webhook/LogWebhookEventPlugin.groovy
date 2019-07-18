@@ -27,8 +27,6 @@ import org.apache.log4j.Logger
 @Plugin(name = "log-webhook-event",service= ServiceNameConstants.WebhookEvent)
 @PluginDescription(title="Log Webhook Events",description = "Can be used to log any incoming webhook events to log4j logger 'org.rundeck.plugin.webhook.event'")
 class LogWebhookEventPlugin implements WebhookEventPlugin {
-    Map config
-
     private static final Logger LOG = Logger.getLogger("org.rundeck.plugin.webhook.event")
 
     @Override
