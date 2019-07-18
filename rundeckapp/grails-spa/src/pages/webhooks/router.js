@@ -9,9 +9,9 @@ export default new Router({
   mode: 'history',
   linkExactActiveClass: 'is-active',
   routes: [{
-      path: '/webhooks',
-      name: 'webhooks',
-      component: WebhooksView
-    }
+    path: '/webhooks',
+    name: 'webhooks',
+    component: WebhooksView
+  }
   ]
 });
