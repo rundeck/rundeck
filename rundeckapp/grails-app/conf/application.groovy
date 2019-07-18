@@ -32,6 +32,7 @@ environments {
 
     }
     test {
+        rundeck.feature.'job-plugin'.enabled = true
         grails.profiler.disable=true
         dataSource {
             dbCreate = "create-drop"
