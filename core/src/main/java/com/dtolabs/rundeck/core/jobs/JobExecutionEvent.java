@@ -57,4 +57,6 @@ public interface JobExecutionEvent {
 
     ExecutionReference getExecution();
 
+    JobEventResult getResult();
+
 }

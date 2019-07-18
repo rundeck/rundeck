@@ -6,6 +6,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
+import com.dtolabs.rundeck.core.jobs.JobEventResult;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +17,7 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
 
     @Getter @Setter private StepExecutionContext executionContext;
     @Getter @Setter ExecutionReference execution;
+    @Getter @Setter JobEventResult result;
 
 
     public JobExecutionEventImpl(StepExecutionContext executionContext) {
@@ -28,9 +31,21 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         this.execution=execution;
     }
 
+    public JobExecutionEventImpl(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            JobEventResult result
+    )
+    {
+        this.executionContext = executionContext;
+        this.execution = execution;
+        this.result = result;
+    }
+
+
     @Override
     public String getProjectName() {
-        if(this.executionContext != null){
+        if (this.executionContext != null) {
             return this.executionContext.getFrameworkProject();
         }
         return null;
@@ -63,6 +78,7 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         }
         return null;
     }
+
 
     @Override
     public String getExecutionId() {
