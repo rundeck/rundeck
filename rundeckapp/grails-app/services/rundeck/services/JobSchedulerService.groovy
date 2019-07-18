@@ -48,6 +48,11 @@ class JobSchedulerService implements JobScheduleManager {
     String determineExecNode(String name, String group, Map data, String project) {
         return rundeckJobScheduleManager.determineExecNode(name, group, data, project)
     }
+
+    @Override
+    List<String> getDeadMembers(String uuid) {
+        return rundeckJobScheduleManager.getDeadMembers(uuid);
+    }
 }
 
 /**
@@ -116,5 +121,10 @@ class QuartzJobScheduleManager implements JobScheduleManager {
     @Override
     String determineExecNode(String name, String group, Map data, String project) {
         return frameworkService.serverUUID
+    }
+
+    @Override
+    List<String> getDeadMembers(String uuid) {
+        return null;
     }
 }

@@ -29,6 +29,7 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
 
 /**
@@ -61,6 +62,7 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         List execIdsToExclude = job.searchExecutions(
                 new FrameworkService(),
                 new ExecutionService(),
+                new JobSchedulerService(),
                 projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize)
 
         Assert.assertEquals(0, execIdsToExclude.size())
@@ -90,7 +92,7 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         ExecutionsCleanUp job = new ExecutionsCleanUp()
 
         List execIdsToExclude = job.searchExecutions(new FrameworkService(),
-                new ExecutionService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+                new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
 
         Assert.assertEquals(true, execIdsToExclude.size() > 0)
 
@@ -98,6 +100,54 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
                 execIdsToExclude, new FileUploadService(), logFileStorageService.proxyInstance())
 
         Assert.assertEquals(sucessTotal, execIdsToExclude.size())
+    }
+
+    @Test
+    void testExecuteJobCleanerOnClusterDeleteNullServerUUID(){
+        String projName = 'projectTest'
+        int maxDaysToKeep = 4
+        int minimumExecutionsToKeep = 0
+        int maximumDeletionSize = 500
+        def logFileStorageService = new MockFor(LogFileStorageService)
+        logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
+                                                                         String filetype,
+                                                                         boolean useStoredPath,
+                                                                         boolean partial ->
+            null
+        }
+        Date startDate = new Date(2015 - 1900, 2, 8)
+        Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
+        ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
+            endDate
+        }
+        Date execDate = new Date(2015 - 1900, 02, 03)
+        ScheduledExecution se = setupJob(projName)
+        Execution execution = setupExecution(se, projName, execDate, execDate)
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+
+        def mockfs=new MockFor(FrameworkService)
+        mockfs.demand.getServerUUID(1..1){
+            "aaaa"
+        }
+        mockfs.demand.isClusterModeEnabled(1..5){
+            true
+        }
+
+        FrameworkService frameworkService = mockfs.proxyInstance()
+
+        def mockjs=new MockFor(JobSchedulerService)
+        mockjs.demand.getDeadMembers(0..1){
+            ["null","bbbb"]
+        }
+
+        JobSchedulerService jobSchedulerService = mockjs.proxyInstance()
+
+
+        List execIdsToExclude = job.searchExecutions(frameworkService,
+                new ExecutionService(), jobSchedulerService, projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+
+        Assert.assertEquals(true, execIdsToExclude.size() > 0)
+
     }
 
     Execution setupExecution(ScheduledExecution se, String projName, Date startDate, Date finishDate) {
@@ -121,6 +171,7 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         }
         return e
     }
+
 
     private ScheduledExecution setupJob(String projName, Closure extra=null) {
         ScheduledExecution.withNewTransaction {
