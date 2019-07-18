@@ -358,6 +358,7 @@ public class PluginAdapterUtility {
             final Description description,
             final Object object, PropertyScope defaultScope) {
         Map<String, Object> inputConfig = mapDescribedProperties(resolver, description, defaultScope);
+
         if (object instanceof Configurable) {
             Configurable configObject = (Configurable) object;
             Properties configuration = new Properties();
@@ -370,7 +371,29 @@ public class PluginAdapterUtility {
         } else {
             inputConfig = configureObjectFieldsWithProperties(object, description.getProperties(), inputConfig);
         }
+
         return inputConfig;
+    }
+
+
+    /**
+     * Set config on fields annotated with PluginConfig {@link PluginConfig}
+     * @param object
+     * @param config
+     */
+    public static void setConfig(final Object object, Object config) {
+        for (final Field field : collectClassFields(object.getClass())) {
+            final PluginConfig annotation = field.getAnnotation(PluginConfig.class);
+            if (null == annotation) {
+                continue;
+            }
+
+            try {
+                setFieldValue(field, config, object);
+            } catch (Exception e) {
+
+            }
+        }
     }
 
     /**
