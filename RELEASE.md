@@ -7,7 +7,37 @@ Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></s
 
 ## Notes
 
-(Enter notes here)
+### Enhancements
+
+* More UI Improvements
+* API: scheduler takeover endpoint can specify multiple job IDs
+* (Enterprise) License key can be shared among cluster members using 
+* (Enterprise) Execution cleanup process can clean up executions from dead cluster members
+ 
+### Bug Fixes
+
+* Project List page correctly loads project controls
+* Remote Option values using allowed values was not validating correctly
+* JAAS/property file login module: username should not be added as a role
+* Admin view of user Profile page with lots of API tokens will load correctly
+* (Enterprise) Cluster manager: can select all orphan jobs to reassign scheduler owner
+* 
+
+### Security
+
+* updated dependencies flagged due to CVEs
+
+### Plugins
+
+* Added "Attribute Match Node Enhancer" plugin: customize node icons, or inject new node attributes based on other attributes
+* (Enterprise) Ruleset workflow strategy can use variables on both sides of conditional comparisons
+* (Enterprise) SQL Runner can use inline SQL script
+* (Enterprise) File Transfer source should allow wildcards
+
+### Docker
+
+* (Enterprise) remote policy
+
 ## Contributors
 
 * Alberto Hormazabal
