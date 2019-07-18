@@ -17,6 +17,7 @@
 
 <g:set var="ukey" value="${g.rkey()}"/>
 <table width="100%" class="table table-condensed table-striped apitokentable">
+    <thead>
     <tr>
         <th class="table-header">
             <g:message code="token"/>
@@ -25,7 +26,7 @@
             <g:message code="expiration"/>
         </th>
         <th class="table-header">
-            <g:message code="token.username" />
+            <g:message code="token.username"/>
         </th>
         <th class="table-header">
             <g:message code="roles"/>
@@ -33,7 +34,10 @@
         <th class="table-header">
         </th>
     </tr>
+    </thead>
+    <tbody id="apiTokenTableBody">
     <g:each in="${tokenList}" var="token">
         <g:render template="token" model="${[user: user, token: token, flashToken: flashToken]}"/>
     </g:each>
+    </tbody>
 </table>
