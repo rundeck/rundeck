@@ -1,12 +1,9 @@
 package rundeck.services.passwordencrypt
 
-import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil
-import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import grails.testing.services.ServiceUnitTest
 import rundeck.services.FrameworkService
@@ -32,40 +29,24 @@ class PasswordUtilityEncrypterLoaderServiceSpec extends Specification implements
         TestPasswordEncryptPlugin plugin = new TestPasswordEncryptPlugin()
 
         service.pluginService = Mock(PluginService){
-            configurePlugin(_,_,_,_) >> new ConfiguredPlugin<PasswordUtilityEncrypter>(plugin,null)
+            configurePlugin(_,_,_,_) >> new ConfiguredPlugin<PasswordUtilityEncrypterPlugin>(plugin,null)
             listPlugins(_,_) >> ["plugin":plugin]
         }
 
         when:
-        def results = service.listPlugins()
+        def results = service.getPasswordUtilityEncrypters()
 
         then:
         results.size() == 1
     }
 
-    class TestPasswordEncryptPlugin implements PasswordUtilityEncrypter {
-
-        private List<Property> formProperties = []
-
-        TestPasswordEncryptPlugin() {
-            formProperties.add(PropertyUtil.string("username", "Username", "Optional, but necessary for Crypt encoding", false, null));
-        }
-
-        @Override
-        String name() {
-            return "test"
-        }
+    class TestPasswordEncryptPlugin implements PasswordUtilityEncrypterPlugin {
 
         @Override
         Map encrypt(Map params) {
             def result = [:]
             result.obfuscate ="ENC(values)"
             return result
-        }
-
-        @Override
-        public List<Property> formProperties() {
-            return formProperties;
         }
     }
 
