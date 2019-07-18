@@ -24,7 +24,9 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginConfig
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
@@ -45,6 +47,7 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
 
     static Logger log = Logger.getLogger(PagerDutyWebhookEventPlugin)
 
+    @PluginConfig
     Map config
 
     @Override
@@ -198,6 +201,9 @@ class PagerDutyWebhookEventPlugin implements WebhookEventPlugin {
     }
 
     static String template(String input, Map data, Object defaultValue = '') {
+        if (input == null)
+            return ''
+
         try {
             if (input.startsWith('$')) {
                 def val = JsonPath.read(data, input)
