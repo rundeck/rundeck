@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -46,6 +47,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -68,6 +70,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.dao.DuplicateKeyException
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
@@ -2265,7 +2268,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext)
+        HashMap optparams = validateJobInputOptions(props, se, authContext, null)
+        INodeSet nodeSet = frameworkService.filterNodeSet(ExecutionService.filtersAsNodeSet(se), props.project)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, se.toMap(), optparams, nodeSet)
+        if(checkBeforeJobExecution(event, optparams)?.useNewValues()){
+            //if new parameters are needed, a new validation is required
+            optparams = validateJobInputOptions(props, se, authContext, event.getOptionsValues())
+        }
+
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
@@ -2412,10 +2422,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param props
      * @param scheduledExec
      * @param authContext auth for reading storage defaults
+     * @param optionValues values modified by a job plugin
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
-        HashMap optparams = parseJobOptionInput(props, scheduledExec)
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map optionValues) {
+        HashMap optparams
+        if(!optionValues){
+            optparams = parseJobOptionInput(props, scheduledExec)
+        }else{
+            optparams = optionValues
+        }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
     }
@@ -3927,5 +3943,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         list = list + fwPlugins
 
         return list
+    }
+
+    def checkBeforeJobExecution(event, optparams){
+        try{
+            return jobPluginService.beforeJobExecution(event)
+        }catch(JobPluginException jpe){
+            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+        }
     }
 }

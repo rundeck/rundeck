@@ -56,7 +56,8 @@ import java.time.ZoneId
 class ExecutionServiceTempSpec extends Specification{
     ExecutionService service
     def setup(){
-         service = new ExecutionService()
+        service = new ExecutionService()
+        service.jobPluginService = Mock(JobPluginService)
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {

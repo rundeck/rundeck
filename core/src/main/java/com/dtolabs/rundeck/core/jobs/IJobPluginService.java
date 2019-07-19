@@ -4,8 +4,8 @@ import com.dtolabs.rundeck.core.execution.JobPluginException;
 
 public interface IJobPluginService {
 
-    JobEventStatus beforeJobStarts(JobEvent event) throws JobPluginException;
+    JobEventStatus beforeJobStarts(JobExecutionEvent event) throws JobPluginException;
 
-    JobEventStatus afterJobEnds(JobEvent event) throws JobPluginException;
+    JobEventStatus afterJobEnds(JobExecutionEvent event) throws JobPluginException;
 
 }

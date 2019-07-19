@@ -3,8 +3,9 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.jobs.IJobPluginService
-import com.dtolabs.rundeck.core.jobs.JobEvent
+import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
@@ -27,6 +28,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     PluginService pluginService
     JobPluginProviderService jobPluginProviderService
     FrameworkService frameworkService
+    def featureService
     public static final String CONF_PROJECT_ENABLE_JOB = 'project.enable.jobPlugin.'
 
     LinkedHashMap<String, String> configPropertiesMapping
@@ -34,7 +36,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     List<Property> projectConfigProperties
 
     enum EventType{
-        BEFORE('beforeJob'), AFTER('afterJob')
+        PRE_EXECUTION("preExecution"),BEFORE('beforeJob'), AFTER('afterJob')
         private final String value
         EventType(String value){
             this.value = value
@@ -102,7 +104,10 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return Map containing all of the JobPlugin implementations
      */
     Map listJobPlugins(){
-        return pluginService.listPlugins(JobPlugin, jobPluginProviderService)
+        if(featureService?.featurePresent('job-plugin', false)){
+            return pluginService?.listPlugins(JobPlugin, jobPluginProviderService)
+        }
+        return null
     }
 
     /**
@@ -110,7 +115,16 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobEventStatus beforeJobStarts(JobEvent event){
+    JobEventStatus beforeJobExecution(JobPreExecutionEvent event){
+        executeLifeCycle(event, EventType.PRE_EXECUTION)
+    }
+
+    /**
+     *
+     * @param event job event
+     * @return JobEventStatus response from plugin implementation
+     */
+    JobEventStatus beforeJobStarts(JobExecutionEvent event){
         executeLifeCycle(event, EventType.BEFORE)
     }
 
@@ -119,7 +133,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobEventStatus afterJobEnds(JobEvent event){
+    JobEventStatus afterJobEnds(JobExecutionEvent event){
         executeLifeCycle(event, EventType.AFTER)
     }
 
@@ -130,9 +144,11 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return JobEventStatus response from plugin implementation
      */
     JobEventStatus executeLifeCycle(def event, def eventType){
-        JobEventStatus result = new JobEventStatus()
-        String projectName = event.getExecutionContext()?.getFrameworkProject()
-        IRundeckProject rundeckProject = event.getExecutionContext()?.getFramework()?.getProjectManager()?.getFrameworkProject(projectName)
+        JobEventStatus result
+        if(!featureService?.featurePresent('job-plugin', false)){
+            return result
+        }
+        IRundeckProject rundeckProject = frameworkService?.getFrameworkProject(event.getProjectName())
         def jlcps = listJobPlugins()
         jlcps.each { String name, DescribedPlugin describedPlugin ->
             if (rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + name) &&
@@ -143,6 +159,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                         result = plugin.beforeJobStarts(event)
                     }else if(eventType.equals(EventType.AFTER)) {
                         result = plugin.afterJobEnds(event)
+                    }else if(eventType.equals(EventType.PRE_EXECUTION)) {
+                        result = plugin.beforeJobExecution(event)
                     }
                     if (result != null && !result.isSuccessful()) {
                         log.info("Result from plugin is false an exception will be thrown")
@@ -162,5 +180,4 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
         }
         result
     }
-
 }

@@ -1,12 +1,14 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.jobs.JobEvent;
+import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 
 import java.util.Map;
 
-public class JobEventImpl implements JobEvent {
+public class JobExecutionEventImpl implements JobExecutionEvent {
 
     private StepExecutionContext executionContext;
 
@@ -19,11 +21,21 @@ public class JobEventImpl implements JobEvent {
         this.executionContext = executionContext;
     }
 
-    public JobEventImpl(StepExecutionContext executionContext) {
-        this.executionContext = executionContext;
+    public JobExecutionEventImpl(StepExecutionContext executionContext) {
+        if(executionContext != null){
+            this.executionContext = ExecutionContextImpl.builder(executionContext).build();
+        }
     }
 
-    public JobEventImpl() {
+    public JobExecutionEventImpl() {
+    }
+
+    @Override
+    public String getProjectName() {
+        if(this.executionContext != null){
+            return this.executionContext.getFrameworkProject();
+        }
+        return null;
     }
 
     @Override
@@ -60,6 +72,14 @@ public class JobEventImpl implements JobEvent {
                 && !this.executionContext.getDataContext().isEmpty()
                 && this.executionContext.getDataContext().containsKey("job")){
             return this.executionContext.getDataContext().get("job").get("execid");
+        }
+        return null;
+    }
+
+    @Override
+    public INodeSet getNodes() {
+        if (this.executionContext != null){
+            return this.executionContext.getNodes();
         }
         return null;
     }
