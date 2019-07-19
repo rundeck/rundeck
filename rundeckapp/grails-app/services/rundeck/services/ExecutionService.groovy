@@ -2478,8 +2478,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
-     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     * evaluate the options in the input argString, and if any Options defined for the Job have enforced=true, the values
+     * is taken from remote URL, have a selected value as default, and have null value in the input properties,
+     * then append the selected by default option value to the argString
      */
     def Map addRemoteOptionSelected(ScheduledExecution scheduledExecution, Map optparams, UserAndRolesAuthContext authContext = null) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
@@ -2489,7 +2490,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def defaultoptions=[:]
             options.each {Option opt ->
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
-                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
                     if(!remoteOptions.err && remoteOptions.values){
                         Map selectedOption = remoteOptions.values.find {Map value -> [true, 'true'].contains(value.selected)}
                         if(selectedOption){
@@ -2505,6 +2506,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return newmap
     }
 
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have required=true, have a
+     * defaultValue, and have null value in the input properties, then append the default option value to the argString
+     */
     def Map addOptionDefaults(ScheduledExecution scheduledExecution, Map optparams) throws ExecutionServiceException {
         def newmap = new HashMap(optparams)
 
