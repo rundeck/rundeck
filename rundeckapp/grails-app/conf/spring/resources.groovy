@@ -161,7 +161,7 @@ beans={
     frameworkFilesystem(FrameworkFactory,rdeckBase){ bean->
         bean.factoryMethod='createFilesystemFramework'
     }
-    filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('nodeService')){ bean->
+    filesystemProjectManager(FrameworkFactory,frameworkFilesystem,ref('rundeckNodeService')){ bean->
         bean.factoryMethod='createProjectManager'
     }
 
