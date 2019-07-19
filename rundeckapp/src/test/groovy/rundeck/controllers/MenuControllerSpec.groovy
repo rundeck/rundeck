@@ -968,6 +968,8 @@ class MenuControllerSpec extends Specification {
 
         when:
         request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
         params.project = project
         controller.listExport()
         then:
@@ -1003,6 +1005,8 @@ class MenuControllerSpec extends Specification {
 
         when:
         request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
         params.project = project
         controller.listExport()
         then:

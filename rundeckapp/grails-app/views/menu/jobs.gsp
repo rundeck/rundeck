@@ -300,16 +300,13 @@ search
 
             var pageParams = loadJsonData('pageParams');
             var nextScheduled = loadJsonData('nextScheduled');
-            var nextSchedList="";
-            for(var i=0; i< nextScheduled.length; i++){
-                nextSchedList = nextSchedList+nextScheduled[i]+",";
-            }
 
             jQuery.ajax({
                 dataType:'json',
-                method: "POST",
-                url:_genUrl(appLinks.scmjobs, {nextScheduled:nextSchedList}),
-                params:nextScheduled,
+                type: "POST",
+                url: appLinks.scmjobs,
+                data: JSON.stringify(nextScheduled),
+                contentType: 'application/json; charset=utf-8',
                 success:function(data,status,xhr){
                     bulkeditor.scmExportEnabled(data.scmExportEnabled);
                     bulkeditor.scmStatus(data.scmStatus);
