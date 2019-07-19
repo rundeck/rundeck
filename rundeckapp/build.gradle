@@ -131,6 +131,8 @@ dependencies {
 
     compile "com.jayway.jsonpath:json-path:2.4.0"
 
+    compile "com.github.dikhan:pagerduty-client:3.0.0"
+
     compile "org.eclipse.jetty:jetty-jaas:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-util:${jettyVersion}"
     compile "org.eclipse.jetty:jetty-security:${jettyVersion}"

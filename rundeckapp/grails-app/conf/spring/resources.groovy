@@ -42,6 +42,8 @@ import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
+import com.dtolabs.rundeck.server.plugins.pd.PagerDutyEventNotificationPlugin
+import com.dtolabs.rundeck.server.plugins.pd.PagerDutyEventStepPlugin
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
@@ -411,6 +413,9 @@ beans={
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
+
+            PagerDutyEventNotificationPlugin,
+            PagerDutyEventStepPlugin,
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
