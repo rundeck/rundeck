@@ -93,4 +93,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return false;
     }
 
+    public Boolean isIgnoreNotifications(){
+        return false;
+    }
+
 }

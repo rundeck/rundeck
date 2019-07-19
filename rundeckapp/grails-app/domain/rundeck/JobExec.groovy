@@ -44,6 +44,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean failOnDisable
     Boolean importOptions
     Boolean useName
+    Boolean ignoreNotifications
     static transients = ['jobIdentifier']
 
     static constraints = {
@@ -62,6 +63,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         importOptions(nullable: true)
         uuid(nullable: true)
         useName(nullable:true)
+        ignoreNotifications(nullable: true)
     }
 
     static mapping = {
@@ -155,6 +157,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(importOptions){
             map.jobref.importOptions = importOptions
         }
+        if(ignoreNotifications){
+            map.jobref.ignoreNotifications = ignoreNotifications
+        }
         if(nodeFilter){
             map.jobref.nodefilters=[filter:nodeFilter]
             def dispatch=[:]
@@ -236,6 +241,11 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(map.jobref.importOptions){
             if (map.jobref.importOptions in ['true', true]) {
                 exec.importOptions = true
+            }
+        }
+        if(map.jobref.ignoreNotifications){
+            if (map.jobref.ignoreNotifications in ['true', true]) {
+                exec.ignoreNotifications = true
             }
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess

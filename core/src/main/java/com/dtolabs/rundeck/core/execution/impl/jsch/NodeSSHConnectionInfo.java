@@ -376,4 +376,9 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         }
         return config;
     }
+
+    @Override
+    public String getBindAddress() {
+        return resolve(JschNodeExecutor.NODE_BRIND_ADDRESS);
+    }
 }

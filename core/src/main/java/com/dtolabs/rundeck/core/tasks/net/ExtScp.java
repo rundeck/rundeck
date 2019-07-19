@@ -46,6 +46,7 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     private PluginLogger        pluginLogger;
     private String toDir;
     private List<FileSet> fileSets;
+    private String bindAddress;
 
     @Override
     public void setTodir(final String aToUri) {
@@ -137,6 +138,16 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
 
     public Integer getTtlSSHAgent() {
         return 0;
+    }
+
+    @Override
+    public void setBindAddress(String bindAddress) {
+        this.bindAddress=bindAddress;
+    }
+
+    @Override
+    public String getBindAddress() {
+        return bindAddress;
     }
 
     public String getIfaceToDir() {

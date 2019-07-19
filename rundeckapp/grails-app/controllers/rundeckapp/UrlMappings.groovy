@@ -203,6 +203,7 @@ class UrlMappings {
         "/api/$api_version/system/logstorage"(controller: 'menu', action: 'apiLogstorageInfo')
         "/api/$api_version/system/logstorage/incomplete/resume"(controller: 'menu', action: 'apiResumeIncompleteLogstorage')
         "/api/$api_version/system/logstorage/incomplete"(controller: 'menu', action: 'apiLogstorageListIncompleteExecutions')
+        "/api/$api_version/system/executions/status"(controller: 'execution', action: 'apiExecutionModeStatus')
         "/api/$api_version/system/executions/enable"(controller: 'execution', action: 'apiExecutionModeActive')
         "/api/$api_version/system/executions/disable"(controller: 'execution', action: 'apiExecutionModePassive')
         "/api/$api_version/system/acl/$path**"(controller: 'framework',action: 'apiSystemAcls')

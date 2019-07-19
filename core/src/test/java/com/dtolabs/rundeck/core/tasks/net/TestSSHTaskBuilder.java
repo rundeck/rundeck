@@ -73,6 +73,7 @@ public class TestSSHTaskBuilder extends TestCase {
         private Boolean enableSSHAgent;
         private SSHAgentProcess sshAgentProcess;
         private Integer ttlSSHAgent;
+        private String bindAddress;
 
         public void setFailonerror(boolean failonerror) {
             this.failonerror = failonerror;
@@ -208,6 +209,16 @@ public class TestSSHTaskBuilder extends TestCase {
         }
 
         @Override
+        public void setBindAddress(String bindAddress) {
+            this.bindAddress = bindAddress;
+        }
+
+        @Override
+        public String getBindAddress() {
+            return this.bindAddress;
+        }
+
+        @Override
         public long getConnectTimeout() {
             return connectTimeout;
         }
@@ -300,6 +311,7 @@ public class TestSSHTaskBuilder extends TestCase {
         private byte[] sudoPasswordStorageData;
         private String privateKeyPassphraseStoragePath;
         private byte[] privateKeyPassphraseStorageData;
+        String bindAddress;
 
         public SSHTaskBuilder.AuthenticationType getAuthenticationType() {
             return authenticationType;
@@ -364,6 +376,11 @@ public class TestSSHTaskBuilder extends TestCase {
 
         public Map<String, String> getSshConfig() {
             return sshConfig;
+        }
+
+        @Override
+        public String getBindAddress() {
+            return bindAddress;
         }
 
         @Override

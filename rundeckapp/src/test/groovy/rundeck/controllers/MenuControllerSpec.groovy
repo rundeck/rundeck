@@ -968,6 +968,8 @@ class MenuControllerSpec extends Specification {
 
         when:
         request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
         params.project = project
         controller.listExport()
         then:
@@ -1003,6 +1005,8 @@ class MenuControllerSpec extends Specification {
 
         when:
         request.method = 'POST'
+        request.JSON = []
+        request.format = 'json'
         params.project = project
         controller.listExport()
         then:
@@ -1370,7 +1374,54 @@ class MenuControllerSpec extends Specification {
         1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
-        1 * controller.scheduledExecutionService.nextExecutions(_,_) >> [new Date()]
+        1 * controller.scheduledExecutionService.nextExecutions(_,_,false) >> [new Date()]
+
+        response.json != null
+        response.json.id  == testUUID
+        response.json.description  == 'a job'
+        response.json.name  == 'job1'
+        response.json.group  == 'some/where'
+        response.json.href  == 'api/href'
+        response.json.permalink  == 'gui/href'
+        response.json.futureScheduledExecutions != null
+        response.json.futureScheduledExecutions.size() == 1
+    }
+
+
+    def "api job forecast json past mode"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.scheduled=true
+        job1.save()
+
+        when:
+        request.api_version = 32
+        params.id=testUUID
+        params.past='true'
+        response.format='json'
+        def result = controller.apiJobForecast()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 31) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+                Mock(UserAndRolesAuthContext)
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+        1 * controller.scheduledExecutionService.nextExecutions(_,_,true) >> [new Date()]
 
         response.json != null
         response.json.id  == testUUID

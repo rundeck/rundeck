@@ -25,6 +25,7 @@ import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
+import rundeck.services.JobSchedulerService
 import rundeck.services.LogFileStorageService
 import spock.lang.Specification
 
@@ -67,7 +68,7 @@ class ExecutionsCleanUpSpec extends Specification {
         def executionService = Mock(ExecutionService) {
             queryExecutions(*_) >> {
                 if(execDate.before(query.endbeforeFilter)){
-                    return [result: [exec], total: 1]
+                    return [result: [exec.id], total: 1]
                 }
 
                 [result: [], total: 0]
@@ -81,6 +82,7 @@ class ExecutionsCleanUpSpec extends Specification {
         }
         def fileUploadService = Mock(FileUploadService)
         def logFileStorageService = Mock(LogFileStorageService)
+        def jobSchedulerService = Mock(JobSchedulerService)
 
         def datamap = new JobDataMap([
                 project: 'projectTest',
@@ -88,7 +90,8 @@ class ExecutionsCleanUpSpec extends Specification {
                 executionService : executionService,
                 frameworkService : frameworkService,
                 fileUploadService: fileUploadService,
-                logFileStorageService: logFileStorageService
+                logFileStorageService: logFileStorageService,
+                jobSchedulerService: jobSchedulerService
         ])
 
         ExecutionsCleanUp job = new ExecutionsCleanUp()
@@ -108,5 +111,90 @@ class ExecutionsCleanUpSpec extends Specification {
         daysToKeep              | executionsRemoved
         10                      | 1
         4                       | 0
+    }
+
+
+    def "execute cleaner job cluster with null on the list of deadMembers"() {
+        def jobName = 'abc'
+        def groupPath = 'elf'
+        def projectName = 'projectTest'
+        def jobUuid = '123'
+        def daysToKeep = 10
+
+        setup:
+        Date startDate = new Date(2015 - 1900, 2, 8)
+        Date endDate = ExecutionQuery.parseRelativeDate("${daysToKeep}d", startDate)
+        Date execDate = new Date(2015 - 1900, 02, 03)
+        ExecutionQuery query = new ExecutionQuery(projFilter: projectName)
+        if(null != endDate){
+            query.endbeforeFilter = endDate
+            query.doendbeforeFilter = true
+        }
+        def se = new ScheduledExecution(
+                jobName: jobName,
+                groupPath: groupPath,
+                project: projectName,
+                uuid: jobUuid,
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+        ).save()
+        def exec = new Execution(
+                scheduledExecution: se,
+                dateStarted: execDate,
+                dateCompleted: execDate,
+                user:'user',
+                status: 'success',
+                project: projectName,
+                scheduleNodeUUID: "aaaa"
+        ).save()
+        def executionService = Mock(ExecutionService) {
+            queryExecutions(*_) >> {
+                if(execDate.before(query.endbeforeFilter)){
+                    return [result: [exec], total: 1]
+                }
+
+                [result: [], total: 0]
+            }
+        }
+
+        def frameworkService = Mock(FrameworkService) {
+            isClusterModeEnabled() >> {
+                true
+            }
+            getServerUUID()>>{
+                "aaaa"
+            }
+        }
+        def fileUploadService = Mock(FileUploadService)
+        def logFileStorageService = Mock(LogFileStorageService)
+        def jobSchedulerService = Mock(JobSchedulerService){
+            getDeadMembers(_)>>{
+                ["bbbb","null"]
+            }
+        }
+
+        def datamap = new JobDataMap([
+                project: 'projectTest',
+                maxDaysToKeep: daysToKeep,
+                executionService : executionService,
+                frameworkService : frameworkService,
+                fileUploadService: fileUploadService,
+                logFileStorageService: logFileStorageService,
+                jobSchedulerService: jobSchedulerService
+        ])
+
+        ExecutionsCleanUp job = new ExecutionsCleanUp()
+        def context = Mock(JobExecutionContext) {
+            getJobDetail() >> Mock(JobDetail) {
+                getJobDataMap() >> datamap
+            }
+        }
+
+        when:
+        job.execute(context)
+
+        then:
+        1*jobSchedulerService.getDeadMembers(_)
+        1*executionService.queryExecutions(_)
+
     }
 }
