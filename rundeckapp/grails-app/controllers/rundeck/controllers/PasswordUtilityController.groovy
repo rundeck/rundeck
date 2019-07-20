@@ -1,5 +1,6 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.encrypter.EncryptorResponse
 import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypter
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 
@@ -49,8 +50,18 @@ class PasswordUtilityController {
             )
 
             if(result.valid){
-                flash.output = plugin.instance?.encrypt(result.props)
+                EncryptorResponse response = plugin.instance?.encrypt(result.props)
+                if(response.valid){
+                    flash.output = response.outputs
+                }else{
+                    if(response.error){
+                        flash.error = response.error
+                    }else{
+                        flash.error = "Error running ${params.encrypter} plugin"
+                    }
+                }
             }else{
+                //description error message properties
                 flash.report = result.report
             }
         }

@@ -4,5 +4,5 @@ import java.util.Map;
 
 public interface PasswordUtilityEncrypterPlugin {
 
-    Map encrypt(Map config);
+    EncryptorResponse encrypt(Map<String,String> config);
 }
