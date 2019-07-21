@@ -144,7 +144,7 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         def logginStatus = service.getLoginStatus(user, new Date())
         then:
         logginStatus
-        logginStatus == UserService.LogginStatus.LIN.value
+        logginStatus == UserService.LogginStatus.LOGGEDIN.value
     }
 
     @Plugin(name = "test-user-group-source",service= ServiceNameConstants.UserGroupSource)

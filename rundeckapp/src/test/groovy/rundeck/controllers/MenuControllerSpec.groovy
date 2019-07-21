@@ -1256,7 +1256,7 @@ class MenuControllerSpec extends Specification {
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
         controller.userService = Mock(UserService){
-            getLoginStatus(_,_) >> UserService.LogginStatus.LIN.value
+            getLoginStatus(_,_) >> UserService.LogginStatus.LOGGEDIN.value
         }
         def userToSearch = 'admin'
         def email = 'test@test.com'
@@ -1305,7 +1305,7 @@ class MenuControllerSpec extends Specification {
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
         controller.userService = Mock(UserService){
-            getLoginStatus(_,_) >> UserService.LogginStatus.LIN.value
+            getLoginStatus(_,_) >> UserService.LogginStatus.LOGGEDIN.value
         }
         def userToSearch = 'admin'
         def email = 'test@test.com'
@@ -1344,7 +1344,7 @@ class MenuControllerSpec extends Specification {
         response.json.users
         response.json.users.admin
         response.json.users.admin.lastJob
-        response.json.users.admin.loggedStatus == UserService.LogginStatus.LIN.value
+        response.json.users.admin.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
 
     }
 

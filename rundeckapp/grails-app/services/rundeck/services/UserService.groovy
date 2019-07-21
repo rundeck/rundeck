@@ -30,7 +30,7 @@ class UserService {
     private static final int DEFAULT_TIMEOUT = 30
 
     enum LogginStatus{
-        LIN('LOGGED IN'),LOUT('LOGGED OUT'),ABND('ABANDONNED'),NL('NOT LOGGED')
+        LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
         private final String value
         LogginStatus(String value){
             this.value = value
@@ -169,13 +169,13 @@ class UserService {
     }
 
     def getLoginStatus(User user, Date lastExecution){
-        def status = LogginStatus.NL.value
+        def status = LogginStatus.NOTLOGGED.value
         if(user){
             Date lastDate = getLastDate(user.getLastLogin(), lastExecution)
             if(lastDate != null){
                 int minutes = DEFAULT_TIMEOUT
-                if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandonned.minutes")){
-                    minutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandonned.minutes"))
+                if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandoned.minutes")){
+                    minutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandoned.minutes"))
                 }
                 Calendar calendar = Calendar.getInstance()
                 calendar.setTime(lastDate)
@@ -183,20 +183,20 @@ class UserService {
                 if(user.lastLogout != null){
                     if(lastDate.after(user.lastLogout)){
                         if(calendar.getTime().before(new Date())){
-                            status = LogginStatus.ABND.value
+                            status = LogginStatus.ABANDONED.value
                         }else{
-                            status = LogginStatus.LIN.value
+                            status = LogginStatus.LOGGEDIN.value
                         }
                     }else{
-                        status = LogginStatus.LOUT.value
+                        status = LogginStatus.LOGGEDOUT.value
                     }
                 }else if(calendar.getTime().after(new Date())){
-                    status = LogginStatus.LIN.value
+                    status = LogginStatus.LOGGEDIN.value
                 }else{
-                    status = LogginStatus.ABND.value
+                    status = LogginStatus.ABANDONED.value
                 }
             }else {
-                status = LogginStatus.NL.value
+                status = LogginStatus.NOTLOGGED.value
             }
         }
         status
