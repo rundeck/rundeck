@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
+public class JobPreExecutionEventImpl implements JobPreExecutionEvent, Serializable {
 
     private String projectName;
     private String userName;
@@ -71,6 +71,10 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     @Override
     public INodeSet getNodes() {
         return this.nodeSet;
+    }
+
+    public void setNodes(INodeSet nodeSet) {
+        this.nodeSet = nodeSet;
     }
 
     public Map getScheduledExecutionMap(){

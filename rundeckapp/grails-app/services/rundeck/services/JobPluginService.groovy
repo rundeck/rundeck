@@ -9,6 +9,7 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobPluginProviderService
 import org.rundeck.core.projects.ProjectConfigurable
@@ -148,6 +149,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
         if(!featureService?.featurePresent('job-plugin', false)){
             return result
         }
+        def instanceMap = [:]
         IRundeckProject rundeckProject = frameworkService?.getFrameworkProject(event.getProjectName())
         def jlcps = listJobPlugins()
         jlcps.each { String name, DescribedPlugin describedPlugin ->
@@ -160,7 +162,11 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     }else if(eventType.equals(EventType.AFTER)) {
                         result = plugin.afterJobEnds(event)
                     }else if(eventType.equals(EventType.PRE_EXECUTION)) {
-                        result = plugin.beforeJobExecution(event)
+                        def newEventInstance = (JobPreExecutionEventImpl) getNewInstance(event)
+                        result = plugin.beforeJobExecution(newEventInstance)
+                        if(result?.useNewValues() == true){
+                            instanceMap.put(name, newEventInstance)
+                        }
                     }
                     if (result != null && !result.isSuccessful()) {
                         log.info("Result from plugin is false an exception will be thrown")
@@ -178,6 +184,42 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 }
             }
         }
+        mergeResult(event, instanceMap)
         result
+    }
+
+    /**
+     * If some specific interface things needs to be copied to the new instance, this needs to be done manually
+     * @param event job event
+     * @return a deep copy of the event
+     */
+    private def getNewInstance(event){
+        def newEventInstance
+        ByteArrayOutputStream bos = new ByteArrayOutputStream()
+        ObjectOutputStream oos = new ObjectOutputStream(bos)
+        oos.writeObject(event)
+        oos.flush()
+        ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray())
+        ObjectInputStream ois = new ObjectInputStream(bin)
+        if(event instanceof JobPreExecutionEventImpl){
+            newEventInstance = (JobPreExecutionEventImpl) ois.readObject()
+            newEventInstance.setNodes(event.nodes)
+        }
+        return newEventInstance
+    }
+
+    /**
+     * It merges the original event with the new ones from the plugins
+     * @param event original job event
+     * @param instanceMap a map containing the instances sent to the plugins (mapped by plugin name)
+     */
+    private mergeResult(event, Map instanceMap){
+        if(event instanceof JobPreExecutionEventImpl){
+            instanceMap.each { String pluginName, JobPreExecutionEventImpl innerEvent ->
+                innerEvent.optionsValues.each { String key, String value ->
+                    event.optionsValues.put(key, value)
+                }
+            }
+        }
     }
 }
