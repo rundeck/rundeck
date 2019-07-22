@@ -1846,9 +1846,14 @@ ansi-bg-default'''))
         if (menuType.projectType && !project) {
             throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
         }
+        String execution = attrs.execution
+        if (menuType.executionType && !project && !execution) {
+            throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
+        }
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
-                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
+                findAll { menuType.projectType ? it.value.isEnabled(project) : menuType.executionType ? it.value.isEnabledExecution(project, execution)  : it.value.enabled }.
+
             each { name, MenuItem item ->
                 out << body((var): item)
             }
@@ -1865,8 +1870,12 @@ ansi-bg-default'''))
         if (menuType.projectType && !project) {
             throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
         }
+        String execution = attrs.execution
+        if (menuType.executionType && !project && !execution) {
+            throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
+        }
         if (applicationContext.getBeansOfType(MenuItem).
-                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
+                findAll { menuType.projectType ? it.value.isEnabled(project) : menuType.executionType ? it.value.isEnabledExecution(project, execution) : it.value.enabled }.
             any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
             out << body()
         }
