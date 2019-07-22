@@ -37,7 +37,7 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
             JobEventResult result
     )
     {
-        this.executionContext = executionContext;
+        this.executionContext = ExecutionContextImpl.builder(executionContext).build();
         this.execution = execution;
         this.result = result;
     }
