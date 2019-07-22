@@ -25,23 +25,34 @@ public interface MenuItem {
      */
     public MenuType getType();
 
+    enum MenuDomain {
+        SYSTEM,
+        PROJECT,
+        EXECUTION
+        //todo
+    }
     enum MenuType {
         /**
          *
          */
-        PROJECT(true),
-        PROJECT_CONFIG(true),
-        SYSTEM_CONFIG(false),
-        USER_MENU(false);
+        PROJECT(MenuDomain.PROJECT),
+        PROJECT_CONFIG(MenuDomain.PROJECT),
+        SYSTEM_CONFIG(MenuDomain.SYSTEM),
+        USER_MENU(MenuDomain.SYSTEM),
+        EXECUTION_RETRY(MenuDomain.EXECUTION);
 
-        MenuType(final boolean projectType) {
-            this.projectType = projectType;
+        MenuType(final MenuDomain domain) {
+            this.domain = domain;
         }
 
-        private final boolean projectType;
+        private final MenuDomain domain;
 
         public boolean isProjectType() {
-            return projectType;
+            return domain == MenuDomain.PROJECT;
+        }
+
+        public boolean isExecutionType() {
+            return domain == MenuDomain.EXECUTION;
         }
     }
 
@@ -68,6 +79,9 @@ public interface MenuItem {
     default String getProjectHref(String project) {
         return null;
     }
+    default String getExecutionHref(String project, String executionId) {
+        return null;
+    }
 
     /**
      * @return css class string for icon in certain menu locations, or null for a default, e.g. 'fas fa-check' for
@@ -89,6 +103,15 @@ public interface MenuItem {
      * @return true if enabled, false if disabled
      */
     default boolean isEnabled(String project) {
+        return true;
+    }
+
+    /**
+     * @param project name for project oriented items
+     * @param executionId execution Id for Execution menu items
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabledExecution(String project, String executionId) {
         return true;
     }
 
