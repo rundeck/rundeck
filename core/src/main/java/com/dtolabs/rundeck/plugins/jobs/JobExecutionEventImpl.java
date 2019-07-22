@@ -27,7 +27,7 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
     }
 
     public JobExecutionEventImpl(StepExecutionContext executionContext, ExecutionReference execution) {
-        this.executionContext = executionContext;
+        this.executionContext = ExecutionContextImpl.builder(executionContext).build();
         this.execution=execution;
     }
 
