@@ -88,7 +88,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     public WorkflowExecutionResult runWorkflow() {
         try {
             JobEventStatus jobEventStatus = iJobPluginService.beforeJobStarts(new JobExecutionEventImpl(context,executionReference));
-            StepExecutionContext executionContext = jobEventStatus.getExecutionContext();
+            StepExecutionContext executionContext = jobEventStatus != null ? jobEventStatus.getExecutionContext() : null;
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(executionContext != null ? executionContext : context, weitem));
             success = getResult().isSuccess();
