@@ -1,5 +1,12 @@
 <template>
   <div>
+    <div class="popup-positioner">
+      <div class="popup" v-if="popup.showing">
+        <div class="close-popup" v-if="popup.error"><span @click="closeOverlay" class="popup-close-btn">x</span></div>
+        <div v-if="popup.message" class="popup-msg">{{popup.message}}</div>
+        <div v-if="popup.error" class="popup-error">{{popup.error}}</div>
+      </div>
+    </div>
     <h3>Webhook Management</h3>
     <div class="row">
       <div class="col-xs-12">
@@ -36,13 +43,6 @@
             >
               <div class="card">
                 <div class="card-header">
-                  <div class="popup-positioner">
-                    <div class="popup" v-if="popup.showing">
-                      <div class="close-popup"><span @click="closeOverlay" class="popup-close-btn">x</span></div>
-                      <div v-if="popup.message" class="popup-msg">{{popup.message}}</div>
-                      <div v-if="popup.error" class="popup-error">{{popup.error}}</div>
-                    </div>
-                  </div>
                   <h5 style="margin:0;">Webhook Detail</h5>
                 </div>
                 <hr>
@@ -51,7 +51,10 @@
                     <div><label>Post Url:</label><span v-if="curHook.authToken" class="form-control">{{apiBasePostUrl}}{{curHook.name}}/{{curHook.authToken}}</span>
                     </div>
                     <div><label>Webhook Name:</label><input v-model="curHook.name" class="form-control"></div>
-                    <div><label>Webhook User:</label><input v-model="curHook.user" class="form-control"></div>
+                    <div><label>Webhook User:</label>
+                      <input v-model="curHook.user" class="form-control" v-if="curHook.isNew">
+                      <span class="form-control readonly" v-else>{{curHook.user}}</span>
+                    </div>
                     <div><label>Webhook Roles:</label><input v-model="curHook.roles" class="form-control"></div>
                     <div><label>Webhook Event Plugin:</label><select v-model="curHook.eventPlugin"
                                                                      @change="setSelectedPlugin()" class="form-control">
@@ -65,7 +68,7 @@
                         :serviceName="'WebhookEvent'"
                         v-model="selectedPlugin"
                         :provider="curHook.eventPlugin"
-                        :key="curHook.eventPlugin"
+                        :key="curHook.name"
                         :show-title="false"
                         :show-description="false"
                         v-if="selectedPlugin.type !== 'pagerduty-run-job' "
@@ -165,18 +168,6 @@ export default {
         }
       })
     },
-    getPlugins() {
-      axios({
-        method: "get",
-        headers: {
-          "x-rundeck-ajax": true
-        },
-        url: `${rdBase}api/${apiVersion}/webhook-admin/listWebhookPlugins`,
-        withCredentials: true
-      }).then(response => {
-        this.webhookPlugins = response.data
-      })
-    },
     select(selected) {
       this.curHook = selected
       this.setSelectedPlugin()
@@ -240,7 +231,7 @@ export default {
     },
     addNewHook() {
       this.showPluginConfig = false
-      this.curHook = {name: "NewHook", user: curUser, roles: curUserRoles, config: {}}
+      this.curHook = {name: "NewHook", user: curUser, roles: curUserRoles, isNew: true, config: {}}
     }
   },
   mounted() {
@@ -277,7 +268,11 @@ export default {
   }
 
   .popup-positioner {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 99998;
   }
 
   .popup {
@@ -286,8 +281,8 @@ export default {
     border-radius: 3px 0 3px 3px;
     padding: 10px;
     position: absolute;
-    top: -10px;
-    left: 150px;
+    top: 40px;
+    left: calc(50% - 225px);
     width: 550px;
     z-index: 99999;
   }
@@ -298,7 +293,6 @@ export default {
     background-color: #90ee90;
     color: #006400;
     padding: 5px;
-    width: 95%;
   }
 
   .popup-error {
@@ -318,10 +312,17 @@ export default {
     border-left-color: #fff;
     border-radius: 0 3px 3px 0;
     padding: 0 6px;
+    background-color: #fff;
   }
 
   .popup-close-btn {
     color: #aaa;
     cursor: pointer;
+  }
+
+  .readonly {
+    color: #555;
+    background-color: #eee;
+    padding: 8px 12px 6px;
   }
 </style>

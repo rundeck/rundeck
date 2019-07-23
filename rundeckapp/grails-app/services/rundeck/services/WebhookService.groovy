@@ -46,14 +46,15 @@ class WebhookService {
 
     def saveHook(UserAndRolesAuthContext authContext,def hookData) {
         Webhook hook
-        User user = hookData.user ? User.findByLogin(hookData.user) : authContext.username
-        if (!user) return [err: "Webhook user '${hookData.user}' not found"]
         if(hookData.id) {
             hook = Webhook.get(hookData.id)
-            hook.authToken.user = user
-            hook.authToken.authRoles = hookData.roles
             if (!hook) return [err: "Webhook not found"]
+            hook.authToken.authRoles = hookData.roles
+            hook.authToken.save()
         } else {
+
+            User user = hookData.user ? User.findByLogin(hookData.user) : User.findByLogin(authContext.username)
+            if (!user) return [err: "Webhook user '${hookData.user}' not found"]
             hook = new Webhook()
             Set<String> roles = hookData.roles ? AuthToken.parseAuthRoles(hookData.roles) : authContext.roles
             hook.authToken = apiService.generateAuthToken(authContext.username,user,roles, null, true)

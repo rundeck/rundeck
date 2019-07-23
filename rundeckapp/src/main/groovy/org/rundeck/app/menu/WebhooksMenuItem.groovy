@@ -15,9 +15,13 @@
  */
 package org.rundeck.app.menu
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.web.mapping.LinkGenerator
 import org.rundeck.app.gui.MenuItem
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.context.request.RequestContextHolder
+import rundeck.services.FrameworkService
 
 
 class WebhooksMenuItem implements MenuItem {
@@ -28,9 +32,23 @@ class WebhooksMenuItem implements MenuItem {
 
     @Autowired
     LinkGenerator grailsLinkGenerator
+    @Autowired
+    FrameworkService frameworkService
 
     @Override
     String getHref() {
         return grailsLinkGenerator.link(uri:"/webhooks")
+    }
+
+    @Override
+    boolean isEnabled() {
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(RequestContextHolder.currentRequestAttributes().session.subject)
+        return frameworkService.authorizeApplicationResourceAny(authContext,
+                                                                AuthConstants.RESOURCE_TYPE_WEBHOOK, [AuthConstants.ACTION_READ])
+    }
+
+    @Override
+    boolean isEnabled(final String project) {
+        return isEnabled()
     }
 }
