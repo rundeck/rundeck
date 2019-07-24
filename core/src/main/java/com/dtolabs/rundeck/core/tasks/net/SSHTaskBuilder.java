@@ -37,6 +37,7 @@ import com.jcraft.jsch.agentproxy.AgentProxyException;
 import com.jcraft.jsch.agentproxy.Connector;
 import com.jcraft.jsch.agentproxy.ConnectorFactory;
 import com.jcraft.jsch.agentproxy.RemoteIdentityRepository;
+import com.jcraft.jsch.SocketFactory;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
@@ -171,6 +172,13 @@ public class SSHTaskBuilder {
         }
         SSHTaskBuilder.configureSession(base.getSshConfig(), session);
 
+        //add  bind address server
+        String bindAddress=base.getBindAddress();
+        if(bindAddress!=null){
+            SocketFactory sfactory = new BindAddressSocketFactory(bindAddress, conTimeout);
+            session.setSocketFactory(sfactory);
+        }
+
         session.connect();
         return session;
     }
@@ -288,6 +296,9 @@ public class SSHTaskBuilder {
         public void setTtlSSHAgent(Integer ttlSSHAgent);
         
         public Integer getTtlSSHAgent();
+
+        public void setBindAddress(String bindAddress);
+        public String getBindAddress();
     }
 
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
@@ -484,6 +495,16 @@ public class SSHTaskBuilder {
         @Override
         public void setPluginLogger(PluginLogger pluginLogger) {
             instance.setPluginLogger(pluginLogger);
+        }
+
+        @Override
+        public void setBindAddress(String bingAddress) {
+            instance.setBindAddress(bingAddress);
+        }
+
+        @Override
+        public String getBindAddress() {
+            return instance.getBindAddress();
         }
     }
 
@@ -742,6 +763,7 @@ public class SSHTaskBuilder {
         sshbase.setEnableSSHAgent(sshConnectionInfo.getLocalSSHAgent());
         sshbase.setTtlSSHAgent(sshConnectionInfo.getTtlSSHAgent());
         sshbase.setPluginLogger(logger);
+        sshbase.setBindAddress(sshConnectionInfo.getBindAddress());
     }
 
     public static Scp buildScp(final INodeEntry nodeentry, final Project project,
@@ -977,6 +999,8 @@ public class SSHTaskBuilder {
         public Integer getTtlSSHAgent();
 
         public Map<String,String> getSshConfig();
+
+        public String getBindAddress();
     }
 
 }

@@ -1,0 +1,21 @@
+{% set artifactProviderBase = "/rundeck/repository/artifacts/provider" %}
+
+repositories:
+  - repositoryName: official
+    enabled: true
+    type: HTTP
+    owner: RUNDECK
+
+  {%- macro artifact_provider(provider) %}
+  {%- set type = getv(printf("%s/type", provider), "file") %}
+  {%- set index = provider | base %}
+
+  - repositoryName: {% set name = printf("%s/name", provider) %} {{ getv(name, index)}}
+    type: STORAGE_TREE
+    configProperties:
+      storageTreePath: {% set path = printf("%s/path", provider) %} {{ getv(path, "/")}}
+  {% endmacro %}
+  {%- for p in lsdir(artifactProviderBase) -%}
+  {% set provider = printf("%s/%s", artifactProviderBase, p) -%}
+  {{ artifact_provider(provider) }}
+  {%- endfor %}

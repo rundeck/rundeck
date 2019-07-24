@@ -512,7 +512,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             String fromServerUUID = null,
             boolean selectAll = false,
             String projectFilter = null,
-            String jobid = null
+            List<String> jobids = null
     )
     {
         Map claimed = [:]
@@ -555,8 +555,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (queryProject) {
                     eq('project', queryProject)
                 }
-                if (jobid){
-                    eq('uuid', jobid)
+                if (jobids){
+                    'in'('uuid', jobids)
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
@@ -644,9 +644,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
             def newsched = ScheduledExecution.get(scheduledExecution.id)
             newsched.nextExecution = nextdate
-            if(nextExecNode){
-                newsched.serverNodeUUID = nextExecNode
-            }
             if (!newsched.save()) {
                 log.error("Unable to save second change to scheduledExec.")
             }
@@ -793,12 +790,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param fromServerUUID server UUID to claim scheduling of jobs from
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
-    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null) {
+    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, List<String> ids=null) {
         def toServerUuid = frameworkService.getServerUUID()
         if (toServerUuid == fromServerUUID) {
             return [:]
         }
-        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, id)
+        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, ids)
         if (claimed.find { it.value.success }) {
             rescheduleJobs(toServerUuid)
         }
@@ -1426,8 +1423,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if(se.scheduled){
             data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-//                data.put("serverUUID", frameworkService.getServerUUID())
-                data.put("serverUUID", nextExecNode(se))
+                data.put("serverUUID", frameworkService.getServerUUID())
+                //data.put("serverUUID", nextExecNode(se))
             }
         }
 
@@ -2618,9 +2615,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -3207,9 +3201,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 def newsched = ScheduledExecution.get(scheduledExecution.id)
                 newsched.nextExecution = nextdate
-                if(nextExecNode){
-                    newsched.serverNodeUUID = nextExecNode
-                }
                 if (!newsched.save()) {
                     log.error("Unable to save second change to scheduledExec.")
                 }
@@ -4148,12 +4139,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param to Date in the future
      * @return list of dates
      */
-    List<Date> nextExecutions(ScheduledExecution se, Date to){
+    List<Date> nextExecutions(ScheduledExecution se, Date to, boolean past = false){
         def trigger = createTrigger(se)
         Calendar cal = new BaseCalendar()
         if(se.timeZone){
             cal.setTimeZone(TimeZone.getTimeZone(se.timeZone))
         }
-        return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
+        if(past){
+            return TriggerUtils.computeFireTimesBetween(trigger, cal, to,new Date())
+        }else {
+            return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
+        }
     }
 }

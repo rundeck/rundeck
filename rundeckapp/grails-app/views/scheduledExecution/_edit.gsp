@@ -219,7 +219,7 @@
       <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
-              <div class="${fieldColSize}">
+              <div class="${fieldColSize}" style="padding-top:1em;">
                   <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                   <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
                                                                                 strategyPlugins:strategyPlugins]}"/>
@@ -1048,25 +1048,26 @@ function getCurSEID(){
          *
          */
          function validateJobEditForm(form){
-             var wfitem=$(form).down('div.wfitemEditForm');
-             if(wfitem && !wascancelled){
-                 doyft(wfitem.identify());
-                 $(wfitem).scrollTo();
-                 if ($(wfitem).down("span.cancelsavemsg")) {
-                     $(wfitem).down("span.cancelsavemsg").show();
+             var wfitem=jQuery(form).find('div.wfitemEditForm');
+             let valid=true
+             if(wfitem.length && !wascancelled){
+                 jobeditor.addError('workflow');
+                 wfitem.addClass('alert-warning')
+                 if (wfitem.find("span.cancelsavemsg").length) {
+                     wfitem.find("span.cancelsavemsg").show();
                  }
-                 return false;
+                 valid= false;
              }
-            var optedit= $(form).down('div.optEditForm');
-            if (optedit && !wascancelled) {
-                doyft(optedit.identify());
-                $(optedit).scrollTo();
-                if($(optedit).down("span.cancelsavemsg")){
-                    $(optedit).down("span.cancelsavemsg").show();
+            var optedit= jQuery(form).find('div.optEditForm');
+            if (optedit.length && !wascancelled) {
+                jobeditor.addError('option');
+                optedit.addClass('alert-warning')
+                if(optedit.find("span.cancelsavemsg").length){
+                    optedit.find("span.cancelsavemsg").show();
                 }
-                return false;
+                valid= false;
             }
-             return true;
+             return valid;
          }
         function _updateBoxInfo(name, data) {
 

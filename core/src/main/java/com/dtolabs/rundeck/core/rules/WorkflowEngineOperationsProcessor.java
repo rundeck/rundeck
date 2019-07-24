@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import lombok.RequiredArgsConstructor;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -36,11 +37,11 @@ import java.util.stream.Collectors;
 class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.OperationCompleted<DAT>, OP extends
         WorkflowSystem.Operation<DAT, RES>>
 {
-    private WorkflowEngine workflowEngine;
+    private StateWorkflowSystem workflowEngine;
+    private WorkflowSystemEventHandler eventHandler;
     private final Set<OP> operations;
     private final WorkflowSystem.SharedData<DAT> sharedData;
-    private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<WorkflowSystem
-            .Operation>());
+    private final Set<WorkflowSystem.Operation> inProcess = Collections.synchronizedSet(new HashSet<>());
     private final Set<WorkflowSystem.Operation> skipped = new HashSet<>();
     private final Set<OP> pending;
     private volatile boolean interrupted;
@@ -56,9 +57,23 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
+    private boolean
+            endStateBreak =
+            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateBreak", "false"));
+    private boolean
+            endStateCancel =
+            Boolean.parseBoolean(System.getProperty("WorkflowEngineOperationsProcessor.endStateCancel", "false"));
+    private boolean
+            endStateCancelInterrupt =
+            Boolean.parseBoolean(System.getProperty(
+                    "WorkflowEngineOperationsProcessor.endStateCancelInterrupt",
+                    "false"
+            ));
+    ;
 
     public WorkflowEngineOperationsProcessor(
-            final WorkflowEngine workflowEngine,
+            final StateWorkflowSystem workflowEngine,
+            final WorkflowSystemEventHandler eventHandler,
             final Set<OP> operations,
             final WorkflowSystem.SharedData<DAT> sharedData,
             ListeningExecutorService executorService,
@@ -66,6 +81,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     )
     {
         this.workflowEngine = workflowEngine;
+        this.eventHandler = eventHandler;
         this.operations = operations;
         this.sharedData = sharedData;
         this.pending = new HashSet<>(operations);
@@ -77,7 +93,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Process the operations from a begin state
      */
     public void beginProcessing() {
-        workflowEngine.event(WorkflowSystemEventType.Begin, "Workflow begin");
+        eventHandler.event(WorkflowSystemEventType.Begin, "Workflow begin");
         initialize();
         continueProcessing();
     }
@@ -87,6 +103,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Continue processing from current state
      */
     private void continueProcessing() {
+        boolean cancel = false;
+        boolean cancelInterrupt = false;
         try {
             while (!Thread.currentThread().isInterrupted()) {
                 HashMap<String, String> changes = new HashMap<>();
@@ -95,9 +113,9 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 getAvailableChanges(changes);
 
                 if (changes.isEmpty()) {
-                    if (inProcess.isEmpty()) {
+                    if (detectNoMoreChanges()) {
                         //no pending operations, signalling no new state changes will occur
-                        workflowEngine.event(
+                        eventHandler.event(
                                 WorkflowSystemEventType.EndOfChanges,
                                 "No more state changes expected, finishing workflow."
                         );
@@ -119,9 +137,15 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 //handle state changes
                 processStateChanges(changes);
 
-                if (workflowEngine.isWorkflowEndState(workflowEngine.getState())) {
-                    workflowEngine.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                    return;
+                if (workflowEngine.isWorkflowEndState()) {
+                    eventHandler.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
+                    if (endStateBreak) {
+                        cancel = endStateCancel;
+                        cancelInterrupt = endStateCancelInterrupt;
+                        break;
+                    } else {
+                        return;
+                    }
                 }
                 processOperations(results::add);
             }
@@ -129,11 +153,17 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             Thread.currentThread().interrupt();
         }
         if (Thread.currentThread().isInterrupted()) {
-            workflowEngine.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
-            cancelFutures();
+            eventHandler.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
+            cancelFutures(true);
             interrupted = Thread.interrupted();
+        } else if (cancel) {
+            cancelFutures(cancelInterrupt);
         }
         awaitFutures();
+    }
+
+    boolean detectNoMoreChanges() {
+        return inProcess.isEmpty() && stateChangeQueue.isEmpty();
     }
 
     /**
@@ -185,8 +215,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
     }
 
-    private void cancelFutures() {
-        futures.forEach(future -> future.cancel(true));
+    private void cancelFutures(final boolean mayInterruptIfRunning) {
+        futures.forEach(future -> future.cancel(mayInterruptIfRunning));
     }
 
     public void initialize() {
@@ -214,50 +244,65 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             }
             pending.remove(operation);
 
-            workflowEngine.event(
+            eventHandler.event(
                     WorkflowSystemEventType.WillRunOperation,
                     String.format("operation starting: %s", operation),
                     operation
             );
-            final ListenableFuture<RES> submit = executorService.submit(() -> operation.apply(inputData));
-            inProcess.add(operation);
-            futures.add(submit);
-            FutureCallback<RES> callback = new FutureCallback<RES>() {
-                @Override
-                public void onSuccess(final RES successResult) {
-                    workflowEngine.event(
-                            WorkflowSystemEventType.OperationSuccess,
-                            String.format("operation succeeded: %s", successResult),
-                            successResult
-                    );
-                    assert successResult != null;
-                    WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
-                    resultConsumer.accept(result);
-                    stateChangeQueue.add(successResult);
-                    inProcess.remove(operation);
-                }
-
-                @Override
-                public void onFailure(final Throwable t) {
-                    workflowEngine.event(
-                            WorkflowSystemEventType.OperationFailed,
-                            String.format("operation failed: %s", t),
-                            t
-                    );
-                    WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
-                    resultConsumer.accept(result);
-                    StateObj newFailureState = operation.getFailureState(t);
-                    if (null != newFailureState && newFailureState.getState().size() > 0) {
-                        WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(
-                                newFailureState);
-                        stateChangeQueue.add(objectOperationCompleted);
-                    }
-                    inProcess.remove(operation);
-                }
-            };
-
+            final ListenableFuture<RES> submit = beginOperation(inputData, operation);
+            FutureCallback<RES> callback = new OperationFutureCallback(eventHandler, operation, resultConsumer);
             Futures.addCallback(submit, callback, manager);
         }
+    }
+
+    @RequiredArgsConstructor
+    class OperationFutureCallback
+            implements FutureCallback<RES>
+    {
+        final WorkflowSystemEventHandler eventHandler;
+        final OP operation;
+        final Consumer<WorkflowSystem.OperationResult<DAT, RES, OP>> resultConsumer;
+
+        @Override
+        public void onSuccess(final RES successResult) {
+            eventHandler.event(
+                    WorkflowSystemEventType.OperationSuccess,
+                    String.format("operation succeeded: %s", successResult),
+                    successResult
+            );
+            assert successResult != null;
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(successResult, operation);
+            resultConsumer.accept(result);
+            finishedOperation(successResult, operation);
+        }
+
+        @Override
+        public void onFailure(final Throwable t) {
+            eventHandler.event(
+                    WorkflowSystemEventType.OperationFailed,
+                    String.format("operation failed: %s", t),
+                    t
+            );
+            WorkflowSystem.OperationResult<DAT, RES, OP> result = result(t, operation);
+            resultConsumer.accept(result);
+            StateObj newFailureState = operation.getFailureState(t);
+            if (null == newFailureState) {
+                newFailureState = new DataState();
+            }
+            finishedOperation(WorkflowEngine.<DAT>dummyResult(newFailureState), operation);
+        }
+    }
+
+    private ListenableFuture<RES> beginOperation(final DAT inputData, final OP operation) {
+        final ListenableFuture<RES> submit = executorService.submit(() -> operation.apply(inputData));
+        inProcess.add(operation);
+        futures.add(submit);
+        return submit;
+    }
+
+    private void finishedOperation(final WorkflowSystem.OperationCompleted<DAT> e, final OP operation) {
+        stateChangeQueue.add(e);
+        inProcess.remove(operation);
     }
 
     private <D, T extends WorkflowSystem.OperationCompleted<D>, X extends WorkflowSystem.Operation<D, T>>
@@ -310,14 +355,14 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * @param changes
      */
     private void processStateChanges(final Map<String, String> changes) {
-        workflowEngine.event(WorkflowSystemEventType.WillProcessStateChange,
-                             String.format("saw state changes: %s", changes), changes
+        eventHandler.event(WorkflowSystemEventType.WillProcessStateChange,
+                           String.format("saw state changes: %s", changes), changes
         );
 
         workflowEngine.getState().updateState(changes);
 
         boolean update = Rules.update(workflowEngine.getRuleEngine(), workflowEngine.getState());
-        workflowEngine.event(
+        eventHandler.event(
                 WorkflowSystemEventType.DidProcessStateChange,
                 String.format(
                         "applied state changes and rules (changed? %s): %s",
@@ -360,7 +405,16 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         pending.removeAll(shouldskip);
         skipped.addAll(shouldskip);
 
-        workflowEngine.eventLoopProgress(origPendingCount, shouldskip.size(), shouldrun.size(), pending.size());
+        eventHandler.event(
+                WorkflowSystemEventType.LoopProgress,
+                String.format(
+                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
+                        origPendingCount,
+                        shouldrun.size() - shouldskip.size(),
+                        shouldskip.size(),
+                        pending.size()
+                )
+        );
     }
 
     /**
@@ -370,7 +424,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      */
     private void processSkippedOperations(final List<OP> shouldskip) {
         for (final OP operation : shouldskip) {
-            workflowEngine.event(
+            eventHandler.event(
                     WorkflowSystemEventType.WillSkipOperation,
                     String.format("Skip condition statisfied for operation: %s, skipping", operation),
                     operation

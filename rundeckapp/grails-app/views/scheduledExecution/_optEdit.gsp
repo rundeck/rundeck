@@ -731,9 +731,6 @@
 
         <g:hiddenField name="scheduledExecutionId" value="${scheduledExecutionId}"/>
         <div class="floatr" style="margin:10px 0;">
-            <span class="warn note cancelsavemsg" style="display:none;">
-                <g:message code="scheduledExecution.option.unsaved.warning"/>
-            </span>
             <g:if test="${newoption}">
                 <g:hiddenField name="newoption" value="true"/>
                 <span class="btn btn-default btn-sm" onclick="_optcancelnew();"
@@ -752,6 +749,9 @@
                 <span class="btn btn-primary btn-sm" onclick="_optsave('optedit_${enc(attr:rkey)}','reqtoken_${enc(attr:rkey)}',$(this).up('li.optEntry'));"
                       title="${g.message(code:'form.option.save.title', encodeAs: 'HTMLAttribute')}"><g:message code="save" /></span>
             </g:else>
+            <span class="text-warning cancelsavemsg" style="display:none;">
+                <g:message code="scheduledExecution.option.unsaved.warning"/>
+            </span>
         </div>
         <g:jsonToken id="reqtoken_${rkey}" url="${request.forwardURI}"/>
     </div>
