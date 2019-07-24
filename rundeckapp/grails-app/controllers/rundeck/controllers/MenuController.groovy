@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
-import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.SaveProjAclFile
@@ -30,32 +29,14 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.service.FileCopier
-import com.dtolabs.rundeck.core.execution.service.NodeExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
-import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
-import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin
-import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
-import com.dtolabs.rundeck.plugins.step.NodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
-import com.dtolabs.rundeck.plugins.step.StepPlugin
-import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
-import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
@@ -89,6 +70,7 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
+import rundeck.services.audit.AuditEventsService
 import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
@@ -109,6 +91,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     PluginService pluginService
     PluginApiService pluginApiService
     MetricService metricService
+    AuditEventsService auditEventsService
 
     def configurationService
     ScmService scmService
@@ -141,7 +124,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     @PackageScope
     def nowrunning(QueueQuery query) {
         //find currently running executions
-        
+
         if(params['Clear']){
             query=null
         }
@@ -156,7 +139,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(null!=query){
             query.configureFilter()
         }
-        
+
         //find previous executions
         def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
             executionService.queryQueue(query)
@@ -167,9 +150,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //include id of last completed execution for the project
         def eid=executionService.lastExecutionId(query.projFilter)
         model.lastExecId=eid
-        
+
         User u = userService.findOrCreateUser(session.user)
-        Map filterpref=[:] 
+        Map filterpref=[:]
         if(u){
             filterpref= userService.parseKeyValuePref(u.filterPref)
         }
@@ -194,7 +177,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
     }
-    
+
     def nowrunningFragment = {QueueQuery query->
         if (requireAjax(action: 'index', controller: 'reports', params: params)) {
             return
@@ -258,6 +241,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return redirect(controller: 'menu', action: 'home')
         }
         def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
+
+        // Trigger project home access event
+        auditEventsService.eventBuilder()
+            .setResourceType(AuditEvent.ResourceType.project)
+            .setResourceName(params.project)
+            .setAction(AuditEvent.Action.view)
+            .publish()
+
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
@@ -283,12 +274,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         return redirect(controller:'framework',action:'nodes', params: [project: params.project])
     }
-    
+
     def clearJobsFilter = { ScheduledExecutionQuery query ->
         return redirect(action: 'jobs', params: [project: params.project])
     }
     def jobs (ScheduledExecutionQuery query ){
-        
+
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
             Map filterpref = userService.parseKeyValuePref(u.filterPref)
@@ -443,7 +434,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null
-        
+
         if(params.filterName){
             //load a named filter and create a query from it
             def User u = userService.findOrCreateUser(session.user)
@@ -651,7 +642,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def schedlist=qres.schedlist
         def total=qres.total
         def filters=qres._filters
-        
+
         def finishq=scheduledExecutionService.finishquery(query,params,qres)
 
         def allScheduled = schedlist.findAll { it.scheduled }
@@ -680,7 +671,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def authCreate = frameworkService.authorizeProjectResource(authContext,
                 AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_CREATE, query.projFilter)
-        
+
 
         def Map jobauthorizations=[:]
 
@@ -721,7 +712,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         readauthcount= newschedlist.size()
 
         if(grailsApplication.config.rundeck?.gui?.realJobTree != "false") {
-            //Adding group entries for empty hierachies to have a "real" tree 
+            //Adding group entries for empty hierachies to have a "real" tree
             def missinggroups = [:]
             jobgroups.each { k, v ->
                 def splittedgroups = k.split('/')
@@ -759,8 +750,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         totalauthorized: readauthcount,
         ]
     }
-    
-    
+
+
     def storeJobfilter(ScheduledExecutionQuery query, StoreFilterCommand storeFilterCommand){
         withForm{
         if (storeFilterCommand.hasErrors()) {
@@ -811,8 +802,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
     }
-    
-    
+
+
     def deleteJobfilter={
         withForm{
         def User u = userService.findOrCreateUser(session.user)
@@ -2168,7 +2159,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-        
+
         //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
@@ -3189,7 +3180,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (request.api_version >= ApiVersions.V31 && params.jobIdFilter) {
             query.jobIdFilter = params.jobIdFilter
         }
-        
+
         def results = nowrunning(query)
 
         withFormat{
