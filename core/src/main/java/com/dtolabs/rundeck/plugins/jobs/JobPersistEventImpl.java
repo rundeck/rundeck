@@ -5,15 +5,12 @@ import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent;
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class JobPersistEventImpl implements JobPersistEvent {
 
     String projectName;
-    List<JobOption> options;
+    SortedSet<JobOption> options;
     INodeSet nodes;
     String userName;
     String nodeFilter;
@@ -45,7 +42,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
     public String getProjectName() { return this.projectName; }
 
     @Override
-    public List<JobOption> getOptions() { return this.options; }
+    public SortedSet<JobOption> getOptions() { return this.options; }
 
     @Override
     public INodeSet getNodes() { return this.nodes; }
@@ -60,7 +57,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
 
     private void setOptions(ArrayList<LinkedHashMap> originalOptions) throws ValidationException {
         if(originalOptions != null && !originalOptions.isEmpty()){
-            this.options = new ArrayList<JobOption>();
+            this.options = new TreeSet<JobOption>();
             for (LinkedHashMap originalOption: originalOptions) {
                 JobOptionImpl option = new JobOptionImpl(originalOption);
                 this.options.add(option);
@@ -68,7 +65,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
         }
     }
 
-    public void setNewOptions(List<JobOption> options) throws ValidationException {
+    public void setNewOptions(SortedSet<JobOption> options) {
         this.options = options;
     }
 }

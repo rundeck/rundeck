@@ -2,14 +2,11 @@ package com.dtolabs.rundeck.plugins.jobs;
 
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-public class JobOptionImpl implements JobOption {
+public class JobOptionImpl implements JobOption, Comparable {
 
     static final String DEFAULT_DELIMITER = ",";
     String name;
@@ -360,4 +357,16 @@ public class JobOptionImpl implements JobOption {
         }
     }
 
+    @Override
+    public int compareTo(Object o) {
+        JobOptionImpl bla = (JobOptionImpl)o;
+        if (null != sortIndex && null != bla.sortIndex) {
+            return sortIndex.compareTo(bla.sortIndex);
+        } else if (null == sortIndex && null == bla.sortIndex
+            && name != null) {
+            return name.compareTo(bla.name);
+        } else {
+            return sortIndex != null ? -1 : 1;
+        }
+    }
 }

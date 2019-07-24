@@ -4200,7 +4200,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduledExecution.options = null
     }
 
-    def getOptions(List<JobOption> jobOptions) {
+    def getOptions(SortedSet<JobOption> jobOptions) {
         SortedSet<Option> options = new TreeSet<>()
         jobOptions.each {
             final ObjectMapper mapper = new ObjectMapper()
@@ -4219,9 +4219,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def validateOptions(scheduledExecution, rundeckOptions){
         def optfailed = false
+        def optNames = [:]
         rundeckOptions?.each {Option opt ->
             EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
             fileUploadService.validateFileOptConfig(opt)
+            if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
+                opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
+            }
             if (opt.errors.hasErrors()) {
                 optfailed = true
                 def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
@@ -4232,6 +4236,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         'Invalid Option definition: {0}'
                 )
             }
+            optNames.put(opt.name, opt)
         }
         if (!optfailed) {
             if(scheduledExecution.options){

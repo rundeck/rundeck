@@ -2,7 +2,7 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 
-import java.util.List;
+import java.util.SortedSet;
 
 public interface JobPersistEvent {
 
@@ -16,7 +16,7 @@ public interface JobPersistEvent {
      *
      * @return List<JobOptions> options for the job.
      */
-    List<JobOption> getOptions();
+    SortedSet<JobOption> getOptions();
 
     /**
      *

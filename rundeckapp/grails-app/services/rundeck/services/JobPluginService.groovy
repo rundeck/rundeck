@@ -203,7 +203,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 }
             }
         }
-        mergeResult(event, instanceMap, eventType, result)
+        mergeResult(instanceMap, eventType, result)
         result
     }
 
@@ -212,18 +212,26 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @param event original job event
      * @param instanceMap a map containing the instances sent to the plugins (mapped by plugin name)
      */
-    private mergeResult(event, Map instanceMap, eventType, result){
-        if(result != null){
+    private mergeResult(Map instanceMap, eventType, result){
+        if(!instanceMap.isEmpty()){
             if(eventType == EventType.PRE_EXECUTION){
                 instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
-                    resultFromMap.getOptionsValues()?.each { String key, String value ->
-                        result.getOptionsValues().put(key, value)
+                    if(result == null){
+                        result = resultFromMap
+                    }else{
+                        resultFromMap.getOptionsValues()?.each { String key, String value ->
+                            result.getOptionsValues().put(key, value)
+                        }
                     }
+
                 }
             }
             else if(eventType == EventType.BEFORE_SAVE){
-                def options = []
+                SortedSet options = new TreeSet()
                 instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
+                    if(result == null){
+                        result = resultFromMap
+                    }
                     resultFromMap.getOptions().each {
                         options.add(it)
                     }

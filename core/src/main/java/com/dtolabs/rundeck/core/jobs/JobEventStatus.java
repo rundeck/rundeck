@@ -1,8 +1,9 @@
 package com.dtolabs.rundeck.core.jobs;
 
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public interface JobEventStatus {
 
@@ -18,6 +19,6 @@ public interface JobEventStatus {
 
     default Map getOptionsValues(){ return null; }
 
-    default List<JobOption> getOptions(){ return new ArrayList<JobOption>(); }
+    default SortedSet<JobOption> getOptions(){ return new TreeSet<JobOption>(); }
 
 }
