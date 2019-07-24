@@ -5,37 +5,34 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class JobPreExecutionEventImpl implements JobPreExecutionEvent, Serializable {
+public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
 
     private String projectName;
     private String userName;
     private Map scheduledExecutionMap;
-    private Map optionsValues;
+    private HashMap optionsValues;
     private INodeSet nodeSet;
 
-    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, Map optionsValues, INodeSet nodeSet) throws IOException, ClassNotFoundException {
+    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodeSet) {
         this.projectName = projectName;
         this.userName = userName;
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream()){
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(scheduledExecutionMap);
-            oos.flush();
-            ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bin);
-            this.scheduledExecutionMap = (Map) ois.readObject();
+        if(scheduledExecutionMap != null){
+            this.scheduledExecutionMap = (Map)((HashMap) scheduledExecutionMap).clone();
         }
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream()){
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(optionsValues);
-            oos.flush();
-            ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray());
-            ObjectInputStream ois = new ObjectInputStream(bin);
-            this.optionsValues = (Map) ois.readObject();
+        if(optionsValues != null){
+            this.optionsValues = (HashMap) optionsValues.clone();
+        }else{
+            this.optionsValues = new HashMap();
         }
         this.nodeSet = nodeSet;
+    }
+
+    public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin){
+        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodeSet);
     }
 
     public void setProjectName(String projectName){

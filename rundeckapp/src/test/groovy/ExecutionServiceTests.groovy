@@ -72,6 +72,8 @@ class ExecutionServiceTests  {
         mock.demand.getRoles { roles }
         mock.proxyInstance()
     }
+
+
     void testCreateExecutionRunning(){
 
         ScheduledExecution se = new ScheduledExecution(
@@ -96,7 +98,14 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
         try{
@@ -133,7 +142,14 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
@@ -153,7 +169,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -190,7 +213,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -227,7 +257,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -258,7 +295,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -290,7 +334,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -355,7 +406,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -391,7 +449,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -419,7 +484,14 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -451,7 +523,14 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -483,7 +562,14 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -522,7 +608,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -560,7 +653,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -580,7 +680,14 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -602,7 +709,14 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -624,7 +738,14 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -645,7 +766,14 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -676,7 +804,14 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -2064,7 +2199,14 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -2098,7 +2240,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -2144,7 +2293,14 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                null
+            }
+            getServerUUID(1..1){
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 

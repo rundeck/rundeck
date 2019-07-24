@@ -18,6 +18,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.NodesSelector
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 
@@ -180,6 +181,9 @@ class ScheduledExServiceTests {
             }
         }
 
+        sec.jobPluginService = mockWith(JobPluginService){
+            beforeJobSave{event -> return null}
+        }
         sec.frameworkService = mockWith(FrameworkService){
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -196,6 +200,9 @@ class ScheduledExServiceTests {
                 return projectMock
             }
             projectNames{authContext -> []}
+            filterNodeSet(0..1){ NodesSelector selector, String project->
+                null
+            }
         }
     }
     def setupDoUpdateJob(sec){
@@ -609,15 +616,14 @@ class ScheduledExServiceTests {
                 return projectMock
             }
             projectNames{authContext -> []}
-            getFrameworkFromUserSession { session, request -> return null }
-            getCommand { project, type, command, framework ->
+            getFrameworkFromUserSession(0..1) { session, request -> return null }
+            getCommand(0..1) { project, type, command, framework ->
                 assertEquals 'testProject', project
                 assertEquals 'aType', type
                 assertEquals 'aCommand', command
                 return null
             }
-            getFrameworkFromUserSession { session, request -> return null }
-            getFrameworkFromUserSession { session, request -> return null }
+            filterNodeSet(1..1){selector, project -> null}
         }
 
 
