@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.schedule;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,4 +79,12 @@ public interface JobScheduleManager {
      * @return uuid of node for the scheduled execution
      */
     String determineExecNode(String name, String group, Map data, String project);
+
+
+    /**
+     * Return list dead cluster members.
+     *
+     * @return list dead cluster members
+     */
+    List<String> getDeadMembers(String uuid);
 }

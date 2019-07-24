@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -78,6 +79,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def fileUploadService
     def AuthContextEvaluator rundeckAuthContextEvaluator
     StoragePluginProviderService storagePluginProviderService
+    JobSchedulerService jobSchedulerService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -275,7 +277,8 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
                             project: project,
                             logFileStorageService: logFileStorageService,
                             fileUploadService: fileUploadService,
-                            frameworkService: this
+                            frameworkService: this,
+                            jobSchedulerService: jobSchedulerService
                     ])
         }
     }
@@ -283,7 +286,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
     def existsFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().existsFrameworkProject(project)
     }
-    
+
     def getFrameworkProject(String project) {
         return rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project)
     }
