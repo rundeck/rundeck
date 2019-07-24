@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.plugins;
 
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
@@ -90,6 +91,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
+        map.put(ServiceNameConstants.PasswordUtilityEncrypter, PasswordUtilityEncrypterPlugin.class);
         map.put(ServiceNameConstants.AuditEventListener, AuditEventListener.class);
 
         TYPES = Collections.unmodifiableMap(map);
