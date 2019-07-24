@@ -3,6 +3,7 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.execution.JobPluginException;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent;
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 
 
@@ -39,6 +40,15 @@ public interface JobPlugin {
      * @return JobEventStatus
      */
     default public JobEventStatus afterJobEnds(JobExecutionEvent event) throws JobPluginException{
+        return null;
+    }
+
+    /**
+     * It triggers when a job is persisted
+     * @param event event saving data
+     * @return JobEventStatus
+     */
+    default public JobEventStatus beforeSaveJob(JobPersistEvent event) throws JobPluginException{
         return null;
     }
 
