@@ -56,7 +56,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','object-store','orchestrator', 'source-refresh','upvar']
-def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter']
+def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source','py-winrm-plugin','openssh-node-execution','multiline-regex-datacapture-filter', 'attribute-match-node-enhancer']
 
 //manifest describing expected build results
 def manifest=[

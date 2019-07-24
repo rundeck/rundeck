@@ -13,6 +13,7 @@ import international from './i18n'
 import {
   EventBus
 } from '../../utilities/vueEventBus.js'
+import uivLang from '../../utilities/uivi18n'
 
 Vue.config.productionTip = false
 
@@ -20,22 +21,19 @@ Vue.use(Vue2Filters)
 Vue.use(VueCookies)
 Vue.use(uiv)
 Vue.use(VueI18n)
-import uivLang from '../../utilities/uivi18n'
 
 let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'
 let lang = window._rundeck.language || 'en'
 
 // include any i18n injected in the page by the app
-messages =
-    {
-      [locale]: Object.assign(
-          {},
-          uivLang[locale] || uivLang[lang] || {},
-          window.Messages,
-          messages[locale] || messages[lang] || messages['en_US'] || {}
-      )
-    }
+messages = {
+  [locale]: Object.assign({},
+    uivLang[locale] || uivLang[lang] || {},
+    window.Messages,
+    messages[locale] || messages[lang] || messages['en_US'] || {}
+  )
+}
 
 // Create VueI18n instance with options
 /* eslint-disable no-new */
@@ -52,12 +50,17 @@ for (var i = 0; i < els.length; i++) {
   })
   new Vue({
     el: e,
-    data(){
-      return{
-        EventBus:EventBus
+    data() {
+      return {
+        EventBus: EventBus
       }
     },
-    components: { ProjectPluginConfig, ProjectNodeSourcesConfig , WriteableProjectNodeSources, PageConfirm},
+    components: {
+      ProjectPluginConfig,
+      ProjectNodeSourcesConfig,
+      WriteableProjectNodeSources,
+      PageConfirm
+    },
     i18n
   })
 }

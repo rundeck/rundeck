@@ -58,6 +58,7 @@ import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -2618,6 +2619,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             return
                         }
                     }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
+                        }
+                    }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
                         def val
                         if (optparams[opt.name] instanceof Collection) {
@@ -2638,6 +2651,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                     : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
 
                             return
+                        }
+                    }
+                    if(opt.enforced && !opt.optionValues){
+                        Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
+                        if(!remoteOptions.err && remoteOptions.values){
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
                         }
                     }
                     if (opt.enforced && opt.optionValues &&
@@ -2848,7 +2873,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    scheduledExecution.serverNodeUUID = scheduledExecutionService.nextExecNode(scheduledExecution)
                     if (scheduledExecution.save(flush: true)) {
                         log.info("updated scheduled Execution nextExecution")
                     } else {
@@ -3562,11 +3586,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean never = true
             def interrupt = false
 
-            ScheduledExecution.withTransaction {
-                // Get a new object attached to the new session
-                def scheduledExecution = ScheduledExecution.get(id)
-                notificationService.triggerJobNotification('start', scheduledExecution,
-                    [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+            if(!jitem.ignoreNotifications) {
+                ScheduledExecution.withTransaction {
+                    // Get a new object attached to the new session
+                    def scheduledExecution = ScheduledExecution.get(id)
+                    notificationService.triggerJobNotification('start', scheduledExecution,
+                            [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                }
+
             }
 
             int killcount = 0
@@ -3605,8 +3632,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def duration = System.currentTimeMillis() - startTime
-
-        if (averageDuration > 0 && duration > averageDuration) {
+        if ((!jitem.ignoreNotifications) && (averageDuration > 0) && (duration > averageDuration)) {
             avgDurationExceeded(id, [
                     execution: exec,
                     context  : newContext,
@@ -3646,18 +3672,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
 
-            // Get a new object attached to the new session
-            def scheduledExecution = ScheduledExecution.get(id)
-            notificationService.triggerJobNotification(
-                    wresult?.result.success ? 'success' : 'failure',
-                    scheduledExecution,
-                    [
-                            execution : execution,
-                            nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
-                            context   : newContext,
-                            jobref    : jitem.jobIdentifier
-                    ]
-            )
+            if(!jitem.ignoreNotifications) {
+                // Get a new object attached to the new session
+                def scheduledExecution = ScheduledExecution.get(id)
+                notificationService.triggerJobNotification(
+                        wresult?.result.success ? 'success' : 'failure',
+                        scheduledExecution,
+                        [
+                                execution : execution,
+                                nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
+                                context   : newContext,
+                                jobref    : jitem.jobIdentifier
+                        ]
+                )
+            }
 
             result.sourceResult = wresult.result
 

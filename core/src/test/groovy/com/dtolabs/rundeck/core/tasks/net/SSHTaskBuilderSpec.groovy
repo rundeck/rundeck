@@ -342,4 +342,44 @@ class SSHTaskBuilderSpec extends Specification {
 
     }
 
+    def "buildSsh with bind address"() {
+        given:
+        def node = Mock(INodeEntry) {
+            extractHostname() >> 'ahostname'
+        }
+        def project = new Project()
+
+        def nodeAuthentication = Mock(SSHTaskBuilder.SSHConnectionInfo) {
+            getUsername() >> 'bob'
+            getAuthenticationType() >> SSHTaskBuilder.AuthenticationType.privateKey
+            getPrivateKeyStoragePath() >> 'keys/fake/path'
+            getPrivateKeyStorageData() >> {
+                new ByteArrayInputStream('data'.bytes)
+            }
+            getBindAddress() >> "192.168.0.120"
+        }
+        def listener = Mock(ExecutionListener)
+
+        String[] command=["ls"]
+        def datacontext=[:]
+
+        when:
+        def result = SSHTaskBuilder.build(
+                node,
+                command,
+                project,
+                datacontext,
+                nodeAuthentication,
+                0,
+                listener
+        );
+        then:
+        result != null
+        result instanceof ExtSSHExec
+        ExtSSHExec built = (ExtSSHExec) result
+
+        built.getBindAddress() == "192.168.0.120"
+
+    }
+
 }

@@ -10,10 +10,6 @@ The more of these guidelines you can follow, the easier (and faster) it is for u
 3. Please add unit tests to demonstrate that your submission fixes an existing bug, or performs as intended.
 1. Rebase your branch on the current state of the `master` branch. Use `git rebase master`.
    This means you might have to deal with conflicts.
-1. Consolidate commits so that all related file changes are within a single commit.
-   You can [squash commits](http://www.gitready.com/advanced/2009/02/10/squashing-commits-with-rebase.html)
-   into a single commit by doing `git rebase -i`.  (This doesn't mean your entire PR has to be a single commit, just that
-   any related changes are within a single commit.)
 2. Be descriptive in your commit messages: explain the purpose of all changes.
    You can modify commit messages by doing `git commit --amend` (for the previous change),
    or `git rebase -i` for earlier changes.

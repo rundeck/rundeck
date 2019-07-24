@@ -29,6 +29,7 @@ function TokenCreator(data) {
     self.tokenTimeUnit = ko.observable(data.tokenTimeUnit || 'm');
     self.tokenUser = ko.observable(data.tokenUser || data.user);
     self.tokenRolesStr = ko.observable(data.tokenRoles);
+    self.tokenTableSummaryText = ko.observable(data.tokenTableSummaryText);
     self.generateData = ko.computed(function () {
         return {
             login: self.user(),
@@ -81,6 +82,92 @@ function RoleSet(list) {
     }
 }
 
+function TokenTableHandler(ctx) {
+
+    var self = this;
+    var context = ctx;
+    var tbody = jQuery('#apiTokenTableBody');
+
+    self.pageOffset = context.tokenPagingOffset;
+    self.pageMax = context.tokenPagingMax;
+    self.totalTokens = context.tokenTotal;
+
+    self.getTableBody = function () {
+        return tbody;
+    };
+
+    var updateSummary = function () {
+        tokencreator.tokenTableSummaryText(message("userController.page.profile.pager.summary", [
+            self.pageOffset + 1,
+            Math.min((self.pageOffset + self.pageMax), self.totalTokens),
+            self.totalTokens
+        ]));
+    };
+
+    var rows = function () {
+        return tbody.find(".apitokenform");
+    };
+
+    self.getNumRows = function () {
+        return rows().length;
+    };
+
+    self.currentPage = function () {
+        return Math.ceil(self.pageOffset / self.pageMax) + 1;
+    };
+
+    var calcPages = function (total) {
+        return Math.ceil(total / self.pageMax);
+    };
+
+    self.totalPages = function () {
+        return calcPages(self.totalTokens);
+    };
+
+    /**
+     * Determines if number of pages changes if the total of tokens changes.
+     * @param totalDiff Increment (or decrement if negative) on current total to check.
+     * @return {boolean} true if number of pages would change.
+     */
+    self.numPagesChanges = function (totalDiff) {
+        return self.totalPages() !== calcPages(self.totalTokens + totalDiff);
+    };
+
+    self.insertRow = function (tokenid, rowContent) {
+        var table = tokenTable.getTableBody();
+        table.prepend(rowContent);
+        var row = $('token-' + tokenid);
+        row.style.opacity = 0;
+        jQuery($(row)).fadeTo(1000, 1);
+
+        self.totalTokens++;
+        updateSummary();
+
+        // if numrows > max then drop last row.
+        if(self.getNumRows() > self.pageMax) {
+            rows().last().remove();
+        }
+    };
+
+    self.removeRow = function(elem) {
+        jQuery(elem).fadeOut("slow", function () {
+            $(this).remove();
+            self.totalTokens--;
+            updateSummary();
+        });
+    };
+
+    self.goToPage = function (pageNum) {
+        var params = {
+            login: context.user,
+            max: self.pageMax,
+            offset: self.pageMax * (pageNum - 1)
+        };
+        window.location = _genUrl(appLinks.userProfilePage, params);
+    };
+}
+
+
 function highlightNew() {
     jQuery(' .apitokenform.newtoken').fadeTo('slow', 1);
 }
@@ -89,18 +176,39 @@ function tokenAjaxError(msg) {
     jQuery('.gentokenerror').show();
 }
 
+
+function getNumRows() {
+    return jQuery('.apitokenform').length;
+}
+
 function addTokenRow(elem, login, tokenid) {
-    var table = $(elem).down('.apitokentable');
-    var row = new Element('tbody');
-    table.insert(row);
-    $(row).addClassName('apitokenform');
-    $(row).style.opacity = 0;
-    jQuery(row).load(
-        _genUrl(appLinks.userRenderApiToken, {login: login, tokenid: tokenid}),
-        function (resp, status, jqxhr) {
-            jQuery($(row)).fadeTo("slow",1);
-        }
-    );
+
+    // add the row dynamically only if we are at the first page, and the
+    // number of pages will not change.
+    if(tokenTable.currentPage() !== 1 || tokenTable.numPagesChanges(1)) {
+      tokenTable.goToPage(1);
+      return;
+    }
+
+    jQuery.get(_genUrl(appLinks.userRenderApiToken, {login: login, tokenid: tokenid}), function (response) {
+        tokenTable.insertRow(tokenid, response);
+    });
+
+}
+
+function removeTokenRow(elem, data) {
+
+    // Remove dynamically only if we are in last page
+    // and number of pages will not change.
+    if (tokenTable.currentPage() !== tokenTable.totalPages()
+      || tokenTable.numPagesChanges(-1)) {
+
+        // reload page.
+        window.location.reload();
+        return;
+    }
+
+    tokenTable.removeRow(elem);
 }
 
 function clearToken(elem) {
@@ -122,7 +230,7 @@ function clearToken(elem) {
                 tokenAjaxError(data.error);
             } else if (data.result) {
                 //remove row element
-                jQuery(elem).fadeOut("slow");
+                removeTokenRow(elem, data);
             }
         },
         error: function (jqxhr, status, error) {
@@ -132,6 +240,8 @@ function clearToken(elem) {
         }
     }).success(_createAjaxReceiveTokensHandler('api_req_tokens'));
 }
+
+
 function generateUserToken(login, elem, data) {
     var dom = jQuery('#' + elem);
     jQuery.ajax({
@@ -197,8 +307,17 @@ jQuery(function () {
     var dom = jQuery('#gentokensection');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);
-        window.tokencreator = new TokenCreator({roleset: roleset, user: data.user, adminAuth: data.adminAuth,
-            userTokenAuth: data.userTokenAuth, svcTokenAuth: data.svcTokenAuth});
+        window.tokencreator = new TokenCreator({
+            roleset: roleset,
+            user: data.user,
+            adminAuth: data.adminAuth,
+            userTokenAuth: data.userTokenAuth,
+            svcTokenAuth: data.svcTokenAuth,
+            tokenTableSummaryText: data.tokenTableSummaryText
+        });
         ko.applyBindings(tokencreator, dom[0]);
+
+        // Token table handler
+        window.tokenTable = new TokenTableHandler(data);
     }
 });
