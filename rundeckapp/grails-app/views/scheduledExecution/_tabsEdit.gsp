@@ -28,7 +28,7 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
-                        <!-- ko if: workflowError() || optionError() -->
+                        <!-- ko if: inPageError() -->
                         <b class="text-warning fas fa-exclamation-circle"></b>
                         <!-- /ko -->
                     </a>
@@ -48,6 +48,18 @@
                         <g:message code="job.edit.page.tab.notifications.title"/>
                     </a>
                 </li>
+                <feature:enabled name="job-plugin">
+                    <g:if test="${jobPlugins}">
+                        <li>
+                            <a href="#tab_plugins" data-toggle="tab">
+                                <g:message code="job.edit.page.tab.plugins.title" default="Plugins"/>
+                                <!-- ko if: pluginsError() -->
+                                <b class="text-warning fas fa-exclamation-circle"></b>
+                                <!-- /ko -->
+                            </a>
+                        </li>
+                    </g:if>
+                </feature:enabled>
                 <li>
                     <a href="#tab_other" data-toggle="tab">
                         <g:message code="job.edit.page.tab.other.title"/>

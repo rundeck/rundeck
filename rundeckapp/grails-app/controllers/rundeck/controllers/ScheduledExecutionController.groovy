@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -66,6 +68,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
+import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.utils.OptionsUtil
 
@@ -142,6 +145,8 @@ class ScheduledExecutionController  extends ControllerBase{
     def PluginService pluginService
     def FileUploadService fileUploadService
     OptionValuesService optionValuesService
+    FeatureService featureService
+    JobPluginService jobPluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1802,6 +1807,12 @@ class ScheduledExecutionController  extends ControllerBase{
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
             !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
+
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
@@ -1813,6 +1824,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 stepDescriptions    : stepTypes,
                 timeZones           : timeZones,
                 logFilterPlugins    : logFilterPlugins,
+                jobPlugins          : jobPlugins,
                 projectNames        : fprojects,
                 globalVars          : globals
         ]
@@ -1878,18 +1890,27 @@ class ScheduledExecutionController  extends ControllerBase{
                 !pluginControlService?.isDisabledPlugin(k, 'Notification')
             }
 
+            def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                    frameworkService.getFrameworkProject(params.project),
+                    pluginControlService
+            )
+
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-            return render(view:'edit', model: [scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                    notificationValidation: params['notificationValidation'],
-                    nodeStepDescriptions: nodeStepTypes,
-                    stepDescriptions: stepTypes,
-                    strategyPlugins: strategyPlugins,
-                    notificationPlugins: notificationPlugins,
-                    orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                    params:params,
-                    globalVars:globals,
-                    logFilterPlugins:logFilterPlugins
+            return render(
+                    view: 'edit', model: [scheduledExecution    : scheduledExecution,
+                                          nextExecutionTime     : scheduledExecutionService.nextExecutionTime(
+                                                  scheduledExecution
+                                          ),
+                                          notificationValidation: params['notificationValidation'],
+                                          nodeStepDescriptions  : nodeStepTypes,
+                                          stepDescriptions      : stepTypes,
+                                          strategyPlugins       : strategyPlugins,
+                                          notificationPlugins   : notificationPlugins,
+                                          orchestratorPlugins   : orchestratorPluginService.listDescriptions(),
+                                          params                : params,
+                                          globalVars            : globals,
+                                          logFilterPlugins      : logFilterPlugins,
+                                          jobPlugins            : jobPlugins
                    ])
         }else{
 
@@ -1976,6 +1997,11 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
 
@@ -1983,8 +2009,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 view: 'create',
                 model: [
                         scheduledExecution  : newScheduledExecution,
-                        crontab: crontab,
-                        params: params,
+                        crontab             : crontab,
+                        params              : params,
                         iscopy              :true,
                         authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                         nodeStepDescriptions: nodeStepTypes,
@@ -1993,6 +2019,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         notificationPlugins : notificationPlugins,
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
+                        jobPlugins          : jobPlugins,
                         projectNames        : fprojects,
                         globalVars          : globals
                 ]
@@ -2141,6 +2168,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
         def fprojects = frameworkService.projectNames(authContext)
@@ -2151,6 +2183,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins     :strategyPlugins,
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
+                jobPlugins          : jobPlugins,
                 projectNames        : fprojects,
                 globalVars          :globals,
                 timeZones           :timeZones]

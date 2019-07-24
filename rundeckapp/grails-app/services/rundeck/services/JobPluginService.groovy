@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.jobs.IJobPluginService
@@ -8,7 +9,11 @@ import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -16,6 +21,7 @@ import com.dtolabs.rundeck.server.plugins.services.JobPluginProviderService
 import org.rundeck.core.projects.ProjectConfigurable
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import rundeck.ScheduledExecution
 
 /**
  * Provides capability to execute certain task based on job a job event
@@ -223,4 +229,81 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             }
         }
     }
+
+    /**
+     *
+     * @param project
+     * @return map of described plugins enabled for the project
+     */
+    Map<String, DescribedPlugin<JobPlugin>> listEnabledJobPlugins(IRundeckProject project) {
+        if (!featureService.featurePresent('job-plugin')) {
+            return null
+        }
+        listEnabledJobPlugins(project, frameworkService.getPluginControlService(project.name))
+    }
+
+    /**
+     *
+     * @param project
+     * @return map of described plugins enabled for the project
+     */
+    Map<String, DescribedPlugin<JobPlugin>> listEnabledJobPlugins(
+            IRundeckProject project,
+            PluginControlService pluginControlService
+    ) {
+        if (!featureService.featurePresent('job-plugin')) {
+            return null
+        }
+
+        return pluginService.listPlugins(JobPlugin).findAll { k, v ->
+            isProjectJobPluginEnabled(project, k) &&
+            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.JobPlugin)
+        }
+    }
+
+    /**
+     *
+     * @param rundeckProject
+     * @param provider JobPlugin provider name
+     * @return true if the job plugin name is enabled for the project
+     */
+    public boolean isProjectJobPluginEnabled(IRundeckProject rundeckProject, String provider) {
+        rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + provider) &&
+        rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + provider) == "true"
+    }
+
+    /**
+     * Read the config set for the job
+     * @param job
+     * @return PluginConfigSet for the JobPlugin service for the job, or null if not defined or not enabled
+     */
+    PluginConfigSet getJobPluginConfigSetForJob(ScheduledExecution job) {
+        if (!featureService?.featurePresent('job-plugin', false)) {
+            return null
+        }
+        def jobPluginConfig = job.pluginConfigMap?.get ServiceNameConstants.JobPlugin
+
+        if (!(jobPluginConfig instanceof Map)) {
+            return null
+        }
+        List<PluginProviderConfiguration> configs = []
+        jobPluginConfig.each { String type, Map config ->
+            configs << SimplePluginConfiguration.builder().provider(type).configuration(config).build()
+        }
+
+        PluginConfigSet.with ServiceNameConstants.JobPlugin, configs
+    }
+
+    /**
+     * Store the plugin config set for the job
+     * @param job job
+     * @param configSet config set
+     */
+    def setJobPluginConfigSetForJob(final ScheduledExecution job, final PluginConfigSet configSet) {
+        Map<String, Map<String, Object>> data = configSet.pluginProviderConfigs.collectEntries {
+            [it.provider, it.configuration]
+        }
+        job.setPluginConfigVal(ServiceNameConstants.JobPlugin, data)
+    }
+
 }
