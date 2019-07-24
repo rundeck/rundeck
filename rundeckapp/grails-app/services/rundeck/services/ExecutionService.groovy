@@ -3510,7 +3510,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             } else {
                 averageDuration = se.averageDuration
-                timeout = se.timeout ? Sizes.parseTimeDuration(se.timeout) : 0
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
@@ -3548,6 +3547,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def msg = "Invalid options: ${e.errors.keySet()}"
                     result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
                 }
+
+                def timeouttmp = '0'
+                if(se.timeout){
+                    if(se.timeout.contains('${')){
+                        timeouttmp = DataContextUtils.replaceDataReferencesInString(se.timeout, newContext.dataContext)
+                    }else{
+                        timeouttmp = se.timeout
+                    }
+                }
+                timeout = Sizes.parseTimeDuration(timeouttmp)
             }
         }
 
