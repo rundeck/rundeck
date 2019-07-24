@@ -1167,7 +1167,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     item,
                     executioncontext,
                     workflowLogManager,
-                    jobPluginService
+                    jobPluginService,
+                    execution.asReference()
             )
 
             thread.start()
@@ -3598,7 +3599,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newExecItem,
                     newContext,
                     null,
-                    jobPluginService
+                    jobPluginService,
+                    exec.asReference()
             )
 
             thread.start()

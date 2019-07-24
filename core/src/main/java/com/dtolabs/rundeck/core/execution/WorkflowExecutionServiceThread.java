@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.jobs.JobEventStatus;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl;
+import com.dtolabs.rundeck.plugins.jobs.JobEventResultImpl;
 
 /**
  * WorkflowExecutionServiceThread is ...
@@ -46,13 +47,15 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
     private IJobPluginService iJobPluginService;
+    private ExecutionReference executionReference;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager,
-            IJobPluginService iJobPluginService
+            IJobPluginService iJobPluginService,
+            ExecutionReference executionReference
     )
     {
         this.weservice = eservice;
@@ -60,6 +63,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
         this.context = econtext;
         this.loggingManager = loggingManager;
         this.iJobPluginService = iJobPluginService;
+        this.executionReference = executionReference;
     }
 
     public void run() {
@@ -83,15 +87,20 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
-            JobExecutionEventImpl beforeEvent = new JobExecutionEventImpl(context);
-            iJobPluginService.beforeJobStarts(beforeEvent);
+            JobEventStatus jobEventStatus = iJobPluginService.beforeJobStarts(new JobExecutionEventImpl(context,executionReference));
+            StepExecutionContext executionContext = jobEventStatus != null ? jobEventStatus.getExecutionContext() : null;
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            setResult(executorForItem.executeWorkflow(context, weitem));
+            setResult(executorForItem.executeWorkflow(executionContext != null ? executionContext : context, weitem));
             success = getResult().isSuccess();
             if (null != getResult().getException()) {
                 thrown = getResult().getException();
             }
-            iJobPluginService.afterJobEnds(new JobExecutionEventImpl(context));
+
+            iJobPluginService.afterJobEnds(new JobExecutionEventImpl(
+                    executionContext != null ? executionContext: context,
+                    executionReference,
+                    new JobEventResultImpl(getResult(), isAborted())
+            ));
             return getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);

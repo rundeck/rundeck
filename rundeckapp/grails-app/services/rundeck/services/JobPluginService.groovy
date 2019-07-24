@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.JobPluginException
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.jobs.IJobPluginService
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
@@ -170,11 +171,11 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).equals("true")) {
                 try {
                     JobPlugin plugin = (JobPlugin) describedPlugin.instance
-                    if(eventType.equals(EventType.BEFORE_RUN)){
+                    if(eventType == EventType.BEFORE_RUN){
                         result = plugin.beforeJobStarts(event)
-                    }else if(eventType.equals(EventType.AFTER_RUN)) {
+                    }else if(eventType == EventType.AFTER_RUN) {
                         result = plugin.afterJobEnds(event)
-                    }else if(eventType.equals(EventType.PRE_EXECUTION)) {
+                    }else if(eventType == EventType.PRE_EXECUTION) {
                         def newEventInstance = new JobPreExecutionEventImpl(event)
                         result = plugin.beforeJobExecution(newEventInstance)
                         if(result?.useNewValues() == true){
