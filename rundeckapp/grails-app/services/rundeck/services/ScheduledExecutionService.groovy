@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -2599,7 +2600,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (params.jobPlugins) {
             //validate job plugins
-            def configSet = _parseJobPluginsParams(params.jobPlugins)
+            def configSet = parseJobPluginsParams(params.jobPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed
@@ -2835,17 +2836,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param jobPluginParams
      * @return
      */
-    private PluginConfigSet _parseJobPluginsParams(Map jobPluginParams) {
+    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams) {
         List<String> keys = [jobPluginParams?.keys].flatten().findAll { it }
 
         List<PluginProviderConfiguration> configs = []
 
         keys.each { key ->
-            def enabled = jobPluginParams.enabled[key]
+            def enabled = jobPluginParams.enabled?.get(key)
             if (enabled != 'true') {
                 return
             }
-            def pluginType = jobPluginParams.type[key]
+            def pluginType = jobPluginParams.type[key]?.toString()
             Map config = jobPluginParams[key]?.configMap ?: [:]
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
         }
@@ -3878,7 +3879,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (params.jobPlugins) {
             //validate job plugins
-            def configSet = _parseJobPluginsParams(params.jobPlugins)
+            def configSet = parseJobPluginsParams(params.jobPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed

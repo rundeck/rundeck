@@ -16,7 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import org.apache.log4j.Logger
 import rundeck.ScheduledExecutionStats
 
@@ -604,6 +608,88 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
 
+    }
+
+    def "parse job plugins params"() {
+        given:
+            def params = [keys: keys] + other
+        when:
+            def result = ScheduledExecutionService.parseJobPluginsParams(params)
+        then:
+            result
+            result.service == 'JobPlugin'
+            result.pluginProviderConfigs!=null
+            result.pluginProviderConfigs.size()==expectSize
+            if(expectSize>0) {
+                result.pluginProviderConfigs.find { it.provider == 'aType' } != null
+                result.pluginProviderConfigs.find { it.provider == 'aType' }.configuration == [a: 'b']
+            }
+            if(expectSize>1){
+                result.pluginProviderConfigs.find{it.provider=='bType'}!=null
+                result.pluginProviderConfigs.find{it.provider=='bType'}.configuration==[b:'c']
+            }
+
+        where:
+            keys              | other  | expectSize
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
+            ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
+            ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true']] | 1
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true',asdf2:'false']] | 1
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true',asdf2:'true']] | 2
+
+    }
+
+    def "do validate job plugins"() {
+        given:
+            setupDoValidate()
+            def params = baseJobParams()
+            params.jobPlugins = [
+                    keys:['a','b'],
+                    enabled:['a':'true','b':'true'],
+                    type:[a:'aType',b:'bType'],
+                    'a': [
+                            configMap: [a: 'b']
+                    ],
+                    'b': [
+                            configMap: [b: 'c']
+                    ]
+            ]
+        when:
+            def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+            1 * service.pluginService.validatePluginConfig('aType',JobPlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:true)
+            1 * service.pluginService.validatePluginConfig('bType',JobPlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
+            1 * service.jobPluginService.setJobPluginConfigSetForJob(_,_)
+            !results.failed
+
+    }
+    def "do validate job plugins invalid"() {
+        given:
+            setupDoValidate()
+            def params = baseJobParams()
+            params.jobPlugins = [
+                    keys:['a','b'],
+                    enabled:['a':'true','b':'true'],
+                    type:[a:'aType',b:'bType'],
+                    'a': [
+                            configMap: [a: 'b']
+                    ],
+                    'b': [
+                            configMap: [b: 'c']
+                    ]
+            ]
+        when:
+            def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+            1 * service.pluginService.validatePluginConfig('aType',JobPlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false)
+            1 * service.pluginService.validatePluginConfig('bType',JobPlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
+            0 * service.jobPluginService.setJobPluginConfigSetForJob(_,_)
+            results.failed
+            results.scheduledExecution.errors.hasFieldErrors('pluginConfig')
     }
     @Unroll
     def "do validate node-first strategy error handlers"() {
@@ -2067,6 +2153,74 @@ class ScheduledExecutionServiceSpec extends Specification {
         pluginConfigMap                                | _
         [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
         [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
+    }
+
+    @Unroll
+    def "do update job job plugin valid"() {
+        given:
+            setupDoUpdateJob()
+            def se = new ScheduledExecution(createJobParams()).save()
+            def newJob = new ScheduledExecution(createJobParams())
+            def pluginService = service.pluginService
+            0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+            1 * service.jobPluginService.getJobPluginConfigSetForJob(newJob) >>
+            PluginConfigSet.with(
+                    'JobPlugin',
+                    [
+                            SimplePluginConfiguration.builder().
+                                    provider('aPlugin').
+                                    configuration([some: 'config']).
+                                    build()
+                    ]
+            )
+            1 * service.frameworkService.filterNodeSet(_,_)
+            1 * service.jobPluginService.beforeJobSave(_,_)
+            0 * _
+        when:
+            def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+            results.success
+
+            1 * service.pluginService.validatePluginConfig('aPlugin', JobPlugin, 'AProject', [some: 'config']) >>
+            new ValidatedPlugin(valid: true)
+            1 * service.jobPluginService.setJobPluginConfigSetForJob(_, _)
+
+    }
+
+    @Unroll
+    def "do update job job plugin invalid"() {
+        given:
+            setupDoUpdateJob()
+            def se = new ScheduledExecution(createJobParams()).save()
+            def newJob = new ScheduledExecution(createJobParams())
+            def pluginService = service.pluginService
+            0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+            1 * service.jobPluginService.getJobPluginConfigSetForJob(newJob) >>
+            PluginConfigSet.with(
+                    'JobPlugin',
+                    [
+                            SimplePluginConfiguration.builder().
+                                    provider('aPlugin').
+                                    configuration([some: 'config']).
+                                    build()
+                    ]
+            )
+            1 * service.frameworkService.filterNodeSet(_,_)
+            1 * service.jobPluginService.beforeJobSave(_,_)
+            0 * _
+        when:
+            def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+            !results.success
+
+            1 * service.pluginService.validatePluginConfig('aPlugin', JobPlugin, 'AProject', [some: 'config']) >>
+            new ValidatedPlugin(valid: false)
+            0 * service.jobPluginService.setJobPluginConfigSetForJob(_, _)
+
     }
 
 
