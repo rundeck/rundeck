@@ -1,12 +1,14 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.encrypter.PasswordUtilityEncrypterPlugin
 import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
@@ -89,6 +91,10 @@ class PluginApiService {
             }.sort { a, b -> a.name <=> b.name }
         }
 
+        pluginDescs['PasswordUtilityEncrypter'] = pluginService.listPlugins(PasswordUtilityEncrypterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
         //web-app level plugin descriptions
         if(featureService.featurePresent("job-plugin")) {
             pluginDescs[jobPluginService.jobPluginProviderService.name]=jobPluginService.listJobPlugins().collect {
@@ -138,6 +144,10 @@ class PluginApiService {
         pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs[ServiceNameConstants.AuditEventListener] = pluginService.listPlugins(AuditEventListener).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
 
         Map<String,Map> uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
