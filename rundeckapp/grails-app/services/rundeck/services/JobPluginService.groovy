@@ -5,11 +5,14 @@ import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.jobs.IJobPluginService
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
+
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobPluginProviderService
 import org.rundeck.core.projects.ProjectConfigurable
@@ -37,7 +40,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     List<Property> projectConfigProperties
 
     enum EventType{
-        PRE_EXECUTION("preExecution"),BEFORE('beforeJob'), AFTER('afterJob')
+        PRE_EXECUTION("preExecution"),BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun'),
+        BEFORE_SAVE("beforeSave")
         private final String value
         EventType(String value){
             this.value = value
@@ -126,7 +130,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return JobEventStatus response from plugin implementation
      */
     JobEventStatus beforeJobStarts(JobExecutionEvent event){
-        executeLifeCycle(event, EventType.BEFORE)
+        executeLifeCycle(event, EventType.BEFORE_RUN)
     }
 
     /**
@@ -135,7 +139,16 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return JobEventStatus response from plugin implementation
      */
     JobEventStatus afterJobEnds(JobExecutionEvent event){
-        executeLifeCycle(event, EventType.AFTER)
+        executeLifeCycle(event, EventType.AFTER_RUN)
+    }
+
+    /**
+     *
+     * @param event job event
+     * @return JobEventStatus response from plugin implementation
+     */
+    JobEventStatus beforeJobSave(JobPersistEvent event){
+        executeLifeCycle(event, EventType.BEFORE_SAVE)
     }
 
     /**
@@ -157,15 +170,21 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + name).equals("true")) {
                 try {
                     JobPlugin plugin = (JobPlugin) describedPlugin.instance
-                    if(eventType.equals(EventType.BEFORE)){
+                    if(eventType.equals(EventType.BEFORE_RUN)){
                         result = plugin.beforeJobStarts(event)
-                    }else if(eventType.equals(EventType.AFTER)) {
+                    }else if(eventType.equals(EventType.AFTER_RUN)) {
                         result = plugin.afterJobEnds(event)
                     }else if(eventType.equals(EventType.PRE_EXECUTION)) {
-                        def newEventInstance = (JobPreExecutionEventImpl) getNewInstance(event)
+                        def newEventInstance = new JobPreExecutionEventImpl(event)
                         result = plugin.beforeJobExecution(newEventInstance)
                         if(result?.useNewValues() == true){
-                            instanceMap.put(name, newEventInstance)
+                            instanceMap.put(name, result)
+                        }
+                    }else if(eventType == EventType.BEFORE_SAVE){
+                        def newEventInstance = new JobPersistEventImpl(event)
+                        result = plugin.beforeSaveJob(newEventInstance)
+                        if(result?.useNewValues() == true){
+                            instanceMap.put(name, result)
                         }
                     }
                     if (result != null && !result.isSuccessful()) {
@@ -184,28 +203,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 }
             }
         }
-        mergeResult(event, instanceMap)
+        mergeResult(event, instanceMap, eventType, result)
         result
-    }
-
-    /**
-     * If some specific interface things needs to be copied to the new instance, this needs to be done manually
-     * @param event job event
-     * @return a deep copy of the event
-     */
-    private def getNewInstance(event){
-        def newEventInstance
-        ByteArrayOutputStream bos = new ByteArrayOutputStream()
-        ObjectOutputStream oos = new ObjectOutputStream(bos)
-        oos.writeObject(event)
-        oos.flush()
-        ByteArrayInputStream bin = new ByteArrayInputStream(bos.toByteArray())
-        ObjectInputStream ois = new ObjectInputStream(bin)
-        if(event instanceof JobPreExecutionEventImpl){
-            newEventInstance = (JobPreExecutionEventImpl) ois.readObject()
-            newEventInstance.setNodes(event.nodes)
-        }
-        return newEventInstance
     }
 
     /**
@@ -213,12 +212,23 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @param event original job event
      * @param instanceMap a map containing the instances sent to the plugins (mapped by plugin name)
      */
-    private mergeResult(event, Map instanceMap){
-        if(event instanceof JobPreExecutionEventImpl){
-            instanceMap.each { String pluginName, JobPreExecutionEventImpl innerEvent ->
-                innerEvent.optionsValues.each { String key, String value ->
-                    event.optionsValues.put(key, value)
+    private mergeResult(event, Map instanceMap, eventType, result){
+        if(result != null){
+            if(eventType == EventType.PRE_EXECUTION){
+                instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
+                    resultFromMap.getOptionsValues()?.each { String key, String value ->
+                        result.getOptionsValues().put(key, value)
+                    }
                 }
+            }
+            else if(eventType == EventType.BEFORE_SAVE){
+                def options = []
+                instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
+                    resultFromMap.getOptions().each {
+                        options.add(it)
+                    }
+                }
+                result.options = options
             }
         }
     }

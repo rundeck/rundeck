@@ -1793,8 +1793,6 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
 
-
-
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
                                             workflow: new Workflow(
                                                     commands: [new CommandExec(
@@ -1812,7 +1810,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                                             ]
         )
         when:
-        def results = service._doupdateJob(se.id, params, null)
+        def results = service._doupdateJob(se.id, params, mockAuth())
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -2045,6 +2043,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
+        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2089,6 +2088,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
         0 * service.frameworkService.validateDescription(*_)
+        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())

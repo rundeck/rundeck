@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -2269,11 +2270,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //evaluate embedded Job options for validation
         HashMap optparams = validateJobInputOptions(props, se, authContext, null)
-        INodeSet nodeSet = frameworkService.filterNodeSet(ExecutionService.filtersAsNodeSet(se), props.project)
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, se.toMap(), optparams, nodeSet)
-        if(checkBeforeJobExecution(event, optparams)?.useNewValues()){
+        def result = checkBeforeJobExecution(se, optparams, props)
+        if(result?.useNewValues()){
             //if new parameters are needed, a new validation is required
-            optparams = validateJobInputOptions(props, se, authContext, event.getOptionsValues())
+            optparams = validateJobInputOptions(props, se, authContext, result.getOptionsValues())
         }
 
         optparams = removeSecureOptionEntries(se, optparams)
@@ -3945,7 +3945,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
-    def checkBeforeJobExecution(event, optparams){
+    def checkBeforeJobExecution(scheduledExecution, optparams, props){
+        INodeSet nodeSet = frameworkService?.filterNodeSet(ExecutionService.filtersAsNodeSet(scheduledExecution), props.project)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodeSet)
         try{
             return jobPluginService.beforeJobExecution(event)
         }catch(JobPluginException jpe){
