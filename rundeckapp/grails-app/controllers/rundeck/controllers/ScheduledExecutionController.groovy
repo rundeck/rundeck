@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -66,6 +68,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
+import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.utils.OptionsUtil
 
@@ -142,6 +145,8 @@ class ScheduledExecutionController  extends ControllerBase{
     def PluginService pluginService
     def FileUploadService fileUploadService
     OptionValuesService optionValuesService
+    FeatureService featureService
+    JobPluginService jobPluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1802,6 +1807,12 @@ class ScheduledExecutionController  extends ControllerBase{
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
             !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
+
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
@@ -1813,6 +1824,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 stepDescriptions    : stepTypes,
                 timeZones           : timeZones,
                 logFilterPlugins    : logFilterPlugins,
+                jobPlugins          : jobPlugins,
                 projectNames        : fprojects,
                 globalVars          : globals
         ]
@@ -1878,18 +1890,27 @@ class ScheduledExecutionController  extends ControllerBase{
                 !pluginControlService?.isDisabledPlugin(k, 'Notification')
             }
 
+            def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                    frameworkService.getFrameworkProject(params.project),
+                    pluginControlService
+            )
+
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-            return render(view:'edit', model: [scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                    notificationValidation: params['notificationValidation'],
-                    nodeStepDescriptions: nodeStepTypes,
-                    stepDescriptions: stepTypes,
-                    strategyPlugins: strategyPlugins,
-                    notificationPlugins: notificationPlugins,
-                    orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                    params:params,
-                    globalVars:globals,
-                    logFilterPlugins:logFilterPlugins
+            return render(
+                    view: 'edit', model: [scheduledExecution    : scheduledExecution,
+                                          nextExecutionTime     : scheduledExecutionService.nextExecutionTime(
+                                                  scheduledExecution
+                                          ),
+                                          notificationValidation: params['notificationValidation'],
+                                          nodeStepDescriptions  : nodeStepTypes,
+                                          stepDescriptions      : stepTypes,
+                                          strategyPlugins       : strategyPlugins,
+                                          notificationPlugins   : notificationPlugins,
+                                          orchestratorPlugins   : orchestratorPluginService.listDescriptions(),
+                                          params                : params,
+                                          globalVars            : globals,
+                                          logFilterPlugins      : logFilterPlugins,
+                                          jobPlugins            : jobPlugins
                    ])
         }else{
 
@@ -1976,6 +1997,11 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
 
@@ -1983,8 +2009,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 view: 'create',
                 model: [
                         scheduledExecution  : newScheduledExecution,
-                        crontab: crontab,
-                        params: params,
+                        crontab             : crontab,
+                        params              : params,
                         iscopy              :true,
                         authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                         nodeStepDescriptions: nodeStepTypes,
@@ -1993,6 +2019,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         notificationPlugins : notificationPlugins,
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
+                        jobPlugins          : jobPlugins,
                         projectNames        : fprojects,
                         globalVars          : globals
                 ]
@@ -2141,6 +2168,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(
+                frameworkService.getFrameworkProject(params.project),
+                pluginControlService
+        )
+
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
         def fprojects = frameworkService.projectNames(authContext)
@@ -2151,6 +2183,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins     :strategyPlugins,
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
+                jobPlugins          : jobPlugins,
                 projectNames        : fprojects,
                 globalVars          :globals,
                 timeZones           :timeZones]
@@ -4303,6 +4336,7 @@ class ScheduledExecutionController  extends ControllerBase{
         String serverUUID=null
         boolean serverAll=false
         String project=null
+        def jobIds=[]
         def jobid=null
         if(request.format=='json' ){
             def data= request.JSON
@@ -4310,6 +4344,14 @@ class ScheduledExecutionController  extends ControllerBase{
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
             jobid = data?.job?.id?:null
+            if(jobid){
+                jobIds << jobid
+            }
+            if(request.api_version >= ApiVersions.V31 && data?.jobs){
+                data?.jobs.each{job->
+                    jobIds << job.id
+                }
+            }
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
@@ -4319,19 +4361,31 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
-                jobid = data.job?.'@id'?.text()?:null
+                if(request.api_version >= ApiVersions.V31){
+                    if(data.job?.size()>0){
+                        data.job?.each{ job ->
+                            jobIds << job?.'@id'?.text()
+
+                        }
+                    }
+                }else{
+                    jobid = data.job?.'@id'?.text()?:null
+                    if(jobid){
+                        jobIds << jobid
+                    }
+                }
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID && !serverAll&& !jobid) {
+        if (!serverUUID && !serverAll && !jobIds) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobid)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobIds?:null)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
@@ -4377,6 +4431,11 @@ class ScheduledExecutionController  extends ControllerBase{
                         }
                         if(jobid){
                             delegate.'job'(id:jobid)
+                        }
+                        if(jobIds){
+                            jobIds.each { jid ->
+                                delegate.'job'(id:jid)
+                            }
                         }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {

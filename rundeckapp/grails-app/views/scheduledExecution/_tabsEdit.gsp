@@ -19,7 +19,7 @@
 <div class="vue-tabs">
     <div class="nav-tabs-navigation">
         <div class="nav-tabs-wrapper">
-            <ul class="nav nav-tabs" id="job_edit_tabs">
+            <ul class="nav nav-tabs" id="job_edit_tabs" data-ko-bind="jobeditor">
                 <li class="active">
                     <a href="#tab_details" data-toggle="tab">
                         <g:message code="job.edit.page.tab.details.title"/>
@@ -28,6 +28,9 @@
                 <li>
                     <a href="#tab_workflow" data-toggle="tab">
                         <g:message code="job.edit.page.tab.workflow.title"/>
+                        <!-- ko if: inPageError() -->
+                        <b class="text-warning fas fa-exclamation-circle"></b>
+                        <!-- /ko -->
                     </a>
                 </li>
                 <li>
@@ -45,6 +48,18 @@
                         <g:message code="job.edit.page.tab.notifications.title"/>
                     </a>
                 </li>
+                <feature:enabled name="job-plugin">
+                    <g:if test="${jobPlugins}">
+                        <li>
+                            <a href="#tab_plugins" data-toggle="tab">
+                                <g:message code="job.edit.page.tab.plugins.title" default="Plugins"/>
+                                <!-- ko if: pluginsError() -->
+                                <b class="text-warning fas fa-exclamation-circle"></b>
+                                <!-- /ko -->
+                            </a>
+                        </li>
+                    </g:if>
+                </feature:enabled>
                 <li>
                     <a href="#tab_other" data-toggle="tab">
                         <g:message code="job.edit.page.tab.other.title"/>

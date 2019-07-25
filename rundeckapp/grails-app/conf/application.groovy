@@ -33,6 +33,7 @@ environments {
     }
     test {
         grails.profiler.disable=true
+        rundeck.feature.'job-plugin'.enabled = true
         dataSource {
             dbCreate = "create-drop"
             url = "jdbc:h2:file:./db/testDb"

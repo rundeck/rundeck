@@ -16,10 +16,13 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.google.gson.Gson
 import groovy.json.JsonOutput
 import org.quartz.Calendar
@@ -27,7 +30,7 @@ import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 
-class ScheduledExecution extends ExecutionContext {
+class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
     static final String RUNBOOK_MARKER='---'
     Long id
     SortedSet<Option> options
@@ -91,11 +94,14 @@ class ScheduledExecution extends ExecutionContext {
     String defaultTab
 
     String maxMultipleExecutions
+    String pluginConfig
 
-    static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
+    static transients = ['userRoles', 'adhocExecutionType', 'notifySuccessRecipients', 'notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl',
-                         'notifyRetryableFailureRecipients','notifyRetryableFailureUrl','notifyFailureAttach','notifySuccessAttach','notifyRetryableFailureAttach']
+                         'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
+                         'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
+                         'notifySuccessAttach', 'notifyRetryableFailureAttach',
+                         'pluginConfigMap','jobPluginConfigSet']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -172,6 +178,7 @@ class ScheduledExecution extends ExecutionContext {
         notifyAvgDurationThreshold(nullable: true)
         defaultTab(maxSize: 256, blank: true, nullable: true)
         maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
+        pluginConfig(nullable: true)
     }
 
     static mapping = {
@@ -203,6 +210,7 @@ class ScheduledExecution extends ExecutionContext {
         retryDelay(type: 'text')
         notifyAvgDurationThreshold(type: 'text')
         serverNodeUUID(type: 'string')
+        pluginConfig(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
             index 'JOB_IDX_PROJECT', ['project']
@@ -234,6 +242,21 @@ class ScheduledExecution extends ExecutionContext {
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
     String toString() { generateFullName()+" - $description" }
+
+    Map getPluginConfigMap() {
+        pluginConfig ? asJsonMap(pluginConfig) : [:]
+    }
+
+
+    void setPluginConfigMap(Map config) {
+        pluginConfig = config ? serializeJsonMap(config) : null
+    }
+
+    void setPluginConfigVal(String key, Object val) {
+        Map map = pluginConfigMap
+        map[key] = val
+        setPluginConfigMap(map)
+    }
 
     Map refreshOptions(){
 
@@ -377,6 +400,10 @@ class ScheduledExecution extends ExecutionContext {
 
             map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
+        def config = pluginConfigMap
+        if (config) {
+            map.plugins = config
+        }
         return map
     }
     static ScheduledExecution fromMap(Map data){
@@ -464,7 +491,7 @@ class ScheduledExecution extends ExecutionContext {
                     se.year = '*'
                 }
                 if(data.schedule.dayofmonth && data.schedule.dayofmonth instanceof Map
-                        && null !=data.schedule.dayofmonth.day){
+                        && null !=data.schedule.dayofmonth.day && '?' !=data.schedule.dayofmonth.day){
                     se.dayOfMonth = data.schedule.dayofmonth.day
                     se.dayOfWeek = '?'
                 }else if(data.schedule.weekday && data.schedule.weekday instanceof Map
@@ -567,6 +594,9 @@ class ScheduledExecution extends ExecutionContext {
                 se.notifyAvgDurationThreshold = data.notifyAvgDurationThreshold
             }
 
+        }
+        if (data.plugins instanceof Map) {
+            se.pluginConfigMap = data.plugins
         }
         return se
     }

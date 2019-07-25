@@ -219,7 +219,7 @@
       <section id="workflowContent" class="section-separator section-space-lg" >
           <div class="form-group">
               <div class="${labelColSize}  control-label text-form-label"><g:message code="Workflow.label" /></div>
-              <div class="${fieldColSize}">
+              <div class="${fieldColSize}" style="padding-top:1em;">
                   <g:set var="editwf" value="${session.editWF && session.editWF[scheduledExecution.id.toString()]?session.editWF[scheduledExecution.id.toString()]:scheduledExecution.workflow}"/>
                   <g:render template="/execution/execDetailsWorkflow" model="${[workflow:editwf,context:scheduledExecution,edit:true,error:scheduledExecution?.errors?.hasFieldErrors('workflow'),project:scheduledExecution?.project?:(params.project ?: request.project)?: projects?.size() == 1 ? projects[0].name :'',
                                                                                 strategyPlugins:strategyPlugins]}"/>
@@ -788,7 +788,54 @@
       </g:if>
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
+<feature:enabled name="job-plugin">
+    <g:if test="${jobPlugins}">
+        <g:set var="jobPluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('JobPlugin')?:[:]}"/>
+        <div class="tab-pane" id="tab_plugins">
+            <div class="list-group">
+                <g:each in="${jobPlugins}" var="plugin">
+                    <g:set var="pluginKey" value="${params.jobPlugin?.type?.get(pluginType)?:g.rkey()}"/>
+                    <g:set var="pluginType" value="${plugin.key}"/>
+                    <g:hiddenField name="jobPlugins.keys" value="${pluginKey}"/>
+                    <g:hiddenField name="jobPlugins.type.${pluginKey}" value="${pluginType}"/>
+                    <g:set var="pluginDescription" value="${plugin.value.description}"/>
+                    <g:set var="pluginConfig" value="${params.jobPlugin?.get(pluginKey)?.configMap ?: jobPluginConfigMap[pluginType]}"/>
+                    <g:if test="${pluginDescription?.properties}">
+                        <div class="list-group-item">
+                            <g:if test="${pluginDescription}">
 
+                                <g:render template="/framework/renderPluginDesc" model="${[
+                                        serviceName    : 'JobPlugin',
+                                        description    : pluginDescription,
+                                        showPluginIcon : true,
+                                        showNodeIcon   : false,
+                                        hideTitle      : false,
+                                        hideDescription: false,
+                                        fullDescription: true
+                                ]}"/>
+
+                                <g:if test="${pluginDescription?.properties}">
+                                    <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
+                                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                            service:'JobPlugin',
+                                            provider:pluginDescription.name,
+                                            properties:pluginDescription?.properties,
+                                            report: params.jobPluginValidation?.get(pluginType),
+                                            prefix:prefix,
+                                            values:pluginConfig?:[:],
+                                            fieldnamePrefix:prefix,
+                                            origfieldnamePrefix:'orig.' + prefix,
+                                            allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                                    ]}"/>
+                                </g:if>
+                            </g:if>
+                        </div>
+                    </g:if>
+                </g:each>
+            </div>
+        </div>
+    </g:if>
+</feature:enabled>
 
   %{--Log level--}%
   <div class="tab-pane" id="tab_other">
@@ -1048,25 +1095,26 @@ function getCurSEID(){
          *
          */
          function validateJobEditForm(form){
-             var wfitem=$(form).down('div.wfitemEditForm');
-             if(wfitem && !wascancelled){
-                 doyft(wfitem.identify());
-                 $(wfitem).scrollTo();
-                 if ($(wfitem).down("span.cancelsavemsg")) {
-                     $(wfitem).down("span.cancelsavemsg").show();
+             var wfitem=jQuery(form).find('div.wfitemEditForm');
+             let valid=true
+             if(wfitem.length && !wascancelled){
+                 jobeditor.addError('workflow');
+                 wfitem.addClass('alert-warning')
+                 if (wfitem.find("span.cancelsavemsg").length) {
+                     wfitem.find("span.cancelsavemsg").show();
                  }
-                 return false;
+                 valid= false;
              }
-            var optedit= $(form).down('div.optEditForm');
-            if (optedit && !wascancelled) {
-                doyft(optedit.identify());
-                $(optedit).scrollTo();
-                if($(optedit).down("span.cancelsavemsg")){
-                    $(optedit).down("span.cancelsavemsg").show();
+            var optedit= jQuery(form).find('div.optEditForm');
+            if (optedit.length && !wascancelled) {
+                jobeditor.addError('option');
+                optedit.addClass('alert-warning')
+                if(optedit.find("span.cancelsavemsg").length){
+                    optedit.find("span.cancelsavemsg").show();
                 }
-                return false;
+                valid= false;
             }
-             return true;
+             return valid;
          }
         function _updateBoxInfo(name, data) {
 
@@ -1178,7 +1226,12 @@ function getCurSEID(){
             })
             ;
             const jobDef = loadJsonData('jobDefinitionJSON')
-            window.jobeditor = new JobEditor(jobDef)
+            var jobeditor = new JobEditor(jobDef)
+            window.jobeditor = jobeditor
+            window._jobeditor = jobeditor
+<g:if test="${params.jobPluginValidation}">
+            jobeditor.addError('plugins');
+</g:if>
             initKoBind(null,{jobeditor:jobeditor})
         }
 

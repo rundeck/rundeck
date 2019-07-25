@@ -1871,6 +1871,52 @@ void testDecodeBasic__no_group(){
         assertEquals("*",jobs[0].year)
 
     }
+    /**
+     * Test  weekday
+     */
+    void testDecodeScheduledWeekday(){
+        def jobs = JobsXMLCodec.decode("""<joblist>
+  <job>
+    <id>5</id>
+    <name>wait1</name>
+    <description>a simple desc</description>
+    <loglevel>INFO</loglevel>
+    <group>some/group</group>
+    <context>
+      <project>test1</project>
+      <options>
+        <option name='delay' value='60' />
+      </options>
+    </context>
+    <sequence><command><exec>test</exec></command></sequence>
+    <dispatch>
+      <threadcount>1</threadcount>
+      <keepgoing>false</keepgoing>
+    </dispatch>
+    <schedule >
+      <time hour='*/4' minute='21' seconds='0' />
+      <day day='?' />
+      <weekday day='2-4' />
+      <month month='*/6' />
+      <year year=""/>
+    </schedule>
+  </job>
+</joblist>
+""")
+        assertNotNull jobs
+        assertEquals "incorrect size", 1, jobs.size()
+
+        assertEquals "incorrect scheduled", "true", jobs[0].scheduled.toString()
+        assertNull "incorrect scheduled", jobs[0].crontabString
+        assertEquals("*/4",jobs[0].hour)
+        assertEquals("21",jobs[0].minute)
+        assertEquals("0",jobs[0].seconds)
+        assertEquals("2-4",jobs[0].dayOfWeek)
+        assertEquals("?",jobs[0].dayOfMonth)
+        assertEquals("*/6",jobs[0].month)
+        assertEquals("*",jobs[0].year)
+
+    }
 
 
 

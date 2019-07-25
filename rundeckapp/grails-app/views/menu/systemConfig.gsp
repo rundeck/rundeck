@@ -65,8 +65,12 @@
 
             <h4>Datasource</h4>
             <div class="text-primary"><g:enc>${System.properties['rundeck.config.location']}</g:enc>:</div>
-            <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.url']]"/>
-
+            <g:if test="${flatConfig.dataSource.jndiName}">
+                <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.jndiName']]"/>
+            </g:if>
+            <g:else>
+                <g:render template="displayConfigProps" model="[map: flatConfig, keys: ['dataSource.url']]"/>
+            </g:else>
             <hr>
 
             <h4>Plugins</h4>

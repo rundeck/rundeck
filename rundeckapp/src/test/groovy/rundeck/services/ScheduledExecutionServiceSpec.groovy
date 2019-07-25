@@ -82,6 +82,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
+        service.jobPluginService = Mock(JobPluginService)
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -1174,6 +1175,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.jobPluginService = Mock(JobPluginService)
         uuid
     }
 
@@ -1218,6 +1220,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             }
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.jobPluginService = Mock(JobPluginService)
         uuid
     }
 
@@ -1792,7 +1795,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-
+        service.jobPluginService = Mock(JobPluginService)
 
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
@@ -1812,7 +1815,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                                             ]
         )
         when:
-        def results = service._doupdateJob(se.id, params, null)
+        def results = service._doupdateJob(se.id, params, mockAuth())
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -2045,6 +2048,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
+        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
+        1 * service.jobPluginService.beforeJobSave(_,_)
+        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2089,6 +2095,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
         0 * service.frameworkService.validateDescription(*_)
+        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
+        1 * service.jobPluginService.beforeJobSave(_,_)
+        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())

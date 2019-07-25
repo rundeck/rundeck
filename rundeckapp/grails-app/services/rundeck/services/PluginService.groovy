@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -220,8 +221,8 @@ class PluginService {
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
     def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, String projectName,
-                                                Framework framework,
-                              PluggableProviderService<T> service) {
+                                                IFramework framework,
+                                                PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
         if (!validation) {
             logValidationErrors(service.name, name, Validator.errorReport('provider', 'Not found: ' + name))
@@ -247,7 +248,7 @@ class PluginService {
      */
     def <T> ConfiguredPlugin<T> configurePlugin(
             String name, Map configuration, String projectName,
-            Framework framework,
+            IFramework framework,
             Class<T> type
     )
     {
@@ -384,6 +385,30 @@ class PluginService {
      */
     def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config) {
         return rundeckPluginRegistry?.validatePluginByName(name, createPluggableService(clazz), config)
+    }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param clazz service class type
+     * @param resolver project resolver
+     * @param defaultScope default scope
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(
+            String name,
+            Class clazz,
+            String project,
+            Map config
+    ) {
+        def service = createPluggableService(clazz)
+        return rundeckPluginRegistry?.validatePluginByName(
+                name,
+                service,
+                frameworkService.rundeckFramework,
+                project,
+                config
+        )
     }
 
     def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {

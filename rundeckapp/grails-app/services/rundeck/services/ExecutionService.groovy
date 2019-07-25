@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -46,6 +47,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -58,6 +60,7 @@ import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
+import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
@@ -90,7 +93,6 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -125,6 +127,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    JobPluginService jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1162,13 +1165,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             );
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+
+
+            def jobPluginConfigs = scheduledExecution ?
+                                   jobPluginService.getJobPluginConfigSetForJob(scheduledExecution) :
+                                   null
+            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
                     item,
                     executioncontext,
-                    workflowLogManager
+                    workflowLogManager,
+                    jobPluginExecHandler
             )
+
             thread.start()
             log.debug("started thread")
             return [
@@ -2268,7 +2279,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext)
+        HashMap optparams = validateJobInputOptions(props, se, authContext, null)
+        def result = checkBeforeJobExecution(se, optparams, props)
+        if(result?.useNewValues()){
+            //if new parameters are needed, a new validation is required
+            optparams = validateJobInputOptions(props, se, authContext, result.getOptionsValues())
+        }
+
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
@@ -2415,10 +2432,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param props
      * @param scheduledExec
      * @param authContext auth for reading storage defaults
+     * @param optionValues values modified by a job plugin
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
-        HashMap optparams = parseJobOptionInput(props, scheduledExec)
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map optionValues) {
+        HashMap optparams
+        if(!optionValues){
+            optparams = parseJobOptionInput(props, scheduledExec)
+        }else{
+            optparams = optionValues
+        }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
     }
@@ -2627,7 +2650,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if(opt.enforced && !opt.optionValues){
                         Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
                         if(!remoteOptions.err && remoteOptions.values){
-                            opt.optionValues = remoteOptions.values
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
                         }
                     }
                     if (opt.enforced && opt.optionValues && optparams[opt.name]) {
@@ -2655,7 +2684,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if(opt.enforced && !opt.optionValues){
                         Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
                         if(!remoteOptions.err && remoteOptions.values){
-                            opt.optionValues = remoteOptions.values
+                            opt.optionValues = remoteOptions.values.collect {optValue ->
+                                if(optValue instanceof JSONObject){
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
+                            }
                         }
                     }
                     if (opt.enforced && opt.optionValues &&
@@ -2866,7 +2901,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (scheduledExecution.scheduled) {
                     scheduledExecution.nextExecution = scheduledExecutionService.nextExecutionTime(scheduledExecution)
-                    scheduledExecution.serverNodeUUID = scheduledExecutionService.nextExecNode(scheduledExecution)
                     if (scheduledExecution.save(flush: true)) {
                         log.info("updated scheduled Execution nextExecution")
                     } else {
@@ -3569,22 +3603,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def timeoutms = 1000 * timeout
             def shouldCheckTimeout = timeoutms > 0
+
+            def jobPluginConfigs = se ?
+                                   jobPluginService.getJobPluginConfigSetForJob(se) :
+                                   null
+            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, exec.asReference())
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
                     newContext,
-                    null
+                    null,
+                    jobPluginExecHandler
             )
 
             thread.start()
             boolean never = true
             def interrupt = false
 
-            ScheduledExecution.withTransaction {
-                // Get a new object attached to the new session
-                def scheduledExecution = ScheduledExecution.get(id)
-                notificationService.triggerJobNotification('start', scheduledExecution,
-                    [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+            if(!jitem.ignoreNotifications) {
+                ScheduledExecution.withTransaction {
+                    // Get a new object attached to the new session
+                    def scheduledExecution = ScheduledExecution.get(id)
+                    notificationService.triggerJobNotification('start', scheduledExecution,
+                            [execution: exec, context: newContext, jobref: jitem.jobIdentifier])
+                }
+
             }
 
             int killcount = 0
@@ -3623,8 +3666,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def duration = System.currentTimeMillis() - startTime
-
-        if (averageDuration > 0 && duration > averageDuration) {
+        if ((!jitem.ignoreNotifications) && (averageDuration > 0) && (duration > averageDuration)) {
             avgDurationExceeded(id, [
                     execution: exec,
                     context  : newContext,
@@ -3664,18 +3706,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             }
 
-            // Get a new object attached to the new session
-            def scheduledExecution = ScheduledExecution.get(id)
-            notificationService.triggerJobNotification(
-                    wresult?.result.success ? 'success' : 'failure',
-                    scheduledExecution,
-                    [
-                            execution : execution,
-                            nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
-                            context   : newContext,
-                            jobref    : jitem.jobIdentifier
-                    ]
-            )
+            if(!jitem.ignoreNotifications) {
+                // Get a new object attached to the new session
+                def scheduledExecution = ScheduledExecution.get(id)
+                notificationService.triggerJobNotification(
+                        wresult?.result.success ? 'success' : 'failure',
+                        scheduledExecution,
+                        [
+                                execution : execution,
+                                nodestatus: [succeeded: sucCount, failed: failedCount, total: newContext.getNodes().getNodeNames().size()],
+                                context   : newContext,
+                                jobref    : jitem.jobIdentifier
+                        ]
+                )
+            }
 
             result.sourceResult = wresult.result
 
@@ -3914,5 +3958,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         list = list + fwPlugins
 
         return list
+    }
+
+    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props){
+        INodeSet nodeSet = frameworkService?.filterNodeSet(filtersAsNodeSet(scheduledExecution), props.project)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodeSet)
+        try{
+            return jobPluginService.beforeJobExecution(scheduledExecution, event)
+        }catch(JobPluginException jpe){
+            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+        }
     }
 }

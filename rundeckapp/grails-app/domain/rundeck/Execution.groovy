@@ -416,7 +416,7 @@ class Execution extends ExecutionContext {
         if (scheduledExecution) {
             jobRef = new JobReferenceImpl(
                     id: scheduledExecution.extid,
-                    scheduledExecutionName: scheduledExecution.jobName,
+                    jobName: scheduledExecution.jobName,
                     groupPath: scheduledExecution.groupPath,
                     project: scheduledExecution.project
             )

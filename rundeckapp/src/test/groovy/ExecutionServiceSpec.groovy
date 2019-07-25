@@ -43,6 +43,7 @@ import grails.testing.services.ServiceUnitTest
 import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
+import org.grails.web.json.JSONObject
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -60,6 +61,10 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     Class[] getDomainClassesToMock() {
         [Execution, User, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest, ReferencedExecution, ScheduledExecutionStats]
+    }
+
+    def setup(){
+        service.jobPluginService = Mock(JobPluginService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -1489,7 +1494,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
-    def "validate option values, opt enforced allowed values from Remote Url"() {
+    def "invalid option values, opt enforced allowed values from Remote Url"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
         Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
@@ -1509,12 +1514,44 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             ]
         }
 
+
         ExecutionServiceValidationException e = thrown()
         e.errors.containsKey('test1')
 
+
         where:
-        opts                                           | _
-        ['test1': 'somevalue']                         | _
+        opts                                           | remoteValues
+        ['test1': 'somevalue']                         | ["A", "B", "C"]
+        ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+
+    }
+
+    def "valid option values, opt enforced allowed values from Remote Url"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : ["A", "B", "C"],
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+
+        noExceptionThrown()
+
+
+        where:
+        opts                                           | remoteValues
+        ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
 
     }
 
@@ -2751,6 +2788,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -2859,6 +2897,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -2971,6 +3010,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -3083,6 +3123,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 failOnDisable,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -3322,6 +3363,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
                 )
 
@@ -3432,6 +3474,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -3944,6 +3987,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -4053,6 +4097,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 null,
                 false,
                 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                false,
                 false
         )
 
@@ -4311,6 +4356,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 false,
                 false,
                 null,
+                false,
                 false
         )
 
@@ -4490,5 +4536,116 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         e2 != null
         e2.filter == "name: SelectedNode"
         e2.filterExclude == null
+    }
+
+    def "skip notification property on job ref"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> Mock(Framework)
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'args2'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                true
+        )
+
+
+        service.notificationService = Mock(NotificationService)
+        def dispatcherResult = Mock(DispatcherResult)
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>success
+        }
+
+
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult]
+            }
+        }
+
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        0 * service.notificationService.triggerJobNotification('start', _, _)
+        0 * service.notificationService.triggerJobNotification(trigger, _, _)
+        where:
+        success      | trigger
+        true         | 'success'
+        false        | 'failure'
     }
 }
