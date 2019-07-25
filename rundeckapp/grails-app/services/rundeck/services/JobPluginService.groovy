@@ -46,9 +46,10 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     def featureService
     public static final String CONF_PROJECT_ENABLE_JOB = 'project.enable.jobPlugin.'
 
-    LinkedHashMap<String, String> configPropertiesMapping
-    LinkedHashMap<String, String> configProperties
+    Map<String, String> configPropertiesMapping
+    Map<String, String> configProperties
     List<Property> projectConfigProperties
+
 
     enum EventType{
         PRE_EXECUTION("preExecution"),BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun'),
@@ -67,9 +68,9 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * It loads the plugin properties to be shown under the project configuration
      */
     def loadProperties(){
-        List<Property> projectConfigProperties = new ArrayList<Property>()
-        LinkedHashMap<String, String> configPropertiesMapping = []
-        LinkedHashMap<String, String> configProperties = []
+        List<Property> projectConfigProperties = []
+        Map<String, String> configPropertiesMapping = [:]
+        Map<String, String> configProperties = [:]
         listJobPlugins().each { String name, DescribedPlugin describedPlugin ->
             projectConfigProperties.add(
                     PropertyBuilder.builder().with {
