@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -220,8 +221,8 @@ class PluginService {
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
     def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, String projectName,
-                                                Framework framework,
-                              PluggableProviderService<T> service) {
+                                                IFramework framework,
+                                                PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
         if (!validation) {
             logValidationErrors(service.name, name, Validator.errorReport('provider', 'Not found: ' + name))
@@ -247,7 +248,7 @@ class PluginService {
      */
     def <T> ConfiguredPlugin<T> configurePlugin(
             String name, Map configuration, String projectName,
-            Framework framework,
+            IFramework framework,
             Class<T> type
     )
     {
