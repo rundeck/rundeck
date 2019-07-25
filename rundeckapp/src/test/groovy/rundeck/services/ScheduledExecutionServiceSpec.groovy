@@ -2049,6 +2049,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ]
         0 * service.frameworkService.validateDescription(*_)
         1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
+        1 * service.jobPluginService.beforeJobSave(_,_)
         1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
@@ -2095,6 +2096,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ]
         0 * service.frameworkService.validateDescription(*_)
         1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
+        1 * service.jobPluginService.beforeJobSave(_,_)
         1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
