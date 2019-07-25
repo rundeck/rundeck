@@ -180,10 +180,11 @@ class ScheduledExecutionServiceSpec extends Specification {
             getServerUUID() >> 'uuid'
             isClusterModeEnabled() >> clusterEnabled
         }
-        service.rundeckJobScheduleManager=Mock(JobScheduleManager){
+        service.jobSchedulerService=Mock(JobSchedulerService){
             determineExecNode(*_)>>{args->
                 return serverNodeUUID
             }
+            scheduleRemoteJob(_)>>false
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -2685,7 +2686,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         def scheduleDate = new Date()
 
         when:
-        def result = service.scheduleJob(job, null, null)
+        def result = service.scheduleJob(job, null, null, true)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -3279,5 +3280,73 @@ class ScheduledExecutionServiceSpec extends Specification {
         false           | true              | 'dev'
         true            | null              | 'qa'
         null            | null              |' user'
+    }
+
+
+    @Unroll
+    def "cluster, should not scheduleJob because the remote policy"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
+        def serverNodeUUID = "uuid"
+        def clusterEnabled = true
+
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
+            getServerUUID() >> serverNodeUUID
+            isClusterModeEnabled() >> clusterEnabled
+        }
+        service.jobSchedulerService=Mock(JobSchedulerService){
+            determineExecNode(*_)>>{args->
+                return serverNodeUUID
+            }
+            scheduleRemoteJob(_)>>true
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        0 * service.quartzScheduler.scheduleJob(_, _)
+        result == [null, null]
+    }
+
+    @Unroll
+    def "do update job on cluster must not call quartz scheduleJob"(){
+        given:
+        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
+        def uuid = setupDoUpdate(true,serverUUID)
+
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid, scheduled: false])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+
+        def inparams = [jobName: 'newName', scheduled: true]
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.serverNodeUUID == jobOwnerUuid
+        1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> false
+        0 * service.quartzScheduler.scheduleJob(_,_,_)
+
+
     }
 }
