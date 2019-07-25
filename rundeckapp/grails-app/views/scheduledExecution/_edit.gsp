@@ -803,27 +803,16 @@
                     <g:if test="${pluginDescription?.properties}">
                         <div class="list-group-item">
                             <g:if test="${pluginDescription}">
-                                <stepplugin:pluginIcon service="JobPlugin"
-                                                       name="${pluginDescription.name}"
-                                                       width="16px"
-                                                       height="16px">
-                                    <i class="rdicon icon-small plugin"></i>
-                                </stepplugin:pluginIcon>
-                                <stepplugin:message
-                                        service="JobPlugin"
-                                        name="${pluginDescription.name}"
-                                        code="plugin.title"
-                                        default="${pluginDescription.title ?: pluginDescription.name}"/>
-                                <span class="text-primary"><g:render template="/scheduledExecution/description"
-                                                                     model="[description:
-                                                                                     stepplugin.messageText(
-                                                                                             service: 'JobPlugin',
-                                                                                             name: pluginDescription.name,
-                                                                                             code: 'plugin.description',
-                                                                                             default: pluginDescription.description
-                                                                                     ),
-                                                                             textCss    : '',
-                                                                             mode       : 'hidden', rkey: g.rkey()]"/></span>
+
+                                <g:render template="/framework/renderPluginDesc" model="${[
+                                        serviceName    : 'JobPlugin',
+                                        description    : pluginDescription,
+                                        showPluginIcon : true,
+                                        showNodeIcon   : false,
+                                        hideTitle      : false,
+                                        hideDescription: false,
+                                        fullDescription: true
+                                ]}"/>
 
                                 <g:if test="${pluginDescription?.properties}">
                                     <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
