@@ -74,7 +74,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             projectConfigProperties.add(
                     PropertyBuilder.builder().with {
                         booleanType 'jobPlugin' + name
-                        title 'Enable ' + name
+                        title('Enable ' + (describedPlugin.description?.title ?: name))
                         required(false)
                         defaultValue null
                         renderingOption('booleanTrueDisplayValueClass', 'text-warning')
