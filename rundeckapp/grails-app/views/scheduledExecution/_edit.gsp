@@ -803,6 +803,9 @@
                     <g:if test="${pluginDescription?.properties}">
                         <div class="list-group-item">
                             <g:if test="${pluginDescription}">
+                                <div class="checkbox-inline">
+                                    <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true" checked="${pluginConfig!=null}"/>
+                                </div>
 
                                 <g:render template="/framework/renderPluginDesc" model="${[
                                         serviceName    : 'JobPlugin',

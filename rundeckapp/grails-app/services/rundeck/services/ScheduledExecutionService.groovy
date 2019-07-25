@@ -2841,6 +2841,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         List<PluginProviderConfiguration> configs = []
 
         keys.each { key ->
+            def enabled = jobPluginParams.enabled[key]
+            if (enabled != 'true') {
+                return
+            }
             def pluginType = jobPluginParams.type[key]
             Map config = jobPluginParams[key]?.configMap ?: [:]
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
