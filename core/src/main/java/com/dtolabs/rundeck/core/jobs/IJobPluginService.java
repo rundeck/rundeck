@@ -1,11 +1,16 @@
 package com.dtolabs.rundeck.core.jobs;
 
-import com.dtolabs.rundeck.core.execution.JobPluginException;
+import com.dtolabs.rundeck.core.execution.ExecutionReference;
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet;
 
 public interface IJobPluginService {
-
-    JobEventStatus beforeJobStarts(JobExecutionEvent event) throws JobPluginException;
-
-    JobEventStatus afterJobEnds(JobExecutionEvent event) throws JobPluginException;
-
+    /**
+     * Creates a handler with configured plugins for the execution reference, may return null if no plugins are configured,
+     * or job plugins are disabled
+     *
+     * @param configurations     configurations
+     * @param executionReference reference
+     * @return handler to process events for the execution, or null
+     */
+    JobPluginExecutionHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference);
 }

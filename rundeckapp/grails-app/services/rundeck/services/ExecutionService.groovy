@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
@@ -71,7 +70,6 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
 import org.springframework.dao.DuplicateKeyException
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
@@ -129,7 +127,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    def jobPluginService
+    JobPluginService jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1161,14 +1159,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             );
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+
+
+            def jobPluginConfigs = scheduledExecution ?
+                                   jobPluginService.getJobPluginConfigSetForJob(scheduledExecution) :
+                                   null
+            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
                     item,
                     executioncontext,
                     workflowLogManager,
-                    jobPluginService,
-                    execution.asReference()
+                    jobPluginExecHandler
             )
 
             thread.start()
@@ -3594,13 +3597,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def timeoutms = 1000 * timeout
             def shouldCheckTimeout = timeoutms > 0
+
+            def jobPluginConfigs = se ?
+                                   jobPluginService.getJobPluginConfigSetForJob(se) :
+                                   null
+            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, exec.asReference())
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
                     newContext,
                     null,
-                    jobPluginService,
-                    exec.asReference()
+                    jobPluginExecHandler
             )
 
             thread.start()
@@ -3947,11 +3954,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
-    def checkBeforeJobExecution(scheduledExecution, optparams, props){
-        INodeSet nodeSet = frameworkService?.filterNodeSet(ExecutionService.filtersAsNodeSet(scheduledExecution), props.project)
+    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props){
+        INodeSet nodeSet = frameworkService?.filterNodeSet(filtersAsNodeSet(scheduledExecution), props.project)
         JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodeSet)
         try{
-            return jobPluginService.beforeJobExecution(event)
+            return jobPluginService.beforeJobExecution(scheduledExecution, event)
         }catch(JobPluginException jpe){
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }

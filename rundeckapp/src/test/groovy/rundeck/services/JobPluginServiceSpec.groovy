@@ -22,6 +22,7 @@ import rundeck.User
 import rundeck.Workflow
 import rundeck.services.feature.FeatureService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 @TestFor(JobPluginService)
 @Mock([Execution, ScheduledExecution, Workflow, CommandExec, User, ScheduledExecutionStats])
@@ -65,59 +66,81 @@ class JobPluginServiceSpec extends Specification {
         }
     }
 
-    def "custom plugin successful answer"() {
+    @Unroll
+    def "custom plugin successful answer via plugin list"() {
         given:
-        service.jobPluginProviderService = jobPluginProviderService
-        service.frameworkService = frameworkService
-        service.featureService = featureService
-        def plugin = Mock(JobPluginImpl){
-            beforeJobStarts(_) >> Mock(JobEventStatus){
-                isSuccessful() >> true
+            service.jobPluginProviderService = jobPluginProviderService
+            service.frameworkService = frameworkService
+            service.featureService = featureService
+            def plugin = Mock(JobPluginImpl) {
+                beforeJobStarts(_) >> Mock(JobEventStatus) {
+                    isSuccessful() >> true
+                }
+                afterJobEnds(_) >> Mock(JobEventStatus) {
+                    isSuccessful() >> true
+                }
             }
-        }
-        def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
-        service.pluginService = Mock(PluginService){
-            listPlugins(_,_) >> ["TestPlugin":describedPlugin]
-        }
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
+            JobEventStatus result = service.handleEvent(
+                    new JobExecutionEventImpl(executionContext, null),
+                    eventType,
+                    [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
+            )
         then:
-        result.isSuccessful()
+            result.isSuccessful()
+        where:
+            eventType                             | _
+            JobPluginService.EventType.BEFORE_RUN | _
+            JobPluginService.EventType.AFTER_RUN  | _
     }
 
-    def "custom plugin exception thrown for returning false"() {
+    @Unroll
+    def "custom plugin unsuccessful answer via plugin list event #eventType"() {
         given:
-        service.jobPluginProviderService = jobPluginProviderService
-        service.frameworkService = frameworkService
-        service.featureService = featureService
-        def plugin = Mock(JobPluginImpl){
-            beforeJobStarts(_) >> Mock(JobEventStatus){
-                isSuccessful() >> false
+            service.jobPluginProviderService = jobPluginProviderService
+            service.frameworkService = frameworkService
+            service.featureService = featureService
+            def plugin = Mock(JobPluginImpl) {
+                beforeJobStarts(_) >> Mock(JobEventStatus) {
+                    isSuccessful() >> false
+                }
+                afterJobEnds(_) >> Mock(JobEventStatus) {
+                    isSuccessful() >> false
+                }
             }
-        }
-        def describedPlugin = new DescribedPlugin(plugin, null, 'TestPlugin')
-        service.pluginService = Mock(PluginService){
-            listPlugins(JobPlugin, jobPluginProviderService) >> ["TestPlugin":describedPlugin]
-        }
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
+            JobEventStatus result = service.handleEvent(
+                    new JobExecutionEventImpl(executionContext, null),
+                    eventType,
+                    [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
+            )
         then:
-        thrown(JobPluginException)
+            thrown(JobPluginException)
+        where:
+            eventType                             | _
+            JobPluginService.EventType.BEFORE_RUN | _
+            JobPluginService.EventType.AFTER_RUN  | _
     }
 
-    def "custom plugin exception thrown from the plugin"() {
+    @Unroll
+    def "custom plugin exception thrown via plugin list event #eventType"() {
         given:
-        service.jobPluginProviderService = jobPluginProviderService
-        service.frameworkService = frameworkService
-        service.featureService = featureService
-        def describedPlugin = new DescribedPlugin(new JobPluginImpl(), null, 'TestPlugin')
-        service.pluginService = Mock(PluginService){
-            listPlugins(JobPlugin, jobPluginProviderService) >> ["TestPlugin":describedPlugin]
-        }
+            service.jobPluginProviderService = jobPluginProviderService
+            service.frameworkService = frameworkService
+            service.featureService = featureService
+            def plugin = new JobPluginImpl()
         when:
-        JobEventStatus result = service.beforeJobStarts(new JobExecutionEventImpl(executionContext,null))
+            JobEventStatus result = service.handleEvent(
+                    new JobExecutionEventImpl(executionContext, null),
+                    eventType,
+                    [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
+            )
         then:
-        thrown(JobPluginException)
+            thrown(JobPluginException)
+        where:
+            eventType                             | _
+            JobPluginService.EventType.BEFORE_RUN | _
+            JobPluginService.EventType.AFTER_RUN  | _
     }
 
 }

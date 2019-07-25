@@ -4281,7 +4281,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         scheduleMap.project = scheduledExecution.project
         INodeSet nodeSet = frameworkService.filterNodeSet(ExecutionService.filtersAsNodeSet(scheduledExecution), scheduledExecution.project)
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet)
-        def jobEventStatus = jobPluginService?.beforeJobSave(jobPersistEvent)
+        def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
             def result = validateOptions(scheduledExecution, rundeckOptions)
