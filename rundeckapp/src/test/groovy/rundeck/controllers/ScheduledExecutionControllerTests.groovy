@@ -2014,7 +2014,8 @@ class ScheduledExecutionControllerTests  {
             }
 
             sec.jobPluginService = mockWith(JobPluginService){
-                listEnabledJobPlugins{proj,ctrl->[:]}
+                listEnabledJobPlugins{ctrl->[:]}
+                getProjectDefaultJobPluginTypes{proj->[]}
             }
 
             def params = [id: se.id.toString()]
@@ -3386,7 +3387,8 @@ class ScheduledExecutionControllerTests  {
         }
 
         sec.jobPluginService = mockWith(JobPluginService){
-            listEnabledJobPlugins{proj,ctrl->[:]}
+            listEnabledJobPlugins{ctrl->[:]}
+            getProjectDefaultJobPluginTypes{proj->[]}
         }
         def params = [id: se.id.toString()]
         sec.params.putAll(params)

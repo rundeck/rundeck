@@ -26,7 +26,6 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
@@ -39,7 +38,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -2600,7 +2598,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (params.jobPlugins) {
             //validate job plugins
-            def configSet = parseJobPluginsParams(params.jobPlugins)
+
+            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
+            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed
@@ -2836,17 +2836,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param jobPluginParams
      * @return
      */
-    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams) {
+    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams, Collection<String> defaultEnabledList = []) {
         List<String> keys = [jobPluginParams?.keys].flatten().findAll { it }
 
         List<PluginProviderConfiguration> configs = []
 
         keys.each { key ->
             def enabled = jobPluginParams.enabled?.get(key)
-            if (enabled != 'true') {
+            def pluginType = jobPluginParams.type[key]?.toString()
+            if (enabled != 'true' && !defaultEnabledList.contains(pluginType)) {
                 return
             }
-            def pluginType = jobPluginParams.type[key]?.toString()
             Map config = jobPluginParams[key]?.configMap ?: [:]
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
         }
@@ -3879,7 +3879,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (params.jobPlugins) {
             //validate job plugins
-            def configSet = parseJobPluginsParams(params.jobPlugins)
+            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
+            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed

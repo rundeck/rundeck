@@ -656,6 +656,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                             configMap: [b: 'c']
                     ]
             ]
+            service.frameworkService.getFrameworkProject(_)>>Mock(IRundeckProject){
+                getProperties()>>[:]
+            }
         when:
             def results = service._dovalidate(params, Mock(UserAndRoles))
 
@@ -681,6 +684,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                             configMap: [b: 'c']
                     ]
             ]
+            service.frameworkService.getFrameworkProject(_)>>Mock(IRundeckProject){
+                getProperties()>>[:]
+            }
         when:
             def results = service._dovalidate(params, Mock(UserAndRoles))
 

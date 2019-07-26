@@ -385,13 +385,13 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return
      */
     List<NamedJobPlugin> createConfiguredPlugins(PluginConfigSet configurations, String project) {
-        IRundeckProject rundeckProject = frameworkService?.getFrameworkProject(project)
         List<NamedJobPlugin> configured = []
+        def project1 = frameworkService.getFrameworkProject(project)
+        def defaultpluginTypes = new HashSet<String>(getProjectDefaultJobPluginTypes(project1))
+
         configurations?.pluginProviderConfigs?.each { PluginProviderConfiguration pluginConfig ->
             String type = pluginConfig.provider
-            if (!isProjectJobPluginEnabled(rundeckProject, type)) {
-                return
-            }
+            defaultpluginTypes.remove(type)
             def configuredPlugin = pluginService.configurePlugin(
                     type,
                     pluginConfig.configuration,
@@ -400,25 +400,29 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     JobPlugin
             )
             if (!configuredPlugin) {
-                //could not load plugin
+                //TODO: could not load plugin, or config was invalid
                 return
             }
+            configured << new NamedJobPlugin(plugin: (JobPlugin) configuredPlugin.instance, name: type)
+        }
+        defaultpluginTypes.each{type->
+            def configuredPlugin = pluginService.configurePlugin(
+                    type,
+                    [:],
+                    project,
+                    frameworkService.rundeckFramework,
+                    JobPlugin
+            )
+            if (!configuredPlugin) {
+                //TODO: could not load plugin, or config was invalid
+                return
+            }
+
             configured << new NamedJobPlugin(plugin: (JobPlugin) configuredPlugin.instance, name: type)
         }
         configured
     }
 
-    /**
-     *
-     * @param project
-     * @return map of described plugins enabled for the project
-     */
-    Map<String, DescribedPlugin<JobPlugin>> listEnabledJobPlugins(IRundeckProject project) {
-        if (!featureService.featurePresent('job-plugin')) {
-            return null
-        }
-        listEnabledJobPlugins(project, frameworkService.getPluginControlService(project.name))
-    }
 
     /**
      *
@@ -426,15 +430,13 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return map of described plugins enabled for the project
      */
     Map<String, DescribedPlugin<JobPlugin>> listEnabledJobPlugins(
-            IRundeckProject project,
             PluginControlService pluginControlService
     ) {
-        if (!featureService.featurePresent('job-plugin')) {
+        if (!featureService.featurePresent('job-plugin', false)) {
             return null
         }
 
         return pluginService.listPlugins(JobPlugin).findAll { k, v ->
-            isProjectJobPluginEnabled(project, k) &&
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.JobPlugin)
         }
     }
@@ -448,6 +450,19 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     public boolean isProjectJobPluginEnabled(IRundeckProject rundeckProject, String provider) {
         rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + provider) &&
         rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + provider) == "true"
+    }
+    /**
+     *
+     * @param rundeckProject
+     * @param provider JobPlugin provider name
+     * @return true if the job plugin name is enabled for the project
+     */
+    public Set<String> getProjectDefaultJobPluginTypes(IRundeckProject rundeckProject) {
+        rundeckProject.getProjectProperties().findAll {
+            it.key.startsWith(CONF_PROJECT_ENABLE_JOB) && it.value == 'true'
+        }.collect {
+            it.key.substring(CONF_PROJECT_ENABLE_JOB.length())
+        }
     }
 
     /**

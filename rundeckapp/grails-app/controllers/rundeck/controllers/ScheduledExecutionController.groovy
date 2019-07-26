@@ -26,16 +26,12 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -52,9 +48,7 @@ import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.log4j.Logger
-import org.apache.log4j.MDC
 import org.grails.web.json.JSONElement
-import org.grails.web.json.JSONObject
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
@@ -70,7 +64,6 @@ import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
 import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
-import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -1808,10 +1801,8 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
 
-        def jobPlugins = jobPluginService.listEnabledJobPlugins(
-                frameworkService.getFrameworkProject(params.project),
-                pluginControlService
-        )
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
+        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
@@ -1825,6 +1816,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 timeZones           : timeZones,
                 logFilterPlugins    : logFilterPlugins,
                 jobPlugins          : jobPlugins,
+                jobDefaultPlugins   : jobDefaultPlugins,
                 projectNames        : fprojects,
                 globalVars          : globals
         ]
@@ -1890,10 +1882,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 !pluginControlService?.isDisabledPlugin(k, 'Notification')
             }
 
-            def jobPlugins = jobPluginService.listEnabledJobPlugins(
-                    frameworkService.getFrameworkProject(params.project),
-                    pluginControlService
-            )
+            def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
+            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(
@@ -1910,7 +1900,8 @@ class ScheduledExecutionController  extends ControllerBase{
                                           params                : params,
                                           globalVars            : globals,
                                           logFilterPlugins      : logFilterPlugins,
-                                          jobPlugins            : jobPlugins
+                                          jobPlugins            : jobPlugins,
+                                          jobDefaultPlugins     : jobDefaultPlugins,
                    ])
         }else{
 
@@ -1997,10 +1988,8 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
-        def jobPlugins = jobPluginService.listEnabledJobPlugins(
-                frameworkService.getFrameworkProject(params.project),
-                pluginControlService
-        )
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
+        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
@@ -2020,6 +2009,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
                         jobPlugins          : jobPlugins,
+                        jobDefaultPlugins   : jobDefaultPlugins,
                         projectNames        : fprojects,
                         globalVars          : globals
                 ]
@@ -2168,10 +2158,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
-        def jobPlugins = jobPluginService.listEnabledJobPlugins(
-                frameworkService.getFrameworkProject(params.project),
-                pluginControlService
-        )
+        def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
+        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
@@ -2184,6 +2172,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
                 jobPlugins          : jobPlugins,
+                jobDefaultPlugins   : jobDefaultPlugins,
                 projectNames        : fprojects,
                 globalVars          :globals,
                 timeZones           :timeZones]

@@ -808,10 +808,22 @@
                                     <div class="col-sm-12">
                                         <div class="checkbox ">
                                             <g:set var="prkey" value="${rkey()}"/>
-                                            <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
-                                                        class="form-control"
-                                                        id="jobPluginEnabled_${prkey}"
-                                                        checked="${pluginConfig != null}"/>
+                                            <g:if test="${jobDefaultPlugins?.contains(pluginType)}">
+                                                <input type="checkbox"
+                                                       disabled
+                                                       checked
+                                                       title="Enabled by default for this project"
+                                                       name="jobPlugins.enabled.${pluginKey}"
+                                                       value="true"
+                                                       class="form-control disabled"
+                                                       id="jobPluginEnabled_${prkey}"/>
+                                            </g:if>
+                                            <g:else>
+                                                <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
+                                                            class="form-control"
+                                                            id="jobPluginEnabled_${prkey}"
+                                                            checked="${pluginConfig != null}"/>
+                                            </g:else>
                                             <label for="jobPluginEnabled_${prkey}">
                                                 <g:render template="/framework/renderPluginDesc" model="${[
                                                         serviceName    : 'JobPlugin',
