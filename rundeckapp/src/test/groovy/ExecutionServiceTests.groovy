@@ -99,9 +99,7 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
+
             getServerUUID(1..1){
                 null
             }
@@ -143,9 +141,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -170,9 +165,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -214,9 +206,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -258,9 +247,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -296,9 +282,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -335,9 +318,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -407,9 +387,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -450,9 +427,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -485,9 +459,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -524,9 +495,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -563,9 +531,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -609,9 +574,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -654,9 +616,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -681,9 +640,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -710,9 +666,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -739,9 +692,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -767,9 +717,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -805,9 +752,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -2200,9 +2144,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -2241,9 +2182,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
@@ -2294,9 +2232,6 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                null
-            }
             getServerUUID(1..1){
                 null
             }
