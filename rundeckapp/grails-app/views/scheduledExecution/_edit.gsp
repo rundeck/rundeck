@@ -792,6 +792,9 @@
     <g:if test="${jobPlugins}">
         <g:set var="jobPluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('JobPlugin')?:[:]}"/>
         <div class="tab-pane" id="tab_plugins">
+            <div class="help-block">
+                <g:message code="scheduledExecution.property.jobPluginConfig.help.text" />
+            </div>
             <div class="list-group">
                 <g:each in="${jobPlugins}" var="plugin">
                     <g:set var="pluginKey" value="${params.jobPlugin?.type?.get(pluginType)?:g.rkey()}"/>
