@@ -2043,7 +2043,6 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
-        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2088,7 +2087,6 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
         0 * service.frameworkService.validateDescription(*_)
-        1 * service.frameworkService.filterNodeSet(_,_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
