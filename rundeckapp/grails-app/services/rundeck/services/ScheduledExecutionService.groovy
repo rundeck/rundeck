@@ -4271,7 +4271,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     nodeKeepgoing: scheduledExecution.nodeKeepgoing
             ])
             nodeselector=nodeset
-        } else if(frameworkService){
+        } else if(frameworkService != null){
             //blank?
             nodeselector = SelectorUtils.singleNode(frameworkService.frameworkNodeName)
         }else{

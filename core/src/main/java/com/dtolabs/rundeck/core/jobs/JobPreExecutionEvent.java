@@ -1,6 +1,8 @@
 package com.dtolabs.rundeck.core.jobs;
 
 
+import com.dtolabs.rundeck.core.common.INodeSet;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -36,4 +38,10 @@ public interface JobPreExecutionEvent {
      * @return String node filter
      */
     String getNodeFilter();
+
+    /**
+     *
+     * @return INodeSet node set where the job will run
+     */
+    INodeSet getNodes();
 }

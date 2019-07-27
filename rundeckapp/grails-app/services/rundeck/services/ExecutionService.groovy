@@ -1446,8 +1446,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
             def filterExclude = DataContextUtils.replaceDataReferencesInString(execMap.asExcludeFilter(),datacontext)
-            NodeSet nodeset = filtersAsNodeSet([
-                    filter:filter,
+            NodeSet nodeset = filtersAsNodeSet([filter:filter,
                     filterExclude: filterExclude,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
@@ -2423,7 +2422,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
         HashMap optparams
         optparams = parseJobOptionInput(props, scheduledExec)
-        def result = checkBeforeJobExecution(scheduledExec, optparams, props)
+        def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
         if(result?.useNewValues()){
             optparams = result.optionsValues
         }
@@ -3940,9 +3939,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
-    def checkBeforeJobExecution(scheduledExecution, optparams, props) {
+    def checkBeforeJobExecution(scheduledExecution, optparams, props, authContext) {
 
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams)
+        INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, authContext)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes)
         try {
             return jobPluginService.beforeJobExecution(event)
         } catch (JobPluginException jpe) {

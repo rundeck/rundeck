@@ -104,6 +104,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
         try{
@@ -145,6 +150,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
@@ -166,6 +176,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -210,6 +225,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -251,6 +271,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -283,6 +308,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -319,6 +349,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -391,6 +426,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -431,6 +471,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -460,6 +505,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -499,6 +549,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -532,6 +587,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -578,6 +638,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -620,6 +685,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -641,6 +711,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -670,6 +745,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -696,6 +776,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService = fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -718,6 +803,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -753,6 +843,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -2148,6 +2243,11 @@ class ExecutionServiceTests  {
                 null
             }
         }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
+                null
+            }
+        }
         svc.frameworkService=fsvc
         svc.jobPluginService = new JobPluginService()
 
@@ -2183,6 +2283,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -2233,6 +2338,11 @@ class ExecutionServiceTests  {
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
             getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }

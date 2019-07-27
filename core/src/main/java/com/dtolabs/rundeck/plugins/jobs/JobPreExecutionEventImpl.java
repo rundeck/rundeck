@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
+import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 
 import java.util.ArrayList;
@@ -14,8 +15,10 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     private Map scheduledExecutionMap;
     private HashMap optionsValues;
     private String nodeFilter;
+    private INodeSet nodes;
 
-    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues) {
+
+    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodes) {
         this.projectName = projectName;
         this.userName = userName;
         if(scheduledExecutionMap != null){
@@ -29,11 +32,12 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
         }else{
             this.optionsValues = new HashMap();
         }
+        this.nodes = nodes;
 
     }
 
     public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin){
-        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues);
+        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodes);
     }
 
     public void setProjectName(String projectName){
@@ -70,5 +74,8 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     public String getNodeFilter() {
         return this.nodeFilter;
     }
+
+    @Override
+    public INodeSet getNodes() { return this.nodes; }
 
 }
