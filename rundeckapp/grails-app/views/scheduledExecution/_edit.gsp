@@ -792,6 +792,9 @@
     <g:if test="${jobPlugins}">
         <g:set var="jobPluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('JobPlugin')?:[:]}"/>
         <div class="tab-pane" id="tab_plugins">
+            <div class="help-block">
+                <g:message code="scheduledExecution.property.jobPluginConfig.help.text" />
+            </div>
             <div class="list-group">
                 <g:each in="${jobPlugins}" var="plugin">
                     <g:set var="pluginKey" value="${params.jobPlugin?.type?.get(pluginType)?:g.rkey()}"/>
@@ -800,19 +803,46 @@
                     <g:hiddenField name="jobPlugins.type.${pluginKey}" value="${pluginType}"/>
                     <g:set var="pluginDescription" value="${plugin.value.description}"/>
                     <g:set var="pluginConfig" value="${params.jobPlugin?.get(pluginKey)?.configMap ?: jobPluginConfigMap[pluginType]}"/>
-                    <g:if test="${pluginDescription?.properties}">
+
                         <div class="list-group-item">
                             <g:if test="${pluginDescription}">
+                                <div class="form-group">
 
-                                <g:render template="/framework/renderPluginDesc" model="${[
-                                        serviceName    : 'JobPlugin',
-                                        description    : pluginDescription,
-                                        showPluginIcon : true,
-                                        showNodeIcon   : false,
-                                        hideTitle      : false,
-                                        hideDescription: false,
-                                        fullDescription: true
-                                ]}"/>
+                                    <div class="col-sm-12">
+                                        <div class="checkbox ">
+                                            <g:set var="prkey" value="${rkey()}"/>
+                                            <g:if test="${jobDefaultPlugins?.contains(pluginType)}">
+                                                <input type="checkbox"
+                                                       disabled
+                                                       checked
+                                                       title="Enabled by default for this project"
+                                                       name="jobPlugins.enabled.${pluginKey}"
+                                                       value="true"
+                                                       class="form-control disabled"
+                                                       id="jobPluginEnabled_${prkey}"/>
+                                            </g:if>
+                                            <g:else>
+                                                <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
+                                                            class="form-control"
+                                                            id="jobPluginEnabled_${prkey}"
+                                                            checked="${pluginConfig != null}"/>
+                                            </g:else>
+                                            <label for="jobPluginEnabled_${prkey}">
+                                                <g:render template="/framework/renderPluginDesc" model="${[
+                                                        serviceName    : 'JobPlugin',
+                                                        description    : pluginDescription,
+                                                        showPluginIcon : true,
+                                                        showNodeIcon   : false,
+                                                        hideTitle      : false,
+                                                        hideDescription: false,
+                                                        fullDescription: true
+                                                ]}"/>
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                </div>
+
 
                                 <g:if test="${pluginDescription?.properties}">
                                     <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
@@ -830,7 +860,7 @@
                                 </g:if>
                             </g:if>
                         </div>
-                    </g:if>
+
                 </g:each>
             </div>
         </div>

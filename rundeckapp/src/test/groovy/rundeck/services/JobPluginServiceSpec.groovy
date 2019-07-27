@@ -2,13 +2,17 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.server.plugins.services.JobPluginProviderService
@@ -141,6 +145,131 @@ class JobPluginServiceSpec extends Specification {
             eventType                             | _
             JobPluginService.EventType.BEFORE_RUN | _
             JobPluginService.EventType.AFTER_RUN  | _
+    }
+
+    def "create configured plugins with no project defaults"() {
+        given:
+            def configs = PluginConfigSet.with(
+                    'JobPlugin', [
+                    SimplePluginConfiguration.builder().provider('typeA').configuration([a: 'b']).build()
+            ]
+            )
+            String project = 'aProject'
+            service.pluginService = Mock(PluginService)
+            service.frameworkService = Mock(FrameworkService) {
+                getFrameworkProject(project) >> Mock(IRundeckProject) {
+                    getProjectProperties() >> [
+                            :
+                    ]
+                }
+            }
+            def configured1 = new ConfiguredPlugin<JobPlugin>(null, [a: 'b'])
+        when:
+            def result = service.createConfiguredPlugins(configs, project)
+        then:
+            result.size() == 1
+            result[0].name == 'typeA'
+
+            1 * service.pluginService.configurePlugin('typeA', [a: 'b'], 'aProject', _, JobPlugin) >> configured1
+
+    }
+
+    def "create configured plugins with project defaults"() {
+        given:
+            def configs = PluginConfigSet.with(
+                    'JobPlugin', [
+                    SimplePluginConfiguration.builder().provider('typeA').configuration([a: 'b']).build()
+            ]
+            )
+            String project = 'aProject'
+            service.pluginService = Mock(PluginService)
+            service.frameworkService = Mock(FrameworkService) {
+                getFrameworkProject(project) >> Mock(IRundeckProject) {
+                    getProjectProperties() >> [
+                            (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeB'): 'true'
+                    ]
+                }
+            }
+            def configured1 = new ConfiguredPlugin<JobPlugin>(null, [a: 'b'])
+            def configured2 = new ConfiguredPlugin<JobPlugin>(null, [:])
+        when:
+            def result = service.createConfiguredPlugins(configs, project)
+        then:
+            result.size() == 2
+            result[0].name == 'typeA'
+            result[1].name == 'typeB'
+
+            1 * service.pluginService.configurePlugin('typeA', [a: 'b'], 'aProject', _, JobPlugin) >> configured1
+            1 * service.pluginService.configurePlugin('typeB', [:], 'aProject', _, JobPlugin) >> configured2
+
+    }
+
+    def "create configured plugins with project defaults, no overlap"() {
+        given:
+            def configs = PluginConfigSet.with(
+                    'JobPlugin', [
+                    SimplePluginConfiguration.builder().provider('typeA').configuration([a: 'b']).build()
+            ]
+            )
+            String project = 'aProject'
+            service.pluginService = Mock(PluginService)
+            service.frameworkService = Mock(FrameworkService) {
+                getFrameworkProject(project) >> Mock(IRundeckProject) {
+                    getProjectProperties() >> [
+                            (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeA'): 'true',
+                            (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeB'): 'true',
+                    ]
+                }
+            }
+            def configured1 = new ConfiguredPlugin<JobPlugin>(null, [a: 'b'])
+            def configured2 = new ConfiguredPlugin<JobPlugin>(null, [:])
+        when:
+            def result = service.createConfiguredPlugins(configs, project)
+        then:
+            result.size() == 2
+            result[0].name == 'typeA'
+            result[1].name == 'typeB'
+
+            1 * service.pluginService.configurePlugin('typeA', [a: 'b'], 'aProject', _, JobPlugin) >> configured1
+            1 * service.pluginService.configurePlugin('typeB', [:], 'aProject', _, JobPlugin) >> configured2
+
+    }
+
+    def "list enabled plugins"() {
+        given:
+            service.featureService = featureService
+            def controlService = Mock(PluginControlService) {
+                isDisabledPlugin('typeA', 'JobPlugin') >> true
+            }
+            service.pluginService = Mock(PluginService) {
+                listPlugins(JobPlugin) >> [
+                        typeA: new DescribedPlugin<JobPlugin>(null, null, 'typeA'),
+                        typeB: new DescribedPlugin<JobPlugin>(null, null, 'typeB')
+                ]
+            }
+
+        when:
+            def result = service.listEnabledJobPlugins(controlService)
+        then:
+            result.size() == 1
+            result['typeA'] == null
+            result['typeB'] != null
+    }
+
+    def "get project default job plugin types"() {
+        given:
+            def project = Mock(IRundeckProject) {
+                getProjectProperties() >> [
+                        (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeA'): 'true',
+                        (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeB'): 'true',
+                        (JobPluginService.CONF_PROJECT_ENABLE_JOB + 'typeC'): 'false',
+                ]
+            }
+        when:
+            def result = service.getProjectDefaultJobPluginTypes(project)
+        then:
+            result == (['typeA', 'typeB'] as Set)
+
     }
 
 }
