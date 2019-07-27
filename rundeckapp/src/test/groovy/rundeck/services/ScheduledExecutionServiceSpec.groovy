@@ -80,6 +80,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             getServerUUID()>>TEST_UUID1
             getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
             projectNames(*_)>>[]
+            getFrameworkNodeName() >> "testProject"
         }
         service.pluginService=Mock(PluginService)
         service.executionServiceBean=Mock(ExecutionService)
@@ -1297,7 +1298,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                     }
                 }
             }
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
         }
         service.executionServiceBean = Mock(ExecutionService) {
             _ * getExecutionsAreActive() >> false
@@ -2142,7 +2146,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         0 * service.frameworkService.validateDescription(*_)
         1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
         1 * service.jobPluginService.beforeJobSave(_,_)
-        1 * service.frameworkService.filterNodeSet(_,_)
+        1 * service.frameworkService.getFrameworkNodeName()
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2179,7 +2183,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                                     build()
                     ]
             )
-            1 * service.frameworkService.filterNodeSet(_,_)
+            1 * service.frameworkService.getFrameworkNodeName()
             1 * service.jobPluginService.beforeJobSave(_,_)
             0 * _
         when:
@@ -2213,7 +2217,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                                     build()
                     ]
             )
-            1 * service.frameworkService.filterNodeSet(_,_)
+            1 * service.frameworkService.getFrameworkNodeName()
             1 * service.jobPluginService.beforeJobSave(_,_)
             0 * _
         when:
@@ -2257,7 +2261,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         0 * service.frameworkService.validateDescription(*_)
         1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
         1 * service.jobPluginService.beforeJobSave(_,_)
-        1 * service.frameworkService.filterNodeSet(_,_)
+        1 * service.frameworkService.getFrameworkNodeName()
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())

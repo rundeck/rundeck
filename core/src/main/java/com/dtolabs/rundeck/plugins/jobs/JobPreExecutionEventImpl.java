@@ -3,7 +3,6 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,24 +14,30 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     private String userName;
     private Map scheduledExecutionMap;
     private HashMap optionsValues;
-    private INodeSet nodeSet;
+    private String nodeFilter;
+    private INodeSet nodes;
 
-    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodeSet) {
+
+    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodes) {
         this.projectName = projectName;
         this.userName = userName;
         if(scheduledExecutionMap != null){
             this.scheduledExecutionMap = (Map)((HashMap) scheduledExecutionMap).clone();
+            if(this.scheduledExecutionMap.get("filter") != null){
+                this.nodeFilter = (String) this.scheduledExecutionMap.get("filter");
+            }
         }
         if(optionsValues != null){
             this.optionsValues = (HashMap) optionsValues.clone();
         }else{
             this.optionsValues = new HashMap();
         }
-        this.nodeSet = nodeSet;
+        this.nodes = nodes;
+
     }
 
     public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin){
-        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodeSet);
+        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodes);
     }
 
     public void setProjectName(String projectName){
@@ -61,20 +66,16 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     }
 
     @Override
-    public Map<String, String> getOptionsValues() {
+    public HashMap getOptionsValues() {
         return this.optionsValues;
     }
 
     @Override
-    public INodeSet getNodes() {
-        return this.nodeSet;
+    public String getNodeFilter() {
+        return this.nodeFilter;
     }
 
-    public void setNodes(INodeSet nodeSet) {
-        this.nodeSet = nodeSet;
-    }
+    @Override
+    public INodeSet getNodes() { return this.nodes; }
 
-    public Map getScheduledExecutionMap(){
-        return this.scheduledExecutionMap;
-    }
 }

@@ -24,6 +24,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -37,6 +40,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
@@ -4284,8 +4288,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def runBeforeSave(scheduledExecution, authContext){
         Map scheduleMap = scheduledExecution.toMap()
+        INodeSet nodeSet = getNodes(scheduledExecution, authContext)
         scheduleMap.project = scheduledExecution.project
-        INodeSet nodeSet = frameworkService.filterNodeSet(ExecutionService.filtersAsNodeSet(scheduledExecution), scheduledExecution.project)
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet)
         def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
@@ -4362,5 +4366,38 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         } else {
             return [failed: true, scheduledExecution: scheduledExecution]
         }
+    }
+
+    /**
+     * Return a NodeSet using the filters during job save
+     */
+    def getNodes(scheduledExecution, authContext){
+
+        NodesSelector nodeselector
+        if (scheduledExecution.doNodedispatch) {
+            //set nodeset for the context if doNodedispatch parameter is true
+            def filter = scheduledExecution.asFilter()
+            def filterExclude = scheduledExecution.asExcludeFilter()
+            NodeSet nodeset = ExecutionService.filtersAsNodeSet([
+                    filter:filter,
+                    filterExclude: filterExclude,
+                    nodeExcludePrecedence:scheduledExecution.nodeExcludePrecedence,
+                    nodeThreadcount: scheduledExecution.nodeThreadcount,
+                    nodeKeepgoing: scheduledExecution.nodeKeepgoing
+            ])
+            nodeselector=nodeset
+        } else if(frameworkService != null){
+            //blank?
+            nodeselector = SelectorUtils.singleNode(frameworkService.frameworkNodeName)
+        }else{
+            nodeselector = null
+        }
+
+        INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+                scheduledExecution.project,
+                new HashSet<String>(Arrays.asList("read", "run")),
+                frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                authContext)
+        nodeSet
     }
 }

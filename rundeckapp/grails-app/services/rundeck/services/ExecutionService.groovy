@@ -1450,8 +1450,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
             def filterExclude = DataContextUtils.replaceDataReferencesInString(execMap.asExcludeFilter(),datacontext)
-            NodeSet nodeset = filtersAsNodeSet([
-                    filter:filter,
+            NodeSet nodeset = filtersAsNodeSet([filter:filter,
                     filterExclude: filterExclude,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
@@ -2273,12 +2272,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext, null)
-        def result = checkBeforeJobExecution(se, optparams, props)
-        if(result?.useNewValues()){
-            //if new parameters are needed, a new validation is required
-            optparams = validateJobInputOptions(props, se, authContext, result.getOptionsValues())
-        }
+        HashMap optparams = validateJobInputOptions(props, se, authContext)
 
         optparams = removeSecureOptionEntries(se, optparams)
 
@@ -2429,12 +2423,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param optionValues values modified by a job plugin
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map optionValues) {
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
         HashMap optparams
-        if(!optionValues){
-            optparams = parseJobOptionInput(props, scheduledExec)
-        }else{
-            optparams = optionValues
+        optparams = parseJobOptionInput(props, scheduledExec)
+        def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
+        if(result?.useNewValues()){
+            optparams = result.optionsValues
         }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
@@ -3954,12 +3948,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return list
     }
 
-    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props){
-        INodeSet nodeSet = frameworkService?.filterNodeSet(filtersAsNodeSet(scheduledExecution), props.project)
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodeSet)
-        try{
+    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
+
+        INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, authContext)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes)
+        try {
             return jobPluginService.beforeJobExecution(scheduledExecution, event)
-        }catch(JobPluginException jpe){
+        } catch (JobPluginException jpe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }
     }

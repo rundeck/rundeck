@@ -56,7 +56,7 @@ import rundeck.controllers.ScheduledExecutionController
 @TestFor(ScheduledExecutionService)
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 @TestMixin(ControllerUnitTestMixin)
-class ScheduledExServiceTests {
+    class ScheduledExServiceTests {
 
 
 
@@ -200,9 +200,9 @@ class ScheduledExServiceTests {
                 return projectMock
             }
             projectNames{authContext -> []}
-            filterNodeSet(0..1){ NodesSelector selector, String project->
-                null
-            }
+            getFrameworkNodeName(0..1){ -> "testProject"}
+            filterNodeSet(0..1){nodeselector, project -> null}
+            filterAuthorizedNodes(0..1){project, actions, unfiltered, authContext -> null}
         }
     }
     def setupDoUpdateJob(sec){
@@ -287,7 +287,7 @@ class ScheduledExServiceTests {
 
 
 
-    public void testDoUpdateScheduledInvalidDayOfMonth() {
+    public void ScheduledInvalidDayOfMonth() {
         //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
         def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 3 2010-2040')
 
@@ -623,7 +623,9 @@ class ScheduledExServiceTests {
                 assertEquals 'aCommand', command
                 return null
             }
-            filterNodeSet(1..1){selector, project -> null}
+            getFrameworkNodeName(0..1){ -> "testProject"}
+            filterNodeSet(0..1){nodeselector, project -> null}
+            filterAuthorizedNodes(0..1){project, actions, unfiltered, authContext -> null}
         }
 
 

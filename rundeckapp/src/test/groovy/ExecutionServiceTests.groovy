@@ -99,10 +99,13 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){scheduledExecution, authContext ->
                 null
             }
         }
@@ -145,10 +148,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -174,10 +179,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -220,10 +227,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -266,10 +275,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -306,10 +317,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -347,10 +360,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -421,10 +436,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -466,10 +483,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -503,10 +522,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -544,10 +565,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -585,10 +608,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -633,10 +658,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -680,10 +707,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -709,10 +738,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -740,10 +771,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -771,10 +804,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -801,10 +836,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -841,10 +878,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -2238,10 +2277,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -2281,10 +2322,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }
@@ -2336,10 +2379,12 @@ class ExecutionServiceTests  {
 
         ExecutionService svc = new ExecutionService()
         FrameworkService fsvc = mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
+            getServerUUID(1..1){
                 null
             }
-            getServerUUID(1..1){
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, authContext ->
                 null
             }
         }

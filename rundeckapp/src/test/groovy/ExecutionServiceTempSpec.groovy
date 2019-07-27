@@ -293,6 +293,9 @@ class ExecutionServiceTempSpec extends Specification{
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
         }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
+        }
         when:
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])
 
