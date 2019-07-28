@@ -18,14 +18,11 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     private INodeSet nodes;
 
 
-    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodes) {
+    public JobPreExecutionEventImpl(String projectName, String userName, Map scheduledExecutionMap, HashMap optionsValues, INodeSet nodes, String nodeFilter) {
         this.projectName = projectName;
         this.userName = userName;
         if(scheduledExecutionMap != null){
             this.scheduledExecutionMap = (Map)((HashMap) scheduledExecutionMap).clone();
-            if(this.scheduledExecutionMap.get("filter") != null){
-                this.nodeFilter = (String) this.scheduledExecutionMap.get("filter");
-            }
         }
         if(optionsValues != null){
             this.optionsValues = (HashMap) optionsValues.clone();
@@ -33,11 +30,12 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
             this.optionsValues = new HashMap();
         }
         this.nodes = nodes;
+        this.nodeFilter = nodeFilter;
 
     }
 
     public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin){
-        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodes);
+        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodes, origin.nodeFilter);
     }
 
     public void setProjectName(String projectName){

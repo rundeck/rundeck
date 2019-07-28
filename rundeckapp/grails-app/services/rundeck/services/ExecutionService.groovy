@@ -3942,7 +3942,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def checkBeforeJobExecution(scheduledExecution, optparams, props, authContext) {
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, authContext)
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes)
+        def nodeFilter = scheduledExecution?.toMap()?.get("filter")
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes, nodeFilter)
         try {
             return jobPluginService.beforeJobExecution(event)
         } catch (JobPluginException jpe) {
