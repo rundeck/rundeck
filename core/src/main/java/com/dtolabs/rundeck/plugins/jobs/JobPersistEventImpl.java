@@ -16,12 +16,9 @@ public class JobPersistEventImpl implements JobPersistEvent {
     String nodeFilter;
     Map scheduledExecutionMap;
 
-    public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes) throws ValidationException {
+    public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes, String nodeFilter) throws ValidationException {
         this.scheduledExecutionMap = scheduledExecutionMap;
         if(this.scheduledExecutionMap != null){
-            if(this.scheduledExecutionMap.containsKey("nodefilters")){
-                this.nodeFilter = (String)((LinkedHashMap) this.scheduledExecutionMap.get("nodefilters")).get("filters");
-            }
             if(this.scheduledExecutionMap.containsKey("project")){
                 this.projectName = (String) this.scheduledExecutionMap.get("project");
             }
@@ -32,10 +29,11 @@ public class JobPersistEventImpl implements JobPersistEvent {
         }
         this.userName = userName;
         this.nodes = nodes;
+        this.nodeFilter = nodeFilter;
     }
 
     public JobPersistEventImpl(JobPersistEventImpl origin) throws ValidationException {
-        this(origin.scheduledExecutionMap, origin.userName, origin.nodes);
+        this(origin.scheduledExecutionMap, origin.userName, origin.nodes, origin.nodeFilter);
     }
 
     @Override

@@ -4175,7 +4175,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map scheduleMap = scheduledExecution.toMap()
         INodeSet nodeSet = getNodes(scheduledExecution, authContext)
         scheduleMap.project = scheduledExecution.project
-        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet)
+        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet, scheduledExecution?.filter)
         def jobEventStatus = jobPluginService?.beforeJobSave(jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())

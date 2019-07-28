@@ -51,9 +51,9 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
     }
 
     @Override
-    public ArrayList<LinkedHashMap> getOptions() {
+    public ArrayList<Map> getOptions() {
         if(this.scheduledExecutionMap != null && this.scheduledExecutionMap.containsKey("options")){
-            return (ArrayList<LinkedHashMap>) this.scheduledExecutionMap.get("options");
+            return (ArrayList<Map>) this.scheduledExecutionMap.get("options");
         }
         return null;
     }

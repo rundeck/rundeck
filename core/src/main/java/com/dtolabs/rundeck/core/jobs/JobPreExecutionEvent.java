@@ -19,7 +19,7 @@ public interface JobPreExecutionEvent {
      *
      * @return List<LinkedHashMap> options of the job.
      */
-    List<LinkedHashMap> getOptions();
+    List<Map> getOptions();
 
     /**
      *
@@ -31,7 +31,7 @@ public interface JobPreExecutionEvent {
      *
      * @return Map<String, String> values setup to job options.
      */
-    Map getOptionsValues();
+    Map<String, String> getOptionsValues();
 
     /**
      *
