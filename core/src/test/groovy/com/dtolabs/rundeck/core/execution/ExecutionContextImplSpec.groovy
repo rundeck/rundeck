@@ -69,4 +69,45 @@ class ExecutionContextImplSpec extends Specification {
         newctx.dataContext.node?.rapscallion == null
         newctx.dataContext.node?.rutabega == 'turnip'
     }
+
+    def "merge builder merges components"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1B', String)
+                                          .addComponent('test2', 'Test2', String)
+                                          .build()
+            def ec2 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1A', String)
+                                          .build()
+            def b1 = ExecutionContextImpl.builder(ec1)
+            def b2 = ExecutionContextImpl.builder(ec2)
+        when:
+            b1.merge(b2)
+            def result = b1.build()
+        then:
+            result.getComponentList().size() == 2
+            result.componentsForType(String).size() == 2
+            (result.componentsForType(String) as Set) == (['Test2', 'Test1A'] as Set)
+    }
+
+    def "merge builder merges components2"() {
+        given:
+            def ec1 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1B', String)
+                                          .addComponent('test2', 'Test2', String)
+                                          .build()
+            def ec2 = ExecutionContextImpl.builder()
+                                          .addComponent('test1', 'Test1A', String)
+                                          .addComponent('test3', 'Test3', String)
+                                          .build()
+            def b1 = ExecutionContextImpl.builder(ec1)
+            def b2 = ExecutionContextImpl.builder(ec2)
+        when:
+            b2.merge(b1)
+            def result = b2.build()
+        then:
+            result.getComponentList().size() == 3
+            result.componentsForType(String).size() == 3
+            (result.componentsForType(String) as Set) == (['Test2', 'Test1B', 'Test3'] as Set)
+    }
 }

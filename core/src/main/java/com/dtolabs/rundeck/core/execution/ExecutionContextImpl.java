@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.storage.StorageTree;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
@@ -295,6 +296,20 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             if (null == ctx.pluginControlService) {
                 ctx.pluginControlService = other.ctx.pluginControlService;
             }
+            //replace components with the same name+type
+            List<ContextComponent<?>> newList = new ArrayList<>();
+
+            Predicate<ContextComponent<?>>
+                    otherContainsNotMatch =
+                    (comp) -> other.ctx.componentList
+                            .stream()
+                            .noneMatch((bcomp) -> ContextComponent.equalsTo(comp, bcomp));
+
+
+            //add components from this list that don't match
+            newList.addAll(ctx.componentList.stream().filter(otherContainsNotMatch).collect(Collectors.toList()));
+            newList.addAll(other.ctx.componentList);
+            ctx.componentList = newList;
 
             return this;
         }
