@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
 
 public interface JobPreExecutionEvent {
 
@@ -19,7 +20,7 @@ public interface JobPreExecutionEvent {
      *
      * @return List<LinkedHashMap> options of the job.
      */
-    List<Map> getOptions();
+    SortedSet<JobOption> getOptions();
 
     /**
      *

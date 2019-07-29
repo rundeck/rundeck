@@ -4173,7 +4173,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def runBeforeSave(scheduledExecution, authContext){
         Map scheduleMap = scheduledExecution.toMap()
-        INodeSet nodeSet = getNodes(scheduledExecution, authContext)
+        INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
         scheduleMap.project = scheduledExecution.project
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet, scheduledExecution?.filter)
         def jobEventStatus = jobPluginService?.beforeJobSave(jobPersistEvent)
@@ -4256,12 +4256,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     /**
      * Return a NodeSet using the filters during job save
      */
-    def getNodes(scheduledExecution, authContext){
+    def getNodes(scheduledExecution, filter, authContext){
 
         NodesSelector nodeselector
         if (scheduledExecution.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = scheduledExecution.asFilter()
+            filter = filter? filter : scheduledExecution.asFilter()
             def filterExclude = scheduledExecution.asExcludeFilter()
             NodeSet nodeset = ExecutionService.filtersAsNodeSet([
                     filter:filter,
