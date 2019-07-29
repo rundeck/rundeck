@@ -55,4 +55,9 @@ public interface ContextComponent<T> {
             }
         };
     }
+
+    static boolean equalsTo(ContextComponent acomp, ContextComponent bcomp) {
+        return bcomp.getName().equals(acomp.getName())
+               && bcomp.getType().equals(acomp.getType());
+    }
 }
