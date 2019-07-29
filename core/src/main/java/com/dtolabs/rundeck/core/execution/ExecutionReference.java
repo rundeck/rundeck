@@ -4,6 +4,7 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.jobs.JobReference;
 
 import java.util.Date;
+import java.util.Map;
 
 public interface ExecutionReference {
     String getProject();
@@ -18,6 +19,8 @@ public interface ExecutionReference {
     String getFailedNodeList();
     String getTargetNodes();
     String getAdhocCommand();
+
+    Map getMetadata();
 
 
 }

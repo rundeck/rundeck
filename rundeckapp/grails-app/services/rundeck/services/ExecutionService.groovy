@@ -1900,7 +1900,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
-                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false
+                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
+                                      extraMetadataMap: params.extraMetadataMap?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2045,7 +2046,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             Map allowedOptions = input.subMap(
                     ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
-                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId']
+                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','meta']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
@@ -2112,6 +2113,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
                                                'nodeoverride', 'nodefilter',
                                                'executionType',
+                                               'meta',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
@@ -2283,7 +2285,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } else {
             throw new ExecutionServiceException("executionType is required")
         }
-
+        if(input['meta'] instanceof Map){
+            props['extraMetadataMap'] = input['meta']
+        }
         //evaluate embedded Job options for validation
         HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
 

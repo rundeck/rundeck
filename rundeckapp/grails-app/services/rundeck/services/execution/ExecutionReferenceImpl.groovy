@@ -18,6 +18,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String failedNodeList
     String targetNodes
     String adhocCommand
+    Map metadata
 
     @Override
     String toString() {

@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
@@ -28,7 +29,7 @@ import rundeck.services.execution.ExecutionReferenceImpl
 /**
 * Execution
 */
-class Execution extends ExecutionContext {
+class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     ScheduledExecution scheduledExecution
     Date dateStarted
@@ -50,9 +51,10 @@ class Execution extends ExecutionContext {
     String serverNodeUUID
     Integer nodeThreadcount=1
     Long retryOriginalId
+    String extraMetadata
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap']
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
@@ -111,6 +113,7 @@ class Execution extends ExecutionContext {
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
         excludeFilterUncheck(nullable: true)
+        extraMetadata(nullable: true)
     }
 
     static mapping = {
@@ -141,6 +144,7 @@ class Execution extends ExecutionContext {
         retry( type: 'text')
         userRoleList(type: 'text')
         serverNodeUUID(type: 'string')
+        extraMetadata(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
@@ -172,6 +176,15 @@ class Execution extends ExecutionContext {
     public String toString() {
         return "Workflow execution: ${workflow}"
     }
+
+    Map getExtraMetadataMap() {
+        extraMetadata ? asJsonMap(extraMetadata) : [:]
+    }
+
+    void setExtraMetadataMap(Map config) {
+        extraMetadata = config ? serializeJsonMap(config) : null
+    }
+
 
     public setUserRoles(List l) {
         setUserRoleList(l?.join(","))
@@ -321,6 +334,9 @@ class Execution extends ExecutionContext {
 		if(this.orchestrator){
 			map.orchestrator=this.orchestrator.toMap();
 		}
+        if (this.extraMetadata) {
+            map.extra = this.extraMetadataMap
+        }
         map
     }
     static Execution fromMap(Map data, ScheduledExecution job=null){
@@ -408,6 +424,9 @@ class Execution extends ExecutionContext {
         if(data.orchestrator){
             exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
         }
+        if (data.extra instanceof Map) {
+            exec.extraMetadataMap = data.extra
+        }
         exec
     }
 
@@ -432,7 +451,8 @@ class Execution extends ExecutionContext {
                 status: status,
                 succeededNodeList: succeededNodeList,
                 failedNodeList: failedNodeList,
-                targetNodes: targetNodes
+                targetNodes: targetNodes,
+                metadata: extraMetadataMap
         )
     }
 }
