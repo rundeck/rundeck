@@ -3540,7 +3540,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             } else {
                 averageDuration = se.averageDuration
-                timeout = se.timeout ? Sizes.parseTimeDuration(se.timeout) : 0
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
@@ -3578,6 +3577,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def msg = "Invalid options: ${e.errors.keySet()}"
                     result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
                 }
+
+                def timeouttmp = '0'
+                if(se.timeout){
+                    if(se.timeout.contains('${')){
+                        timeouttmp = DataContextUtils.replaceDataReferencesInString(se.timeout, newContext.dataContext)
+                    }else{
+                        timeouttmp = se.timeout
+                    }
+                }
+                timeout = Sizes.parseTimeDuration(timeouttmp)
             }
         }
 
@@ -3599,7 +3608,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         long startTime = System.currentTimeMillis()
-
         def wresult = metricService.withTimer(this.class.name, 'runJobReference') {
             WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
@@ -3613,8 +3621,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             thread.start()
-            boolean never = true
-            def interrupt = false
 
             if(!jitem.ignoreNotifications) {
                 ScheduledExecution.withTransaction {
@@ -3625,40 +3631,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             }
+            return executionUtilService.runRefJobWithTimer(thread, startTime, shouldCheckTimeout, timeoutms)
 
-            int killcount = 0
-            def killLimit = 100
-            while (thread.isAlive() || never) {
-                never = false
-                try {
-                    thread.join(1000)
-                } catch (InterruptedException e) {
-                    //interrupt
-                    interrupt = true
-                }
-                if (thread.interrupted) {
-                    interrupt = true
-                }
-                def duration = System.currentTimeMillis() - startTime
-                if (shouldCheckTimeout
-                        && duration > timeoutms
-                ) {
-                    interrupt = true
-                }
-                if (interrupt) {
-                    if (killcount < killLimit) {
-                        //send wave after wave
-                        thread.abort()
-                        Thread.yield();
-                        killcount++;
-                    } else {
-                        //reached pre-set kill limit, so shut down
-                        thread.stop()
-                    }
-                }
-            }
-
-            [result: thread.result, interrupt: interrupt]
         }
 
         def duration = System.currentTimeMillis() - startTime
