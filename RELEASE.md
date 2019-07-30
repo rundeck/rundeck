@@ -7,34 +7,36 @@ Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></s
 
 ## Notes
 
-* UI revamp for most parts of the app:
+* Improved framework and layout in the UI, including the:
   * Project list
   * Job list
   * Job view
   * Job Editor
   * Execution view
   * Activity view
-* Rundeck Repository
-  * Now you can browse and install plugins from the Rundeck GUI
+* Rundeck Official Repository and Plugin Manager UI
+  * Find and install supported plugins from the official Rundeck plugin repository (online.rundeck.com) from the Rundeck UI
+  * Uninstall plugins from the Rundeck UI
+  * Upload and install custom plugins
+  * View plugin configuration setttings
 * Execution cleaner
-  * Project configuration allows automatically removing older executions periodically
-* Options: 
-  * Can preserve allowed value list order (sort is not optional)
-  * Can specify multi value delimiter
-  * https://github.com/rundeck/rundeck/pull/4599
-* Auth:
-  * Can specify a required user role for Rundeck access (https://github.com/rundeck/rundeck/pull/4820)
-  * ACLs can use "notBy" instead of "by" to deny access to non matching groups/users. See https://github.com/rundeck/rundeck/pull/4769
+  * Project configuration - setup job history pruning interval 
+* Options [4599](https://github.com/rundeck/rundeck/pull/4599): 
+  * Preserve allowed value list order (sort is not optional)
+  * Specify multi-value delimiter
+* Authentication and authorization:
+  * Ability to require a role for Rundeck access [4820](https://github.com/rundeck/rundeck/pull/4820).
+  * ACLs can use "notBy" instead of "by" to deny access to non matching groups/users [4769](https://github.com/rundeck/rundeck/pull/4769)
 * Jobs:
-  * Default Log filters can be added at project/framework level, such as the Mask Passwords plugin (https://github.com/rundeck/rundeck/pull/4806)
-  * Configuration to allow unsantized html in log output (https://github.com/rundeck/rundeck/pull/4784)
+  * Add default Log filters at the project/framework level. For example, use the Mask Passwords plugin for all jobs in a project. [4806](https://github.com/rundeck/rundeck/pull/4806)
+  * Configuration to allow unsantized html in log output. [4784](https://github.com/rundeck/rundeck/pull/4784)
 
 ### Enhancements
 
-* More UI Improvements
-* API: scheduler takeover endpoint can specify multiple job IDs
+* UI Improvements
+* API: Scheduler takeover endpoint can specify multiple job IDs
 * Added option to Enable/Disable notifications for Referenced Jobs [#5026](https://github.com/rundeck/rundeck/pull/5026)
-* (Enterprise) License key can be shared among cluster members using 
+* (Enterprise) License key can be shared among cluster members 
 * (Enterprise) Execution cleanup process can clean up executions from dead cluster members
  
 ### Bug Fixes
@@ -52,10 +54,10 @@ Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></s
 
 ### Plugins
 
-* Added "Attribute Match Node Enhancer" plugin: customize node icons, or inject new node attributes based on other attributes
+* Added "Attribute Match Node Enhancer" plugin for customize node icons and injecting new node attributes based on other attributes
 * (Enterprise) Ruleset workflow strategy can use variables on both sides of conditional comparisons
 * (Enterprise) SQL Runner can use inline SQL script
-* (Enterprise) File Transfer source should allow wildcards
+* (Enterprise) File Transfer source allows wildcards
 
 ### Docker
 
