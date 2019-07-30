@@ -95,5 +95,7 @@ public interface JobScheduleManager {
      *
      * @return true if successful
      */
-    boolean scheduleRemoteJob(Map data);
+    default boolean scheduleRemoteJob(Map data){
+        return false;
+    }
 }
