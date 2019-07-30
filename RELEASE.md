@@ -54,7 +54,7 @@ Name: <span style="color: peru"><span class="glyphicon glyphicon-piggy-bank"></s
 
 ### Plugins
 
-* Added "Attribute Match Node Enhancer" plugin for customize node icons and injecting new node attributes based on other attributes
+* Added "Attribute Match Node Enhancer" plugin for customizing node icons and injecting new node attributes based on other attributes
 * (Enterprise) Ruleset workflow strategy can use variables on both sides of conditional comparisons
 * (Enterprise) SQL Runner can use inline SQL script
 * (Enterprise) File Transfer source allows wildcards
