@@ -2277,13 +2277,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         boolean shouldreSchedule = false
+        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if(frameworkService.isClusterModeEnabled()){
 
             if (originalCron != scheduledExecution.generateCrontabExression() ||
                 originalSchedule != scheduledExecution.scheduleEnabled ||
                 originalExecution != scheduledExecution.executionEnabled ||
                 originalTz != scheduledExecution.timeZone ||
-                oldsched != scheduledExecution.scheduled
+                oldsched != scheduledExecution.scheduled ||
+                renamed
             ) {
                 def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
                             serverUUID   : frameworkService.serverUUID,
@@ -2305,7 +2308,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else{
             shouldreSchedule = true
         }
-        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if (renamed) {
             changeinfo.rename = true
             changeinfo.origName = oldjobname
