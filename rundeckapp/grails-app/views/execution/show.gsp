@@ -184,6 +184,17 @@ search
           <div class="subtitle-head-item execution-head-info flex-item-1">
               <section class="flex-container reverse">
                   <section class="flex-item-1 text-right">
+                  <div style="display:inline-block;vertical-align:bottom;margin-right:.3em;">
+                     <g:render template="/scheduledExecution/showExecutionLink"
+                                model="[scheduledExecution: scheduledExecution,
+                                        linkCss           : 'text-h4',
+                                        noimgs            : true,
+                                        execution         : execution,
+                                        hideExecStatus    : true,
+                                        followparams      : [mode: followmode, lastlines: params.lastlines]
+                                ]"/>
+                  </div>
+
                       <g:if test="${deleteExecAuth || authChecks[AuthConstants.ACTION_READ]}">
                           <div class="btn-group" data-bind="visible: completed()">
                               <button type="button"
@@ -194,7 +205,28 @@ search
                                   <span class="caret"></span>
                               </button>
                               <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                  <g:if test="${eprev}">
+                                    <li>
+                                      <g:link action="show" controller="execution" id="${eprev.id}"
+                                            params="[project: eprev.project]"
+                                            title="Previous Execution #${eprev.id}">
+                                        <i class="glyphicon glyphicon-arrow-left"></i>
+                                        <g:message code="previous.execution"/>
+                                      </g:link>
+                                    </li>
+                                  </g:if>
 
+                                  <g:if test="${enext}">
+                                    <li>
+                                      <g:link action="show" controller="execution"
+                                          title="Next Execution #${enext.id}"
+                                          params="[project: enext.project]"
+                                          id="${enext.id}">
+                                          <i class="glyphicon glyphicon-arrow-right"></i>
+                                          <g:message code="next.execution"/>
+                                      </g:link>
+                                    </li>
+                                  </g:if>
                                   <g:if test="${deleteExecAuth}">
                                       <li>
                                           <a href="#execdelete"
@@ -222,14 +254,7 @@ search
                       </g:if>
 
 
-                      <g:render template="/scheduledExecution/showExecutionLink"
-                                model="[scheduledExecution: scheduledExecution,
-                                        linkCss           : 'text-h4',
-                                        noimgs            : true,
-                                        execution         : execution,
-                                        hideExecStatus    : true,
-                                        followparams      : [mode: followmode, lastlines: params.lastlines]
-                                ]"/>
+
 
                   </section>
                   <section class="flex-item-2">
@@ -252,7 +277,7 @@ search
                   </section>
               </section>
 
-              <section class="section-space execution-action-links ">
+              <section class="section-space execution-action-links " style="padding-top:.6em;">
 
                       <g:if test="${null == execution.dateCompleted}">
                           <span data-bind="if: canKillExec()">
@@ -281,8 +306,6 @@ search
                               </span>
                           </span>
                       </g:if>
-
-
                   <g:if test="${scheduledExecution}">
                           <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(
                                   active: true,
@@ -292,7 +315,7 @@ search
                               <g:link controller="scheduledExecution"
                                       action="execute"
                                       id="${scheduledExecution.extid}"
-                                      class=" pull-right"
+                                      class="btn btn-default btn-xs pull-right"
                                       params="${[retryExecId: execution.id, project: execution.project]}"
                                       title="${g.message(code: 'execution.job.action.runAgain')}"
                                       style="${wdgt.styleVisible(
@@ -387,6 +410,7 @@ search
                                       <i class="caret"></i>
                                   </button>
                                   <ul class="dropdown-menu pull-right" role="menu">
+
                                       <li>
                                           <g:link
                                                   controller="framework"
