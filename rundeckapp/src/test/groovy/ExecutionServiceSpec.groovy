@@ -4731,6 +4731,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         }
         service.metricService = Mock(MetricService){
             withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
                 [result:wresult,interrupt:true]
             }
         }
@@ -4743,9 +4744,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         when:
         def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
         then:
+        1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
         res instanceof StepExecutionResultImpl
         !res.success
-
 
     }
 }
