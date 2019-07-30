@@ -315,7 +315,7 @@ search
                               <g:link controller="scheduledExecution"
                                       action="execute"
                                       id="${scheduledExecution.extid}"
-                                      class="btn btn-default btn-xs pull-right"
+                                      class=" pull-right"
                                       params="${[retryExecId: execution.id, project: execution.project]}"
                                       title="${g.message(code: 'execution.job.action.runAgain')}"
                                       style="${wdgt.styleVisible(
