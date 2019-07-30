@@ -2413,7 +2413,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
-        HashMap optparams = parseJobOptionInput(props, scheduledExec)
+        HashMap optparams = parseJobOptionInput(props, scheduledExec, authContext)
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
     }
@@ -2425,12 +2425,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param scheduledExec
      * @return a Map of String to String, does not produce multiple values for multivalued options
      */
-    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec) {
+    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext = null) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
             optparams = FrameworkService.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
+        optparams = addRemoteOptionSelected(scheduledExec, optparams, authContext)
         optparams
     }
 
@@ -2474,6 +2475,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         return results
+    }
+
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have enforced=true, the values
+     * is taken from remote URL, have a selected value as default, and have null value in the input properties,
+     * then append the selected by default option value to the argString
+     */
+    def Map addRemoteOptionSelected(ScheduledExecution scheduledExecution, Map optparams, UserAndRolesAuthContext authContext = null) throws ExecutionServiceException {
+        def newmap = new HashMap(optparams)
+
+        final options = scheduledExecution.options
+        if (options) {
+            def defaultoptions=[:]
+            options.each {Option opt ->
+                if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
+                    if(!remoteOptions.err && remoteOptions.values){
+                        Map selectedOption = remoteOptions.values.find {Map value -> [true, 'true'].contains(value.selected)}
+                        if(selectedOption){
+                            defaultoptions[opt.name]=selectedOption.value
+                        }
+                    }
+                }
+            }
+            if(defaultoptions){
+                newmap.putAll(defaultoptions)
+            }
+        }
+        return newmap
     }
 
     /**
