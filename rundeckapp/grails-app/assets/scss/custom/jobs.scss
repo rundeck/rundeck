@@ -15,7 +15,10 @@
  */
 
 .table.item_details {
-  &> tr > td:first-child, &> tbody > tr > td:first-child, td.displabel {
+
+  &>tr>td:first-child,
+  &>tbody>tr>td:first-child,
+  td.displabel {
     text-align: right;
     vertical-align: top;
 
@@ -31,8 +34,7 @@
 }
 
 .jobstats {
-  .job-stats-item {
-  }
+  .job-stats-item {}
 
   .job-stats-value {
     font-weight: bold;
@@ -51,7 +53,8 @@
 
 .exec-options-header {
   background: #e6e6e6;
-  .jobInfoSection{
+
+  .jobInfoSection {
     padding: 10px 0;
   }
 }
@@ -61,7 +64,8 @@
     text-decoration: line-through;
     color: $dark-gray;
   }
-  .cronselected{
+
+  .cronselected {
     font-weight: bold;
   }
 
@@ -70,7 +74,8 @@
   }
 }
 
-.job_list_row, .job_list_group_header {
+.job_list_row,
+.job_list_group_header {
   clear: both;
 }
 
@@ -90,7 +95,7 @@
   }
 }
 
-.expandComponentHolder.expanded > .job_list_group_header > .jobgroupexpand {
+.expandComponentHolder.expanded>.job_list_group_header>.jobgroupexpand {
   //todo: emphasize expanded groups. but, expander widget doesn't correctly set expanded state for nested elements yet
   //color: #454545;
   //text-decoration: underline;
@@ -106,4 +111,39 @@
     background: #F8f8f8;
     border-color: #e8e8e8;
   }
+}
+
+
+@media (min-width: 993px) {
+  .execution-aux-info.flex-item-1 {
+    max-width: calc(50vw - 115px);
+  }
+}
+
+.argstring-scrollable {
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
+}
+
+.argstring-scrollable .text-secondary {
+  display: block;
+}
+
+.argstring-scrollable .optkey {
+  display: inline-block;
+}
+
+.argstring-scrollable .optvalue {
+  overflow: hidden;
+  word-break: break-all;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+// eventargs is typically a table > td
+// found here: /rundeckapp/grails-app/assets/scss/custom/table-events.scss
+.eventargs .argstring-scrollable {
+  display: none;
 }
