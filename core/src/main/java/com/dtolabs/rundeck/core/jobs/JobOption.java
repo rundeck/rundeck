@@ -30,7 +30,7 @@ public interface JobOption {
     }
 
     default Boolean getRequired() {
-        return null;
+        return false;
     }
 
     default Boolean getDate() {

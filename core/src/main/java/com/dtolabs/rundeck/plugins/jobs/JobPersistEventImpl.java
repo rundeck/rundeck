@@ -82,7 +82,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
         }
     }
 
-    public void setNewOptions(SortedSet<JobOption> options) {
+    public void setOptions(SortedSet<JobOption> options) {
         this.options = options;
     }
 }

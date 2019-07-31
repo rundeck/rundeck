@@ -167,7 +167,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
-                def JobEventStatus result = handleEventForPlugin(eventType, plugin, curEvent)
+                JobEventStatus result = handleEventForPlugin(eventType, plugin, curEvent)
                 if (result != null && !result.successful) {
                     success = false
                     log.info("Result from plugin is false an exception will be thrown")
@@ -180,7 +180,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     }
 
                 }
-                if (result != null) {
+                if (result != null && result.useNewValues()) {
                     results[plugin.name] = result
                 }
                 prevResult = result
@@ -202,7 +202,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             }
         }
 
-        mergeEventResult(success, prevResult, prevEvent)
+        mergeEventResult(success, prevResult, prevEvent, !results.isEmpty())
+
     }
 
     public JobEventStatus handleEventForPlugin(
@@ -239,12 +240,13 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     jobEvent.userName,
                     jobEvent.scheduledExecutionMap,
                     newOptionsValues,
-                    jobEvent.nodes
+                    jobEvent.nodes,
+                    jobEvent.nodeFilter
             )
         } else if (jobEvent instanceof JobPersistEvent) {
             TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
             def newEvent = new JobPersistEventImpl(jobEvent)
-            newEvent.setNewOptions(options)
+            newEvent.setOptions(options)
             return newEvent
         } else if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(
@@ -266,7 +268,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @param jobEvent event
      * @return result with merged contents for the type of event
      */
-    JobEventStatus mergeEventResult(boolean success, final JobEventStatus jobEventStatus, final Object jobEvent) {
+    JobEventStatus mergeEventResult(boolean success, final JobEventStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
         if (jobEvent instanceof JobPreExecutionEventImpl) {
             HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
                     jobEvent.optionsValues,
@@ -274,13 +276,15 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             )
             return new JobEventStatusImpl(
                     successful: success,
-                    optionsValues: newOptionsValues
+                    optionsValues: newOptionsValues,
+                    useNewValues: useNewValues
             )
         } else if (jobEvent instanceof JobPersistEvent) {
             TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
             return new JobEventStatusImpl(
                     successful: success,
-                    options: options
+                    options: options,
+                    useNewValues: useNewValues
             )
         } else if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, jobEventStatus)
@@ -325,8 +329,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     }
 
     /**
-     * Merge initial JobOption set with result of event if useNewValues is specified, or return null if
-     * the initial set was null and result value was null or not useNewValues was not set
+     * It replaces initial JobOption set with result of event if useNewValues is specified, or return null if
+     * the initial set was null and result value was null or useNewValues was not set
      * @param initial initial set, or null
      * @param jobEventStatus result of event
      * @return merged set, or null
@@ -334,11 +338,11 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     public TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobEventStatus jobEventStatus) {
         SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
 
-        if (jobEventStatus && jobEventStatus.useNewValues() && jobEventStatus.options) {
-            if (options) {
-                options.addAll(jobEventStatus.options)
-            } else {
+        if (jobEventStatus && jobEventStatus.useNewValues()) {
+            if(jobEventStatus.options){
                 options = new TreeSet<>(jobEventStatus.options)
+            }else{
+                options = null
             }
         }
         options
@@ -531,10 +535,11 @@ class NamedJobPlugin implements JobPlugin {
 class JobEventStatusImpl implements JobEventStatus {
     boolean successful
     Map optionsValues
+    boolean useNewValues
 
     @Override
     boolean useNewValues() {
-        optionsValues
+        useNewValues
     }
     StepExecutionContext executionContext
     SortedSet<JobOption> options
