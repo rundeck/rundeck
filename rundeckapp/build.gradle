@@ -166,6 +166,24 @@ dependencies {
     testRuntime "org.seleniumhq.selenium:selenium-firefox-driver"
     testRuntime "org.seleniumhq.selenium:selenium-remote-driver"
     testRuntime "org.seleniumhq.selenium:selenium-api"
+
+
+    // transitive dependencies constraints.
+    constraints {
+        compile("com.mchange:c3p0:0.9.5.4") {
+            because "version brought by quartz affected by CVE-2019-5427"
+        }
+        compile ('org.bouncycastle:bcprov-jdk15on:1.62') {
+            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+        }
+        compile ('org.bouncycastle:bcpg-jdk15on:1.62') {
+            because "version brought by rundeck:repository affected by CVE-2018-1000613"
+        }
+
+    }
+
+
+
 }
 grails{
     plugins{
