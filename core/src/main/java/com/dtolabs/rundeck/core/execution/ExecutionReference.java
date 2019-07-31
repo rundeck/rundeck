@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.jobs.JobReference;
 import java.util.Date;
 
 public interface ExecutionReference {
+    String getProject();
     String getId();
     String getFilter();
     String getOptions();

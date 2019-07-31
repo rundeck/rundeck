@@ -182,7 +182,7 @@ import rundeck.controllers.ScheduledExecutionController
         }
 
         sec.jobPluginService = mockWith(JobPluginService){
-            beforeJobSave{event -> return null}
+            beforeJobSave{job,event -> return null}
         }
         sec.frameworkService = mockWith(FrameworkService){
             authorizeProjectJobAll { framework, resource, actions, project -> return true }

@@ -1224,6 +1224,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listDescriptions()
         }
         controller.pluginService = Mock(PluginService)
+        controller.jobPluginService = Mock(JobPluginService)
         when:
         def result = controller.createFromExecution()
         then:

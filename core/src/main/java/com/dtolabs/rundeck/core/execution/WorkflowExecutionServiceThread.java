@@ -23,16 +23,12 @@
 */
 package com.dtolabs.rundeck.core.execution;
 
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
-import com.dtolabs.rundeck.core.jobs.IJobPluginService;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.JobPluginExecutionHandler;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
-import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl;
+import com.dtolabs.rundeck.plugins.jobs.JobEventResultImpl;
 
 /**
  * WorkflowExecutionServiceThread is ...
@@ -45,21 +41,21 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     private StepExecutionContext context;
     private WorkflowExecutionResult result;
     private LoggingManager loggingManager;
-    private IJobPluginService iJobPluginService;
+    private JobPluginExecutionHandler jobPluginHolder;
 
     public WorkflowExecutionServiceThread(
             WorkflowExecutionService eservice,
             WorkflowExecutionItem eitem,
             StepExecutionContext econtext,
             LoggingManager loggingManager,
-            IJobPluginService iJobPluginService
+            JobPluginExecutionHandler jobPluginHolder
     )
     {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
         this.loggingManager = loggingManager;
-        this.iJobPluginService = iJobPluginService;
+        this.jobPluginHolder = jobPluginHolder;
     }
 
     public void run() {
@@ -83,15 +79,24 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
 
     public WorkflowExecutionResult runWorkflow() {
         try {
-            JobExecutionEventImpl beforeEvent = new JobExecutionEventImpl(context);
-            iJobPluginService.beforeJobStarts(beforeEvent);
+            StepExecutionContext executionContext = context;
+            if (jobPluginHolder != null) {
+                //TODO: check success and stop execution
+                executionContext =
+                        jobPluginHolder.beforeJobStarts(context)
+                                       .map(JobEventStatus::getExecutionContext)
+                                       .orElse(null);
+            }
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            setResult(executorForItem.executeWorkflow(context, weitem));
+            setResult(executorForItem.executeWorkflow(executionContext, weitem));
             success = getResult().isSuccess();
             if (null != getResult().getException()) {
                 thrown = getResult().getException();
             }
-            iJobPluginService.afterJobEnds(new JobExecutionEventImpl(context));
+
+            if (null != jobPluginHolder) {
+                jobPluginHolder.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+            }
             return getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);

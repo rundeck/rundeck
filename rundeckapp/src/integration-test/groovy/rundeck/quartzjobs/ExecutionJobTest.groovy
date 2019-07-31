@@ -22,16 +22,12 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.gorm.transactions.Rollback
-import grails.gorm.transactions.Transactional
 
 //import grails.test.GrailsMock
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification

@@ -29,9 +29,11 @@ import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -41,6 +43,7 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
+import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -146,7 +149,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def executionUtilService
     def fileUploadService
     JobSchedulerService jobSchedulerService
-    def jobPluginService
+    JobPluginService jobPluginService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -2597,6 +2600,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
+        if (params.jobPlugins) {
+            //validate job plugins
+
+            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
+            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
+            def result = _updateJobPluginsData(configSet, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+                params['jobPluginValidation'] = result.validations
+            }
+        }
         //try to save workflow
         if (!failed && null != scheduledExecution.workflow) {
             if (!scheduledExecution.workflow.validate()) {
@@ -2819,6 +2833,87 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def addrs = arr.findAll { it.trim() }.join(",")
         def n = new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
         [failed:false,notification: n]
+    }
+
+    /**
+     * Convert params into PluginConfigSet
+     * @param jobPluginParams
+     * @return
+     */
+    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams, Collection<String> defaultEnabledList = []) {
+        List<String> keys = [jobPluginParams?.keys].flatten().findAll { it }
+
+        List<PluginProviderConfiguration> configs = []
+
+        keys.each { key ->
+            def enabled = jobPluginParams.enabled?.get(key)
+            def pluginType = jobPluginParams.type[key]?.toString()
+            if (enabled != 'true' && !defaultEnabledList.contains(pluginType)) {
+                return
+            }
+            Map config = jobPluginParams[key]?.configMap ?: [:]
+            configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
+        }
+        PluginConfigSet.with ServiceNameConstants.JobPlugin, configs
+    }
+
+    /**
+     * Validate input config set, update job plugin settings if all are valid
+     * @param pluginConfigSet config set
+     * @param scheduledExecution job
+     * @param projectProperties
+     * @return [failed:boolean, validations: Map<String,Validator.Report>]
+     */
+    private Map _updateJobPluginsData(
+            PluginConfigSet pluginConfigSet,
+            ScheduledExecution scheduledExecution
+    ) {
+        Map<String,Validator.Report> pluginValidations = [:]
+        boolean err = false
+        pluginConfigSet.pluginProviderConfigs.each { PluginProviderConfiguration providerConfig ->
+            def pluginType = providerConfig.provider
+            Map config = providerConfig.configuration
+            Map validation = validateJobPlugin(pluginType, config, scheduledExecution)
+            if (validation.failed) {
+                err = true
+                if (validation.validation) {
+                    pluginValidations[pluginType] = validation.validation.report
+                }
+            }
+        }
+        if (!err) {
+            jobPluginService.setJobPluginConfigSetForJob(scheduledExecution, pluginConfigSet)
+        }
+        [failed: err, validations: pluginValidations]
+    }
+
+    private Map validateJobPlugin(
+            String type,
+            Map config,
+            ScheduledExecution scheduledExecution
+    ) {
+        def failed = false
+        def validation = pluginService.validatePluginConfig(type, JobPlugin, scheduledExecution.project, config)
+        if (validation == null) {
+            scheduledExecution.errors.rejectValue(
+                    'pluginConfig',
+                    'scheduledExecution.jobPlugins.pluginTypeNotFound.message',
+                    [type] as Object[],
+                    'Job Plugin type "{0}" was not found or could not be loaded'
+            )
+            return [failed: true]
+        }
+        if (!validation.valid) {
+            failed = true
+
+            scheduledExecution.errors.rejectValue(
+                    'pluginConfig',
+                    'scheduledExecution.jobPlugins.invalidPlugin.message',
+                    [type] as Object[],
+                    'Invalid Configuration for Job plugin: {0}'
+            )
+        }
+        [failed: failed, validation: validation]
     }
 
     /**
@@ -3187,6 +3282,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     scheduledExecution.removeFromNotifications(it)
                     todiscard << it
                 }
+            }
+        }
+        def jobPluginConfig = jobPluginService.getJobPluginConfigSetForJob(params)
+        if (jobPluginConfig != null) {
+            //validate job plugins
+            def result = _updateJobPluginsData(jobPluginConfig, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+//                params['jobPluginValidation'] = result.validations
             }
         }
 
@@ -3776,6 +3880,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = result.failed
             }
         }
+
+        if (params.jobPlugins) {
+            //validate job plugins
+            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
+            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
+            def result = _updateJobPluginsData(configSet, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+                params['jobPluginValidation'] = result.validations
+            }
+        }
         if (scheduledExecution.doNodedispatch) {
             if (!scheduledExecution.nodeThreadcount) {
                 scheduledExecution.nodeThreadcount = 1
@@ -4176,7 +4291,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
         scheduleMap.project = scheduledExecution.project
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet, scheduledExecution?.filter)
-        def jobEventStatus = jobPluginService?.beforeJobSave(jobPersistEvent)
+        def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
             def result = validateOptions(scheduledExecution, rundeckOptions)

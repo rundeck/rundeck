@@ -187,6 +187,91 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             }
         }
 
+        /**
+         * Merges mergable contents from another builder, in general assigns values if the
+         * current builder does not have a value and merges contents where applicaable
+         *
+         * @param other
+         * @return this
+         */
+        public Builder merge(Builder other) {
+            if (null == ctx.frameworkProject) {
+                ctx.frameworkProject = other.ctx.frameworkProject;
+            }
+            if (null == ctx.user) {
+                ctx.user = other.ctx.user;
+            }
+            if (null == ctx.nodeSet) {
+                ctx.nodeSet = other.ctx.nodeSet;
+            }
+            if (ctx.loglevel != other.ctx.loglevel) {
+                ctx.loglevel = other.ctx.loglevel;
+            }
+            if (null == ctx.nodes) {
+                ctx.nodes = other.ctx.nodes;
+            }
+            if (null == ctx.charsetEncoding) {
+                ctx.charsetEncoding = other.ctx.charsetEncoding;
+            }
+            ctx.dataContext.merge(other.ctx.dataContext);
+
+            if (null == ctx.privateDataContext) {
+                ctx.privateDataContext = other.ctx.privateDataContext;
+            }
+            if (null == ctx.executionListener) {
+                ctx.executionListener = other.ctx.executionListener;
+            }
+            if (null == ctx.workflowExecutionListener) {
+                ctx.workflowExecutionListener = other.ctx.workflowExecutionListener;
+            }
+            if (null == ctx.executionLogger) {
+                ctx.executionLogger = other.ctx.executionLogger;
+            }
+
+            if (null == ctx.framework) {
+                ctx.framework = other.ctx.framework;
+            }
+            if (null == ctx.authContext) {
+                ctx.authContext = other.ctx.authContext;
+            }
+            if (ctx.threadCount != other.ctx.threadCount) {
+                ctx.threadCount = other.ctx.threadCount;
+            }
+            if (null == ctx.nodeRankAttribute) {
+                ctx.nodeRankAttribute = other.ctx.nodeRankAttribute;
+            }
+            if (ctx.nodeRankOrderAscending != other.ctx.nodeRankOrderAscending) {
+                ctx.nodeRankOrderAscending = other.ctx.nodeRankOrderAscending;
+            }
+            if (null == ctx.storageTree) {
+                ctx.storageTree = other.ctx.storageTree;
+            }
+            if (null == ctx.jobService) {
+                ctx.jobService = other.ctx.jobService;
+            }
+            if (null == ctx.nodeService) {
+                ctx.nodeService = other.ctx.nodeService;
+            }
+            if (null == ctx.orchestrator) {
+                ctx.orchestrator = other.ctx.orchestrator;
+            }
+            if (null == ctx.outputContext) {
+                ctx.outputContext = other.ctx.outputContext;
+            }
+            ctx.sharedDataContext.merge(other.ctx.sharedDataContext.consolidate());
+            if (null == ctx.loggingManager) {
+                ctx.loggingManager = other.ctx.loggingManager;
+            }
+            if (ctx.singleNodeContext != other.ctx.singleNodeContext) {
+                ctx.singleNodeContext = other.ctx.singleNodeContext;
+            }
+            if (null == ctx.pluginControlService) {
+                ctx.pluginControlService = other.ctx.pluginControlService;
+            }
+
+            return this;
+        }
+
         public Builder loggingManager(LoggingManager loggingManager) {
             ctx.loggingManager = loggingManager;
             return this;

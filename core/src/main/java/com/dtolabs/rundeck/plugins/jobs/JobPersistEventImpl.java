@@ -9,12 +9,12 @@ import java.util.*;
 
 public class JobPersistEventImpl implements JobPersistEvent {
 
-    String projectName;
-    SortedSet<JobOption> options;
-    INodeSet nodes;
-    String userName;
-    String nodeFilter;
-    Map scheduledExecutionMap;
+    private String projectName;
+    private SortedSet<JobOption> options;
+    private INodeSet nodes;
+    private String userName;
+    private String nodeFilter;
+    private Map scheduledExecutionMap;
 
     public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes, String nodeFilter) throws ValidationException {
         this.scheduledExecutionMap = scheduledExecutionMap;
@@ -32,8 +32,27 @@ public class JobPersistEventImpl implements JobPersistEvent {
         this.nodeFilter = nodeFilter;
     }
 
-    public JobPersistEventImpl(JobPersistEventImpl origin) throws ValidationException {
-        this(origin.scheduledExecutionMap, origin.userName, origin.nodes, origin.nodeFilter);
+    public JobPersistEventImpl(
+            String projectName,
+            String userName,
+            INodeSet nodes,
+            String nodeFilter,
+            SortedSet<JobOption> options){
+        this.projectName = projectName;
+        this.userName = userName;
+        this.nodes = nodes;
+        this.nodeFilter = nodeFilter;
+        this.options = options;
+    }
+
+    public JobPersistEventImpl(JobPersistEvent origin) {
+        this(
+                origin.getProjectName(),
+                origin.getUserName(),
+                origin.getNodes(),
+                origin.getNodeFilter(),
+                origin.getOptions()
+        );
     }
 
     @Override

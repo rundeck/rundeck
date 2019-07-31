@@ -788,7 +788,84 @@
       </g:if>
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
+<feature:enabled name="job-plugin">
+    <g:if test="${jobPlugins}">
+        <g:set var="jobPluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('JobPlugin')?:[:]}"/>
+        <div class="tab-pane" id="tab_plugins">
+            <div class="help-block">
+                <g:message code="scheduledExecution.property.jobPluginConfig.help.text" />
+            </div>
+            <div class="list-group">
+                <g:each in="${jobPlugins}" var="plugin">
+                    <g:set var="pluginKey" value="${params.jobPlugin?.type?.get(pluginType)?:g.rkey()}"/>
+                    <g:set var="pluginType" value="${plugin.key}"/>
+                    <g:hiddenField name="jobPlugins.keys" value="${pluginKey}"/>
+                    <g:hiddenField name="jobPlugins.type.${pluginKey}" value="${pluginType}"/>
+                    <g:set var="pluginDescription" value="${plugin.value.description}"/>
+                    <g:set var="pluginConfig" value="${params.jobPlugin?.get(pluginKey)?.configMap ?: jobPluginConfigMap[pluginType]}"/>
 
+                        <div class="list-group-item">
+                            <g:if test="${pluginDescription}">
+                                <div class="form-group">
+
+                                    <div class="col-sm-12">
+                                        <div class="checkbox ">
+                                            <g:set var="prkey" value="${rkey()}"/>
+                                            <g:if test="${jobDefaultPlugins?.contains(pluginType)}">
+                                                <input type="checkbox"
+                                                       disabled
+                                                       checked
+                                                       title="Enabled by default for this project"
+                                                       name="jobPlugins.enabled.${pluginKey}"
+                                                       value="true"
+                                                       class="form-control disabled"
+                                                       id="jobPluginEnabled_${prkey}"/>
+                                            </g:if>
+                                            <g:else>
+                                                <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
+                                                            class="form-control"
+                                                            id="jobPluginEnabled_${prkey}"
+                                                            checked="${pluginConfig != null}"/>
+                                            </g:else>
+                                            <label for="jobPluginEnabled_${prkey}">
+                                                <g:render template="/framework/renderPluginDesc" model="${[
+                                                        serviceName    : 'JobPlugin',
+                                                        description    : pluginDescription,
+                                                        showPluginIcon : true,
+                                                        showNodeIcon   : false,
+                                                        hideTitle      : false,
+                                                        hideDescription: false,
+                                                        fullDescription: true
+                                                ]}"/>
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+
+                                <g:if test="${pluginDescription?.properties}">
+                                    <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
+                                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                            service:'JobPlugin',
+                                            provider:pluginDescription.name,
+                                            properties:pluginDescription?.properties,
+                                            report: params.jobPluginValidation?.get(pluginType),
+                                            prefix:prefix,
+                                            values:pluginConfig?:[:],
+                                            fieldnamePrefix:prefix,
+                                            origfieldnamePrefix:'orig.' + prefix,
+                                            allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                                    ]}"/>
+                                </g:if>
+                            </g:if>
+                        </div>
+
+                </g:each>
+            </div>
+        </div>
+    </g:if>
+</feature:enabled>
 
   %{--Log level--}%
   <div class="tab-pane" id="tab_other">
@@ -1179,7 +1256,12 @@ function getCurSEID(){
             })
             ;
             const jobDef = loadJsonData('jobDefinitionJSON')
-            window.jobeditor = new JobEditor(jobDef)
+            var jobeditor = new JobEditor(jobDef)
+            window.jobeditor = jobeditor
+            window._jobeditor = jobeditor
+<g:if test="${params.jobPluginValidation}">
+            jobeditor.addError('plugins');
+</g:if>
             initKoBind(null,{jobeditor:jobeditor})
         }
 

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
+import rundeck.services.JobPluginService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.ScheduledExecutionStats
 
@@ -1983,6 +1984,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
             fwkControl.demand.getPluginControlService { null }
+            fwkControl.demand.getFrameworkProject {String name-> null }
             fwkControl.demand.projectNames { [] }
             fwkControl.demand.getProjectGlobals { [:] }
             fwkControl.demand.getRundeckFramework {-> return null }
@@ -2009,6 +2011,11 @@ class ScheduledExecutionControllerTests  {
             sec.notificationService = pControl.proxyInstance()
             sec.pluginService = mockWith(PluginService){
                 listPlugins(){[]}
+            }
+
+            sec.jobPluginService = mockWith(JobPluginService){
+                listEnabledJobPlugins{ctrl->[:]}
+                getProjectDefaultJobPluginTypes{proj->[]}
             }
 
             def params = [id: se.id.toString()]
@@ -3358,6 +3365,7 @@ class ScheduledExecutionControllerTests  {
         fwkControl.demand.getPluginControlService{proj->plgControlSrv.proxyInstance()}
         fwkControl.demand.getNodeStepPluginDescriptions { [[name:'test'],[name:'test2']] }
         fwkControl.demand.getStepPluginDescriptions { [] }
+        fwkControl.demand.getFrameworkProject {name-> }
         fwkControl.demand.getProjectGlobals { [:] }
         fwkControl.demand.projectNames { [] }
         sec.frameworkService = fwkControl.proxyInstance()
@@ -3376,6 +3384,11 @@ class ScheduledExecutionControllerTests  {
         sec.notificationService = pControl.proxyInstance()
         sec.pluginService = mockWith(PluginService){
             listPlugins(){[]}
+        }
+
+        sec.jobPluginService = mockWith(JobPluginService){
+            listEnabledJobPlugins{ctrl->[:]}
+            getProjectDefaultJobPluginTypes{proj->[]}
         }
         def params = [id: se.id.toString()]
         sec.params.putAll(params)
