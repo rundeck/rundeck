@@ -16,12 +16,9 @@ public class JobPersistEventImpl implements JobPersistEvent {
     private String nodeFilter;
     private Map scheduledExecutionMap;
 
-    public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes) throws ValidationException {
+    public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes, String nodeFilter) throws ValidationException {
         this.scheduledExecutionMap = scheduledExecutionMap;
         if(this.scheduledExecutionMap != null){
-            if(this.scheduledExecutionMap.containsKey("nodefilters")){
-                this.nodeFilter = (String)((LinkedHashMap) this.scheduledExecutionMap.get("nodefilters")).get("filters");
-            }
             if(this.scheduledExecutionMap.containsKey("project")){
                 this.projectName = (String) this.scheduledExecutionMap.get("project");
             }
@@ -32,6 +29,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
         }
         this.userName = userName;
         this.nodes = nodes;
+        this.nodeFilter = nodeFilter;
     }
 
     public JobPersistEventImpl(
@@ -39,9 +37,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
             String userName,
             INodeSet nodes,
             String nodeFilter,
-            SortedSet<JobOption> options
-    ) throws ValidationException
-    {
+            SortedSet<JobOption> options){
         this.projectName = projectName;
         this.userName = userName;
         this.nodes = nodes;
@@ -49,7 +45,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
         this.options = options;
     }
 
-    public JobPersistEventImpl(JobPersistEvent origin) throws ValidationException {
+    public JobPersistEventImpl(JobPersistEvent origin) {
         this(
                 origin.getProjectName(),
                 origin.getUserName(),
@@ -86,7 +82,7 @@ public class JobPersistEventImpl implements JobPersistEvent {
         }
     }
 
-    public void setNewOptions(SortedSet<JobOption> options) {
+    public void setOptions(SortedSet<JobOption> options) {
         this.options = options;
     }
 }

@@ -82,10 +82,11 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             StepExecutionContext executionContext = context;
             if (jobPluginHolder != null) {
                 //TODO: check success and stop execution
-                executionContext =
+                StepExecutionContext newExecutionContext =
                         jobPluginHolder.beforeJobStarts(context)
                                        .map(JobEventStatus::getExecutionContext)
                                        .orElse(null);
+                executionContext = newExecutionContext != null? newExecutionContext: executionContext;
             }
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
             setResult(executorForItem.executeWorkflow(executionContext, weitem));

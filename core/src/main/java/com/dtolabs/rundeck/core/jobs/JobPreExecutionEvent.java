@@ -3,9 +3,10 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 
 public interface JobPreExecutionEvent {
 
@@ -17,9 +18,9 @@ public interface JobPreExecutionEvent {
 
     /**
      *
-     * @return ArrayList<LinkedHashMap> options of the job.
+     * @return List<LinkedHashMap> options of the job.
      */
-    ArrayList<LinkedHashMap> getOptions();
+    SortedSet<JobOption> getOptions();
 
     /**
      *
@@ -31,7 +32,7 @@ public interface JobPreExecutionEvent {
      *
      * @return Map<String, String> values setup to job options.
      */
-    HashMap getOptionsValues();
+    Map<String, String> getOptionsValues();
 
     /**
      *

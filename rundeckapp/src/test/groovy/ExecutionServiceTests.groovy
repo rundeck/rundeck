@@ -105,7 +105,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){scheduledExecution, authContext ->
+            getNodes(1..1){scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -153,7 +153,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -184,7 +184,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -232,7 +232,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -280,7 +280,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -322,7 +322,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -365,7 +365,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -441,7 +441,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -488,7 +488,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -527,7 +527,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -570,7 +570,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -613,7 +613,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -663,7 +663,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -712,7 +712,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -743,7 +743,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -776,7 +776,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -809,7 +809,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -841,7 +841,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -883,7 +883,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -2282,7 +2282,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -2327,7 +2327,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
@@ -2384,7 +2384,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
-            getNodes(1..1){ scheduledExecution, authContext ->
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
         }
