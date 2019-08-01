@@ -325,7 +325,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    auditEventsService(AuditEventsService, pluginService, frameworkService)
+    auditEventsService(AuditEventsService, frameworkService)
 
     scmJobImporter(ScmJobImporter)
 

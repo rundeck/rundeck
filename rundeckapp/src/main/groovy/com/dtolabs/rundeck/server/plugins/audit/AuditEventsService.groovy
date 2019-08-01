@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
-import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -37,25 +36,19 @@ class AuditEventsService
     static final Logger LOG = Logger.getLogger(AuditEventsService.class)
 
     final FrameworkService frameworkService
-    final PluginService pluginService
     final AsyncTaskExecutor asyncTaskExecutor
     final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
     private volatile Map<String, DescribedPlugin> installedPlugins = null
 
-    AuditEventsService(PluginService pluginService, FrameworkService frameworkService) {
+    AuditEventsService(FrameworkService frameworkService) {
 
-        this.pluginService = pluginService
         this.frameworkService = frameworkService
 
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
         asyncTaskExecutor.initialize()
-
-        // kick plugin loading
-        getListenerPlugins()
-
     }
 
 
@@ -69,8 +62,7 @@ class AuditEventsService
         if (installedPlugins == null) {
             synchronized (this) {
                 if (installedPlugins == null) {
-                    installedPlugins = pluginService
-                            .listPluginDescriptions(ServiceNameConstants.AuditEventListener)
+                    installedPlugins = frameworkService.pluginService.listPluginDescriptions(ServiceNameConstants.AuditEventListener)
                             .collectEntries {
                                 [(it.name): initializePluginInstance(it)]
                             }
@@ -88,7 +80,7 @@ class AuditEventsService
     private DescribedPlugin<AuditEventListener> initializePluginInstance(Description pluginDescription) {
         LOG.info("Initializing audit plugin instance: " + pluginDescription.name)
         // Get instance from plugin manager.
-        ConfiguredPlugin<AuditEventListener> plugin = pluginService.configurePlugin(
+        ConfiguredPlugin<AuditEventListener> plugin = frameworkService.pluginService.configurePlugin(
                 pluginDescription.name,
                 null,
                 null,
@@ -122,6 +114,9 @@ class AuditEventsService
             LOG.error("Null authentication on login failure event. Cancelling event dispatch.")
             return
         }
+
+
+
 
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
