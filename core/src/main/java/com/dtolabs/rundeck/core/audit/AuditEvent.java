@@ -13,14 +13,6 @@ import java.util.List;
  */
 public interface AuditEvent extends Serializable {
 
-
-  /**
-   *
-   * @return The system framework interface..
-   */
-  Framework getFramework();
-
-
   /**
    * @return Timestamp of the event.
    */

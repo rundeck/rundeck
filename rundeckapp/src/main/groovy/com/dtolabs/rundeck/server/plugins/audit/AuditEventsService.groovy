@@ -1,9 +1,12 @@
-package rundeck.services.audit
+package com.dtolabs.rundeck.server.plugins.audit
 
 import com.dtolabs.rundeck.core.audit.AuditEvent
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.core.plugins.DescribedPlugin
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
-import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
@@ -14,6 +17,7 @@ import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.authentication.logout.LogoutHandler
 import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -27,25 +31,75 @@ import java.util.stream.Collectors
  * @author Alberto Hormazabal
  *
  */
-@Transactional
 class AuditEventsService
         implements LogoutHandler {
 
     static final Logger LOG = Logger.getLogger(AuditEventsService.class)
 
     final FrameworkService frameworkService
+    final PluginService pluginService
     final AsyncTaskExecutor asyncTaskExecutor
     final CopyOnWriteArrayList<AuditEventListener> internalListeners = new CopyOnWriteArrayList<>()
 
-    AuditEventsService(FrameworkService frameworkService) {
+    private volatile Map<String, DescribedPlugin> installedPlugins = null
+
+    AuditEventsService(PluginService pluginService, FrameworkService frameworkService) {
+
+        this.pluginService = pluginService
         this.frameworkService = frameworkService
 
         asyncTaskExecutor = new ThreadPoolTaskExecutor()
         asyncTaskExecutor.setCorePoolSize(1)
         asyncTaskExecutor.setMaxPoolSize(1)
         asyncTaskExecutor.initialize()
+
+        // kick plugin loading
+        getListenerPlugins()
+
     }
 
+
+    /**
+     * Returns the cache of listener plugins.
+     * Cache is implemented lazily, so if the cache is not initialized, the plugins
+     * will be instanced and configured, and the cache will be built.
+     * @return
+     */
+    private Map<String, DescribedPlugin<AuditEventListener>> getListenerPlugins() {
+        if (installedPlugins == null) {
+            synchronized (this) {
+                if (installedPlugins == null) {
+                    installedPlugins = pluginService
+                            .listPluginDescriptions(ServiceNameConstants.AuditEventListener)
+                            .collectEntries {
+                                [(it.name): initializePluginInstance(it)]
+                            }
+                }
+            }
+        }
+        installedPlugins
+    }
+
+    /**
+     * Initializes a plugin instance.
+     * @param pluginDescription
+     * @return
+     */
+    private DescribedPlugin<AuditEventListener> initializePluginInstance(Description pluginDescription) {
+        LOG.info("Initializing audit plugin instance: " + pluginDescription.name)
+        // Get instance from plugin manager.
+        ConfiguredPlugin<AuditEventListener> plugin = pluginService.configurePlugin(
+                pluginDescription.name,
+                null,
+                null,
+                frameworkService.rundeckFramework as Framework,
+                AuditEventListener.class)
+
+        // Initialize plugin
+        plugin.instance.init()
+
+        return new DescribedPlugin<AuditEventListener>(plugin.instance, pluginDescription, pluginDescription.name)
+    }
 
     /**
      * Handles and authentication success event
@@ -159,7 +213,7 @@ class AuditEventsService
             }
 
             // dispatch to plugins
-            frameworkService.pluginService.listPlugins(AuditEventListener.class)
+            this.listenerPlugins
                     .values().stream()
                     .peek {
                         if (LOG.isDebugEnabled()) {
@@ -341,11 +395,6 @@ class AuditEventsService
                 final action = AuditEventBuilder.this.action
                 final rtype = AuditEventBuilder.this.resourceType
                 final rname = AuditEventBuilder.this.resourceName
-
-                @Override
-                Framework getFramework() {
-                    return frameworkService.rundeckFramework as Framework
-                }
 
                 @Override
                 Date getTimestamp() {
