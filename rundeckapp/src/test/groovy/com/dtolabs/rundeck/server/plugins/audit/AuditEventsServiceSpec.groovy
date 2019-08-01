@@ -1,4 +1,4 @@
-package rundeck.services.audit
+package com.dtolabs.rundeck.server.plugins.audit
 
 import grails.testing.services.ServiceUnitTest
 import spock.lang.Specification

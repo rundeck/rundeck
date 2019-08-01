@@ -9,6 +9,12 @@ import com.dtolabs.rundeck.core.audit.AuditEvent;
  */
 public interface AuditEventListener {
 
+  /**
+   * Initialization method called after the plugin instance has been created.
+   * Use this method to perform initialization procedures.
+   */
+  default void init() {}
+
 
   /**
    * Called when any kind of event is fired by the system.
