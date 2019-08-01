@@ -38,8 +38,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -47,6 +49,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -3952,7 +3955,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext)
         def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes, nodeFilter)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
+                props.project,
+                props.user,
+                optparams,
+                nodes,
+                nodeFilter,
+                scheduledExecutionService.getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         try {
             return jobPluginService.beforeJobExecution(scheduledExecution, event)
         } catch (JobPluginException jpe) {

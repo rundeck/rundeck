@@ -238,10 +238,10 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             return new JobPreExecutionEventImpl(
                     jobEvent.projectName,
                     jobEvent.userName,
-                    jobEvent.scheduledExecutionMap,
                     newOptionsValues,
                     jobEvent.nodes,
-                    jobEvent.nodeFilter
+                    jobEvent.nodeFilter,
+                    jobEvent.getOptions()
             )
         } else if (jobEvent instanceof JobPersistEvent) {
             TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)

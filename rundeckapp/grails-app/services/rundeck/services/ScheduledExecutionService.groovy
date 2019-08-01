@@ -37,11 +37,13 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -4290,7 +4292,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map scheduleMap = scheduledExecution.toMap()
         INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
         scheduleMap.project = scheduledExecution.project
-        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet, scheduledExecution?.filter)
+        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
+                scheduleMap.project,
+                authContext.getUsername(),
+                nodeSet,
+                scheduledExecution?.filter,
+                getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
@@ -4399,5 +4406,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                 authContext)
         nodeSet
+    }
+
+    def getOptionsFromScheduleExecutionMap(scheduledExecutionMap) {
+        def options = new TreeSet<JobOption>()
+        if(scheduledExecutionMap != null){
+            if(scheduledExecutionMap.containsKey("options")){
+                def originalOptions = scheduledExecutionMap.get("options")
+                if(originalOptions != null && !originalOptions.isEmpty()){
+                    for (LinkedHashMap originalOption: originalOptions) {
+                        JobOptionImpl option = new JobOptionImpl(originalOption)
+                        options.add(option)
+                    }
+                }
+            }
+        }
+        return options
     }
 }
