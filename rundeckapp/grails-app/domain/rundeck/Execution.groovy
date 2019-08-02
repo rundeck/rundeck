@@ -51,6 +51,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
     String serverNodeUUID
     Integer nodeThreadcount=1
     Long retryOriginalId
+    Long retryPrevId
     String extraMetadata
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
@@ -112,6 +113,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
+        retryPrevId(nullable: true)
         excludeFilterUncheck(nullable: true)
         extraMetadata(nullable: true)
     }
@@ -301,6 +303,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         if(this.retryOriginalId){
             map.retryOriginalId=retryOriginalId
         }
+        if (this.retryPrevId) {
+            map.retryPrevId = retryPrevId
+        }
         if(this.retry){
             map.retry=this.retry
         }
@@ -365,6 +370,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         }
         if(data.retryOriginalId){
             exec.retryOriginalId= Long.valueOf(data.retryOriginalId)
+        }
+        if (data.retryPrevId) {
+            exec.retryPrevId = Long.valueOf(data.retryPrevId)
         }
         if(data.retry){
             exec.retry=data.retry
@@ -444,6 +452,9 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
         return new ExecutionReferenceImpl(
                 project: project,
                 id: id,
+                retryOriginalId: retryOriginalId?.toString(),
+                retryPrevId: retryPrevId?.toString(),
+                retryNextId: retryExecution?.id?.toString(),
                 options: argString,
                 filter: filter,
                 job: jobRef,
