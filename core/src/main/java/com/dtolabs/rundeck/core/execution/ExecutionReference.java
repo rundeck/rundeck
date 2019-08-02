@@ -9,6 +9,29 @@ import java.util.Map;
 public interface ExecutionReference {
     String getProject();
     String getId();
+
+    /**
+     * If this execution is a retry, return the ID of the original execution
+     * @return
+     */
+    default String getRetryOriginalId() {
+        return null;
+    }
+
+    /**
+     * If this execution is a retry, return the ID of the previous execution
+     * @return
+     */
+    default String getRetryPrevId() {
+        return null;
+    }
+    /**
+     * If this execution was retried, return the ID of the retry execution
+     * @return
+     */
+    default String getRetryNextId() {
+        return null;
+    }
     String getFilter();
     String getOptions();
     JobReference getJob();

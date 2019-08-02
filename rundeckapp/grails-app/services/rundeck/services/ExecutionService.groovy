@@ -968,6 +968,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             jobcontext.retryInitialExecId="0"
         }
+        if(execution.retryAttempt>0 && execution.retryPrevId!=null){
+            jobcontext.retryPrevExecId=Long.toString(execution.retryPrevId)
+        }else{
+            jobcontext.retryPrevExecId="0"
+        }
         jobcontext.wasRetry=Boolean.toString(execution.retryAttempt?true:false)
         jobcontext.threadcount=Integer.toString(execution.nodeThreadcount?:1)
         jobcontext
@@ -1896,6 +1901,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
+                                      retryPrevId:params.retryPrevId?:null,
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
@@ -2039,13 +2045,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(originalId>0){
             input.retryOriginalId = originalId
         }
+        if(prevId>0){
+            input.retryPrevId = prevId
+        }
         def Execution e = null
         boolean success = false
         try {
 
             Map allowedOptions = input.subMap(
                     ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
-                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','meta']
+                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','retryPrevId','meta']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
@@ -2269,7 +2278,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
