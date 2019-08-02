@@ -233,17 +233,7 @@ class JobStateService implements AuthorizingJobService {
         if(!isAuth){
             throw new ExecutionNotFound("Execution not found", id, project)
         }
-
-        JobReferenceImpl jobRef
-        if(se) {
-            jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
-                    project: se.project)
-        }
-        new ExecutionReferenceImpl(
-                project: exec.project, id: exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
-                dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList,
-                dateCompleted:exec.dateCompleted, failedNodeList: exec.failedNodeList)
-
+        return exec.asReference()
     }
 
 
@@ -304,14 +294,18 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
-        if (result && result.success && result.executionId) {
-            return new ExecutionReferenceImpl(
-                id: result.executionId,
-                job: jobReference,
-                filter: jobFilter,
-                options: result.execution?.argString,
-                dateStarted: result.execution?.dateStarted
-            )
+        if (result && result.success) {
+            if (result.execution) {
+                return result.execution.asReference()
+            } else if (result.executionId) {
+                return new ExecutionReferenceImpl(
+                        id: result.executionId,
+                        job: jobReference,
+                        filter: jobFilter,
+                        options: result.execution?.argString,
+                        dateStarted: result.execution?.dateStarted
+                )
+            }
         } else {
             throw new JobExecutionError(
                 result?.message ?: result?.error ?: "Unknown: ${result}",
@@ -398,26 +392,7 @@ class JobStateService implements AuthorizingJobService {
         def total=results.total
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(auth,result,[AuthConstants.ACTION_READ])
-        def idList = []
-        filtered.each { Execution exec->
-            ScheduledExecution se = exec.scheduledExecution
-            JobReferenceImpl jobRef
-            if(se){
-                jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
-                        project: se.project)
-            } else {
-                jobRef = null
-            }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(
-                    project: exec.project, id: exec.id, options: exec.argString,
-                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, dateCompleted:exec.dateCompleted,
-                    status: exec.status, succeededNodeList: exec.succeededNodeList,
-                    failedNodeList: exec.failedNodeList)
-            if(!se && exec.workflow && exec.workflow.commands && exec.workflow.commands[0]){
-                execRef.adhocCommand = exec.workflow.commands[0].summarize()
-            }
-            idList.push(execRef)
-        }
-        return [result:idList, total:idList.size()]
+        def reflist = filtered.collect { it.asReference() }
+        return [result:reflist, total:reflist.size()]
     }
 }
