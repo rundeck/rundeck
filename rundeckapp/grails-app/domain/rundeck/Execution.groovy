@@ -440,6 +440,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     ExecutionReference asReference(Closure<String> genTargetNodes = null) {
         JobReferenceImpl jobRef = null
+        String adhocCommand = null
         if (scheduledExecution) {
             jobRef = new JobReferenceImpl(
                     id: scheduledExecution.extid,
@@ -447,6 +448,8 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                     groupPath: scheduledExecution.groupPath,
                     project: scheduledExecution.project
             )
+        } else if (workflow && workflow.commands && workflow.commands[0]) {
+            adhocCommand = workflow.commands[0].summarize()
         }
         String targetNodes = genTargetNodes?.call(this)
         return new ExecutionReferenceImpl(
@@ -458,6 +461,7 @@ class Execution extends ExecutionContext implements EmbeddedJsonData {
                 options: argString,
                 filter: filter,
                 job: jobRef,
+                adhocCommand: adhocCommand,
                 dateStarted: dateStarted,
                 status: status,
                 succeededNodeList: succeededNodeList,
