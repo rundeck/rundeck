@@ -26,6 +26,6 @@ public interface JobEventStatus {
     /**
      * @return StepExecutionContext of the event.
      */
-    StepExecutionContext getExecutionContext();
+    default StepExecutionContext getExecutionContext(){ return null; }
 
 }
