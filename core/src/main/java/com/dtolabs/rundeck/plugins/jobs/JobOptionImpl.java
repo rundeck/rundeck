@@ -359,12 +359,12 @@ public class JobOptionImpl implements JobOption, Comparable {
 
     @Override
     public int compareTo(Object o) {
-        JobOptionImpl bla = (JobOptionImpl)o;
-        if (null != sortIndex && null != bla.sortIndex) {
-            return sortIndex.compareTo(bla.sortIndex);
-        } else if (null == sortIndex && null == bla.sortIndex
+        JobOptionImpl option = (JobOptionImpl)o;
+        if (null != sortIndex && null != option.sortIndex) {
+            return sortIndex.compareTo(option.sortIndex);
+        } else if (null == sortIndex && null == option.sortIndex
             && name != null) {
-            return name.compareTo(bla.name);
+            return name.compareTo(option.name);
         } else {
             return sortIndex != null ? -1 : 1;
         }
