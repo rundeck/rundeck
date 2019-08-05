@@ -643,17 +643,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution) {
-        rescheduleJob(scheduledExecution, false, null, null)
+        rescheduleJob(scheduledExecution, false, null, null, false)
     }
 
-    def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
+    def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
         if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
             //verify cluster member is schedule owner
 
             def nextdate = null
             def nextExecNode = null
             try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
@@ -700,7 +700,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             try {
                 def nexttime = null
                 def nextExecNode = null
-                (nexttime, nextExecNode) = scheduleJob(se, null, null)
+                (nexttime, nextExecNode) = scheduleJob(se, null, null, true)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -1083,7 +1083,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 AuthConstants.ACTION_RUN,se.project)
     }
 
-    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
+    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName, boolean forceLocal=false) {
         def jobid = "${se.generateFullName()} [${se.extid}]"
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
@@ -1101,6 +1101,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "$jobDesc, but job execution is disabled."
             )
             return [null, null];
+        }
+
+        def data=["project": se.project,
+                  "jobId":se.uuid]
+
+        if(!forceLocal){
+            boolean remoteAssign = jobSchedulerService.scheduleRemoteJob(data)
+
+            if(remoteAssign){
+                return [null, null]
+            }
         }
 
         def jobDetail = createJobDetail(se)
@@ -2120,7 +2131,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (scheduledExecution.save(flush: true)) {
-            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
+            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup, true)
             return [success: true, scheduledExecution: scheduledExecution]
         } else {
             scheduledExecution.discard()
@@ -2280,13 +2291,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
+        boolean shouldreSchedule = false
+        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if(frameworkService.isClusterModeEnabled()){
 
             if (originalCron != scheduledExecution.generateCrontabExression() ||
                 originalSchedule != scheduledExecution.scheduleEnabled ||
                 originalExecution != scheduledExecution.executionEnabled ||
                 originalTz != scheduledExecution.timeZone ||
-                oldsched != scheduledExecution.scheduled
+                oldsched != scheduledExecution.scheduled ||
+                renamed
             ) {
                 def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
                             serverUUID   : frameworkService.serverUUID,
@@ -2298,13 +2313,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                    //schedule meesage want sent , it should be ran locally
+                    shouldreSchedule = true
                 }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID
             }
+        }else{
+            shouldreSchedule = true
         }
-        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if (renamed) {
             changeinfo.rename = true
             changeinfo.origName = oldjobname
@@ -2636,7 +2655,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             resultFromJobPlugin = runBeforeSave(scheduledExecution, authContext)
         }
         if (resultFromJobPlugin.success && !failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project) && shouldreSchedule) {
                 def nextdate = null
                 def nextExecNode = null
                 try {

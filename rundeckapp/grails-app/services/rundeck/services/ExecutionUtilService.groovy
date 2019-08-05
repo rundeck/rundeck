@@ -386,4 +386,42 @@ class ExecutionUtilService {
         builder.objToDom("executions", [execution: map], xml)
     }
 
+    def runRefJobWithTimer(Thread thread, long startTime, boolean shouldCheckTimeout, long timeoutms){
+
+        boolean never = true
+        def interrupt = false
+        int killcount = 0
+        def killLimit = 100
+        while (thread.isAlive() || never) {
+            never = false
+            try {
+                thread.join(1000)
+            } catch (InterruptedException e) {
+                //interrupt
+                interrupt = true
+            }
+            if (thread.interrupted) {
+                interrupt = true
+            }
+            def duration = System.currentTimeMillis() - startTime
+            if (shouldCheckTimeout
+                    && duration > timeoutms
+            ) {
+                interrupt = true
+            }
+            if (interrupt) {
+                if (killcount < killLimit) {
+                    //send wave after wave
+                    thread.abort()
+                    Thread.yield();
+                    killcount++;
+                } else {
+                    //reached pre-set kill limit, so shut down
+                    thread.stop()
+                }
+            }
+        }
+
+        return [result: thread.result, interrupt: interrupt]
+    }
 }

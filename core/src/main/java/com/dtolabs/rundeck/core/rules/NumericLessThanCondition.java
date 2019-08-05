@@ -16,7 +16,13 @@ public class NumericLessThanCondition implements Condition {
         if (value == null) {
             return false;
         }
-        Float fValue = NumericCondition.extractFloat(value);
+        Float fValue;
+        String nValue = input.getState().get(value);
+        if(nValue == null){
+            fValue = NumericCondition.extractFloat(value);
+        }else{
+            fValue = NumericCondition.extractFloat(nValue);
+        }
         Float fObject = NumericCondition.extractFloat(anObject);
         return fObject<fValue;
     }

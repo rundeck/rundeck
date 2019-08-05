@@ -1549,7 +1549,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
             [
                     optionSelect : opt,
-                    values       : ["A", "B", "C"],
+                    values       : remoteValues,
                     srcUrl       : "cleanUrl",
                     err          : null
             ]
@@ -1561,6 +1561,37 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         where:
         opts                                           | remoteValues
         ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+
+    }
+
+    def "opt enforced allowed values from Remote Url with or without default value"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, defaultValue: defaultValue, optionValues: null)
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
+            [
+                    optionSelect : opt,
+                    values       : remoteValues,
+                    srcUrl       : "cleanUrl",
+                    err          : null
+            ]
+        }
+        when:
+
+        HashMap optparams = service.parseJobOptionInput([:], se, null)
+
+        then:
+
+
+        optparams[opt.name] == optValue
+
+
+        where:
+        defaultValue | optValue                                       | remoteValues
+        "B"          | "B"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        null         | "A"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
 
     }
 
@@ -4671,5 +4702,110 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         success      | trigger
         true         | 'success'
         false        | 'failure'
+    }
+
+    def "parent job fails if the job ref goes timeout using option variable"(){
+        given:
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                timeout: '${option.timeout}',
+                description: 'a job',
+                argString: '-args b -timeout 3s',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'sleep 10']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+
+        def datacontext = [job:[execid:e1.id]]
+
+
+        def nodeSet = new NodeSetImpl()
+        def node1 = new NodeEntryImpl('node1')
+        nodeSet.putNode(node1)
+
+        service.fileUploadService = Mock(FileUploadService)
+        service.executionUtilService = Mock(ExecutionUtilService)
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(*_) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args ->
+                nodeSet
+            }
+        }
+
+        service.notificationService = Mock(NotificationService)
+        def framework = Mock(Framework)
+
+        def origContext = Mock(StepExecutionContext){
+            getDataContext()>>datacontext
+            getStepNumber()>>1
+            getStepContext()>>[]
+            getNodes()>> nodeSet
+            getFramework() >> framework
+
+        }
+        JobRefCommand item = ExecutionItemFactory.createJobRef(
+                group+'/'+jobname,
+                ['args', 'timeout'] as String[],
+                false,
+                null,
+                true,
+                '.*',
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                project,
+                false,
+                false,
+                null,
+                false,
+                false
+        )
+
+        def wresult = Mock(WorkflowExecutionResult){
+            isSuccess()>>false
+        }
+        service.metricService = Mock(MetricService){
+            withTimer(_,_,_)>>{classname, name,  closure ->
+                closure()
+                [result:wresult,interrupt:true]
+            }
+        }
+        def createFailure = { FailureReason reason, String msg ->
+            return new StepExecutionResultImpl(null, reason, msg)
+        }
+        def createSuccess = {
+            return new StepExecutionResultImpl()
+        }
+        when:
+        def res = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        then:
+        1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
+        res instanceof StepExecutionResultImpl
+        !res.success
+
     }
 }

@@ -19,11 +19,6 @@
   - limitations under the License.
   --}%
 
-    <g:set var="tokenAdmin" value="${auth.resourceAllowedTest(
-            kind: 'user',
-            action: [AuthConstants.ACTION_ADMIN],
-            context: 'application'
-    )}"/>
     <g:set var="selfToken" value="${auth.resourceAllowedTest(
             kind: 'apitoken',
             action: [AuthConstants.GENERATE_USER_TOKEN],
@@ -43,16 +38,28 @@
         window.location.href = url + "?lang=" + jQuery("#language").val();
     }
     </script>
+
+    <g:jsMessages code="userController.page.profile.pager.summary"/>
+
     <g:set var="currentLang" value="${response.locale?.toString() ?: request.locale?.toString()}"/>
     <g:embedJSON
-        data="${[user         : user.login,
-                 roles        : authRoles,
-                 adminAuth    : tokenAdmin,
-                 userTokenAuth: selfToken,
-                 svcTokenAuth : serviceToken,
-                 language     : currentLang
+            data="${[user             : user.login,
+                     roles            : authRoles,
+                     adminAuth        : tokenAdmin,
+                     userTokenAuth    : selfToken,
+                     svcTokenAuth     : serviceToken,
+                     language         : currentLang,
+                     tokenPagingMax   : params.max,
+                     tokenPagingOffset: params.offset,
+                     tokenTotal       : tokenTotal,
+                     tokenTableSummaryText: message(code: "userController.page.profile.pager.summary",
+                             args: [
+                                     params.offset.toInteger() + 1,
+                                     Math.min((params.offset.toInteger() + params.max.toInteger()), tokenTotal),
+                                     tokenTotal
+                             ])
             ]}"
-        id="genPageData"/>
+            id="genPageData"/>
 </head>
 <body>
 <div class="container-fluid">
@@ -108,7 +115,7 @@
                   </div>
                   <div class="pageBody" id="userProfilePage">
                       <g:jsonToken id='api_req_tokens' url="${request.forwardURI}"/>
-                      <tmpl:user user="${user}" edit="${true}"/>
+                      <tmpl:user user="${user}" edit="${true}" tokens="${tokenList}" tokenTotal="${tokenTotal}" />
                   </div>
               </div>
           </div>
