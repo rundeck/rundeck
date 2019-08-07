@@ -1,5 +1,7 @@
 package org.rundeck.plugin.vars;
 
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
@@ -10,11 +12,12 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Plugin(name = ExportVarWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
 @PluginDescription(title = "Global Variable",
-        description = "Creates a global variable.")
+        description = "Creates a global variable to be used on other steps or in notifications.")
 
 
 public class ExportVarWorkflowStep implements StepPlugin {
@@ -65,6 +68,18 @@ public class ExportVarWorkflowStep implements StepPlugin {
             );
         }
         context.getOutputContext().addOutput(ContextView.global(),group,export,value);
+
+        MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
+                .getSharedDataContext()
+                .consolidate();
+
+        //move directly to global view to be used immediately on notifications.
+        DataContext data = sharedDataContext.getData(ContextView.global());
+        if( data!= null) {
+            HashMap<String, String> stringHashMap = new HashMap<>();
+            stringHashMap.put(export, value);
+            data.put(group, stringHashMap);
+        }
     }
 
     /**

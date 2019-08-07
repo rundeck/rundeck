@@ -1,6 +1,8 @@
 package org.rundeck.plugin.vars
 
+import com.dtolabs.rundeck.core.data.MultiDataContextImpl
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
@@ -43,6 +45,14 @@ class ExportVarWorkflowStepSpec extends Specification {
         then:
         1 * context.getOutputContext() >> Mock(SharedOutputContext) {
             1 * addOutput(ContextView.global(),group,name,value)
+        }
+
+        1 * context.getExecutionContext() >> Mock(ExecutionContext){
+            1 * getSharedDataContext() >> Mock(MultiDataContextImpl) {
+                1 * consolidate() >> Mock(MultiDataContextImpl) {
+                    1 * getData(ContextView.global())
+                }
+            }
         }
 
         where:
