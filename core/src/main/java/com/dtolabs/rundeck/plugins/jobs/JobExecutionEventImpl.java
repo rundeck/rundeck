@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.jobs.JobEventResult;
@@ -18,6 +19,7 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
     @Getter @Setter private StepExecutionContext executionContext;
     @Getter @Setter ExecutionReference execution;
     @Getter @Setter JobEventResult result;
+    @Getter @Setter WorkflowExecutionItem workflow;
 
 
     public JobExecutionEventImpl(StepExecutionContext executionContext) {
@@ -26,12 +28,27 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         }
     }
 
-    public JobExecutionEventImpl(StepExecutionContext executionContext, ExecutionReference execution) {
+    private JobExecutionEventImpl(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            WorkflowExecutionItem workflow
+    )
+    {
         this.executionContext = ExecutionContextImpl.builder(executionContext).build();
-        this.execution=execution;
+        this.execution = execution;
+        this.workflow = workflow;
     }
 
-    public JobExecutionEventImpl(
+    public static JobExecutionEvent beforeRun(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            WorkflowExecutionItem workflow
+    )
+    {
+        return new JobExecutionEventImpl(executionContext, execution, workflow);
+    }
+
+    private JobExecutionEventImpl(
             StepExecutionContext executionContext,
             ExecutionReference execution,
             JobEventResult result
@@ -40,6 +57,15 @@ public class JobExecutionEventImpl implements JobExecutionEvent {
         this.executionContext = ExecutionContextImpl.builder(executionContext).build();
         this.execution = execution;
         this.result = result;
+    }
+
+    public static JobExecutionEvent afterRun(
+            StepExecutionContext executionContext,
+            ExecutionReference execution,
+            JobEventResult result
+    )
+    {
+        return new JobExecutionEventImpl(executionContext, execution, result);
     }
 
 

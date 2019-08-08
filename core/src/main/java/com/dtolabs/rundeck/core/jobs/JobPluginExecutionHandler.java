@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.JobPluginException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
 import java.util.Optional;
 
@@ -15,7 +16,10 @@ public interface JobPluginExecutionHandler {
      * @param executionContext input execution context
      * @throws JobPluginException
      */
-    Optional<JobEventStatus> beforeJobStarts(final StepExecutionContext executionContext) throws JobPluginException;
+    Optional<JobEventStatus> beforeJobStarts(
+            final StepExecutionContext executionContext,
+            final WorkflowExecutionItem workflowItem
+    ) throws JobPluginException;
 
     /**
      * Job end event

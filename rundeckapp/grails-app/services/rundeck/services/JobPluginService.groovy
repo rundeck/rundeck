@@ -254,7 +254,9 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     jobEventStatus
             )
 
-            return new JobExecutionEventImpl(newContext, jobEvent.execution, jobEvent.result)
+            return jobEvent.result != null ?
+                   JobExecutionEventImpl.afterRun(newContext, jobEvent.execution, jobEvent.result) :
+                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
