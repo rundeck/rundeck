@@ -246,8 +246,21 @@ class JobStateService implements AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError {
+        runJob(auth, jobReference, jobArgString, jobFilter, asUser, null)
+    }
+
+    @Override
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            String jobArgString,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
         def inputOpts = ["argString": jobArgString]
-        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, meta)
     }
 
     @Override
@@ -259,19 +272,43 @@ class JobStateService implements AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError {
+        runJob(auth, jobReference, optionData, jobFilter, asUser, null)
+    }
+
+    @Override
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            Map optionData,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
         def inputOpts = [:]
         optionData.each { k, v ->
-            inputOpts['option.'+k] = v
+            inputOpts['option.' + k] = v
         }
         return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
     }
 
     ExecutionReference doRunJob(
-        String jobFilter,
-        Map inputOpts,
-        JobReference jobReference,
-        UserAndRolesAuthContext auth,
-        String asUser
+            String jobFilter,
+            Map inputOpts,
+            JobReference jobReference,
+            UserAndRolesAuthContext auth,
+            String asUser
+    ) {
+        doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, null)
+    }
+
+    ExecutionReference doRunJob(
+            String jobFilter,
+            Map inputOpts,
+            JobReference jobReference,
+            UserAndRolesAuthContext auth,
+            String asUser,
+            Map<String, ?> meta
     ) {
         if (jobFilter) {
             inputOpts.filter = jobFilter
@@ -292,6 +329,9 @@ class JobStateService implements AuthorizingJobService {
             se.project
         )) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
+        }
+        if (meta) {
+            inputOpts['meta'] = meta
         }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
         if (result && result.success) {
