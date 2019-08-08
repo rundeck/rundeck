@@ -96,7 +96,11 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             }
 
             if (null != jobPluginHolder) {
-                jobPluginHolder.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+                try {
+                    jobPluginHolder.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+                } catch (JobPluginException err) {
+                    err.printStackTrace(System.err);
+                }
             }
             return getResult();
         } catch (Throwable e) {
