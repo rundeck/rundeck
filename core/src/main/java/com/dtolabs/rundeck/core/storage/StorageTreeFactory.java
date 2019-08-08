@@ -138,6 +138,15 @@ public class StorageTreeFactory {
                     ), PathUtil.asPath("/keys")
             );
         }
+        if(null!=defaultConverters && defaultConverters.contains("FileStorageLayer")){
+            logger.debug("Configuring base converter: FileStorageLayer" );
+            builder=builder.convert(
+                    new StorageConverterPluginAdapter(
+                            "builtin:file-storage",
+                            new FileStorageLayer()
+                    ), PathUtil.asPath("/files")
+            );
+        }
         return builder;
     }
 

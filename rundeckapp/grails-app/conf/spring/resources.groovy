@@ -351,6 +351,22 @@ beans={
     }
     rundeckConfigStorageTree(rundeckConfigStorageTreeFactory:"createTree")
 
+    rundeckFileStorageTreeFactory(StorageTreeFactory){
+        frameworkPropertyLookup=ref('frameworkPropertyLookup')
+        pluginRegistry=ref("rundeckPluginRegistry")
+        storagePluginProviderService=ref('storagePluginProviderService')
+        storageConverterPluginProviderService=ref('storageConverterPluginProviderService')
+        configuration = application.config.rundeck?.files?.storage?.toFlatConfig()
+        storageConfigPrefix='provider'
+        converterConfigPrefix='converter'
+        baseStorageType='file'
+        baseStorageConfig=['baseDir':storageDir.getAbsolutePath()]
+        defaultConverters=['StorageTimestamperConverter', 'FileStorageLayer']
+        loggerName='org.rundeck.storage.events'
+    }
+    rundeckFileStorageTree(rundeckFileStorageTreeFactory:"createTree")
+    authFileRundeckStorageTree(AuthRundeckStorageTree, rundeckFileStorageTree)
+
     /**
      * Define groovy-based plugins as Spring beans, registered in a hash map
      */

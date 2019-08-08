@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionConte
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
+import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 import java.util.ArrayList;
@@ -68,6 +69,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private int stepNumber = 1;
     private List<Integer> stepContext;
     private StorageTree storageTree;
+    private StorageTree fileStorageTree;
+    private AuthStorageTree authStorageTree;
     private JobService jobService;
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
@@ -111,6 +114,16 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public StorageTree getStorageTree() {
         return storageTree;
+    }
+
+    @Override
+    public StorageTree getFileStorageTree() {
+        return fileStorageTree;
+    }
+
+    @Override
+    public AuthStorageTree getAuthStorageTree() {
+        return authStorageTree;
     }
 
     @Override
@@ -172,6 +185,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
                 ctx.nodeRankOrderAscending = original.isNodeRankOrderAscending();
                 ctx.storageTree = original.getStorageTree();
+                ctx.fileStorageTree = original.getFileStorageTree();
+                ctx.authStorageTree = original.getAuthStorageTree();
                 ctx.jobService = original.getJobService();
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
@@ -194,6 +209,16 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder storageTree(StorageTree storageTree) {
             ctx.storageTree = storageTree;
+            return this;
+        }
+
+        public Builder fileStorageTree(StorageTree fileStorageTree) {
+            ctx.fileStorageTree = fileStorageTree;
+            return this;
+        }
+
+        public Builder authStorageTree(AuthStorageTree authStorageTree) {
+            ctx.authStorageTree = authStorageTree;
             return this;
         }
 

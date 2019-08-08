@@ -39,6 +39,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.storage.AuthStorageTree
+import com.dtolabs.rundeck.core.storage.StorageUtil
+import com.dtolabs.rundeck.core.storage.files.FileStorageUtil
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -107,6 +110,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def LoggingService loggingService
     def WorkflowService workflowService
     def StorageService storageService
+    def AuthStorageTree authFileRundeckStorageTree
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -1484,6 +1488,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             pluginControlService(PluginControlServiceImpl.forProject(framework, origContext?.frameworkProject?:execMap.project))
             frameworkProject(origContext?.frameworkProject?:execMap.project)
             storageTree(storageService.storageTreeWithContext(authContext))
+            fileStorageTree(FileStorageUtil.fileStorageWrapper(StorageUtil.resolvedTree(authContext, authFileRundeckStorageTree)))
+            authStorageTree(storageService.authRundeckStorageTree)
             jobService(jobStateService.jobServiceWithAuthContext(authContext))
             nodeService(rundeckNodeService)
             user(userName)

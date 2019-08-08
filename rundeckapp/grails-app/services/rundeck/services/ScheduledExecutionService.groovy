@@ -1878,6 +1878,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 config.attachLogInFile = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['file']
                 config.attachLogInline = params[ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE] in ['inline']
             }
+            if (params[ScheduledExecutionController.NOTIFY_SUCCESS_EXTERNAL_ATTACH]!=null) {
+                config.attachExternalFile = params[ScheduledExecutionController.NOTIFY_SUCCESS_EXTERNAL_ATTACH] in ['true',true]
+                config.attachExternalPathName = params[ScheduledExecutionController.NOTIFY_SUCCESS_EXTERNAL_FILE_PATH_NAME_ATTACH]
+            }
             nots << [eventTrigger: ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME,
                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
                     configuration: config

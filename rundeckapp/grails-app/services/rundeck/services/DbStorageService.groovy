@@ -173,7 +173,10 @@ class DbStorageService implements NamespacedStorage{
     protected Storage findResource(String ns, Path path) {
         def dir, name
         (dir, name) = splitPath(path)
-        def found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        def found = false
+        Storage.withNewSession {
+            found = Storage.findByNamespaceAndDirAndName(ns?:null,dir, name)
+        }
         found
     }
 
@@ -317,10 +320,12 @@ class DbStorageService implements NamespacedStorage{
             return false;
         }
         try{
-            if(!saveStorage()){
-                while(retry){
-                    Storage.withNewSession {session->
-                        saveStorage()
+            Storage.withNewSession { session1 ->
+                if (!saveStorage()) {
+                    while (retry) {
+                        Storage.withNewSession { session ->
+                            saveStorage()
+                        }
                     }
                 }
             }

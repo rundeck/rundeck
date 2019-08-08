@@ -22,6 +22,9 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.storage.AuthStorageTree
+import com.dtolabs.rundeck.core.storage.ResourceMeta
+import com.dtolabs.rundeck.core.storage.files.FileStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -36,8 +39,12 @@ import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
+import org.grails.web.util.WebUtils
+import org.rundeck.storage.api.PathUtil
+import org.rundeck.storage.api.Resource
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.web.context.request.RequestContextHolder
 import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
@@ -45,6 +52,7 @@ import rundeck.User
 import rundeck.controllers.ExecutionController
 import rundeck.services.logging.ExecutionLogState
 
+import javax.servlet.http.HttpSession
 import java.text.SimpleDateFormat
 
 /*
@@ -68,6 +76,7 @@ public class NotificationService implements ApplicationContextAware{
     def LoggingService loggingService
     def apiService
     def executionService
+    AuthStorageTree authFileRundeckStorageTree
     OrchestratorPluginService orchestratorPluginService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
@@ -224,6 +233,8 @@ public class NotificationService implements ApplicationContextAware{
                     def configAttachLog=mailConfig.attachLog
                     def configAttachLogInFile=mailConfig.attachLogInFile
                     def configAttachLogInline=mailConfig.attachLogInline
+                    def configAttachExternalFile=mailConfig.attachExternalFile
+                    def configAttachExternalPathName=mailConfig.attachExternalPathName
                     final state = exec.executionState
                     def statMsg=[
                             (ExecutionService.EXECUTION_ABORTED):'KILLED',
@@ -289,6 +300,8 @@ public class NotificationService implements ApplicationContextAware{
                             attachlog = true
                         }
                     }
+                    def attachExternalFile = configAttachExternalFile in ['true', true]
+                    String attachExternalPathName = configAttachExternalPathName
 
                     //set up templates
                     def subjecttmpl='${notification.eventStatus} [${exec.project}] ${job.group}/${job.name} ${exec' +
@@ -397,7 +410,7 @@ public class NotificationService implements ApplicationContextAware{
                         }
                         try{
                             mailService.sendMail{
-                              multipart (attachlog && outputfile!=null)
+                              multipart (attachlog && outputfile!=null) || attachExternalFile
                               to sendTo
                               subject subjectmsg
                                 if(htmlemail){
@@ -421,6 +434,20 @@ public class NotificationService implements ApplicationContextAware{
                                                     renderJobStats    : renderJobStats
                                             ]
                                     )
+                                }
+                                if(attachExternalFile){
+                                    try{
+                                        Map ctx = generateContextData(content.execution, content)
+                                        String pathToFile = DataContextUtils.replaceDataReferencesInString(
+                                                attachExternalPathName, ctx, null, true)
+
+                                        FileStorageTree fileStorageTree = content.context?.getFileStorageTree()
+
+                                        byte[] contentAttatch = fileStorageTree?.readFile(PathUtil.asPath(pathToFile))
+                                        attachBytes "${PathUtil.pathName(pathToFile)}", fileStorageTree?.getContentType(PathUtil.asPath(pathToFile)), contentAttatch
+                                    } catch (IOException exp) {
+                                        log.error("Cannot attach file: $exp.message")
+                                    }
                                 }
                                 if(attachlog && outputfile != null){
                                     attachBytes "${source.jobName}-${exec.id}.${attachedExtension}", attachedContentType, outputfile.getText("UTF-8").bytes

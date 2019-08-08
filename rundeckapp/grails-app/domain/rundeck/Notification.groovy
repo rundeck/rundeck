@@ -103,6 +103,10 @@ public class Notification {
             if(data.email && data.email.subject){
                 map['subject']= data.email.subject
             }
+            if(data.email && data.email.attachExternalFile){
+                map['attachExternalFile']=data.email.attachExternalFile in ['true',true]
+                map['attachExternalPathName']=data.email.attachExternalPathName
+            }
             if(data.email && data.email.attachLog){
                 map['attachLog']= data.email.attachLog in ['true',true]
             }

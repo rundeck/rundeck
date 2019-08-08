@@ -84,6 +84,8 @@
             triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS,
             triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_SUCCESS_SUBJECT,
             triggerEmailAttachName: ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH,
+            triggerEmailExternalFilePathName: ScheduledExecutionController.NOTIFY_SUCCESS_EXTERNAL_FILE_PATH_NAME_ATTACH,
+            triggerEmailExternalFileAttachName: ScheduledExecutionController.NOTIFY_SUCCESS_EXTERNAL_ATTACH,
             triggerEmailAttachTypeName: ScheduledExecutionController.NOTIFY_SUCCESS_ATTACH_TYPE,
             triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONSUCCESS_URL,
             triggerUrlFieldName: ScheduledExecutionController.NOTIFY_SUCCESS_URL,

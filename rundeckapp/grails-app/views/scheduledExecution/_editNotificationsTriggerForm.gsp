@@ -44,9 +44,24 @@ implied. - See the License for the specific language governing permissions and -
               <div class="${hasErrors(bean: scheduledExecution, field: triggerEmailAttachName, 'has-error')} ">
 
                 <g:set var="attachTrue" value="${params[triggerEmailAttachName] == 'true' || defEmail?.mailConfiguration()?.attachLog in ['true', true]}"/>
+                <g:set var="attachExternalFileTrue" value="${params[triggerEmailExternalFileAttachName] == 'true' || defEmail?.mailConfiguration()?.attachExternalFile in ['true', true]}"/>
 
                 <g:set var="attachAsFileTrue" value="${params[triggerEmailAttachTypeName] == 'file' || defEmail?.mailConfiguration()?.attachLogInFile in ['true', true] || !(defEmail?.mailConfiguration() in ['attachLogInFile','attachLogInline']) }" />
                 <g:set var="attachInlineTrue" value="${params[triggerEmailAttachTypeName] == 'inline' || defEmail?.mailConfiguration()?.attachLogInline in ['true', true]}"/>
+
+                <g:if test="${triggerEmailExternalFileAttachName}">
+                  <div class="checkbox">
+                    <g:checkBox name="${triggerEmailExternalFileAttachName}" value="true" checked="${attachExternalFileTrue}"/>
+                    <label class="${attachExternalFileTrue ? 'active' : ''}">
+                      <g:message code="notification.email.external.file.attach"/>
+                    </label>
+                  </div>
+                  <div class="input-group  input-group-sm">
+                    <label class="input-group-addon"><g:message code="notification.email.external.file.attach.path.name"/></label>
+                    <g:textField name="${triggerEmailExternalFilePathName}" value="${params[triggerEmailExternalFilePathName] ?: defEmail?.mailConfiguration()?.attachExternalPathName}" class="form-control context_var_autocomplete" size="60" placeholder="path/to/file"/>
+                    <g:helpTooltip code="notification.email.description" css="input-group-addon text-info"/>
+                  </div>
+                </g:if>
 
                 <div class="checkbox">
                   <g:checkBox name="${triggerEmailAttachName}" value="true" checked="${attachTrue}"/>
