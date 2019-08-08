@@ -16,6 +16,7 @@
 
 package rundeck
 
+import org.rundeck.app.gui.AuthMenuItem
 import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
@@ -1852,13 +1853,18 @@ ansi-bg-default'''))
         if (menuType.executionType && !project && !execution) {
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
+        def auth = session.subject ? (
+                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
+                frameworkService.getAuthContextForSubject(session.subject)
+        ) : null
+
+        def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
-                findAll { menuType.projectType ? it.value.isEnabled(project) : menuType.executionType ? it.value.isEnabledExecution(project, execution)  : it.value.enabled }.
-
-            each { name, MenuItem item ->
-                out << body((var): item)
-            }
+                findAll { checkEnabled.apply(it.value) }.
+                each { name, MenuItem item ->
+                    out << body((var): item)
+                }
     }
 
     /**
@@ -1876,9 +1882,17 @@ ansi-bg-default'''))
         if (menuType.executionType && !project && !execution) {
             throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
         }
+        def auth = session.subject ? (
+                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
+                frameworkService.getAuthContextForSubject(session.subject)
+        ) : null
+
+        def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
+
         if (applicationContext.getBeansOfType(MenuItem).
-                findAll { menuType.projectType ? it.value.isEnabled(project) : menuType.executionType ? it.value.isEnabledExecution(project, execution) : it.value.enabled }.
-            any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
+                findAll { it.value.type == menuType }.
+                any { checkEnabled.apply(it.value) }
+        ) {
             out << body()
         }
 
