@@ -787,6 +787,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext{ctx->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -817,6 +820,9 @@ class ExecutionServiceTests  {
         service.frameworkService = makeFrameworkMock([test: 'args']).proxyInstance()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -865,6 +871,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -898,6 +907,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -929,6 +941,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -954,6 +969,9 @@ class ExecutionServiceTests  {
         service.frameworkService = makeFrameworkMock([test: 'args']).proxyInstance()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1018,6 +1036,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -1059,6 +1080,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -1090,6 +1114,9 @@ class ExecutionServiceTests  {
         service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).proxyInstance()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1138,6 +1165,9 @@ class ExecutionServiceTests  {
         service.frameworkService = makeFrameworkMock([test: 'args',test3:'something']).proxyInstance()
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1200,6 +1230,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext { ctx ->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -1243,6 +1276,9 @@ class ExecutionServiceTests  {
         }
         service.storageService = mockWith(StorageService) {
             storageTreeWithContext { ctx ->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1715,6 +1751,9 @@ class ExecutionServiceTests  {
             storageTreeWithContext(1..1){AuthContext->
                 null
             }
+            getAuthRundeckStorageTree(1..1){
+                null
+            }
         }
         service.jobStateService = mockWith(JobStateService) {
             jobServiceWithAuthContext { ctx ->
@@ -1793,6 +1832,9 @@ class ExecutionServiceTests  {
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1882,6 +1924,9 @@ class ExecutionServiceTests  {
         }
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
@@ -1987,6 +2032,9 @@ class ExecutionServiceTests  {
 
         service.storageService=mockWith(StorageService){
             storageTreeWithContext(1..1){AuthContext->
+                null
+            }
+            getAuthRundeckStorageTree(1..1){
                 null
             }
         }
