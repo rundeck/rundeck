@@ -38,8 +38,10 @@ import com.dtolabs.rundeck.core.storage.StorageTree;
 import lombok.Getter;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -107,6 +109,34 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 .filter(comp -> type.isAssignableFrom(comp.getType()))
                 .map(contextComponent -> type.cast(contextComponent.getObject()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T> int useAllComponentsOfType(final Class<T> type, final Consumer<T> consumer) {
+        List<ContextComponent<?>> found = componentStream(type).collect(Collectors.toList());
+        componentList.removeAll(found.stream().filter(ContextComponent::isUseOnce).collect(Collectors.toList()));
+        found.forEach((comp) -> consumer.accept(type.cast(comp.getObject())));
+        return found.size();
+    }
+
+    private <T> Stream<ContextComponent<?>> componentStream(final Class<T> type) {
+        return componentList.stream()
+                            .filter(comp -> type.isAssignableFrom(comp.getType()))
+                            .filter(comp -> null != comp.getObject());
+    }
+
+    @Override
+    public <T> boolean useSingleComponentOfType(final Class<T> type, final Consumer<Optional<T>> consumer) {
+        Optional<T> t = useSingleComponentOfType(type);
+        consumer.accept(t);
+        return t.isPresent();
+    }
+
+    @Override
+    public <T> Optional<T> useSingleComponentOfType(final Class<T> type) {
+        Optional<ContextComponent<?>> found = componentStream(type).findFirst();
+        found.ifPresent(contextComponent -> componentList.remove(contextComponent));
+        return found.map((opt) -> type.cast(opt.getObject()));
     }
 
     @Override
@@ -211,7 +241,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 }
                 ctx.pluginControlService =
                     PluginControlServiceImpl.forProject(original.getFramework(), original.getFrameworkProject());
-                ctx.componentList = original.getComponentList();
+                ctx.componentList = new ArrayList<>();
+                if (null != original.getComponentList()) {
+                    ctx.componentList.addAll(original.getComponentList());
+                }
             }
         }
 
@@ -584,6 +617,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public <T> Builder addComponent(String name, T object, Class<T> type) {
             addComponent(ContextComponent.with(name, object, type));
+            return this;
+        }
+
+        public <T> Builder addComponent(String name, T object, Class<T> type, boolean useOnce) {
+            addComponent(ContextComponent.with(name, object, type, useOnce));
             return this;
         }
 

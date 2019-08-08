@@ -99,6 +99,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -160,6 +161,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -213,6 +215,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -281,6 +284,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -339,6 +343,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -405,6 +410,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFramework() >> framework
             componentForType(_) >> Optional.empty()
             componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {

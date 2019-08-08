@@ -30,6 +30,13 @@ public interface ContextComponent<T> {
     T getObject();
 
     /**
+     * @return true if the component should not be used more than once
+     */
+    default boolean isUseOnce() {
+        return false;
+    }
+
+    /**
      * Create a component
      *
      * @param name
@@ -38,6 +45,19 @@ public interface ContextComponent<T> {
      * @param <T>
      */
     static <T> ContextComponent<T> with(String name, T o, Class<T> type) {
+        return with(name, o, type, false);
+    }
+
+    /**
+     * Create a component
+     *
+     * @param name
+     * @param o
+     * @param type
+     * @param useOnce true for single use component
+     * @param <T>
+     */
+    static <T> ContextComponent<T> with(String name, T o, Class<T> type, boolean useOnce) {
         return new ContextComponent<T>() {
             @Override
             public String getName() {
@@ -52,6 +72,11 @@ public interface ContextComponent<T> {
             @Override
             public T getObject() {
                 return o;
+            }
+
+            @Override
+            public boolean isUseOnce() {
+                return useOnce;
             }
         };
     }

@@ -17,7 +17,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
@@ -181,7 +180,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowExecutionItem item
     )
     {
-        Augmentor component = executionContext.componentForType(Augmentor.class).orElseGet(DefaultAugmentor::new);
+        Augmentor component = executionContext.useSingleComponentOfType(Augmentor.class)
+                                              .orElseGet(DefaultAugmentor::new);
+
         MutableStateObj mutable = component.getInitialState(item, executionContext);
         final WFSharedContext sharedContext = component.getSharedContext(executionContext);
 
@@ -245,7 +246,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             logDebug.log(String.format("%s: %s", event.getEventType(), event.getMessage()));
         });
 
-        list.addAll(executionContext.componentsForType(WorkflowSystemEventListener.class));
+        executionContext.useAllComponentsOfType(WorkflowSystemEventListener.class, list::add);
 
         WorkflowSystem<Map<String, String>> workflowEngine = buildWorkflowSystem(
                 state,

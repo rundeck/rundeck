@@ -45,6 +45,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * ExecutionContext is ...
@@ -152,11 +153,31 @@ public interface ExecutionContext {
     <T> Collection<T> componentsForType(Class<T> type);
 
     /**
+     * apply the consumer to components of the given type, and remove "useOnce" components after use
+     *
+     * @param type
+     * @param consumer
+     * @param <T>
+     */
+    <T> int useAllComponentsOfType(Class<T> type, Consumer<T> consumer);
+
+    /**
      * @param <T>
      * @param type
      * @return a single component for the given type
      */
     <T> Optional<T> componentForType(Class<T> type);
+
+    /**
+     * apply the consumer to a single component of the given type, and remove the component if it is "useOnce"
+     *
+     * @param <T>
+     * @param type
+     * @return a single component for the given type
+     */
+    <T> boolean useSingleComponentOfType(Class<T> type, Consumer<Optional<T>> consumer);
+
+    <T> Optional<T> useSingleComponentOfType(Class<T> type);
 
     /**
      * @return the node specific context data keyed by node name
