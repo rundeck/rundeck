@@ -16,6 +16,10 @@
 
 package org.rundeck.app.gui;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
+import java.util.function.Function;
+
 /**
  * Define a menu item with a link
  */
@@ -53,6 +57,18 @@ public interface MenuItem {
 
         public boolean isExecutionType() {
             return domain == MenuDomain.EXECUTION;
+        }
+
+        public boolean isSystemType() {
+            return domain == MenuDomain.SYSTEM;
+        }
+
+        public Function<MenuItem, Boolean> getEnabledCheck(
+                String project,
+                String executionId
+        )
+        {
+            return MenuItem.getEnabledCheck(this, project, executionId);
         }
     }
 
@@ -115,4 +131,25 @@ public interface MenuItem {
         return true;
     }
 
+    /**
+     * @param menuType    menu types to check
+     * @param project     project name, if available and project type should be checked
+     * @param executionId execution ID string, if available and execution type should be checked
+     * @return enabled check function given the input values
+     */
+    static Function<MenuItem, Boolean> getEnabledCheck(
+            MenuItem.MenuType menuType,
+            String project,
+            String executionId
+    )
+    {
+        //item is enabled with out auth check
+        return (item) ->
+                item.getType().isProjectType() && menuType.isProjectType() ? item.isEnabled(project) :
+                item.getType().isExecutionType() && menuType.isExecutionType() ? item.isEnabledExecution(
+                        project,
+                        executionId
+                ) :
+                item.isEnabled();
+    }
 }
