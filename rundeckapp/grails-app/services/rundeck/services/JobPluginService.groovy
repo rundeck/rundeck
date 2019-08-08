@@ -182,8 +182,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 }
                 if (result != null && result.useNewValues()) {
                     results[plugin.name] = result
+                    prevResult = result
                 }
-                prevResult = result
                 prevEvent = curEvent
             } catch (Exception e) {
                 success = false
