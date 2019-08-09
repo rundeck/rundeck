@@ -249,84 +249,83 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         /**
-         * Merges mergable contents from another builder, in general assigns values if the
-         * current builder does not have a value and merges contents where applicaable
+         * Merges contents from another builder, in general assigns values if the
+         * other builder has a value and merges contents where applicable
          *
-         * @param other
+         * @param other other builder with values to merge into this one
          * @return this
          */
         public Builder merge(Builder other) {
-            if (null == ctx.frameworkProject) {
+            if (null != ctx.frameworkProject) {
                 ctx.frameworkProject = other.ctx.frameworkProject;
             }
-            if (null == ctx.user) {
+            if (null != other.ctx.user) {
                 ctx.user = other.ctx.user;
             }
-            if (null == ctx.nodeSet) {
+            if (null != other.ctx.nodeSet) {
                 ctx.nodeSet = other.ctx.nodeSet;
             }
             if (ctx.loglevel != other.ctx.loglevel) {
                 ctx.loglevel = other.ctx.loglevel;
             }
-            if (null == ctx.nodes) {
+            if (null != other.ctx.nodes) {
                 ctx.nodes = other.ctx.nodes;
             }
-            if (null == ctx.charsetEncoding) {
+            if (null != other.ctx.charsetEncoding) {
                 ctx.charsetEncoding = other.ctx.charsetEncoding;
             }
             ctx.dataContext.merge(other.ctx.dataContext);
 
-            if (null == ctx.privateDataContext) {
-                ctx.privateDataContext = other.ctx.privateDataContext;
-            }
-            if (null == ctx.executionListener) {
+            ctx.privateDataContext.merge(other.ctx.privateDataContext);
+
+            if (null != other.ctx.executionListener) {
                 ctx.executionListener = other.ctx.executionListener;
             }
-            if (null == ctx.workflowExecutionListener) {
+            if (null != other.ctx.workflowExecutionListener) {
                 ctx.workflowExecutionListener = other.ctx.workflowExecutionListener;
             }
-            if (null == ctx.executionLogger) {
+            if (null != other.ctx.executionLogger) {
                 ctx.executionLogger = other.ctx.executionLogger;
             }
 
-            if (null == ctx.framework) {
+            if (null != other.ctx.framework) {
                 ctx.framework = other.ctx.framework;
             }
-            if (null == ctx.authContext) {
+            if (null != other.ctx.authContext) {
                 ctx.authContext = other.ctx.authContext;
             }
             if (ctx.threadCount != other.ctx.threadCount) {
                 ctx.threadCount = other.ctx.threadCount;
             }
-            if (null == ctx.nodeRankAttribute) {
+            if (null != other.ctx.nodeRankAttribute) {
                 ctx.nodeRankAttribute = other.ctx.nodeRankAttribute;
             }
             if (ctx.nodeRankOrderAscending != other.ctx.nodeRankOrderAscending) {
                 ctx.nodeRankOrderAscending = other.ctx.nodeRankOrderAscending;
             }
-            if (null == ctx.storageTree) {
+            if (null != other.ctx.storageTree) {
                 ctx.storageTree = other.ctx.storageTree;
             }
-            if (null == ctx.jobService) {
+            if (null != other.ctx.jobService) {
                 ctx.jobService = other.ctx.jobService;
             }
-            if (null == ctx.nodeService) {
+            if (null != other.ctx.nodeService) {
                 ctx.nodeService = other.ctx.nodeService;
             }
-            if (null == ctx.orchestrator) {
+            if (null != other.ctx.orchestrator) {
                 ctx.orchestrator = other.ctx.orchestrator;
             }
-            if (null == ctx.outputContext) {
+            if (null != other.ctx.outputContext) {
                 ctx.outputContext = other.ctx.outputContext;
             }
             ctx.sharedDataContext.merge(other.ctx.sharedDataContext.consolidate());
-            if (null == ctx.loggingManager) {
+            if (null != other.ctx.loggingManager) {
                 ctx.loggingManager = other.ctx.loggingManager;
             }
-            if (ctx.singleNodeContext != other.ctx.singleNodeContext) {
+            if (null != other.ctx.singleNodeContext) {
                 ctx.singleNodeContext = other.ctx.singleNodeContext;
             }
-            if (null == ctx.pluginControlService) {
+            if (null != other.ctx.pluginControlService) {
                 ctx.pluginControlService = other.ctx.pluginControlService;
             }
             //replace components with the same name+type

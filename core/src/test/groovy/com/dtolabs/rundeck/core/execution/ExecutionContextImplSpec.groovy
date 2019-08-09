@@ -1,6 +1,21 @@
 package com.dtolabs.rundeck.core.execution
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.common.OrchestratorConfig
+import com.dtolabs.rundeck.core.common.PluginControlService
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
+import com.dtolabs.rundeck.core.jobs.JobService
+import com.dtolabs.rundeck.core.logging.LoggingManager
+import com.dtolabs.rundeck.core.nodes.ProjectNodeService
+import com.dtolabs.rundeck.core.storage.StorageTree
 import spock.lang.Specification
 
 /**
@@ -109,5 +124,126 @@ class ExecutionContextImplSpec extends Specification {
             result.getComponentList().size() == 3
             result.componentsForType(String).size() == 3
             (result.componentsForType(String) as Set) == (['Test2', 'Test1B', 'Test3'] as Set)
+    }
+
+    def "merge builder merges settings"() {
+        def selector1 = Mock(NodesSelector)
+        def selector2 = Mock(NodesSelector)
+        def nodeset1 = Mock(INodeSet)
+        def nodeset2 = Mock(INodeSet)
+        def execListener1 = Mock(ExecutionListener)
+        def execListener2 = Mock(ExecutionListener)
+        def wflistener1 = Mock(WorkflowExecutionListener)
+        def wflistener2 = Mock(WorkflowExecutionListener)
+        def execLogger1 = Mock(ExecutionLogger)
+        def execLogger2 = Mock(ExecutionLogger)
+        def fwk1 = Mock(Framework)
+        def fwk2 = Mock(Framework)
+        def auth1 = Mock(UserAndRolesAuthContext)
+        def auth2 = Mock(UserAndRolesAuthContext)
+        def storage1 = Mock(StorageTree)
+        def storage2 = Mock(StorageTree)
+        def jobservice1 = Mock(JobService)
+        def jobservice2 = Mock(JobService)
+        def nodeservice1 = Mock(ProjectNodeService)
+        def nodeservice2 = Mock(ProjectNodeService)
+        def outcontext1 = Mock(SharedOutputContext)
+        def outcontext2 = Mock(SharedOutputContext)
+        def logmanager1 = Mock(LoggingManager)
+        def logmanager2 = Mock(LoggingManager)
+        def plugincontrol1 = Mock(PluginControlService)
+        def plugincontrol2 = Mock(PluginControlService)
+        def node1 = new NodeEntryImpl('anode')
+        def node2 = new NodeEntryImpl('bnode')
+        def orc1 = new OrchestratorConfig('a', [b: 'c'])
+        def orc2 = new OrchestratorConfig('b', [e: 'f'])
+        def sharedctx1 = SharedDataContextUtils.sharedContext()
+        sharedctx1.merge(ContextView.global(), DataContextUtils.context('data', [bob: 'data', blah: 'blee']))
+        def sharedctx2 = SharedDataContextUtils.sharedContext()
+        sharedctx2.merge(ContextView.global(), DataContextUtils.context('data', [bob: 'data2', blee: 'blah']))
+        given:
+            def b1 = ExecutionContextImpl.builder()
+                                         .frameworkProject('AProject')
+                                         .user('aUser')
+                                         .nodeSelector(selector1)
+                                         .loglevel(1)
+                                         .nodes(nodeset1)
+                                         .charsetEncoding('asdf')
+                                         .dataContext(DataContextUtils.context('a', [b: 'c']))
+                                         .privateDataContext([z: [q: 'r']])
+                                         .executionListener(execListener1)
+                                         .workflowExecutionListener(wflistener1)
+                                         .executionLogger(execLogger1)
+                                         .framework(fwk1)
+                                         .authContext(auth1)
+                                         .threadCount(1)
+                                         .nodeRankAttribute('asdfattr')
+                                         .nodeRankOrderAscending(false)
+                                         .storageTree(storage1)
+                                         .jobService(jobservice1)
+                                         .nodeService(nodeservice1)
+                                         .orchestrator(orc1)
+                                         .outputContext(outcontext1)
+                                         .sharedDataContext(sharedctx1)
+                                         .loggingManager(logmanager1)
+//                                         .singleNodeContext(node1, false)
+                                         .pluginControlService(plugincontrol1)
+
+
+            def b2 = ExecutionContextImpl.builder()
+                                         .frameworkProject('BProject')
+                                         .user('bUser')
+                                         .nodeSelector(selector2)
+                                         .loglevel(2)
+                                         .nodes(nodeset2)
+                                         .charsetEncoding('bsdf')
+                                         .dataContext(DataContextUtils.context('b', [c: 'd']))
+                                         .privateDataContext([w: [h: 'j']])
+                                         .executionListener(execListener2)
+                                         .workflowExecutionListener(wflistener2)
+                                         .executionLogger(execLogger2)
+                                         .framework(fwk2)
+                                         .authContext(auth2)
+                                         .threadCount(2)
+                                         .nodeRankAttribute('bsdfattr')
+                                         .nodeRankOrderAscending(true)
+                                         .storageTree(storage2)
+                                         .jobService(jobservice2)
+                                         .nodeService(nodeservice2)
+                                         .orchestrator(orc2)
+                                         .outputContext(outcontext2)
+                                         .sharedDataContext(sharedctx2)
+                                         .loggingManager(logmanager2)
+//                                         .singleNodeContext(node2, false)
+                                         .pluginControlService(plugincontrol2)
+
+        when:
+            def result = b1.merge(b2).build()
+        then:
+            result.frameworkProject == 'BProject'
+            result.user == 'bUser'
+            result.nodeSelector == selector2
+            result.loglevel == 2
+            result.nodes == nodeset2
+            result.charsetEncoding == 'bsdf'
+            result.dataContext == [a: [b: 'c'], b: [c: 'd']]
+            result.privateDataContext == [w: [h: 'j'], z: [q: 'r']]
+            result.executionListener == execListener2
+            result.workflowExecutionListener == (wflistener2)
+            result.executionLogger == (execLogger2)
+            result.framework == (fwk2)
+            result.authContext == (auth2)
+            result.threadCount == (2)
+            result.nodeRankAttribute == ('bsdfattr')
+            result.nodeRankOrderAscending == (true)
+            result.storageTree == (storage2)
+            result.jobService == (jobservice2)
+            result.nodeService == (nodeservice2)
+            result.orchestrator == (orc2)
+            result.outputContext == (outcontext2)
+            result.sharedDataContext.consolidate().getData(ContextView.global()).data == [bob: 'data2', blee: 'blah', blah: 'blee']
+            result.loggingManager == (logmanager2)
+            result.singleNodeContext == null
+            result.pluginControlService == (plugincontrol2)
     }
 }
