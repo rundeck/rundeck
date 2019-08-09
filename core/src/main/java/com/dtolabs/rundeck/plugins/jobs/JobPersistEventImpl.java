@@ -14,23 +14,6 @@ public class JobPersistEventImpl implements JobPersistEvent {
     private INodeSet nodes;
     private String userName;
     private String nodeFilter;
-    private Map scheduledExecutionMap;
-
-    public JobPersistEventImpl(Map scheduledExecutionMap, String userName, INodeSet nodes, String nodeFilter) throws ValidationException {
-        this.scheduledExecutionMap = scheduledExecutionMap;
-        if(this.scheduledExecutionMap != null){
-            if(this.scheduledExecutionMap.containsKey("project")){
-                this.projectName = (String) this.scheduledExecutionMap.get("project");
-            }
-            if(this.scheduledExecutionMap.containsKey("options")){
-                ArrayList<LinkedHashMap> originalOptions = (ArrayList<LinkedHashMap>) this.scheduledExecutionMap.get("options");
-                setOptions(originalOptions);
-            }
-        }
-        this.userName = userName;
-        this.nodes = nodes;
-        this.nodeFilter = nodeFilter;
-    }
 
     public JobPersistEventImpl(
             String projectName,
@@ -72,17 +55,6 @@ public class JobPersistEventImpl implements JobPersistEvent {
     @Override
     public String getNodeFilter() { return this.nodeFilter; }
 
-    private void setOptions(ArrayList<LinkedHashMap> originalOptions) throws ValidationException {
-        if(originalOptions != null && !originalOptions.isEmpty()){
-            this.options = new TreeSet<JobOption>();
-            for (LinkedHashMap originalOption: originalOptions) {
-                JobOptionImpl option = new JobOptionImpl(originalOption);
-                this.options.add(option);
-            }
-        }
-    }
+    public void setOptions(SortedSet<JobOption> options) { this.options = options; }
 
-    public void setOptions(SortedSet<JobOption> options) {
-        this.options = options;
-    }
 }

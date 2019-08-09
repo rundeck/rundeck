@@ -15,6 +15,7 @@
  */
 
 
+import com.dtolabs.rundeck.core.jobs.JobOption
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
@@ -108,6 +109,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -156,6 +160,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -186,6 +193,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -235,6 +245,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -283,6 +296,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService=fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -324,6 +340,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -367,6 +386,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -444,6 +466,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -491,6 +516,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -529,6 +557,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -573,6 +604,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService=fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -615,6 +649,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -666,6 +703,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService=fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -715,6 +755,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService=fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -745,6 +788,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -779,6 +825,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -812,6 +861,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService = fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -843,6 +895,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService = fsvc
@@ -885,6 +940,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService = fsvc
@@ -2285,6 +2343,9 @@ class ExecutionServiceTests  {
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
             }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
         }
         svc.frameworkService=fsvc
         svc.jobPluginService = mockWith(JobPluginService){
@@ -2329,6 +2390,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService=fsvc
@@ -2386,6 +2450,9 @@ class ExecutionServiceTests  {
         svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
             getNodes(1..1){ scheduledExecution, filter, authContext ->
                 null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
             }
         }
         svc.frameworkService = fsvc

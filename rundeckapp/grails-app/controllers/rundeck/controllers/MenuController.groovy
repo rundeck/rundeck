@@ -3224,63 +3224,69 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def listExport(){
         UserAndRolesAuthContext authContext
-        def query = new ScheduledExecutionQuery()
-        query.idlist = params.nextScheduled
-        query.projFilter = params.project
-        authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def result = listWorkflows(query, authContext,session.user)
 
         def results=[:]
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(
-                        params.project
-                ),
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
-        )) {
-            def pluginData = [:]
-            if(frameworkService.isClusterModeEnabled()){
-                //initialize if in another node
-                scmService.initProject(params.project,'export')
-            }
-            try {
-                if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                    pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
-                    if(pluginData.scmExportEnabled){
-                        pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled)
-                        pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                        pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                        pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
-                    }
-                    results.putAll(pluginData)
-                }
-            } catch (ScmPluginException e) {
-                results.warning = "Failed to update SCM Export status: ${e.message}"
-            }
-        }
-        if (frameworkService.authorizeApplicationResourceAny(authContext,
-                frameworkService.authResourceForProject(
-                        params.project
-                ),
-                [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
-        )) {
-            if(frameworkService.isClusterModeEnabled()){
-                //initialize if in another node
-                scmService.initProject(params.project,'import')
-            }
-            def pluginData = [:]
-            try {
-                if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                    pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
-                    if(pluginData.scmImportEnabled){
-                        pluginData.scmImportJobStatus = scmService.importStatusForJobs(authContext, result.nextScheduled)
-                        pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                        pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
-                    }
-                    results.putAll(pluginData)
-                }
+        if(request.format=='json' ) {
+            def data = request.JSON
+            def nextScheduled = data?.join(",")?.replaceAll(/"/, '')
+            def query = new ScheduledExecutionQuery()
+            query.idlist = nextScheduled //request.format   def data= request.JSON
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
+            def result = listWorkflows(query, authContext, session.user)
 
-            } catch (ScmPluginException e) {
-                results.warning = "Failed to update SCM Import status: ${e.message}"
+
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                    frameworkService.authResourceForProject(
+                            params.project
+                    ),
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+            )) {
+                def pluginData = [:]
+                if (frameworkService.isClusterModeEnabled()) {
+                    //initialize if in another node
+                    scmService.initProject(params.project, 'export')
+                }
+                try {
+                    if (scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
+                        if (pluginData.scmExportEnabled) {
+                            pluginData.scmStatus = scmService.exportStatusForJobs(authContext, result.nextScheduled)
+                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                            pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                            pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                        }
+                        results.putAll(pluginData)
+                    }
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Export status: ${e.message}"
+                }
+            }
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                    frameworkService.authResourceForProject(
+                            params.project
+                    ),
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+            )) {
+                if (frameworkService.isClusterModeEnabled()) {
+                    //initialize if in another node
+                    scmService.initProject(params.project, 'import')
+                }
+                def pluginData = [:]
+                try {
+                    if (scmService.projectHasConfiguredImportPlugin(params.project)) {
+                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
+                        if (pluginData.scmImportEnabled) {
+                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(authContext, result.nextScheduled)
+                            pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                        }
+                        results.putAll(pluginData)
+                    }
+
+                } catch (ScmPluginException e) {
+                    results.warning = "Failed to update SCM Import status: ${e.message}"
+                }
             }
         }
         render(results as JSON)

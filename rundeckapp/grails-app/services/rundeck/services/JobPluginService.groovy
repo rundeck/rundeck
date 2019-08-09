@@ -182,8 +182,8 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 }
                 if (result != null && result.useNewValues()) {
                     results[plugin.name] = result
+                    prevResult = result
                 }
-                prevResult = result
                 prevEvent = curEvent
             } catch (Exception e) {
                 success = false
@@ -238,10 +238,10 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             return new JobPreExecutionEventImpl(
                     jobEvent.projectName,
                     jobEvent.userName,
-                    jobEvent.scheduledExecutionMap,
                     newOptionsValues,
                     jobEvent.nodes,
-                    jobEvent.nodeFilter
+                    jobEvent.nodeFilter,
+                    jobEvent.getOptions()
             )
         } else if (jobEvent instanceof JobPersistEvent) {
             TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
@@ -254,7 +254,9 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                     jobEventStatus
             )
 
-            return new JobExecutionEventImpl(newContext, jobEvent.execution, jobEvent.result)
+            return jobEvent.result != null ?
+                   JobExecutionEventImpl.afterRun(newContext, jobEvent.execution, jobEvent.result) :
+                   JobExecutionEventImpl.beforeRun(newContext, jobEvent.execution, jobEvent.workflow)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }

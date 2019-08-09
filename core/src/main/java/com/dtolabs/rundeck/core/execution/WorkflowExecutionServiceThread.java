@@ -83,7 +83,7 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             if (jobPluginHolder != null) {
                 //TODO: check success and stop execution
                 StepExecutionContext newExecutionContext =
-                        jobPluginHolder.beforeJobStarts(context)
+                        jobPluginHolder.beforeJobStarts(context, weitem)
                                        .map(JobEventStatus::getExecutionContext)
                                        .orElse(null);
                 executionContext = newExecutionContext != null? newExecutionContext: executionContext;
@@ -96,7 +96,11 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             }
 
             if (null != jobPluginHolder) {
-                jobPluginHolder.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+                try {
+                    jobPluginHolder.afterJobEnds(executionContext, new JobEventResultImpl(getResult(), isAborted()));
+                } catch (JobPluginException err) {
+                    err.printStackTrace(System.err);
+                }
             }
             return getResult();
         } catch (Throwable e) {

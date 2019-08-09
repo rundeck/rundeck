@@ -210,3 +210,6 @@ to utilize the `RUNDECK_ENVARS_UNSETS` option.
 
 ### `RUNDECK_ENVARS_UNSETS`
 Set to a space-separated list of environment variables to unset before starting Rundeck.
+
+### `RUNDECK_QUARTZ_THREADPOOL_THREADCOUNT`
+Set the threadCount value to the max number of threads you want to run concurrently. If not set, default to 10.

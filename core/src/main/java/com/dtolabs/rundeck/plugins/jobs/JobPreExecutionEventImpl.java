@@ -11,7 +11,6 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
 
     private String projectName;
     private String userName;
-    private Map scheduledExecutionMap;
     private HashMap optionsValues;
     private String nodeFilter;
     private INodeSet nodes;
@@ -20,20 +19,13 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
 
     public JobPreExecutionEventImpl(String projectName,
                                     String userName,
-                                    Map scheduledExecutionMap,
                                     HashMap optionsValues,
                                     INodeSet nodes,
-                                    String nodeFilter) throws ValidationException {
+                                    String nodeFilter,
+                                    SortedSet<JobOption> options) {
 
         this.projectName = projectName;
         this.userName = userName;
-        if(scheduledExecutionMap != null){
-            this.scheduledExecutionMap = (Map)((HashMap) scheduledExecutionMap).clone();
-            if(this.scheduledExecutionMap.containsKey("options")){
-                ArrayList<LinkedHashMap> originalOptions = (ArrayList<LinkedHashMap>) this.scheduledExecutionMap.get("options");
-                setOptions(originalOptions);
-            }
-        }
         if(optionsValues != null){
             this.optionsValues = (HashMap) optionsValues.clone();
         }else{
@@ -41,18 +33,11 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
         }
         this.nodes = nodes;
         this.nodeFilter = nodeFilter;
-
+        this.options = options;
     }
 
-    public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin) throws ValidationException {
-        this(origin.projectName, origin.userName, origin.scheduledExecutionMap, origin.optionsValues, origin.nodes, origin.nodeFilter);
-    }
-
-    public void setProjectName(String projectName){
-        this.projectName = projectName;
-    }
-    public void setUserName(String userName){
-        this.userName = userName;
+    public JobPreExecutionEventImpl(JobPreExecutionEventImpl origin) {
+        this(origin.projectName, origin.userName, origin.optionsValues, origin.nodes, origin.nodeFilter, origin.options);
     }
 
     @Override
@@ -82,15 +67,5 @@ public class JobPreExecutionEventImpl implements JobPreExecutionEvent {
 
     @Override
     public INodeSet getNodes() { return this.nodes; }
-
-    private void setOptions(ArrayList<LinkedHashMap> originalOptions) throws ValidationException {
-        if(originalOptions != null && !originalOptions.isEmpty()){
-            this.options = new TreeSet<JobOption>();
-            for (LinkedHashMap originalOption: originalOptions) {
-                JobOptionImpl option = new JobOptionImpl(originalOption);
-                this.options.add(option);
-            }
-        }
-    }
 
 }

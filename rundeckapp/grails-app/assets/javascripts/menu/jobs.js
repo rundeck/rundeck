@@ -211,13 +211,13 @@ function BulkEditor(data){
             exportStatus = self.scmStatus()[jobid].synchState.name;
             switch(exportStatus) {
                 case "EXPORT_NEEDED":
-                    text = self.message['scm.export.status.EXPORT_NEEDED.description'];
+                    text = self.messages['scm.export.status.EXPORT_NEEDED.description'];
                     break;
                 case "CREATE_NEEDED":
-                    text = self.message['scm.export.status.CREATE_NEEDED.description'];
+                    text = self.messages['scm.export.status.CREATE_NEEDED.description'];
                     break;
                 case "CLEAN":
-                    text = self.message['scm.export.status.CLEAN.description'];
+                    text = self.messages['scm.export.status.CLEAN.description'];
                     break;
                 default:
                     text = exportStatus;
@@ -232,19 +232,19 @@ function BulkEditor(data){
             importStatus = self.scmImportJobStatus()[jobid].synchState.name;
             switch(importStatus) {
                 case "IMPORT_NEEDED":
-                    text += self.message['scm.import.status.IMPORT_NEEDED.description'];
+                    text += self.messages['scm.import.status.IMPORT_NEEDED.description'];
                     break;
                 case "DELETE_NEEDED":
-                    text += self.message['scm.import.status.DELETE_NEEDED.description'];
+                    text += self.messages['scm.import.status.DELETE_NEEDED.description'];
                     break;
                 case "CLEAN":
-                    text += self.message['scm.import.status.CLEAN.description'];
+                    text += self.messages['scm.import.status.CLEAN.description'];
                     break;
                 case "REFRESH_NEEDED":
-                    text += self.message['scm.import.status.REFRESH_NEEDED.description'];
+                    text += self.messages['scm.import.status.REFRESH_NEEDED.description'];
                     break;
                 case "UNKNOWN":
-                    text += self.message['scm.import.status.UNKNOWN.description'];
+                    text += self.messages['scm.import.status.UNKNOWN.description'];
                     break;
                 default:
                     text += importStatus;
@@ -343,19 +343,19 @@ function BulkEditor(data){
             var text = null;
             switch(self.exportState()) {
                 case "EXPORT_NEEDED":
-                    text = self.message['scm.export.status.EXPORT_NEEDED.display.text'];
+                    text = self.messages['scm.export.status.EXPORT_NEEDED.display.text'];
                     break;
                 case "CREATE_NEEDED":
-                    text = self.message['scm.export.status.CREATE_NEEDED.display.text'];
+                    text = self.messages['scm.export.status.CREATE_NEEDED.display.text'];
                     break;
                 case "REFRESH_NEEDED":
-                    text = self.message['scm.export.status.REFRESH_NEEDED.display.text'];
+                    text = self.messages['scm.export.status.REFRESH_NEEDED.display.text'];
                     break;
                 case "DELETED":
-                    text = self.message['scm.export.status.DELETED.display.text'];
+                    text = self.messages['scm.export.status.DELETED.display.text'];
                     break;
                 case "CLEAN":
-                    text = self.message['scm.export.status.CLEAN.display.text'];
+                    text = self.messages['scm.export.status.CLEAN.display.text'];
                     break;
             }
             if(!text){
@@ -371,16 +371,16 @@ function BulkEditor(data){
             var text = null;
             switch(self.importState()) {
                 case "IMPORT_NEEDED":
-                    text = self.message['scm.import.status.IMPORT_NEEDED.display.text'];
+                    text = self.messages['scm.import.status.IMPORT_NEEDED.display.text'];
                     break;
                 case "REFRESH_NEEDED":
-                    text = self.message['scm.import.status.REFRESH_NEEDED.display.text'];
+                    text = self.messages['scm.import.status.REFRESH_NEEDED.display.text'];
                     break;
                 case "UNKNOWN":
-                    text = self.message['scm.import.status.UNKNOWN.display.text'];
+                    text = self.messages['scm.import.status.UNKNOWN.display.text'];
                     break;
                 case "CLEAN":
-                    text = self.message['scm.import.status.CLEAN.display.text'];
+                    text = self.messages['scm.import.status.CLEAN.display.text'];
                     break;
             }
             if(!text){

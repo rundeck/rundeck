@@ -38,8 +38,10 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
+import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -47,6 +49,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -2460,12 +2463,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param scheduledExec
      * @return a Map of String to String, does not produce multiple values for multivalued options
      */
-    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec) {
+    protected HashMap parseJobOptionInput(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext = null) {
         def optparams = filterOptParams(props)
         if (!optparams && props.argString) {
             optparams = FrameworkService.parseOptsFromString(props.argString)
         }
         optparams = addOptionDefaults(scheduledExec, optparams)
+        optparams = addRemoteOptionSelected(scheduledExec, optparams, authContext)
         optparams
     }
 
@@ -2509,6 +2513,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         return results
+    }
+
+    /**
+     * evaluate the options in the input argString, and if any Options defined for the Job have enforced=true, the values
+     * is taken from remote URL, have a selected value as default, and have null value in the input properties,
+     * then append the selected by default option value to the argString
+     */
+    def Map addRemoteOptionSelected(ScheduledExecution scheduledExecution, Map optparams, UserAndRolesAuthContext authContext = null) throws ExecutionServiceException {
+        def newmap = new HashMap(optparams)
+
+        final options = scheduledExecution.options
+        if (options) {
+            def defaultoptions=[:]
+            options.each {Option opt ->
+                if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
+                    Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
+                    if(!remoteOptions.err && remoteOptions.values){
+                        Map selectedOption = remoteOptions.values.find {Map value -> [true, 'true'].contains(value.selected)}
+                        if(selectedOption){
+                            defaultoptions[opt.name]=selectedOption.value
+                        }
+                    }
+                }
+            }
+            if(defaultoptions){
+                newmap.putAll(defaultoptions)
+            }
+        }
+        return newmap
     }
 
     /**
@@ -3545,7 +3578,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
             } else {
                 averageDuration = se.averageDuration
-                timeout = se.timeout ? Sizes.parseTimeDuration(se.timeout) : 0
                 exec = Execution.get(execid as Long)
                 if (!exec) {
                     def msg = "Execution not found: ${execid}"
@@ -3583,6 +3615,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def msg = "Invalid options: ${e.errors.keySet()}"
                     result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
                 }
+
+                def timeouttmp = '0'
+                if(se.timeout){
+                    if(se.timeout.contains('${')){
+                        timeouttmp = DataContextUtils.replaceDataReferencesInString(se.timeout, newContext.dataContext)
+                    }else{
+                        timeouttmp = se.timeout
+                    }
+                }
+                timeout = Sizes.parseTimeDuration(timeouttmp)
             }
         }
 
@@ -3604,7 +3646,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         long startTime = System.currentTimeMillis()
-
         def wresult = metricService.withTimer(this.class.name, 'runJobReference') {
             WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
@@ -3624,8 +3665,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
 
             thread.start()
-            boolean never = true
-            def interrupt = false
 
             if(!jitem.ignoreNotifications) {
                 ScheduledExecution.withTransaction {
@@ -3636,40 +3675,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
             }
+            return executionUtilService.runRefJobWithTimer(thread, startTime, shouldCheckTimeout, timeoutms)
 
-            int killcount = 0
-            def killLimit = 100
-            while (thread.isAlive() || never) {
-                never = false
-                try {
-                    thread.join(1000)
-                } catch (InterruptedException e) {
-                    //interrupt
-                    interrupt = true
-                }
-                if (thread.interrupted) {
-                    interrupt = true
-                }
-                def duration = System.currentTimeMillis() - startTime
-                if (shouldCheckTimeout
-                        && duration > timeoutms
-                ) {
-                    interrupt = true
-                }
-                if (interrupt) {
-                    if (killcount < killLimit) {
-                        //send wave after wave
-                        thread.abort()
-                        Thread.yield();
-                        killcount++;
-                    } else {
-                        //reached pre-set kill limit, so shut down
-                        thread.stop()
-                    }
-                }
-            }
-
-            [result: thread.result, interrupt: interrupt]
         }
 
         def duration = System.currentTimeMillis() - startTime
@@ -3971,7 +3978,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext)
         def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
-        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(props.project, props.user, scheduledExecution.toMap(), optparams, nodes, nodeFilter)
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
+                props.project,
+                props.user,
+                optparams,
+                nodes,
+                nodeFilter,
+                scheduledExecutionService.getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         try {
             return jobPluginService.beforeJobExecution(scheduledExecution, event)
         } catch (JobPluginException jpe) {

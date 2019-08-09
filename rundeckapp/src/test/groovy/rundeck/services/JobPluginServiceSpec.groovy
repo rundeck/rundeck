@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
@@ -86,7 +87,9 @@ class JobPluginServiceSpec extends Specification {
             }
         when:
             JobEventStatus result = service.handleEvent(
-                    new JobExecutionEventImpl(executionContext, null),
+                    eventType == JobPluginService.EventType.BEFORE_RUN ?
+                    JobExecutionEventImpl.beforeRun(executionContext, null, null) :
+                    JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
                     [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
             )
@@ -114,7 +117,9 @@ class JobPluginServiceSpec extends Specification {
             }
         when:
             JobEventStatus result = service.handleEvent(
-                    new JobExecutionEventImpl(executionContext, null),
+                    eventType == JobPluginService.EventType.BEFORE_RUN ?
+                    JobExecutionEventImpl.beforeRun(executionContext, null, null) :
+                    JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
                     [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
             )
@@ -135,7 +140,9 @@ class JobPluginServiceSpec extends Specification {
             def plugin = new JobPluginImpl()
         when:
             JobEventStatus result = service.handleEvent(
-                    new JobExecutionEventImpl(executionContext, null),
+                    eventType == JobPluginService.EventType.BEFORE_RUN ?
+                    JobExecutionEventImpl.beforeRun(executionContext, null, null) :
+                    JobExecutionEventImpl.afterRun(executionContext, null, null),
                     eventType,
                     [new NamedJobPlugin(name: 'TestPlugin', plugin: plugin)]
             )
@@ -270,6 +277,36 @@ class JobPluginServiceSpec extends Specification {
         then:
             result == (['typeA', 'typeB'] as Set)
 
+    }
+
+    def "merge job before run execution event"() {
+        given:
+            def ctx1 = Mock(StepExecutionContext) {
+                getFrameworkProject() >> 'ATest'
+                getLoglevel() >> 2
+            }
+            def ref = Mock(ExecutionReference)
+            def wf = Mock(WorkflowExecutionItem)
+            def event = JobExecutionEventImpl.beforeRun(ctx1, ref, wf)
+            def status = Mock(JobEventStatus) {
+                useNewValues() >> useNewValues
+                getExecutionContext() >> Mock(StepExecutionContext) {
+                    getLoglevel() >> 0
+                }
+            }
+        when:
+            JobExecutionEvent result = (JobExecutionEvent) service.mergeEvent(status, event)
+        then:
+            result != null
+            result.executionContext
+            result.executionContext.frameworkProject == 'ATest'
+            result.execution == ref
+            result.workflow == wf
+
+        where:
+            useNewValues | expectlevel
+            true         | 0
+            false        | 2
     }
 
 }

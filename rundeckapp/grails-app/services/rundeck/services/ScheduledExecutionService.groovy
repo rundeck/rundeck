@@ -37,11 +37,13 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -641,17 +643,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution) {
-        rescheduleJob(scheduledExecution, false, null, null)
+        rescheduleJob(scheduledExecution, false, null, null, false)
     }
 
-    def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
+    def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup, boolean forceLocal) {
         if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
             //verify cluster member is schedule owner
 
             def nextdate = null
             def nextExecNode = null
             try {
-                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup);
+                (nextdate, nextExecNode) = scheduleJob(scheduledExecution, oldJobName, oldJobGroup, forceLocal);
             } catch (SchedulerException e) {
                 log.error("Unable to schedule job: ${scheduledExecution.extid}: ${e.message}")
             }
@@ -698,7 +700,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             try {
                 def nexttime = null
                 def nextExecNode = null
-                (nexttime, nextExecNode) = scheduleJob(se, null, null)
+                (nexttime, nextExecNode) = scheduleJob(se, null, null, true)
                 succeededJobs << [job: se, nextscheduled: nexttime]
                 log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
@@ -1081,7 +1083,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 AuthConstants.ACTION_RUN,se.project)
     }
 
-    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
+    def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName, boolean forceLocal=false) {
         def jobid = "${se.generateFullName()} [${se.extid}]"
         def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
@@ -1099,6 +1101,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     "$jobDesc, but job execution is disabled."
             )
             return [null, null];
+        }
+
+        def data=["project": se.project,
+                  "jobId":se.uuid]
+
+        if(!forceLocal){
+            boolean remoteAssign = jobSchedulerService.scheduleRemoteJob(data)
+
+            if(remoteAssign){
+                return [null, null]
+            }
         }
 
         def jobDetail = createJobDetail(se)
@@ -2118,7 +2131,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (scheduledExecution.save(flush: true)) {
-            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
+            rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup, true)
             return [success: true, scheduledExecution: scheduledExecution]
         } else {
             scheduledExecution.discard()
@@ -2278,13 +2291,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
+        boolean shouldreSchedule = false
+        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if(frameworkService.isClusterModeEnabled()){
 
             if (originalCron != scheduledExecution.generateCrontabExression() ||
                 originalSchedule != scheduledExecution.scheduleEnabled ||
                 originalExecution != scheduledExecution.executionEnabled ||
                 originalTz != scheduledExecution.timeZone ||
-                oldsched != scheduledExecution.scheduled
+                oldsched != scheduledExecution.scheduled ||
+                renamed
             ) {
                 def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
                             serverUUID   : frameworkService.serverUUID,
@@ -2296,13 +2313,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                    //schedule meesage want sent , it should be ran locally
+                    shouldreSchedule = true
                 }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID
             }
+        }else{
+            shouldreSchedule = true
         }
-        def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
+
         if (renamed) {
             changeinfo.rename = true
             changeinfo.origName = oldjobname
@@ -2634,7 +2655,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             resultFromJobPlugin = runBeforeSave(scheduledExecution, authContext)
         }
         if (resultFromJobPlugin.success && !failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project) && shouldreSchedule) {
                 def nextdate = null
                 def nextExecNode = null
                 try {
@@ -4290,7 +4311,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Map scheduleMap = scheduledExecution.toMap()
         INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
         scheduleMap.project = scheduledExecution.project
-        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(scheduleMap, authContext.getUsername(), nodeSet, scheduledExecution?.filter)
+        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
+                scheduleMap.project,
+                authContext.getUsername(),
+                nodeSet,
+                scheduledExecution?.filter,
+                getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
@@ -4399,5 +4425,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
                 authContext)
         nodeSet
+    }
+
+    def getOptionsFromScheduleExecutionMap(scheduledExecutionMap) {
+        def options = new TreeSet<JobOption>()
+        if(scheduledExecutionMap != null){
+            if(scheduledExecutionMap.containsKey("options")){
+                def originalOptions = scheduledExecutionMap.get("options")
+                if(originalOptions != null && !originalOptions.isEmpty()){
+                    for (LinkedHashMap originalOption: originalOptions) {
+                        JobOptionImpl option = new JobOptionImpl(originalOption)
+                        options.add(option)
+                    }
+                }
+            }
+        }
+        return options
     }
 }

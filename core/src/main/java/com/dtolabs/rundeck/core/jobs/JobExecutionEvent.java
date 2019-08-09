@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 
 import java.util.Map;
 
@@ -56,6 +57,8 @@ public interface JobExecutionEvent {
     INodeSet getNodes();
 
     ExecutionReference getExecution();
+
+    WorkflowExecutionItem getWorkflow();
 
     JobEventResult getResult();
 
