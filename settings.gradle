@@ -40,6 +40,7 @@ include	'rundeck-storage',
     'grails-persistlocale',
     'grails-securityheaders',
     'rundeckapp:repository',
+    'rundeckapp:webhooks',
     'docker'
 
 project(":rundeckapp").name = "rundeck"

@@ -193,6 +193,7 @@ grails{
         compile project(':grails-persistlocale')
         compile project(':grails-securityheaders')
         compile project(':rundeck:repository')
+        compile project(':rundeck:webhooks')
     }
 }
 
