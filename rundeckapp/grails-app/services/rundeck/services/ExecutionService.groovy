@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.JobPluginException
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
@@ -3631,10 +3632,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != result) {
             return result
         }
-
+        ExecutionReference executionReference
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
+            executionReference = exec.asReference()
             refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
+
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
                 String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3655,7 +3658,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobPluginConfigs = se ?
                                    jobPluginService.getJobPluginConfigSetForJob(se) :
                                    null
-            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, exec.asReference())
+            def jobPluginExecHandler = jobPluginService.getExecutionHandler(jobPluginConfigs, executionReference)
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
