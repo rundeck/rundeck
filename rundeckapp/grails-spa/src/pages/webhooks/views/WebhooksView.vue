@@ -132,7 +132,6 @@
           showing: false,
           message: null
         },
-        inputPlugin: "ConfigStandin",
         customConfigComponent: null,
         showPluginConfig: false
       }
