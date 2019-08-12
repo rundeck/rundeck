@@ -3326,37 +3326,4 @@ class ScheduledExecutionServiceSpec extends Specification {
         result == [null, null]
     }
 
-    @Unroll
-    def "do update job on cluster, a schedule changed or name changed must not call local quartz scheduleJob if a takeover message was sent"(){
-        given:
-        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
-        setupDoUpdate(true,serverUUID)
-
-        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
-        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
-        service.jobSchedulerService = Mock(JobSchedulerService)
-
-        when:
-        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
-
-        then:
-        results.success
-        results.scheduledExecution.serverNodeUUID == jobOwnerUuid
-        if(shouldChange) {
-            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> false
-            0 * service.quartzScheduler.scheduleJob(_,_,_)
-        }
-
-        where:
-        inparams                                        | shouldChange
-        [jobName: 'newName']                            | true
-        [jobName: 'newName', scheduled: false]          | true
-        [scheduled: true]                               | false
-        [groupPath: 'newGroup', timeZone: 'GMT+1']      | true
-        [groupPath: 'newGroup']                         | true
-        [dayOfMonth: '10']                              | true
-
-    }
-
-
 }
