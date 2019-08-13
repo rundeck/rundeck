@@ -15,6 +15,7 @@ import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.step.StepPlugin
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.data.DataUtil
@@ -37,6 +38,9 @@ class SaveFilePlugin  implements StepPlugin {
     @PluginProperty(title = 'Overwrite if already exists', description = "Overwrite file if already exists")
     boolean overwrite = false
 
+    @PluginProperty(title = 'Log content', description = "Log file content")
+    boolean logContent = false
+
     @PluginProperty(title = "File URL",
             description = "URL to save a file from the filesystem")
     String directoryFile
@@ -45,8 +49,6 @@ class SaveFilePlugin  implements StepPlugin {
             description = "File content")
     @RenderingOptions(
             [
-                    @RenderingOption(key = StringRenderingConstants.GROUP_NAME, value = "Text file content"),
-                    @RenderingOption(key = StringRenderingConstants.GROUPING, value = "secondary"),
                     @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = "MULTI_LINE"),
                     @RenderingOption(key = StringRenderingConstants.CODE_SYNTAX_MODE, value = "text/x-markdown")
             ]
@@ -77,6 +79,8 @@ class SaveFilePlugin  implements StepPlugin {
                     DataUtil.withStream(stream, map, StorageUtil.factory())
             )
 
+            this.writeLog(context)
+
             return
         }
 
@@ -84,9 +88,33 @@ class SaveFilePlugin  implements StepPlugin {
                 filePath,
                 DataUtil.withStream(stream, map, StorageUtil.factory())
         )
+
+        this.writeLog(context)
     }
 
     private byte[] fileContent(){
         return directoryFile ? new File(directoryFile).getBytes() : content.getBytes()
+    }
+
+    private void writeLog(PluginStepContext context){
+        if(logContent){
+            Map<String, String> logPath = [:]
+            logPath.put("Path", this.path)
+            logPath.put("File name", this.name)
+            logPath.put("Text", this.content)
+            ObjectMapper objectMapper = new ObjectMapper()
+            StringWriter stringWriter = new StringWriter()
+            objectMapper.writeValue(stringWriter, logPath)
+
+
+            context.getExecutionContext().getExecutionListener().log(
+                    2,
+                    stringWriter.toString(),
+                    [
+                            'content-data-type'       : 'application/json',
+                            'content-meta:table-title': 'File saved on storage'
+                    ]
+            )
+        }
     }
 }
