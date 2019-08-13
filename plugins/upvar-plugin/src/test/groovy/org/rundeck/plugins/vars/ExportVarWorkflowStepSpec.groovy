@@ -47,14 +47,6 @@ class ExportVarWorkflowStepSpec extends Specification {
             1 * addOutput(ContextView.global(),group,name,value)
         }
 
-        1 * context.getExecutionContext() >> Mock(ExecutionContext){
-            1 * getSharedDataContext() >> Mock(MultiDataContextImpl) {
-                1 * consolidate() >> Mock(MultiDataContextImpl) {
-                    1 * getData(ContextView.global())
-                }
-            }
-        }
-
         where:
         group    | name     | value
         'grp'    | 'name'   | 'value'

@@ -68,18 +68,6 @@ public class ExportVarWorkflowStep implements StepPlugin {
             );
         }
         context.getOutputContext().addOutput(ContextView.global(),group,export,value);
-
-        MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
-                .getSharedDataContext()
-                .consolidate();
-
-        //move directly to global view to be used immediately on notifications.
-        DataContext data = sharedDataContext.getData(ContextView.global());
-        if( data!= null) {
-            HashMap<String, String> stringHashMap = new HashMap<>();
-            stringHashMap.put(export, value);
-            data.put(group, stringHashMap);
-        }
     }
 
     /**
