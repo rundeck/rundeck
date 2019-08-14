@@ -59,7 +59,7 @@ implied. - See the License for the specific language governing permissions and -
                   <div class="input-group  input-group-sm">
                     <label class="input-group-addon"><g:message code="notification.email.external.file.attach.path.name"/></label>
                     <g:textField name="${triggerEmailExternalFilePathName}" value="${params[triggerEmailExternalFilePathName] ?: defEmail?.mailConfiguration()?.attachExternalPathName}" class="form-control context_var_autocomplete" size="60" placeholder="path/to/file"/>
-                    <g:helpTooltip code="notification.email.description" css="input-group-addon text-info"/>
+                    <g:helpTooltip code="notification.email.external.file.description" css="input-group-addon text-info"/>
                   </div>
                 </g:if>
 
