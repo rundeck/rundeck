@@ -873,8 +873,25 @@ function RDNode(name, steps,flow){
      * @param steps
      */
     self.loadData=function(data){
+        self.dedupeSteps(data.steps);
         self.updateSummary(data.summary);
         self.updateSteps(data.steps);
+    };
+    self.dedupeSteps=function(steps) {
+        var seen = []
+        var dupes = []
+
+        steps.forEach(function(s) {
+            if (seen.indexOf(s.stepctx) > -1) {
+                dupes.push(s)
+            }
+
+            seen.push(s.stepctx)
+        })
+
+        dupes.forEach(function(d) {
+            steps.splice(steps.indexOf(d), 1)
+        })
     };
     self.updateSteps=function(steps){
         ko.mapping.fromJS({steps: steps}, mapping, this);
