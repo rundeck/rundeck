@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
+import groovy.transform.PackageScope
 import org.apache.log4j.Logger
 import webhooks.Webhook
 
@@ -19,6 +20,7 @@ import webhooks.Webhook
 class WebhookService {
     private static final Logger LOG4J_LOGGER = Logger.getLogger("org.rundeck.webhook.events")
     private static final ObjectMapper mapper = new ObjectMapper()
+    private static final String KEY_STORE_PREFIX = "\${KS:"
 
     def rundeckPluginRegistry
     def pluginService
@@ -28,6 +30,7 @@ class WebhookService {
     def messageSource
     def userService
     def rundeckAuthTokenManagerService
+    def storageService
 
     def processWebhook(String pluginName, String pluginConfigJson, WebhookData data, UserAndRolesAuthContext authContext) {
         LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
@@ -35,6 +38,7 @@ class WebhookService {
                 WebhookEventPlugin.class)
 
         Map pluginConfig = pluginConfigJson ? mapper.readValue(pluginConfigJson,HashMap) : [:]
+        replaceSecureOpts(authContext,pluginConfig)
         WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, webhookPluginProviderService, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
                                                                   PropertyScope.Instance).instance
 
@@ -42,6 +46,31 @@ class WebhookService {
 
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
         plugin.onEvent(context,data)
+    }
+
+    @PackageScope
+    void replaceSecureOpts(UserAndRolesAuthContext authContext, Map configProps) {
+
+            def keystore = storageService.storageTreeWithContext(authContext)
+            configProps.each { String key, String value ->
+                if(value.contains(KEY_STORE_PREFIX)) {
+                    String replaced = value
+                    int startIdx = -1
+                    while(replaced.indexOf(KEY_STORE_PREFIX,startIdx+1) != -1) {
+                        startIdx = replaced.indexOf(KEY_STORE_PREFIX)
+                        int endIdx = replaced.indexOf('}',startIdx)
+                        String valueToReplace = replaced.substring(startIdx,endIdx+1)
+                        String keyPath = valueToReplace.substring(KEY_STORE_PREFIX.length(),valueToReplace.length()-1)
+                        if(keystore.hasPassword(keyPath)) {
+                            String replacementValue = new String(keystore.readPassword(keyPath))
+                            replaced = replaced.replace(valueToReplace,replacementValue)
+                        } else {
+                            println "key was not found in key store: ${valueToReplace}"
+                        }
+                    }
+                    configProps[key] = replaced
+                }
+            }
     }
 
     def listWebhooksByProject(String project) {

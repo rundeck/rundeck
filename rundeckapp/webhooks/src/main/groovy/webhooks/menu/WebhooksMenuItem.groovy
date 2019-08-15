@@ -26,7 +26,7 @@ import webhooks.WebhookConstants
 class WebhooksMenuItem implements MenuItem {
     String title = "Webhooks"
     String titleCode = "Webhooks.title"
-    MenuItem.MenuType type = MenuType.PROJECT_CONFIG
+    MenuItem.MenuType type = MenuType.PROJECT
 
     @Autowired
     LinkGenerator grailsLinkGenerator
