@@ -2624,8 +2624,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (params.jobPlugins) {
             //validate job plugins
 
-            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
-            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
+            def configSet = parseJobPluginsParams(params.jobPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed
@@ -2861,7 +2860,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param jobPluginParams
      * @return
      */
-    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams, Collection<String> defaultEnabledList = []) {
+    static PluginConfigSet parseJobPluginsParams(Map jobPluginParams) {
         List<String> keys = [jobPluginParams?.keys].flatten().findAll { it }
 
         List<PluginProviderConfiguration> configs = []
@@ -2869,7 +2868,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         keys.each { key ->
             def enabled = jobPluginParams.enabled?.get(key)
             def pluginType = jobPluginParams.type[key]?.toString()
-            if (enabled != 'true' && !defaultEnabledList.contains(pluginType)) {
+            if (enabled != 'true') {
                 return
             }
             Map config = jobPluginParams[key]?.configMap ?: [:]
@@ -3904,8 +3903,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (params.jobPlugins) {
             //validate job plugins
-            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkProject)
-            def configSet = parseJobPluginsParams(params.jobPlugins, jobDefaultPlugins)
+
+            def configSet = parseJobPluginsParams(params.jobPlugins)
             def result = _updateJobPluginsData(configSet, scheduledExecution)
             if (result.failed) {
                 failed = result.failed

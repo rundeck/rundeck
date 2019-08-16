@@ -811,22 +811,11 @@
                                     <div class="col-sm-12">
                                         <div class="checkbox ">
                                             <g:set var="prkey" value="${rkey()}"/>
-                                            <g:if test="${jobDefaultPlugins?.contains(pluginType)}">
-                                                <input type="checkbox"
-                                                       disabled
-                                                       checked
-                                                       title="Enabled by default for this project"
-                                                       name="jobPlugins.enabled.${pluginKey}"
-                                                       value="true"
-                                                       class="form-control disabled"
-                                                       id="jobPluginEnabled_${prkey}"/>
-                                            </g:if>
-                                            <g:else>
-                                                <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
-                                                            class="form-control"
-                                                            id="jobPluginEnabled_${prkey}"
-                                                            checked="${pluginConfig != null}"/>
-                                            </g:else>
+                                            <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
+                                                        class="form-control"
+                                                        id="jobPluginEnabled_${prkey}"
+                                                        checked="${pluginConfig != null}"/>
+
                                             <label for="jobPluginEnabled_${prkey}">
                                                 <g:render template="/framework/renderPluginDesc" model="${[
                                                         serviceName    : 'JobPlugin',
@@ -863,6 +852,44 @@
 
                 </g:each>
             </div>
+            <g:if test="${jobDefaultPlugins}">
+                <div class="tab-pane" id="tab_project_plugins">
+                    <div class="help-block">
+                        <g:message code="scheduledExecution.property.project.jobPluginConfig.help.text" />
+                    </div>
+                    <div class="list-group">
+                        <g:each in="${jobDefaultPlugins}" var="defaultPlugin">
+                            <g:set var="jobPlugin" value="${jobPlugins?.get(defaultPlugin)}"/>
+                            <div class="list-group-item">
+                                <div class="form-group">
+                                    <div class="col-sm-12">
+                                        <div class="checkbox ">
+                                            <g:set var="prkey" value="${rkey()}"/>
+                                            <g:checkBox name="jobPlugin.project.enabled.${prkey}" value="true"
+                                                        disabled="true"
+                                                        class="form-control"
+                                                        id="projectJobPluginEnabled_${prkey}"
+                                                        checked="true"/>
+
+                                            <label for="projectJobPluginEnabled_${prkey}">
+                                                <g:render template="/framework/renderPluginDesc" model="${[
+                                                        serviceName    : 'JobPlugin',
+                                                        description    : jobPlugin.description,
+                                                        showPluginIcon : true,
+                                                        showNodeIcon   : false,
+                                                        hideTitle      : false,
+                                                        hideDescription: false,
+                                                        fullDescription: true
+                                                ]}"/>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </g:each>
+                    </div>
+                </div>
+            </g:if>
         </div>
     </g:if>
 </feature:enabled>
