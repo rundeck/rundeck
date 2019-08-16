@@ -1,6 +1,8 @@
 package org.rundeck.plugin.vars
 
+import com.dtolabs.rundeck.core.data.MultiDataContextImpl
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext
 import com.dtolabs.rundeck.plugins.step.PluginStepContext
