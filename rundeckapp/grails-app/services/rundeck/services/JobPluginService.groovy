@@ -81,7 +81,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                         renderingOption('booleanTrueDisplayValueClass', 'text-warning')
                     }.build()
             )
-            describedPlugin.getDescription().getProperties().clear()
             configPropertiesMapping.put('jobPlugin' + name , CONF_PROJECT_ENABLE_JOB + name)
             configProperties.put('jobPlugin' + name, 'jobPlugin')
         }
