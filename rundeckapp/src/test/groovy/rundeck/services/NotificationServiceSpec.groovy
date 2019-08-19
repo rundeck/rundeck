@@ -392,6 +392,69 @@ class NotificationServiceSpec extends Specification {
         result
     }
 
+    def "email notification attach unsanitized html"() {
+        given:
+        ExpandoMetaClass.disableGlobally()
+        File tmpTemplate = File.createTempFile("tmp","tmplate")
+        tmpTemplate << 'My Email template <span style="color: red;">${logoutput.data}</span>'
+        grailsApplication.config.rundeck.mail.template.file = tmpTemplate.getAbsolutePath()
+        def (job, execution) = createTestJob()
+        def content = [
+                execution: execution,
+                context  : Mock(ExecutionContext) {
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
+                }
+        ]
+        job.notifications = [
+                new Notification(
+                        eventTrigger: 'onsuccess',
+                        type: 'email',
+                        content: '{"recipients":"mail@example.com","subject":"test","attachLog":true,"attachLogInline":true}'
+                )
+        ]
+        job.save()
+        service.metaClass.checkAllowUnsanitized = { final String project -> true }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
+
+        }
+        service.mailService = Mock(MailService)
+        service.grailsLinkGenerator = Mock(LinkGenerator) {
+            _ * link(*_) >> 'alink'
+        }
+
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: new Date(),
+                                                               message: "log",
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                               ]
+        )
+        service.loggingService=Mock(LoggingService)
+        def messageBuilder = Mock(MailMessageBuilder)
+
+        when:
+        def result = service.triggerJobNotification('success', job, content)
+
+        then:
+        1 * service.loggingService.getLogReader(_) >> reader
+        1 * service.mailService.sendMail(_) >> { Closure callable ->
+            callable.delegate = messageBuilder
+            callable.resolveStrategy = Closure.DELEGATE_FIRST
+            callable.call(messageBuilder)
+        }
+        1 * messageBuilder.html('My Email template <span style="color: red;">log\n</span>')
+
+        result
+    }
 
     class TestReader implements StreamingLogReader {
         List<LogEvent> logs;

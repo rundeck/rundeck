@@ -34,6 +34,7 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.codecs.JSONCodec
+import org.rundeck.app.AppConstants
 import rundeck.Execution
 import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
@@ -842,15 +843,15 @@ class ExecutionControllerSpec extends Specification {
 
         when:
         def prjCfg = Mock(IRundeckProjectConfig) {
-            hasProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> projectHasProp
-            getProperty(controller.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
+            hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> projectHasProp
+            getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
         }
         def prjMgr = Mock(ProjectManager) {
             loadProjectConfig("proj1") >> prjCfg
         }
         def fwk = Mock(Framework) {
-            hasProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> frameworkHasProp
-            getProperty(controller.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
+            hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> frameworkHasProp
+            getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
             getProjectManager() >> prjMgr
         }
         controller.frameworkService = Mock(FrameworkService) {

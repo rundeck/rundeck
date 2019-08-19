@@ -762,7 +762,12 @@
               <tr>
                 <td style="padding: 20px;">
                   <pre>
-                    ${enc(sanitize:logOutput)}
+                    <g:if test="${allowUnsanitized}">
+                      ${enc(rawtext:logOutput)}
+                    </g:if>
+                    <g:else>
+                      ${enc(sanitize:logOutput)}
+                    </g:else>
                   </pre>
                 </td>
               </tr>
