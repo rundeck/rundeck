@@ -120,6 +120,7 @@ public class ServiceTypes {
     private static ServiceLoader<PluginProviderServices>
         pluginProviderServiceLoader =
         ServiceLoader.load(PluginProviderServices.class);
+    private static final Object providerLoaderSync = new Object();
 
     /**
      * Get a pluggable service implementation for the given plugin type, if available via {@link ServiceLoader}
@@ -134,9 +135,11 @@ public class ServiceTypes {
         ServiceProviderLoader loader
     )
     {
-        for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
-            if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
-                return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+        synchronized (providerLoaderSync) {
+            for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
+                if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
+                    return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+                }
             }
         }
         return null;
