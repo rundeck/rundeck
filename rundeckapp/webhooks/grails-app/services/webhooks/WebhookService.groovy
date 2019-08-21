@@ -50,11 +50,31 @@ class WebhookService {
 
     @PackageScope
     void replaceSecureOpts(UserAndRolesAuthContext authContext, Map configProps) {
+        def keystore = storageService.storageTreeWithContext(authContext)
 
-            def keystore = storageService.storageTreeWithContext(authContext)
-            configProps.each { String key, String value ->
-                if(value.contains(KEY_STORE_PREFIX)) {
-                    String replaced = value
+        Stack<Object> items = []
+
+        configProps.each { idx, i -> items.push([i, configProps, idx]) }
+
+        while(true) {
+            if (items.empty())
+                break
+
+            def elem = items.pop()
+
+            def (item, parent, index) = elem
+
+            if (item instanceof Map) {
+                item.each { idx, i -> items.push([i, item, idx]) }
+                continue
+            } else if (item instanceof List) {
+                item.eachWithIndex { i, idx -> items.push([i, item, idx]) }
+                continue
+            }
+
+            if (item instanceof String) {
+                if(item.contains(KEY_STORE_PREFIX)) {
+                    String replaced = item
                     int startIdx = -1
                     while(replaced.indexOf(KEY_STORE_PREFIX,startIdx+1) != -1) {
                         startIdx = replaced.indexOf(KEY_STORE_PREFIX)
@@ -68,9 +88,10 @@ class WebhookService {
                             println "key was not found in key store: ${valueToReplace}"
                         }
                     }
-                    configProps[key] = replaced
+                    parent[index] = replaced
                 }
             }
+        }
     }
 
     def listWebhooksByProject(String project) {

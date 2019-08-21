@@ -33,6 +33,15 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         def config = [:]
         config.prop1 = "my value"
         config.prop2 = '${KS:keys/proj1/sval}'
+        config.prop3 = [
+                prop1: 'foo',
+                prop2: '${KS:keys/proj1/sval}'
+        ]
+        config.prop4 = [
+                'foo',
+                '${KS:keys/proj1/sval}'
+        ]
+
         def mockStorageTree = Mock(MockStorageTree) {
             hasPassword(_) >> { true }
             readPassword(_) >> { "password".bytes }
@@ -45,7 +54,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         then:
         config.prop1 == "my value"
         config.prop2 == "password"
-
+        config.prop3['prop2'] == "password"
+        config.prop4[1] == "password"
     }
 
     interface MockStorageService {
