@@ -13,14 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.core.authentication.tokens;
+package webhooks.importer
 
-import java.util.Set;
+import spock.lang.Specification
 
-public interface AuthTokenManager {
-    AuthenticationToken getToken(String token);
-    boolean updateAuthRoles(String token, String roleString);
-    boolean deleteToken(String token);
-    Set<String> parseAuthRoles(String authRoles);
-    boolean importWebhookToken(String token, String owner, String user, String roleString);
+class WebhooksProjectImporterSpec extends Specification {
+
+    def "doImport"() {
+        given:
+        WebhooksProjectImporter importer = new WebhooksProjectImporter()
+        importer.webhookService = Mock(MockWebhookService)
+
+        when:
+        importer.doImport("webhook",new File(getClass().getClassLoader().getResource("webhooks.yaml").toURI()))
+
+        then:
+        2 * importer.webhookService.importWebhook(_) >> {
+            [msg:"ok"]
+        }
+    }
+
+    static interface MockWebhookService {
+        def importWebhook(def hookData)
+    }
 }

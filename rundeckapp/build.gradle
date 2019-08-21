@@ -194,9 +194,6 @@ grails{
         compile project(':grails-securityheaders')
         compile project(':rundeck:repository')
         compile project(':rundeck:webhooks')
-        compile project(':pro-plugins:rundeckpro-webhooks')
-        compile project(':pro-plugins:rundeckpro-reactions')
-        compile project(':pro-plugins:rundeckpro-license')
     }
 }
 

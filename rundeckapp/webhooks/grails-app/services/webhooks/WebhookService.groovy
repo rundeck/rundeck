@@ -21,6 +21,7 @@ class WebhookService {
     private static final Logger LOG4J_LOGGER = Logger.getLogger("org.rundeck.webhook.events")
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
+    private static final String END_MARKER = "}"
 
     def rundeckPluginRegistry
     def pluginService
@@ -50,6 +51,7 @@ class WebhookService {
 
     @PackageScope
     void replaceSecureOpts(UserAndRolesAuthContext authContext, Map configProps) {
+        if(configProps.isEmpty()) return
         def keystore = storageService.storageTreeWithContext(authContext)
 
         Stack<Object> items = []
@@ -73,19 +75,23 @@ class WebhookService {
             }
 
             if (item instanceof String) {
-                if(item.contains(KEY_STORE_PREFIX)) {
+                if(item && item.contains(KEY_STORE_PREFIX)) {
                     String replaced = item
                     int startIdx = -1
                     while(replaced.indexOf(KEY_STORE_PREFIX,startIdx+1) != -1) {
                         startIdx = replaced.indexOf(KEY_STORE_PREFIX)
-                        int endIdx = replaced.indexOf('}',startIdx)
+                        int endIdx = replaced.indexOf(END_MARKER,startIdx)
+                        if(endIdx == -1) {
+                            log.error("Invalid substitution string, terminating marker not found in value: ${replaced}")
+                            break
+                        }
                         String valueToReplace = replaced.substring(startIdx,endIdx+1)
                         String keyPath = valueToReplace.substring(KEY_STORE_PREFIX.length(),valueToReplace.length()-1)
                         if(keystore.hasPassword(keyPath)) {
                             String replacementValue = new String(keystore.readPassword(keyPath))
                             replaced = replaced.replace(valueToReplace,replacementValue)
                         } else {
-                            println "key was not found in key store: ${valueToReplace}"
+                            log.warn("key was not found in key store: ${keyPath}")
                         }
                     }
                     parent[index] = replaced
@@ -97,7 +103,7 @@ class WebhookService {
     def listWebhooksByProject(String project) {
         Webhook.findAllByProject(project).collect {
             AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(it.authToken)
-            [id:it.id, name:it.name, project: it.project, user:authToken.ownerName, roles: authToken.authRoles, authToken:it.authToken, eventPlugin:it.eventPlugin, config:mapper.readValue(it.pluginConfigurationJson, HashMap)]
+            [id:it.id, name:it.name, project: it.project, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRoles, authToken:it.authToken, eventPlugin:it.eventPlugin, config:mapper.readValue(it.pluginConfigurationJson, HashMap)]
         }
     }
 
@@ -133,6 +139,25 @@ class WebhookService {
         } else {
             return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
+    }
+
+    def importWebhook(hook) {
+        if(Webhook.findByAuthToken(hook.apiToken.token)) return [msg:"Webhook exists"]
+        if(!rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token, hook.apiToken.creator, hook.apiToken.user, hook.apiToken.roles)) return [err:"Unable to create webhook api token"]
+        Webhook ihook = new Webhook()
+        ihook.name = hook.name
+        ihook.authToken = hook.apiToken.token
+        ihook.project = hook.project
+        ihook.eventPlugin = hook.eventPlugin
+        ihook.pluginConfigurationJson = hook.pluginConfiguration
+        try {
+            ihook.save(failOnError:true)
+            return [msg:"Webhook ${hook.name} imported"]
+        } catch(Exception ex) {
+            log.error("Failed to import webhook", ex)
+            return [err:"Unable to import webhoook ${hook.name}. Error:"+ex.message]
+        }
+
     }
 
     Webhook getWebhook(Long id) {

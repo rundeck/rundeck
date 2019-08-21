@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.rundeck.core.projects;
 
-package com.dtolabs.rundeck.app.support
+import java.io.File;
 
-/**
- * Created by greg on 8/11/15.
- */
-interface ProjectArchiveImportRequest {
-    String getProject()
-    String getJobUuidOption()
-    Boolean getImportExecutions()
-    Boolean getImportConfig()
-    Boolean getImportACL()
-    Boolean getImportWebhooks()
-
+public interface ProjectDataImporter {
+    String getSelector();
+    void doImport(String project, File importFile);
 }

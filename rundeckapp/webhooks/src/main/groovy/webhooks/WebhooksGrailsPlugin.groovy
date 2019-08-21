@@ -2,6 +2,8 @@ package webhooks
 
 import grails.plugins.*
 import grails.util.Environment
+import webhooks.exporter.WebhooksProjectExporter
+import webhooks.importer.WebhooksProjectImporter
 import webhooks.menu.WebhooksMenuItem
 import webhooks.plugins.JobRunWebhookEventPlugin
 import webhooks.plugins.LogWebhookEventPlugin
@@ -58,7 +60,12 @@ Brief summary/description of the plugin.
             ].each { type ->
                 "rundeckAppPlugin_${type.simpleName}"(PluginFactoryBean, type)
             }
-
+            webhookProjectExporter(WebhooksProjectExporter) {
+                webhookService = ref('webhookService')
+            }
+            webhookProjectImporter(WebhooksProjectImporter) {
+                webhookService = ref('webhookService')
+            }
         }
     }}
 
