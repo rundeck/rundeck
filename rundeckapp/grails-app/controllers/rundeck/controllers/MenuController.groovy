@@ -3354,7 +3354,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
         }
-        def userList = [:]
+        def userList = []
         boolean loggedOnly = false
         if(params.loggedOnly && params.loggedOnly.equals('true')){
             loggedOnly = true
@@ -3374,10 +3374,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             def tokenList = AuthToken.findAllByUser(it)
             obj.tokens = tokenList?.size()
             obj.loggedStatus = userService.getLoginStatus(it, obj.lastJob)
-            if(loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LIN.value)){
-                userList.put(it.login,obj)
+            obj.lastHostName = it.lastLoggedHostName
+            obj.lastSessionId = it.lastSessionId
+            obj.loggedInTime = it.lastLogin
+            if(loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)){
+                userList.add(obj)
             }else if(!loggedOnly){
-                userList.put(it.login,obj)
+                userList.add(obj)
             }
         }
         render(contentType:'application/json',text:

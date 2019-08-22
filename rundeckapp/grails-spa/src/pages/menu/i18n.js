@@ -4,9 +4,9 @@ const translationStrings = {
     message: {
       pageUsersSummary: 'List of Rundeck users.',
       pageUsersLoginLabel: 'Login',
-      pageUsersCreatedLabel: 'Creado',
-      pageUsersUpdatedLabel: 'Actualizado',
-      pageUsersLastjobLabel: 'Ultima ejecucion de un trabajo',
+      pageUsersCreatedLabel: 'Created',
+      pageUsersUpdatedLabel: 'Updated',
+      pageUsersLastjobLabel: 'Last Job Execution',
       domainUserFirstNameLabel: 'First Name',
       domainUserLastNameLabel: 'Last Name',
       domainUserEmailLabel: 'Email',
@@ -16,7 +16,14 @@ const translationStrings = {
       pageUsersLoggedStatus: 'Logged Status',
       pageUserLoggedOnly: 'Logged Users Only',
       pageUserNotSet: 'Not Set',
-      pageUserNone: 'None'
+      pageUserNone: 'None',
+      pageFilterLogin: 'Login',
+      pageFilterHostName: 'Host Name',
+      pageFilterSessionID: 'Session ID',
+      pageFilterBtnSearch: 'Search',
+      pageUsersSessionIDLabel: 'Session ID',
+      pageUsersHostNameLabel: 'Host Name',
+      pageUsersEventTimeLabel: 'Event Time'
     }
   },
   es_419: {
@@ -35,7 +42,14 @@ const translationStrings = {
       pageUsersLoggedStatus: 'Logged Status',
       pageUserLoggedOnly: 'Logged Users Only',
       pageUserNotSet: 'No Establecido',
-      pageUserNone: 'Ninguno'
+      pageUserNone: 'Ninguno',
+      pageFilterLogin: 'Login',
+      pageFilterHostName: 'Host Name',
+      pageFilterSessionID: 'Session ID',
+      pageFilterBtnSearch: 'Buscar',
+      pageUsersSessionIDLabel: 'Session ID',
+      pageUsersHostNameLabel: 'Host Name',
+      pageUsersEventTimeLabel: 'Event Time'
     }
   }
 }

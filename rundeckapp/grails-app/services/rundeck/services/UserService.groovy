@@ -52,12 +52,14 @@ class UserService {
         return user
     }
 
-    def registerLogin(String login){
+    def registerLogin(String login, String sessionId){
         User user = User.findByLogin(login)
         if(!user){
             user = new User(login:login)
         }
         user.lastLogin = new Date()
+        user.lastLoggedHostName = InetAddress.getLocalHost().getHostName()
+        user.lastSessionId = sessionId
         if(!user.save(flush:true)){
             System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
         }

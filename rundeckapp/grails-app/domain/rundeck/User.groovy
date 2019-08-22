@@ -35,6 +35,8 @@ class User {
     String filterPref
     Date lastLogin
     Date lastLogout
+    String lastSessionId
+    String lastLoggedHostName
 
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
     static constraints={
@@ -49,5 +51,7 @@ class User {
         filterPref(nullable:true)
         lastLogin(nullable:true)
         lastLogout(nullable:true)
+        lastSessionId(nullable:true)
+        lastLoggedHostName(nullable:true)
     }
 }

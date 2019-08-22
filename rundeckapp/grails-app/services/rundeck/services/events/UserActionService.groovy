@@ -5,6 +5,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent
 import org.springframework.security.core.Authentication
 import org.springframework.security.web.authentication.logout.LogoutHandler
+import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
 import javax.servlet.http.HttpServletRequest
@@ -14,11 +15,13 @@ import javax.servlet.http.HttpServletResponse
 class UserActionService implements LogoutHandler{
 
     UserService userService
+    FrameworkService frameworkService
 
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
         if(extractUsername(event?.authentication) != null){
-            userService.registerLogin(extractUsername(event.authentication))
+            String sessionId = event.getSource()?.details?.sessionId
+            userService.registerLogin(extractUsername(event.authentication), sessionId)
         }else{
             log.error("Null user name on handleAuthenticationSuccessEvent")
         }

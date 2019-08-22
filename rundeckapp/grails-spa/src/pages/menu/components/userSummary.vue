@@ -17,6 +17,45 @@
             </div>
           </div>
         </div>
+        <div class="base-filters">
+          <div class="row">
+            <div class="col-xs-12 col-sm-4">
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  :placeholder="$t( 'message.pageFilterLogin')"
+                  v-model="loginFilter"
+                >
+              </div>
+            </div>
+            <div class="col-xs-12 col-sm-4">
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  :placeholder="$t( 'message.pageFilterSessionID')"
+                  v-model="sessionIdFilter"
+                >
+              </div>
+            </div>
+            <div class="col-xs-12 col-sm-4">
+              <div class="form-group">
+                <input
+                  type="text"
+                  class="form-control"
+                  :placeholder="$t( 'message.pageFilterHostName')"
+                  v-model="hostNameFilter"
+                >
+              </div>
+            </div>
+            <div class="col-xs-12">
+              <div class="form-group pull-right">
+                <btn @click="filterByCriteria()" type="primary">{{ $t("message.pageFilterBtnSearch")}}</btn>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="row">
@@ -58,11 +97,23 @@
                           </span>
                         </th>
                         <th class="table-header">
+                          {{ $t("message.pageUsersSessionIDLabel")}}
+                          SESSION ID
+                        </th>
+                        <th class="table-header">
+                          {{ $t("message.pageUsersHostNameLabel")}}
+                          HOSTNAME
+                        </th>
+                        <th class="table-header">
+                          {{ $t("message.pageUsersEventTimeLabel")}}
+                          EVENT TIME
+                        </th>
+                        <th class="table-header">
                           {{ $t("message.pageUsersLoggedStatus")}}
                         </th>
                       </tr>
 
-                      <tr v-for="user in users">
+                      <tr v-for="user in filteredUsers">
                         <td>{{user.login}}
                         </td>
                         <td v-if="user.email">{{user.email}}
@@ -93,6 +144,16 @@
                         </td>
                         <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNone")}}</span>
                         </td>
+                        <td v-if="user.lastSessionId">{{user.lastSessionId}}
+                        </td>
+                        <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                        <td v-if="user.lastHostName">{{user.lastHostName}}
+                        </td>
+                        <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                        <td v-if="user.loggedInTime">{{user.loggedInTime | moment("MM/DD/YYYY hh:mm a")}}
+                        </td>
+                        <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                        </td>
                         <td>{{user.loggedStatus}}
                         </td>
                       </tr>
@@ -121,7 +182,11 @@
     data () {
       return {
         users: [],
-        loggedOnly: false
+        loggedOnly: false,
+        filteredUsers: [],
+        sessionIdFilter: "",
+        hostNameFilter: "",
+        loginFilter: ""
       }
     },
     methods: {
@@ -136,7 +201,39 @@
           withCredentials: true
         }).then((response) => {
           this.users = response.data.users
+          this.filterByCriteria()
         })
+      },
+      filterByCriteria: function (){
+        var sessionFilterMatch = true
+        var hostNameFilterMatch = true
+        var loginFilterMatch = true
+        if(this.sessionIdFilter.trim().length == 0){
+          sessionFilterMatch = false
+        }
+        if(this.hostNameFilter.trim().length == 0){
+          hostNameFilterMatch = false
+        }
+        if(this.loginFilter.trim().length == 0){
+          loginFilterMatch = false
+        }
+        global = this
+        const filteredUsers = this.users.filter(function(user){
+          var singleUserSessionMatch = true
+          var singleUserHostnameMatch = true
+          var singleUserLoginMatch = true
+          if(sessionFilterMatch === true){
+            singleUserSessionMatch = user.lastSessionId === global.sessionIdFilter.trim()? true : false
+          }
+          if(hostNameFilterMatch === true){
+            singleUserHostnameMatch = user.lastHostName === global.hostNameFilter.trim()? true : false
+          }
+          if(loginFilterMatch === true){
+            singleUserLoginMatch = user.login === global.loginFilter.trim()? true : false
+          }
+          return (singleUserSessionMatch && singleUserHostnameMatch && singleUserLoginMatch)
+        })
+        this.filteredUsers = filteredUsers
       }
     },
     beforeMount() {
