@@ -56,9 +56,10 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
     def "registerLogin"(){
         setup:
         String login = "theusername"
+        String sessionId = "exampleSessionId01"
 
         when:
-        User user = service.registerLogin(login)
+        User user = service.registerLogin(login, sessionId)
 
         then:
         user.login == "theusername"

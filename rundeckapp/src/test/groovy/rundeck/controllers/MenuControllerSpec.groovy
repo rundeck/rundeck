@@ -1296,8 +1296,8 @@ class MenuControllerSpec extends Specification {
 
         then:
         response.json.users
-        response.json.users.admin
-        response.json.users.admin.lastJob
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
 
     }
 
@@ -1346,9 +1346,9 @@ class MenuControllerSpec extends Specification {
 
         then:
         response.json.users
-        response.json.users.admin
-        response.json.users.admin.lastJob
-        response.json.users.admin.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
 
     }
 
