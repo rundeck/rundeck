@@ -295,6 +295,7 @@
                     </span>
                 </span>
                 <input type="hidden" name="default_${serviceDefaults.service}" data-bind="value: defaults['${serviceDefaults.service}'].type"/>
+                <input type="hidden" name="${serviceDefaults.prefix}.default.type" data-bind="value: defaults['${serviceDefaults.service}'].type"/>
             </div>
         </div>
         <g:each in="${serviceDefaults.descriptions}" var="description" status="nex">
@@ -307,8 +308,6 @@
           <div class=" " id="${enc(attr: nkey) + '_det'}"
                data-bind="if: defaults['${serviceDefaults.service}'].type()==='${enc(attr: description.name)}'">
               <hr/>
-              <g:hiddenField name="${serviceDefaults.prefix}.default.type"
-                             value="${description.name}"/>
 
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                     service            : serviceDefaults.service,
