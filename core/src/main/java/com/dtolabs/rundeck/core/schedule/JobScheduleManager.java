@@ -87,4 +87,15 @@ public interface JobScheduleManager {
      * @return list dead cluster members
      */
     List<String> getDeadMembers(String uuid);
+
+    /**
+     * Schedule a job to run later
+     *
+     * @param data  dataRundeckproClusterGrailsPlugin
+     *
+     * @return true if successful
+     */
+    default boolean scheduleRemoteJob(Map data){
+        return false;
+    }
 }

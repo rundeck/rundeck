@@ -53,6 +53,11 @@ class JobSchedulerService implements JobScheduleManager {
     List<String> getDeadMembers(String uuid) {
         return rundeckJobScheduleManager.getDeadMembers(uuid);
     }
+
+    @Override
+    boolean scheduleRemoteJob(Map data) {
+        return rundeckJobScheduleManager.scheduleRemoteJob(data)
+    }
 }
 
 /**
@@ -65,7 +70,6 @@ class QuartzJobScheduleManager implements JobScheduleManager {
 
     @Autowired
     def FrameworkService frameworkService
-
 
     @Override
     void deleteJobSchedule(final String name, final String group) {
@@ -127,4 +131,10 @@ class QuartzJobScheduleManager implements JobScheduleManager {
     List<String> getDeadMembers(String uuid) {
         return null;
     }
+
+    @Override
+    boolean scheduleRemoteJob(Map data) {
+        false
+    }
+
 }

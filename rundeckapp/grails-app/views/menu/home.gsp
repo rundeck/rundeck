@@ -212,7 +212,7 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-xs-12">
-      <div class="card">
+      <div class="card" data-bind="if:  projectCount()>0 ">
         <div class="card-content">
           <div data-bind="if: !loadedProjectNames() && projectCount()<1">
             <div class="">
