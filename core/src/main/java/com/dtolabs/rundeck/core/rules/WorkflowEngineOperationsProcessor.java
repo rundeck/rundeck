@@ -185,7 +185,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private void getContextGlobalData(final Map<String, String> changes){
         DAT inputData = null != sharedData ? sharedData.produceNext() : null;
         if(inputData != null && inputData instanceof WFSharedContext) {
-            DataContext globals = ((WFSharedContext) inputData).getData().get(ContextView.global());
+            DataContext globals = ((WFSharedContext) inputData).consolidate().getData().get(ContextView.global());
             if (null != globals) {
                 HashMap<String, String> stringStringHashMap = new HashMap<>();
                 for (String s : globals.keySet()) {
