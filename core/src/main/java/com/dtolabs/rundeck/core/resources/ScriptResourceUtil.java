@@ -269,8 +269,15 @@ class ScriptResourceUtil {
                 shells.add(scriptfile.getAbsolutePath() + " " + newargs);
             } else {
                 shells.add(scriptfile.getAbsolutePath());
+                String[] argsplitted = null;
+                if(scriptargsarr == null){
+                    argsplitted = scriptargs.split(" (?=(?:[^(\"|\')]*(\"|\')[^(\"|\')]*(\"|\'))*[^(\"|\')]*$)");
+                    for(int i = 0; i<argsplitted.length;i++){
+                        argsplitted[i] =  argsplitted[i].replaceAll("\"|\'", "");
+                    }
+                }
                 shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(
-                        null!=scriptargsarr?scriptargsarr:scriptargs.split(" "),
+                        null!=scriptargsarr?scriptargsarr:argsplitted,
                         newDataContext
                 )));
             }

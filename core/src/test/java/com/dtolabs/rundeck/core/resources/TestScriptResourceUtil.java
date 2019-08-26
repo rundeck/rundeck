@@ -85,6 +85,17 @@ public class TestScriptResourceUtil extends TestCase {
             assertEquals(workingdir, processBuilder.directory());
             assertEquals(testEnv.size(), processBuilder.environment().size());
         }
+        {
+            //interpreter args not quoted with internal quot
+            final ProcessBuilder processBuilder = ScriptResourceUtil.buildProcess(workingdir, scriptfile, "a b \"b c d\"", null,
+                    null,
+                    "test -c", false);
+
+
+            assertEquals(Arrays.asList("test", "-c", scriptfile.getAbsolutePath() , "a","b", "b c d"), processBuilder.command());
+            assertEquals(workingdir, processBuilder.directory());
+            assertEquals(testEnv.size(), processBuilder.environment().size());
+        }
     }
 
     public void testBuildProcessEnv() throws Exception {
