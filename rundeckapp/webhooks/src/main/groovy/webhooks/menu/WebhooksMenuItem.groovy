@@ -35,7 +35,7 @@ class WebhooksMenuItem implements MenuItem {
     @Override
     String getProjectHref(final String project) {
         return grailsLinkGenerator.link(
-                action: "index",
+                action: "admin",
                 controller: "webhook",
                 plugin: "webhooks",
                 params: [project: project]

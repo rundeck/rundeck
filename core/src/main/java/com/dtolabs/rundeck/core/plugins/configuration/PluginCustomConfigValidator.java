@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package webhooks
+package com.dtolabs.rundeck.core.plugins.configuration;
 
-class Webhook {
+import java.util.Map;
 
-    String name
-    String project
-    String authToken
-    String eventPlugin
-    String pluginConfigurationJson = '{}'
-
-    static constraints = {
-        name(nullable: false)
-        project(nullable: false)
-        authToken(nullable: false)
-        eventPlugin(nullable: false)
-    }
-
-    static mapping = {
-        pluginConfigurationJson type: 'text'
-    }
+public interface PluginCustomConfigValidator {
+    Validator.Report validate(Map config);
 }

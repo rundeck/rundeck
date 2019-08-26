@@ -20,7 +20,7 @@ class WebhookController {
     def frameworkService
     def apiService
 
-    def index() { }
+    def admin() {}
 
     def save() {
         String project = request.JSON.project
@@ -36,7 +36,7 @@ class WebhookController {
         }
 
         def msg = webhookService.saveHook(authContext,request.JSON)
-        if(msg.err) response.status = 500
+        if(msg.err) response.status = 400
 
         render msg as JSON
     }
@@ -54,9 +54,28 @@ class WebhookController {
             return
         }
         def output = webhookService.delete(webhook)
-        if(output.err) response.status = 500
+        if(output.err) response.status = 400
         render output as JSON
 
+    }
+
+    def get() {
+        if(!params.project){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['project']])
+
+        }
+        if(!params.id){
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                           code: 'api.error.parameter.required', args: ['id']])
+
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!authorized(authContext, params.project, RESOURCE_TYPE_WEBHOOK, ACTION_READ)) {
+            sendJsonError("You do not have access to this resource")
+            return
+        }
+        render webhookService.getWebhookWithAuth(params.id) as JSON
     }
 
     def list() {

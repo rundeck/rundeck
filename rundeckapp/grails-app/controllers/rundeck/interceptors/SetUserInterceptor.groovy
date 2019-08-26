@@ -62,7 +62,7 @@ class SetUserInterceptor {
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
             def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
-            AuthTokenType tokenType = controllerName == "webhook" ? AuthTokenType.WEBHOOK : AuthTokenType.USER
+            AuthTokenType tokenType = controllerName == "webhook" && actionName == "post" ? AuthTokenType.WEBHOOK : AuthTokenType.USER
             String user = lookupToken(authtoken, servletContext, tokenType)
             List<String> roles = lookupTokenRoles(authtoken, servletContext)
 

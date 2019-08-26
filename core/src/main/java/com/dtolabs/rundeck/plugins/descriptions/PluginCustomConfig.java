@@ -1,5 +1,7 @@
 package com.dtolabs.rundeck.plugins.descriptions;
 
+import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -23,13 +25,6 @@ public @interface PluginCustomConfig {
      * @return the name of the custom vue component that will be used to provide the configuration for this property
      */
     String vueConfigurationComponent() default "";
-    /**
-     * @return class name of a validator to use
-     */
-    String validatorClassName() default "";
 
-    /**
-     * @return class of a validator to use
-     */
-    Class<?> validatorClass() default Object.class;
+    Class<? extends PluginCustomConfigValidator> validator() default PluginCustomConfigValidator.class;
 }

@@ -1,12 +1,17 @@
 package webhooks
 
-import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenManager
+
 import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PluginCustomConfigValidator
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventContextImpl
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
 import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
@@ -14,7 +19,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.log4j.Logger
-import webhooks.Webhook
 
 @Transactional
 class WebhookService {
@@ -102,8 +106,7 @@ class WebhookService {
 
     def listWebhooksByProject(String project) {
         Webhook.findAllByProject(project).collect {
-            AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(it.authToken)
-            [id:it.id, name:it.name, project: it.project, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRoles, authToken:it.authToken, eventPlugin:it.eventPlugin, config:mapper.readValue(it.pluginConfigurationJson, HashMap)]
+            getWebhookWithAuthAsMap(it)
         }
     }
 
@@ -112,7 +115,9 @@ class WebhookService {
         if(hookData.id) {
             hook = Webhook.get(hookData.id)
             if (!hook) return [err: "Webhook not found"]
-            rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,hookData.roles)
+            if(hookData.roles) {
+                if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,hookData.roles)) return [err:"Could not update token roles"]
+            }
         } else {
             String checkUser = hookData.user ?: authContext.username
             if (!userService.validateUserExists(checkUser)) return [err: "Webhook user '${checkUser}' not found"]
@@ -120,24 +125,49 @@ class WebhookService {
             Set<String> roles = hookData.roles ? rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles) : authContext.roles
             hook.authToken = apiService.generateUserToken(authContext,null,checkUser,roles, false, true).token
         }
-        hook.name = hookData.name
-        hook.project = hookData.project
-        hook.eventPlugin = hookData.eventPlugin
-        hook.pluginConfigurationJson = hookData.config ? mapper.writeValueAsString(hookData.config) : "{}"
-        if(hook.save()) {
-            return [msg: "saved"]
+        hook.name = hookData.name ?: hook.name
+        hook.project = hookData.project ?: hook.project
+        if(hookData.eventPlugin && !pluginService.listPlugins(WebhookEventPlugin).any { it.key == hookData.eventPlugin}) return [err:"Plugin does not exist: " + hookData.eventPlugin]
+        hook.eventPlugin = hookData.eventPlugin ?: hook.eventPlugin
+
+        Map pluginConfig = [:]
+        if(hookData.config) pluginConfig = hookData.config instanceof String ? mapper.readValue(hookData.config, HashMap) : hookData.config
+        ValidatedPlugin vPlugin = validatePluginConfig(hook.eventPlugin,pluginConfig)
+        if(!vPlugin.valid) return [err: "Invalid plugin configuration: " + vPlugin.report.errors.collect {k,v -> "$k : $v"}.join("\n")]
+        hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
+
+        if(hook.save(true)) {
+            return [msg: "Saved webhook"]
         } else {
             return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
         }
     }
 
+    @PackageScope
+    ValidatedPlugin validatePluginConfig(String webhookPlugin, Map pluginConfig) {
+        ValidatedPlugin result = pluginService.validatePluginConfig(ServiceNameConstants.WebhookEvent, webhookPlugin, pluginConfig)
+        def plugin = pluginService.getPlugin(webhookPlugin,WebhookEventPlugin.class)
+        PluginCustomConfig customConfig = PluginAdapterUtility.getCustomConfigAnnotation(plugin)
+        if(customConfig && customConfig.validator()) {
+            PluginCustomConfigValidator validator = Validator.createCustomPropertyValidator(customConfig)
+            if(validator) {
+                result.report.errors.putAll(validator.validate(pluginConfig).errors)
+                result.valid = result.report.valid
+            }
+        }
+        return result
+    }
+
     def delete(Webhook hook) {
         String authToken = hook.authToken
-        if(hook.delete()) {
+        String name = hook.name
+        try {
+            hook.delete()
             rundeckAuthTokenManagerService.deleteToken(authToken)
-            return [msg: "deleted ${name} webhook"]
-        } else {
-            return [err: hook.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")]
+            return [msg: "Deleted ${name} webhook"]
+        } catch(Exception ex) {
+            log.error("delete webhook failed",ex)
+            return [err: ex.message]
         }
     }
 
@@ -158,6 +188,16 @@ class WebhookService {
             return [err:"Unable to import webhoook ${hook.name}. Error:"+ex.message]
         }
 
+    }
+
+    def getWebhookWithAuth(String id) {
+        Webhook hook = Webhook.get(id.toLong())
+        getWebhookWithAuthAsMap(hook)
+    }
+
+    private Map getWebhookWithAuthAsMap(Webhook hook) {
+        AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
+        return [id:hook.id, name:hook.name, project: hook.project, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRoles, authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {

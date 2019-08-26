@@ -160,7 +160,7 @@
           headers: {
             "x-rundeck-ajax": true
           },
-          url: `${rdBase}api/${apiVersion}/webhook-admin/editorData/${projectName}`,
+          url: `${rdBase}webhook/admin/editorData/${projectName}`,
           withCredentials: true
         }).then(response => {
           curUser = response.data.username
@@ -194,7 +194,7 @@
             "x-rundeck-ajax": true,
             "Content-Type": "application/json"
           },
-          url: `${rdBase}webhook-admin/save`,
+          url: `${rdBase}webhook/admin/save`,
           data: JSON.stringify(this.curHook),
           withCredentials: true
         }).then(response => {
@@ -216,7 +216,7 @@
           headers: {
             "x-rundeck-ajax": true
           },
-          url: `${rdBase}webhook-admin/delete/${this.curHook.id}`,
+          url: `${rdBase}webhook/admin/delete/${this.curHook.id}`,
           withCredentials: true
         }).then(response => {
           if (response.data.err) {
