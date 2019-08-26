@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -158,6 +159,7 @@ class UserController extends ControllerBase{
             if (max) {
                 maxResults(max)
             }
+            eq("type", AuthTokenType.USER)
             order("dateCreated", "desc")
         }
         params.max = max
