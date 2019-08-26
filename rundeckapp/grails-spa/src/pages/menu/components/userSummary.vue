@@ -98,15 +98,12 @@
                         </th>
                         <th class="table-header">
                           {{ $t("message.pageUsersSessionIDLabel")}}
-                          SESSION ID
                         </th>
                         <th class="table-header">
                           {{ $t("message.pageUsersHostNameLabel")}}
-                          HOSTNAME
                         </th>
                         <th class="table-header">
                           {{ $t("message.pageUsersEventTimeLabel")}}
-                          EVENT TIME
                         </th>
                         <th class="table-header">
                           {{ $t("message.pageUsersLoggedStatus")}}
