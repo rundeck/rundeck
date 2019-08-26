@@ -66,6 +66,11 @@
         <g:message code="gui.menu.KeyStorage"/>
     </g:link>
   </li>
+  <li>
+    <g:link controller="menu" action="fileStorage">
+        <g:message code="gui.menu.FileStorage"/>
+    </g:link>
+  </li>
   <g:if test="${authRead}">
     <li>
       <g:link controller="menu" action="systemConfig">

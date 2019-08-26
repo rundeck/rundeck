@@ -58,9 +58,10 @@ class SaveFilePlugin  implements StepPlugin {
     @Override
     void executeStep(PluginStepContext context, Map<String, Object> configuration) throws NodeStepException {
         Path filePath = PathUtil.asPath(path + "/" + name)
+        def dataContext = context.dataContextObject
         FileStorageTree fileStorageTree = context.executionContext.getFileStorageTree()
         byte[] fileContent = fileContent()
-        boolean hasFile = fileStorageTree.hasFile(filePath)
+        boolean hasFile = fileStorageTree.hasFileOnExecWorkpacePath(filePath, dataContext.job.project, dataContext.job.name, dataContext.job.execid)
 
         if(!overwrite && hasFile){
             context.getLogger().log(Constants.ERR_LEVEL, "File already exists")
@@ -76,7 +77,8 @@ class SaveFilePlugin  implements StepPlugin {
         if(hasFile && overwrite){
             fileStorageTree.updateResource(
                     filePath,
-                    DataUtil.withStream(stream, map, StorageUtil.factory())
+                    DataUtil.withStream(stream, map, StorageUtil.factory()),
+                    dataContext.job.project, dataContext.job.name, dataContext.job.execid
             )
 
             this.writeLog(context)
@@ -86,7 +88,8 @@ class SaveFilePlugin  implements StepPlugin {
 
         fileStorageTree.createResource(
                 filePath,
-                DataUtil.withStream(stream, map, StorageUtil.factory())
+                DataUtil.withStream(stream, map, StorageUtil.factory()),
+                dataContext.job.project, dataContext.job.name, dataContext.job.execid
         )
 
         this.writeLog(context)

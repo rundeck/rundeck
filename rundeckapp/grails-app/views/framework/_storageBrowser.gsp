@@ -45,18 +45,20 @@ implied. - See the License for the specific language governing permissions and -
         </ul>
       </div>
 
-      <div class="btn-group" data-bind="if: allowUpload() ">
-        <a href="#storageuploadkey" data-bind="click: actionUpload" class="btn btn-sm btn-success ">
-          <i class="glyphicon glyphicon-plus"></i>
-          <g:message code="storage.add.or.upload.a.key"/>
-        </a>
-      </div>
-      <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
-        <a href="#storageuploadkey" data-bind="click: actionUploadModify" class="btn btn-sm btn-info ">
-          <i class="glyphicon glyphicon-pencil"></i>
-          <g:message code="storage.overwrite.key"/>
-        </a>
-      </div>
+      <g:if test="${!isFileStorage}">
+        <div class="btn-group" data-bind="if: allowUpload() ">
+          <a href="#storageuploadkey" data-bind="click: actionUpload" class="btn btn-sm btn-success ">
+            <i class="glyphicon glyphicon-plus"></i>
+            <g:message code="storage.add.or.upload.a.key"/>
+          </a>
+        </div>
+        <div class="btn-group" data-bind="if: allowUpload() && selectedPath() ">
+          <a href="#storageuploadkey" data-bind="click: actionUploadModify" class="btn btn-sm btn-info ">
+            <i class="glyphicon glyphicon-pencil"></i>
+            <g:message code="storage.overwrite.key"/>
+          </a>
+        </div>
+      </g:if>
     </div>
     <div class="loading-area text-info " data-bind="visible: loading()" style="width: 100%; height: 200px; padding: 50px; background-color: #eee;">
       <i class="glyphicon glyphicon-time"></i>
@@ -67,11 +69,15 @@ implied. - See the License for the specific language governing permissions and -
         <tr>
           <td colspan="2" class="text-primary">
             <span data-bind="if: filteredFiles().length < 1">
-              <g:message code="storage.no.keys"/>
+              <g:message code="${isFileStorage? 'storage.no.files' : 'storage.no.keys'}"/>
             </span>
-            <span data-bind="if: filteredFiles().length > 0">
+            <span data-bind="if: filteredFiles().length == 1">
               <span data-bind="text: filteredFiles().length"></span>
-              <g:message code="storage.keys.plural"/>
+              <g:message code="${isFileStorage? 'storage.files.singular' : 'storage.keys.singular'}"/>
+            </span>
+            <span data-bind="if: filteredFiles().length > 1">
+              <span data-bind="text: filteredFiles().length"></span>
+              <g:message code="${isFileStorage? 'storage.files.plural' : 'storage.keys.plural'}"/>
             </span>
           </td>
         </tr>

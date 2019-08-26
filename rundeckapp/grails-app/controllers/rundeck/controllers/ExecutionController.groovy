@@ -43,6 +43,7 @@ import groovy.transform.PackageScope
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
+import org.rundeck.storage.api.PathUtil
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -65,6 +66,7 @@ class ExecutionController extends ControllerBase{
     static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
     static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
 
+    FileStorageService fileStorageService
     FrameworkService frameworkService
     ExecutionService executionService
     LoggingService loggingService
@@ -261,6 +263,8 @@ class ExecutionController extends ControllerBase{
 
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
+        def hasFile = fileStorageService.hasPath(authContext,
+                "files/${e.project}/${e.scheduledExecution?.jobName}/${e.id}")
         projectNames.each{
             if(it != params.project && frameworkService.authorizeProjectResource(
                     authContext,
@@ -277,6 +281,7 @@ class ExecutionController extends ControllerBase{
                 execution             : e,
                 workflowTree          : workflowTree,
                 filesize              : filesize,
+                hasFile               : hasFile,
                 nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
                         e.scheduledExecution
                 ) : null,

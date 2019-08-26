@@ -174,6 +174,7 @@ search
 })
       </g:javascript>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+      <asset:javascript src="storageBrowseKO.js"/>
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
@@ -226,6 +227,25 @@ search
                                           <g:message code="next.execution"/>
                                       </g:link>
                                     </li>
+                                  </g:if>
+                                  <g:if test="${hasFile}">
+                                      <li>
+                                          <g:set var="fieldid" value="${g.rkey()}"/>
+                                          <g:set var="execid" value="${execution.id}"/>
+                                          <g:set var="jobName" value="${scheduledExecution?.jobName}"/>
+                                          <g:set var="project" value="${execution.project}"/>
+                                          <g:set var="storageRoot" value="${'files'}"/>
+                                          <a type="button"
+                                             data-toggle="modal"
+                                             href="#storagebrowse"
+                                             data-storage-root="${enc(attr:storageRoot)}"
+                                             data-storage-filter=""
+                                             data-storage-execution-id="${execution.id}"
+                                             data-storage-job="${scheduledExecution?.jobName}"
+                                             data-storage-project="${execution.project}"
+                                             data-field="#${enc(attr:fieldid)}"
+                                          ><i class="glyphicon glyphicon-folder-open"> </i> <g:message code="storage.browse.files"/></a>
+                                      </li>
                                   </g:if>
                                   <g:if test="${deleteExecAuth}">
                                       <li>
@@ -918,6 +938,7 @@ search
 
 
   </div>
+  <g:render template="/framework/storageBrowseModalKO" model="[type: 'files']"/>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 

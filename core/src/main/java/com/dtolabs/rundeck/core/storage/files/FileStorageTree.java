@@ -53,6 +53,77 @@ public interface FileStorageTree extends StorageTree, AppService {
      */
     boolean hasFile(String path);
 
+
+    /**
+     * @param path path
+     * @param content content
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return file resource
+     */
+    Resource<ResourceMeta> createResource(
+            Path path, ResourceMeta content, String project, String jobName, String execId);
+
+    /**
+     * @param path path
+     * @param content content
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return file resource
+     */
+    Resource<ResourceMeta> updateResource(
+            Path path, ResourceMeta content, String project, String jobName, String execId);
+
+    /**
+     * @param path path
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return contentType resource contentType
+     */
+    public String getContentType(Path path, String project, String jobName, String execId) throws IOException;
+
+
+    /**
+     * @param path path
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return true if the path exists
+     */
+    public boolean hasDirectoryOnExecWorkpacePath(Path path, String project, String jobName, String execId);
+
+
+    /**
+     * @param path path
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return true if the resource exists
+     */
+    public boolean hasFileOnExecWorkpacePath(Path path, String project, String jobName, String execId);
+
+
+    /**
+     * @param path path
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return file data
+     */
+    public byte[] readFileOnExecWorkspacePath(Path path, String project, String jobName, String execId) throws IOException;
+
+    /**
+     * @param path path
+     * @param project project name
+     * @param jobName job name
+     * @param execId execution Id
+     * @return file resource
+     */
+    public Resource<ResourceMeta> getFIle(Path path, String project, String jobName, String execId);
+
     /**
      *
      * @param path path

@@ -108,9 +108,13 @@
         menuJobsPicker: '${createLink(controller:"menu",action:"jobsPicker",params:projParams)}',
         scheduledExecutionGroupTreeFragment: '${createLink(controller:"scheduledExecution",action:"groupTreeFragment",params:projParams)}',
         storageKeysBrowse: '${createLink(controller: 'menu',action: 'storage')}',
+        storageFilesBrowse: '${createLink(controller: 'menu',action: 'fileStorage')}',
         storageKeysApi: '${createLink(uri:'/storage/access/keys')}',
+        storageFilesApi: '${createLink(uri:'/storage/access/files')}',
         storageKeysDownload: '${createLink(uri:'/storage/download/keys')}',
+        storageFilesDownload: '${createLink(uri:'/storage/download/files')}',
         storageKeysDelete: '${createLink(uri:'/storage/delete/keys')}',
+        storageFilesDelete: '${createLink(uri:'/storage/delete/files')}',
         apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}',
 
         scmjobs: '${createLink(controller:'menu',action:'listExport',params: projParams)}',

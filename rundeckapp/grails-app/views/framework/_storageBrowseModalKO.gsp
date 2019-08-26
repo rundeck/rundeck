@@ -26,17 +26,19 @@
             </div>
 
             <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
-                <g:render template="/framework/storageBrowser"/>
+                <g:render template="/framework/storageBrowser" model="[isFileStorage: type == 'files']"/>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel" /></button>
-                <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
-                        data-bind="css: selectedPath()?'active':'disabled' "
-                        data-dismiss="modal">
-                    <g:message code="storage.choose.selected.key" />
-                </button>
-            </div>
+            <g:if test="${type != 'files'}">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-sm btn-default" data-dismiss="modal"><g:message code="cancel" /></button>
+                    <button type="button" class="btn btn-sm btn-success obs-storagebrowse-select"
+                            data-bind="css: selectedPath()?'active':'disabled' "
+                            data-dismiss="modal">
+                        <g:message code="${type == 'file' ? 'storage.choose.selected.file' : 'storage.choose.selected.key'}" />
+                    </button>
+                </div>
+            </g:if>
         </div>
     </div>
 </div>
@@ -45,14 +47,28 @@
         var storagebrowsemodal = jQuery('#storagebrowse');
         storagebrowsemodal.on('show.bs.modal',function (evt) {
             var rootPath = jQuery(evt.relatedTarget).data('storage-root');
-            if (!rootPath.startsWith("keys/")) {
-                rootPath = "keys";
+            var execId = jQuery(evt.relatedTarget).data('storage-execution-id');
+            var prject = jQuery(evt.relatedTarget).data('storage-project');
+            var jobName = jQuery(evt.relatedTarget).data('storage-job');
+
+            var execParams = {executionId: execId, project: prject, jobName: jobName};
+            if (!rootPath.startsWith("${type ?: 'keys'}/")) {
+                rootPath = "${type ?: 'keys'}";
+            }
+
+            if (rootPath == "files") {
+                rootPath = rootPath + "/" + prject + "/" + jobName + "/" + execId;
             }
             var storageBrowse = jQuery(evt.delegateTarget).data('storageBrowser');
             var storageBrowseTarget = jQuery(evt.relatedTarget).data('field');
             if (storageBrowse == null) {
-                storageBrowse= new StorageBrowser(appLinks.storageKeysApi, rootPath);
-                storageBrowse.browseMode('select');
+
+                var storageKeysApiLink = appLinks["${type}" == 'files' ? 'storageFilesApi': 'storageKeysApi'];
+                var storageBrowseLink = appLinks["${type}" == 'files' ? 'storageFilesBrowse': 'storageKeysBrowse'];
+                var storageDownload = appLinks["${type}" == 'files' ? 'storageFilesDownload': 'storageKeysDownload'];
+                var storageDelete = appLinks["${type}" == 'files' ? 'storageFilesDelete': 'storageKeysDelete'];
+                storageBrowse= new StorageBrowser(storageKeysApiLink, rootPath, undefined, storageBrowseLink, storageDownload, storageDelete, execParams);
+                storageBrowse.browseMode(("${type}" != 'files' ? 'select' : 'browse'));
                 storageBrowse.staticRoot(true);
                 jQuery('body').data('storageBrowser', storageBrowse );
                 jQuery(evt.delegateTarget).data('storageBrowser', storageBrowse);
