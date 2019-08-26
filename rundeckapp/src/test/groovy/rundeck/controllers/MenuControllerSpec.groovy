@@ -979,8 +979,12 @@ class MenuControllerSpec extends Specification {
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]) >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_EXPORT,
+                                                                                AuthConstants.SCM_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_IMPORT,
+                                                                               AuthConstants.SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
@@ -1016,8 +1020,12 @@ class MenuControllerSpec extends Specification {
                                                                         offset:0,
                                                                         paginateParams:[:],
                                                                         displayParams:[:]]
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]) >> true
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_EXPORT,
+                                                                               AuthConstants.SCM_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
+                                                                               AuthConstants.ACTION_IMPORT,
+                                                                                AuthConstants.SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
