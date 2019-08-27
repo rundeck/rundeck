@@ -364,7 +364,9 @@ function StorageBrowser(baseUrl, rootPath, fileSelect, storageBrowse, storageDow
     };
     self.download = function(){
         if(self.selectedPath()){
-            document.location = _genUrl(storageDownload, {relativePath:self.relativePath(self.selectedPath())});
+            var urlParams = {relativePath:self.relativePath(self.selectedPath())};
+            jQuery.extend(urlParams, self.executionParams);
+            document.location = _genUrl(storageDownload, urlParams);
         }
     };
     self.delete = function(){

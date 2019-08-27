@@ -35,15 +35,17 @@ class SaveFilePlugin  implements StepPlugin {
             required = true)
     String name
 
+    @PluginProperty(title = "Content type",
+            description = "File content type. Default: ",
+            defaultValue = "text/plain",
+            required = true)
+    String contentType
+
     @PluginProperty(title = 'Overwrite if already exists', description = "Overwrite file if already exists")
     boolean overwrite = false
 
     @PluginProperty(title = 'Log content', description = "Log file content")
     boolean logContent = false
-
-    @PluginProperty(title = "File URL",
-            description = "URL to save a file from the filesystem")
-    String directoryFile
 
     @PluginProperty(title = "File content",
             description = "File content")
@@ -72,6 +74,10 @@ class SaveFilePlugin  implements StepPlugin {
         }
 
         Map<String, String> map = [:]
+        if(contentType){
+            map[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] = contentType
+        }
+
         InputStream stream = new ByteArrayInputStream(fileContent)
 
         if(hasFile && overwrite){
@@ -96,7 +102,7 @@ class SaveFilePlugin  implements StepPlugin {
     }
 
     private byte[] fileContent(){
-        return directoryFile ? new File(directoryFile).getBytes() : content.getBytes()
+        return content.getBytes()
     }
 
     private void writeLog(PluginStepContext context){

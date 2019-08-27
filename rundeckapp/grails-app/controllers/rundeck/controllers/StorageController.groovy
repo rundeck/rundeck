@@ -269,7 +269,11 @@ class StorageController extends ControllerBase{
     }
 
     public def fileStorageDownload(StorageParams storageParams){
-        storageDownload(storageParams, 'files', fileStorageService)
+        String rootPath = "files"
+        if(params.project){
+            rootPath = "${rootPath}/${params.project}/${params.jobName}/${params.executionId}"
+        }
+        storageDownload(storageParams, rootPath, fileStorageService)
     }
 
     private def storageDownload(StorageParams storageParams, String rootPath, StorageService service = storageService){
