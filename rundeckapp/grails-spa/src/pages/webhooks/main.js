@@ -14,6 +14,7 @@ Vue.use(VueFuse)
 Vue.use(Vue2Filters)
 Vue.use(uiv)
 
+// eslint-disable-next-line no-new
 new Vue({
   el: '#webhook-vue',
   components: { App },
