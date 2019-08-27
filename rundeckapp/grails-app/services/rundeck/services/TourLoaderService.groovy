@@ -12,12 +12,12 @@ class TourLoaderService {
     def pluginService
     def frameworkService
 
-    def listAllTourManifests() {
+    def listAllTourManifests(String project = null) {
         def tourManifest = []
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
 
         pluginService.listPlugins(TourLoaderPlugin).each { prov ->
-            TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
+            TourLoaderPlugin tourLoader = pluginService.configurePlugin(prov.key, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
             def title = getPluginTitle(tourLoader)
             def manifest = tourLoader.tourManifest
             def tours = manifest.tours
@@ -42,15 +42,15 @@ class TourLoaderService {
         return null
     }
 
-    Map listTours(String loaderName) {
+    Map listTours(String loaderName, String project = null) {
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
-        TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
+        TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
         tourLoader.tourManifest
     }
 
-    Map getTour(String loaderName, String tourKey) {
+    Map getTour(String loaderName, String tourKey, String project = null) {
         PluggableProviderService tourLoaderProviderService = rundeckPluginRegistry.createPluggableService(TourLoaderPlugin.class)
-        TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(), PropertyScope.Instance).instance
+        TourLoaderPlugin tourLoader = pluginService.configurePlugin(loaderName, tourLoaderProviderService, frameworkService.getFrameworkPropertyResolver(project), PropertyScope.Instance).instance
         tourLoader.getTour(tourKey)
     }
 }
