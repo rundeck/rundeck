@@ -203,7 +203,6 @@ bootRun {
     systemProperties(System.properties)
     systemProperty "build.ident", project.version
     addResources = true
-    systemProperty "rundeckpro.edition", "ENTERPRISE"
 }
 
 webdriverBinaries {

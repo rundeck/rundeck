@@ -22,7 +22,9 @@
     <meta name="tabpage" content="projectHome"/>
     <title><g:appTitle/></title>
     <asset:stylesheet src="static/css/pages/webhooks.css"/>
-    <g:render template="prowebhooks" />
+    <g:templateExists name="prowebhooks">
+        <g:render template="prowebhooks" />
+    </g:templateExists>
 </head>
 
 <body>

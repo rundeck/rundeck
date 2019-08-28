@@ -12,7 +12,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventContextImpl
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
-import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -37,7 +37,7 @@ class WebhookService {
     def rundeckAuthTokenManagerService
     def storageService
 
-    def processWebhook(String pluginName, String pluginConfigJson, WebhookData data, UserAndRolesAuthContext authContext) {
+    def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext) {
         LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
         PluggableProviderService webhookPluginProviderService = rundeckPluginRegistry.createPluggableService(
                 WebhookEventPlugin.class)
@@ -116,7 +116,7 @@ class WebhookService {
             hook = Webhook.get(hookData.id)
             if (!hook) return [err: "Webhook not found"]
             if(hookData.roles) {
-                if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,hookData.roles)) return [err:"Could not update token roles"]
+                if(!rundeckAuthTokenManagerService.updateAuthRoles(hook.authToken,rundeckAuthTokenManagerService.parseAuthRoles(hookData.roles))) return [err:"Could not update token roles"]
             }
         } else {
             String checkUser = hookData.user ?: authContext.username
@@ -172,8 +172,8 @@ class WebhookService {
     }
 
     def importWebhook(hook) {
-        if(Webhook.findByAuthToken(hook.apiToken.token)) return [msg:"Webhook exists"]
-        if(!rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token, hook.apiToken.creator, hook.apiToken.user, hook.apiToken.roles)) return [err:"Unable to create webhook api token"]
+        if(Webhook.findByAuthToken(hook.apiToken.token)) return [msg:"Webhook with token ${hook.apiToken.token} exists. Skipping..."]
+        if(!rundeckAuthTokenManagerService.importWebhookToken(hook.apiToken.token, hook.apiToken.creator, hook.apiToken.user, rundeckAuthTokenManagerService.parseAuthRoles(hook.apiToken.roles))) return [err:"Unable to create webhook api token"]
         Webhook ihook = new Webhook()
         ihook.name = hook.name
         ihook.authToken = hook.apiToken.token
@@ -197,7 +197,7 @@ class WebhookService {
 
     private Map getWebhookWithAuthAsMap(Webhook hook) {
         AuthenticationToken authToken = rundeckAuthTokenManagerService.getToken(hook.authToken)
-        return [id:hook.id, name:hook.name, project: hook.project, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRoles, authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
+        return [id:hook.id, name:hook.name, project: hook.project, user:authToken.ownerName, creator:authToken.creator, roles: authToken.authRolesSet().join(","), authToken:hook.authToken, eventPlugin:hook.eventPlugin, config:mapper.readValue(hook.pluginConfigurationJson, HashMap)]
     }
 
     Webhook getWebhook(Long id) {

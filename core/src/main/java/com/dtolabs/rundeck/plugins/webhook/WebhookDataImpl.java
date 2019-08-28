@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.core.authentication.tokens;
+package com.dtolabs.rundeck.plugins.webhook;
 
-import java.util.Date;
-import java.util.Set;
+import lombok.Data;
 
-public interface AuthenticationToken {
-    String getToken();
-    Set<String> authRolesSet();
-    String getUuid();
-    String getCreator();
-    String getOwnerName();
-    AuthTokenType getType();
-    String getPrintableToken();
-    Date getExpiration();
+import java.io.InputStream;
+import java.util.UUID;
+
+/**
+ * Default implementation of WebhookData
+ */
+@Data
+public class WebhookDataImpl implements WebhookData {
+    private String      id = UUID.randomUUID().toString();
+    private long        timestamp;
+    private String      sender;
+    private String      webhook;
+    private String      project;
+    private String      contentType;
+    private InputStream data;
 }

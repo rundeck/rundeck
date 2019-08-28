@@ -4,11 +4,10 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
-import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.converters.JSON
 import groovy.transform.PackageScope
-import webhooks.Webhook
 
 import javax.servlet.http.HttpServletResponse
 import static webhooks.WebhookConstants.*
@@ -126,7 +125,7 @@ class WebhookController {
             return
         }
 
-        WebhookData whkdata = new WebhookData()
+        WebhookDataImpl whkdata = new WebhookDataImpl()
         whkdata.webhook = hook.name
         whkdata.timestamp = System.currentTimeMillis()
         whkdata.sender = request.remoteAddr

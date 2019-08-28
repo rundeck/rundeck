@@ -18,7 +18,7 @@ package webhooks
 import com.dtolabs.rundeck.core.authorization.AuthContextProcessor
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
@@ -62,6 +62,6 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     interface MockWebhookService {
         Webhook getWebhookByToken(String token)
-        void processWebhook(String pluginName, String pluginConfigJson, WebhookData data, UserAndRolesAuthContext context)
+        void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context)
     }
 }

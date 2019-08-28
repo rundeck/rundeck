@@ -15,21 +15,17 @@
  */
 package com.dtolabs.rundeck.plugins.webhook;
 
-import lombok.Data;
-
 import java.io.InputStream;
-import java.util.UUID;
 
 /**
  * Data that is passed to a webhook plugin
  */
-@Data
-public class WebhookData {
-    private String      id = UUID.randomUUID().toString();
-    private long        timestamp;
-    private String      sender;
-    private String      webhook;
-    private String      project;
-    private String      contentType;
-    private InputStream data;
+public interface WebhookData {
+    String getId();
+    long getTimestamp();
+    String getSender();
+    String getWebhook();
+    String getProject();
+    String getContentType();
+    InputStream getData();
 }

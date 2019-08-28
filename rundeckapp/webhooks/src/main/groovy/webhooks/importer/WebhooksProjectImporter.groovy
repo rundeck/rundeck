@@ -40,6 +40,9 @@ class WebhooksProjectImporter implements ProjectDataImporter {
         data.webhooks.each { hook ->
             logger.debug("Attempting to import" +
                          " hook: " + hook.name)
+            if(hook.project != project) {
+                hook.project = project //reassign project so that the hook will show up under the new project
+            }
             def importResult = webhookService.importWebhook(hook)
             if(importResult.msg) {
                 logger.debug(importResult.msg)

@@ -29,8 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
-import com.dtolabs.rundeck.plugins.webhook.WebhookData
+import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import grails.testing.gorm.DataTest
@@ -52,7 +51,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
             getUsername() >> { "webhookUser" }
             getRoles() >> { ["webhook","test"] }
         }
-        WebhookData data = new WebhookData()
+        WebhookDataImpl data = new WebhookDataImpl()
         data.webhook = "testhook"
         data.sender = "asender"
         data.contentType = "text/plain"
@@ -85,10 +84,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
-        WebhookData captured
+        WebhookDataImpl captured
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        void onEvent(final WebhookEventContext context, final WebhookDataImpl data) throws WebhookEventException {
             captured = data
         }
     }
@@ -151,13 +150,13 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     static class CustomConfigWebhookEventPlugin implements WebhookEventPlugin {
-        WebhookData captured
+        WebhookDataImpl captured
 
         @PluginCustomConfig(validator = TestCustomValidator)
         Map config
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
+        void onEvent(final WebhookEventContext context, final WebhookDataImpl data) throws WebhookEventException {
             captured = data
         }
     }
@@ -236,7 +235,8 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         created.project == "Test"
         created.eventPlugin == "log-webhook-event"
         created.pluginConfigurationJson == '{"cfg1":"val1"}'
-        1 * service.rundeckAuthTokenManagerService.importWebhookToken("abc123","admin","webhookUser","webhook,test") >> { true }
+        1 * service.rundeckAuthTokenManagerService.parseAuthRoles("webhook,test") >> { ["webhook","test"] as Set }
+        1 * service.rundeckAuthTokenManagerService.importWebhookToken("abc123","admin","webhookUser",_) >> { true }
     }
 
     def "getWebhookWithAuth"() {
@@ -252,8 +252,9 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         service.rundeckAuthTokenManagerService = Mock(AuthTokenManager) {
             getToken("abc123") >> { new TestAuthenticationToken(token:"abc123",
                                                                 creator:"admin",
-                                                                authRoles:"webhook,role1",
+                                                                authRoles:["webhook,role1"] as Set,
                                                                 ownerName:"webhook") }
+
         }
 
         when:
@@ -301,11 +302,15 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     class TestAuthenticationToken implements AuthenticationToken {
 
         String token
-        String authRoles
+        Set<String> authRoles
         String uuid
         String creator
         String ownerName
 
+        @Override
+        Set<String> authRolesSet() {
+            return authRoles
+        }
 
         @Override
         AuthTokenType getType() {

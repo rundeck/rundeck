@@ -15,12 +15,49 @@
  */
 package com.dtolabs.rundeck.core.authentication.tokens;
 
+import java.util.List;
 import java.util.Set;
 
+/**
+ * Manage Rundeck API authentication tokens
+ */
 public interface AuthTokenManager {
+    /**
+     * Retrieve token information from storage
+     * @param token The token string that identifies the token
+     * @return AuthenticationToken
+     */
     AuthenticationToken getToken(String token);
-    boolean updateAuthRoles(String token, String roleString);
+
+    /**
+     * Update the roles associated with the authentication token
+     * @param token token id
+     * @param roleSet the new list of roles
+     * @return true if the update completed successfully
+     */
+    boolean updateAuthRoles(String token, Set<String> roleSet);
+
+    /**
+     * Delete an authentication token
+     * @param token token identifier
+     * @return true if the update completed successfully
+     */
     boolean deleteToken(String token);
+
+    /**
+     * Parse a comma separated list of roles into a role Set
+     * @param authRoles String of roles separated by a comma
+     * @return A unique set of roles
+     */
     Set<String> parseAuthRoles(String authRoles);
-    boolean importWebhookToken(String token, String owner, String user, String roleString);
+
+    /**
+     * Import a Webhook type api token
+     * @param token token id
+     * @param owner the name of the user that will own the token
+     * @param user the user that is represented by this auth token
+     * @param roleSet set of roles for the auth token
+     * @return true if the update completed successfully
+     */
+    boolean importWebhookToken(String token, String owner, String user, Set<String> roleSet);
 }

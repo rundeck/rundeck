@@ -21,5 +21,5 @@ import com.dtolabs.rundeck.core.webhook.WebhookEventException;
  * Plugin that will be invoked on a configured webhook event
  */
 public interface WebhookEventPlugin {
-    void onEvent(WebhookEventContext context,WebhookData data) throws WebhookEventException;
+    void onEvent(WebhookEventContext context, WebhookData data) throws WebhookEventException;
 }

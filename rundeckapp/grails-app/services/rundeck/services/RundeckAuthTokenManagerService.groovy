@@ -16,10 +16,10 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
 
     @Override
-    boolean updateAuthRoles(final String token, final String roleString) {
+    boolean updateAuthRoles(final String token, final Set<String> roleSet) {
         AuthToken authToken = AuthToken.findByToken(token)
         if(!authToken) return false
-        authToken.authRoles = roleString
+        authToken.authRoles = AuthToken.generateAuthRoles(roleSet)
         try {
             authToken.save(failOnError: true)
             return true
@@ -47,13 +47,13 @@ class RundeckAuthTokenManagerService implements AuthTokenManager {
     }
 
     @Override
-    boolean importWebhookToken(final String token, final String creator, final String user, final String roleString) {
+    boolean importWebhookToken(final String token, final String creator, final String user, final Set<String> roleSet) {
         if(AuthToken.findByToken(token)) return true
 
         AuthToken authToken = new AuthToken()
         try {
             authToken.token = token
-            authToken.authRoles = roleString
+            authToken.authRoles = AuthToken.generateAuthRoles(roleSet)
             authToken.type = AuthTokenType.WEBHOOK
             authToken.creator = creator
             authToken.user = User.findByLogin(user)
