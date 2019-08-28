@@ -23,7 +23,8 @@ const translationStrings = {
       pageFilterBtnSearch: 'Search',
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
-      pageUsersEventTimeLabel: 'Event Time'
+      pageUsersEventTimeLabel: 'Event Time',
+      pageUsersTotalFounds: 'Total Users Found'
     }
   },
   es_419: {
@@ -49,7 +50,8 @@ const translationStrings = {
       pageFilterBtnSearch: 'Buscar',
       pageUsersSessionIDLabel: 'Session ID',
       pageUsersHostNameLabel: 'Host Name',
-      pageUsersEventTimeLabel: 'Event Time'
+      pageUsersEventTimeLabel: 'Event Time',
+      pageUsersTotalFounds: 'Total De Usuarios Encontrados'
     }
   }
 }

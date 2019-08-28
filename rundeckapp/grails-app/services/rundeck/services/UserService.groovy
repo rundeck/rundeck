@@ -217,4 +217,69 @@ class UserService {
         }
     }
 
+    def findWithFilters(boolean loggedInOnly, def filters, offset, max){
+
+        int timeOutMinutes = DEFAULT_TIMEOUT
+        if(frameworkService?.getRundeckFramework()?.getPropertyLookup().hasProperty("framework.session.abandoned.minutes")){
+            timeOutMinutes = Integer.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty("framework.session.abandoned.minutes"))
+        }
+        Calendar calendar = Calendar.getInstance()
+        calendar.add(Calendar.MINUTE, -timeOutMinutes)
+
+        def totalRecords = User.createCriteria().count(){
+            if(loggedInOnly){
+                or{
+                    and{
+                        isNotNull("lastLogin")
+                        isNotNull("lastLogout")
+                        gtProperty("lastLogin", "lastLogout")
+                        gt("lastLogin", calendar.getTime())
+                    }
+                    and{
+                        isNotNull("lastLogin")
+                        isNull("lastLogout")
+                        gt("lastLogin", calendar.getTime())
+                    }
+                }
+            }
+            if(filters){
+                filters.each {k,v ->
+                    eq(k, v)
+                }
+            }
+        }
+
+        def users = []
+        if(totalRecords > 0){
+            users = User.createCriteria().list(max:max, offset:offset){
+                if(loggedInOnly){
+                    or{
+                        and{
+                            isNotNull("lastLogin")
+                            isNotNull("lastLogout")
+                            gtProperty("lastLogin", "lastLogout")
+                            gt("lastLogin", calendar.getTime())
+                        }
+                        and{
+                            isNotNull("lastLogin")
+                            isNull("lastLogout")
+                            gt("lastLogin", calendar.getTime())
+                        }
+                    }
+                }
+
+                if(filters){
+                    filters.each {k,v ->
+                        eq(k, v)
+                    }
+                }
+                order("login", "asc")
+            }
+        }
+        [
+            totalRecords:totalRecords,
+            users       :users
+        ]
+    }
+
 }

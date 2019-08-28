@@ -96,6 +96,8 @@ import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
+
+    private static final int DEFAULT_USER_PAGE_SIZE = 100
     FrameworkService frameworkService
     MenuService menuService
     ExecutionService executionService
@@ -3354,12 +3356,35 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_ADMIN, 'User', 'accounts')) {
             return
         }
-        def userList = []
+
         boolean loggedOnly = false
         if(params.loggedOnly && params.loggedOnly.equals('true')){
             loggedOnly = true
         }
-        User.listOrderByLogin().each {
+        def filters = [:]
+        if(params.loginFilter && !params.loginFilter.trim().isEmpty()){
+            filters << ["login" : params.loginFilter.trim()]
+        }
+        if(params.sessionFilter && !params.sessionFilter.trim().isEmpty()){
+            filters << ["lastSessionId" : params.sessionFilter.trim()]
+        }
+        if(params.hostNameFilter && !params.hostNameFilter.trim().isEmpty()){
+            filters << ["lastLoggedHostName" : params.hostNameFilter.trim()]
+        }
+        def offset = 0
+        if(params.offset){
+            offset = params.offset
+        }
+
+        int max = grailsApplication.config.getProperty(
+                        "rundeck.gui.user.summary.max.per.page",
+                        Integer.class,
+                        DEFAULT_USER_PAGE_SIZE)
+
+        def result = userService.findWithFilters(loggedOnly, filters, offset, max)
+
+        def userList = []
+        result.users.each {
             def obj = [:]
             obj.login = it.login
             obj.firstName = it.firstName
@@ -3384,7 +3409,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         render(contentType:'application/json',text:
-                ([users: userList] )as JSON
+                ([
+                    users           : userList,
+                    totalRecords    : result.totalRecords,
+                    offset          : offset,
+                    maxRows         : max
+                ] )as JSON
         )
     }
 }
