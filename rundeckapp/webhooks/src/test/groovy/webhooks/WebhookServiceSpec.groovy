@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.webhook.WebhookEventException
 import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig
+import com.dtolabs.rundeck.plugins.webhook.WebhookData
 import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
@@ -84,10 +85,10 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
-        WebhookDataImpl captured
+        WebhookData captured
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookDataImpl data) throws WebhookEventException {
+        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
         }
     }
@@ -150,13 +151,13 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     static class CustomConfigWebhookEventPlugin implements WebhookEventPlugin {
-        WebhookDataImpl captured
+        WebhookData captured
 
         @PluginCustomConfig(validator = TestCustomValidator)
         Map config
 
         @Override
-        void onEvent(final WebhookEventContext context, final WebhookDataImpl data) throws WebhookEventException {
+        void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
             captured = data
         }
     }
