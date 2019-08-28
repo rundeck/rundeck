@@ -195,7 +195,7 @@
     data () {
       return {
         users: [],
-        loggedOnly: false,
+        loggedOnly: true,
         sessionIdFilter: "",
         hostNameFilter: "",
         loginFilter: "",
