@@ -16,6 +16,7 @@
 package com.dtolabs.rundeck.plugins.webhook;
 
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * Data that is passed to a webhook plugin
@@ -27,5 +28,6 @@ public interface WebhookData {
     String getWebhook();
     String getProject();
     String getContentType();
+    Map<String,String> getHeaders();
     InputStream getData();
 }

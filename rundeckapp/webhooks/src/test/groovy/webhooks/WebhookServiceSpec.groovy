@@ -40,6 +40,8 @@ import org.rundeck.app.spi.Services
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import javax.servlet.http.HttpServletRequest
+
 
 class WebhookServiceSpec extends Specification implements ServiceUnitTest<WebhookService>, DataTest {
     void setupSpec() {
@@ -75,17 +77,25 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         TestWebhookEventPlugin testPlugin = new TestWebhookEventPlugin()
 
         service.pluginService = Mock(MockPluginService) {
-            configurePlugin("test-webhook-event", _, _,
-                            PropertyScope.Instance) >> { new ConfiguredPlugin<WebhookEventPlugin>(testPlugin, [:] ) }
+            configurePlugin("test-webhook-event", _, _,_) >> { new ConfiguredPlugin<WebhookEventPlugin>(testPlugin, [:] ) }
         }
-        service.processWebhook("test-webhook-event","{}",data,mockUserAuth)
+        def request = Mock(HttpServletRequest) {
+            getHeader("X-Rundeck-TestHdr") >> { "Hdr1" }
+        }
+        service.processWebhook("test-webhook-event","{}",data,mockUserAuth,request)
 
         then:
         testPlugin.captured.data.text=="my event data"
+        testPlugin.captured.headers["X-Rundeck-TestHdr"] == "Hdr1"
     }
 
     class TestWebhookEventPlugin implements WebhookEventPlugin {
         WebhookData captured
+
+        @Override
+        List<String> getRequestHeadersToCopy() {
+            return ["X-Rundeck-TestHdr"]
+        }
 
         @Override
         void onEvent(final WebhookEventContext context, final WebhookData data) throws WebhookEventException {
@@ -282,7 +292,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
     }
 
     interface MockPluginService {
-        ConfiguredPlugin configurePlugin(String pluginName, PluggableProviderService svc, PropertyResolver resolver, PropertyScope scope)
+        ConfiguredPlugin configurePlugin(String pluginName, Class serviceClass, PropertyResolver resolver, PropertyScope scope)
         ValidatedPlugin validatePluginConfig(String service, String pluginName, Map config)
         WebhookEventPlugin getPlugin(String service, Class pluginClass)
         Map listPlugins(Class pluginClass)

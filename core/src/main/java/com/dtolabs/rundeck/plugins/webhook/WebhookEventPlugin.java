@@ -17,9 +17,13 @@ package com.dtolabs.rundeck.plugins.webhook;
 
 import com.dtolabs.rundeck.core.webhook.WebhookEventException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Plugin that will be invoked on a configured webhook event
  */
 public interface WebhookEventPlugin {
+    default List<String> getRequestHeadersToCopy() {return new ArrayList<>(); };
     void onEvent(WebhookEventContext context, WebhookData data) throws WebhookEventException;
 }

@@ -134,7 +134,7 @@ class WebhookController {
         whkdata.data = request.inputStream
 
         try {
-            webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext)
+            webhookService.processWebhook(hook.eventPlugin, hook.pluginConfigurationJson, whkdata, authContext, request)
             render new HashMap([msg: "ok"]) as JSON
         } catch(WebhookEventException wee) {
             sendJsonError(wee.message)

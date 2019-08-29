@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.plugins.webhook;
 import lombok.Data;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.UUID;
 
 /**
@@ -25,11 +26,12 @@ import java.util.UUID;
  */
 @Data
 public class WebhookDataImpl implements WebhookData {
-    private String      id = UUID.randomUUID().toString();
-    private long        timestamp;
-    private String      sender;
-    private String      webhook;
-    private String      project;
-    private String      contentType;
-    private InputStream data;
+    private String                 id = UUID.randomUUID().toString();
+    private long                   timestamp;
+    private String                 sender;
+    private String                 webhook;
+    private String                 project;
+    private String                 contentType;
+    private InputStream            data;
+    private HashMap<String,String> headers = new HashMap<>();
 }

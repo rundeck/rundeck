@@ -20,6 +20,8 @@ import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
 import org.apache.log4j.Logger
 
+import javax.servlet.http.HttpServletRequest
+
 @Transactional
 class WebhookService {
     private static final Logger LOG4J_LOGGER = Logger.getLogger("org.rundeck.webhook.events")
@@ -37,17 +39,16 @@ class WebhookService {
     def rundeckAuthTokenManagerService
     def storageService
 
-    def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext) {
+    def processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext authContext, HttpServletRequest request) {
         LOG4J_LOGGER.info("processing '" + data.webhook + "' with plugin '" + pluginName + "' triggered by: '" + authContext.username+"'")
-        PluggableProviderService webhookPluginProviderService = rundeckPluginRegistry.createPluggableService(
-                WebhookEventPlugin.class)
-
         Map pluginConfig = pluginConfigJson ? mapper.readValue(pluginConfigJson,HashMap) : [:]
         replaceSecureOpts(authContext,pluginConfig)
-        WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, webhookPluginProviderService, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
+        WebhookEventPlugin plugin = pluginService.configurePlugin(pluginName, WebhookEventPlugin.class, frameworkService.getFrameworkPropertyResolver(data.project,pluginConfig),
                                                                   PropertyScope.Instance).instance
 
         PluginAdapterUtility.setConfig(plugin, pluginConfig)
+
+        plugin.requestHeadersToCopy?.each { hdr -> data.headers[hdr] = request.getHeader(hdr)}
 
         WebhookEventContext context = new WebhookEventContextImpl(rundeckAuthorizedServicesProvider.getServicesWith(authContext))
         plugin.onEvent(context,data)

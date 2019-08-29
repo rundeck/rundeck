@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import grails.testing.web.controllers.ControllerUnitTest
 import spock.lang.Specification
 
+import javax.servlet.http.HttpServletRequest
+
 
 class WebhookControllerSpec extends Specification implements ControllerUnitTest<WebhookController> {
 
@@ -38,7 +40,7 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234")}
         1 * controller.frameworkService.getAuthContextForSubject(_) >> { new SubjectAuthContext(null, null) }
         1 * controller.frameworkService.authorizeProjectResourceAny(_,_,_,_) >> { return true }
-        1 * controller.webhookService.processWebhook(_,_,_,_) >> { }
+        1 * controller.webhookService.processWebhook(_,_,_,_,_) >> { }
         response.text == '{"msg":"ok"}'
     }
 
@@ -62,6 +64,6 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
 
     interface MockWebhookService {
         Webhook getWebhookByToken(String token)
-        void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context)
+        void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
     }
 }
