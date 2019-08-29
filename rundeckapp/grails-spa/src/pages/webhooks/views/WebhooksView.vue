@@ -60,6 +60,12 @@
                                                                      @change="setSelectedPlugin()" class="form-control">
                       <option v-for="plugin in webhookPlugins" :key="plugin.name" v-bind:value="plugin.name">{{plugin.title}}</option>
                     </select></div>
+                    <div class="row">
+                      <div class="col-sm-3 form-margin"><label>Webhook Enabled:</label></div>
+                      <div class="col-sm-5">
+                        <div class="checkbox"><input type="checkbox" v-model="curHook.enabled" class="form-control"><label></label></div>
+                      </div>
+                    </div>
                     <div v-if="selectedPlugin && showPluginConfig">
                       <h5>Plugin Configuration</h5>
                       <hr>
@@ -227,7 +233,7 @@ export default {
     },
     addNewHook() {
       this.showPluginConfig = false
-      this.curHook = {name: "New Hook", user: curUser, roles: curUserRoles, project: projectName, isNew: true, config: {}}
+      this.curHook = {name: "New Hook", user: curUser, roles: curUserRoles, enabled: true, project: projectName, isNew: true, config: {}}
     },
     loadProPlugins() {
       proPluginList.forEach(plugin => {
@@ -326,5 +332,9 @@ export default {
     color: #555;
     background-color: #eee;
     padding: 8px 12px 6px;
+  }
+
+  .form-margin {
+    margin: 10px 0 12px;
   }
 </style>

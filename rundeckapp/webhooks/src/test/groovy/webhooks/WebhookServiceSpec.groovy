@@ -130,6 +130,7 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         result == [msg:"Saved webhook"]
         created.name == "test"
         created.project == "Test"
+        created.enabled == true
         created.eventPlugin == "log-webhook-event"
         created.pluginConfigurationJson == '{"cfg1":"val1"}'
         1 * service.apiService.generateUserToken(_,_,_,_,_,_) >> { [token:"12345"] }

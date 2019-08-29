@@ -118,6 +118,10 @@ class WebhookController {
             sendJsonError("Webhook not found")
             return
         }
+        if(!hook.enabled) {
+            sendJsonError("Webhook not enabled",503)
+            return
+        }
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!authorized(authContext, hook.project, RESOURCE_TYPE_WEBHOOK, ACTION_POST)) {
@@ -141,8 +145,8 @@ class WebhookController {
         }
     }
 
-    private def sendJsonError(String errMessage) {
-        response.setStatus(400)
+    private def sendJsonError(String errMessage,int statusCode = 400) {
+        response.setStatus(statusCode)
         def err = [err:errMessage]
         render err as JSON
     }

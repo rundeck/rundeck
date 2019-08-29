@@ -62,6 +62,21 @@ class WebhookControllerSpec extends Specification implements ControllerUnitTest<
         response.text == '{"err":"You are not authorized to perform this action"}'
     }
 
+    def "503 if webhook is not enabled"() {
+        given:
+        controller.webhookService = Mock(MockWebhookService)
+
+        when:
+        params.authtoken = "1234"
+        controller.post()
+
+        then:
+        1 * controller.webhookService.getWebhookByToken(_) >> { new Webhook(name:"test",authToken: "1234",enabled:false)}
+        0 * controller.webhookService.processWebhook(_,_,_,_)
+        response.text == '{"err":"Webhook not enabled"}'
+        response.status == 503
+    }
+
     interface MockWebhookService {
         Webhook getWebhookByToken(String token)
         void processWebhook(String pluginName, String pluginConfigJson, WebhookDataImpl data, UserAndRolesAuthContext context, HttpServletRequest request)
