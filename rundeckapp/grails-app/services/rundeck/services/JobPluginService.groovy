@@ -9,51 +9,34 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.jobs.IJobPluginService
 import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
-import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPluginExecutionHandler
-import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPlugin
-import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobPluginProviderService
-import org.rundeck.core.projects.ProjectConfigurable
-import org.springframework.context.ApplicationContext
-import org.springframework.context.ApplicationContextAware
 import rundeck.ScheduledExecution
 
 /**
- * Provides capability to execute certain task based on job a job event
+ * Provides capability to execute certain task based on a job event
  * Created by rnavarro
  * Date: 5/07/19
  * Time: 10:32 AM
  */
 
-public class JobPluginService implements ApplicationContextAware, ProjectConfigurable, IJobPluginService{
+class JobPluginService implements IJobPluginService {
 
-    ApplicationContext applicationContext
     PluginService pluginService
     JobPluginProviderService jobPluginProviderService
     FrameworkService frameworkService
     def featureService
-    public static final String CONF_PROJECT_ENABLE_JOB = 'project.enable.jobPlugin.'
-
-    Map<String, String> configPropertiesMapping
-    Map<String, String> configProperties
-    List<Property> projectConfigProperties
-
 
     enum EventType{
-        PRE_EXECUTION("preExecution"),BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun'),
-        BEFORE_SAVE("beforeSave")
+        BEFORE_RUN('beforeJobRun'), AFTER_RUN('afterJobRun')
         private final String value
         EventType(String value){
             this.value = value
@@ -65,59 +48,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
 
     /**
      *
-     * It loads the plugin properties to be shown under the project configuration
-     */
-    def loadProperties(){
-        List<Property> projectConfigProperties = []
-        Map<String, String> configPropertiesMapping = [:]
-        Map<String, String> configProperties = [:]
-        listJobPlugins().each { String name, DescribedPlugin describedPlugin ->
-            projectConfigProperties.add(
-                    PropertyBuilder.builder().with {
-                        booleanType 'jobPlugin' + name
-                        title('Enable ' + (describedPlugin.description?.title ?: name))
-                        required(false)
-                        defaultValue null
-                        renderingOption('booleanTrueDisplayValueClass', 'text-warning')
-                    }.build()
-            )
-            configPropertiesMapping.put('jobPlugin' + name , CONF_PROJECT_ENABLE_JOB + name)
-            configProperties.put('jobPlugin' + name, 'jobPlugin')
-        }
-        this.configPropertiesMapping = configPropertiesMapping
-        this.configProperties = configProperties
-        this.projectConfigProperties = projectConfigProperties
-    }
-
-    @Override
-    Map<String, String> getCategories() {
-        loadProperties()
-        configProperties
-    }
-
-    @Override
-    Map<String, String> getPropertiesMapping() {
-        loadProperties()
-        configPropertiesMapping
-    }
-
-    @Override
-    List<Property> getProjectConfigProperties() {
-        loadProperties()
-        projectConfigProperties
-    }
-
-    /**
-     *
-     * @param name
-     * @return map containing [instance:(plugin instance), description: (map or Description), ]
-     */
-    DescribedPlugin getJobPluginDescriptor(String name) {
-        return pluginService.getPluginDescriptor(name, jobPluginProviderService)
-    }
-
-    /**
-     *
      * @return Map containing all of the JobPlugin implementations
      */
     Map listJobPlugins(){
@@ -125,26 +55,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             return pluginService?.listPlugins(JobPlugin, jobPluginProviderService)
         }
         return null
-    }
-
-    /**
-     *
-     * @param event job event
-     * @return JobEventStatus response from plugin implementation
-     */
-    JobEventStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event) {
-        def plugins = createConfiguredPlugins(getJobPluginConfigSetForJob(job), job.project)
-        handleEvent(event, EventType.PRE_EXECUTION, plugins)
-    }
-
-    /**
-     *
-     * @param event job event
-     * @return JobEventStatus response from plugin implementation
-     */
-    JobEventStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) {
-        def plugins = createConfiguredPlugins(getJobPluginConfigSetForJob(job), job.project)
-        handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
 
     /**
@@ -206,7 +116,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
 
     }
 
-    public JobEventStatus handleEventForPlugin(
+    JobEventStatus handleEventForPlugin(
             EventType eventType,
             NamedJobPlugin plugin,
             event
@@ -216,10 +126,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 return plugin.beforeJobStarts(event)
             case EventType.AFTER_RUN:
                 return plugin.afterJobEnds(event)
-            case EventType.PRE_EXECUTION:
-                return plugin.beforeJobExecution(event)
-            case EventType.BEFORE_SAVE:
-                return plugin.beforeSaveJob(event)
         }
     }
 
@@ -230,25 +136,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return
      */
     Object mergeEvent(final JobEventStatus jobEventStatus, final Object jobEvent) {
-        if (jobEvent instanceof JobPreExecutionEventImpl) {
-            HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
-                    jobEvent.optionsValues,
-                    jobEventStatus
-            )
-            return new JobPreExecutionEventImpl(
-                    jobEvent.projectName,
-                    jobEvent.userName,
-                    newOptionsValues,
-                    jobEvent.nodes,
-                    jobEvent.nodeFilter,
-                    jobEvent.getOptions()
-            )
-        } else if (jobEvent instanceof JobPersistEvent) {
-            TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
-            def newEvent = new JobPersistEventImpl(jobEvent)
-            newEvent.setOptions(options)
-            return newEvent
-        } else if (jobEvent instanceof JobExecutionEventImpl) {
+        if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(
                     jobEvent.executionContext,
                     jobEventStatus
@@ -271,24 +159,7 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      * @return result with merged contents for the type of event
      */
     JobEventStatus mergeEventResult(boolean success, final JobEventStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
-        if (jobEvent instanceof JobPreExecutionEventImpl) {
-            HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
-                    jobEvent.optionsValues,
-                    jobEventStatus
-            )
-            return new JobEventStatusImpl(
-                    successful: success,
-                    optionsValues: newOptionsValues,
-                    useNewValues: useNewValues
-            )
-        } else if (jobEvent instanceof JobPersistEvent) {
-            TreeSet<JobOption> options = mergePersistOptions(jobEvent.options, jobEventStatus)
-            return new JobEventStatusImpl(
-                    successful: success,
-                    options: options,
-                    useNewValues: useNewValues
-            )
-        } else if (jobEvent instanceof JobExecutionEventImpl) {
+        if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, jobEventStatus)
 
             return new JobEventStatusImpl(successful: success, executionContext: newContext)
@@ -296,13 +167,14 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
             throw new IllegalArgumentException("Unexpected type")
         }
     }
+
     /**
      * Merge the context with result of event
      * @param context original
      * @param jobEventStatus result of event
      * @return merged context if the event has an executionContext value and useNewValues is true
      */
-    public ExecutionContextImpl mergeExecutionEventContext(
+    ExecutionContextImpl mergeExecutionEventContext(
             StepExecutionContext context,
             JobEventStatus jobEventStatus
     ) {
@@ -314,77 +186,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
     }
 
     /**
-     * Merge optionsValues map from event result if useNewValues is true and optionsValues is set
-     * @param optionsValues original optionsValues map, or null
-     * @param jobEventStatus result of pre execution event
-     * @return new map with merged optionsvalues
-     */
-    public HashMap<String, String> mergePreExecutionOptionsValues(
-            Map<String, String> optionsValues,
-            JobEventStatus jobEventStatus
-    ) {
-        def newOptionsValues = new HashMap<String, String>(optionsValues ?: [:])
-        if (jobEventStatus && jobEventStatus.useNewValues() && jobEventStatus.optionsValues) {
-            newOptionsValues.putAll(jobEventStatus.optionsValues)
-        }
-        newOptionsValues
-    }
-
-    /**
-     * It replaces initial JobOption set with result of event if useNewValues is specified, or return null if
-     * the initial set was null and result value was null or useNewValues was not set
-     * @param initial initial set, or null
-     * @param jobEventStatus result of event
-     * @return merged set, or null
-     */
-    public TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobEventStatus jobEventStatus) {
-        SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
-
-        if (jobEventStatus && jobEventStatus.useNewValues()) {
-            if(jobEventStatus.options){
-                options = new TreeSet<>(jobEventStatus.options)
-            }else{
-                options = null
-            }
-        }
-        options
-    }
-
-    /**
-     * It merges the original event with the new ones from the plugins
-     * @param event original job event
-     * @param optionValuesMap a map containing the instances sent to the plugins (mapped by plugin name)
-     */
-    private mergeResult(Map instanceMap, eventType, result){
-        if(!instanceMap.isEmpty()){
-            if(eventType == EventType.PRE_EXECUTION){
-                instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
-                    if(result == null){
-                        result = resultFromMap
-                    }else{
-                        resultFromMap.getOptionsValues()?.each { String key, String value ->
-                            result.getOptionsValues().put(key, value)
-                        }
-                    }
-
-                }
-            }
-            else if(eventType == EventType.BEFORE_SAVE){
-                SortedSet options = new TreeSet()
-                instanceMap.each { String pluginName, JobEventStatus resultFromMap ->
-                    if(result == null){
-                        result = resultFromMap
-                    }
-                    resultFromMap.getOptions().each {
-                        options.add(it)
-                    }
-                }
-                result.options = options
-            }
-        }
-    }
-
-    /**
      * Load configured JobPlugin instances for the job
      * @param configurations
      * @param project
@@ -392,8 +193,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
      */
     List<NamedJobPlugin> createConfiguredPlugins(PluginConfigSet configurations, String project) {
         List<NamedJobPlugin> configured = []
-        def project1 = frameworkService.getFrameworkProject(project)
-        def defaultpluginTypes = new HashSet<String>(getProjectDefaultJobPluginTypes(project1))
 
         configurations?.pluginProviderConfigs?.each { PluginProviderConfiguration pluginConfig ->
             String type = pluginConfig.provider
@@ -408,21 +207,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
                 //TODO: could not load plugin, or config was invalid
                 return
             }
-            configured << new NamedJobPlugin(plugin: (JobPlugin) configuredPlugin.instance, name: type)
-        }
-        defaultpluginTypes.each{type->
-            def configuredPlugin = pluginService.configurePlugin(
-                    type,
-                    [:],
-                    project,
-                    frameworkService.rundeckFramework,
-                    JobPlugin
-            )
-            if (!configuredPlugin) {
-                //TODO: could not load plugin, or config was invalid
-                return
-            }
-
             configured << new NamedJobPlugin(plugin: (JobPlugin) configuredPlugin.instance, name: type)
         }
         configured
@@ -443,30 +227,6 @@ public class JobPluginService implements ApplicationContextAware, ProjectConfigu
 
         return pluginService.listPlugins(JobPlugin).findAll { k, v ->
             !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.JobPlugin)
-        }
-    }
-
-    /**
-     *
-     * @param rundeckProject
-     * @param provider JobPlugin provider name
-     * @return true if the job plugin name is enabled for the project
-     */
-    public boolean isProjectJobPluginEnabled(IRundeckProject rundeckProject, String provider) {
-        rundeckProject?.hasProperty(CONF_PROJECT_ENABLE_JOB + provider) &&
-        rundeckProject?.getProperty(CONF_PROJECT_ENABLE_JOB + provider) == "true"
-    }
-    /**
-     *
-     * @param rundeckProject
-     * @param provider JobPlugin provider name
-     * @return true if the job plugin name is enabled for the project
-     */
-    public Set<String> getProjectDefaultJobPluginTypes(IRundeckProject rundeckProject) {
-        rundeckProject.getProjectProperties().findAll {
-            it.key.startsWith(CONF_PROJECT_ENABLE_JOB) && it.value == 'true'
-        }.collect {
-            it.key.substring(CONF_PROJECT_ENABLE_JOB.length())
         }
     }
 

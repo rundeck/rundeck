@@ -1802,7 +1802,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
-        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
@@ -1816,7 +1815,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 timeZones           : timeZones,
                 logFilterPlugins    : logFilterPlugins,
                 jobPlugins          : jobPlugins,
-                jobDefaultPlugins   : jobDefaultPlugins,
                 projectNames        : fprojects,
                 globalVars          : globals
         ]
@@ -1883,7 +1881,6 @@ class ScheduledExecutionController  extends ControllerBase{
             }
 
             def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
-            def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(
@@ -1900,8 +1897,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                           params                : params,
                                           globalVars            : globals,
                                           logFilterPlugins      : logFilterPlugins,
-                                          jobPlugins            : jobPlugins,
-                                          jobDefaultPlugins     : jobDefaultPlugins,
+                                          jobPlugins            : jobPlugins
                    ])
         }else{
 
@@ -1989,7 +1985,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
-        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
@@ -2009,7 +2004,6 @@ class ScheduledExecutionController  extends ControllerBase{
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
                         jobPlugins          : jobPlugins,
-                        jobDefaultPlugins   : jobDefaultPlugins,
                         projectNames        : fprojects,
                         globalVars          : globals
                 ]
@@ -2159,7 +2153,6 @@ class ScheduledExecutionController  extends ControllerBase{
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
         def jobPlugins = jobPluginService.listEnabledJobPlugins(pluginControlService)
-        def jobDefaultPlugins = jobPluginService.getProjectDefaultJobPluginTypes(frameworkService.getFrameworkProject(params.project))
 
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
@@ -2172,7 +2165,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
                 jobPlugins          : jobPlugins,
-                jobDefaultPlugins   : jobDefaultPlugins,
                 projectNames        : fprojects,
                 globalVars          :globals,
                 timeZones           :timeZones]

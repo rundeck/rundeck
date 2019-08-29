@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ProjectPluginException
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
@@ -130,7 +131,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
-    JobPluginService jobPluginService
+    ProjectPluginService projectPluginService
+    def jobPluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -3967,8 +3969,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 nodeFilter,
                 scheduledExecutionService.getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         try {
-            return jobPluginService.beforeJobExecution(scheduledExecution, event)
-        } catch (JobPluginException jpe) {
+            return projectPluginService.beforeJobExecution(scheduledExecution, event)
+        } catch (ProjectPluginException ppe) {
             throw new ExecutionServiceValidationException(jpe.message, optparams, null)
         }
     }

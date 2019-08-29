@@ -58,6 +58,7 @@ class ExecutionServiceTempSpec extends Specification{
     def setup(){
         service = new ExecutionService()
         service.jobPluginService = Mock(JobPluginService)
+        service.projectPluginService = Mock(ProjectPluginService)
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {

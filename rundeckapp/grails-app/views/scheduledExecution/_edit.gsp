@@ -804,92 +804,53 @@
                     <g:set var="pluginDescription" value="${plugin.value.description}"/>
                     <g:set var="pluginConfig" value="${params.jobPlugin?.get(pluginKey)?.configMap ?: jobPluginConfigMap[pluginType]}"/>
 
-                        <div class="list-group-item">
-                            <g:if test="${pluginDescription}">
-                                <div class="form-group">
+                    <div class="list-group-item">
+                        <g:if test="${pluginDescription}">
+                            <div class="form-group">
 
-                                    <div class="col-sm-12">
-                                        <div class="checkbox ">
-                                            <g:set var="prkey" value="${rkey()}"/>
-                                            <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
-                                                        class="form-control"
-                                                        id="jobPluginEnabled_${prkey}"
-                                                        checked="${pluginConfig != null}"/>
+                                <div class="col-sm-12">
+                                    <div class="checkbox ">
+                                        <g:set var="prkey" value="${rkey()}"/>
+                                        <g:checkBox name="jobPlugins.enabled.${pluginKey}" value="true"
+                                                    class="form-control"
+                                                    id="jobPluginEnabled_${prkey}"
+                                                    checked="${pluginConfig != null}"/>
 
-                                            <label for="jobPluginEnabled_${prkey}">
-                                                <g:render template="/framework/renderPluginDesc" model="${[
-                                                        serviceName    : 'JobPlugin',
-                                                        description    : pluginDescription,
-                                                        showPluginIcon : true,
-                                                        showNodeIcon   : false,
-                                                        hideTitle      : false,
-                                                        hideDescription: false,
-                                                        fullDescription: true
-                                                ]}"/>
-                                            </label>
-                                        </div>
-
+                                        <label for="jobPluginEnabled_${prkey}">
+                                            <g:render template="/framework/renderPluginDesc" model="${[
+                                                    serviceName    : 'JobPlugin',
+                                                    description    : pluginDescription,
+                                                    showPluginIcon : true,
+                                                    showNodeIcon   : false,
+                                                    hideTitle      : false,
+                                                    hideDescription: false,
+                                                    fullDescription: true
+                                            ]}"/>
+                                        </label>
                                     </div>
-                                </div>
 
-
-                                <g:if test="${pluginDescription?.properties}">
-                                    <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
-                                    <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                            service:'JobPlugin',
-                                            provider:pluginDescription.name,
-                                            properties:pluginDescription?.properties,
-                                            report: params.jobPluginValidation?.get(pluginType),
-                                            prefix:prefix,
-                                            values:pluginConfig?:[:],
-                                            fieldnamePrefix:prefix,
-                                            origfieldnamePrefix:'orig.' + prefix,
-                                            allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
-                                    ]}"/>
-                                </g:if>
-                            </g:if>
-                        </div>
-
-                </g:each>
-            </div>
-            <g:if test="${jobDefaultPlugins}">
-                <div class="tab-pane" id="tab_project_plugins">
-                    <div class="help-block">
-                        <g:message code="scheduledExecution.property.project.jobPluginConfig.help.text" />
-                    </div>
-                    <div class="list-group">
-                        <g:each in="${jobDefaultPlugins}" var="defaultPlugin">
-                            <g:set var="jobPlugin" value="${jobPlugins?.get(defaultPlugin)}"/>
-                            <div class="list-group-item">
-                                <div class="form-group">
-                                    <div class="col-sm-12">
-                                        <div class="checkbox ">
-                                            <g:set var="prkey" value="${rkey()}"/>
-                                            <g:checkBox name="jobPlugin.project.enabled.${prkey}" value="true"
-                                                        disabled="true"
-                                                        class="form-control"
-                                                        id="projectJobPluginEnabled_${prkey}"
-                                                        checked="true"/>
-
-                                            <label for="projectJobPluginEnabled_${prkey}">
-                                                <g:render template="/framework/renderPluginDesc" model="${[
-                                                        serviceName    : 'JobPlugin',
-                                                        description    : jobPlugin.description,
-                                                        showPluginIcon : true,
-                                                        showNodeIcon   : false,
-                                                        hideTitle      : false,
-                                                        hideDescription: false,
-                                                        fullDescription: true
-                                                ]}"/>
-                                            </label>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
-                        </g:each>
+
+
+                            <g:if test="${pluginDescription?.properties}">
+                                <g:set var="prefix" value="jobPlugins.${pluginKey}.configMap."/>
+                                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                        service:'JobPlugin',
+                                        provider:pluginDescription.name,
+                                        properties:pluginDescription?.properties,
+                                        report: params.jobPluginValidation?.get(pluginType),
+                                        prefix:prefix,
+                                        values:pluginConfig?:[:],
+                                        fieldnamePrefix:prefix,
+                                        origfieldnamePrefix:'orig.' + prefix,
+                                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                                ]}"/>
+                            </g:if>
+                        </g:if>
                     </div>
-                </div>
-            </g:if>
+                </g:each>
+            </div>
         </div>
     </g:if>
 </feature:enabled>

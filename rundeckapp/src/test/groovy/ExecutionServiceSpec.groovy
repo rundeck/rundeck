@@ -64,7 +64,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     }
 
     def setup(){
-        service.jobPluginService = Mock(JobPluginService)
+        service.projectPluginService = Mock(ProjectPluginService)
     }
 
     private Map createJobParams(Map overrides = [:]) {
@@ -3022,6 +3022,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.jobPluginService = Mock(JobPluginService)
 
 
 
@@ -4377,6 +4378,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.jobPluginService = Mock(JobPluginService)
 
 
 
@@ -4640,7 +4642,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
-
+        service.jobPluginService = Mock(JobPluginService)
 
 
         def origContext = Mock(StepExecutionContext){
@@ -4752,6 +4754,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 nodeSet
             }
         }
+        service.jobPluginService = Mock(JobPluginService)
 
         service.notificationService = Mock(NotificationService)
         def framework = Mock(Framework)

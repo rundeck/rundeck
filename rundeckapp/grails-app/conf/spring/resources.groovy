@@ -237,6 +237,13 @@ beans={
     }
 
     /**
+     * the Project plugin provider service
+     */
+    projectPluginProviderService(ProjectPluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+
+    /**
      * the Job plugin provider service
      */
     jobPluginProviderService(JobPluginProviderService){

@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
+import com.dtolabs.rundeck.plugins.project.ProjectPlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory;
@@ -91,6 +92,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
         map.put(ServiceNameConstants.JobPlugin, JobPlugin.class);
+        map.put(ServiceNameConstants.ProjectPlugin, ProjectPlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

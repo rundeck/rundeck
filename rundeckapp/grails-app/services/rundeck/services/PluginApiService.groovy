@@ -45,6 +45,7 @@ class PluginApiService {
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
     JobPluginService jobPluginService
+    ProjectPluginService projectPluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -90,6 +91,11 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
+        if(featureService.featurePresent("project-plugin")) {
+            pluginDescs[projectPluginService.projectPluginProviderService.name]=projectPluginService.listProjectPlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         if(featureService.featurePresent("job-plugin")) {
             pluginDescs[jobPluginService.jobPluginProviderService.name]=jobPluginService.listJobPlugins().collect {
                 it.value.description

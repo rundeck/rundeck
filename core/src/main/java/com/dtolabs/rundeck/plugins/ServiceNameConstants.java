@@ -69,4 +69,5 @@ public class ServiceNameConstants {
     public static final String NodeEnhancer            = "NodeEnhancer";
     public static final String UserGroupSource         = "UserGroupSource";
     public static final String JobPlugin               = "JobPlugin";
+    public static final String ProjectPlugin           = "ProjectPlugin";
 }

@@ -151,6 +151,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def executionUtilService
     def fileUploadService
     JobSchedulerService jobSchedulerService
+    ProjectPluginService projectPluginService
     JobPluginService jobPluginService
 
     @Override
@@ -4316,7 +4317,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 nodeSet,
                 scheduledExecution?.filter,
                 getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
-        def jobEventStatus = jobPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
+        def jobEventStatus = projectPluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.useNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
             def result = validateOptions(scheduledExecution, rundeckOptions)
