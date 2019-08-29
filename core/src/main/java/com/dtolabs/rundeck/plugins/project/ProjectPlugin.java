@@ -1,0 +1,33 @@
+package com.dtolabs.rundeck.plugins.project;
+
+import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.JobPersistEvent;
+import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
+import com.dtolabs.rundeck.core.plugins.ProjectPluginException;
+
+/**
+ * ProjectPlugin interface for executing tasks based on a certain event
+ * Created by rnavarro
+ * Date: 8/23/19
+ * Time: 10:45 AM
+ */
+public interface ProjectPlugin {
+
+    /**
+     * It triggers before the job execution context exist
+     * @param event event execution data
+     * @return JobEventStatus
+     */
+    default JobEventStatus beforeJobExecution(JobPreExecutionEvent event) throws ProjectPluginException {
+        return null;
+    }
+
+    /**
+     * It triggers when a job is persisted
+     * @param event event saving data
+     * @return JobEventStatus
+     */
+    default JobEventStatus beforeSaveJob(JobPersistEvent event) throws ProjectPluginException{
+        return null;
+    }
+}

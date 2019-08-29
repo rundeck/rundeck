@@ -114,7 +114,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
         try{
@@ -165,7 +165,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
@@ -199,7 +199,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -250,7 +250,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -301,7 +301,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -346,7 +346,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -392,7 +392,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -471,7 +471,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -521,7 +521,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -563,7 +563,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -609,7 +609,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -655,7 +655,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -708,7 +708,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -760,7 +760,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -794,7 +794,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -830,7 +830,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -866,7 +866,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -901,7 +901,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -946,7 +946,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2348,7 +2348,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2396,7 +2396,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService=fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 
@@ -2456,7 +2456,7 @@ class ExecutionServiceTests  {
             }
         }
         svc.frameworkService = fsvc
-        svc.jobPluginService = mockWith(JobPluginService){
+        svc.projectPluginService = mockWith(ProjectPluginService){
             beforeJobExecution(1..1){job,event->}
         }
 

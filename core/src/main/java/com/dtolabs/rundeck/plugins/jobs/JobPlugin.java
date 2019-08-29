@@ -15,16 +15,6 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
  */
 public interface JobPlugin {
 
-
-    /**
-     * It triggers before the job execution context exist
-     * @param event event execution data
-     * @return JobEventStatus
-     */
-    default public JobEventStatus beforeJobExecution(JobPreExecutionEvent event) throws JobPluginException{
-        return null;
-    }
-
     /**
      * It triggers before the job starts
      * @param event event execution data
@@ -40,15 +30,6 @@ public interface JobPlugin {
      * @return JobEventStatus
      */
     default public JobEventStatus afterJobEnds(JobExecutionEvent event) throws JobPluginException{
-        return null;
-    }
-
-    /**
-     * It triggers when a job is persisted
-     * @param event event saving data
-     * @return JobEventStatus
-     */
-    default public JobEventStatus beforeSaveJob(JobPersistEvent event) throws JobPluginException{
         return null;
     }
 

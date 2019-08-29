@@ -31,7 +31,7 @@ public class JobPluginException extends Exception {
         this.setFailureReason(failureReason);
     }
 
-    private FailureReason failureReason = ExecutionException.Reason.Unknown;
+    private FailureReason failureReason = Reason.Unknown;
 
     public FailureReason getFailureReason() {
         return failureReason;

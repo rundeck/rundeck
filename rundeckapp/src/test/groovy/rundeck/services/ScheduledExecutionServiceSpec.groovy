@@ -87,6 +87,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
+        service.projectPluginService = Mock(ProjectPluginService)
         service.jobPluginService = Mock(JobPluginService)
         TEST_UUID1
     }
@@ -2145,9 +2146,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
-        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
-        1 * service.jobPluginService.beforeJobSave(_,_)
+        0 * service.projectPluginService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
+        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2185,7 +2186,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                     ]
             )
             1 * service.frameworkService.getFrameworkNodeName()
-            1 * service.jobPluginService.beforeJobSave(_,_)
+            0 * service.projectPluginService.beforeJobSave(_,_)
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2219,7 +2220,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                     ]
             )
             1 * service.frameworkService.getFrameworkNodeName()
-            1 * service.jobPluginService.beforeJobSave(_,_)
+            0 * service.projectPluginService.beforeJobSave(_,_)
             0 * _
         when:
             def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2260,9 +2261,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
         0 * service.frameworkService.validateDescription(*_)
-        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
-        1 * service.jobPluginService.beforeJobSave(_,_)
+        0 * service.projectPluginService.beforeJobSave(_,_)
         1 * service.frameworkService.getFrameworkNodeName()
+        1 * service.jobPluginService.getJobPluginConfigSetForJob(_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
