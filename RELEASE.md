@@ -1,28 +1,19 @@
-Release 3.0.25
+Release 3.0.26
 ===========
 
-Date: 2019-08-14
+Date: 2019-08-29
 
-Name: <span style="color: red"><span class="glyphicon glyphicon-tower"></span> "jalapeño popper red tower"</span>
-
-## Notes
-
-### Bug Fixes
-
-* Fixed error when triggering average duration notification in referenced job [#5152](https://github.com/rundeck/rundeck/pull/5152)
-* Fixed race condition causing premature workflow exits [#5148](https://github.com/rundeck/rundeck/pull/5148)
+Name: <span style="color: rosybrown"><span class="glyphicon glyphicon-apple"></span> "jalapeño popper rosybrown apple"</span>
 
 ## Issues
 
-[Milestone 3.0.25](https://github.com/rundeck/rundeck/milestone/114)
+[Milestone 3.0.26](https://github.com/rundeck/rundeck/milestone/118)
 
-* [Fix proxy initialization exception for avg duration notifications](https://github.com/rundeck/rundeck/pull/5152)
-* [Backport : fix #5023 wfengine premature exit due to race condition](https://github.com/rundeck/rundeck/pull/5148)
+* [Backport - Dedupe steps on stepctx](https://github.com/rundeck/rundeck/pull/5165)
 
 ## Contributors
 
-* Greg Schueler (gschueler)
-* Greg Zapp (ProTip)
+* ProTip
 
 ## Bug Reporters
 
