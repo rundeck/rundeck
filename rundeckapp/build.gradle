@@ -139,7 +139,7 @@ dependencies {
     compile 'org.kohsuke:libpam4j:1.10'
     compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
     compile "org.codehaus.groovy:groovy-all:${groovyVersion}"
-    compile "javax.xml.bind:jaxb-api:2.3.0"
+    compile "javax.xml.bind:jaxb-api:2.3.1"
     compile 'org.dom4j:dom4j:2.1.1'
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
