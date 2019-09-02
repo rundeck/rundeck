@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.logging.LogEvent
@@ -544,7 +545,7 @@ public class NotificationService implements ApplicationContextAware{
             userData['user.lastName'] = user.lastName
         }
         //pass data context
-        def dcontext = content['context']?.dataContext ?: [:]
+        def dcontext = content.context?.getSharedDataContext()?.getData(ContextView.global())?.getData() ?: [:] //usage of modified global context
         def mailcontext = DataContextUtils.addContext("job", userData, null)
         def context = DataContextUtils.merge(dcontext, mailcontext)
         context
