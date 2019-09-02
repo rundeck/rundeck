@@ -3972,7 +3972,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
             return projectPluginService.beforeJobExecution(scheduledExecution, event)
         } catch (ProjectPluginException ppe) {
-            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+            throw new ExecutionServiceValidationException(ppe.message, optparams, null)
         }
     }
 }
