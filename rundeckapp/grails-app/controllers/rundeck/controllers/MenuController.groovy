@@ -29,7 +29,9 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
+import com.dtolabs.rundeck.core.audit.ActionTypes
 import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.core.audit.ResourceTypes
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -250,9 +252,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         // Trigger project home access event
         auditEventsService.eventBuilder()
-            .setResourceType(AuditEvent.ResourceType.project)
+            .setResourceType(ResourceTypes.PROJECT)
             .setResourceName(params.project)
-            .setAction(AuditEvent.Action.view)
+            .setActionType(ActionTypes.VIEW)
             .publish()
 
         switch (startpage){

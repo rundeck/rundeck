@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.server.plugins.audit
 
-import com.dtolabs.rundeck.core.audit.AuditEvent
+import com.dtolabs.rundeck.core.audit.*
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
@@ -8,6 +8,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import org.apache.log4j.Logger
+import org.grails.web.servlet.mvc.GrailsWebRequest
+import org.grails.web.util.WebUtils
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -102,8 +104,8 @@ class AuditEventsService
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
                 .setUserRoles(extractAuthorities(event.authentication))
-                .setAction(AuditEvent.Action.login_success)
-                .setResourceType(AuditEvent.ResourceType.user)
+                .setActionType(ActionTypes.LOGIN_SUCCESS)
+                .setResourceType(ResourceTypes.USER)
                 .setResourceName(extractUsername(event.authentication))
                 .publish()
     }
@@ -116,13 +118,11 @@ class AuditEventsService
         }
 
 
-
-
         eventBuilder()
                 .setUsername(extractUsername(event.authentication))
                 .setUserRoles(extractAuthorities(event.authentication))
-                .setAction(AuditEvent.Action.login_failed)
-                .setResourceType(AuditEvent.ResourceType.user)
+                .setActionType(ActionTypes.LOGIN_FAILED)
+                .setResourceType(ResourceTypes.USER)
                 .setResourceName(extractUsername(event.authentication))
                 .publish()
     }
@@ -142,8 +142,8 @@ class AuditEventsService
         eventBuilder()
                 .setUsername(extractUsername(authentication))
                 .setUserRoles(extractAuthorities(authentication))
-                .setAction(AuditEvent.Action.logout)
-                .setResourceType(AuditEvent.ResourceType.user)
+                .setActionType(ActionTypes.LOGOUT)
+                .setResourceType(ResourceTypes.USER)
                 .setResourceName(extractUsername(authentication))
                 .publish()
     }
@@ -184,12 +184,21 @@ class AuditEventsService
      */
     private dispatchEvent(AuditEventBuilder eventBuilder) {
 
-
         // If no user specified, set the user from the current context.
         if (!eventBuilder.username) {
             Authentication auth = SecurityContextHolder.context.authentication
             eventBuilder.setUsername(extractUsername(auth))
             eventBuilder.setUserRoles(extractAuthorities(auth))
+        }
+
+        // Add request data if not defined.
+        if (!eventBuilder.httpRequest) {
+            try {
+                eventBuilder.setHttpRequest(WebUtils.retrieveGrailsWebRequest());
+            }
+            catch (IllegalStateException e) {
+                LOG.debug("Dispatching event outside of web request context: " + e.getMessage(), e)
+            }
         }
 
         AuditEvent event = eventBuilder.build()
@@ -232,23 +241,23 @@ class AuditEventsService
             listener.onEvent(event)
 
             // Call specific callbacks
-            if (AuditEvent.ResourceType.user.equals(event.resourceType)) {
-                switch (event.action) {
-                    case AuditEvent.Action.login_success:
+            if (ResourceTypes.USER.equals(event.resourceInfo.type)) {
+                switch (event.actionType) {
+                    case ActionTypes.LOGIN_SUCCESS:
                         listener.onLoginSuccess(event)
                         break
 
-                    case AuditEvent.Action.login_failed:
+                    case ActionTypes.LOGIN_FAILED:
                         listener.onLoginFailed(event)
                         break
 
-                    case AuditEvent.Action.logout:
+                    case ActionTypes.LOGOUT:
                         listener.onLogout(event)
                         break
                 }
-            } else if (AuditEvent.ResourceType.project.equals(event.resourceType)) {
-                switch (event.action) {
-                    case AuditEvent.Action.view:
+            } else if (ResourceTypes.PROJECT.equals(event.resourceInfo.type)) {
+                switch (event.actionType) {
+                    case ActionTypes.VIEW:
                         listener.onProjectView(event)
                         break
                 }
@@ -305,10 +314,10 @@ class AuditEventsService
 
         private String username = null
         private Collection<String> userRoles = []
-        private AuditEvent.Action action = null
-        private AuditEvent.ResourceType resourceType = null
+        private String action = null
+        private String resourceType = null
         private String resourceName = null
-
+        private GrailsWebRequest httpRequest = null;
 
         private AuditEventBuilder() {
         }
@@ -348,11 +357,12 @@ class AuditEventsService
 
         /**
          * Sets the event action.
+         * See {@link ActionTypes}
          * @param eventType
          * @return
          */
-        AuditEventBuilder setAction(AuditEvent.Action action) {
-            this.action = action
+        AuditEventBuilder setActionType(String actionType) {
+            this.action = actionType
             return this
         }
 
@@ -361,7 +371,7 @@ class AuditEventsService
          * @param projectName
          * @return
          */
-        AuditEventBuilder setResourceType(AuditEvent.ResourceType resourceType) {
+        AuditEventBuilder setResourceType(String resourceType) {
             this.resourceType = resourceType
             return this
         }
@@ -376,65 +386,147 @@ class AuditEventsService
             return this
         }
 
+
+        /**
+         * Sets the request associated with this event.
+         * @param httpRequest HTTP Request associated with this event.
+         * @return
+         */
+        AuditEventBuilder setHttpRequest(GrailsWebRequest httpRequest) {
+            this.httpRequest = httpRequest
+            return this
+        }
+
+
         /**
          * Builds a new immutable event object
          * @return
          */
         private AuditEvent build() {
+            // Copy the data.
+            final ts = new Date()
+            final user = AuditEventBuilder.this.username
+            final roles = Collections.unmodifiableList(new ArrayList(AuditEventBuilder.this.userRoles))
+            final action = AuditEventBuilder.this.action
+            final rtype = AuditEventBuilder.this.resourceType
+            final rname = AuditEventBuilder.this.resourceName
+            final serverHostname = InetAddress.getLocalHost().getHostName()
+            final serverUUID = frameworkService.getServerUUID()
+
+            // We cannot reference the request from the event object impl directly because the request api doesn't work well on async scenarios.
+            // So we must extract any wanted value here while we are inside the request context (if any)
+            final request = AuditEventBuilder.this.httpRequest;
+            final sessionID = request?.getSessionId();
+            final userAgent = request?.getHeader("User-Agent");
 
             return new AuditEvent() {
-                // Copy the data.
-                final ts = new Date()
-                final user = AuditEventBuilder.this.username
-                final roles = Collections.unmodifiableList(new ArrayList(AuditEventBuilder.this.userRoles))
-                final action = AuditEventBuilder.this.action
-                final rtype = AuditEventBuilder.this.resourceType
-                final rname = AuditEventBuilder.this.resourceName
-
                 @Override
                 Date getTimestamp() {
-                    return ts
+                    return ts;
                 }
 
                 @Override
-                String getUsername() {
-                    return user
-                }
-
-                @Override
-                List<String> getUserRoles() {
-                    return roles
-                }
-
-                @Override
-                AuditEvent.Action getAction() {
+                String getActionType() {
                     return action
                 }
 
                 @Override
-                AuditEvent.ResourceType getResourceType() {
-                    return rtype
+                UserInfo getUserInfo() {
+                    return new UserInfo() {
+                        @Override
+                        String getUsername() {
+                            return user;
+                        }
+
+                        @Override
+                        List<String> getUserRoles() {
+                            return roles;
+                        }
+
+
+                        @Override
+                        String toString() {
+                            return "{" +
+                                    "username='" + getUsername() + '\'' +
+                                    ", userRoles=" + getUserRoles() +
+                                    '}';
+                        }
+                    }
+
                 }
 
                 @Override
-                String getResourceName() {
-                    return rname
+                RequestInfo getRequestInfo() {
+                    return new RequestInfo() {
+                        @Override
+                        String getServerHostname() {
+                            return serverHostname
+                        }
+
+                        @Override
+                        String getServerUUID() {
+                            return serverUUID
+                        }
+
+                        @Override
+                        String getSessionID() {
+                            return sessionID
+                        }
+
+                        @Override
+                        String getUserAgent() {
+                            return userAgent
+                        }
+
+
+                        @Override
+                        String toString() {
+                            return "{" +
+                                    "serverHostname='" + getServerHostname() + '\'' +
+                                    ", serverUUID='" + getServerUUID() + '\'' +
+                                    ", sessionID='" + getSessionID() + '\'' +
+                                    ", userAgent='" + getUserAgent() + '\'' +
+                                    '}';
+                        }
+                    }
+                }
+
+                @Override
+                ResourceInfo getResourceInfo() {
+                    return new ResourceInfo() {
+                        @Override
+                        String getType() {
+                            return rtype
+                        }
+
+                        @Override
+                        String getName() {
+                            return rname
+                        }
+
+
+                        @Override
+                        String toString() {
+                            return "{" +
+                                    "resourceType='" + getType() + "'" +
+                                    ", resourceName='" + getName() + "'" +
+                                    '}';
+                        }
+                    }
                 }
 
 
                 @Override
-                String toString() {
+                public String toString() {
                     return "AuditEvent {" +
-                            "timestamp=" + ts +
-                            ", username=" + user +
-                            ", userRoles=" + roles +
-                            ", action=" + action +
-                            ", resourceType=" + rtype +
-                            ", resourceName=" + rname +
-                            '}'
+                            "Timestamp=" + getTimestamp() +
+                            ", ActionType='" + getActionType() + '\'' +
+                            ", UserInfo=" + getUserInfo() +
+                            ", RequestInfo=" + getRequestInfo() +
+                            ", ResourceInfo=" + getResourceInfo() +
+                            '}';
                 }
             }
         }
-
     }
 }
