@@ -189,7 +189,7 @@
     </li>
 </g:if>
 
-<g:if test="${authProjectExport && scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
+<g:if test="${scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
     %{renderedActions++}%
     <g:if test="${authRead}">
         <li class="divider"></li>

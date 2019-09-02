@@ -60,6 +60,8 @@ public class AuthConstants {
     public static final String SCM_UPDATE="scm_update";
     public static final String SCM_CREATE="scm_create";
     public static final String SCM_DELETE="scm_delete";
+    public static final String SCM_IMPORT = "scm_import";
+    public static final String SCM_EXPORT = "scm_export";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";

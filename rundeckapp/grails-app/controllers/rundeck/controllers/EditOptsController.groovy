@@ -728,14 +728,21 @@ class EditOptsController {
         if (params?.scheduledExecutionId) {
             optid = params.scheduledExecutionId
             if (null == session.editOPTS[optid]) {
-                ScheduledExecution sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
+                ScheduledExecution sched
+                if(params?.sched){
+                    sched = params.sched
+                }else{
+                    sched = ScheduledExecution.getByIdOrUUID(params.scheduledExecutionId)
+                }
                 if (!sched) {
                     session.editOPTS[optid] = [:]
                 }else if (sched.options) {
                     editopts = [:]
 
                     sched.options.each {Option opt ->
-                        editopts[opt.name] = opt.createClone()
+                        def cloneOpt = opt.createClone()
+                        cloneOpt.getOptionValues()
+                        editopts[opt.name] = cloneOpt
                     }
                     session.editOPTS[optid] = editopts
                 } else {
