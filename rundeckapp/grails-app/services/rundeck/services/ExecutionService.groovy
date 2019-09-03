@@ -2047,6 +2047,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
+
+            checkSecuredOptions(scheduledExecution, secureOptsExposed, allowedOptions)
+            checkSecuredOptions(scheduledExecution, secureOpts, allowedOptions)
+
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -2140,6 +2144,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 allowedOptions['executionType'] = 'user-scheduled'
             }
             def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
+
+            checkSecuredOptions(scheduledExecution, secureOptsExposed, allowedOptions)
+            checkSecuredOptions(scheduledExecution, secureOpts, allowedOptions)
+
             // Update execution
             e.dateStarted       = startTime
             e.status            = "scheduled"
@@ -2440,7 +2448,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return optparams
     }
 
-    def checkSecuredOptions(scheduledExecution, props, optionsValues){
+    def checkSecuredOptions(scheduledExecution, props = [:], optionsValues){
 
         final options = scheduledExecution.options
         if(optionsValues && options) {
@@ -2449,9 +2457,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def optpatt = '^option\\.(.+)$'
                     props.each { key, val ->
                         def matcher = key =~ optpatt
-                        if (matcher.matches() && optionsValues[matcher.group(1)]) {
+                        if (matcher.matches() && opt.name ==  matcher.group(1) && optionsValues[matcher.group(1)]) {
                             def optname = matcher.group(1)
                             props[matcher.text] = optionsValues[optname]
+                        }else if(key == opt.name && optionsValues['option.'+opt.name]){
+                            props[key] = optionsValues['option.'+opt.name]
                         }
                     }
                 }
