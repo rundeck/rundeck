@@ -375,8 +375,15 @@ class ExecutionController extends ControllerBase{
         }
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
+
+        def hasFile = false
+        if(jobcomplete){
+            hasFile = fileStorageService.hasPath(authContext,
+                    "files/${e.project}/${e.scheduledExecution?.jobName}/${e.id}")
+        }
         def data=[
                 completed            : jobcomplete,
+                hasFile              : hasFile,
                 execDuration         : execDuration,
                 executionState       : execState.toUpperCase(),
                 executionStatusString: e.customStatusString,

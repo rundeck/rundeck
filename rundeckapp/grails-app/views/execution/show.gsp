@@ -228,25 +228,6 @@ search
                                       </g:link>
                                     </li>
                                   </g:if>
-                                  <g:if test="${hasFile}">
-                                      <li>
-                                          <g:set var="fieldid" value="${g.rkey()}"/>
-                                          <g:set var="execid" value="${execution.id}"/>
-                                          <g:set var="jobName" value="${scheduledExecution?.jobName}"/>
-                                          <g:set var="project" value="${execution.project}"/>
-                                          <g:set var="storageRoot" value="${'files'}"/>
-                                          <a type="button"
-                                             data-toggle="modal"
-                                             href="#storagebrowse"
-                                             data-storage-root="${enc(attr:storageRoot)}"
-                                             data-storage-filter=""
-                                             data-storage-execution-id="${execution.id}"
-                                             data-storage-job="${scheduledExecution?.jobName}"
-                                             data-storage-project="${execution.project}"
-                                             data-field="#${enc(attr:fieldid)}"
-                                          ><i class="glyphicon glyphicon-folder-open"> </i> <g:message code="storage.browse.files"/></a>
-                                      </li>
-                                  </g:if>
                                   <g:if test="${deleteExecAuth}">
                                       <li>
                                           <a href="#execdelete"
@@ -599,6 +580,24 @@ search
 
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
+
+                                  <span data-bind="visible: hasFile() ">
+                                      <g:set var="fieldid" value="${g.rkey()}"/>
+                                      <g:set var="execid" value="${execution.id}"/>
+                                      <g:set var="jobName" value="${scheduledExecution?.jobName}"/>
+                                      <g:set var="project" value="${execution.project}"/>
+                                      <g:set var="storageRoot" value="${'files'}"/>
+                                      <a class="btn btn-secondary btn-sm"
+                                         data-toggle="modal"
+                                         href="#storagebrowse"
+                                         data-storage-root="${enc(attr:storageRoot)}"
+                                         data-storage-filter=""
+                                         data-storage-execution-id="${execution.id}"
+                                         data-storage-job="${scheduledExecution?.jobName}"
+                                         data-storage-project="${execution.project}"
+                                         data-field="#${enc(attr:fieldid)}"
+                                      ><g:message code="storage.browse.files"/><i class="glyphicon glyphicon-folder-open"></i></a>
+                                  </span>
 
                                   <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
                                       <g:message code="execution.page.view.options.title"/>
@@ -1158,6 +1157,7 @@ search
 
         ko.mapping.fromJS({
             completed:'${execution.dateCompleted != null}',
+            hasFile:'${hasFile}',
             startTime:'${enc(js:execution.dateStarted)}',
             endTime:'${enc(js:execution.dateCompleted)}',
             executionState:'${enc(js:execution.executionState)}',
