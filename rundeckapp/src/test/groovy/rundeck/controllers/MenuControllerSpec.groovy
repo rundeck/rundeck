@@ -1259,9 +1259,6 @@ class MenuControllerSpec extends Specification {
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
-        controller.userService = Mock(UserService){
-            getLoginStatus(_,_) >> UserService.LogginStatus.LOGGEDIN.value
-        }
         def userToSearch = 'admin'
         def email = 'test@test.com'
         def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
@@ -1307,9 +1304,6 @@ class MenuControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
-        }
-        controller.userService = Mock(UserService){
-            getLoginStatus(_,_) >> UserService.LogginStatus.LOGGEDIN.value
         }
         def userToSearch = 'admin'
         def email = 'test@test.com'
