@@ -193,7 +193,7 @@ export default {
       this.curHook.config = this.selectedPlugin.config
       this.ajax("post", `${rdBase}webhook/admin/save`, this.curHook).then(response => {
         if (response.data.err) {
-          this.setError("Failed to savez! " + response.data.err)
+          this.setError("Failed to save! " + response.data.err)
           this.errors = response.data.errors
         } else {
           this.setMessage("Saved!")
