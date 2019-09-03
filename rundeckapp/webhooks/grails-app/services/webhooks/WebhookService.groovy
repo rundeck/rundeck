@@ -134,8 +134,16 @@ class WebhookService {
 
         Map pluginConfig = [:]
         if(hookData.config) pluginConfig = hookData.config instanceof String ? mapper.readValue(hookData.config, HashMap) : hookData.config
-        ValidatedPlugin vPlugin = validatePluginConfig(hook.eventPlugin,pluginConfig)
-        if(!vPlugin.valid) return [err: "Validation errors", errors: vPlugin.report.errors]
+
+        def (ValidatedPlugin vPlugin, boolean isCustom) = validatePluginConfig(hook.eventPlugin,pluginConfig)
+        if(!vPlugin.valid) {
+            def errMsg = isCustom ?
+                    "Validation errors" :
+                    "Invalid plugin configuration: " + vPlugin.report.errors.collect { k, v -> "$k : $v" }.join("\n")
+
+            return [err: errMsg, errors: vPlugin.report.errors]
+        }
+
         hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
 
         if(hook.save(true)) {
@@ -146,8 +154,9 @@ class WebhookService {
     }
 
     @PackageScope
-    ValidatedPlugin validatePluginConfig(String webhookPlugin, Map pluginConfig) {
+    Tuple2<ValidatedPlugin, Boolean> validatePluginConfig(String webhookPlugin, Map pluginConfig) {
         ValidatedPlugin result = pluginService.validatePluginConfig(ServiceNameConstants.WebhookEvent, webhookPlugin, pluginConfig)
+        def isCustom = false
         def plugin = pluginService.getPlugin(webhookPlugin,WebhookEventPlugin.class)
         PluginCustomConfig customConfig = PluginAdapterUtility.getCustomConfigAnnotation(plugin)
         if(customConfig && customConfig.validator()) {
@@ -155,9 +164,10 @@ class WebhookService {
             if(validator) {
                 result.report.errors.putAll(validator.validate(pluginConfig).errors)
                 result.valid = result.report.valid
+                isCustom = true
             }
         }
-        return result
+        return new Tuple2(result, isCustom)
     }
 
     def delete(Webhook hook) {
