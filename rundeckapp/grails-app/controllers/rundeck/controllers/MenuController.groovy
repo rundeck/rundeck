@@ -479,7 +479,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  frameworkService.authResourceForProject(
                                                                          params.project
                                                                  ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.SCM_EXPORT]
             )) {
                 if(frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
@@ -513,7 +513,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  frameworkService.authResourceForProject(
                                                                          params.project
                                                                  ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.SCM_IMPORT]
             )) {
                 if(frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
@@ -548,7 +548,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     frameworkService.authResourceForProject(
                             params.project
                     ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT,
+                     AuthConstants.SCM_IMPORT, AuthConstants.SCM_EXPORT]
             )) {
                 if (minScm) {
                     def pluginData = [:]
@@ -3244,7 +3245,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     frameworkService.authResourceForProject(
                             params.project
                     ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.SCM_EXPORT]
             )) {
                 def pluginData = [:]
                 if (frameworkService.isClusterModeEnabled()) {
@@ -3270,7 +3271,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     frameworkService.authResourceForProject(
                             params.project
                     ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.SCM_IMPORT]
             )) {
                 if (frameworkService.isClusterModeEnabled()) {
                     //initialize if in another node

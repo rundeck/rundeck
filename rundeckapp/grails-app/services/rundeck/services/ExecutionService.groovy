@@ -3641,15 +3641,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         }
 
-        def duration = System.currentTimeMillis() - startTime
-        if ((!jitem.ignoreNotifications) && (averageDuration > 0) && (duration > averageDuration)) {
-            avgDurationExceeded(id, [
-                    execution: exec,
-                    context  : newContext,
-                    jobref   : jitem.jobIdentifier
-            ])
-        }
-
         if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
 
@@ -3658,6 +3649,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         ScheduledExecution.withTransaction {
+            def duration = System.currentTimeMillis() - startTime
+
             if (wresult.result) {
                 def savedJobState = false
                 if (!disableRefStats) {
@@ -3684,6 +3677,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             if(!jitem.ignoreNotifications) {
                 // Get a new object attached to the new session
+
+                if (averageDuration > 0 && duration > averageDuration) {
+                    avgDurationExceeded(id, [
+                            execution: execution,
+                            context  : newContext,
+                            jobref   : jitem.jobIdentifier
+                    ])
+                }
+
                 def scheduledExecution = ScheduledExecution.get(id)
                 notificationService.triggerJobNotification(
                         wresult?.result.success ? 'success' : 'failure',
@@ -3698,7 +3700,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
             result.sourceResult = wresult.result
-
 
             Map<String, String> data = ((WorkflowExecutionResult) wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
             if (data) {

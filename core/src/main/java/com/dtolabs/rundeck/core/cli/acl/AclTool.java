@@ -868,7 +868,9 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_DELETE,
                     ACLConstants.ACTION_IMPORT,
                     ACLConstants.ACTION_EXPORT,
-                    ACLConstants.ACTION_DELETE_EXECUTION
+                    ACLConstants.ACTION_DELETE_EXECUTION,
+                    ACLConstants.ACTION_SCM_IMPORT,
+                    ACLConstants.ACTION_SCM_EXPORT
             );
     static final List<String> appProjectAclActions =
             Arrays.asList(
@@ -1992,6 +1994,8 @@ public class AclTool extends BaseTool {
         public static final String ACTION_SCM_UPDATE="scm_update";
         public static final String ACTION_SCM_CREATE="scm_create";
         public static final String ACTION_SCM_DELETE="scm_delete";
+        public static final String ACTION_SCM_IMPORT = "scm_import";
+        public static final String ACTION_SCM_EXPORT = "scm_export";
 
         public static final String TYPE_SYSTEM = "system";
         public static final String TYPE_SYSTEM_ACL = "system_acl";
