@@ -80,7 +80,7 @@
                         v-if="!customConfigComponent"
                       >
                       </plugin-config>
-                      <component :is="customConfigComponent" v-else :pluginConfig="curHook.config"></component>
+                      <component :is="customConfigComponent" v-else :pluginConfig="curHook.config" :errors="errors"></component>
                     </div>
                     <div class="row" style="margin-top: 10px;">
                       <div class="col-sm-6">
@@ -125,12 +125,16 @@ var proPluginList = window.PRO_WEBHOOK_COMPONENTS ? window.PRO_WEBHOOK_COMPONENT
 var projectName = window._rundeck ? window._rundeck.projectName : undefined
 export default {
   name: "WebhooksView",
-  components: {PluginConfig},
+  components: {
+    PluginConfig,
+
+  },
   data() {
     return {
       webhooks: [],
       webhookPlugins: [],
       curHook: null,
+      errors: {},
       selectedPlugin: null,
       apiBasePostUrl: `${rdBase}api/${apiVersion}/webhook/`,
       popup: {
@@ -189,7 +193,8 @@ export default {
       this.curHook.config = this.selectedPlugin.config
       this.ajax("post", `${rdBase}webhook/admin/save`, this.curHook).then(response => {
         if (response.data.err) {
-          this.setError("Failed to save! " + response.data.err)
+          this.setError("Failed to savez! " + response.data.err)
+          this.errors = response.data.errors
         } else {
           this.setMessage("Saved!")
           this.getHooks()
@@ -197,6 +202,7 @@ export default {
       }).catch(err => {
         if (err.response.data.err) {
           this.setError("Failed to save! " + err.response.data.err)
+          this.errors = err.response.data.errors
         }
       })
     },

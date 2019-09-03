@@ -135,7 +135,7 @@ class WebhookService {
         Map pluginConfig = [:]
         if(hookData.config) pluginConfig = hookData.config instanceof String ? mapper.readValue(hookData.config, HashMap) : hookData.config
         ValidatedPlugin vPlugin = validatePluginConfig(hook.eventPlugin,pluginConfig)
-        if(!vPlugin.valid) return [err: "Invalid plugin configuration: " + vPlugin.report.errors.collect {k,v -> "$k : $v"}.join("\n")]
+        if(!vPlugin.valid) return [err: "Validation errors", errors: vPlugin.report.errors]
         hook.pluginConfigurationJson = mapper.writeValueAsString(pluginConfig)
 
         if(hook.save(true)) {
