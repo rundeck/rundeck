@@ -148,11 +148,11 @@ class WebhookServiceSpec extends Specification implements ServiceUnitTest<Webhoo
         }
 
         when:
-        ValidatedPlugin vPlugin = service.validatePluginConfig("custom-cfg-webhook-event",config)
+        Tuple2<ValidatedPlugin,Boolean> vPlugin = service.validatePluginConfig("custom-cfg-webhook-event",config)
 
         then:
-        vPlugin.valid == valid
-        vPlugin.report.errors == errors
+        vPlugin.first.valid == valid
+        vPlugin.first.report.errors == errors
 
 
         where:
