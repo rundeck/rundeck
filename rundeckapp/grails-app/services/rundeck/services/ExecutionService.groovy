@@ -2434,9 +2434,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
         if(result?.useNewValues()){
             optparams = result.optionsValues
+            checkSecuredOptions(scheduledExec, props, result.optionsValues)
         }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
+    }
+
+    def checkSecuredOptions(scheduledExecution, props, optionsValues){
+
+        final options = scheduledExecution.options
+        if(optionsValues && options) {
+            options.each {Option opt ->
+                if (opt.secureInput) {
+                    def optpatt = '^option\\.(.+)$'
+                    props.each { key, val ->
+                        def matcher = key =~ optpatt
+                        if (matcher.matches() && optionsValues[matcher.group(1)]) {
+                            def optname = matcher.group(1)
+                            props[matcher.text] = optionsValues[optname]
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
