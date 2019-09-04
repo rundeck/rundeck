@@ -197,6 +197,8 @@ export default {
           this.errors = response.data.errors
         } else {
           this.setMessage("Saved!")
+          this.setError()
+          this.errors = {}
           this.getHooks()
         }
       }).catch(err => {
