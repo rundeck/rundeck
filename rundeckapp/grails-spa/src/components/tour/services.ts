@@ -5,9 +5,8 @@ import TourConstants from '@/components/tour/constants'
 
 export const getTours = () => {
   let tours = [] as any[]
-
   return new Promise<any[]>((resolve, reject) => {
-    axios.get(TourConstants.tourManifestUrl).then((response) => {
+    axios.get(TourConstants.tourManifestUrl, getHeaderObject()).then((response) => {
       if (response && response.data && response.data.length) {
         _.each(response.data, (tourLoader) => {
           tours.push(tourLoader)
@@ -23,7 +22,7 @@ export const getTours = () => {
 
 export const getTour = (tourLoader: string, tourKey: string) => {
   return new Promise((resolve, reject) => {
-    axios.get(`${TourConstants.tourUrl}${tourLoader}/${tourKey}.json`)
+    axios.get(`${TourConstants.tourUrl}${tourLoader}/${tourKey}.json`, getHeaderObject())
       .then((response) => {
         if (response && response.data) {
           resolve(response.data)
@@ -44,6 +43,10 @@ export const unsetTour = () => {
       })
     })
   })
+}
+
+function getHeaderObject() {
+  return window._rundeck.projectName ? {headers: {"X-Tour-Project": window._rundeck.projectName}} : {}
 }
 
 export default {
