@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookDataImpl
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.text.SimpleTemplateEngine
 import org.apache.log4j.Logger
 import org.rundeck.utils.UUIDPropertyValidator
 
@@ -75,12 +76,16 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
         String expandedJobId = jobId
         try {
 
-            //expand values in the argString/jobOptions map
             final Map<String, String> webhookMap = new HashMap<>()
             webhookMap.put("id", data.id)
             webhookMap.put("project", data.project)
+            webhookMap.put("sender",data.sender)
+            webhookMap.put("timestamp",data.timestamp.toString())
+            getRequestHeadersToCopy().each {
+                if(data.getHeaders().containsKey(it)) webhookMap.put(it,data.getHeaders().get(it))
+            }
 
-            Map<String, Map<String, String>> localDataContext = DataContextUtils.context("webhook", webhookMap)
+            def dataContext = ["webhook":webhookMap]
 
             try {
                 def webhookdata = mapper.readValue(data.data, HashMap)
@@ -88,30 +93,23 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
                     log.trace("webhook payload")
                     log.trace(mapper.writeValueAsString(webhookdata))
                 }
-                Map<String, String> eventData = new HashMap<>()
-                if (webhookdata != null && webhookdata instanceof Map) {
-                    eventData = MapData.toStringStringMap((Map) webhookdata)
-                }
-                localDataContext = DataContextUtils.addContext("data", eventData, localDataContext)
-                localDataContext = DataContextUtils.addContext("payload", [raw:mapper.writeValueAsString(webhookdata)], localDataContext)
+                dataContext << ["data":webhookdata]
+                dataContext << ["raw":mapper.writeValueAsString(webhookdata)]
             } catch(Exception ex) {
                 throw new WebhookEventException(ex,"Unable to parse posted JSON data",WebhookJobRunHandlerFailureReason.JsonParseError)
             }
 
-            expandedJobId = DataContextUtils.replaceDataReferencesInString(
-                    jobId,
-                    localDataContext
-            )
+            expandedJobId = groovyTemplate(jobId,dataContext)
 
             JobReference jobReference = jobService.jobForID(
                     expandedJobId, data.project
             )
 
-            def expandedNodeFilter = DataContextUtils.replaceDataReferencesInString(nodeFilter, localDataContext)
-            def expandedAsUser = DataContextUtils.replaceDataReferencesInString(asUser, localDataContext)
+            def expandedNodeFilter = groovyTemplate(nodeFilter, dataContext)
+            def expandedAsUser = groovyTemplate(asUser, dataContext)
 
             String[] args = argString ? OptsUtil.burst(argString) : new String[0]
-            String[] expandedArgs = DataContextUtils.replaceDataReferencesInArray(args, localDataContext)
+            String[] expandedArgs = args.collect { groovyTemplate(it,dataContext) }
             String expandedArgString = OptsUtil.join(expandedArgs)
             log.info(
                     "starting job ${expandedJobId} with args: ${expandedArgString}, " +
@@ -148,11 +146,24 @@ class JobRunWebhookEventPlugin implements WebhookEventPlugin {
         }
     }
 
+    static String groovyTemplate(String input, Map data) throws WebhookEventException {
+        if(!input || input.isEmpty()) return ""
+        def engine = new SimpleTemplateEngine()
+
+        try {
+            def template = engine.createTemplate(input)
+            template.make(data)
+        } catch(GroovyRuntimeException ex) {
+            throw new WebhookEventException(ex, "Failed to substitute data", WebhookJobRunHandlerFailureReason.DataSubstitutionError)
+        }
+    }
+
     static enum WebhookJobRunHandlerFailureReason implements FailureReason {
         InvalidContentType,
         JsonParseError,
         JobNotFound,
-        ExecutionError
+        ExecutionError,
+        DataSubstitutionError
     }
 
 }
