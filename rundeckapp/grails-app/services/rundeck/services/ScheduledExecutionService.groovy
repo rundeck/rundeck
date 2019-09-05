@@ -21,22 +21,34 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.PluginProviderConfiguration
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
+import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.fasterxml.jackson.databind.ObjectMapper
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
 import grails.plugins.quartz.listeners.SessionBinderJobListener
@@ -137,6 +149,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def executionUtilService
     def fileUploadService
     JobSchedulerService jobSchedulerService
+    JobLifecyclePluginService jobLifecyclePluginService
+    ExecutionLifecyclePluginService executionLifecyclePluginService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -2276,6 +2290,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
+        boolean shouldreSchedule = false
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
 
         if(frameworkService.isClusterModeEnabled()){
@@ -2297,11 +2312,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                    //schedule meesage want sent , it should be ran locally
+                    shouldreSchedule = true
                 }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID
             }
+        }else{
+            shouldreSchedule = true
         }
 
         if (renamed) {
@@ -2601,6 +2620,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
+        if (params.executionLifecyclePlugins) {
+            //validate execution life cycle plugins
+
+            def configSet = parseExecutionLifecyclePluginsParams(params.executionLifecyclePlugins)
+            def result = _updateExecutionLifecyclePluginsData(configSet, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+                params['executionLifecyclePluginValidation'] = result.validations
+            }
+        }
         //try to save workflow
         if (!failed && null != scheduledExecution.workflow) {
             if (!scheduledExecution.workflow.validate()) {
@@ -2618,9 +2647,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
-        if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
 
+        def resultFromExecutionLifecyclePlugin = ["success" : true]
+        if(scheduledExecution != null && scheduledExecution.workflow != null){
+            resultFromExecutionLifecyclePlugin = runBeforeSave(scheduledExecution, authContext)
+        }
+        if (resultFromExecutionLifecyclePlugin.success && !failed && scheduledExecution.save(true)) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project) && shouldreSchedule) {
                 def nextdate = null
                 def nextExecNode = null
                 try {
@@ -2819,6 +2852,87 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def addrs = arr.findAll { it.trim() }.join(",")
         def n = new Notification(eventTrigger: trigger, type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE, content: addrs)
         [failed:false,notification: n]
+    }
+
+    /**
+     * Convert params into PluginConfigSet
+     * @param executionLifecyclePluginsParams
+     * @return
+     */
+    static PluginConfigSet parseExecutionLifecyclePluginsParams(Map executionLifecyclePluginsParams) {
+        List<String> keys = [executionLifecyclePluginsParams?.keys].flatten().findAll { it }
+
+        List<PluginProviderConfiguration> configs = []
+
+        keys.each { key ->
+            def enabled = executionLifecyclePluginsParams.enabled?.get(key)
+            def pluginType = executionLifecyclePluginsParams.type[key]?.toString()
+            if (enabled != 'true') {
+                return
+            }
+            Map config = executionLifecyclePluginsParams[key]?.configMap ?: [:]
+            configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
+        }
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecyclePlugin, configs
+    }
+
+    /**
+     * Validate input config set, update execution life cycle plugin settings if all are valid
+     * @param pluginConfigSet config set
+     * @param scheduledExecution job
+     * @param projectProperties
+     * @return [failed:boolean, validations: Map<String,Validator.Report>]
+     */
+    private Map _updateExecutionLifecyclePluginsData(
+            PluginConfigSet pluginConfigSet,
+            ScheduledExecution scheduledExecution
+    ) {
+        Map<String,Validator.Report> pluginValidations = [:]
+        boolean err = false
+        pluginConfigSet.pluginProviderConfigs.each { PluginProviderConfiguration providerConfig ->
+            def pluginType = providerConfig.provider
+            Map config = providerConfig.configuration
+            Map validation = validateExecutionLifecyclePlugin(pluginType, config, scheduledExecution)
+            if (validation.failed) {
+                err = true
+                if (validation.validation) {
+                    pluginValidations[pluginType] = validation.validation.report
+                }
+            }
+        }
+        if (!err) {
+            executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(scheduledExecution, pluginConfigSet)
+        }
+        [failed: err, validations: pluginValidations]
+    }
+
+    private Map validateExecutionLifecyclePlugin(
+            String type,
+            Map config,
+            ScheduledExecution scheduledExecution
+    ) {
+        def failed = false
+        def validation = pluginService.validatePluginConfig(type, ExecutionLifecyclePlugin, scheduledExecution.project, config)
+        if (validation == null) {
+            scheduledExecution.errors.rejectValue(
+                    'pluginConfig',
+                    'scheduledExecution.executionLifecyclePlugins.pluginTypeNotFound.message',
+                    [type] as Object[],
+                    'Execution Life Cycle plugin type "{0}" was not found or could not be loaded'
+            )
+            return [failed: true]
+        }
+        if (!validation.valid) {
+            failed = true
+
+            scheduledExecution.errors.rejectValue(
+                    'pluginConfig',
+                    'scheduledExecution.executionLifecyclePlugins.invalidPlugin.message',
+                    [type] as Object[],
+                    'Invalid Configuration for Execution Life Cycle plugin: {0}'
+            )
+        }
+        [failed: failed, validation: validation]
     }
 
     /**
@@ -3189,6 +3303,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
         }
+        def executionLifecyclePluginConfig = executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(params)
+        if (executionLifecyclePluginConfig != null) {
+            //validate job plugins
+            def result = _updateExecutionLifecyclePluginsData(executionLifecyclePluginConfig, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+            }
+        }
 
         //try to save workflow
         if (!failed && null != scheduledExecution.workflow) {
@@ -3204,8 +3326,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
-
-        if (!failed && scheduledExecution.save(flush:true)) {
+        def result = runBeforeSave(scheduledExecution, authContext)
+        if (result.success && !failed && scheduledExecution.save(flush:true)) {
             if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 def nextExecNode = null
@@ -3297,7 +3419,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution.uuid) {
             scheduledExecution.uuid = UUID.randomUUID().toString()
         }
-        if (!failed && scheduledExecution.save(flush:true)) {
+        def resultFromPlugin = runBeforeSave(scheduledExecution, authContext)
+        if (resultFromPlugin.success && !failed && scheduledExecution.save(flush:true)) {
             def stats = ScheduledExecutionStats.findAllBySe(scheduledExecution)
             if (!stats) {
                 stats = new ScheduledExecutionStats(se: scheduledExecution)
@@ -3711,7 +3834,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def i = 0;
             if (params.options instanceof Collection) {
                 params.options.each { origopt ->
-                    def Option theopt = origopt.createClone()
+                    if(origopt instanceof Map){
+                        origopt = Option.fromMap(origopt.name, origopt)
+                    }
+                    Option theopt = origopt.createClone()
                     scheduledExecution.addToOptions(theopt)
                     EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
                     fileUploadService.validateFileOptConfig(theopt)
@@ -3770,6 +3896,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def result = _updateNotificationsData(params, scheduledExecution,projectProps)
             if (result.failed) {
                 failed = result.failed
+            }
+        }
+
+        if (params.executionLifecyclePlugins) {
+            //validate execution life cycle plugins
+
+            def configSet = parseExecutionLifecyclePluginsParams(params.executionLifecyclePlugins)
+            def result = _updateExecutionLifecyclePluginsData(configSet, scheduledExecution)
+            if (result.failed) {
+                failed = result.failed
+                params['executionLifecyclePluginValidation'] = result.validations
             }
         }
         if (scheduledExecution.doNodedispatch) {
@@ -4165,5 +4302,142 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }else {
             return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
         }
+    }
+
+    def runBeforeSave(scheduledExecution, authContext){
+        Map scheduleMap = scheduledExecution.toMap()
+        INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
+        scheduleMap.project = scheduledExecution.project
+        JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
+                scheduleMap.name,
+                scheduleMap.project,
+                authContext.getUsername(),
+                nodeSet,
+                scheduledExecution?.filter,
+                getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
+        def jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
+        if(jobEventStatus?.useNewValues()){
+            SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
+            def result = validateOptions(scheduledExecution, rundeckOptions)
+            def failed = result.failed
+            //try to save workflow
+            if(failed){
+                scheduledExecution.discard()
+                return [success: false, scheduledExecution: scheduledExecution]
+            }
+            return [success: true, scheduledExecution: scheduledExecution]
+        }else{
+            return [success: true, scheduledExecution: scheduledExecution]
+        }
+    }
+
+    def deleteEveryOption(scheduledExecution){
+        def todelete = []
+        scheduledExecution.options.each {
+            todelete << it
+        }
+        todelete.each {
+            it.delete()
+            scheduledExecution.removeFromOptions(it)
+        }
+        scheduledExecution.options = null
+    }
+
+    def getOptions(SortedSet<JobOption> jobOptions) {
+        SortedSet<Option> options = new TreeSet<>()
+        jobOptions.each {
+            final ObjectMapper mapper = new ObjectMapper()
+            Map<String, Object> map = mapper.convertValue(it, Map.class)
+            options.add(new Option(map))
+        }
+        options
+    }
+
+    def addOptions(ScheduledExecution scheduledExecution, SortedSet<Option> rundeckOptions){
+        rundeckOptions?.each {
+            it.convertValuesList()
+            scheduledExecution.addToOptions(it)
+        }
+    }
+
+    def validateOptions(scheduledExecution, rundeckOptions){
+        def optfailed = false
+        def optNames = [:]
+        rundeckOptions?.each {Option opt ->
+            EditOptsController._validateOption(opt, null,scheduledExecution.scheduled)
+            fileUploadService.validateFileOptConfig(opt)
+            if(!opt.errors.hasErrors() && optNames.containsKey(opt.name)){
+                opt.errors.rejectValue('name', 'option.name.duplicate.message', [opt.name] as Object[], "Option already exists: {0}")
+            }
+            if (opt.errors.hasErrors()) {
+                optfailed = true
+                def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
+                scheduledExecution.errors.rejectValue(
+                        'options',
+                        'scheduledExecution.options.invalid.message',
+                        [errmsg] as Object[],
+                        'Invalid Option definition: {0}'
+                )
+            }
+            optNames.put(opt.name, opt)
+        }
+        if (!optfailed) {
+            if(scheduledExecution.options){
+                deleteEveryOption(scheduledExecution)
+            }
+            addOptions(scheduledExecution, rundeckOptions)
+            return [failed: false, scheduledExecution: scheduledExecution]
+        } else {
+            return [failed: true, scheduledExecution: scheduledExecution]
+        }
+    }
+
+    /**
+     * Return a NodeSet using the filters during job save
+     */
+    def getNodes(scheduledExecution, filter, authContext){
+
+        NodesSelector nodeselector
+        if (scheduledExecution.doNodedispatch) {
+            //set nodeset for the context if doNodedispatch parameter is true
+            filter = filter? filter : scheduledExecution.asFilter()
+            def filterExclude = scheduledExecution.asExcludeFilter()
+            NodeSet nodeset = ExecutionService.filtersAsNodeSet([
+                    filter:filter,
+                    filterExclude: filterExclude,
+                    nodeExcludePrecedence:scheduledExecution.nodeExcludePrecedence,
+                    nodeThreadcount: scheduledExecution.nodeThreadcount,
+                    nodeKeepgoing: scheduledExecution.nodeKeepgoing
+            ])
+            nodeselector=nodeset
+        } else if(frameworkService != null){
+            //blank?
+            nodeselector = SelectorUtils.singleNode(frameworkService.frameworkNodeName)
+        }else{
+            nodeselector = null
+        }
+
+        INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
+                scheduledExecution.project,
+                new HashSet<String>(Arrays.asList("read", "run")),
+                frameworkService.filterNodeSet(nodeselector, scheduledExecution.project),
+                authContext)
+        nodeSet
+    }
+
+    def getOptionsFromScheduleExecutionMap(scheduledExecutionMap) {
+        def options = new TreeSet<JobOption>()
+        if(scheduledExecutionMap != null){
+            if(scheduledExecutionMap.containsKey("options")){
+                def originalOptions = scheduledExecutionMap.get("options")
+                if(originalOptions != null && !originalOptions.isEmpty()){
+                    for (LinkedHashMap originalOption: originalOptions) {
+                        JobOptionImpl option = new JobOptionImpl(originalOption)
+                        options.add(option)
+                    }
+                }
+            }
+        }
+        return options
     }
 }

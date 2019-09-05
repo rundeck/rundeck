@@ -19,8 +19,11 @@ package rundeck
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import rundeck.services.ExecutionService
+import rundeck.services.JobReferenceImpl
+import rundeck.services.execution.ExecutionReferenceImpl
 
 /**
 * Execution
@@ -406,6 +409,31 @@ class Execution extends ExecutionContext {
             exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
         }
         exec
+    }
+
+    ExecutionReference asReference(Closure<String> genTargetNodes = null) {
+        JobReferenceImpl jobRef = null
+        if (scheduledExecution) {
+            jobRef = new JobReferenceImpl(
+                    id: scheduledExecution.extid,
+                    jobName: scheduledExecution.jobName,
+                    groupPath: scheduledExecution.groupPath,
+                    project: scheduledExecution.project
+            )
+        }
+        String targetNodes = genTargetNodes?.call(this)
+        return new ExecutionReferenceImpl(
+                project: project,
+                id: id,
+                options: argString,
+                filter: filter,
+                job: jobRef,
+                dateStarted: dateStarted,
+                status: status,
+                succeededNodeList: succeededNodeList,
+                failedNodeList: failedNodeList,
+                targetNodes: targetNodes
+        )
     }
 }
 

@@ -22,16 +22,12 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.gorm.transactions.Rollback
-import grails.gorm.transactions.Transactional
 
 //import grails.test.GrailsMock
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
 import org.junit.Assert
-import org.junit.Ignore
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -233,7 +229,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null,null)
         stb.successful=true
         stb.result=wfeForSuccess(true)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
@@ -268,7 +264,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null,null)
         stb.successful=true
         def threshold=new testThreshold()
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
@@ -302,7 +298,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null,null)
         stb.successful=true
         def threshold=new testThreshold()
         threshold.wasMet=true
@@ -366,7 +362,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null,null)
         stb.result = wfeForSuccess(false)
 
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
@@ -437,7 +433,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null,null)
         stb.result=wfeForSuccess(false)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
@@ -837,7 +833,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null,null)
         stb.successful=true
         stb.result=wfeForSuccess(true)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true, scheduledExecution: se]

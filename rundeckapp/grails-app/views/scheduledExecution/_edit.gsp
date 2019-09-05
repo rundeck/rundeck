@@ -788,7 +788,72 @@
       </g:if>
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
+<feature:enabled name="executionLifecycle-plugin">
+    <g:if test="${executionLifecyclePlugins}">
+        <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecyclePlugin')?:[:]}"/>
+        <div class="tab-pane" id="tab_execution_plugins">
+            <div class="help-block">
+                <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
+            </div>
+            <div class="list-group">
+                <g:each in="${executionLifecyclePlugins}" var="plugin">
+                    <g:set var="pluginKey" value="${params.executionLifecyclePlugin?.type?.get(pluginType)?:g.rkey()}"/>
+                    <g:set var="pluginType" value="${plugin.key}"/>
+                    <g:hiddenField name="executionLifecyclePlugins.keys" value="${pluginKey}"/>
+                    <g:hiddenField name="executionLifecyclePlugins.type.${pluginKey}" value="${pluginType}"/>
+                    <g:set var="pluginDescription" value="${plugin.value.description}"/>
+                    <g:set var="pluginConfig" value="${params.executionLifecyclePlugins?.get(pluginKey)?.configMap ?: executionLifecyclePluginConfigMap[pluginType]}"/>
 
+                    <div class="list-group-item">
+                        <g:if test="${pluginDescription}">
+                            <div class="form-group">
+
+                                <div class="col-sm-12">
+                                    <div class="checkbox ">
+                                        <g:set var="prkey" value="${rkey()}"/>
+                                        <g:checkBox name="executionLifecyclePlugins.enabled.${pluginKey}" value="true"
+                                                    class="form-control"
+                                                    id="executionLifecyclePluginEnabled_${prkey}"
+                                                    checked="${pluginConfig != null}"/>
+
+                                        <label for="executionLifecyclePluginEnabled_${prkey}">
+                                            <g:render template="/framework/renderPluginDesc" model="${[
+                                                    serviceName    : 'ExecutionLifecyclePlugin',
+                                                    description    : pluginDescription,
+                                                    showPluginIcon : true,
+                                                    showNodeIcon   : false,
+                                                    hideTitle      : false,
+                                                    hideDescription: false,
+                                                    fullDescription: true
+                                            ]}"/>
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                            <g:if test="${pluginDescription?.properties}">
+                                <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
+                                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                        service:'ExecutionLifecyclePlugin',
+                                        provider:pluginDescription.name,
+                                        properties:pluginDescription?.properties,
+                                        report: params.executionLifecyclePluginValidation?.get(pluginType),
+                                        prefix:prefix,
+                                        values:pluginConfig?:[:],
+                                        fieldnamePrefix:prefix,
+                                        origfieldnamePrefix:'orig.' + prefix,
+                                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                                ]}"/>
+                            </g:if>
+                        </g:if>
+                    </div>
+                </g:each>
+            </div>
+        </div>
+    </g:if>
+</feature:enabled>
 
   %{--Log level--}%
   <div class="tab-pane" id="tab_other">
@@ -1179,7 +1244,12 @@ function getCurSEID(){
             })
             ;
             const jobDef = loadJsonData('jobDefinitionJSON')
-            window.jobeditor = new JobEditor(jobDef)
+            var jobeditor = new JobEditor(jobDef)
+            window.jobeditor = jobeditor
+            window._jobeditor = jobeditor
+<g:if test="${params.executionLifecyclePluginValidation}">
+            jobeditor.addError('plugins');
+</g:if>
             initKoBind(null,{jobeditor:jobeditor})
         }
 
