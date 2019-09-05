@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
 import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.SaveFileFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
@@ -413,6 +414,7 @@ beans={
             //log filters
             MaskPasswordsFilterPlugin,
             SimpleDataFilterPlugin,
+            SaveFileFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
