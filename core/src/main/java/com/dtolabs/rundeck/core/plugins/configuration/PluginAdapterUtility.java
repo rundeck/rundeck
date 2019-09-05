@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.metadata.PluginMeta;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
@@ -482,6 +481,35 @@ public class PluginAdapterUtility {
                 );
 
         return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
+    }
+
+    /**
+     * Set config on fields annotated with PluginConfig {@link PluginCustomConfig}
+     * @param object
+     * @param config
+     */
+    public static void setConfig(final Object object, Object config) {
+        for (final Field field : collectClassFields(object.getClass())) {
+            final PluginCustomConfig annotation = field.getAnnotation(PluginCustomConfig.class);
+            if (null == annotation) {
+                continue;
+            }
+
+            try {
+                setFieldValue(field, config, object);
+            } catch (Exception e) {
+                throw new RuntimeException("Cannot set value of PluginCustomConfig field: "+ field.getName(),e);
+            }
+        }
+    }
+
+    public static PluginCustomConfig getCustomConfigAnnotation(final Object providerInstance) {
+        PluginCustomConfig annotation = null;
+        for (final Field field : collectClassFields(providerInstance.getClass())) {
+            annotation = field.getAnnotation(PluginCustomConfig.class);
+            if (null != annotation) break;
+        }
+        return annotation;
     }
 
     /**
