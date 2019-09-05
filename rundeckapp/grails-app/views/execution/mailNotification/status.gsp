@@ -20,12 +20,29 @@
    Created: August 26th, 2019
    $Id$
 --%>
+
 <%@ page import="rundeck.Execution" contentType="text/html" %>
+<%@ page import="rundeck.ReferencedExecution" %>
+
 <%
     request.setAttribute("IS_MAIL_RENDERING_REQUEST",Boolean.TRUE)
 %>
-<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 
+<g:set var="execCount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution) : 0}"/>
+<g:set var="successcount" value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
+<g:set var="refsuccesscount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatus(scheduledExecution, 'succeeded') : 0}"/>
+
+<g:set var="refexecCount" value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
+
+<g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
+
+<g:set var="status" value="${execution.statusSucceeded() ? 'succeed' : execution.cancelled?'warn': execution.customStatusString?'other':'fail'}" />
+
+<g:set var="statusColor" value="${execution.statusSucceeded() ? 'green' : execution.cancelled?'yellow': execution.customStatusString?'blue':'red'}" />
+
+<g:set var="execfailed" value="${execstate in ['failed','aborted']}" />
+
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
   <meta http-equiv="x-ua-compatible" content="ie=edge">
@@ -398,14 +415,23 @@
       background-color: #e2e2e2;
       padding: 10px 15px;
     }
+    .execution-status-warn{
+      border-color: yellow;
+    }
+    .execution-status-succeed{
+      border-color: green;
+    }
+    .execution-status-other{
+      border-color: blue;
+    }
+    .execution-status-fail{
+      border-color: red;
+    }
   </style>
 </head>
 
 <body
   style="box-sizing:border-box;margin:0;padding:0;width:100%;word-break:break-word;-webkit-font-smoothing:antialiased;">
-  <g:set var="execfailed" value="${execstate in ['failed','aborted']}" />
-
-
   <div style="display:none;font-size:0;line-height:0;">
     <!-- Add your preheader text here -->
   </div>
@@ -418,7 +444,7 @@
               <!-- ADD ROWS HERE -->
           <tr>
             <td class="col" colspan="2" width="310" style="padding: 0 10px;">
-              <div style="border-left:20px solid green;padding-left:10px;">
+              <div style="border-left:20px solid ${statusColor};padding-left:10px;" class="execution-status-${status}">
                 <h3 style="margin: 0;">
                   <g:enc>${execution.project}</g:enc>
                 </h3>
@@ -515,9 +541,6 @@
             </tr>
           </g:if>
           <tr>
-
-
-
             <td class="col" colspan="1" style="padding: 0 10px;">
               <div style="background-color:#EEEEEE; border-radius: 3px; line-height: 100%; mso-padding-alt: 5px 50px 10px;text-align: center;">
                 <g:link absolute="true" controller="execution"
@@ -552,18 +575,18 @@
         <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
           <tr>
             <g:if test="${null!=execution.dateStarted}">
-              <td>
+              <td class="col pb-sm-30 borderless-sm">
                 <h5 style="margin: 0 0 10px;">Started</h5>
                 <div style="font-size: 30px; line-height: 100%;">
                   <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago" />
                 </div>
-                <div style="font-size: 12px; line-height: 100%;">
+                <div style="font-size: 12px; line-height: 100%; margin-top:10px;">
                   <g:enc>${execution.dateStarted}</g:enc>
                 </div>
               </td>
             </g:if>
             <g:else>
-              <td>
+              <td class="col pb-sm-30 borderless-sm">
                 <h5 style="margin: 0 0 10px;">Started</h5>
                 <div style="font-size: 30px; line-height: 100%;">
                   Just Now
@@ -577,14 +600,14 @@
                 <div style="font-size: 30px; line-height: 100%;">
                   <g:relativeDate elapsed="${execution.dateCompleted}" agoClass="timeago" />
                 </div>
-                <div style="font-size: 12px; line-height: 100%;">
+                <div style="font-size: 12px; line-height: 100%; margin-top:10px;">
                   <g:enc>${execution.dateCompleted}</g:enc>
                 </div>
               </td>
             </g:if>
             <g:if test="${null!=execution.dateCompleted && null!=execution.dateStarted}">
               <td class="col borderless-sm" width="184" style="border-left: 1px solid #EEEEEE; padding: 0 20px;">
-                <h5 style="margin: 0 0 10px;">Time</h5>
+                <h5 style="margin: 0 0 10px;">Duration</h5>
                 <div style="font-size: 30px; line-height: 100%;">
                   <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}" />
                 </div>
@@ -626,12 +649,14 @@
                 <g:message code="Execution.plural"/>
               </h5>
               <div style="font-size: 30px; line-height: 100%;">
-                <g:formatNumber number="${execCount}"/>
+                ${execCount}
               </div>
             </td>
             <td class="col borderless-sm" width="184" style="border-left: 1px solid #EEEEEE; padding: 0 20px;">
               <h5 style="margin: 0 0 10px;">Success Rate</h5>
-              <div style="font-size: 30px; line-height: 100%;">100%</div>
+              <div style="font-size: 30px; line-height: 100%;">
+                <g:formatNumber number="${successrate}" type="percent"/>
+              </div>
             </td>
           </tr>
         </table>
