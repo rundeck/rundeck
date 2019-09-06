@@ -107,6 +107,10 @@
     }
 
     @media only screen and (max-width: 699px) {
+      .d{
+        display: block;
+        margin-bottom: 20px;
+      }
       .col {
         box-sizing: border-box;
         display: inline-block !important;
@@ -427,6 +431,17 @@
     .execution-status-fail{
       border-color: red;
     }
+
+
+    @media only screen and (max-width: 699px) {
+    .job-link{
+      display: block;
+      margin-bottom:20px;
+    }
+     .mobile-button-stack{
+       margin-bottom:20px;
+     }
+    }
   </style>
 </head>
 
@@ -449,7 +464,7 @@
                   <g:enc>${execution.project}</g:enc>
                 </h3>
                 <h1 style="margin: 10px 0 15px 0;">
-                  <g:link controller="execution" action="show" id="${execution.id}"
+                  <g:link controller="execution" action="show" id="${execution.id}" class="job-link"
                     absolute="${absolute ? 'true' : 'false'}"
                     params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">
                     <g:if test="${scheduledExecution}">
@@ -544,6 +559,7 @@
             <td class="col" colspan="1" style="padding: 0 10px;">
               <div style="background-color:#EEEEEE; border-radius: 3px; line-height: 100%; mso-padding-alt: 5px 50px 10px;text-align: center;">
                 <g:link absolute="true" controller="execution"
+                      class="mobile-button-stack"
                       params="[project: execution.project]"
                       action="show" id="${execution.id}" title="View execution output" style="color: #000000; display: block; font-size: 13px; padding: 10px 50px; text-decoration:
                       none;">View Output</g:link>
@@ -552,7 +568,7 @@
           <g:if test="${execstate!='running'}">
             <td class="col" colspan="1" style="padding: 0 10px;">
               <div style="background-color:#EEEEEE; border-radius: 3px; line-height: 100%; mso-padding-alt: 5px 50px 10px;text-align: center;">
-                <g:link class="filelink"
+                <g:link class="mobile-button-stack"
                     title="Download entire output file"
                     controller="execution"
                     action="downloadOutput"
@@ -575,7 +591,7 @@
         <table cellpadding="0" cellspacing="0" role="presentation" width="100%">
           <tr>
             <g:if test="${null!=execution.dateStarted}">
-              <td class="col pb-sm-30 borderless-sm">
+              <td class="col pb-sm-30 borderless-sm" style="padding: 0 20px;">
                 <h5 style="margin: 0 0 10px;">Started</h5>
                 <div style="font-size: 30px; line-height: 100%;">
                   <g:relativeDate elapsed="${execution.dateStarted}" agoClass="timeago" />
