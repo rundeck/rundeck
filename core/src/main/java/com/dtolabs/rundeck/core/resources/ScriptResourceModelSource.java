@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.utils.OptsUtil;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.apache.log4j.Logger;
@@ -108,7 +109,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     private String format;
     private File scriptFile;
     private String interpreter;
-    private String args;
+    private String[] argsAsArray;
     private boolean interpreterArgsQuoted;
     private String project;
     HashMap<String, Map<String, String>> configDataContext;
@@ -134,7 +135,10 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
                 CONFIG_FILE + " does not exist or is not a file: " + scriptFile.getAbsolutePath());
         }
         interpreter = configuration.getProperty(CONFIG_INTERPRETER);
-        args = configuration.getProperty(CONFIG_ARGS);
+        String args = configuration.getProperty(CONFIG_ARGS);
+        if(null != args){
+            argsAsArray = OptsUtil.burst(args);
+        }
         if (!configuration.containsKey(CONFIG_FORMAT)) {
             throw new ConfigurationException(CONFIG_FORMAT + " is required");
         }
@@ -155,8 +159,8 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
     public INodeSet getNodes() throws ResourceModelSourceException {
         try {
             return ScriptResourceUtil.executeScript(scriptFile,
-                                                    args,
                                                     null,
+                                                    argsAsArray,
                                                     interpreter,
                                                     ScriptResourceModelSourceFactory.SERVICE_PROVIDER_TYPE,
                                                     executionDataContext,
