@@ -13,7 +13,9 @@ import {
 Vue.config.productionTip = false
 
 Vue.use(uiv)
-axios.get(TourConstants.tourManifestUrl)
+const project = window._rundeck.projectName
+const cfg = project ? {headers: {"X-Tour-Project": project}} : {}
+axios.get(TourConstants.tourManifestUrl, cfg)
   .then((response) => {
     if (response && response.data && response.data.length) {
       // There are tours mentioned in the tour manifest

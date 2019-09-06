@@ -9,15 +9,18 @@ class TourController {
     def index() { }
 
     def listAllTourManifests() {
-        render tourLoaderService.listAllTourManifests() as JSON
+        String project = request.getHeader("X-Tour-Project")
+        render tourLoaderService.listAllTourManifests(project) as JSON
     }
 
     def list() {
-        render tourLoaderService.listTours(params.loaderName) as JSON
+        String project = request.getHeader("X-Tour-Project")
+        render tourLoaderService.listTours(params.loaderName,project) as JSON
     }
 
     def getTour() {
-        render tourLoaderService.getTour(params.loaderName,params.tour) as JSON
+        String project = request.getHeader("X-Tour-Project")
+        render tourLoaderService.getTour(params.loaderName,params.tour,project) as JSON
     }
 
 

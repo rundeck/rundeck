@@ -39,6 +39,8 @@
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
 
+    <asset:javascript src="vue.min.js"/>
+
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
     <![endif]-->
