@@ -18,6 +18,7 @@ package org.rundeck.app.authorization
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
+import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
@@ -40,7 +41,7 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired DirectNodeExecutionService directNodeExecutionService
     ServicesProvider baseServices
     private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)
-            NodeExecutionService, (Class) ExecutionFileLoaderService]
+            NodeExecutionService, (Class) ExecutionFileLoaderService, (Class) AsyncExecutionFileLoaderService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
@@ -76,6 +77,9 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
                 return (T) directNodeExecutionService.nodeExecutionServiceWithAuth(authContext)
             }
             if (type == ExecutionFileLoaderService) {
+                return (T) authedLogFileLoaderService.serviceWithAuth(authContext)
+            }
+            if (type == AsyncExecutionFileLoaderService) {
                 return (T) authedLogFileLoaderService.serviceWithAuth(authContext)
             }
             throw new IllegalStateException("Required service " + type.getName() + " was not available");

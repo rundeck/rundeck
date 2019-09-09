@@ -21,7 +21,10 @@ import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
@@ -34,13 +37,16 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
+import com.google.common.util.concurrent.Futures
 import grails.events.EventPublisher
 import org.hibernate.sql.JoinType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
+import org.springframework.util.concurrent.ListenableFuture
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.events.ExecutionCompleteEvent
@@ -56,12 +62,17 @@ import rundeck.services.logging.MultiFileStorageRequestImpl
 
 import javax.validation.constraints.NotNull
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.function.Consumer
+import java.util.function.Supplier
 
 /**
  * Manage execution file storage retrieve and store requests.
@@ -74,15 +85,20 @@ import java.nio.file.StandardCopyOption
  * "retrievalRequests" blocking queue for retrieval requests
  */
 class LogFileStorageService
-        implements InitializingBean, ApplicationContextAware, EventPublisher, ExecutionFileLoaderService {
+        implements
+                InitializingBean,
+                ApplicationContextAware,
+                EventPublisher,
+                ExecutionFileLoaderService,
+                AsyncExecutionFileLoaderService {
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    AsyncTaskExecutor logFileTaskExecutor
-    AsyncTaskExecutor logFileStorageTaskExecutor
+    AsyncListenableTaskExecutor logFileTaskExecutor
+    AsyncListenableTaskExecutor logFileStorageTaskExecutor
     TaskScheduler logFileStorageTaskScheduler
     def executorService
     def grailsApplication
@@ -110,6 +126,11 @@ class LogFileStorageService
      * Queue of log retrieval requests, processed by {@link #runRetrievalRequest(java.util.Map)}
      */
     private BlockingQueue<Map> retrievalRequests = new LinkedBlockingQueue<Map>()
+    /**
+     * CompleteableFuture listeners (promises) for the retrieval results
+     */
+    protected ConcurrentHashMap<String, CompletableFuture<RetrieveFileResult>> logFileRetrievalListeners =
+            new ConcurrentHashMap<String, CompletableFuture<RetrieveFileResult>>()
     /**
      * Currently running requests
      */
@@ -150,15 +171,31 @@ class LogFileStorageService
                 }
             }
         }))
-        logFileTaskExecutor?.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
-            runRetrievalRequest(task)
-        }))
+        logFileTaskExecutor?.execute(new TaskRunner<Map>(retrievalRequests, this.&runRetrievalRequestTask))
         if (getConfiguredResumeStrategy() == 'periodic') {
             long delay = getConfiguredStorageRetryDelay() * 1000
             logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
         }
     }
 
+    /**
+     * Runs the task via the logfileTaskExecutor, uses the completeableFuture result to pass results back to the listener
+     * @param task
+     * @return
+     */
+    def runRetrievalRequestTask(Map task){
+        def listener = logFileRetrievalListeners.remove(task.ruuid)
+        def future = runRetrievalRequest(task)
+        future.handle(
+                { result, throwable ->
+                    if (result) {
+                        listener?.complete(result)
+                    } else if (throwable) {
+                        listener?.completeExceptionally(throwable)
+                    }
+                }
+        )
+    }
     private String getConfiguredResumeStrategy() {
         configurationService?.getString("logFileStorageService.resumeIncomplete.strategy", "periodic")?:'periodic'
     }
@@ -326,10 +363,12 @@ class LogFileStorageService
                         log.debug("Storage request [ID#${task.id}] cancelled.")
                     }
                 }
+                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling"])
                 failedRequests.add(requestId)
             }else{
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
 
+                failures.put(requestId, ["Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up"])
                 failedRequests.add(requestId)
             }
         } else {
@@ -371,11 +410,16 @@ class LogFileStorageService
      * Run retrieval request task with no retries, executes in the logFileTaskExecutor threadpool
      * @param task
      */
-    private void runRetrievalRequest(Map task) {
-
-        logFileTaskExecutor.execute{
+    private CompletableFuture<RetrieveFileResult> runRetrievalRequest(Map task) {
+        Supplier<RetrieveFileResult> supplier = { ->
             running << task
-            def result = retrieveLogFile(task.file, task.filetype, task.storage, task.id, task.partial ? true : false)
+            RetrieveFileResult result = retrieveLogFile(
+                    task.file,
+                    task.filetype,
+                    task.storage,
+                    task.id,
+                    task.partial ? true : false
+            )
             def success=result.success
             if (!success) {
                 log.error("LogFileStorage: failed retrieval request for ${task.id}")
@@ -394,7 +438,9 @@ class LogFileStorageService
             }
             logFileRetrievalRequests.remove(task.id)
             running.remove(task)
+            result
         }
+        CompletableFuture.<RetrieveFileResult> supplyAsync(supplier, logFileTaskExecutor)
     }
     /**
      * Return the configured retry count
@@ -1373,10 +1419,46 @@ class LogFileStorageService
         )
     }
 
-    def LogFileLoader requestFileLoad(ExecutionReference e, String filetype, boolean performLoad) {
-        requestLogFileLoad(Execution.get(e.id), filetype, performLoad)
+    def LogFileLoader requestFileLoad(ExecutionReference e, String filetype, boolean performLoad)
+            throws ExecutionNotFound {
+        requestLogFileLoad(getExecutionByReferenceOrFail(e), filetype, performLoad)
     }
+
+    public Execution getExecutionByReferenceOrFail(ExecutionReference e) throws ExecutionNotFound {
+        Execution execution1 = Execution.get(e.id)
+        if (!execution1) {
+            throw new ExecutionNotFound('Not Found', e.id, e.project)
+        }
+        execution1
+    }
+
     def LogFileLoader requestLogFileLoad(Execution e, String filetype, boolean performLoad) {
+        requestLogFileLoadAsync(e, filetype, performLoad, false).get()
+    }
+
+    CompletableFuture<ExecutionFileLoader> requestFileLoadAsync(
+            ExecutionReference e,
+            String filetype
+    ) throws ExecutionNotFound {
+        requestLogFileLoadAsync(getExecutionByReferenceOrFail(e), filetype, true, true)
+    }
+
+    /**
+     * Async result for log file load request, which will return either the
+     * current state of the loader (Future with result immediately available),
+     * or a Future which completes when the load completes (when async is true, and performLoad is true)
+     * @param e
+     * @param filetype
+     * @param performLoad if true, request a remote load, if false, only the local/remote state is returned
+     * @param async if true, and performLoad is true, the returned future will complete when the remote load completes
+     * @return future with completed loader, or if async and performLoad is used, a future that will will complete when requested load completes
+     */
+    def CompletableFuture<LogFileLoader> requestLogFileLoadAsync(
+            Execution e,
+            String filetype,
+            boolean performLoad,
+            boolean async
+    ) {
         //handle cases where execution is still running or just started
         //and the file may not be available yet
 
@@ -1391,11 +1473,11 @@ class LogFileStorageService
             if (isClusterExec && plugin) {
                 //execution on another rundeck server, we have to wait until it is complete
                 if (!partialRetrieveSupported) {
-                    return new LogFileLoader(state: ExecutionFileState.PENDING_REMOTE)
+                    return CompletableFuture.completedFuture(new LogFileLoader(state: ExecutionFileState.PENDING_REMOTE))
                 }
             } else if (!e.outputfilepath) {
                 //no filepath defined: execution started, hasn't created output file yet.
-                return new LogFileLoader(state: ExecutionFileState.WAITING)
+                return CompletableFuture.completedFuture(new LogFileLoader(state: ExecutionFileState.WAITING))
             }
         }
 
@@ -1421,7 +1503,24 @@ class LogFileStorageService
                 break
             case ExecutionFileState.AVAILABLE_REMOTE:
                 if (performLoad) {
-                    state = requestLogFileRetrieval(e, filetype, plugin)
+                    if (async) {
+                        CompletableFuture<RetrieveFileResult> promise = new CompletableFuture<RetrieveFileResult>()
+                        CompletableFuture<LogFileLoader> resultFuture = promise.thenApply(
+                                { RetrieveFileResult res ->
+                                    new LogFileLoader(
+                                            state: res.success ? ExecutionFileState.AVAILABLE :
+                                                   res.error ? ExecutionFileState.ERROR : ExecutionFileState.NOT_FOUND,
+                                            file: res.file,
+                                            errorCode: res.error ? 'execution.log.storage.retrieval.ERROR' : null,
+                                            errorData: res.error ? ['', res.error] : null
+                                    )
+                                }
+                        )
+                        state = requestLogFileRetrieval(e, filetype, plugin, promise)
+                        return resultFuture
+                    } else {
+                        state = requestLogFileRetrieval(e, filetype, plugin)
+                    }
                 }
                 break
             case ExecutionFileState.AVAILABLE_REMOTE_PARTIAL:
@@ -1436,12 +1535,14 @@ class LogFileStorageService
         }
         log.debug("requestLogFileLoad(${e.id},${filetype},${performLoad}): result ${state}")
 
-        return new LogFileLoader(
+        return CompletableFuture.completedFuture(
+                new LogFileLoader(
                 state: state,
                 file: file,
                 errorCode: result.errorCode,
                 errorData: result.errorData,
                 retryBackoff: retryBackoff
+                )
         )
     }
 
@@ -1485,11 +1586,19 @@ class LogFileStorageService
     private ExecutionFileState requestLogFileRetrieval(
             Execution execution, String filetype, ExecutionFileStorage
                     plugin
+    ) {
+        requestLogFileRetrieval(execution, filetype, plugin, null)
+    }
+
+    private ExecutionFileState requestLogFileRetrieval(
+            Execution execution, String filetype, ExecutionFileStorage plugin,
+            CompletableFuture<RetrieveFileResult> listener
     )
     {
         def key=logFileRetrievalKey(execution,filetype)
         def file = getFileForExecutionFiletype(execution, filetype, false, false)
         Map newstate = [state  : ExecutionFileState.PENDING_LOCAL, file: file, filetype: filetype,
+                        ruuid  : UUID.randomUUID().toString(),
                         storage: plugin, id: key, name: getConfiguredPluginName(), count: 0]
         def previous = logFileRetrievalResults.get(key)
         if(previous!=null){
@@ -1504,6 +1613,9 @@ class LogFileStorageService
         //remove previous result
         logFileRetrievalResults.remove(key)
         log.debug("requestLogFileRetrieval, queueing a new request (attempt ${newstate.count+1}) for ${key}...")
+        if (null != listener) {
+            logFileRetrievalListeners.put(newstate.ruuid, listener)
+        }
         retrievalRequests<<newstate
         return ExecutionFileState.PENDING_LOCAL
     }
@@ -1849,7 +1961,7 @@ class LogFileStorageService
      * @param storage plugin that is already initialized
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-    private Map retrieveLogFile(
+    private RetrieveFileResult retrieveLogFile(
             File file,
             String filetype,
             ExecutionFileStorage storage,
@@ -1893,6 +2005,13 @@ class LogFileStorageService
             log.error("Retrieval request [ID#${ident}] error: ${errorMessage}")
             tempfile.delete()
         }
-        return [success: success, error: errorMessage]
+        return new RetrieveFileResult(success: success, error: errorMessage, file: file, partial: partial)
     }
+}
+
+class RetrieveFileResult {
+    boolean success
+    File file
+    String error
+    boolean partial
 }
