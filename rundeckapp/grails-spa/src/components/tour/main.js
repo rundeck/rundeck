@@ -1,6 +1,8 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue'
+import VueI18n from 'vue-i18n'
+import uivLang from '../../utilities/uivi18n'
 import * as uiv from 'uiv'
 import axios from 'axios'
 import TourConstants from '@/components/tour/constants'
@@ -11,6 +13,21 @@ import {
 } from '../../utilities/vueEventBus.js'
 
 Vue.config.productionTip = false
+
+let messages =
+{
+  en_US: Object.assign(
+    {},
+    uivLang['en_US'] || uivLang['en'] || {},
+    window.Messages
+  )
+}
+
+const i18n = new VueI18n({
+  silentTranslationWarn: true,
+  locale: 'en', // set locale
+  messages // set locale messages,
+})
 
 Vue.use(uiv)
 const project = window._rundeck.projectName
@@ -42,7 +59,8 @@ axios.get(TourConstants.tourManifestUrl, cfg)
         components: {
           TourPicker
         },
-        template: '<tour-picker :event-bus="EventBus"/>'
+        template: '<tour-picker :event-bus="EventBus"/>',
+        i18n
       })
 
       // creating the dom element that will contain the tour application
@@ -66,7 +84,8 @@ axios.get(TourConstants.tourManifestUrl, cfg)
         components: {
           TourDisplay
         },
-        template: '<tour-display :event-bus="EventBus"/>'
+        template: '<tour-display :event-bus="EventBus"/>',
+        i18n
       })
     }
   })

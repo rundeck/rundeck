@@ -9,7 +9,6 @@ import * as uiv from 'uiv'
 import international from './i18n'
 import VueI18n from 'vue-i18n'
 import moment from 'moment'
-import VueMoment from 'vue-moment'
 import {
   EventBus
 } from '../../utilities/vueEventBus.js'
@@ -28,7 +27,6 @@ let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'
 let lang = window._rundeck.language || 'en'
 moment.locale(locale)
-Vue.use(VueMoment,{moment})
 
 // include any i18n injected in the page by the app
 messages =
