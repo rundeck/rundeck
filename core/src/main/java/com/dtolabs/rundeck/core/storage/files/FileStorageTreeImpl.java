@@ -9,8 +9,6 @@ import org.rundeck.storage.api.Tree;
 
 import java.io.IOException;
 
-import static com.dtolabs.rundeck.core.storage.FileStorageLayer.FILE_MIME_TYPE;
-
 public class FileStorageTreeImpl extends TypedStorageTreeImpl
         implements FileStorageTree {
     public static final String FILE_PATH_DEFAULT = "/files/";
@@ -103,13 +101,22 @@ public class FileStorageTreeImpl extends TypedStorageTreeImpl
         return resource.getContents().getContentType();
     }
 
+    @Override
+    public Path getJobFilesPath(String project, String jobName){
+        return pathWithDefaultRoot(PathUtil.asPath(getFileWorkspacePath(project, jobName, null)));
+    }
+
     private Path pathWithDefaultRoot(Path path){
         String fullPath = FILE_PATH_DEFAULT + path.getPath();
         return PathUtil.asPath(fullPath);
     }
 
     private Path pathWithJobWorkspaceRoot(Path path, String project, String jobName, String execId){
-        String p = "/" + project + "/" + jobName + "/" + execId + "/" + path.getPath();
+        String p = getFileWorkspacePath(project, jobName, execId)  + path.getPath();
         return pathWithDefaultRoot(PathUtil.asPath(p));
+    }
+
+    private String getFileWorkspacePath(String project, String jobName, String execId){
+        return "/" + project + "/" + (null != jobName ? jobName + "/" : "") + (null != execId ? execId + "/" : "");
     }
 }

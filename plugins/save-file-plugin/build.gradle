@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ext.pluginClassNames =  'com.dtolabs.rundeck.plugin.SaveFilePlugin'
+ext.pluginClassNames =  'com.dtolabs.rundeck.plugin.SaveFilePlugin,com.dtolabs.rundeck.plugin.DeleteFilePlugin'
 ext.pluginName = 'Save File Plugin'
 ext.pluginDescription = 'Save file on storage'
 

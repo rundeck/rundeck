@@ -52,7 +52,8 @@ class SaveFileFilterPlugin implements LogFilterPlugin {
 
     @PluginProperty(
             title = "Pattern",
-            description = '''Regular Expression for matching a writting operation.''',
+            description = '''Regular Expression for matching any operation that writes to a file 
+and then save this file on rundeck file storage''',
             defaultValue = SaveFileFilterPlugin.PATTERN,
             required = true
     )

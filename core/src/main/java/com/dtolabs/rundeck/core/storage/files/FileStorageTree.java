@@ -87,6 +87,13 @@ public interface FileStorageTree extends StorageTree, AppService {
 
 
     /**
+     * @param project
+     * @return The root path for files created on a job
+     */
+    public Path getJobFilesPath(String project, String jobName);
+
+
+    /**
      * @param path path
      * @param project project name
      * @param jobName job name
