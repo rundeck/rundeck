@@ -17,6 +17,7 @@
 package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -25,6 +26,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
@@ -38,6 +40,7 @@ import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.A
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_PARTIAL
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.AVAILABLE_REMOTE_PARTIAL
+import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.ERROR
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.NOT_FOUND
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.PENDING_REMOTE
 import static com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState.WAITING
@@ -722,26 +725,30 @@ class LogFileStorageServiceSpec extends Specification {
 
     def "requestLogFileLoad before output set"() {
         given:
-        def exec = new Execution(
-            dateStarted: new Date(),
-            dateCompleted: null,
-            user: 'user2',
-            project: 'test',
-            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
-        ).save()
-        def filetype = 'rdlog'
-        def performLoad = true
+            def exec = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user2',
+                    project: 'test',
+                    serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+            ).save()
+            def filetype = 'rdlog'
+            def performLoad = true
 
-        service.frameworkService = Mock(FrameworkService)
-        service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+            service.frameworkService = Mock(FrameworkService)
+            service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
-
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
         then:
-        result != null
-        result.state == WAITING
+            result != null
+            result.get().state == WAITING
+
+        where:
+            async | _
+            true  | _
+            false | _
     }
 
     def "requestLogFileLoad with missing file"() {
@@ -770,12 +777,16 @@ class LogFileStorageServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService)
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
 
         then:
         result != null
-        result.state == NOT_FOUND
+            result.get().state == NOT_FOUND
+        where:
+            async | _
+            true  | _
+            false | _
     }
 
     def "requestLogFileLoad with existing file"() {
@@ -809,12 +820,16 @@ class LogFileStorageServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService)
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
 
         then:
         result != null
-        result.state == AVAILABLE
+            result.get().state == AVAILABLE
+        where:
+            async | _
+            true  | _
+            false | _
     }
 
     public void createLogFile(Path logsDir, Execution exec, filetype) {
@@ -828,6 +843,8 @@ class LogFileStorageServiceSpec extends Specification {
         boolean partialRetrieveSupported
         boolean retrieveSupported = true
         boolean storeSupported = false
+        Closure<Boolean> retrieve
+        boolean available
 
         @Override
         void initialize(final Map<String, ?> context) {
@@ -836,7 +853,7 @@ class LogFileStorageServiceSpec extends Specification {
 
         @Override
         boolean isAvailable(final String filetype) throws ExecutionFileStorageException {
-            return false
+            return available
         }
 
         @Override
@@ -848,6 +865,9 @@ class LogFileStorageServiceSpec extends Specification {
         @Override
         boolean retrieve(final String filetype, final OutputStream stream)
             throws IOException, ExecutionFileStorageException {
+            if (retrieve) {
+                return retrieve.call(filetype, stream)
+            }
             return false
         }
     }
@@ -879,12 +899,17 @@ class LogFileStorageServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService)
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
 
         then:
         result != null
-        result.state == NOT_FOUND
+            result.get().state == NOT_FOUND
+
+        where:
+            async | _
+            true  | _
+            false | _
     }
 
     def "requestLogFileLoad running, cluster mode, with plugin, no partial"() {
@@ -919,12 +944,16 @@ class LogFileStorageServiceSpec extends Specification {
         }
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
 
         then:
         result != null
-        result.state == PENDING_REMOTE
+            result.get().state == PENDING_REMOTE
+        where:
+            async | _
+            true  | _
+            false | _
     }
 
     def "requestLogFileLoad cluster mode with local file no plugin"() {
@@ -958,11 +987,147 @@ class LogFileStorageServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService)
         when:
 
-        def result = service.requestLogFileLoad(exec, filetype, performLoad)
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
 
 
         then:
         result != null
-        result.state == AVAILABLE
+            result.get().state == AVAILABLE
+        where:
+            async | _
+            true  | _
+            false | _
+    }
+
+    def "requestLogFileLoad cluster mode with plugin async"() {
+        given:
+            def tempDir = Files.createTempDirectory('test_logs')
+            def logsDir = tempDir.resolve('rundeck')
+
+            def exec = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user2',
+                    project: 'test',
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+                    outputfilepath: '/tmp/file'
+            ).save()
+            def filetype = 'rdlog'
+            def performLoad = true
+
+//            createLogFile(logsDir, exec, filetype)
+
+            service.frameworkService = Mock(FrameworkService) {
+                isClusterModeEnabled() >> true
+                getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+                getFrameworkProperties() >> (
+                        [
+                                'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                        ] as Properties
+                )
+            }
+            boolean retrieved = false
+            def plugin = new TestEFSPlugin(
+                    partialRetrieveSupported: false, available: true, retrieve: { type, stream ->
+                stream.write('data'.bytes)
+                retrieved = true
+                true
+            }
+            )
+            service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+            service.configurationService = Mock(ConfigurationService) {
+                getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
+            }
+            service.pluginService = Mock(PluginService) {
+                configurePlugin(
+                        'testplugin',
+                        _,
+                        _,
+                        PropertyScope.Instance
+                ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
+            }
+            service.logFileTaskExecutor = new SimpleAsyncTaskExecutor()
+        when:
+
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, async)
+            service.runRetrievalRequestTask(service.retrievalRequests.take())
+
+
+        then:
+            result != null
+//            service.retrievalRequests.size() == 1
+            result.get().state == AVAILABLE
+            retrieved == async
+        where:
+            async | _
+            true  | _
+    }
+
+    def "requestLogFileLoad cluster mode with plugin async with error"() {
+        given:
+            def tempDir = Files.createTempDirectory('test_logs')
+            def logsDir = tempDir.resolve('rundeck')
+
+            def exec = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user2',
+                    project: 'test',
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+                    outputfilepath: '/tmp/file'
+            ).save()
+            def filetype = 'rdlog'
+            def performLoad = true
+
+//            createLogFile(logsDir, exec, filetype)
+
+            service.frameworkService = Mock(FrameworkService) {
+                isClusterModeEnabled() >> true
+                getServerUUID() >> 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+                getFrameworkProperties() >> (
+                        [
+                                'framework.logs.dir': tempDir.toAbsolutePath().toString()
+                        ] as Properties
+                )
+            }
+            boolean retrieved = false
+            def plugin = new TestEFSPlugin(
+                    partialRetrieveSupported: false, available: true, retrieve: { type, stream ->
+//                stream.write('data'.bytes)
+                retrieved = true
+                if(err){
+                    throw new ExecutionFileStorageException(err)
+                }
+                false
+            }
+            )
+            service.grailsLinkGenerator = Mock(grails.web.mapping.LinkGenerator)
+            service.configurationService = Mock(ConfigurationService) {
+                getString('execution.logs.fileStoragePlugin', null) >> 'testplugin'
+            }
+            service.pluginService = Mock(PluginService) {
+                configurePlugin(
+                        'testplugin',
+                        _,
+                        _,
+                        PropertyScope.Instance
+                ) >> new ConfiguredPlugin<ExecutionFileStoragePlugin>(plugin, [:])
+            }
+            service.logFileTaskExecutor = new SimpleAsyncTaskExecutor()
+        when:
+
+            def result = service.requestLogFileLoadAsync(exec, filetype, performLoad, true)
+            service.runRetrievalRequestTask(service.retrievalRequests.take())
+
+
+        then:
+            result != null
+//            service.retrievalRequests.size() == 1
+            result.get().state == status
+            retrieved
+        where:
+            err             | status
+            null            | ExecutionFileState.NOT_FOUND
+            'error message' | ExecutionFileState.ERROR
     }
 }

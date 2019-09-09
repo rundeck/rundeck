@@ -19,14 +19,17 @@ package rundeck.services.execution.logstorage
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import groovy.transform.CompileStatic
 
+import java.util.concurrent.CompletableFuture
+
 @CompileStatic
 class ResolvedExecutionFileLoaderService
-        implements ExecutionFileLoaderService {
+        implements ExecutionFileLoaderService, AsyncExecutionFileLoaderService {
     UserAndRolesAuthContext authContext
     AuthorizingExecutionFileLoaderService authorizingExecutionFileLoaderService
     @Delegate ExecutionFileManagerService delegate
@@ -36,5 +39,11 @@ class ResolvedExecutionFileLoaderService
     ExecutionFileLoader requestFileLoad(final ExecutionReference e, final String filetype, final boolean performLoad)
             throws ExecutionNotFound {
         return authorizingExecutionFileLoaderService.requestFileLoad(authContext, e, filetype, performLoad)
+    }
+
+    @Override
+    CompletableFuture<ExecutionFileLoader> requestFileLoadAsync(final ExecutionReference e, final String filetype)
+            throws ExecutionNotFound {
+        return authorizingExecutionFileLoaderService.requestFileLoadAsync(authContext, e, filetype)
     }
 }

@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoader
 
+import java.util.concurrent.CompletableFuture
+
 interface AuthorizingExecutionFileLoaderService {
 
     ExecutionFileLoader requestFileLoad(
@@ -28,5 +30,11 @@ interface AuthorizingExecutionFileLoaderService {
             ExecutionReference e,
             String filetype,
             boolean performLoad
+    ) throws  ExecutionNotFound
+
+    CompletableFuture<ExecutionFileLoader> requestFileLoadAsync(
+            AuthContext auth,
+            ExecutionReference e,
+            String filetype
     ) throws  ExecutionNotFound
 }
