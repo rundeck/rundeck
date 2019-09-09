@@ -135,6 +135,10 @@ module.exports = {
     child_process: 'empty'
   },
 
+  externals: {
+    "vue": "Vue"
+  },
+
   plugins: [
     new VueLoaderPlugin(),
     new MiniCssExtractPlugin({
