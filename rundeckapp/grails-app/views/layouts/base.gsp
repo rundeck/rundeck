@@ -1,3 +1,4 @@
+<%@ page import="grails.util.Environment" %>
 %{--
 - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
 -
@@ -20,6 +21,12 @@
 <!--[if IE 9 ]>    <html class="ie9"> <![endif]-->
 <!--[if (gt IE 9)|!(IE)]><!--> <html lang="${response.locale.language}"><!--<![endif]-->
 <head>
+    <g:if test="${Environment.isDevelopmentEnvironmentAvailable()}">
+        <asset:javascript src="vue.js"/>
+    </g:if>
+    <g:else>
+        <asset:javascript src="vue.min.js"/>
+    </g:else>
     <title>
       <g:layoutTitle default="${g.appTitle()}"/>
     </title>
@@ -38,8 +45,6 @@
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
-
-    <asset:javascript src="vue.min.js"/>
 
     <!--[if lt IE 9]>
     <asset:javascript src="respond.min.js"/>
@@ -156,7 +161,6 @@
     </g:if>
 
     <g:jsonToken id="ui_token" url="${request.forwardURI}"/>
-    <g:layoutHead/>
     <script type=text/javascript>
         window._rundeck = Object.assign(window._rundeck || {}, {
         rdBase: '${g.createLink(uri:"/",absolute:true)}',
@@ -171,6 +175,7 @@
         })
     </script>
     <asset:javascript src="static/components/central.js"/>
+    <g:layoutHead/>
 </head>
 <body class="${_sidebarClass}">
   <div class="wrapper">
