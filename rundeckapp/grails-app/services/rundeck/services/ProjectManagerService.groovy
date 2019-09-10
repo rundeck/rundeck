@@ -514,7 +514,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def rdprojectconfig = new RundeckProjectConfig(projectName,
                                                        createProjectPropertyLookup(projectName, res.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(projectName, res.config ?: new Properties()),
-                                                       res.lastModified
+                                                       res.lastModified, res.creationTime
         )
 
         def newproj= new RundeckProject(rdprojectconfig, this)
@@ -566,7 +566,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def rdprojectconfig = new RundeckProjectConfig(project.name,
                                                        createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
-                                                       resource.lastModified
+                                                       resource.lastModified,
+                                                        resource.creationTime
         )
         project.projectConfig=rdprojectconfig
         project.nodesFactory = rundeckNodeService
@@ -616,7 +617,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def rdprojectconfig = new RundeckProjectConfig(project.name,
                                                        createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
                                                        createDirectProjectPropertyLookup(project.name, resource.config ?: new Properties()),
-                                                       resource.lastModified
+                                                       resource.lastModified,
+                resource.creationTime
         )
         project.projectConfig=rdprojectconfig
         project.nodesFactory = rundeckNodeService
@@ -703,7 +705,8 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                          project,
                                                          resource.config ?: new Properties()
                                                  ),
-                                                 resource.lastModified
+                                                 resource.lastModified,
+                resource.creationTime
         )
         return rdprojectconfig
     }

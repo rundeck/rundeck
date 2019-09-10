@@ -124,6 +124,10 @@ public class RundeckProject implements IRundeckProject{
         return projectConfig.getConfigLastModifiedTime();
     }
 
+    public Date getConfigCreatedTime(){
+        return projectConfig.getConfigCreatedTime();
+    }
+
 
     public IProjectNodes getProjectNodes() {
         return getNodesFactory().getNodes(getName());
