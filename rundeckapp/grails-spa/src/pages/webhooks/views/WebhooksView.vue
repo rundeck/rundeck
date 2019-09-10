@@ -171,6 +171,7 @@ export default {
         this.webhooks = response.data.hooks
         if (this.curHook) {
           this.curHook = this.webhooks.find(hk => hk.id === this.curHook.id)
+          this.setSelectedPlugin()
         }
       })
     },
