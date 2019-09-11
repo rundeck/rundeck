@@ -761,7 +761,9 @@
             <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="border: 1px solid #EEEEEE;">
               <tr>
                 <td style="padding: 20px;">
-                  ${enc(sanitize:logOutput)}
+                  <pre>
+                    ${enc(sanitize:logOutput)}
+                  </pre>
                 </td>
               </tr>
             </table>
