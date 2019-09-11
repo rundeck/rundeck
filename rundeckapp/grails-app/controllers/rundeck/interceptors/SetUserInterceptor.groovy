@@ -2,6 +2,7 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import grails.plugin.springsecurity.SpringSecurityUtils
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
@@ -61,7 +62,8 @@ class SetUserInterceptor {
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
             def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
-            String user = lookupToken(authtoken, servletContext)
+            AuthTokenType tokenType = controllerName == "webhook" && actionName == "post" ? AuthTokenType.WEBHOOK : AuthTokenType.USER
+            String user = lookupToken(authtoken, servletContext, tokenType)
             List<String> roles = lookupTokenRoles(authtoken, servletContext)
 
             if (user){
@@ -155,7 +157,7 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
-    private String lookupToken(String authtoken, ServletContext context) {
+    private String lookupToken(String authtoken, ServletContext context, AuthTokenType tokenType) {
         if(!authtoken){
             return null
         }
@@ -169,7 +171,7 @@ class SetUserInterceptor {
                 return user
             }
         }
-        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        def tokenobj = authtoken ? AuthToken.findByTokenAndType(authtoken, tokenType) : null
         if (tokenobj) {
             if (tokenobj.tokenIsExpired()) {
                 log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");

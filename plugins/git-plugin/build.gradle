@@ -46,7 +46,7 @@ dependencies {
     compile 'log4j:log4j:1.2.17'
 
     testCompile 'junit:junit:4.8.1',
-                'org.mockito:mockito-all:1.8.5'
+                'org.mockito:mockito-all:1.10.19'
 
     testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testCompile "cglib:cglib-nodep:2.2.2"

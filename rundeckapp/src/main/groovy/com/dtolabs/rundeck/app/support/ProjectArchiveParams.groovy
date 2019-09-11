@@ -34,6 +34,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean importConfig=false
     Boolean importACL=false
     Boolean importScm=false
+    Boolean importWebhooks=false
     Boolean validateJobref=false
     Boolean exportAll
     Boolean exportJobs
@@ -42,6 +43,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     Boolean exportReadmes
     Boolean exportAcls
     Boolean exportScm
+    Boolean exportWebhooks
     String stripJobRef
 
     static constraints={
@@ -51,6 +53,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         importConfig(nullable: true)
         importACL(nullable: true)
         importScm(nullable: true)
+        importWebhooks(nullable: true)
         exportAll(nullable: true)
         exportJobs(nullable: true)
         exportExecutions(nullable: true)
@@ -58,6 +61,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
         exportReadmes(nullable: true)
         exportAcls(nullable: true)
         exportScm(nullable: true)
+        exportWebhooks(nullable: true)
         stripJobRef(nullable: true)
     }
 
@@ -70,6 +74,7 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
                 readmes: exportReadmes ?: false,
                 acls: exportAcls ?: false,
                 scm: exportScm ?: false,
+                webhooks: exportWebhooks ?: false,
                 stripJobRef: stripJobRef
         )
     }

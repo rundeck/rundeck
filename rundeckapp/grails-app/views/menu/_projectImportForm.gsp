@@ -161,8 +161,30 @@
                     <g:message code="archive.import.importJobRef.true.help"/>
                 </span>
               </div>
-
           </div>
+          <feature:enabled name="webhooks">
+          <div class="list-group-item">
+            <h4 class="list-group-item-heading">Webhooks</h4>
+            <div class="radio">
+              <input type="radio" name="importWebhooks" id="webhookstrue" value="true" checked/>
+              <label title="" for="webhookstrue">
+                <g:message code="archive.import.importWebhooks.true.title"/>
+              </label>
+              <span class="help-block">
+                <g:message code="archive.import.importWebhooks.true.help"/>
+              </span>
+            </div>
+            <div class="radio">
+              <input type="radio" name="importWebhooks" id="webhooksfalse" value="false"/>
+              <label title="" for="webhooksfalse">
+                <g:message code="archive.import.importWebhooks.false.title"/>
+              </label>
+              <span class="help-block">
+                <g:message code="archive.import.importWebhooks.false.help"/>
+              </span>
+            </div>
+          </div>
+          </feature:enabled>
         </div>
       </div>
       <div class="card-footer">

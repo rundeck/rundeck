@@ -25,7 +25,7 @@ apply plugin: 'groovy'
 dependencies{
 
     testCompile 'junit:junit:4.8.1',
-                'org.mockito:mockito-all:1.8.5'
+                'org.mockito:mockito-all:1.10.19'
 
     testCompile "org.codehaus.groovy:groovy-all:${groovyVersion}"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"

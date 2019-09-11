@@ -21,7 +21,7 @@
     "vue": "2.5.17",
     "vue-cookies": "^1.5.6",
     "vue-fuse": "^2.0.2",
-    "vue-i18n": "^8.8.0",
+    "vue-i18n": "^8.14.0",
     "vue-moment": "^4.0.0",
     "vue-property-decorator": "^7.3.0",
     "vue-router": "^3.0.6",
@@ -32,7 +32,7 @@
     "snyk": "^1.165.2"
   },
   "devDependencies": {
-    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#69f412b59541e0bb27e60cde3a96cfa1354c0fe4",
+    "@rundeck/ui-trellis": "git+https://github.com/rundeck/ui-trellis.git#fd12bd83de08538d664e301610e2883a69446f91",
     "@types/lodash": "^4.14.117",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",

@@ -26,6 +26,7 @@ import spock.lang.Specification
 class ApplicationTest extends Specification {
 
     def "setEnvironment with both property file and groovy"() {
+
         when:
         File tmpCfgDir = File.createTempDir()
         File tmpGroovy = new File(tmpCfgDir, "rundeck-config.groovy")
@@ -52,6 +53,7 @@ class ApplicationTest extends Specification {
         propertiesLoaded.size() == 2
         propertiesLoaded.contains("rundeck.config.location")
         propertiesLoaded.contains("rundeck-config-groovy")
+
     }
 
     def "load rundeck-config.properties if set in system property RDECK_CONFIG_LOCATION"() {
@@ -65,6 +67,61 @@ class ApplicationTest extends Specification {
 
         then:
         props.get("myprop") == "avalue"
+
+    }
+
+    def "load default rundeck-config.groovy if file exist and RDECK_CONFIG_LOCATION not set"() {
+
+        when:
+        File defaultGroovy = File.createTempFile("rundeck-config",".groovy")
+        defaultGroovy << "grails { mail {} } "
+        Application app = new Application()
+        TestEnvironment env = new TestEnvironment()
+        app.loadGroovyRundeckConfigIfExists(env)
+
+        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.name }
+
+        then:
+        propertiesLoaded.size() == 1
+        propertiesLoaded.contains("rundeck-config-groovy")
+
+    }
+
+    def "load my-custom-file.groovy as rundeck-config-groovy if set in system property RDECK_CONFIG_LOCATION"() {
+
+        when:
+        File customGroovy = File.createTempFile("my-custom-file",".groovy")
+        customGroovy << "grails { customvalue {} } "
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,customGroovy.absolutePath)
+
+        Application app = new Application()
+        TestEnvironment env = new TestEnvironment()
+        app.loadGroovyRundeckConfigIfExists(env)
+
+        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.source }
+
+        then:
+        propertiesLoaded['grails'][0].toString().compareToIgnoreCase("customvalue")
+
+    }
+
+    def "load my-custom-file.groovy over default rundeck-config.groovy if both exist and RDECK_CONFIG_LOCATION is set"() {
+
+        when:
+        File defaultGroovy = File.createTempFile("rundeck-config",".groovy")
+        File customGroovy = File.createTempFile("my-custom-file",".groovy")
+        defaultGroovy << "grails { mail {} } "
+        customGroovy << "grails { customvalue {} } "
+
+        System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION,customGroovy.absolutePath)
+        Application app = new Application()
+        TestEnvironment env = new TestEnvironment()
+        app.loadGroovyRundeckConfigIfExists(env)
+
+        List<String> propertiesLoaded = env.propertySources.iterator().collect { it.source }
+
+        then:
+        propertiesLoaded['grails'][0].toString().compareToIgnoreCase("customvalue")
 
     }
 

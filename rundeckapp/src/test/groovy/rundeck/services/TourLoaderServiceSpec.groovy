@@ -14,12 +14,6 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def setup() {
         service.rundeckPluginRegistry = Stub(RundeckPluginRegistry)
         service.frameworkService = Mock(FrameworkService)
-        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
-            @Override
-            Object resolvePropertyValue(final String name, final PropertyScope scope) {
-                return null
-            }
-        }
     }
 
     def cleanup() {
@@ -28,7 +22,12 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "list all tour manifests"() {
         setup:
         service.pluginService = Mock(PluginService)
-
+        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
 
         when:
         TestTourLoader tourLoader = new TestTourLoader()
@@ -44,9 +43,39 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
 
     }
 
+    def "list all tour manifests - project specific"() {
+        setup:
+        service.pluginService = Mock(PluginService)
+
+        when:
+        TestTourLoader tourLoader = new TestTourLoader()
+        TestTourLoader tourLoader2 = new TestTourLoader()
+        1 * service.pluginService.listPlugins(_) >> ["tourloader":tourLoader,"tourloader2":tourLoader2]
+        2 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestTourLoader>(tourLoader,null)
+        def allManifests = service.listAllTourManifests("proj1")
+
+        then:
+        allManifests.size() == 2
+        allManifests.find { it.provider == "tourloader"}
+        allManifests.find { it.provider == "tourloader2"}
+        service.frameworkService.getFrameworkPropertyResolver({it == "proj1"},_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
+
+    }
+
     def "list tours"() {
         setup:
         service.pluginService = Mock(PluginService)
+        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
 
         when:
         1 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestTourLoader>(new TestTourLoader(),null)
@@ -60,6 +89,12 @@ class TourLoaderServiceSpec extends Specification implements ServiceUnitTest<Tou
     def "get tours"() {
         setup:
         service.pluginService = Mock(PluginService)
+        service.frameworkService.getFrameworkPropertyResolver(_,_) >> new PropertyResolver() {
+            @Override
+            Object resolvePropertyValue(final String name, final PropertyScope scope) {
+                return null
+            }
+        }
 
         when:
         1 * service.pluginService.configurePlugin(_,_,_,_) >> new ConfiguredPlugin<TestTourLoader>(new TestTourLoader(),null)

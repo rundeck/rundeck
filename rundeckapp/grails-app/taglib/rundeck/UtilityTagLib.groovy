@@ -16,6 +16,7 @@
 
 package rundeck
 
+import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -62,6 +63,7 @@ class UtilityTagLib{
     def configurationService
     def scheduledExecutionService
     FrameworkService frameworkService
+    GrailsConventionGroovyPageLocator groovyPageLocator
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -1879,6 +1881,14 @@ ansi-bg-default'''))
             shouldShowLocalLogin = frameworkService.getFirstLoginFile().exists()
         }
         if(shouldShowLocalLogin) {
+            out << body()
+        }
+    }
+
+    def templateExists = { attrs, body ->
+        if(!attrs.name) throw new IllegalArgumentException("name attr is required for templateExists tag")
+        boolean exists = groovyPageLocator.findTemplate(attrs.name) != null
+        if(exists) {
             out << body()
         }
     }

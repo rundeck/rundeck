@@ -16,9 +16,13 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
+import com.dtolabs.rundeck.core.authentication.tokens.AuthenticationToken
+
 import java.time.Clock
 
-class AuthToken {
+class AuthToken implements AuthenticationToken {
     String token
     String authRoles
     String uuid
@@ -26,8 +30,9 @@ class AuthToken {
     Date expiration
     Date dateCreated
     Date lastUpdated
+    AuthTokenType type
     static belongsTo = [user:User]
-    static transients = ['printableToken']
+    static transients = ['printableToken','ownerName']
     static constraints = {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
@@ -40,6 +45,12 @@ class AuthToken {
     }
     static mapping = {
         authRoles type: 'text'
+        'type' defaultValue: "'USER'"
+
+        DomainIndexHelper.generate(delegate) {
+            index 'IDX_TOKEN', ['token']
+            index 'IDX_TYPE', ['type']
+        }
     }
 
     Set<String> authRolesSet() {
@@ -76,5 +87,9 @@ class AuthToken {
     @Override
     String toString() {
         "Auth Token: ${printableToken}"
+    }
+
+    String getOwnerName() {
+        return user.login
     }
 }
