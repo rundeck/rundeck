@@ -145,5 +145,5 @@
 // eventargs is typically a table > td
 // found here: /rundeckapp/grails-app/assets/scss/custom/table-events.scss
 .eventargs .argstring-scrollable {
-  display: none;
+  overflow-x: hidden;
 }
