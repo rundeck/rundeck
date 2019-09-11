@@ -3516,6 +3516,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def WorkflowExecutionItem newExecItem
         def ScheduledExecution se
         def Execution exec
+        def executionReference
 
         def props = frameworkService.getFrameworkProperties()
         def disableRefStats = (props?.getProperty('rundeck.disable.ref.stats') == 'true')
@@ -3635,6 +3636,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
+            executionReference = exec.asReference()
             refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
@@ -3656,7 +3658,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def executionLifecyclePluginConfigs = se ?
                                    executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) :
                                    null
-            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, exec.asReference())
+            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
