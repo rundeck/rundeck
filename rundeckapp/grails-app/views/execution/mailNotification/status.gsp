@@ -20,8 +20,8 @@
    Created: August 26th, 2019
    $Id$
 --%>
+<%@ page contentType="text/html" %>
 <g:set var="emailCSSFrameworkEnabled" value="${grailsApplication.config.rundeck?.feature?.emailCSSFramework?.enabled}"/>
-
 
 <g:if test="${emailCSSFrameworkEnabled == 'true'}">
   <g:render template="/execution/mailNotification/newStatus"/>
