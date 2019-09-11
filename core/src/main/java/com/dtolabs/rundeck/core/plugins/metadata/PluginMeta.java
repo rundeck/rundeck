@@ -52,6 +52,7 @@ public class PluginMeta {
     private String sourceLink;
     private String docsLink;
     private String targetHostCompatibility;
+    private String display;
 
     public List<ProviderDef> getPluginDefs() {
         if (null == pluginDefs && null!=providers) {
@@ -213,5 +214,13 @@ public class PluginMeta {
 
     public void setTargetHostCompatibility(final String targetHostCompatibility) {
         this.targetHostCompatibility = targetHostCompatibility;
+    }
+
+    public String getDisplay() {
+        return display;
+    }
+
+    public void setDisplay(final String display) {
+        this.display = display;
     }
 }
