@@ -131,6 +131,7 @@ class UserController extends ControllerBase{
             if (!tokenAdmin) {
                 eq("creator", u.login)
             }
+            eq("type", AuthTokenType.USER)
         }
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
