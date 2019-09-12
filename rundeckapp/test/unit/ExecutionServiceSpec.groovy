@@ -3453,4 +3453,71 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.dataContext['option'] == ['test1.delimiter':',', 'test1':'A,B']
 
     }
+
+
+
+    def "createJobReferenceContext default values secure option"() {
+        given:
+        def context = ExecutionContextImpl.builder()
+                .threadCount(1)
+                .keepgoing(false)
+                .dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+                .privateDataContext(['option': [:],])
+                .user('aUser')
+                .build()
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                options: [
+                        new Option(
+                                name: 'pass',
+                                secureInput: true,
+                                secureExposed: true,
+                                defaultStoragePath: "keys/admin/pass"
+                        )
+                ]
+        )
+        null != se
+        null != se.save()
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+        service.storageService = Mock(StorageService)
+        def authContext = Mock(AuthContext)
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                [] as String[],
+                null, null, null, null, null, null, false, false, false
+        )
+
+        then:
+
+        2*service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            readPassword('keys/admin/pass') >> {
+                return 'pass1'.bytes
+            }
+        }
+
+        newCtxt.dataContext['secureOption'] == ['pass': 'pass1']
+    }
+
 }

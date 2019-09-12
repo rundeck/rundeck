@@ -3107,14 +3107,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
 
-        if (!newargs){
-            def props = [:]
-            HashMap optparams = validateJobInputOptions(props, se, null)
-            optparams = removeSecureOptionEntries(se, optparams)
-
-            newargs = generateJobArgline(se, optparams)
-        }
-
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
         if(importOptions && executionContext.dataContext?.option) {
             jobOptsMap = addImportedOptions(se,jobOptsMap, executionContext)
