@@ -3512,6 +3512,7 @@ class ExecutionServiceSpec extends Specification {
         then:
 
         2*service.storageService.storageTreeWithContext(_) >> Mock(KeyStorageTree) {
+            hasPassword('keys/admin/pass') >> true
             readPassword('keys/admin/pass') >> {
                 return 'pass1'.bytes
             }
