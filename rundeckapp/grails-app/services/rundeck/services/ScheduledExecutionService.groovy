@@ -2292,7 +2292,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
 
-        boolean shouldreSchedule = false
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
 
         if(frameworkService.isClusterModeEnabled()){
@@ -2314,15 +2313,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 )
                 if (modify) {
                     scheduledExecution.serverNodeUUID = frameworkService.serverUUID
-                    //schedule meesage want sent , it should be ran locally
-                    shouldreSchedule = true
                 }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID
             }
-        }else{
-            shouldreSchedule = true
         }
 
         if (renamed) {
@@ -2655,7 +2650,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             resultFromJobPlugin = runBeforeSave(scheduledExecution, authContext)
         }
         if (resultFromJobPlugin.success && !failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project) && shouldreSchedule) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
+
                 def nextdate = null
                 def nextExecNode = null
                 try {

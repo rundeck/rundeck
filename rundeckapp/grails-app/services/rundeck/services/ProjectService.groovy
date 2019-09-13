@@ -36,6 +36,8 @@ import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.rundeck.core.projects.ProjectDataExporter
+import org.rundeck.core.projects.ProjectDataImporter
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.transaction.TransactionStatus
@@ -675,6 +677,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         def isExportReadmes = !options || options.all || options.readmes
         def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
         def isExportScm = scmConfigure && (!options || options.all || options.scm)
+        def isExportWebhooks = !options || options.all || options.webhooks
         def stripJobRef = (options.stripJobRef != 'no')?options.stripJobRef:null
         if (options && options.executionsOnly) {
             listener?.total(
@@ -699,6 +702,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                 total += 1
             }
             if (isExportScm){
+                total += 1
+            }
+            if (isExportWebhooks){
                 total += 1
             }
             listener?.total('export', total)
@@ -849,6 +855,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                     }
                 }
             }
+            def projectExportSelectors = []
+            if(isExportWebhooks) {
+                projectExportSelectors.add("webhooks")
+            }
+            def projectExporters = applicationContext.getBeansOfType(ProjectDataExporter)
+            projectExporters.each { String name, ProjectDataExporter exporter ->
+                if(projectExportSelectors.contains(exporter.selector)) {
+                    exporter.export(projectName,zip)
+                }
+            }
         }
         listener?.done()
 
@@ -924,10 +940,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
         boolean importScm = options.importScm
+        boolean importWebhooks = options.importWebhooks
         boolean validateJobref = options.validateJobref
         File configtemp = null
         File scmimporttemp = null
         File scmexporttemp = null
+        File webhookimporttemp = null
         Map<String, File> mdfilestemp = [:]
         Map<String, File> aclfilestemp = [:]
         zip.read {
@@ -990,8 +1008,25 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             }
                         }
                     }
-
                 }
+                if(importWebhooks) {
+                    'webhooks.yaml' { path, name, inputs ->
+                        webhookimporttemp = copyToTemp()
+                    }
+                }
+            }
+        }
+        def importerImportFiles = [:]
+        def projectImportSelectors = []
+        if(importWebhooks) {
+            projectImportSelectors.add("webhooks")
+            importerImportFiles["webhooks"] = webhookimporttemp
+        }
+
+        def projectImporters = applicationContext.getBeansOfType(ProjectDataImporter)
+        projectImporters.each { String name, ProjectDataImporter importer ->
+            if(projectImportSelectors.contains(importer.selector)) {
+                importer.doImport(project.name,importerImportFiles[importer.selector])
             }
         }
         //have files in dir
@@ -1490,6 +1525,7 @@ class ArchiveOptions{
     boolean readmes = false
     boolean acls = false
     boolean scm = false
+    boolean webhooks = false
     String stripJobRef = null
 
     def parseExecutionsIds(execidsparam){

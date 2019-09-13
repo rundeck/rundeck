@@ -23,6 +23,10 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
+import com.dtolabs.rundeck.plugins.descriptions.PluginCustomConfig;
+import org.apache.commons.lang.StringUtils;
+
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -301,5 +305,17 @@ public class Validator {
             rev.put(entry.getValue(), entry.getKey());
         }
         return performMapping(input, rev, skip);
+    }
+
+    public static PluginCustomConfigValidator createCustomPropertyValidator(PluginCustomConfig annotation) {
+        if(annotation.validator() == PluginCustomConfigValidator.class) return null;
+        try {
+            return annotation.validator().getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException | InvocationTargetException |
+                IllegalAccessException | InstantiationException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 }

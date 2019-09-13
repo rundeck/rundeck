@@ -6,7 +6,6 @@ import Vue from 'vue'
 import * as uiv from 'uiv'
 import international from './i18n'
 import uivLang from '../../utilities/uivi18n'
-import VueMoment from 'vue-moment'
 import VueCookies from 'vue-cookies'
 import moment from 'moment'
 // Component Files
@@ -23,7 +22,6 @@ let messages = international.messages
 let locale = window._rundeck.locale || 'en_US'
 let lang = window._rundeck.language || 'en'
 moment.locale(locale)
-Vue.use(VueMoment,{moment})
 
 // include any i18n injected in the page by the app
 messages =

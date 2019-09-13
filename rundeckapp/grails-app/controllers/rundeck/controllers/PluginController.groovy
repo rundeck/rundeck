@@ -3,6 +3,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.PluginResourceReq
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.plugins.PluginValidator
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import grails.converters.JSON
@@ -182,10 +183,13 @@ class PluginController extends ControllerBase {
         String appVer = servletContext.getAttribute('version.number')
 
         def desc = null
+        def instance = null
         if(service== "UI") {
             desc = pluginService.listPlugins(UIPluginProviderService,uiPluginService.uiPluginProviderService).find { it.key == pluginName }.value.description
         } else {
-            desc = pluginService.getPluginDescriptor(pluginName, service)?.description
+            def pDescriptor = pluginService.getPluginDescriptor(pluginName, service)
+            instance = pDescriptor?.instance
+            desc = pDescriptor?.description
         }
 
         if(!desc) {
@@ -240,6 +244,11 @@ class PluginController extends ControllerBase {
             pluginName,
             desc.properties
         )
+        if(instance) {
+            //Check for custom config vue component
+            def customConfigProp = PluginAdapterUtility.getCustomConfigAnnotation(instance)
+            if(customConfigProp) terseDesc.vueConfigComponent = customConfigProp.vueConfigurationComponent()
+        }
 
         render(terseDesc as JSON)
     }

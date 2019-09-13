@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin;
 import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
@@ -93,6 +94,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
         map.put(ServiceNameConstants.JobPlugin, JobPlugin.class);
         map.put(ServiceNameConstants.ProjectPlugin, ProjectPlugin.class);
+        map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }
@@ -124,6 +126,7 @@ public class ServiceTypes {
     private static ServiceLoader<PluginProviderServices>
         pluginProviderServiceLoader =
         ServiceLoader.load(PluginProviderServices.class);
+    private static final Object providerLoaderSync = new Object();
 
     /**
      * Get a pluggable service implementation for the given plugin type, if available via {@link ServiceLoader}
@@ -138,9 +141,11 @@ public class ServiceTypes {
         ServiceProviderLoader loader
     )
     {
-        for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
-            if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
-                return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+        synchronized (providerLoaderSync) {
+            for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
+                if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
+                    return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+                }
             }
         }
         return null;

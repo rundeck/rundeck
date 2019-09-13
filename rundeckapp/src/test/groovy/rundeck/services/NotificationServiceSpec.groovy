@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -99,10 +101,13 @@ class NotificationServiceSpec extends Specification {
     def "mail recipients in context var"() {
         given:
         def (job, execution) = createTestJob()
+        def globalContext = new BaseDataContext([globals: globals])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), globalContext)
         def content = [
                 execution: execution,
                 context  : Mock(ExecutionContext) {
-                    getDataContext() >> new BaseDataContext([globals: globals])
+                    1 * getSharedDataContext() >> shared
                 }
         ]
         job.notifications = [

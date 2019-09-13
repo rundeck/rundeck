@@ -280,7 +280,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                                  AuthConstants.SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
                     model.scmExportStatus = scmService.exportStatusForJobs(authContext, [scheduledExecution])
@@ -289,7 +290,8 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                                  AuthConstants.SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
                     model.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
@@ -488,7 +490,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def projectResource = frameworkService.authResourceForProject(params.project)
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                              AuthConstants.SCM_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
                 dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
@@ -497,7 +500,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                              AuthConstants.SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])

@@ -106,6 +106,19 @@
                     <i class="glyphicon glyphicon-ban-circle"></i> SCM Configuration (Unauthorized)
                   </div>
                 </auth:resourceAllowed>
+                <feature:enabled name="webhooks">
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}">
+                  <div class="checkbox">
+                    <g:checkBox name="exportWebhooks" value="true"/>
+                    <label for="exportScm">Webhooks</label>
+                  </div>
+                </auth:resourceAllowed>
+                <auth:resourceAllowed action="${[AuthConstants.ACTION_ADMIN]}" context='application' type="project" name="${params.project}" has="false">
+                  <div class="checkbox disabled text-primary">
+                    <i class="glyphicon glyphicon-ban-circle"></i> Webhooks (Unauthorized)
+                  </div>
+                </auth:resourceAllowed>
+                </feature:enabled>
               </div>
             </div>
 
