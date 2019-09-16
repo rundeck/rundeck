@@ -1,7 +1,10 @@
 package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginUtils
+import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.rundeck.repository.ResponseBatch
 import com.rundeck.repository.ResponseMessage
 import com.rundeck.repository.artifact.ArtifactType
@@ -164,6 +167,42 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
 
     }
 
+    void "uninstall artifact that was manually installed"() {
+        given:
+        ServiceProviderLoader mockPluginManager = Mock(ServiceProviderLoader)
+        IFramework mockRundeckFramework = Mock(IFramework) {
+            getPluginManager() >> mockPluginManager
+        }
+        controller.repositoryPluginService = Mock(RepositoryPluginService)
+        FakeFrameworkService fwkSvc = new FakeFrameworkService(true)
+        fwkSvc.setRundeckFramework(mockRundeckFramework)
+        controller.frameworkService = fwkSvc
+        String pluginName = "ManuallyInstalledPlugin"
+        def installedPluginId = PluginUtils.generateShaIdFromName(pluginName)
+        controller.pluginApiService.installedPluginIds = [:]
+        controller.pluginApiService.installedPluginIds[installedPluginId] = "1.0"
+        File tmp = File.createTempFile("manual","plugin:")
+        tmp.deleteOnExit()
+        def mockPluginMeta = Mock(PluginMetadata) {
+            getFile() >> { tmp  }
+        }
+
+        when:
+        params.artifactId = installedPluginId
+        params.service = "LogFilter"
+        params.name = pluginName
+        controller.uninstallArtifact()
+
+        then:
+        1 * client.listRepositories() >> [new RepositoryDefinition(repositoryName: "private", owner: RepositoryOwner.PRIVATE)]
+        1 * client.getArtifact("private",installedPluginId, "1.0") >> null
+        0 * controller.repositoryPluginService.uninstallArtifact(_)
+        1 * mockPluginManager.getPluginMetadata("LogFilter",pluginName) >> { mockPluginMeta }
+        1 * controller.repositoryPluginService.removeOldPlugin(tmp)
+        response.json == ["msg":"Plugin Uninstalled"]
+
+    }
+
     void "regenreate manifest no repo specified and only 1 repo defined"() {
         given:
         controller.repositoryPluginService = Mock(RepositoryPluginService)
@@ -215,6 +254,7 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
     class FakeFrameworkService {
 
         boolean authorized = true
+        IFramework rundeckFramework
 
         FakeFrameworkService() {}
         FakeFrameworkService(authorized) {
@@ -225,6 +265,8 @@ class RepositoryControllerSpec extends Specification implements ControllerUnitTe
             return [] as AuthContext
         }
         boolean authorizeApplicationResourceAny(def authCtx, def type, def action) { return authorized }
+
+        IFramework getRundeckFramework() { return rundeckFramework }
     }
     class FakePluginApiService {
         def installedPluginIds = []
