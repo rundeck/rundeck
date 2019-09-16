@@ -244,6 +244,8 @@ class PluginController extends ControllerBase {
             pluginName,
             desc.properties
         )
+        terseDesc.projectMapping = desc.propertiesMapping
+        terseDesc.fwkMapping = desc.fwkPropertiesMapping
         if(instance) {
             //Check for custom config vue component
             def customConfigProp = PluginAdapterUtility.getCustomConfigAnnotation(instance)
