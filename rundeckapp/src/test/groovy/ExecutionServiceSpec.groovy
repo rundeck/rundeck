@@ -1551,6 +1551,22 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
     }
 
+    def "remote url option validator does not attempt to validate option values plugin values"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution()
+        Option opt = new Option(name: 'test1', enforced: true, optionValues: null, optionValuesPluginType: 'test_opt_val_plugin')
+        se.addToOptions(opt)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        when:
+
+        def validation = service.validateOptionValues(se, ["test":"A"])
+
+        then:
+        0 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_)
+        noExceptionThrown()
+
+    }
+
     def "opt enforced allowed values from Remote Url with or without default value"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
