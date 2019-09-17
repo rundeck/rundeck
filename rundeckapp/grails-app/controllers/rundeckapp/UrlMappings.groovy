@@ -241,6 +241,8 @@ class UrlMappings {
 
         "/api/$api_version/metrics/$name**?"(controller: 'api', action: 'apiMetrics')
 
+        "/api/$api_version/plugin/list"(controller: 'plugin', action: 'listPlugins')
+
         //catchall
         "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
