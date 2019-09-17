@@ -194,12 +194,30 @@ class RepositoryController {
                 } else {
                     log.warn("Could not find repository artifact information for: ${params.artifactId}. Could be a manually installed plugin. Attempting to uninstall from libext")
 
-                    def providerMeta = frameworkService.getRundeckFramework().
-                            getPluginManager().
-                            getPluginMetadata(params.service, params.name)
+                    String service = params.service
+                    String pluginName = params.name
+                    if(!(service || pluginName)) {
+                        for(def svc in pluginApiService.listPlugins()) {
+                            def plugin = svc.providers.find { p -> p.pluginId == params.artifactId }
+                            if(plugin) {
+                                service = svc.service
+                                pluginName = plugin.name
+                            }
+                        }
+                    }
 
-                    if(providerMeta) {
-                        repositoryPluginService.removeOldPlugin(providerMeta.getFile())
+                    if(service && pluginName) {
+                        def providerMeta = frameworkService.getRundeckFramework().
+                                getPluginManager().
+                                getPluginMetadata(service, pluginName)
+
+                        if (providerMeta) {
+                            repositoryPluginService.removeOldPlugin(providerMeta.getFile())
+                        }
+                    } else {
+                        responseMsg.errors = [[code:"plugin.uninstall.failure", msg: "Unable to find plugin name or service."]]
+                        response.setStatus(400)
+                        return
                     }
                 }
 
