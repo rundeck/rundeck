@@ -43,6 +43,7 @@ import groovy.transform.PackageScope
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
+import org.rundeck.app.AppConstants
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -62,9 +63,6 @@ import java.util.stream.Collectors
 * ExecutionController
 */
 class ExecutionController extends ControllerBase{
-    static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
-    static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
-
     FrameworkService frameworkService
     ExecutionService executionService
     LoggingService loggingService
@@ -949,12 +947,12 @@ setTimeout(function(){
     }
 
     boolean checkAllowUnsanitized(String project) {
-        if(frameworkService.getRundeckFramework().hasProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
+        if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
             if ("true" != frameworkService.getRundeckFramework().
-                    getProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
+                    getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
             def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
-            if(projectConfig.hasProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
-                return "true" == projectConfig.getProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+            if(projectConfig.hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
+                return "true" == projectConfig.getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)
             }
             return false
         }

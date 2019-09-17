@@ -363,8 +363,12 @@ div.progressContainer div.progressContent{
 
 <div class="content">
     <g:if test="${logOutput}">
-        <h3>Log OUTPUT</h3>
-        ${enc(sanitize:logOutput)}
+        <g:if test="${allowUnsanitized}">
+            ${enc(rawtext:logOutput)}
+        </g:if>
+        <g:else>
+            ${enc(sanitize:logOutput)}
+        </g:else>
     </g:if>
 </div>
 <div class="foot">
