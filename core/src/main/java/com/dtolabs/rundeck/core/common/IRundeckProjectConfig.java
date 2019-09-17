@@ -54,4 +54,9 @@ public interface IRundeckProjectConfig {
      * @return last modified time for configuration in epoch time
      */
     Date getConfigLastModifiedTime();
+
+    /**
+     * @return creation date time for configuration in epoch time
+     */
+    Date getConfigCreatedTime();
 }

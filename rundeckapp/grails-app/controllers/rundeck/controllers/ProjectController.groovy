@@ -498,6 +498,9 @@ class ProjectController extends ControllerBase{
         delegate.'project'(pmap) {
             name(data.name)
             description(data.description)
+            if (vers >= ApiVersions.V33) {
+                created(data.created)
+            }
             if (vers >= ApiVersions.V26) {
                 if (pject.hasProperty("project.label")) {
                     label(data.label)
@@ -549,20 +552,22 @@ class ProjectController extends ControllerBase{
     }
 
     private Map basicProjectDetails(def pject, def version) {
+        def name = pject.name
+        def retMap = [
+                url:generateProjectApiUrl(pject.name),
+                name: name,
+                description: pject.getProjectProperties()?.get("project.description")?:''
+        ]
         if(version>=ApiVersions.V26){
-            [
-                    url:generateProjectApiUrl(pject.name),
-                    name:pject.name,
-                    description: pject.getProjectProperties()?.get("project.description")?:'',
-                    label: pject.getProjectProperties()?.get("project.label")?:''
-            ]
-        }else{
-            [
-                    url:generateProjectApiUrl(pject.name),
-                    name:pject.name,
-                    description: pject.getProjectProperties()?.get("project.description")?:''
-            ]
+            retMap.label = pject.getProjectProperties()?.get("project.label")?:''
         }
+        if(version>=ApiVersions.V33){
+            def created = pject.getConfigCreatedTime()
+            if(created){
+                retMap.created = created?:''
+            }
+        }
+        retMap
 
     }
 
