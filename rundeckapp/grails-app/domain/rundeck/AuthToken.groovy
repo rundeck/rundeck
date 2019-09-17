@@ -30,7 +30,7 @@ class AuthToken implements AuthenticationToken {
     Date expiration
     Date dateCreated
     Date lastUpdated
-    AuthTokenType type
+    AuthTokenType type = AuthTokenType.USER
     static belongsTo = [user:User]
     static transients = ['printableToken','ownerName']
     static constraints = {
@@ -42,6 +42,7 @@ class AuthToken implements AuthenticationToken {
         expiration(nullable: true)
         lastUpdated(nullable: true)
         dateCreated(nullable: true)
+        type(nullable: true)
     }
     static mapping = {
         authRoles type: 'text'
