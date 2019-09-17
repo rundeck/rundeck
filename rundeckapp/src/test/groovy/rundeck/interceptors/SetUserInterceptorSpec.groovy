@@ -2,8 +2,12 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import grails.core.GrailsApplication
+import grails.testing.gorm.DataTest
 import grails.testing.web.interceptor.InterceptorUnitTest
+import rundeck.AuthToken
+import rundeck.User
 import rundeck.UtilityTagLib
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.HTMLContentCodec
@@ -13,10 +17,15 @@ import rundeck.services.UserService
 import spock.lang.Specification
 
 import javax.security.auth.Subject
+import javax.servlet.ServletContext
 import java.security.Principal
 
-class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor> {
+class SetUserInterceptorSpec extends Specification implements InterceptorUnitTest<SetUserInterceptor>, DataTest {
 
+    void setupSpec() {
+        mockDomain User
+        mockDomain AuthToken
+    }
     def setup() {
     }
 
@@ -93,5 +102,36 @@ class SetUserInterceptorSpec extends Specification implements InterceptorUnitTes
         null         | "auser"  | ["grp1"]         | true
 
 
+    }
+
+    def "lookupToken"() {
+
+        setup:
+        User u1 = new User(login: "admin")
+        User u2 = new User(login: "whk")
+        AuthToken userTk1 = new AuthToken(token: "123",user:u1,authRoles:"admin",type: null)
+        AuthToken userTk2 = new AuthToken(token: "456",user:u1,authRoles:"admin",type: AuthTokenType.USER)
+        AuthToken whkTk = new AuthToken(token: "789",user:u2,authRoles:"admin",type:AuthTokenType.WEBHOOK)
+        u1.save()
+        u2.save()
+        userTk1.save()
+        userTk2.save()
+        whkTk.save()
+        def svCtx = Mock(ServletContext)
+
+        when:
+        String result = interceptor.lookupToken(tk,svCtx,webhookToken)
+
+        then:
+        result == expected
+
+        where:
+        tk|webhookToken|expected
+        "123"|true|null
+        "123"|false|"admin"
+        "456"|true|null
+        "456"|false|"admin"
+        "789"|true|"whk"
+        "789"|false|null
     }
 }

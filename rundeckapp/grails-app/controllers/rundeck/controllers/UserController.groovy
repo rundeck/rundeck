@@ -131,7 +131,11 @@ class UserController extends ControllerBase{
             if (!tokenAdmin) {
                 eq("creator", u.login)
             }
-            eq("type", AuthTokenType.USER)
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
+            }
+
         }
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
@@ -160,7 +164,10 @@ class UserController extends ControllerBase{
             if (max) {
                 maxResults(max)
             }
-            eq("type", AuthTokenType.USER)
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
+            }
             order("dateCreated", "desc")
         }
         params.max = max
