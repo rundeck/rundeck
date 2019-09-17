@@ -220,7 +220,7 @@ const actions = {
         headers: {
           "x-rundeck-ajax": true
         },
-        url: `${window._rundeck.rdBase}repository/uninstall/${properties.id}`,
+        url: `${window._rundeck.rdBase}repository/uninstall/${properties.id}/${properties.service}/${properties.name}`,
         withCredentials: true
       })
       .then(response => {

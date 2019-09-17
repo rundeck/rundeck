@@ -99,7 +99,7 @@ class UrlMappings {
             //         controller: "repository",
             //         action: "uninstallArtifact"
             // )
-            post "/repository/uninstall/$artifactId"(
+            post "/repository/uninstall/$artifactId/$service?/$name?"(
                     controller: "repository",
                     action: "uninstallArtifact"
             )
