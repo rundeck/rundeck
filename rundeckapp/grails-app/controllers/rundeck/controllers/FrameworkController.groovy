@@ -96,7 +96,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     public static final Integer MAXIMUM_DELETION_SIZE = 500
     public static final String SCHEDULE_DEFAULT = "0 0 0 1/1 * ? *"
     public static final Map CRON_MODELS_SELECT_VALUES = [
-            "0 0 0 1/1 * ? *"    : "Dayly at 00:00",
+            "0 0 0 1/1 * ? *"    : "Daily at 00:00",
             "0 0 23 ? * FRI *"   : "Weekly (Every Fridays 11PM)",
             "0 0 0 ? * WED,SUN *": "Weekly (Two days a week)",
             "0 30 1 1,15 * ? *"  : "Every 2 weeks",
