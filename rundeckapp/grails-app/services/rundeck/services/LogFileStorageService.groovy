@@ -1802,7 +1802,8 @@ class LogFileStorageService
     boolean areAllExecutionFilesPresent(Execution execution) {
         for (def bean : listExecutionFileProducers()) {
             if (!bean.isExecutionFileGenerated()) {
-                if (!bean.produceStorageFileForExecution(execution.asReference()).localFile.exists()) {
+                def execution1 = bean.produceStorageFileForExecution(execution.asReference())
+                if (execution1.shouldBeStored && !execution1.localFile.exists()) {
                     return false
                 }
             }
@@ -1814,9 +1815,12 @@ class LogFileStorageService
         Collection<ExecutionFileProducer> beans = listExecutionFileProducers(filters)
         def result = [:]
         beans?.each { bean ->
-            result[bean.getExecutionFileType()] = checkpoint ?
+            def execFile= checkpoint ?
                     bean.produceStorageCheckpointForExecution(execution.asReference()) :
                     bean.produceStorageFileForExecution(execution.asReference())
+            if(execFile.shouldBeStored){
+                result[bean.getExecutionFileType()] = execFile
+            }
         }
         log.debug("found beans of ExecutionFileProducer result: $result")
         result?:[:]

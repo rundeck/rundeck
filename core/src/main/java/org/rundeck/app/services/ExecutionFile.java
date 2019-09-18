@@ -25,6 +25,14 @@ public interface ExecutionFile {
     File getLocalFile();
 
     /**
+     *
+     * @return true if this file should be stored, false if this file does not need to be stored (optional file)
+     */
+    default boolean isShouldBeStored(){
+        return true;
+    }
+
+    /**
      * @return policy for deleting this file
      */
     DeletePolicy getFileDeletePolicy();
