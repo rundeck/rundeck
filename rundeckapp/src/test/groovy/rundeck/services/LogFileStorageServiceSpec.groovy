@@ -17,6 +17,7 @@
 package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
@@ -26,6 +27,8 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.rundeck.app.services.ExecutionFile
+import org.rundeck.app.services.ExecutionFileProducer
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
@@ -1129,5 +1132,58 @@ class LogFileStorageServiceSpec extends Specification {
             err             | status
             null            | ExecutionFileState.NOT_FOUND
             'error message' | ExecutionFileState.ERROR
+    }
+
+    static class TestExecFileProducer1 implements ExecutionFileProducer {
+        String executionFileType = 'test1'
+        boolean executionFileGenerated = false
+        boolean checkpointable = false
+        ExecutionFile storageFile
+        ExecutionFile storageFileCheckpoint
+
+        @Override
+        ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
+            storageFile
+        }
+
+        @Override
+        ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
+            storageFileCheckpoint
+        }
+    }
+
+    def "get execution file, isShouldBeStored allows optional file storage"() {
+        given:
+            def execution = new Execution(
+                    dateStarted: new Date(),
+                    dateCompleted: null,
+                    user: 'user2',
+                    project: 'test',
+                    serverNodeUUID: 'D0CA0A6D-3F85-4F53-A714-313EB57A4D1F',
+                    outputfilepath: '/tmp/file'
+            ).save()
+            ExecutionFile file1 = Mock(ExecutionFile) {
+                isShouldBeStored() >> true
+            }
+            ExecutionFile file2 = Mock(ExecutionFile) {
+                isShouldBeStored() >> false
+            }
+            defineBeans {
+                testFileProducer1(TestExecFileProducer1) {
+                    executionFileType = 'test1'
+                    storageFile = file1
+                }
+                testFileProducer2(TestExecFileProducer1) {
+                    executionFileType = 'test2'
+                    storageFile = file2
+                }
+            }
+            service.applicationContext = applicationContext
+        when:
+            def result = service.getExecutionFiles(execution, [], false)
+        then:
+            result.size() == 1
+            result['test1'] == file1
+            !result['test2']
     }
 }
