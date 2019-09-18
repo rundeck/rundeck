@@ -116,6 +116,11 @@ class NodeServiceSpec extends Specification {
         }
 
         @Override
+        Date getConfigCreatedTime() {
+            return null
+        }
+
+        @Override
         String getProperty(final String property) {
             projectProperties.get(property)
         }

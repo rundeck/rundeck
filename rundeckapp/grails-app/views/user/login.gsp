@@ -150,7 +150,7 @@
 
                     <div class="form-group">
                         <label for="password"><g:message code="user.login.password.label"/></label>
-                        <input type="password" name="j_password" id="password" class="form-control input-no-border"/>
+                        <input type="password" name="j_password" id="password" class="form-control input-no-border" autocomplete="off"/>
                     </div>
                         <div class="card-footer text-center">
                             <button type="submit" id="btn-login" class="btn btn-fill btn-wd "><g:message code="user.login.login.button"/></button>

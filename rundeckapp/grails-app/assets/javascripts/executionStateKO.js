@@ -629,20 +629,16 @@ function RDNodeStep(data, node, flow){
     self.executionState = ko.observable(data.executionState || null);
     self.parameterizedStep = ko.observable(data.stepctx.indexOf('@')>=0);
     self.startTimeSimple=ko.pureComputed(function(){
-        //TODO: fix incorrect startTime format: it is not actually UTC time
-        return MomentUtil.formatTimeSimpleUTC(self.startTime());
+        return MomentUtil.formatTimeSimple(self.startTime());
     });
     self.startTimeFormat=function(format){
-        //TODO: fix incorrect startTime format: it is not actually UTC time
-        return MomentUtil.formatTimeUTC(self.startTime(),format);
+        return MomentUtil.formatTime(self.startTime(),format);
     };
     self.endTimeSimple=ko.pureComputed(function(){
-        //TODO: fix incorrect endTime format: it is not actually UTC time
-        return MomentUtil.formatTimeSimpleUTC(self.endTime());
+        return MomentUtil.formatTimeSimple(self.endTime());
     });
     self.endTimeFormat= function (format) {
-        //TODO: fix incorrect endTime format: it is not actually UTC time
-        return MomentUtil.formatTimeUTC(self.endTime(), format);
+        return MomentUtil.formatTime(self.endTime(), format);
     };
     self.durationCalc=ko.pureComputed(function(){
         var dur=self.duration();

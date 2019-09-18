@@ -23,6 +23,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
@@ -335,6 +338,18 @@ public class FrameworkProjectConfig implements IRundeckProjectConfig, IRundeckPr
         return new Date(getPropertyFile().lastModified());
     }
 
+    @Override
+    public Date getConfigCreatedTime(){
+        Path file = getPropertyFile().toPath();
+        try {
+            BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class);
+            return new Date(attr.creationTime().toMillis());
+        } catch (IOException e) {
+            logger.error(e);
+        }
+        return null;
+
+    }
     @Override
     public Map<String, String> getProperties() {
         return lookup.getPropertiesMap();

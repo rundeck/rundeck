@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.utils.Utility
 import com.google.common.base.Predicate
+import groovy.transform.CompileStatic
 
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -137,6 +138,13 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         String partial
         String errorMessage
 
+        RDFormatItem() {}
+
+        RDFormatItem(String partial, boolean lineComplete) {
+            this.lineComplete = lineComplete
+            this.partial = partial
+        }
+
         @Override
         String toString() {
             if (invalid) {
@@ -167,6 +175,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      * Parse the log line, and if aany log entries are completed add them to the buffer
      * @param line
      */
+    @CompileStatic
     LineLogFormat.FormatItem parseLine(String line) {
         if (line == FILE_END) {
             return new RDFormatItem(fileEnd: true)
@@ -176,7 +185,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             def temp = line.substring(DELIM.length())
             if (!temp) {
                 //delim alone
-                return new RDFormatItem(partial: '', lineComplete: true)
+                return new RDFormatItem('', true)
             }
             def item = new RDFormatItem()
             def arr = temp.split("\\|", 4)
@@ -187,19 +196,21 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             Date time = w3cDateFormat.get().parse(arr[0])
             String eventType = arr[1] ?: DEFAULT_EVENT_TYPE
             LogLevel level = arr[2]?LogLevel.valueOf(arr[2]):DEFAULT_LOG_LEVEL
-            def rest = arr[3]
-            def meta = [:]
+            String rest = arr[3]
+            Map<String, String> meta = [:]
             if (rest.startsWith('{')) {
                 //parse meta
                 rest = rest.substring(1)
                 def done = false
                 while (!done) {
-                    def (key, delim, newrest) = decodeMetaKey(rest)
+                    def decodedKey = decodeMetaKey(rest)
+                    def (String key, delim, newrest) = [decodedKey[0] as String, decodedKey[1], decodedKey[2] as String]
                     if (!delim) {
                         return RDFormatItem.error("Meta section invalid: " + rest)
                     }
                     rest = newrest
-                    def (val, delim2, newrest2) = decodeMetaValue(rest)
+                    def decodedVal = decodeMetaValue(rest)
+                    def (String val, delim2, newrest2) = [decodedVal[0] as String, decodedVal[1], decodedVal[2] as String]
                     if (!delim2) {
                         return RDFormatItem.error("Meta section invalid: " + rest)
                     }
@@ -222,7 +233,8 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
                 rest = arr[1]
             }
 
-            def (message, done) = decodeLog(rest)
+            def decoded = decodeLog(rest)
+            def (message, done) = [decoded[0] as String, decoded[1]]
             item.lineComplete = done?true:false
             item.entry = new DefaultLogEvent(
                     loglevel: level,
@@ -233,8 +245,9 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             )
             return item
         } else {
-            def (temp, done) = decodeLog(line)
-            return new RDFormatItem(partial: temp + '\n', lineComplete: done ? true : false)
+             def decoded = decodeLog(line)
+             def (String temp, done) = [decoded[0] as String, decoded[1]]
+            return new RDFormatItem(temp + '\n', done ? true : false)
         }
     }
 
@@ -288,18 +301,24 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
         }
     }
 
+    @CompileStatic
     static List decodeMetaKey(String input) {
-        def (text, done, rest) = unescape(input, BACKSLASH, '=|}\\', '=')
+        def unescaped = unescape(input, BACKSLASH, '=|}\\', '=')
+        def (text, done, rest) = [unescaped[0] as String, unescaped[1], unescaped[2] as String]
         return [text, done, rest]
     }
 
+    @CompileStatic
     static List decodeMetaValue(String input) {
-        def (text, done, rest) = unescape(input, BACKSLASH, '=|}\\', ['|', '}'] as String[])
+        def unescaped = unescape(input, BACKSLASH, '=|}\\', ['|', '}'] as String[])
+        def (text, done, rest) = [unescaped[0] as String, unescaped[1], unescaped[2] as String]
         return [text, done, rest]
     }
 
+    @CompileStatic
     static List decodeLog(String input) {
-        def (text, done, rest) = unescape(input, BACKSLASH, '^\\', DELIM)
+        def unescaped = unescape(input, BACKSLASH, '^\\', DELIM)
+        def (text, done, rest) = [unescaped[0] as String, unescaped[1], unescaped[2] as String]
         return [text, done]
     }
     /**
@@ -309,6 +328,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      * @param delimiter String delimiter where parsing should stop
      * @return List of: String unescaped, Boolean isDone, String remaining
      */
+    @CompileStatic
     static List unescape(String input, char escapeChar, String delimiter) {
         return unescape(input, escapeChar, delimiter + escapeChar, delimiter)
     }
@@ -320,6 +340,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      * @param delimiter String delimiter where parsing should stop
      * @return List of: String unescaped, Boolean isDone, String remaining
      */
+    @CompileStatic
     static List unescape(String input, char escapeChar, String validEscaped, String delimiter) {
         return unescape(input, escapeChar, validEscaped, [delimiter] as String[])
     }
@@ -331,6 +352,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
      * @param delimiter array of delimiters indicating where parsing should stop
      * @return List of: String unescaped, Boolean delimiterReached, String remaining
      */
+    @CompileStatic
     static List unescape(String input, char escapeChar, String validEscaped, String[] delimiter) {
         def newline = new StringBuilder()
         def done = false

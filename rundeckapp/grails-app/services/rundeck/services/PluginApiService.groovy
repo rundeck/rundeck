@@ -351,7 +351,7 @@ class PluginApiService {
 
     }
 
-    private long toEpoch(String dateString) {
+    private synchronized long toEpoch(String dateString) {
         try {
             return PLUGIN_DATE_FMT.parse(dateString).time
         } catch(Exception ex) {

@@ -2292,4 +2292,47 @@ class ProjectControllerTest {
         assertEquals 'some data', response.text
 
     }
+    @Test
+    void apiProjectList_json_date_v33_creation_time(){
+        def dbProjA = new Project(name: 'testproject')
+        dbProjA.save()
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        prja.demand.getConfigCreatedTime(){->new Date()}
+        def dbProjB = new Project(name: 'testproject2')
+        dbProjB.save()
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
+        prjb.demand.getConfigCreatedTime(){->new Date()}
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        request.setAttribute('api_version', 33)
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[0].created != null
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].url==base+'/project/testproject2'
+        assert response.json[1].created != null
+    }
 }

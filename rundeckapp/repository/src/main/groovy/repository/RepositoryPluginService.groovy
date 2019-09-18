@@ -44,14 +44,18 @@ class RepositoryPluginService implements InitializingBean {
     }
 
     void removeOldPlugin(final RepositoryArtifact artifact) {
-        File oldPlugin = new File(localFilesystemPluginDir,artifact.installationFileName)
-        if(oldPlugin.exists()) oldPlugin.delete()
+        removeOldPlugin(new File(localFilesystemPluginDir,artifact.installationFileName))
+    }
+
+    void removeOldPlugin(final File pluginFile) {
+        if(pluginFile.exists()) pluginFile.delete()
     }
 
     void uninstallArtifact(final RepositoryArtifact artifact) {
-        File oldPlugin = new File(localFilesystemPluginDir,artifact.installationFileName)
-        if(oldPlugin.exists()) oldPlugin.delete()
-        installedPluginTree.deleteResource("${storageTreePath}/${artifact.installationFileName}")
+        removeOldPlugin(artifact)
+        if(installedPluginTree.hasResource("${storageTreePath}/${artifact.installationFileName}")) {
+            installedPluginTree.deleteResource("${storageTreePath}/${artifact.installationFileName}")
+        }
     }
 
     @Override
