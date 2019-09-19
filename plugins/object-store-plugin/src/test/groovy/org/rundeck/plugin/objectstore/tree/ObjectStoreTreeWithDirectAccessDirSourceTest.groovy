@@ -24,19 +24,26 @@ import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectAccessDir
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
+import org.testcontainers.containers.GenericContainer
+import org.testcontainers.spock.Testcontainers
+import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioTestServer
+import testhelpers.MinioContainer
 
+@Testcontainers
 class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
     String configBucket = "test-config-bucket-das"
     ObjectStoreTree store
     ObjectStoreDirectorySource directorySource
     static MinioClient mClient
-    static MinioTestServer server = new MinioTestServer()
+    static final String ACCESS_KEY = 'TEST_KEY'
+    static final String SECRET_KEY = UUID.randomUUID().toString()
+
+    @Shared
+    public MinioContainer minio = new MinioContainer<>().withAccess(ACCESS_KEY, SECRET_KEY)
 
     void setupSpec() {
-        server.start()
-        mClient = new MinioClient("http://localhost:9000", server.accessKey, server.secretKey)
+        mClient = minio.client()
     }
 
     void setup() {
@@ -46,7 +53,7 @@ class ObjectStoreTreeWithDirectAccessDirSourceTest extends Specification {
     }
 
     void cleanupSpec() {
-        server.stop()
+        minio.stop()
     }
 
     def "Init"() {
