@@ -17,7 +17,7 @@
 <g:set var="parsed" value="${g.parseOptsFromString(args: argString)}"/>
 <g:if test="${parsed}">
     <g:each in="${parsed}" var="entry">
-        <span class="optkey"><g:enc>${entry.key}</g:enc></span>:
+        <span class="optkey"><g:enc>${entry.key}</g:enc></span>
         <g:if test="${entry.value}">
             <g:if test="${inputFilesMap && inputFilesMap[entry.value]}">
                 <g:set var="frkey" value="${g.rkey()}"/>

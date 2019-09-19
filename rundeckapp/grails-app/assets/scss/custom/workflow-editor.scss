@@ -40,4 +40,8 @@ span.autoedit:hover {
 
 .optkey {
   color: $primary-color;
+
+  &:after {
+    content: ':';
+  }
 }

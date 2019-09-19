@@ -121,29 +121,23 @@
 }
 
 .argstring-scrollable {
-  overflow: hidden;
-  word-break: break-all;
-  text-overflow: ellipsis;
-}
-
-.argstring-scrollable .text-secondary {
-  display: block;
-}
-
-.argstring-scrollable .optkey {
-  display: inline-block;
-}
-
-.argstring-scrollable .optvalue {
-  overflow: hidden;
-  word-break: break-all;
-  text-overflow: ellipsis;
+  overflow-x: hidden;
   white-space: nowrap;
+}
+
+.exec-args-section.argstring-scrollable  .optkey , .exec-args-section.argstring-scrollable  .optvalue{
   display: block;
 }
 
 // eventargs is typically a table > td
 // found here: /rundeckapp/grails-app/assets/scss/custom/table-events.scss
-.eventargs .argstring-scrollable {
-  overflow-x: hidden;
+.eventargs.argstring-scrollable {
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 250px;
+}
+
+.exec-args-section.argstring-scrollable {
+  overflow-y: auto;
+  max-height: 200px;
 }
