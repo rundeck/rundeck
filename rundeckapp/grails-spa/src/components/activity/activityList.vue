@@ -163,7 +163,17 @@
               </div>
     </modal>
     <div class="card-content-full-width">
-    <table class=" table table-hover table-condensed " >
+    <table class=" table table-hover table-condensed ">
+      <!-- <colgroup>
+        <col style="width: 30px"/>
+        <col style="width: 100px"/>
+        <col style="width: 80px"/>
+        <col style="width: 80px"/>
+        <col style="width: 80px"/>
+        <col style="width: 80px"/>
+        <col />
+        <col style="width: 100px"/>
+      </colgroup> -->
       <tbody  v-if="running && running.executions&& running.executions.length>0" class="running-executions">
         <tr
             v-for="exec in running.executions"
@@ -220,7 +230,7 @@
                   <span v-if="exec.job.options">
                       <span v-for="(value,key) in exec.job.options" :key="key">
                           {{key}}:
-                          <code  class="optvalue">{{value}}</code>
+                          <code  class="optvalue activity-optvalue" style="white-space:unset;">{{clampedArg(value)}}</code>
                       </span>
                   </span>
                 </td>
@@ -311,7 +321,7 @@
                 <span v-if="rpt.execution.jobArguments">
                     <span v-for="(value,key) in rpt.execution.jobArguments" :key="key">
                         {{key}}:
-                        <code  class="optvalue">{{value}}</code>
+                        <code  class="optvalue activity-optvalue">{{clampedArg(value)}}</code>
                     </span>
                 </span>
 
@@ -369,6 +379,8 @@ import {
 } from "@rundeck/ui-trellis"
 import { ExecutionBulkDeleteResponse, ExecutionListRunningResponse, Execution } from 'ts-rundeck/dist/lib/models';
 import { setTimeout, clearTimeout } from 'timers';
+
+const ARG_CLAMP=100
 
 /**
  * Generate a URL
@@ -589,6 +601,13 @@ export default Vue.extend({
     },
     reportStateCss(rpt:any){
       return this.executionStateCss(this.reportState(rpt))
+    },
+    clampedArg(arg: string) {
+      console.log('Clamp')
+      if (arg.length > ARG_CLAMP)
+        arg = arg.slice(0, ARG_CLAMP) + '...'
+
+      return arg
     },
     executionState(status:string){
         if (status == 'scheduled') {
@@ -840,6 +859,11 @@ export default Vue.extend({
 .activity-list .table{
   margin-bottom:0;
 }
+
+code.activity-optvalue {
+  white-space: unset !important;
+}
+
 .loading-area{
   padding: 50px;
   background: #efefefef;
