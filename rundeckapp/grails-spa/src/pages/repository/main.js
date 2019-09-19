@@ -21,18 +21,22 @@ Vue.use(VueFuse)
 Vue.use(Vue2Filters)
 Vue.use(uiv)
 
-let messages =
-{
-  en_US: Object.assign(
-    {},
-    uivLang['en_US'] || uivLang['en'] || {},
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+
+// include any i18n injected in the page by the app
+let messages = {
+  [locale]: Object.assign({},
+    uivLang[locale] || uivLang[lang] || {},
     window.Messages
   )
 }
 
+console.log(messages)
+
 const i18n = new VueI18n({
   silentTranslationWarn: true,
-  locale: 'en', // set locale
+  locale, // set locale
   messages // set locale messages,
 })
 
