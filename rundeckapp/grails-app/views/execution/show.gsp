@@ -472,7 +472,7 @@ search
                                 ]"/>
 
                       <g:if test="${execution.argString}">
-                          <section class=" section-space argstring-scrollable">
+                          <section class=" section-space exec-args-section argstring-scrollable">
                               <span class="text-secondary"><g:message code="options.prompt"/></span>
                               <g:render template="/execution/execArgString"
                                         model="[argString: execution.argString, inputFilesMap: inputFilesMap]"/>
