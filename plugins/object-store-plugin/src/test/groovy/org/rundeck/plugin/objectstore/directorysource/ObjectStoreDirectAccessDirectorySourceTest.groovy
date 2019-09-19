@@ -16,22 +16,28 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import io.minio.MinioClient
-import org.rundeck.plugin.objectstore.tree.ObjectStoreTree
+import org.testcontainers.spock.Testcontainers
 import spock.lang.Shared
 import spock.lang.Specification
-import testhelpers.MinioTestServer
+import testhelpers.MinioContainer
 import testhelpers.MinioTestUtils
 
+@Testcontainers
 class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
-    static MinioTestServer server = new MinioTestServer()
     static MinioClient mClient
+    static final String ACCESS_KEY = 'TEST_KEY'
+    static final String SECRET_KEY = UUID.randomUUID().toString()
+
+    @Shared
+    public MinioContainer minio = new MinioContainer<>().withAccess(ACCESS_KEY, SECRET_KEY)
+
+
     @Shared
     ObjectStoreDirectAccessDirectorySource directory
 
     def setupSpec() {
-        server.start()
+        mClient = minio.client()
         String bucket = "direct-access-dir-bucket"
-        mClient = new MinioClient("http://localhost:9000", server.accessKey, server.secretKey)
         if(!mClient.bucketExists(bucket)) mClient.makeBucket(bucket)
         directory = new ObjectStoreDirectAccessDirectorySource(mClient, bucket)
 
@@ -46,7 +52,7 @@ class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     }
 
     void cleanupSpec() {
-        server.stop()
+        minio.stop()
     }
 
     def "CheckPathExists"() {
