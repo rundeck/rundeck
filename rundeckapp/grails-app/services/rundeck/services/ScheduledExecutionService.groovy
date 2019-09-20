@@ -4304,13 +4304,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def runBeforeSave(scheduledExecution, authContext){
-        Map scheduleMap = scheduledExecution.toMap()
+    def runBeforeSave(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext){
         INodeSet nodeSet = getNodes(scheduledExecution, null, authContext)
-        scheduleMap.project = scheduledExecution.project
         JobPersistEventImpl jobPersistEvent = new JobPersistEventImpl(
-                scheduleMap.name,
-                scheduleMap.project,
+                scheduledExecution.jobName,
+                scheduledExecution.project,
                 authContext.getUsername(),
                 nodeSet,
                 scheduledExecution?.filter,
