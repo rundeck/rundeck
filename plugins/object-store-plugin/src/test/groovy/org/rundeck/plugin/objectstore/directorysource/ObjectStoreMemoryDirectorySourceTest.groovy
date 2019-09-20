@@ -16,14 +16,11 @@
 package org.rundeck.plugin.objectstore.directorysource
 
 import io.minio.MinioClient
-import org.testcontainers.containers.GenericContainer
-import org.testcontainers.spock.Testcontainers
 import spock.lang.Shared
 import spock.lang.Specification
 import testhelpers.MinioContainer
 import testhelpers.MinioTestUtils
 
-@Testcontainers
 class ObjectStoreMemoryDirectorySourceTest extends Specification {
 
     static MinioClient mClient
@@ -38,6 +35,7 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
 
 
     def setupSpec() {
+        minio.start()
         mClient = minio.client()
     }
 
