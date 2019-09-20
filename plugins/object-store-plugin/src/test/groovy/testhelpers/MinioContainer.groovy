@@ -33,6 +33,7 @@ class MinioContainer<SELF extends MinioContainer<SELF>> extends GenericContainer
         super(dockerImageName);
         withExposedPorts(DEFAULT_PORT)
         withCommand('server /data')
+        withAccess 'TEST_KEY', UUID.randomUUID().toString()
     }
 
     SELF withAccess(String accessKey, String secretKey) {
