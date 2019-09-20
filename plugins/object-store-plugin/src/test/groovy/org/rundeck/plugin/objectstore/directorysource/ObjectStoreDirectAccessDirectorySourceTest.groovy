@@ -23,11 +23,9 @@ import testhelpers.MinioTestUtils
 
 class ObjectStoreDirectAccessDirectorySourceTest extends Specification {
     static MinioClient mClient
-    static final String ACCESS_KEY = 'TEST_KEY'
-    static final String SECRET_KEY = UUID.randomUUID().toString()
 
     @Shared
-    public MinioContainer minio = new MinioContainer<>().withAccess(ACCESS_KEY, SECRET_KEY)
+    public MinioContainer minio = new MinioContainer<>()
 
 
     @Shared
