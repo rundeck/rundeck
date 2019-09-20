@@ -103,7 +103,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
                          'crontabString', 'averageDuration', 'notifyAvgDurationRecipients', 'notifyAvgDurationUrl',
                          'notifyRetryableFailureRecipients', 'notifyRetryableFailureUrl', 'notifyFailureAttach',
                          'notifySuccessAttach', 'notifyRetryableFailureAttach',
-                         'pluginConfigMap','jobPluginConfigSet']
+                         'pluginConfigMap']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
