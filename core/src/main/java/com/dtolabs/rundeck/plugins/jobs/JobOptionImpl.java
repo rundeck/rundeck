@@ -43,9 +43,9 @@ public class JobOptionImpl implements JobOption, Comparable {
     public JobOptionImpl(LinkedHashMap option) throws ValidationException{
         this.name = (String) option.get("name");
         this.label = option.containsKey("label") ? (String) option.get("label") : null;
-        this.enforced =  option.containsKey("enforced") && (boolean) option.get("enforced")?true:false;
-        this.required = option.containsKey("required") && (boolean) option.get("required")?true:false;
-        this.isDate = option.containsKey("isDate") && (boolean) option.get("isDate")?true:false;
+        this.enforced = option.containsKey("enforced") && (boolean) option.get("enforced");
+        this.required = option.containsKey("required") && (boolean) option.get("required");
+        this.isDate = option.containsKey("isDate") && (boolean) option.get("isDate");
         if(this.isDate){
             this.dateFormat = (String) option.get("dateFormat");
         }
