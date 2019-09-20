@@ -81,8 +81,8 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
                 if (result != null && !result.successful) {
                     success = false
                     log.info("Result from plugin is false an exception will be thrown")
-                    if (result.getDescription() != null && !result.getDescription().trim().isEmpty()) {
-                        throw new ExecutionLifecyclePluginException(result.getDescription())
+                    if (result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
+                        throw new ExecutionLifecyclePluginException(result.getErrorMessage())
                     } else {
                         throw new ExecutionLifecyclePluginException(
                                 "Response from $plugin.name is false, but no description was provided by the plugin"

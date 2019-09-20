@@ -174,8 +174,8 @@ class JobLifecyclePluginService implements ProjectConfigurable {
                 if (result != null && !result.successful) {
                     success = false
                     log.info("Result from plugin is false an exception will be thrown")
-                    if (result.getDescription() != null && !result.getDescription().trim().isEmpty()) {
-                        throw new JobLifecyclePluginException(result.getDescription())
+                    if (result.getErrorMessage() != null && !result.getErrorMessage().trim().isEmpty()) {
+                        throw new JobLifecyclePluginException(result.getErrorMessage())
                     } else {
                         throw new JobLifecyclePluginException(
                                 "Response from $plugin.name is false, but no description was provided by the plugin"

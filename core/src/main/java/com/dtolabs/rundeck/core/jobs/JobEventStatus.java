@@ -19,7 +19,10 @@ public interface JobEventStatus {
         return true;
     }
 
-    default String getDescription() {
+    /**
+     * @return descriptive error message when result is not successful
+     */
+    default String getErrorMessage() {
         return null;
     }
 
