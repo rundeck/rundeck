@@ -18,8 +18,17 @@ package com.dtolabs.rundeck.core.jobs;
 
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 
+/**
+ * Contains result of a Job Execution
+ */
 public interface JobEventResult {
+    /**
+     * @return execution result
+     */
     WorkflowExecutionResult getResult();
 
+    /**
+     * @return true if aborted
+     */
     boolean isAborted();
 }

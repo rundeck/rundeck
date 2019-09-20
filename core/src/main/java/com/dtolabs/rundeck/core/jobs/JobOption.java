@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 
+/**
+ * Models a single Option configuration of a job
+ */
 public interface JobOption {
 
     String getName();

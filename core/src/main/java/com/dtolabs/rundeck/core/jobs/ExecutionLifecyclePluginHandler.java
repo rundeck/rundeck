@@ -7,7 +7,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import java.util.Optional;
 
 /**
- * Can invoke job events given just execution context
+ * Can invoke execution lifecycle events given just execution context
  */
 public interface ExecutionLifecyclePluginHandler {
     /**

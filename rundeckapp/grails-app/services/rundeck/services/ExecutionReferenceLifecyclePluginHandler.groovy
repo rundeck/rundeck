@@ -25,6 +25,9 @@ import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 
+/**
+ * Handles execution lifecycle event calls using multiple plugins and an execution reference, via the {@link ExecutionLifecyclePluginService}
+ */
 class ExecutionReferenceLifecyclePluginHandler implements ExecutionLifecyclePluginHandler {
     ExecutionLifecyclePluginService executionLifecyclePluginService
     ExecutionReference executionReference

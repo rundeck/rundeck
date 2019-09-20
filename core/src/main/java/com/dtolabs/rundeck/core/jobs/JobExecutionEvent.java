@@ -9,11 +9,10 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import java.util.Map;
 
 /**
- * Describes the job life cycle event.
- * Created by rnavarro
- * Date: 5/07/19
+ * Describes the job or execution life cycle event.
+ * @author rnavarro
+ * @since 5/07/19
  */
-
 public interface JobExecutionEvent {
 
     /**
@@ -56,10 +55,20 @@ public interface JobExecutionEvent {
      */
     INodeSet getNodes();
 
+    /**
+     * @return reference to the execution
+     */
     ExecutionReference getExecution();
 
+    /**
+     * @return details of the workflow
+     */
     WorkflowExecutionItem getWorkflow();
 
+    /**
+     *
+     * @return
+     */
     JobEventResult getResult();
 
 }
