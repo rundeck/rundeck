@@ -24,12 +24,10 @@ import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
-import org.testcontainers.spock.Testcontainers
 import spock.lang.Shared
 import spock.lang.Specification
 import testhelpers.MinioContainer
 
-@Testcontainers
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
     ObjectStoreTree store
@@ -42,6 +40,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     public MinioContainer minio = new MinioContainer<>().withAccess(ACCESS_KEY, SECRET_KEY)
 
     void setupSpec() {
+        minio.start()
         mClient = minio.client()
     }
 
