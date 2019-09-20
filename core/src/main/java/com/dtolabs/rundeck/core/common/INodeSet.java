@@ -23,7 +23,6 @@
 */
 package com.dtolabs.rundeck.core.common;
 
-import java.io.Serializable;
 import java.util.Collection;
 
 /**
@@ -31,7 +30,7 @@ import java.util.Collection;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface INodeSet extends Iterable<INodeEntry>, Serializable {
+public interface INodeSet extends Iterable<INodeEntry>{
     public Collection<INodeEntry> getNodes();
 
     public INodeEntry getNode(String name);
