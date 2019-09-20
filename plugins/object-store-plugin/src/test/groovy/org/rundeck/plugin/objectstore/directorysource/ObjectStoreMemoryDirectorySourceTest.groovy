@@ -26,12 +26,8 @@ class ObjectStoreMemoryDirectorySourceTest extends Specification {
     static MinioClient mClient
     ObjectStoreMemoryDirectorySource directory
 
-
-    static final String accessKey = 'TEST_KEY'
-    static final String secretKey = UUID.randomUUID().toString()
-
     @Shared
-    public MinioContainer minio = new MinioContainer<>().withAccess(accessKey, secretKey)
+    public MinioContainer minio = new MinioContainer<>()
 
 
     def setupSpec() {
