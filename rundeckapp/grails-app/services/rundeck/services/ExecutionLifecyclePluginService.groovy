@@ -90,7 +90,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
                     }
 
                 }
-                if (result != null && result.useNewValues()) {
+                if (result != null && result.isUseNewValues()) {
                     results[plugin.name] = result
                     prevResult = result
                 }
@@ -179,7 +179,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
             JobEventStatus jobEventStatus
     ) {
         def newContextBuilder = ExecutionContextImpl.builder(context)
-        if (jobEventStatus && jobEventStatus.useNewValues() && jobEventStatus.executionContext) {
+        if (jobEventStatus && jobEventStatus.isUseNewValues() && jobEventStatus.executionContext) {
             newContextBuilder.merge(ExecutionContextImpl.builder(jobEventStatus.executionContext))
         }
         newContextBuilder.build()
@@ -297,11 +297,6 @@ class JobEventStatusImpl implements JobEventStatus {
     boolean successful
     Map optionsValues
     boolean useNewValues
-
-    @Override
-    boolean useNewValues() {
-        useNewValues
-    }
     StepExecutionContext executionContext
     SortedSet<JobOption> options
 }

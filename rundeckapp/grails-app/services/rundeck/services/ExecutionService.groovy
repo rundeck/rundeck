@@ -2440,7 +2440,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         HashMap optparams
         optparams = parseJobOptionInput(props, scheduledExec)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
-        if(result?.useNewValues()){
+        if(result?.isUseNewValues()){
             optparams = result.optionsValues
             checkSecuredOptions(scheduledExec, props, result.optionsValues)
         }

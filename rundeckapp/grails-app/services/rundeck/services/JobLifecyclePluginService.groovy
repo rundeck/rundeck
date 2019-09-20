@@ -183,7 +183,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
                     }
 
                 }
-                if (result != null && result.useNewValues()) {
+                if (result != null && result.isUseNewValues()) {
                     results[plugin.name] = result
                     prevResult = result
                 }
@@ -294,7 +294,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
             JobEventStatus jobEventStatus
     ) {
         def newOptionsValues = new HashMap<String, String>(optionsValues ?: [:])
-        if (jobEventStatus && jobEventStatus.useNewValues() && jobEventStatus.optionsValues) {
+        if (jobEventStatus && jobEventStatus.isUseNewValues() && jobEventStatus.optionsValues) {
             newOptionsValues.putAll(jobEventStatus.optionsValues)
         }
         newOptionsValues
@@ -310,7 +310,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
     TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobEventStatus jobEventStatus) {
         SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
 
-        if (jobEventStatus && jobEventStatus.useNewValues()) {
+        if (jobEventStatus && jobEventStatus.isUseNewValues()) {
             if(jobEventStatus.options){
                 options = new TreeSet<>(jobEventStatus.options)
             }else{

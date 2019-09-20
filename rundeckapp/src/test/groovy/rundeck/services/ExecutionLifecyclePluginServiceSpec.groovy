@@ -212,7 +212,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             def wf = Mock(WorkflowExecutionItem)
             def event = JobExecutionEventImpl.beforeRun(ctx1, ref, wf)
             def status = Mock(JobEventStatus) {
-                useNewValues() >> useNewValues
+                isUseNewValues() >> useNewValues
                 getExecutionContext() >> Mock(StepExecutionContext) {
                     getLoglevel() >> 0
                 }

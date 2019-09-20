@@ -31,10 +31,6 @@ class JobLifecyclePluginServiceSpec extends Specification {
             return newOptionValues
         }
 
-        @Override
-        boolean useNewValues() {
-            return useNewValues
-        }
     }
 
     def "get project default job plugin types"() {

@@ -26,7 +26,14 @@ public interface JobEventStatus {
         return null;
     }
 
-    default boolean useNewValues(){ return false; }
+    /**
+     *
+     * @return true indicates values returned by this status result should be used (types of values depends on event
+     * context)
+     */
+    default boolean isUseNewValues() {
+        return false;
+    }
 
     /**
      * @return option values to use when isUseNewValues is true

@@ -4316,7 +4316,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution?.filter,
                 getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
         def jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
-        if(jobEventStatus?.useNewValues()){
+        if(jobEventStatus?.isUseNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
             def result = validateOptions(scheduledExecution, rundeckOptions)
             def failed = result.failed
