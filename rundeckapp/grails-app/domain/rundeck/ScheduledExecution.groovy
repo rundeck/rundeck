@@ -21,8 +21,10 @@ import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.google.gson.Gson
 import groovy.json.JsonOutput
 import org.quartz.Calendar
@@ -1189,6 +1191,14 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
             return statsContent.execCount
         }
         return 0;
+    }
+
+    /**
+     *
+     * @return model values
+     */
+    SortedSet<JobOption> jobOptionsSet() {
+        new TreeSet<>(options*.toJobOption())
     }
 }
 

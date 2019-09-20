@@ -4314,7 +4314,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 authContext.getUsername(),
                 nodeSet,
                 scheduledExecution?.filter,
-                getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
+                scheduledExecution.jobOptionsSet())
         def jobEventStatus = jobLifecyclePluginService?.beforeJobSave(scheduledExecution,jobPersistEvent)
         if(jobEventStatus?.isUseNewValues()){
             SortedSet<Option> rundeckOptions = getOptions(jobEventStatus.getOptions())
@@ -4425,19 +4425,4 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         nodeSet
     }
 
-    def getOptionsFromScheduleExecutionMap(scheduledExecutionMap) {
-        def options = new TreeSet<JobOption>()
-        if(scheduledExecutionMap != null){
-            if(scheduledExecutionMap.containsKey("options")){
-                def originalOptions = scheduledExecutionMap.get("options")
-                if(originalOptions != null && !originalOptions.isEmpty()){
-                    for (LinkedHashMap originalOption: originalOptions) {
-                        JobOptionImpl option = new JobOptionImpl(originalOption)
-                        options.add(option)
-                    }
-                }
-            }
-        }
-        return options
-    }
 }

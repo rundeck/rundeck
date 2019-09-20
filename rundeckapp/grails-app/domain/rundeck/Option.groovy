@@ -17,6 +17,8 @@
 package rundeck
 
 import com.dtolabs.rundeck.app.api.marshall.CollectionElement
+import com.dtolabs.rundeck.core.jobs.JobOption
+import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.option.OptionValue
 import com.dtolabs.rundeck.util.StringNumericSort
 import com.fasterxml.jackson.core.JsonParseException
@@ -216,6 +218,9 @@ public class Option implements Comparable{
             map.hidden = hidden
         }
         return map
+    }
+    public JobOption toJobOption(){
+        new JobOptionImpl(toMap())
     }
 
     public static Option fromMap(String name,Map data){

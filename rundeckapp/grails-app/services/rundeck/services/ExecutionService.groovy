@@ -3989,7 +3989,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 optparams,
                 nodes,
                 nodeFilter,
-                scheduledExecutionService.getOptionsFromScheduleExecutionMap(scheduledExecution.toMap()))
+                scheduledExecution.jobOptionsSet())
         try {
             return jobLifecyclePluginService.beforeJobExecution(scheduledExecution, event)
         } catch (JobLifecyclePluginException jpe) {
