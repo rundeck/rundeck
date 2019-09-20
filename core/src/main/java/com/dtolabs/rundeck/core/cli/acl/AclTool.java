@@ -979,7 +979,8 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_TOGGLE_SCHEDULE,
                     ACLConstants.ACTION_SCM_UPDATE,
                     ACLConstants.ACTION_SCM_CREATE,
-                    ACLConstants.ACTION_SCM_DELETE
+                    ACLConstants.ACTION_SCM_DELETE,
+                    ACLConstants.VIEW_HISTORY
             );
     static final List<String> projectJobKindActions =
             Arrays.asList(
@@ -1996,6 +1997,7 @@ public class AclTool extends BaseTool {
         public static final String ACTION_SCM_DELETE="scm_delete";
         public static final String ACTION_SCM_IMPORT = "scm_import";
         public static final String ACTION_SCM_EXPORT = "scm_export";
+        public static final String VIEW_HISTORY = "view_history";
 
         public static final String TYPE_SYSTEM = "system";
         public static final String TYPE_SYSTEM_ACL = "system_acl";

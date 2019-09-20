@@ -17,6 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.Decision
+import com.dtolabs.rundeck.core.authorization.Explanation
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
@@ -26,6 +30,7 @@ import rundeck.ScheduledExecution
 class ReportService  {
 
     def grailsApplication
+    def FrameworkService frameworkService
 
     public Map reportExecutionResult(Map fields) {
         /**
@@ -490,4 +495,47 @@ class ReportService  {
         }
     }
 
+    Map jobHistoryAuthorizations(AuthContext authContext, String project){
+        def decisions = authorizeViewHistoryJob(authContext, project)
+        Map<Explanation.Code, List> authorizations = [:]
+
+        authorizations.put(Explanation.Code.GRANTED, decisions.findAll {
+            it.explain().getCode() == Explanation.Code.GRANTED
+        }?.collect {
+            it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
+        })
+
+        authorizations.put(Explanation.Code.REJECTED_DENIED, decisions.findAll {
+            it.explain().getCode() == Explanation.Code.REJECTED_DENIED
+        }?.collect {
+            it.resource.group ? ScheduledExecution.generateFullName(it.resource.group,it.resource.name) : it.resource.name
+        })
+
+        return authorizations
+    }
+
+    private Set<Decision> authorizeViewHistoryJob(AuthContext authContext, String project){
+        def jobs = ScheduledExecution.createCriteria().list{
+            projections {
+                property('groupPath')
+                property('jobName')
+                property('uuid')
+            }
+            eq("project", project)
+        }
+        HashSet resHS = new HashSet()
+
+        jobs.each { reg ->
+            Map meta = [:]
+            if(reg[0]) meta.group = reg[0]
+            if(reg[1]) meta.job = reg[1]
+            if(reg[2]) meta.uuid = reg[2]
+            resHS.add(frameworkService.authResourceForJob(meta.job, meta.group, meta.uuid))
+        }
+        HashSet constraints = new HashSet()
+        constraints.addAll([AuthConstants.VIEW_HISTORY])
+
+
+        return frameworkService.authorizeProjectResources(authContext,resHS, constraints, project)
+    }
 }

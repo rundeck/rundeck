@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.Explanation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -169,6 +170,10 @@ class ReportsController extends ControllerBase{
             }
 
         }
+
+        Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, constraints,params.project)
+        query.jobListFilter = authorizations.get(Explanation.Code.GRANTED)
+        query.excludeJobListFilter = authorizations.get(Explanation.Code.REJECTED_DENIED)
 
         if(null!=query){
             query.configureFilter()
