@@ -22,12 +22,11 @@ import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProvi
 import rundeck.ScheduledExecution
 
 /**
- * Provides capability to execute certain task based on a job event
+ * Provides capability to execute certain task based on a job execution event
  * Created by rnavarro
  * Date: 5/07/19
  * Time: 10:32 AM
  */
-
 class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginService {
 
     PluginService pluginService
