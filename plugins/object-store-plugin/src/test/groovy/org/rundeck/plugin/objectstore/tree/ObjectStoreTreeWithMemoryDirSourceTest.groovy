@@ -28,7 +28,6 @@ import org.rundeck.plugin.objectstore.directorysource.ObjectStoreDirectorySource
 import org.rundeck.plugin.objectstore.directorysource.ObjectStoreMemoryDirectorySource
 import org.rundeck.storage.api.HasInputStream
 import org.rundeck.storage.api.PathUtil
-import org.testcontainers.spock.Testcontainers
 import spock.lang.Shared
 import spock.lang.Specification
 <<<<<<< HEAD
@@ -38,7 +37,6 @@ import testhelpers.MinioTestServer
 import testhelpers.MinioContainer
 >>>>>>> 82ab4cc55b... Use containers instead of binaries to run minio
 
-@Testcontainers
 class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     String configBucket = "test-config-bucket"
     ObjectStoreTree store
@@ -51,6 +49,7 @@ class ObjectStoreTreeWithMemoryDirSourceTest extends Specification {
     public MinioContainer minio = new MinioContainer<>().withAccess(ACCESS_KEY, SECRET_KEY)
 
     void setupSpec() {
+        minio.start()
         mClient = minio.client()
     }
 
