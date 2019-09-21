@@ -1198,7 +1198,7 @@ class ScheduledExecution extends ExecutionContext implements EmbeddedJsonData {
      * @return model values
      */
     SortedSet<JobOption> jobOptionsSet() {
-        new TreeSet<>(options*.toJobOption())
+        new TreeSet<>(options.collect{it.toJobOption()})
     }
 }
 
