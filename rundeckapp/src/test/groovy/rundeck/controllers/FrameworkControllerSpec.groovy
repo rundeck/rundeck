@@ -1283,6 +1283,28 @@ class FrameworkControllerSpec extends Specification {
 
     }
 
+    def "create project description that includes unicode characters"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+
+        def description = 'Project Desc À'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+
+    }
+
     def "node summary ajax lists filters"() {
         given:
         def project = 'testProj'
