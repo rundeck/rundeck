@@ -171,7 +171,7 @@ class ReportsController extends ControllerBase{
 
         }
 
-        Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, constraints,params.project)
+        Map<Explanation.Code, List> authorizations = reportService.jobHistoryAuthorizations(authContext, params.project)
         query.jobListFilter = authorizations.get(Explanation.Code.GRANTED)
         query.excludeJobListFilter = authorizations.get(Explanation.Code.REJECTED_DENIED)
 
