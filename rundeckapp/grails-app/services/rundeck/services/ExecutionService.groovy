@@ -2042,10 +2042,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
-
-            checkSecuredOptions(scheduledExecution, secureOptsExposed, allowedOptions)
-            checkSecuredOptions(scheduledExecution, secureOpts, allowedOptions)
+            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
 
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
@@ -2139,10 +2136,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
-
-            checkSecuredOptions(scheduledExecution, secureOptsExposed, allowedOptions)
-            checkSecuredOptions(scheduledExecution, secureOpts, allowedOptions)
+            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
 
             // Update execution
             e.dateStarted       = startTime
@@ -2210,6 +2204,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext auth context
      * @param runAsUser owner of execution
      * @param input , map of input overrides, allowed keys: loglevel: String, option.*:String, argString: String, node(Include|Exclude).*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
+     * @param securedOpts
+     * @param secureExposedOpts
      * @return execution
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -2217,7 +2213,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
-            Map input
+            Map input,
+            Map securedOpts,
+            Map secureExposedOpts
     ) {
         def props = [:]
 
@@ -2281,7 +2279,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext)
+        HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
 
         if(props){
             input.putAll(props.findAll{it.key.startsWith('option.') && it.value!=null})
@@ -2383,6 +2381,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param user
      * @param input, map of input overrides, allowed keys: loglevel: String, argString: String, node(Include|Exclude)
      * .*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
+     * @param securedOpts
+     * @param secureExposedOpts
      * @return
      * @throws ExecutionServiceException
      */
@@ -2392,7 +2392,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             String runAsUser,
             Map input = [:],
             boolean retry=false,
-            long prevId=-1
+            long prevId=-1,
+            Map securedOpts = [:],
+            Map secureExposedOpts = [:]
     )
             throws ExecutionServiceException
     {
@@ -2419,10 +2421,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}', 'conflict')
                 }
 
-                return int_createExecution(se, authContext, runAsUser, input)
+                return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
             }
         }else{
-            return int_createExecution(se,authContext,runAsUser,input)
+            return int_createExecution(se,authContext,runAsUser,input, securedOpts, secureExposedOpts)
         }
     }
 
@@ -2434,37 +2436,36 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param scheduledExec
      * @param authContext auth for reading storage defaults
      * @param optionValues values modified by a job plugin
+     * @param securedOpts
+     * @param securedExposedOpts
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
         HashMap optparams
         optparams = parseJobOptionInput(props, scheduledExec)
         def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
         if(result?.isUseNewValues()){
             optparams = result.optionsValues
-            checkSecuredOptions(scheduledExec, props, result.optionsValues)
+            checkSecuredOptions(result.optionsValues, securedOpts, securedExposedOpts)
         }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
     }
 
-    def checkSecuredOptions(scheduledExecution, props = [:], optionsValues){
+    /**
+     * It replaces values coming from optionsValues into secured options and secured exposed options
+     * it doesn't add values to secured/exposed options
+     * @param optionsValues
+     * @param securedOpts
+     * @param securedExposedOpts
+     */
+    def checkSecuredOptions(optionsValues, Map securedOpts = [:], Map securedExposedOpts = [:]){
 
-        final options = scheduledExecution.options
-        if(optionsValues && options) {
-            options.each {Option opt ->
-                if (opt.secureInput) {
-                    def optpatt = '^option\\.(.+)$'
-                    props.each { key, val ->
-                        def matcher = key =~ optpatt
-                        if (matcher.matches() && opt.name ==  matcher.group(1) && optionsValues[matcher.group(1)]) {
-                            def optname = matcher.group(1)
-                            props[matcher.text] = optionsValues[optname]
-                        }else if(key == opt.name && optionsValues['option.'+opt.name]){
-                            props[key] = optionsValues['option.'+opt.name]
-                        }
-                    }
-                }
+        optionsValues.each { k, v ->
+            if(securedOpts[k]){
+                securedOpts.put(k, v)
+            }else if(securedExposedOpts[k]){
+                securedExposedOpts.put(k, v)
             }
         }
     }
