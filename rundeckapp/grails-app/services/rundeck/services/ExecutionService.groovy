@@ -2281,10 +2281,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //evaluate embedded Job options for validation
         HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
 
-        if(props){
-            input.putAll(props.findAll{it.key.startsWith('option.') && it.value!=null})
-        }
-
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
