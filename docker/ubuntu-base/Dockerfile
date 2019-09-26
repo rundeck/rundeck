@@ -30,6 +30,7 @@ RUN set -euxo pipefail \
         sudo \
         openjdk-8-jdk-headless \
         uuid-runtime \
+        postgresql-client \
         wget \
     && rm -rf /var/lib/apt/lists/* \
     # Setup rundeck user
