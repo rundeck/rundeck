@@ -217,6 +217,9 @@ public class Option implements Comparable{
         if(hidden){
             map.hidden = hidden
         }
+        if(name){
+            map.name = name
+        }
         return map
     }
     public JobOption toJobOption(){
