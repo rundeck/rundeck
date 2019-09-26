@@ -175,7 +175,7 @@
 =======
               <g:set var="ischecked" value="${propval.value in defvalset ? 'checked="checked"' : ''}"/>
             <input type="checkbox" id="${fieldname}" name="${fieldname}" ${ischecked} value="${propval.value}"/>
-            <label class="grid-row optionvaluemulti">
+            <label class="grid-row optionvaluemulti" for="${fieldname}">
               ${propval.label}
             </label>
           </div>

@@ -156,9 +156,11 @@ class WorkflowControllerTests {
         def inputValue2 = 'abc\ndef\n\nrbc\n'
         def expectedValue2 = 'abc\ndef\n\nrbc\n'
         def pluginConfig=[monkey: 'tree',
+                          ape:['land','tree'],
                           multilineconfig: inputValue,
                           unixlines: inputValue2]
         def expectedConfig=[monkey:'tree',
+                            ape:'land,tree',
                             multilineconfig: expectedValue,
                             unixlines: expectedValue2]
 
