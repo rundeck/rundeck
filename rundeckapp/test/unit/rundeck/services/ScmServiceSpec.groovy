@@ -322,6 +322,48 @@ class ScmServiceSpec extends Specification {
         ScmService.IMPORT | _
     }
 
+    def "init import plugin twice will replace registered listener"() {
+        given:
+            def ctx = Mock(ScmOperationContext) {
+                getFrameworkProject() >> 'testProject'
+            }
+            def config = [:]
+            def configobj = Mock(ScmPluginConfigData)
+
+            ScmImportPluginFactory importFactory = Mock(ScmImportPluginFactory)
+            ScmImportPlugin plugin = Mock(ScmImportPlugin)
+
+            service.pluginService = Mock(PluginService)
+            service.pluginConfigService = Mock(PluginConfigService)
+            service.jobEventsService = Mock(JobEventsService)
+            service.frameworkService = Mock(FrameworkService)
+
+            def testCloser = new TestCloseable()
+            def validated = new ValidatedPlugin(valid: true)
+            def mockListener = Mock(JobChangeListener)
+
+        when:
+            def result = service.initPlugin(integration, ctx, 'atype', config)
+            def result2 = service.initPlugin(integration, ctx, 'atype', config)
+
+        then:
+            2 * service.frameworkService.getFrameworkPropertyResolver(*_)
+            2 * service.pluginService.validatePlugin(*_) >> validated
+            2 * service.pluginService.retainPlugin('atype', _) >>
+            Closeables.closeableProvider(importFactory, testCloser)
+            2 * service.pluginConfigService.loadScmConfig(*_) >> configobj
+            2 * configobj.getSettingList('trackedItems') >> ['a', 'b']
+            2 * importFactory.createPlugin(ctx, config, ['a', 'b']) >> plugin
+            1 * service.jobEventsService.removeListener(null)
+            1 * service.jobEventsService.removeListener(mockListener)
+            2 * service.jobEventsService.addListenerForProject(_, 'testProject') >> mockListener
+
+            result == plugin
+        where:
+            integration       | _
+            ScmService.IMPORT | _
+    }
+
     def "init export plugin valid"() {
         given:
         def ctx = Mock(ScmOperationContext) {
@@ -357,6 +399,45 @@ class ScmServiceSpec extends Specification {
         where:
         integration       | _
         ScmService.EXPORT | _
+    }
+
+    def "init export plugin twice will replace registered plugin"() {
+        given:
+            def ctx = Mock(ScmOperationContext) {
+                getFrameworkProject() >> 'testProject'
+            }
+            def config = [:]
+
+            ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+            ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+            service.pluginService = Mock(PluginService)
+            service.pluginConfigService = Mock(PluginConfigService)
+            service.jobEventsService = Mock(JobEventsService)
+            service.frameworkService = Mock(FrameworkService)
+            def exportCloser = new TestCloseable()
+
+            def validated = new ValidatedPlugin(valid: true)
+            def mockListener = Mock(JobChangeListener)
+
+        when:
+            def result = service.initPlugin(integration, ctx, 'atype', config)
+            def result2 = service.initPlugin(integration, ctx, 'atype', config)
+
+        then:
+            2 * service.frameworkService.getFrameworkPropertyResolver(*_)
+            2 * service.pluginService.validatePlugin(*_) >> validated
+            2 * service.pluginService.retainPlugin('atype', _) >>
+            Closeables.closeableProvider(exportFactory, exportCloser)
+            2 * exportFactory.createPlugin(ctx, config) >> plugin
+            1 * service.jobEventsService.removeListener(null)
+            1 * service.jobEventsService.removeListener(mockListener)
+            2 * service.jobEventsService.addListenerForProject(_, 'testProject') >> mockListener
+
+            result == plugin
+        where:
+            integration       | _
+            ScmService.EXPORT | _
     }
 
 
@@ -464,7 +545,8 @@ class ScmServiceSpec extends Specification {
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
         TestCloseable exportCloser = new TestCloseable()
         service.loadedExportPlugins['test1'] = Closeables.closeableProvider(plugin, exportCloser)
-        service.initedProjects.add('test1')
+            service.initedProjects.add('export/test1')
+            service.initedProjects.add('import/test1')
 
         def input = [:]
         def auth = Mock(UserAndRolesAuthContext) {
@@ -608,5 +690,27 @@ class ScmServiceSpec extends Specification {
         ScmService.EXPORT   | 'qrst'    |true           | 'etc/scm-export.properties'
         ScmService.IMPORT   | 'uvwx'    |true           | 'etc/scm-import.properties'
 
+    }
+
+    def "initProject is idempotent"() {
+        given:
+            service.pluginConfigService = Mock(PluginConfigService)
+            service.frameworkService = Mock(FrameworkService) {
+                isClusterModeEnabled() >> true
+            }
+        when:
+            service.initProject('testproj1', integration)
+            service.initProject('testproj1', integration)
+        then:
+            1 * service.pluginConfigService.loadScmConfig(
+                    'testproj1',
+                    "etc/scm-${integration}.properties",
+                    "scm.$integration"
+            ) >> Mock(ScmPluginConfigData) {
+                1 * getEnabled() >> false
+            }
+
+        where:
+            integration << ['export', 'import']
     }
 }
