@@ -5,7 +5,6 @@ import * as uiv from 'uiv'
 import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import App from './App'
-import VueMoment from 'vue-moment'
 import VueI18n from 'vue-i18n'
 import international from './i18n'
 
@@ -16,7 +15,6 @@ Vue.use(VueCookies)
 
 Vue.use(uiv)
 Vue.use(VueI18n)
-Vue.use(VueMoment)
 Vue.use(VueCookies)
 
 let messages = international.messages
