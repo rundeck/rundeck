@@ -110,18 +110,18 @@ class ScmService {
      * @param project
      */
     def initProject(String project){
-        synchronized (initedProjects){
-            if(initedProjects.contains(project)){
-                return true
-            }
-            initedProjects.add(project)
-        }
         for (String integration : INTEGRATIONS) {
             initProject(project, integration)
             //TODO: refresh status of all jobs in project?
         }
     }
     def initProject(String project, String integration){
+        synchronized (initedProjects) {
+            if (initedProjects.contains(integration + '/' + project)) {
+                return true
+            }
+            initedProjects.add(integration + '/' + project)
+        }
         def pluginConfig = loadScmConfig(project, integration)
         if (!pluginConfig?.enabled) {
             return false
@@ -443,15 +443,7 @@ class ScmService {
             ScmImportPlugin plugin = loaded.provider
             changeListener = listenerForImportPlugin(plugin)
         }
-        changeListener = jobEventsService.addListenerForProject changeListener, context.frameworkProject
-
-        if (integration == EXPORT) {
-            loadedExportPlugins[context.frameworkProject] = loaded
-            loadedExportListeners[context.frameworkProject] = changeListener
-        } else {
-            loadedImportPlugins[context.frameworkProject] = loaded
-            loadedImportListeners[context.frameworkProject] = changeListener
-        }
+        registerPlugin(integration, loaded, changeListener, context.frameworkProject)
         loaded.provider
     }
 
@@ -610,6 +602,40 @@ class ScmService {
             storeConfig(scmPluginConfig, project, integration)
         }
 
+        unregisterPlugin(integration, project)
+    }
+
+
+    /**
+     * First unregister and plugin already registered, then register this plugin
+     * @param integration
+     * @param context
+     * @param loaded
+     * @param changeListener @param project @param project
+     */
+    public void registerPlugin(
+            String integration,
+            CloseableProvider<? extends Object> loaded,
+            JobChangeListener changeListener,
+            String project
+    ) {
+        unregisterPlugin(integration, project)
+        def registeredListener = jobEventsService.addListenerForProject changeListener, project
+        if (integration == EXPORT) {
+            loadedExportPlugins[project] = loaded
+            loadedExportListeners[project] = registeredListener
+        } else {
+            loadedImportPlugins[project] = loaded
+            loadedImportListeners[project] = registeredListener
+        }
+    }
+
+    /**
+     * Unregister and close a loaded plugin, remove listeners, if present
+     * @param integration
+     * @param project
+     */
+    public void unregisterPlugin(String integration, String project) {
         def loaded
         if (integration == EXPORT) {
             loaded = loadedExportPlugins.remove(project)
@@ -626,7 +652,6 @@ class ScmService {
             jobEventsService.removeListener(changeListener)
         }
         loaded?.provider?.cleanup()
-
     }
 
     /**
