@@ -163,8 +163,8 @@
             <g:each in="${propSelectValues}" var="propval" status="n">
                 <div class="optionvaluemulti checkbox">
               <g:set var="ischecked" value="${propval.value in defvalset ? 'checked="checked"' : ''}"/>
-            <input type="checkbox" id="${fieldname}" name="${fieldname}" ${ischecked} value="${propval.value}"/>
-            <label class="grid-row optionvaluemulti" for="${fieldname}">
+            <input type="checkbox" id="${enc(attr:fieldname)}" name="${enc(attr:fieldname)}" ${ischecked} value="${enc(attr:propval.value)}"/>
+            <label class="grid-row optionvaluemulti" for="${enc(attr:fieldname)}">
               ${propval.label}
             </label>
           </div>
