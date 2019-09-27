@@ -140,7 +140,8 @@ grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
 grails.plugin.springsecurity.logout.handlerNames = [
         'rememberMeServices',
         'securityContextLogoutHandler',
-        'userActionService']
+        'userActionService',
+        'auditEventsService']
 
 grails.plugin.springsecurity.providerNames = [
         'anonymousAuthenticationProvider',

@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.audit.AuditEventsService
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
@@ -134,7 +135,7 @@ beans={
         targetMethod = "initLogging"
         arguments = [log4jPropFile]
     }
-    
+
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -145,7 +146,7 @@ beans={
     rundeckNodeSupport(NodeSupport){
 
     }
-    
+
     rundeckNodeService(EnhancedNodeService)
 
     frameworkPropertyLookupFactory(FrameworkPropertyLookupFactory){
@@ -315,6 +316,8 @@ beans={
     uiPluginProviderService(UIPluginProviderService,rundeckFramework) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
+
+    auditEventsService(AuditEventsService, frameworkService)
 
     scmJobImporter(ScmJobImporter)
 

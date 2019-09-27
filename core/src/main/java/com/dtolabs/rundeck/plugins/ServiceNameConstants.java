@@ -72,4 +72,5 @@ public class ServiceNameConstants {
     public static final String PasswordUtilityEncrypter = "PasswordUtilityEncrypter";
     public static final String ExecutionLifecyclePlugin= "ExecutionLifecyclePlugin";
     public static final String JobLifecyclePlugin      = "JobLifecyclePlugin";
+    public static final String AuditEventListener      = "AuditEventListener";
 }
