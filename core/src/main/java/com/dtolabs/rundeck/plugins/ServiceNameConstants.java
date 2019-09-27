@@ -70,4 +70,6 @@ public class ServiceNameConstants {
     public static final String UserGroupSource         = "UserGroupSource";
     public static final String WebhookEvent            = "WebhookEvent";
     public static final String PasswordUtilityEncrypter = "PasswordUtilityEncrypter";
+    public static final String ExecutionLifecyclePlugin= "ExecutionLifecyclePlugin";
+    public static final String JobLifecyclePlugin      = "JobLifecyclePlugin";
 }

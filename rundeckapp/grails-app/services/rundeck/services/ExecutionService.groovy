@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.logging.*
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration
+import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -46,6 +47,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -91,7 +93,6 @@ import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
-import java.util.stream.Collectors
 
 /**
  * Coordinates Command executions via Ant Project objects
@@ -126,6 +127,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
     def executorService
+    JobLifecyclePluginService jobLifecyclePluginService
+    def executionLifecyclePluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -1157,13 +1160,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     )
             );
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+
+
+            def executionLifecyclePluginConfigs = scheduledExecution ?
+                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(scheduledExecution) :
+                                   null
+            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, execution.asReference())
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
                     item,
                     executioncontext,
-                    workflowLogManager
+                    workflowLogManager,
+                    executionLifecyclePluginExecHandler
             )
+
             thread.start()
             log.debug("started thread")
             return [
@@ -1440,8 +1451,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
             def filterExclude = DataContextUtils.replaceDataReferencesInString(execMap.asExcludeFilter(),datacontext)
-            NodeSet nodeset = filtersAsNodeSet([
-                    filter:filter,
+            NodeSet nodeset = filtersAsNodeSet([filter:filter,
                     filterExclude: filterExclude,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
@@ -2032,7 +2042,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
+            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
+
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -2125,7 +2136,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
+            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions, false, -1, secureOpts, secureOptsExposed)
+
             // Update execution
             e.dateStarted       = startTime
             e.status            = "scheduled"
@@ -2192,6 +2204,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param authContext auth context
      * @param runAsUser owner of execution
      * @param input , map of input overrides, allowed keys: loglevel: String, option.*:String, argString: String, node(Include|Exclude).*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
+     * @param securedOpts
+     * @param secureExposedOpts
      * @return execution
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -2199,7 +2213,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ScheduledExecution se,
             UserAndRolesAuthContext authContext,
             String runAsUser,
-            Map input
+            Map input,
+            Map securedOpts,
+            Map secureExposedOpts
     ) {
         def props = [:]
 
@@ -2263,7 +2279,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //evaluate embedded Job options for validation
-        HashMap optparams = validateJobInputOptions(props, se, authContext)
+        HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
+
         optparams = removeSecureOptionEntries(se, optparams)
 
         props.argString = generateJobArgline(se, optparams)
@@ -2360,6 +2377,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param user
      * @param input, map of input overrides, allowed keys: loglevel: String, argString: String, node(Include|Exclude)
      * .*: String, _replaceNodeFilters:true/false, filter: String, retryAttempt: Integer
+     * @param securedOpts
+     * @param secureExposedOpts
      * @return
      * @throws ExecutionServiceException
      */
@@ -2369,7 +2388,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             String runAsUser,
             Map input = [:],
             boolean retry=false,
-            long prevId=-1
+            long prevId=-1,
+            Map securedOpts = [:],
+            Map secureExposedOpts = [:]
     )
             throws ExecutionServiceException
     {
@@ -2396,10 +2417,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}', 'conflict')
                 }
 
-                return int_createExecution(se, authContext, runAsUser, input)
+                return int_createExecution(se, authContext, runAsUser, input, securedOpts, secureExposedOpts)
             }
         }else{
-            return int_createExecution(se,authContext,runAsUser,input)
+            return int_createExecution(se,authContext,runAsUser,input, securedOpts, secureExposedOpts)
         }
     }
 
@@ -2410,12 +2431,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param props
      * @param scheduledExec
      * @param authContext auth for reading storage defaults
+     * @param optionValues values modified by a job plugin
+     * @param securedOpts
+     * @param securedExposedOpts
      * @return
      */
-    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext) {
-        HashMap optparams = parseJobOptionInput(props, scheduledExec, authContext)
+    private HashMap validateJobInputOptions(Map props, ScheduledExecution scheduledExec, UserAndRolesAuthContext authContext, Map securedOpts, Map securedExposedOpts) {
+        HashMap optparams
+        optparams = parseJobOptionInput(props, scheduledExec)
+        def result = checkBeforeJobExecution(scheduledExec, optparams, props, authContext)
+        if(result?.isUseNewValues()){
+            optparams = result.optionsValues
+            checkSecuredOptions(result.optionsValues, securedOpts, securedExposedOpts)
+        }
         validateOptionValues(scheduledExec, optparams,authContext)
         return optparams
+    }
+
+    /**
+     * It replaces values coming from optionsValues into secured options and secured exposed options
+     * it doesn't add values to secured/exposed options
+     * @param optionsValues
+     * @param securedOpts
+     * @param securedExposedOpts
+     */
+    def checkSecuredOptions(optionsValues, Map securedOpts = [:], Map securedExposedOpts = [:]){
+
+        optionsValues.each { k, v ->
+            if(securedOpts[k]){
+                securedOpts.put(k, v)
+            }else if(securedExposedOpts[k]){
+                securedExposedOpts.put(k, v)
+            }
+        }
     }
 
     /**
@@ -3465,6 +3513,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def WorkflowExecutionItem newExecItem
         def ScheduledExecution se
         def Execution exec
+        def executionReference
 
         def props = frameworkService.getFrameworkProperties()
         def disableRefStats = (props?.getProperty('rundeck.disable.ref.stats') == 'true')
@@ -3584,6 +3633,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         ScheduledExecution.withTransaction {
             exec = Execution.get(execid as Long)
+            executionReference = exec.asReference()
             refId = saveRefExecution(EXECUTION_RUNNING, null, se.id, exec.id)
 
             if (!(schedlist[0].successOnEmptyNodeFilter) && newContext.getNodes().getNodeNames().size() < 1) {
@@ -3601,11 +3651,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def timeoutms = 1000 * timeout
             def shouldCheckTimeout = timeoutms > 0
+
+            def executionLifecyclePluginConfigs = se ?
+                                   executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(se) :
+                                   null
+            def executionLifecyclePluginExecHandler = executionLifecyclePluginService.getExecutionHandler(executionLifecyclePluginConfigs, executionReference)
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
                     newContext,
-                    null
+                    null,
+                    executionLifecyclePluginExecHandler
             )
 
             thread.start()
@@ -3917,5 +3973,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         list = list + fwPlugins
 
         return list
+    }
+
+    def checkBeforeJobExecution(ScheduledExecution scheduledExecution, optparams, props, authContext) {
+
+        INodeSet nodes = scheduledExecutionService.getNodes(scheduledExecution, props.filter, authContext)
+        def nodeFilter = props.filter? props.filter : scheduledExecution.asFilter()
+        JobPreExecutionEventImpl event = new JobPreExecutionEventImpl(
+                scheduledExecution.jobName,
+                props.project,
+                props.user,
+                optparams,
+                nodes,
+                nodeFilter,
+                scheduledExecution.jobOptionsSet())
+        try {
+            return jobLifecyclePluginService.beforeJobExecution(scheduledExecution, event)
+        } catch (JobLifecyclePluginException jpe) {
+            throw new ExecutionServiceValidationException(jpe.message, optparams, null)
+        }
     }
 }
