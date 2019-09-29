@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.PullResult
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.errors.TransportException
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
@@ -642,13 +643,17 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    Map clusterFixJobs(List<JobScmReference> jobs){
+    Map clusterFixJobs(ScmOperationContext context, List<JobScmReference> jobs){
         Status st = git.status().call()
         def bstat = BranchTrackingStatus.of(repo, branch)
         if(st.clean && bstat && bstat.behindCount>0){
-            PullResult result = git.pull().call()
-            jobs.each{job ->
-                refreshJobStatus(job,null)
+            try {
+                PullResult result = gitPull(context)
+                jobs.each{job ->
+                    refreshJobStatus(job,null)
+                }
+            } catch (TransportException e) {
+                log.warn("skipping automatic fix jobs between cluster on https configuration issue")
             }
             return [updated:true]
         }

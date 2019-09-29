@@ -1433,6 +1433,7 @@ class GitExportPluginSpec extends Specification {
         def origindir = new File(tempdir, 'origin')
         Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
 
+        ScmOperationContext context = Mock(ScmOperationContext)
         //create a git dir
         def git = createGit(origindir)
 
@@ -1450,7 +1451,7 @@ class GitExportPluginSpec extends Specification {
         }
 
         when:
-        def status = plugin.clusterFixJobs([jobref])
+        def status = plugin.clusterFixJobs(context, [jobref])
 
         then:
         status != null
@@ -1466,6 +1467,7 @@ class GitExportPluginSpec extends Specification {
         def origindir = new File(tempdir, 'origin')
         Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
 
+        ScmOperationContext context = Mock(ScmOperationContext)
         //create a git dir
         def git = createGit(origindir)
 
@@ -1483,7 +1485,7 @@ class GitExportPluginSpec extends Specification {
         }
 
         when:
-        def status = plugin.clusterFixJobs([jobref])
+        def status = plugin.clusterFixJobs(context, [jobref])
 
         then:
         status != null
@@ -1498,6 +1500,7 @@ class GitExportPluginSpec extends Specification {
         def origindir = new File(tempdir, 'origin')
         Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
 
+        ScmOperationContext context = Mock(ScmOperationContext)
         //create a git dir
         def git = createGit(origindir)
         def commit = addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
@@ -1514,7 +1517,7 @@ class GitExportPluginSpec extends Specification {
         }
 
         when:
-        def status = plugin.clusterFixJobs([jobref])
+        def status = plugin.clusterFixJobs(context, [jobref])
 
         then:
         status != null
