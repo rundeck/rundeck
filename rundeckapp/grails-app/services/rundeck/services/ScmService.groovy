@@ -1062,12 +1062,14 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobState> exportStatusForJobs(List<ScheduledExecution> jobs) {
+    Map<String, JobState> exportStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
-            fixExportStatus(project, jobs)
+            if(auth){
+                fixExportStatus(auth, project, jobs)
+            }
         }
 
         exportjobRefsForJobs(jobs).each { jobReference ->
@@ -1102,12 +1104,12 @@ class ScmService {
      * @param jobs
      * @return
      */
-    Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
+    Map<String, JobImportState> importStatusForJobs(UserAndRolesAuthContext auth, List<ScheduledExecution> jobs) {
         def status = [:]
         def clusterMode = frameworkService.isClusterModeEnabled()
         if(jobs && jobs.size()>0 && clusterMode){
             def project = jobs.get(0).project
-            fixImportStatus(project,jobs)
+            fixImportStatus(auth, project,jobs)
         }
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
             def plugin = getLoadedImportPluginFor jobReference.project
@@ -1324,19 +1326,21 @@ class ScmService {
         return pluginConfig.getSettingList('trackedItems')
     }
 
-    public fixExportStatus(String project, List<ScheduledExecution> jobs){
+    public fixExportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
+        def context = scmOperationContext(auth, project)
         if(jobs && jobs.size()>0){
             def joblist = exportjobRefsForJobs(jobs)
             def plugin = getLoadedExportPluginFor project
-            plugin?.clusterFixJobs(joblist)
+            plugin?.clusterFixJobs(context, joblist)
         }
     }
 
-    public fixImportStatus(String project, List<ScheduledExecution> jobs){
+    public fixImportStatus(UserAndRolesAuthContext auth, String project, List<ScheduledExecution> jobs){
+        def context = scmOperationContext(auth, project)
         if(jobs && jobs.size()>0){
             def joblist = scmJobRefsForJobs(jobs)
             def plugin = getLoadedImportPluginFor project
-            plugin?.clusterFixJobs(joblist)
+            plugin?.clusterFixJobs(context, joblist)
         }
 
     }
