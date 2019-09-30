@@ -104,7 +104,8 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
 
     def filelist=[]
     libextDir.mkdirs()
-    configurations.pluginFiles.files.each { pluginFile ->
+    def compileJars=configurations.compile.files
+    configurations.pluginFiles.files.findAll{!(it in compileJars)}.each { pluginFile ->
         copy {
             from pluginFile
             into libextDir
