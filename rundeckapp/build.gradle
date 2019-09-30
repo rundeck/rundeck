@@ -79,6 +79,8 @@ allprojects {
     }
 }
 dependencies {
+
+    compile "org.codehaus.groovy:groovy-all:2.4.10"
     pluginFiles project(':plugins:script-plugin'),
             project(':plugins:stub-plugin'),
             project(':plugins:localexec-plugin'),
