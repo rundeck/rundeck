@@ -987,10 +987,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                             'project.properties' { path, name, inputs ->
                                 configtemp = copyToTemp()
                             }
-
-                            '(readme|motd)\\.md' { path, name, inputs ->
-                                mdfilestemp[name] = copyToTemp()
-                            }
                         }
                         if(importScm){
                             'scm-import.properties' { path, name, inputs ->
@@ -1000,6 +996,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
                                 scmexporttemp = copyToTemp()
                             }
                         }
+                    }
+                    '(readme|motd)\\.md' { path, name, inputs ->
+                        mdfilestemp[name] = copyToTemp()
                     }
                     if (importACL) {
                         'acls/' {
