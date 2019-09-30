@@ -1446,7 +1446,7 @@ class ScmController extends ControllerBase {
     {
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
         if (isExport) {
-            def scmExportStatusMap = scmService.exportStatusForJobs([scheduledExecution])
+            def scmExportStatusMap = scmService.exportStatusForJobs(authContext, [scheduledExecution])
             JobState scmStatus = scmExportStatusMap[scm.id]
 
             scmJobStatus.synchState = scmStatus?.synchState?.toString()
