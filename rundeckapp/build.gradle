@@ -79,6 +79,8 @@ allprojects {
     }
 }
 dependencies {
+
+    compile "org.codehaus.groovy:groovy-all:2.4.10"
     pluginFiles project(':plugins:script-plugin'),
             project(':plugins:stub-plugin'),
             project(':plugins:localexec-plugin'),
@@ -102,7 +104,8 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
 
     def filelist=[]
     libextDir.mkdirs()
-    configurations.pluginFiles.files.each { pluginFile ->
+    def compileJars=configurations.compile.files
+    configurations.pluginFiles.files.findAll{!(it in compileJars)}.each { pluginFile ->
         copy {
             from pluginFile
             into libextDir

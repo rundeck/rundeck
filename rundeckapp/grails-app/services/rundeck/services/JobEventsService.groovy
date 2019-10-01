@@ -47,7 +47,9 @@ class JobEventsService {
     }
 
     def removeListener(JobChangeListener plugin) {
-        listeners.remove(plugin)
+        if (plugin != null) {
+            listeners.remove(plugin)
+        }
     }
 
     @Listener
