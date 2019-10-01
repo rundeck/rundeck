@@ -2634,11 +2634,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(opt.enforced && !(opt.optionValues || opt.optionValuesPluginType)){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name], authContext?.username)
                     if(!remoteOptions.err && remoteOptions.values){
-                        opt.optionValues = remoteOptions.values.collect {optValue ->
-                            if(optValue instanceof JSONObject){
-                                return optValue.value
-                            } else {
-                                return optValue
+                        /**
+                         * Form of { "Label": "Value"}
+                         */
+                        if (remoteOptions.values instanceof JSONObject) {
+                            opt.optionValues = remoteOptions.values.collect { node ->
+                                node.value
+                            }
+                        }
+
+                        /**
+                         * Form of [{ "name":"Name", "value":"Value"}] or ["Value1", "Value2"]
+                         */
+                        else {
+                            opt.optionValues = remoteOptions.values.collect { optValue ->
+                                if (optValue instanceof JSONObject) {
+                                    return optValue.value
+                                } else {
+                                    return optValue
+                                }
                             }
                         }
                     }

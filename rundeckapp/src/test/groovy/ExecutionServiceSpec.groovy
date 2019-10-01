@@ -1498,13 +1498,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
 
-        def validation = service.validateOptionValues(se, opts)
+        service.validateOptionValues(se, opts)
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
             [
                     optionSelect : opt,
-                    values       : ["A", "B", "C"],
+                    values       : remoteValues,
                     srcUrl       : "cleanUrl",
                     err          : null
             ]
@@ -1512,6 +1512,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         ExecutionServiceValidationException e = thrown()
+        e.errors.each { k, v ->
+            println("${k} ${v}")
+        }
         e.errors.containsKey('test1')
 
 
@@ -1519,6 +1522,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         opts                                           | remoteValues
         ['test1': 'somevalue']                         | ["A", "B", "C"]
         ['test1': 'somevalue']                         | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        ['test1': 'somevalue']                         | new JSONObject('foo': 'bar')
 
     }
 
@@ -1530,7 +1534,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         when:
 
-        def validation = service.validateOptionValues(se, opts)
+        service.validateOptionValues(se, opts)
 
         then:
         1 * service.scheduledExecutionService.loadOptionsRemoteValues(_,_,_) >> {
@@ -1547,8 +1551,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         where:
         opts                                           | remoteValues
+        ['test1': 'Foo']                               | ["Foo", "Bar"]
         ['test1': 'A']                                 | [new JSONObject(name: "a", value:"A"), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
-
+        ['test1': 'Bar']                               | new JSONObject(foo: "Bar")
     }
 
     def "remote url option validator does not attempt to validate option values plugin values"() {
