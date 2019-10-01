@@ -1400,8 +1400,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
 
+        // Put globals in context.
+        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?.frameworkProject?:execMap.project);
+        datacontext.put("globals", globals ? globals : new HashMap<>());
+
         //add delimiter to option variables
         if(null !=optsmap){
+
+            //replaces options values by global ones.
+            optsmap.putAll(DataContextUtils.replaceDataReferences(optsmap, datacontext))
+
             def se=null
             if(execMap  instanceof Execution && null!=execMap.scheduledExecution){
                 se=execMap.scheduledExecution
@@ -1426,10 +1434,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             datacontext.put("nodeDeferred", secureOptionNodeDeferred.clone())
         }
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
-
-        // Put globals in context.
-        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?.frameworkProject?:execMap.project);
-        datacontext.put("globals", globals ? globals : new HashMap<>());
 
 
         NodesSelector nodeselector

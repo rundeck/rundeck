@@ -4794,6 +4794,80 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         1 * service.executionUtilService.runRefJobWithTimer(_, _, _, 3000)
         res instanceof StepExecutionResultImpl
         !res.success
-
     }
+
+    def "Create execution context with global vars and option value replacement"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.a}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == 'b'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
+    def "Create execution context with global vars and option value replacement not found"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'testproj')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [a: 'b', c: 'd']
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+
+        Execution se = new Execution(
+                argString: "-test \${globals.test}",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        when:
+        def val = service.createContext(se, null, null, null, null, null, null)
+        then:
+        val != null
+        val.dataContext.option.test == '\${globals.test}'
+        val.nodeSelector == null
+        val.frameworkProject == "testproj"
+        "testuser" == val.user
+        1 == val.loglevel
+        !val.executionListener
+        val.dataContext.globals == [a: 'b', c: 'd']
+    }
+
 }
