@@ -27,6 +27,7 @@
  * @private
  */
 function _decompactMapList(entries, compactedAttr, func) {
+    var decomp = []
     var odata = {};
     for (var i = 0; i < entries.length; i++) {
         var e = entries[i];
@@ -51,5 +52,7 @@ function _decompactMapList(entries, compactedAttr, func) {
         }
         odata = e;
         func(e);
+        decomp.push(e)
     }
+    return decomp
 }

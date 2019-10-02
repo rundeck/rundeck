@@ -473,9 +473,91 @@ var FollowControl = function (eid, elem, params) {
         var rowcount= this.countTableRows(this.cmdoutputtbl);
         var compacted = data.compacted;
         var compactedAttr = data.compactedAttr;
+
+        /**Called after table update is finished for housekeeping and fetching next batch if necessary **/
+        var doFinishedLogUpdate = function() {
+
+            this.lineCount+=entries.length;
+
+            if (typeof(this.onAppend) == 'function') {
+                this.onAppend();
+            }
+            if (this.clusterExec && this.showClusterExecWarning) {
+                if (!this.runningcmd.completed) {
+                    //show cluster loading info
+                    jQuery('#' + generateId(this.parentElement) + '_clusterinfo').show()
+                } else {
+                    jQuery('#' + generateId(this.parentElement) + '_clusterinfo').hide()
+                }
+            }
+
+            if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
+                //halt timer
+
+                if (null != data.totalSize) {
+                    if (jQuery('#' + this.outfileSizeId)) {
+                        setText('#' + this.outfileSizeId, data.totalSize + " bytes")
+                    }
+                }
+                this.finishDataOutput();
+                this.finishedExecution(this.runningcmd.jobstatus,this.runningcmd.statusString);
+                return;
+            } else {
+                var obj=this;
+                var time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50;
+                if(this.runningcmd.pending != null){
+                    time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 5000 : 5000
+                }
+                if (data.retryBackoff) {
+                    time = Math.max(data.retryBackoff,time);
+                }
+                if (!this.cancelload) {
+                    setTimeout(function () {
+                        obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset)
+                    }, time)
+
+                }
+            }
+            if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
+                this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
+                var message=null;
+                var percent=null;
+                if(this.runningcmd.percent!=null){
+                    percent= Math.ceil(this.runningcmd.percent);
+                    message= "Loading Output... ";
+                } else if (this.runningcmd.pending != null) {
+                    message = this.runningcmd.pending;
+                }
+                this.showLoading(message,percent);
+            }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed) {
+                //pending a remote load
+                if (this.runningcmd.pending != null) {
+                    this.showLoading(this.runningcmd.pending);
+                }else {
+                    this.hideLoading();
+                }
+            }
+            if (this.runningcmd.jobcompleted) {
+
+                if (null != data.totalSize) {
+                    if (jQuery('#' + this.outfileSizeId)) {
+                        setText('#' + this.outfileSizeId, data.totalSize + " bytes")
+                    }
+                }
+            }
+            if (this.cancelload) {
+                if (typeof (this._onStopCallback) == 'function') {
+                    var cb = this._onStopCallback
+                    this._onStopCallback = null
+                    cb()
+                }
+            }
+        }.bind(this)
+
         if (entries != null && entries.length > 0) {
             var tr;
             var self=this;
+
             var eachEntry = function (e) {
                 "use strict";
                 //this.runningcmd.entries.push(e);
@@ -483,97 +565,47 @@ var FollowControl = function (eid, elem, params) {
                 //if tail mode and count>last lines, remove 1 row from top
                 rowcount++;
             };
+
             if (compacted) {
-                _decompactMapList(entries, compactedAttr, eachEntry);
+                var decompEntries = _decompactMapList(entries, compactedAttr, function(){});
             } else {
-                for (var i = 0; i < entries.length; i++) {
-                    eachEntry(entries[i]);
+                var decompEntries = entries
+            }
+
+            /** At around 20k(eyeballed) rows the table reflow takes a large amount of time so we add more rows at once **/
+            var batchSize = rowcount >= 20000 ? 500 : 50
+
+            self.processRowBatches(decompEntries, 0, batchSize, eachEntry, function() {
+                if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported && this.truncateToTail) {
+                    //remove extra lines
+                    this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
                 }
-            }
-            if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported && this.truncateToTail) {
-                //remove extra lines
-                this.removeTableRows(this.cmdoutputtbl, rowcount- this.lastlines);
-            }
-            if(needsScroll && !this.runningcmd.jobcompleted){
-                this.scrollToBottom();
-            }
-        }
-        this.lineCount+=entries.length;
-
-        if (typeof(this.onAppend) == 'function') {
-            this.onAppend();
-        }
-        if (this.clusterExec && this.showClusterExecWarning) {
-            if (!this.runningcmd.completed) {
-                //show cluster loading info
-                jQuery('#' + generateId(this.parentElement) + '_clusterinfo').show()
-            } else {
-                jQuery('#' + generateId(this.parentElement) + '_clusterinfo').hide()
-            }
-        }
-
-        if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
-            //halt timer
-
-            if (null != data.totalSize) {
-                if (jQuery('#' + this.outfileSizeId)) {
-                    setText('#' + this.outfileSizeId, data.totalSize + " bytes")
+                if(needsScroll && !this.runningcmd.jobcompleted) {
+                    this.scrollToBottom();
                 }
-            }
-            this.finishDataOutput();
-            this.finishedExecution(this.runningcmd.jobstatus,this.runningcmd.statusString);
-            return;
-        } else {
-            var obj=this;
-            var time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 1000 : 50;
-            if(this.runningcmd.pending != null){
-                time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 5000 : 5000
-            }
-            if (data.retryBackoff) {
-                time = Math.max(data.retryBackoff,time);
-            }
-            if (!this.cancelload) {
-                setTimeout(function () {
-                    obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset)
-                }, time)
-
-            }
-        }
-        if (this.runningcmd.jobcompleted && !this.runningcmd.completed) {
-            this.jobFinishStatus(this.runningcmd.jobstatus,this.runningcmd.statusString);
-            var message=null;
-            var percent=null;
-            if(this.runningcmd.percent!=null){
-                percent= Math.ceil(this.runningcmd.percent);
-                message= "Loading Output... ";
-            } else if (this.runningcmd.pending != null) {
-                message = this.runningcmd.pending;
-            }
-            this.showLoading(message,percent);
-        }else if (!this.runningcmd.jobcompleted && !this.runningcmd.completed) {
-            //pending a remote load
-            if (this.runningcmd.pending != null) {
-                this.showLoading(this.runningcmd.pending);
-            }else {
-                this.hideLoading();
-            }
-        }
-        if (this.runningcmd.jobcompleted) {
-
-            if (null != data.totalSize) {
-                if (jQuery('#' + this.outfileSizeId)) {
-                    setText('#' + this.outfileSizeId, data.totalSize + " bytes")
-                }
-            }
-        }
-        if (this.cancelload) {
-            if (typeof (this._onStopCallback) == 'function') {
-                var cb = this._onStopCallback
-                this._onStopCallback = null
-                cb()
-            }
+                doFinishedLogUpdate();
+            }.bind(this))
         }
     },
+    /** Process entries in batches of size to prevent blocking the renderer **/
+    processRowBatches: function(entries, index, size, procFunc, doneFunc) {
+        // console.log('Resume at ' + index, ' with size', size)
+
+        for (var i = index; i < entries.length; i++) {
+
+            procFunc(entries[i]);
+
+            if (i !== 0 && i % size === 0) {
+                var resumeIndex = i + 1
+
+                setTimeout(function() {
+                    this.processRowBatches(entries, resumeIndex, size, procFunc, doneFunc)}.bind(this), 0)
+                return
+            }
+        }
+        doneFunc()
+    },
+
     finishDataOutput: function() {
 
         if (typeof(this.onLoadComplete) == 'function') {
@@ -1049,6 +1081,9 @@ var FollowControl = function (eid, elem, params) {
 
         }
         var tr = (this.lastTBody.insertRow(this.isAppendTop() ? 0 : -1))
+
+        // var tr = new HTMLTableRowElement()
+
         this.configureDataRow(tr, data, ctxid);
 
         this.runningcmd.count++;
