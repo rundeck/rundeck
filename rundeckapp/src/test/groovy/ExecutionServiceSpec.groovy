@@ -1177,6 +1177,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
+            1 * removeLogFile(execution, 'rdlog')
+            1 * removeLogFile(execution, 'state.json')
             0 * _(*_)
         }
 
@@ -1232,6 +1234,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
+            1 * removeLogFile(execution, 'rdlog')
+            1 * removeLogFile(execution, 'state.json')
             0 * _(*_)
         }
 
