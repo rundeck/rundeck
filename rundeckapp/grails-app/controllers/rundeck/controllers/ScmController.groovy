@@ -636,7 +636,7 @@ class ScmController extends ControllerBase {
                 query.projFilter = params.project
                 def jobs = scheduledExecutionService.listWorkflows(query)
                 //relaod all jobs to get project status
-                scmService.exportStatusForJobs(jobs.schedlist)
+                scmService.exportStatusForJobs(authContext, jobs.schedlist)
             }
         }
 
@@ -835,7 +835,7 @@ class ScmController extends ControllerBase {
             jobs = ScheduledExecution.findAllByProject(project)
         }
 
-        scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
+        scmJobStatus = scmService.exportStatusForJobs(null, jobs).findAll {
             it.value.synchState != SynchState.CLEAN
         }
         jobs = jobs.findAll {
@@ -993,7 +993,7 @@ class ScmController extends ControllerBase {
             List<ScheduledExecution> alljobs = ScheduledExecution.findAllByProject(project)
             Map<String, ScheduledExecution> jobMap = alljobs.collectEntries { [it.extid, it] }
 
-            Map scmJobStatus = scmService.exportStatusForJobs(alljobs).findAll {
+            Map scmJobStatus = scmService.exportStatusForJobs(authContext, alljobs).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
 
@@ -1158,7 +1158,7 @@ class ScmController extends ControllerBase {
             jobs = jobIds.collect {
                 ScheduledExecution.getByIdOrUUID(it)
             }
-            scmStatus = scmService.exportStatusForJobs(jobs).findAll {
+            scmStatus = scmService.exportStatusForJobs(authContext, jobs).findAll {
                 it.value.synchState != SynchState.CLEAN
             }
             jobs = jobs.findAll {
@@ -1169,7 +1169,7 @@ class ScmController extends ControllerBase {
                 jobMap[it] = ScheduledExecution.getByIdOrUUID(it)
             }
             jobs = (jobMap.values() as List).findAll { it != null }
-            scmStatus = scmService.importStatusForJobs(jobs)
+            scmStatus = scmService.importStatusForJobs(authContext, jobs)
         }
 
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
@@ -1300,7 +1300,7 @@ class ScmController extends ControllerBase {
             renamedJobPaths.values().each {
                 deletedPaths.remove(it)
             }
-            def scmStatus = scmService.exportStatusForJobs(jobs)
+            def scmStatus = scmService.exportStatusForJobs(authContext, jobs)
             def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
@@ -1444,8 +1444,9 @@ class ScmController extends ControllerBase {
             ScmJobStatus scmJobStatus
     )
     {
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, scheduledExecution.project)
         if (isExport) {
-            def scmExportStatusMap = scmService.exportStatusForJobs([scheduledExecution])
+            def scmExportStatusMap = scmService.exportStatusForJobs(authContext, [scheduledExecution])
             JobState scmStatus = scmExportStatusMap[scm.id]
 
             scmJobStatus.synchState = scmStatus?.synchState?.toString()
@@ -1461,7 +1462,7 @@ class ScmController extends ControllerBase {
 
         } else {
 
-            def scmImportStatusMap = scmService.importStatusForJobs([scheduledExecution])
+            def scmImportStatusMap = scmService.importStatusForJobs(authContext, [scheduledExecution])
             JobImportState scmStatus = scmImportStatusMap[scm.id]
 
             scmJobStatus.synchState = scmStatus?.synchState?.toString()
@@ -1709,8 +1710,8 @@ class ScmController extends ControllerBase {
             return redirect(action: 'index', params: [project: project])
         }
         def job = ScheduledExecution.getByIdOrUUID(id)
-        def exportStatus = isExport ? scmService.exportStatusForJobs([job]) : null
-        def importStatus = isExport ? null : scmService.importStatusForJobs([job])
+        def exportStatus = isExport ? scmService.exportStatusForJobs(authContext, [job]) : null
+        def importStatus = isExport ? null : scmService.importStatusForJobs(authContext, [job])
         def scmFilePaths = isExport ? scmService.exportFilePathsMapForJobs([job]) : null
         def diffResult = isExport ? scmService.exportDiff(project, job) : scmService.importDiff(project, job)
         def scmExportRenamedPath = isExport ? scmService.getRenamedJobPathsForProject(params.project)?.get(job.extid) :
