@@ -92,4 +92,20 @@ public interface ExecutionFileStorage {
     {
         throw new UnsupportedOperationException("partialRetrieve is not implemented");
     }
+
+    /**
+     * delete the file of the given file type
+     *
+     * @param filePath key to identify stored file
+     *
+     * @return true if successful
+     *
+     * @throws IOException                                                    if an IO error occurs
+     * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException if other errors occur
+     */
+    default boolean deleteFile(String filetype)
+            throws IOException, ExecutionFileStorageException
+    {
+        throw new UnsupportedOperationException("delete is not implemented");
+    }
 }

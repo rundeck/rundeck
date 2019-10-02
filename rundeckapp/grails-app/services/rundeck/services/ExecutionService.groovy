@@ -1749,9 +1749,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             List<File> files = []
             def execs = []
+
+            def executionFiles = logFileStorageService.getExecutionFiles(e, [], false)
+
             //aggregate all files to delete
             execs << e
-            [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
+            executionFiles.each { ftype, executionFile ->
                 def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, false)
                 if (null != file && file.exists()) {
                     files << file
@@ -1767,6 +1770,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 def file2b = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
                 if (null != file2b && file2b.exists()) {
                     files << file2b
+                }
+
+                def resultDeleteRemote = logFileStorageService.removeLogFile(e, ftype)
+                if(!resultDeleteRemote.success){
+                    log.debug(resultDeleteRemote.error)
                 }
             }
             //delete all job file records
