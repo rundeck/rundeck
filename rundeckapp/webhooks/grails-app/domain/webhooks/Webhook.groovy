@@ -33,6 +33,5 @@ class Webhook {
 
     static mapping = {
         pluginConfigurationJson type: 'text'
-        enabled defaultValue: "true"
     }
 }
