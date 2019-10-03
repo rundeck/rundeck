@@ -49,6 +49,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.services.*
+import rundeck.services.logging.ExecutionFile
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1153,6 +1154,12 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         def file2 = File.createTempFile("ExecutionServiceSpec-test", "file")
         file2.deleteOnExit()
 
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
@@ -1164,8 +1171,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
-            1 * removeLogFile(execution, 'rdlog')
-            1 * removeLogFile(execution, 'state.json')
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
+            1 * removeLogFile(execution, 'state.json') >> [success: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1211,6 +1219,14 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             delete() >> false
             isDirectory() >> false
         }
+
+
+        ExecutionFile executionFile1 = Mock(ExecutionFile){
+            getLocalFile() >> file1
+        }
+
+        Map <String, ExecutionFile> executionFiles = ['rdlog': executionFile1,'state.json':  executionFile1]
+
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
@@ -1221,8 +1237,9 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
-            1 * removeLogFile(execution, 'rdlog')
-            1 * removeLogFile(execution, 'state.json')
+            1 * getExecutionFiles(execution, [], false) >> executionFiles
+            1 * removeLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
+            1 * removeLogFile(execution, 'state.json') >> [success: false, error: "not found"]
             0 * _(*_)
         }
 
