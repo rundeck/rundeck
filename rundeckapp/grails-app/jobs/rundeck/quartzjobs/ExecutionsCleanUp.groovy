@@ -144,8 +144,8 @@ class ExecutionsCleanUp implements InterruptableJob {
             logger.info("Deleted execution: ${e.id}")
             result = [success: true]
         } catch (Exception ex) {
-            logger.error("Failed to delete execution ${e.id}", ex)
-            result = [error:'failure',message: "Failed to delete execution {{Execution ${e.id}}}: ${ex.message}", success: false]
+            logger.error("Failed to delete execution ${execId}", ex)
+            result = [error:'failure',message: "Failed to delete execution {{Execution ${execId}}}: ${ex.message}", success: false]
         }
         return result
     }
