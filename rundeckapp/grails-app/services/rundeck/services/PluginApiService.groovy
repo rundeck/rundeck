@@ -45,6 +45,8 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
+    ExecutionLifecyclePluginService executionLifecyclePluginService
+    JobLifecyclePluginService jobLifecyclePluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -90,6 +92,16 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
+        if(featureService.featurePresent("jobLifecycle-plugin")) {
+            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
+        if(featureService.featurePresent("executionLifecycle-plugin")) {
+            pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
