@@ -78,6 +78,7 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
+import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
@@ -1819,6 +1820,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     deletedfiles++
                 }
             }
+
             log.debug("${deletedfiles} files removed")
             result = [success: true]
         } catch (Exception ex) {

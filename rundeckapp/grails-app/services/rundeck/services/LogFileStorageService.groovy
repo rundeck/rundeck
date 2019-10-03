@@ -2020,6 +2020,11 @@ class LogFileStorageService
      */
    Map removeLogFile(Execution e, String filetype) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+
+       if(!plugin){
+           return [success: false, error: "Not plugin enabled"]
+       }
+
         def remote = plugin.isAvailable(filetype)
         def success=false
         def errorMessage=null
