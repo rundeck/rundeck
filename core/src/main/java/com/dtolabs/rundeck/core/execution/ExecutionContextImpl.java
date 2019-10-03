@@ -256,7 +256,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
          * @return this
          */
         public Builder merge(Builder other) {
-            if (null != ctx.frameworkProject) {
+            if (null != other.ctx.frameworkProject) {
                 ctx.frameworkProject = other.ctx.frameworkProject;
             }
             if (null != other.ctx.user) {
@@ -276,7 +276,13 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             }
             ctx.dataContext.merge(other.ctx.dataContext);
 
-            ctx.privateDataContext.merge(other.ctx.privateDataContext);
+            if (null != other.ctx.privateDataContext) {
+                if (null != ctx.privateDataContext) {
+                    ctx.privateDataContext.merge(other.ctx.privateDataContext);
+                } else {
+                    ctx.privateDataContext = new BaseDataContext(other.ctx.privateDataContext);
+                }
+            }
 
             if (null != other.ctx.executionListener) {
                 ctx.executionListener = other.ctx.executionListener;
