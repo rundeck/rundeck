@@ -75,9 +75,11 @@ import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
+import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
+import rundeck.services.logging.ProducedExecutionFile
 
 import javax.annotation.PreDestroy
 import javax.servlet.http.HttpServletRequest
@@ -1756,24 +1758,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //aggregate all files to delete
             execs << e
             executionFiles.each { ftype, executionFile ->
-                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, false)
-                if (null != file && file.exists()) {
-                    files << file
-                }
-                def fileb = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, true)
-                if (null != fileb && fileb.exists()) {
-                    files << fileb
-                }
-                def file2 = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
-                if (null != file2 && file2.exists()) {
-                    files << file2
-                }
-                def file2b = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
-                if (null != file2b && file2b.exists()) {
-                    files << file2b
+
+                def localFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
+                if (null != localFile && localFile.exists()) {
+                    files << localFile
                 }
 
-                def resultDeleteRemote = logFileStorageService.removeLogFile(e, ftype)
+                def partialFile = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
+                if (null != partialFile && partialFile.exists()) {
+                    files << partialFile
+                }
+
+                def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
                 if(!resultDeleteRemote.success){
                     log.debug(resultDeleteRemote.error)
                 }

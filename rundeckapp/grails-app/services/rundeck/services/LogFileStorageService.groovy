@@ -45,12 +45,14 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
 import rundeck.services.logging.ExecutionFile
+import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
 import rundeck.services.logging.ExecutionFileUtil
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LogFileLoader
 import rundeck.services.logging.MultiFileStorageRequestImpl
+import rundeck.services.logging.ProducedExecutionFile
 
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.ConcurrentHashMap
@@ -1847,21 +1849,25 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
      * @param file type
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-   Map removeLogFile(Execution e, String filetype) {
-        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+   Map removeRemoteLogFile(Execution e, String filetype) {
+
+       def success=false
+
+       //remove remote file
+       def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
 
        if(!plugin){
-           return [success: false, error: "Not plugin enabled"]
+           return [success: success, error: "Not plugin enabled"]
        }
 
         def remote = plugin.isAvailable(filetype)
-        def success=false
         def errorMessage=null
 
         if(remote){
             try{
                 plugin.deleteFile(filetype)
                 success=true
+
             }catch(Exception ex){
                 errorMessage = "Failed retrieve log file: ${ex.message}"
                 log.warn("removing the remote log file failed: ${ex.message}")
