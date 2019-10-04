@@ -39,7 +39,7 @@ class PluginApiServiceIntegrationSpec extends Specification {
                             'ResourceFormatParser',
                             'ResourceFormatGenerator',
                             'Orchestrator',
-                            'JobPlugin',
+                            'ExecutionLifecyclePlugin',
                             'Notification',
                             'StreamingLogReader',
                             'StreamingLogWriter',
