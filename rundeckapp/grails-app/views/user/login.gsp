@@ -101,7 +101,7 @@
                             <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
                           </a>
                           <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
-                          <g:if test="${userDefinedLogo}">
+                          <g:if test="${userDefinedLogo}">`
                             <g:set var="userAssetBase" value="/user-assets" />
                             <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
                             <div style="margin-top:2em">
@@ -112,7 +112,8 @@
                     </h3>
                   </div>
                   <div class="card-content">
-                    <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>
+%{--                    <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>--}%
+                    <cfg:setVar var="loginhtml" key="gui.login.welcomeHtml" />
                     <g:if test="${loginhtml}">
                       <div style="margin-bottom:2em;">
                         <span>

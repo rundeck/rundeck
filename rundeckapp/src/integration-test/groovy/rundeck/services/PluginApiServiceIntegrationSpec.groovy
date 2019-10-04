@@ -70,10 +70,8 @@ class PluginApiServiceIntegrationSpec extends Specification {
     }
 
     void "list plugins option value plugin enabled"() {
-        setup:
-        pluginApiService.grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled=true
-
         when:
+        pluginApiService.featureService.toggleFeature("optionValuesPlugin",true)
         def pluginList = pluginApiService.listPluginsDetailed()
 
         then:

@@ -17,33 +17,36 @@
 package rundeck.services
 
 import org.rundeck.util.Sizes
+import org.springframework.beans.factory.InitializingBean
 
 import java.util.concurrent.TimeUnit
 
-
-class ConfigurationService {
+class ConfigurationService implements InitializingBean {
     static transactional = false
     def grailsApplication
+    private org.grails.config.NavigableMap appCfg = new org.grails.config.NavigableMap()
 
     boolean isExecutionModeActive() {
         getAppConfig()?.executionMode == 'active'
     }
 
     public org.grails.config.NavigableMap getAppConfig() {
-        grailsApplication.config?.rundeck
+        return appCfg
+    }
+
+    public void setAppConfig(org.grails.config.NavigableMap configMap) {
+        this.appCfg = configMap
     }
 
     public org.grails.config.NavigableMap getConfig(String path){
-        def strings = path.split('\\.')
-        def val = appConfig
-        strings.each {
-            val = val?."${it}"
-        }
-        return val;
+        return getValue(path);
     }
 
     void setExecutionModeActive(boolean active) {
         getAppConfig().executionMode = (active ? 'active' : 'passive')
+    }
+    String getString(String property) {
+        getString(property,null)
     }
     /**
      * Lookup boolean config value, rundeck.some.property.name, evaluate true/false.
@@ -52,11 +55,7 @@ class ConfigurationService {
      * @return
      */
     String getString(String property, String defval) {
-        def strings = property.split('\\.')
-        def val = appConfig
-        strings.each {
-            val = val?."${it}"
-        }
+        def val = getValueFromRoot(property,appCfg)
         stringValue(defval, val)
     }
     /**
@@ -66,11 +65,7 @@ class ConfigurationService {
      * @return
      */
     int getInteger(String property, int defval) {
-        def strings = property.split('\\.')
-        def val = appConfig
-        strings.each {
-            val = val?."${it}"
-        }
+        def val = getValueFromRoot(property,appCfg)
         intValue(defval, val)
     }
     /**
@@ -80,11 +75,7 @@ class ConfigurationService {
      * @return
      */
     long getLong(String property, long defval) {
-        def strings = property.split('\\.')
-        def val = appConfig
-        strings.each {
-            val = val?."${it}"
-        }
+        def val = getValueFromRoot(property,appCfg)
         longValue(defval, val)
     }
     /**
@@ -94,11 +85,7 @@ class ConfigurationService {
      * @return
      */
     boolean getBoolean(String property, boolean defval) {
-        def strings = property.split('\\.')
-        def val = appConfig
-        strings.each {
-            val = val?."${it}"
-        }
+        def val = getValueFromRoot(property,appCfg)
         booleanValue(defval, val)
     }
     /**
@@ -129,6 +116,43 @@ class ConfigurationService {
         return booleanValue(defval, val)
     }
 
+    /**
+     * Lookup config value, rundeck.some.property.name, provide default value if null
+     * @param property property name
+     * @param defval default value
+     * @return
+     */
+    Object getValue(String property, Object defval = null) {
+        def val = getValueFromRoot(property,appCfg)
+        if(val == null && deprecatedKeyTrx.containsKey(property)) {
+            //try to get the value from the deprecated property
+            val = getDeprecatedPropertyValue(property)
+            if(val) {
+                //if the value exists warn the user to update their config to use the new property name
+                log.warn("Property '${deprecatedKeyTrx[property]}' has been deprecated. Please update your config to use: '${property}'")
+            }
+        }
+
+        return val ?: defval
+    }
+
+    protected def getValueFromRoot(String property, def root) {
+        try {
+            def strings = property.split('\\.')
+            def val = root
+            strings.each {
+                val = val?."${it}"
+            }
+            return val
+        } catch(Exception ex) {
+            log.warn("Could not get value for property: ${property}")
+        }
+        return null
+    }
+
+    protected def getDeprecatedPropertyValue(property) {
+        return getValueFromRoot(deprecatedKeyTrx[property],grailsApplication.config.rundeck)
+    }
     /**
      * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
      * @param property property name
@@ -212,4 +236,17 @@ class ConfigurationService {
             return defval
         }
     }
+
+    @Override
+    void afterPropertiesSet() throws Exception {
+        appCfg = grailsApplication?.config?.rundeck
+    }
+
+    Map<String,String> deprecatedKeyTrx = [
+            "feature.optionValuesPlugin.enabled":"feature.option-values-plugin.enabled",
+            "feature.enhancedNodes.enabled":"feature.enhanced-nodes.enabled",
+            "feature.enableAll":"feature.*.enabled"
+    ]
+
+
 }

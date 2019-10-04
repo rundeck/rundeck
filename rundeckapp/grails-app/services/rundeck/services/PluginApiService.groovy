@@ -88,7 +88,7 @@ class PluginApiService {
             pluginDescs[it.name] = it.listDescriptions().sort { a, b -> a.name <=> b.name }
         }
 
-        if(featureService.featurePresent("option-values-plugin")) {
+        if(featureService.featurePresent("optionValuesPlugin")) {
             pluginDescs['OptionValues'] = pluginService.listPlugins(OptionValuesPlugin).collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }

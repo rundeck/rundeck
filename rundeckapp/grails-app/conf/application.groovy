@@ -22,8 +22,7 @@ environments {
         application.refreshDelay=5000
         grails.profiler.disable=false
         feature.incubator.'*'=true
-        rundeck.feature.'enhanced-nodes'.enabled = true
-        rundeck.feature.'option-values-plugin'.enabled = true
+        rundeck.feature.enhancedNodes.enabled = true
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
         rundeck.feature.cleanExecutionsHistoryJob.enabled = true
         rundeck.feature.executionLifecyclePlugin.enabled = true
@@ -51,10 +50,8 @@ environments {
         //enable takeover schedule feature
         feature.incubator.jobs = true
 
-
-
-        rundeck.feature.'enhanced-nodes'.enabled = true
-        rundeck.feature.'option-values-plugin'.enabled = true
+        rundeck.feature.enhancedNodes.enabled = true
+        rundeck.feature.optionValuesPlugin.enabled = true
 
         //enable dynamic workflow step descriptions in GUI by default
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true

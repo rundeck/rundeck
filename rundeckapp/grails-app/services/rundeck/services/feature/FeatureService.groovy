@@ -39,7 +39,7 @@ class FeatureService {
      * @return true if enabled
      */
     def boolean featurePresent(def name, boolean defaultEnabled) {
-        def splat = configurationService.getBoolean('feature.*.enabled', false)
+        def splat = configurationService.getBoolean('feature.enableAll', false)
         return splat || configurationService.getBoolean("feature.${name}.enabled", defaultEnabled)
     }
     /**

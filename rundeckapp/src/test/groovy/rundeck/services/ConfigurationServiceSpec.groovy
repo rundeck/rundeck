@@ -29,6 +29,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.executionMode = 'active'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         service.executionModeActive
     }
@@ -37,6 +38,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.executionMode = 'passive'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         !service.executionModeActive
     }
@@ -45,6 +47,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = 'avalue'
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         'avalue' == service.getString('something.value', 'blah')
     }
@@ -60,6 +63,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getInteger('something.value', defval)
 
@@ -76,6 +80,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = confVal
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         expval == service.getLong('something.value', defval)
 
@@ -93,6 +98,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         when:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = testval
+        service.setAppConfig(grailsApplication.config.rundeck)
         then:
         resultval == service.getBoolean('something.value', false)
 
@@ -120,6 +126,7 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.something.value = ''
+        service.setAppConfig(grailsApplication.config.rundeck)
         when:
         service.setBoolean('something.value', tval)
         then:

@@ -60,13 +60,11 @@ class RefererInterceptor {
 
         // Allow /api/* access without matching Referer header. Default: true.
         def allowApi = configurationService.getBoolean('security.csrf.referer.allowApi', true)
-
         if (request.api_version && allowApi) {
             return true
         }
 
         def urlString = (grailsApplication.config.grails.serverURL).toString()
-
         // Require referer header to be from HTTPS version of server URL, otherwise allow HTTP. Default: true.
         def requireHttps = configurationService.getBoolean('security.csrf.referer.requireHttps', true)
 

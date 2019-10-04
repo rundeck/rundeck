@@ -40,7 +40,7 @@ class FeatureServiceSpec extends Specification implements ServiceUnitTest<Featur
 
         then:
         result == ispresent
-        1 * service.configurationService.getBoolean('feature.*.enabled', false) >> false
+        1 * service.configurationService.getBoolean('feature.enableAll', false) >> false
         1 * service.configurationService.getBoolean('feature.afeature.enabled', false) >> ispresent
 
         where:
@@ -57,7 +57,7 @@ class FeatureServiceSpec extends Specification implements ServiceUnitTest<Featur
 
         then:
         result == ispresent
-        1 * service.configurationService.getBoolean('feature.*.enabled', false) >> ispresent
+        1 * service.configurationService.getBoolean('feature.enableAll', false) >> ispresent
         if(!ispresent) {
             1 * service.configurationService.getBoolean('feature.afeature.enabled', false) >> false
         }

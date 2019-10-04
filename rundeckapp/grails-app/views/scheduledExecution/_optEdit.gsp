@@ -385,7 +385,7 @@
                                 <g:message code="form.option.valuesType.url.label" />
                             </label>
                         </div>
-                <feature:enabled name="option-values-plugin">
+                <feature:enabled name="optionValuesPlugin">
                     <!--List OptionValuesPlugins here -->
                     <g:each in="${optionValuesPlugins}" var="optionValPlugin">
                         <div class="radio">
