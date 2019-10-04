@@ -1176,17 +1176,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false) >> file2
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
-            1 * removeLogFile(execution, 'state.json') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [success: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1242,17 +1238,13 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
         service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, false) >> file1
-            1 * getFileForExecutionFiletype(execution, 'rdlog', true, true) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, false) >> file1
             1 * getFileForExecutionFiletype(execution, 'rdlog', false, true) >> file1
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, false)
-            1 * getFileForExecutionFiletype(execution, 'state.json', true, true)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
-            1 * removeLogFile(execution, 'state.json') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [success: false, error: "not found"]
             0 * _(*_)
         }
 
