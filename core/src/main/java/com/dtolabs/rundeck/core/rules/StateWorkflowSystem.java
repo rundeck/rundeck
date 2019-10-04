@@ -286,12 +286,12 @@ public interface StateWorkflowSystem
     /**
      * listener
      */
-    WorkflowSystemEventListener getListener();
+    List<WorkflowSystemEventListener> getListeners();
 
     /**
      * set listener
      *
      * @param listener
      */
-    void setListener(WorkflowSystemEventListener listener);
+    void setListeners(List<WorkflowSystemEventListener> listeners);
 }
