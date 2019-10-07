@@ -900,6 +900,7 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_READ,
                     ACLConstants.ACTION_ENABLE_EXECUTIONS,
                     ACLConstants.ACTION_DISABLE_EXECUTIONS,
+                    ACLConstants.ACTION_CLUSTER_VIEW,
                     ACLConstants.ACTION_ADMIN
             );
     static final List<String> appSystemAclKindActions =
@@ -1996,6 +1997,8 @@ public class AclTool extends BaseTool {
         public static final String ACTION_SCM_DELETE="scm_delete";
         public static final String ACTION_SCM_IMPORT = "scm_import";
         public static final String ACTION_SCM_EXPORT = "scm_export";
+        public static final String ACTION_CLUSTER_VIEW = "cluster";
+
 
         public static final String TYPE_SYSTEM = "system";
         public static final String TYPE_SYSTEM_ACL = "system_acl";
