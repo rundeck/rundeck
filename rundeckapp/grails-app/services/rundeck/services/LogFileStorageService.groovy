@@ -1865,9 +1865,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware,
 
         if(remote){
             try{
-                plugin.deleteFile(filetype)
-                success=true
-
+                success = plugin.deleteFile(filetype)
             }catch(Exception ex){
                 errorMessage = "Failed retrieve log file: ${ex.message}"
                 log.warn("removing the remote log file failed: ${ex.message}")

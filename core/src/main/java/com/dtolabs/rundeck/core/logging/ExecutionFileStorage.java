@@ -106,6 +106,6 @@ public interface ExecutionFileStorage {
     default boolean deleteFile(String filetype)
             throws IOException, ExecutionFileStorageException
     {
-        throw new UnsupportedOperationException("delete is not implemented");
+        return false;
     }
 }
