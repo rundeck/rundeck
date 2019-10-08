@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
@@ -969,6 +970,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             jobcontext.retryInitialExecId="0"
         }
+        if(execution.retryAttempt>0 && execution.retryPrevId!=null){
+            jobcontext.retryPrevExecId=Long.toString(execution.retryPrevId)
+        }else{
+            jobcontext.retryPrevExecId="0"
+        }
         jobcontext.wasRetry=Boolean.toString(execution.retryAttempt?true:false)
         jobcontext.threadcount=Integer.toString(execution.nodeThreadcount?:1)
         jobcontext
@@ -985,9 +991,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * starts an execution in a separate thread, returning a map of [thread:Thread, loghandler:LogHandler, threshold:Threshold]
      */
-    def Map executeAsyncBegin(Framework framework, AuthContext authContext, Execution execution,
-                              ScheduledExecution scheduledExecution=null, Map extraParams = null,
-                              Map extraParamsExposed = null, int retryAttempt=0){
+    def Map executeAsyncBegin(
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            Execution execution,
+            ScheduledExecution scheduledExecution = null,
+            Map extraParams = null,
+            Map extraParamsExposed = null,
+            int retryAttempt = 0
+    ) {
         //TODO: method can be transactional readonly
         metricService.markMeter(this.class.name,'executionStartMeter')
         execution.refresh()
@@ -1380,7 +1392,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ExecutionContext execMap,
             StepExecutionContext origContext,
             Framework framework,
-            AuthContext authContext,
+            UserAndRolesAuthContext authContext,
             String userName = null,
             Map<String, String> jobcontext,
             ExecutionListener listener,
@@ -1891,10 +1903,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retryOriginalId:params.retryOriginalId?:null,
+                                      retryPrevId:params.retryPrevId?:null,
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID(),
-                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false
+                                      excludeFilterUncheck: params.excludeFilterUncheck?"true" == params.excludeFilterUncheck.toString():false,
+                                      extraMetadataMap: params.extraMetadataMap?:null
             )
 
             execution.userRoles = params.userRoles
@@ -2033,13 +2047,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(originalId>0){
             input.retryOriginalId = originalId
         }
+        if(prevId>0){
+            input.retryPrevId = prevId
+        }
         def Execution e = null
         boolean success = false
         try {
 
             Map allowedOptions = input.subMap(
                     ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
-                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId']
+                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId','retryPrevId','meta']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId, secureOpts, secureOptsExposed)
@@ -2106,6 +2123,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
                                                'nodeoverride', 'nodefilter',
                                                'executionType',
+                                               'meta',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
@@ -2268,7 +2286,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','filterExclude','loglevel','retryAttempt','doNodedispatch','retryPrevId','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -2277,7 +2295,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } else {
             throw new ExecutionServiceException("executionType is required")
         }
-
+        if(input['meta'] instanceof Map){
+            props['extraMetadataMap'] = input['meta']
+        }
         //evaluate embedded Job options for validation
         HashMap optparams = validateJobInputOptions(props, se, authContext, securedOpts, secureExposedOpts)
 

@@ -24,14 +24,11 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.ProviderService;
-import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.Map;
 
 /**
  * BaseProviderRegistryService is an abstract base that provides a registry of available service providers based on
@@ -39,154 +36,65 @@ import java.util.*;
  * argument
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @deprecated use {@link IFrameworkProviderRegistryService}
  */
-public abstract class BaseProviderRegistryService<T> implements ProviderService<T>, ProviderRegistryService<T> {
-    protected       HashMap<String, Class<? extends T>> registry;
-    protected       HashMap<String, T>                  instanceregistry;
+@Deprecated
+public abstract class BaseProviderRegistryService<T>
+        extends AbstractProviderRegistryService<T>
+        implements ProviderService<T>, ProviderRegistryService<T>
+{
     protected final Framework                           framework;
-    private         boolean                             cacheInstances = false;
 
-    public BaseProviderRegistryService(Framework framework) {
+    public BaseProviderRegistryService(final Framework framework) {
         this.framework = framework;
-        instanceregistry = new HashMap<>();
-        registry = new HashMap<>();
     }
 
     public BaseProviderRegistryService(final Framework framework, final boolean cacheInstances) {
-        this(framework);
-        this.cacheInstances = cacheInstances;
-    }
-
-    public BaseProviderRegistryService(Framework framework, Map<String, Class<? extends T>> classes) {
+        super(cacheInstances);
         this.framework = framework;
-        instanceregistry = new HashMap<>();
-        registry = new HashMap<>(classes);
     }
 
     public BaseProviderRegistryService(
-        final Map<String, Class<? extends T>> registry,
-        final Framework framework,
-        final boolean cacheInstances
+            final Framework framework,
+            final Map<String, Class<? extends T>> classes
     )
     {
-        instanceregistry = new HashMap<>();
-        this.registry = new HashMap<>(registry);
+        super(classes);
         this.framework = framework;
-        this.cacheInstances = cacheInstances;
     }
 
-    @Override
-    public void registerClass(String name, Class<? extends T> clazz) {
-        registry.put(name, clazz);
+    public BaseProviderRegistryService(
+            final Map<String, Class<? extends T>> registry,
+            final Framework framework,
+            final boolean cacheInstances
+            )
+    {
+        super(registry, cacheInstances);
+        this.framework = framework;
     }
 
-    @Override
-    public void registerInstance(String name, T object) {
-        instanceregistry.put(name, object);
-    }
-
-
-    /**
-     * Return the provider instance of the given name.
-     */
-    public T providerOfType(final String providerName) throws ExecutionServiceException {
-        if (null == providerName) {
-            throw new NullPointerException("provider name was null for Service: " + getName());
-        }
-        if (isCacheInstances()) {
-            if (null == instanceregistry.get(providerName)) {
-                T instance = createProviderInstanceOfType(providerName);
-                instanceregistry.put(providerName, instance);
-                return instance;
-            }
-            return instanceregistry.get(providerName);
-        } else {
-            return createProviderInstanceOfType(providerName);
-        }
-    }
-
-    @Override
-    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
-        final T t = providerOfType(providerName);
-        if (t == null) {
-            return null;
-        }
-        return Closeables.closeableProvider(t);
-    }
-
-    public List<ProviderIdent> listProviders() {
-
-        final HashSet<ProviderIdent> providers = new HashSet<>();
-
-        for (final String s : registry.keySet()) {
-            providers.add(new ProviderIdent(getName(), s));
-        }
-        for (final String s : instanceregistry.keySet()) {
-            providers.add(new ProviderIdent(getName(), s));
-        }
-        return new ArrayList<ProviderIdent>(providers);
-    }
-
-    private T createProviderInstanceOfType(final String providerName) throws ExecutionServiceException {
-        if (null == registry.get(providerName)) {
-            throw new MissingProviderException("Not found", getName(),
-                providerName);
-        }
-        final Class<? extends T> execClass = registry.get(providerName);
-        return createProviderInstanceFromType(execClass, providerName);
-    }
 
     protected T createProviderInstanceFromType(final Class<? extends T> execClass, final String providerName) throws
         ProviderCreationException {
-        boolean ctrfound = true;
         try {
-            final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[]{Framework.class});
-            final T executor = method.newInstance(framework);
-            return executor;
-        } catch (NoSuchMethodException e) {
-            ctrfound = false;
+            final Constructor<? extends T> method = execClass.getDeclaredConstructor(Framework.class);
+            return method.newInstance(framework);
+        } catch (NoSuchMethodException ignored) {
+
         } catch (Exception e) {
             throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e, getName(),
                 providerName);
         }
-        try {
-            final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[0]);
-            final T executor = method.newInstance();
-            return executor;
-        } catch (NoSuchMethodException e) {
-            throw new ProviderCreationException(
-                "No constructor found with signature (Framework) or (): " + e.getMessage(), e,
-                getName(),
-                providerName);
-        } catch (Exception e) {
-            throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e,
-                getName(),
-                providerName);
-        }
+        return super.createProviderInstanceFromType(execClass, providerName);
     }
 
-    protected boolean hasValidProviderSignature(final Class clazz) {
+    protected boolean hasValidProviderSignature(final Class<?> clazz) {
 
         try {
-            final Constructor method = clazz.getDeclaredConstructor(new Class[]{Framework.class});
+            final Constructor method = clazz.getDeclaredConstructor(Framework.class);
             return null != method;
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignored) {
         }
-        try {
-            final Constructor method = clazz.getDeclaredConstructor(new Class[0]);
-            return null != method;
-        } catch (NoSuchMethodException e) {
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isCacheInstances() {
-        return cacheInstances;
-    }
-
-    @Override
-    public void setCacheInstances(boolean cacheInstances) {
-        this.cacheInstances = cacheInstances;
+        return super.hasValidProviderSignature(clazz);
     }
 }

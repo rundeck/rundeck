@@ -97,6 +97,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -156,6 +159,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -207,6 +213,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -273,6 +282,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -329,6 +341,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -393,6 +408,9 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
             getFramework() >> framework
+            componentForType(_) >> Optional.empty()
+            componentsForType(_) >> []
+            useSingleComponentOfType(_) >> Optional.empty()
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {

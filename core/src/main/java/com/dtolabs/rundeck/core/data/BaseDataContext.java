@@ -50,6 +50,14 @@ public class BaseDataContext implements MutableDataContext {
         this.data = new HashMap<>();
         data.put(key, new HashMap<>(value));
     }
+
+    @Override
+    public DataContext copy() {
+        BaseDataContext copy = new BaseDataContext();
+        copy.merge(this);
+        return copy;
+    }
+
     public void merge(DataContext context){
         data= DataContextUtils.merge(data, context.getData());
     }

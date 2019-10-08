@@ -24,6 +24,8 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
     class TestOpCompleted implements WorkflowSystem.OperationCompleted<Map> {
         StateObj newState
         Map result
+        String identity
+        boolean success
     }
 
     class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {
@@ -37,6 +39,7 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
         Long id
         boolean hasRun = false
         Map input = null
+        String identity;
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -75,7 +78,8 @@ class WorkflowEngineOperationsProcessorSpec extends Specification {
             Map shared = [:]
             WorkflowSystem.SharedData<Map> sharedData = WorkflowSystem.SharedData.<Map> with(
                     { Map d -> shared.putAll(d) },
-                    { -> shared }
+                    { -> shared },
+                    {->[:]}
             )
             def executor = Mock(ListeningExecutorService)
             def manager = Mock(ListeningExecutorService)

@@ -10,6 +10,9 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String options
     String filter
     String id
+    String retryOriginalId
+    String retryPrevId
+    String retryNextId
     JobReference job
     Date dateStarted
     Date dateCompleted
@@ -18,6 +21,7 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String failedNodeList
     String targetNodes
     String adhocCommand
+    Map metadata
 
     @Override
     String toString() {

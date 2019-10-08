@@ -28,7 +28,36 @@ class PluginApiServiceIntegrationSpec extends Specification {
         }
 
         then:
-        pluginList.descriptions.size() == 25
+            pluginList.descriptions*.getKey().containsAll(
+                    [
+                            'NodeExecutor',
+                            'FileCopier',
+                            'WorkflowNodeStep',
+                            'WorkflowStep',
+                            'ResourceModelSource',
+                            'NodeEnhancer',
+                            'ResourceFormatParser',
+                            'ResourceFormatGenerator',
+                            'Orchestrator',
+                            'ExecutionLifecyclePlugin',
+                            'Notification',
+                            'StreamingLogReader',
+                            'StreamingLogWriter',
+                            'ExecutionFileStorage',
+                            'Storage',
+                            'StorageConverter',
+                            'ScmExport',
+                            'ScmImport',
+                            'FileUpload',
+                            'LogFilter',
+                            'ContentConverter',
+                            'TourLoader',
+                            'UserGroupSource',
+                            'UI',
+                            'WebhookEvent'
+                    ]
+            )
+            pluginList.descriptions.size() == 25
         pluginList.serviceDefaultScopes.size() == 2
         pluginList.bundledPlugins.size() == 7
         pluginList.embeddedFilenames != null

@@ -2967,6 +2967,10 @@ class ScheduledExecutionController  extends ControllerBase{
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
 
+        if (params.meta instanceof Map) {
+            inputOpts['meta'] = new HashMap(params.meta)
+        }
+
         Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null
 
         //handle uploaded files
@@ -3489,6 +3493,10 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.item.unsupported-format',
                     args: [response.format]
             ])
+        }
+
+        if (request.api_version > ApiVersions.V32 && params.meta instanceof Map) {
+            inputOpts.meta = new HashMap<>(params.meta)
         }
 
         def result

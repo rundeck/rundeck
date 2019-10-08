@@ -1,5 +1,8 @@
 package com.dtolabs.rundeck.core.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
@@ -7,17 +10,17 @@ import java.util.function.Supplier;
  * Created by greg on 5/18/16.
  */
 public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
-    RuleEngine engine;
-    MutableStateObj state;
-    Supplier<ExecutorService> executor;
-    WorkflowSystemEventListener listener;
+    private RuleEngine engine;
+    private MutableStateObj state;
+    private Supplier<ExecutorService> executor;
+    private List<WorkflowSystemEventListener> listeners = new ArrayList<>();
 
     public static WorkflowEngineBuilder builder(WorkflowEngineBuilder source) {
         WorkflowEngineBuilder workflowSystemBuilder = new WorkflowEngineBuilder();
         workflowSystemBuilder.engine = source.engine;
         workflowSystemBuilder.state = source.state;
         workflowSystemBuilder.executor = source.executor;
-        workflowSystemBuilder.listener = source.listener;
+        workflowSystemBuilder.listeners = new ArrayList<>(source.listeners);
         return workflowSystemBuilder;
     }
 
@@ -46,17 +49,23 @@ public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
 
     @Override
     public WorkflowEngineBuilder listener(WorkflowSystemEventListener listener) {
-        this.listener = listener;
+        this.listeners.add(listener);
         return this;
     }
 
     @Override
-    public WorkflowSystem build() {
+    public WorkflowSystemBuilder listeners(final List<WorkflowSystemEventListener> listeners) {
+        this.listeners.addAll(listeners);
+        return this;
+    }
+
+    @Override
+    public WorkflowSystem<Map<String,String>> build() {
         if (null == engine || null == state || null == executor) {
             throw new IllegalArgumentException();
         }
         WorkflowEngine workflowEngine = new WorkflowEngine(engine, state, executor.get());
-        workflowEngine.setListener(listener);
+        workflowEngine.setListeners(listeners);
         return workflowEngine;
     }
 
