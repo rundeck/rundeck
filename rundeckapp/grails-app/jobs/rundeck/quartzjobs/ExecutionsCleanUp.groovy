@@ -22,6 +22,7 @@ class ExecutionsCleanUp implements InterruptableJob {
     }
 
 
+
     void execute(JobExecutionContext context) throws JobExecutionException {
         logger.info("Initializing cleaner execution history job")
 
