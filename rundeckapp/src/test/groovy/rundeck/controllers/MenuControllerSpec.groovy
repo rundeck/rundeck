@@ -26,10 +26,10 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
+import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -981,10 +981,10 @@ class MenuControllerSpec extends Specification {
                                                                         displayParams:[:]]
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
-                                                                                AuthConstants.SCM_EXPORT]) >> true
+                                                                                AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
-                                                                               AuthConstants.SCM_IMPORT]) >> true
+                                                                               AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
@@ -1022,10 +1022,10 @@ class MenuControllerSpec extends Specification {
                                                                         displayParams:[:]]
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_EXPORT,
-                                                                               AuthConstants.SCM_EXPORT]) >> true
+                                                                               AuthConstants.ACTION_SCM_EXPORT]) >> true
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN,
                                                                                AuthConstants.ACTION_IMPORT,
-                                                                                AuthConstants.SCM_IMPORT]) >> true
+                                                                                AuthConstants.ACTION_SCM_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
         1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig

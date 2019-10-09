@@ -21,8 +21,8 @@ import com.dtolabs.rundeck.app.support.ExecQueryFilterCommand
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.Execution

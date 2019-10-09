@@ -27,13 +27,13 @@ import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
@@ -281,7 +281,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
-                                                                  AuthConstants.SCM_EXPORT])) {
+                                                                  AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
                     model.scmExportStatus = scmService.exportStatusForJobs(authContext, [scheduledExecution])
@@ -291,7 +291,7 @@ class ScheduledExecutionController  extends ControllerBase{
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                                                  AuthConstants.SCM_IMPORT])) {
+                                                                  AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
                     model.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
@@ -491,7 +491,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
-                                                              AuthConstants.SCM_EXPORT])) {
+                                                              AuthConstants.ACTION_SCM_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
                 dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
@@ -501,7 +501,7 @@ class ScheduledExecutionController  extends ControllerBase{
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                                              AuthConstants.SCM_IMPORT])) {
+                                                              AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])

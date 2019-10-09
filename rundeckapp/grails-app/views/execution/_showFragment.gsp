@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
 
 <g:if test="${!execution.dateCompleted}">
     <g:jsonToken id="exec_cancel_token" url="${request.forwardURI}"/>

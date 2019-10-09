@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.core.common.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />

@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.ExecArgList
@@ -27,7 +28,6 @@ import com.dtolabs.rundeck.core.execution.NodeExecutionService
 import com.dtolabs.rundeck.core.execution.UnauthorizedException
 import com.dtolabs.rundeck.core.execution.service.FileCopierException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import groovy.transform.CompileStatic
 
 /**

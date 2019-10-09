@@ -16,7 +16,7 @@
 <%--
    Author: Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
 --%>
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>

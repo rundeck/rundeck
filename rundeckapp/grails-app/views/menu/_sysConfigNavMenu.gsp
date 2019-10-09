@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
 
 <g:set var="authRead" value="${auth.resourceAllowedTest(
         type: 'resource',

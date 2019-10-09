@@ -1,4 +1,4 @@
-<%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.core.common.AuthConstants" %>
   <g:set var="selectParams" value="${[:]}"/>
   <g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>

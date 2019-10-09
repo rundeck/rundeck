@@ -21,7 +21,7 @@
   Time: 11:50 AM
 --%>
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <title><g:message code="gui.menu.ExecutionMode" default="Execution Mode" /></title>

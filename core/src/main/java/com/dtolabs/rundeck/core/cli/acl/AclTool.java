@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
+import com.dtolabs.rundeck.core.common.AuthConstants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.apache.commons.cli.*;
@@ -616,7 +617,7 @@ public class AclTool extends BaseTool {
         if(null!=argProject){
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProject);
-            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
+            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_PROJECT, res);
 
             logDecisions(
                     "project named \"" + argProject+"\"",
@@ -632,7 +633,7 @@ public class AclTool extends BaseTool {
         if(null!=argProjectAcl){
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProjectAcl);
-            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
+            Map<String,Object> resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_PROJECT_ACL, res);
 
             logDecisions(
                     "project_acl for Project named \"" + argProjectAcl+"\"",
@@ -828,124 +829,124 @@ public class AclTool extends BaseTool {
 
     static final Set<String> projectTypes = new HashSet<>(
             Arrays.asList(
-                    ACLConstants.TYPE_ADHOC,
-                    ACLConstants.TYPE_JOB,
-                    ACLConstants.TYPE_NODE
+                    AuthConstants.TYPE_ADHOC,
+                    AuthConstants.TYPE_JOB,
+                    AuthConstants.TYPE_NODE
             )
     );
     static final Set<String> projectKinds = new HashSet<>(
             Arrays.asList(
-                    ACLConstants.TYPE_JOB,
-                    ACLConstants.TYPE_NODE,
-                    ACLConstants.TYPE_EVENT
+                    AuthConstants.TYPE_JOB,
+                    AuthConstants.TYPE_NODE,
+                    AuthConstants.TYPE_EVENT
             )
     );
     static final Set<String> appTypes = new HashSet<>(
             Arrays.asList(
-                    ACLConstants.TYPE_PROJECT,
-                    ACLConstants.TYPE_PROJECT_ACL,
-                    ACLConstants.TYPE_STORAGE,
-                    ACLConstants.TYPE_APITOKEN
+                    AuthConstants.TYPE_PROJECT,
+                    AuthConstants.TYPE_PROJECT_ACL,
+                    AuthConstants.TYPE_STORAGE,
+                    AuthConstants.TYPE_APITOKEN
             )
     );
     static final Set<String> appKinds = new HashSet<>(
             Arrays.asList(
-                    ACLConstants.TYPE_PROJECT,
-                    ACLConstants.TYPE_SYSTEM,
-                    ACLConstants.TYPE_SYSTEM_ACL,
-                    ACLConstants.TYPE_USER,
-                    ACLConstants.TYPE_JOB,
-                    ACLConstants.TYPE_APITOKEN,
-                    ACLConstants.TYPE_PLUGIN
+                    AuthConstants.TYPE_PROJECT,
+                    AuthConstants.TYPE_SYSTEM,
+                    AuthConstants.TYPE_SYSTEM_ACL,
+                    AuthConstants.TYPE_USER,
+                    AuthConstants.TYPE_JOB,
+                    AuthConstants.TYPE_APITOKEN,
+                    AuthConstants.TYPE_PLUGIN
             )
     );
 
     static final List<String> appProjectActions =
             Arrays.asList(
-                    ACLConstants.ACTION_ADMIN,
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_CONFIGURE,
-                    ACLConstants.ACTION_DELETE,
-                    ACLConstants.ACTION_IMPORT,
-                    ACLConstants.ACTION_EXPORT,
-                    ACLConstants.ACTION_DELETE_EXECUTION,
-                    ACLConstants.ACTION_SCM_IMPORT,
-                    ACLConstants.ACTION_SCM_EXPORT
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_CONFIGURE,
+                    AuthConstants.ACTION_DELETE,
+                    AuthConstants.ACTION_IMPORT,
+                    AuthConstants.ACTION_EXPORT,
+                    AuthConstants.ACTION_DELETE_EXECUTION,
+                    AuthConstants.ACTION_SCM_IMPORT,
+                    AuthConstants.ACTION_SCM_EXPORT
             );
     static final List<String> appProjectAclActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_UPDATE,
-                    ACLConstants.ACTION_DELETE,
-                    ACLConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_UPDATE,
+                    AuthConstants.ACTION_DELETE,
+                    AuthConstants.ACTION_ADMIN
             );
     static final List<String> appStorageActions =
             Arrays.asList(
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_UPDATE,
-                    ACLConstants.ACTION_DELETE
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_UPDATE,
+                    AuthConstants.ACTION_DELETE
             );
     static final List<String> appApitokenActions =
             Arrays.asList(
-                    ACLConstants.ACTION_CREATE
+                    AuthConstants.ACTION_CREATE
             );
     static final List<String> appProjectKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_CREATE
+                    AuthConstants.ACTION_CREATE
             );
     static final List<String> appSystemKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_ENABLE_EXECUTIONS,
-                    ACLConstants.ACTION_DISABLE_EXECUTIONS,
-                    ACLConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_ENABLE_EXECUTIONS,
+                    AuthConstants.ACTION_DISABLE_EXECUTIONS,
+                    AuthConstants.ACTION_ADMIN
             );
     static final List<String> appSystemAclKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_UPDATE,
-                    ACLConstants.ACTION_DELETE,
-                    ACLConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_UPDATE,
+                    AuthConstants.ACTION_DELETE,
+                    AuthConstants.ACTION_ADMIN
             );
     static final List<String> appUserKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_ADMIN
             );
     static final List<String> appJobKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_ADMIN
+                    AuthConstants.ACTION_ADMIN
             );
     static final List<String> appApitokenKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_ADMIN,
-                    ACLConstants.ACTION_GENERATE_USER_TOKEN,
-                    ACLConstants.ACTION_GENERATE_SERVICE_TOKEN
+                    AuthConstants.ACTION_ADMIN,
+                    AuthConstants.ACTION_GENERATE_USER_TOKEN,
+                    AuthConstants.ACTION_GENERATE_SERVICE_TOKEN
             );
     static final Map<String, List<String>> appResActionsByType;
     static final Map<String, List<String>> appResAttrsByType;
 
-    static final List<String> appPluginActions = Arrays.asList(ACLConstants.ACTION_READ,
-                                                            ACLConstants.ACTION_INSTALL,
-                                                            ACLConstants.ACTION_UNINSTALL,
-                                                            ACLConstants.ACTION_ADMIN);
+    static final List<String> appPluginActions = Arrays.asList(AuthConstants.ACTION_READ,
+                                                            AuthConstants.ACTION_INSTALL,
+                                                            AuthConstants.ACTION_UNINSTALL,
+                                                            AuthConstants.ACTION_ADMIN);
 
     static {
         appResActionsByType = new HashMap<>();
-        appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
-        appResActionsByType.put(ACLConstants.TYPE_PROJECT_ACL, appProjectAclActions);
-        appResActionsByType.put(ACLConstants.TYPE_STORAGE, appStorageActions);
-        appResActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenActions);
+        appResActionsByType.put(AuthConstants.TYPE_PROJECT, appProjectActions);
+        appResActionsByType.put(AuthConstants.TYPE_PROJECT_ACL, appProjectAclActions);
+        appResActionsByType.put(AuthConstants.TYPE_STORAGE, appStorageActions);
+        appResActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenActions);
     }
 
     static {
         appResAttrsByType = new HashMap<>();
-        appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Collections.singletonList("name"));
-        appResAttrsByType.put(ACLConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
-        appResAttrsByType.put(ACLConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
-        appResAttrsByType.put(ACLConstants.TYPE_APITOKEN, Arrays.asList("username", "roles"));
+        appResAttrsByType.put(AuthConstants.TYPE_PROJECT, Collections.singletonList("name"));
+        appResAttrsByType.put(AuthConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
+        appResAttrsByType.put(AuthConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
+        appResAttrsByType.put(AuthConstants.TYPE_APITOKEN, Arrays.asList("username", "roles"));
 
     }
 
@@ -954,67 +955,67 @@ public class AclTool extends BaseTool {
     static {
 
         appKindActionsByType = new HashMap<>();
-        appKindActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_SYSTEM, appSystemKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_SYSTEM_ACL, appSystemAclKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenKindActions);
-        appKindActionsByType.put(ACLConstants.TYPE_PLUGIN, appPluginActions);
+        appKindActionsByType.put(AuthConstants.TYPE_PROJECT, appProjectKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_SYSTEM, appSystemKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_SYSTEM_ACL, appSystemAclKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_USER, appUserKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_JOB, appJobKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_APITOKEN, appApitokenKindActions);
+        appKindActionsByType.put(AuthConstants.TYPE_PLUGIN, appPluginActions);
     }
 
 
     static final List<String> projectJobActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_VIEW,
-                    ACLConstants.ACTION_UPDATE,
-                    ACLConstants.ACTION_DELETE,
-                    ACLConstants.ACTION_RUN,
-                    ACLConstants.ACTION_RUNAS,
-                    ACLConstants.ACTION_KILL,
-                    ACLConstants.ACTION_KILLAS,
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_TOGGLE_EXECUTION,
-                    ACLConstants.ACTION_TOGGLE_SCHEDULE,
-                    ACLConstants.ACTION_SCM_UPDATE,
-                    ACLConstants.ACTION_SCM_CREATE,
-                    ACLConstants.ACTION_SCM_DELETE
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_VIEW,
+                    AuthConstants.ACTION_UPDATE,
+                    AuthConstants.ACTION_DELETE,
+                    AuthConstants.ACTION_RUN,
+                    AuthConstants.ACTION_RUNAS,
+                    AuthConstants.ACTION_KILL,
+                    AuthConstants.ACTION_KILLAS,
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_TOGGLE_EXECUTION,
+                    AuthConstants.ACTION_TOGGLE_SCHEDULE,
+                    AuthConstants.ACTION_SCM_UPDATE,
+                    AuthConstants.ACTION_SCM_CREATE,
+                    AuthConstants.ACTION_SCM_DELETE
             );
     static final List<String> projectJobKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_DELETE
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_DELETE
             );
     static final List<String> projectAdhocActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_VIEW,
-                    ACLConstants.ACTION_RUN,
-                    ACLConstants.ACTION_RUNAS,
-                    ACLConstants.ACTION_KILL,
-                    ACLConstants.ACTION_KILLAS
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_VIEW,
+                    AuthConstants.ACTION_RUN,
+                    AuthConstants.ACTION_RUNAS,
+                    AuthConstants.ACTION_KILL,
+                    AuthConstants.ACTION_KILLAS
             );
     static final List<String> projectNodeActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_RUN
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_RUN
             );
     static final Map<String, List<String>> projResActionsByType;
     static final Map<String, List<String>> projResAttrsByType;
 
     static {
         projResActionsByType = new HashMap<>();
-        projResActionsByType.put(ACLConstants.TYPE_JOB, projectJobActions);
-        projResActionsByType.put(ACLConstants.TYPE_ADHOC, projectAdhocActions);
-        projResActionsByType.put(ACLConstants.TYPE_NODE, projectNodeActions);
+        projResActionsByType.put(AuthConstants.TYPE_JOB, projectJobActions);
+        projResActionsByType.put(AuthConstants.TYPE_ADHOC, projectAdhocActions);
+        projResActionsByType.put(AuthConstants.TYPE_NODE, projectNodeActions);
     }
 
 
     static {
         projResAttrsByType = new HashMap<>();
-        projResAttrsByType.put(ACLConstants.TYPE_JOB, Arrays.asList("group", "name", "uuid"));
-        projResAttrsByType.put(ACLConstants.TYPE_ADHOC, new ArrayList<String>());
+        projResAttrsByType.put(AuthConstants.TYPE_JOB, Arrays.asList("group", "name", "uuid"));
+        projResAttrsByType.put(AuthConstants.TYPE_ADHOC, new ArrayList<String>());
         List<String> nodeAttributeNames = Arrays.asList(
                 "nodename",
                 "rundeck_server",
@@ -1024,29 +1025,29 @@ public class AclTool extends BaseTool {
                 "osVersion",
                 "(etc. any node attribute)"
         );
-        projResAttrsByType.put(ACLConstants.TYPE_NODE, nodeAttributeNames);
+        projResAttrsByType.put(AuthConstants.TYPE_NODE, nodeAttributeNames);
     }
 
     static final List<String> projectNodeKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_CREATE,
-                    ACLConstants.ACTION_UPDATE,
-                    ACLConstants.ACTION_REFRESH
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_CREATE,
+                    AuthConstants.ACTION_UPDATE,
+                    AuthConstants.ACTION_REFRESH
             );
     static final List<String> projectEventKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_READ,
-                    ACLConstants.ACTION_CREATE
+                    AuthConstants.ACTION_READ,
+                    AuthConstants.ACTION_CREATE
             );
     static final Map<String, List<String>> projKindActionsByType;
 
     static {
 
         projKindActionsByType = new HashMap<>();
-        projKindActionsByType.put(ACLConstants.TYPE_JOB, projectJobKindActions);
-        projKindActionsByType.put(ACLConstants.TYPE_NODE, projectNodeKindActions);
-        projKindActionsByType.put(ACLConstants.TYPE_EVENT, projectEventKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_JOB, projectJobKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_NODE, projectNodeKindActions);
+        projKindActionsByType.put(AuthConstants.TYPE_EVENT, projectEventKindActions);
     }
 
     private AuthRequest createAuthRequestFromArgs()
@@ -1106,11 +1107,11 @@ public class AclTool extends BaseTool {
         } else if (argContext == Context.application && argProject != null) {
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProject);
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT, res);
+            resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_PROJECT, res);
         } else if (argContext == Context.application && argProjectAcl != null) {
             HashMap<String, Object> res = new HashMap<>();
             res.put("name", argProjectAcl);
-            resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_PROJECT_ACL, res);
+            resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_PROJECT_ACL, res);
         } else if (argContext == Context.application && argAppStorage != null) {
             resourceMap = createStorageResource();
         } else if (argContext == Context.project && argProjectJob != null) {
@@ -1231,7 +1232,7 @@ public class AclTool extends BaseTool {
         if (null != attrsMap && attrsMap.size() > 0) {
             resourceMap.putAll(attrsMap);
         } else if (attrHelp && null != argResource
-                   && !argResource.equalsIgnoreCase(ACLConstants.TYPE_ADHOC)) {
+                   && !argResource.equalsIgnoreCase(AuthConstants.TYPE_ADHOC)) {
             List<String> possibleAttrs =
                     (argContext == Context.application ? appResAttrsByType : projResAttrsByType)
                             .get(argResource.toLowerCase());
@@ -1348,7 +1349,7 @@ public class AclTool extends BaseTool {
         if(null!=argTags) {
             res.put("tags", tagsSet);
         }
-        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_NODE, res);
+        resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_NODE, res);
         return resourceMap;
     }
 
@@ -1362,19 +1363,19 @@ public class AclTool extends BaseTool {
             res.put("group", "");
             res.put("name", argProjectJob);
         }
-        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
+        resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_JOB, res);
         return resourceMap;
     }
 
     private Map<String, Object> createProjectJobUUIDResource() {
         final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
         res.put("uuid", argProjectJobUUID);
-        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_JOB, res);
+        resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_JOB, res);
         return resourceMap;
     }
     
     private Map<String, Object> createProjectAdhocResource() {
-        return AuthorizationUtil.resourceRule(ACLConstants.TYPE_ADHOC, new HashMap<String, Object>());
+        return AuthorizationUtil.resourceRule(AuthConstants.TYPE_ADHOC, new HashMap<String, Object>());
     }
 
     private Map<String, Object> createStorageResource() {
@@ -1387,7 +1388,7 @@ public class AclTool extends BaseTool {
             res.put("path", argAppStorage);
             res.put("name", argAppStorage);
         }
-        resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_STORAGE, res);
+        resourceMap = AuthorizationUtil.resourceRule(AuthConstants.TYPE_STORAGE, res);
         return resourceMap;
     }
 
@@ -1965,63 +1966,6 @@ public class AclTool extends BaseTool {
         if (null != clilogger) {
             clilogger.debug(message);
         }
-    }
-
-    class ACLConstants {
-        public static final String ACTION_CREATE = "create";
-        public static final String ACTION_READ = "read";
-        public static final String ACTION_VIEW = "view";
-        public static final String ACTION_UPDATE = "update";
-        public static final String ACTION_DELETE = "delete";
-        public static final String ACTION_RUN = "run";
-        public static final String ACTION_KILL = "kill";
-        public static final String ACTION_ADMIN = "admin";
-        public static final String ACTION_GENERATE_USER_TOKEN = "generate_user_token";
-        public static final String ACTION_GENERATE_SERVICE_TOKEN = "generate_service_token";
-        public static final String ACTION_REFRESH = "refresh";
-        public static final String ACTION_RUNAS = "runAs";
-        public static final String ACTION_KILLAS = "killAs";
-        public static final String ACTION_CONFIGURE = "configure";
-        public static final String ACTION_IMPORT = "import";
-        public static final String ACTION_EXPORT = "export";
-        public static final String ACTION_INSTALL = "install";
-        public static final String ACTION_UNINSTALL = "uninstall";
-        public static final String ACTION_DELETE_EXECUTION = "delete_execution";
-        public static final String ACTION_ENABLE_EXECUTIONS = "enable_executions";
-        public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
-        public static final String ACTION_TOGGLE_SCHEDULE = "toggle_schedule";
-        public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
-        public static final String ACTION_SCM_UPDATE="scm_update";
-        public static final String ACTION_SCM_CREATE="scm_create";
-        public static final String ACTION_SCM_DELETE="scm_delete";
-        public static final String ACTION_SCM_IMPORT = "scm_import";
-        public static final String ACTION_SCM_EXPORT = "scm_export";
-
-        public static final String TYPE_SYSTEM = "system";
-        public static final String TYPE_SYSTEM_ACL = "system_acl";
-        public static final String TYPE_NODE = "node";
-        public static final String TYPE_JOB = "job";
-        public static final String TYPE_APITOKEN = "apitoken";
-        public static final String TYPE_ADHOC = "adhoc";
-        public static final String TYPE_PROJECT = "project";
-        public static final String TYPE_PROJECT_ACL = "project_acl";
-        public static final String TYPE_PLUGIN = "plugin";
-        public static final String TYPE_EVENT = "event";
-        public static final String TYPE_USER = "user";
-        public static final String TYPE_STORAGE = "storage";
-
-        private Map<String, String> resType(String type) {
-            return Collections.unmodifiableMap(AuthorizationUtil.resourceType(type));
-        }
-
-        public final Map<String, String> RESOURCE_TYPE_SYSTEM = resType(TYPE_SYSTEM);
-        public final Map<String, String> RESOURCE_TYPE_NODE = resType(TYPE_NODE);
-        public final Map<String, String> RESOURCE_TYPE_JOB = resType(TYPE_JOB);
-        public final Map<String, String> RESOURCE_TYPE_EVENT = resType(TYPE_EVENT);
-        public final Map<String, String> RESOURCE_ADHOC = Collections.unmodifiableMap(
-                AuthorizationUtil
-                        .resource(TYPE_ADHOC)
-        );
     }
 
     class OptionsPrompt extends CLIToolOptionsException {
