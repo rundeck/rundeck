@@ -37,12 +37,12 @@ import spock.lang.Unroll
 
 import javax.security.auth.Subject
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_IMPORT
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_ADMIN
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_CREATE
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_DELETE
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_IMPORT
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_READ
+import static com.dtolabs.rundeck.core.common.AuthConstants.ACTION_UPDATE
 
 /**
  * Created by greg on 2/26/15.

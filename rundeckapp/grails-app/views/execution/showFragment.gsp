@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:null==execution?.dateCompleted?'tail':'browse'}"/>
 <g:set var="authKeys"
        value="${[AuthConstants.ACTION_KILL, AuthConstants.ACTION_READ, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>

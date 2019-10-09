@@ -22,7 +22,7 @@
     Created: Jan 7, 2011 2:21:36 PM
  --%>
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
 <!--Display job details-->
 <div >
 

@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
+<%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.core.common.AuthConstants; rundeck.ScheduledExecution" %>
 
 <html>
   <head>

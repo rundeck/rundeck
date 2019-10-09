@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -56,7 +57,6 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
 import com.dtolabs.rundeck.plugins.step.StepPlugin
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
@@ -479,7 +479,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  frameworkService.authResourceForProject(
                                                                          params.project
                                                                  ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.SCM_EXPORT]
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 if(frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
@@ -513,7 +513,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  frameworkService.authResourceForProject(
                                                                          params.project
                                                                  ),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.SCM_IMPORT]
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
             )) {
                 if(frameworkService.isClusterModeEnabled()){
                     if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
@@ -549,7 +549,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             params.project
                     ),
                     [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT,
-                     AuthConstants.SCM_IMPORT, AuthConstants.SCM_EXPORT]
+                     AuthConstants.ACTION_SCM_IMPORT, AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 if (minScm) {
                     def pluginData = [:]
@@ -3241,7 +3241,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     frameworkService.authResourceForProject(
                             params.project
                     ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.SCM_EXPORT]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,  AuthConstants.ACTION_SCM_EXPORT]
             )) {
                 def pluginData = [:]
                 if (frameworkService.isClusterModeEnabled()) {
@@ -3267,7 +3267,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     frameworkService.authResourceForProject(
                             params.project
                     ),
-                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.SCM_IMPORT]
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT, AuthConstants.ACTION_SCM_IMPORT]
             )) {
                 if (frameworkService.isClusterModeEnabled()) {
                     //initialize if in another node

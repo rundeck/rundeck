@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.core.common.AuthConstants" %>
 <g:set var="selectParams" value="${[:]}"/>
 <g:set var="buildIdent" value="${servletContextAttribute(attribute: 'app.ident')}"/>
 <g:set var="appId" value="${g.appTitle()}"/>
