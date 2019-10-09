@@ -16,12 +16,15 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
-import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
+import com.dtolabs.rundeck.core.execution.workflow.state.StepStateChange
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
+
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * $INTERFACE is ...
@@ -45,8 +48,8 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     MutableWorkflowStepStateImpl(StepIdentifier stepIdentifier,MutableWorkflowState subflow) {
         this.stepIdentifier = stepIdentifier
         this.mutableStepState=new MutableStepStateImpl()
-        this.mutableNodeStateMap = Collections.synchronizedMap(new HashMap<String, MutableStepState>())
-        this.parameterizedStepStates = Collections.synchronizedMap(new HashMap<String, MutableWorkflowStepState>())
+        this.mutableNodeStateMap = new ConcurrentHashMap<>()
+        this.parameterizedStepStates = new ConcurrentHashMap<>()
         this.mutableSubWorkflowState=subflow
         this.nodeStep=false
     }
@@ -83,23 +86,48 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
     }
 
     @Override
-    MutableWorkflowState createMutableSubWorkflowState(List<String> nodeSet,long count) {
-        mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeSet, count)
+    MutableStepState getOrCreateMutableNodeState(final String node) {
+        mutableNodeStateMap.computeIfAbsent(node, { new MutableStepStateImpl() })
+        mutableNodeStateMap[node]
+    }
+
+    @Override
+    synchronized MutableWorkflowState getOrCreateMutableSubWorkflowState(List<String> nodeSet, long count) {
+        if (null == mutableSubWorkflowState) {
+            mutableSubWorkflowState = new MutableWorkflowStateImpl(nodeSet, count)
+        }
+        mutableSubWorkflowState
     }
 
     @Override
     MutableWorkflowStepState getParameterizedStepState(StepIdentifier ident,Map<String, String> params) {
         def string = StateUtils.parameterString(params)
-        if(null==parameterizedStepStates[string]){
-            if (null == mutableSubWorkflowState) {
-                createMutableSubWorkflowState([], 1)
-            }
-            MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(ident,
-                    new MutableWorkflowStateImpl(mutableSubWorkflowState.nodeSet, mutableSubWorkflowState.stepCount))
-            newState.ownerStepState=this
-            parameterizedStepStates[string]= newState
-        }
-        return parameterizedStepStates[string]
+        def nodeName = params['node']
+        parameterizedStepStates.computeIfAbsent(
+                string,
+                {
+                    MutableWorkflowState mwfstate = getOrCreateMutableSubWorkflowState(nodeName ? [nodeName] : [], 1)
+                    MutableWorkflowStepStateImpl newState = new MutableWorkflowStepStateImpl(
+                            ident,
+                            new MutableWorkflowStateImpl(mwfstate.nodeSet, mwfstate.stepCount)
+                    )
+                    newState.ownerStepState = this
+                    newState
+                }
+        )
+        parameterizedStepStates[string]
+    }
+
+    @Override
+    void touchStateForSubStep(
+            final StepIdentifier identifier,
+            final int index,
+            final StepStateChange stepStateChange,
+            final Date timestamp
+    ) {
+        MutableWorkflowState subflow = getOrCreateMutableSubWorkflowState(null, 0)
+        //recursively update subworkflow state for the step in the subcontext
+        subflow.touchStateForStep(identifier, index + 1, stepStateChange, timestamp);
     }
 
     @Override
@@ -114,12 +142,12 @@ class MutableWorkflowStepStateImpl implements MutableWorkflowStepState {
 
     @Override
     void setNodeStepTargets(List<String> nodeset) {
-        nodeStepTargets = new ArrayList<String>(nodeset)
+        nodeStepTargets = new CopyOnWriteArrayList<>(nodeset)
         nodeStep=true
     }
 
     @Override
-    public java.lang.String toString() {
+    public String toString() {
         return "WFStep{" +
                 "step=" + mutableStepState +
                 (hasSubWorkflow()? ", sub=" + mutableSubWorkflowState :'') +

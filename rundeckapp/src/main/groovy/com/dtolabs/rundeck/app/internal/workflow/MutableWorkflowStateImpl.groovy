@@ -18,6 +18,9 @@ package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.*
 
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+
 /**
  * $INTERFACE is ...
  * User: greg
@@ -25,15 +28,15 @@ import com.dtolabs.rundeck.core.execution.workflow.state.*
  * Time: 3:41 PM
  */
 class MutableWorkflowStateImpl implements MutableWorkflowState {
-    def ArrayList<String> mutableNodeSet;
-    def ArrayList<String> mutableAllNodes;
+    def List<String> mutableNodeSet;
+    def List<String> mutableAllNodes;
     def long stepCount;
     def ExecutionState executionState;
     def Date updateTime;
     def Date startTime;
     def Date endTime;
-    def Map<Integer,MutableWorkflowStepState> mutableStepStates;
-    def Map<String,MutableWorkflowNodeState> mutableNodeStates;
+    final Map<Integer, MutableWorkflowStepState> mutableStepStates;
+    final Map<String, MutableWorkflowNodeState> mutableNodeStates;
     private StepIdentifier parentStepId
     def String serverNode
 
@@ -47,21 +50,47 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     MutableWorkflowStateImpl(List<String> nodeSet, long stepCount, Map<Integer, MutableWorkflowStepStateImpl> steps, StepIdentifier parentStepId, String serverNode) {
         this.serverNode=serverNode
         this.parentStepId = parentStepId
-        this.mutableNodeSet = new ArrayList<>()
-        this.mutableAllNodes = new ArrayList<>()
+        this.mutableNodeSet = new CopyOnWriteArrayList<>()
+        this.mutableAllNodes = new CopyOnWriteArrayList<>()
         if (null != nodeSet) {
             this.mutableNodeSet.addAll(nodeSet)
         }
         this.mutableAllNodes.addAll(mutableNodeSet)
         this.stepCount = stepCount
-        mutableStepStates = new HashMap<Integer, MutableWorkflowStepState>()
+        mutableStepStates = new ConcurrentHashMap<>(steps ?: [:])
         for (int i = 1; i <= stepCount; i++) {
-            mutableStepStates[i - 1] = steps && steps[i - 1] ? steps[i - 1] : new MutableWorkflowStepStateImpl(StateUtils.stepIdentifierAppend(parentStepId, StateUtils.stepIdentifier(i)))
+            mutableStepStates.computeIfAbsent(
+                    i - 1,
+                    {
+                        new MutableWorkflowStepStateImpl(
+                                StateUtils.stepIdentifierAppend(
+                                        parentStepId,
+                                        StateUtils.stepIdentifier(i)
+                                )
+                        )
+                    }
+            )
         }
         this.executionState = ExecutionState.WAITING
-        mutableNodeStates = new HashMap<String, MutableWorkflowNodeState>()
+        mutableNodeStates = new ConcurrentHashMap<>()
+        initNodeStepStates()
+        if (mutableStepStates && serverNode) {
+            mutableStepStates.each { int index, MutableWorkflowStepState step ->
+                if (!step.nodeStep && !step.hasSubWorkflow()) {
+                    //a workflow step, e.g. plugin, without a sub workflow
+                    getOrCreateMutableNodeStepState(step, serverNode, step.stepIdentifier)
+                }
+            }
+        }
+
+    }
+
+    /**
+     * init node states and associate with node step states of steps
+     */
+    void initNodeStepStates() {
         mutableAllNodes.each { node ->
-            mutableNodeStates[node] = new MutableWorkflowNodeStateImpl(node)
+            mutableNodeStates.putIfAbsent(node, new MutableWorkflowNodeStateImpl(node))
         }
         if (mutableNodeStates && mutableStepStates) {
             //link nodes to node step states
@@ -73,15 +102,6 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                 }
             }
         }
-        if (mutableStepStates && serverNode) {
-            mutableStepStates.each { int index, MutableWorkflowStepState step ->
-                if (!step.nodeStep && !step.hasSubWorkflow()) {
-                    //a workflow step, e.g. plugin, without a sub workflow
-                    getOrCreateMutableNodeStepState(step, serverNode, step.stepIdentifier)
-                }
-            }
-        }
-
     }
 
     MutableWorkflowStepState getAt(Integer index){
@@ -113,14 +133,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                                          Date timestamp) {
         touchWFState(identifier,timestamp)
 
-        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index, mutableStepStates)
-        transitionStateIfWaiting(identifier,currentStep.mutableStepState)
+        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index)
+        transitionStateIfWaiting(identifier, currentStep.mutableStepState)
         if (identifier.context.size() - index > 1) {
             descendTouchStateForStep(currentStep, identifier, index, stepStateChange,timestamp)
-            if(currentStep.ownerStepState){
-                transitionStateIfWaiting(identifier,currentStep.ownerStepState.mutableStepState)
-                descendTouchStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange,timestamp)
-            }
+
         }else if (stepStateChange.nodeState && currentStep.nodeStep) {
             MutableStepState toUpdate = getOrCreateMutableNodeStepState(currentStep, stepStateChange.nodeName, identifier)
             transitionStateIfWaiting(identifier,toUpdate)
@@ -135,13 +152,9 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                                      Date timestamp) {
         touchStateForStep(identifier,index,stepStateChange,timestamp)
 
-        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index, mutableStepStates)
+        MutableWorkflowStepState currentStep = locateStepWithContext(identifier, index)
         if (identifier.context.size() - index > 1) {
             descendUpdateStateForStep(currentStep, identifier, index, stepStateChange, timestamp)
-            if(currentStep.ownerStepState){
-                //also update state for parameterized step owner
-                descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
-            }
             return
         }
 
@@ -291,19 +304,24 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      * @param identifier
      * @return
      */
-    private MutableStepState getOrCreateMutableNodeStepState(MutableWorkflowStepState currentStep, String nodeName, StepIdentifier identifier) {
-        if (null == currentStep.nodeStateMap[nodeName]) {
-            //create it
-            currentStep.mutableNodeStateMap[nodeName] = new MutableStepStateImpl()
-        }
+    private MutableStepState getOrCreateMutableNodeStepState(
+            MutableWorkflowStepState currentStep,
+            String nodeName,
+            StepIdentifier identifier
+    ) {
+        def stepState = currentStep.getOrCreateMutableNodeState(nodeName)
         //connect step-oriented state to node-oriented state
-        if (null == mutableNodeStates[nodeName]) {
-            mutableNodeStates[nodeName] = new MutableWorkflowNodeStateImpl(nodeName)
-        }
-        if (null == mutableNodeStates[nodeName].mutableStepStateMap[identifier]) {
-            mutableNodeStates[nodeName].mutableStepStateMap[identifier] = currentStep.mutableNodeStateMap[nodeName]
-        }
-        return currentStep.mutableNodeStateMap[nodeName]
+        mutableNodeStates.computeIfAbsent(
+                nodeName,
+                {
+                    new MutableWorkflowNodeStateImpl(nodeName)
+                }
+        )
+        mutableNodeStates[nodeName].mutableStepStateMap.putIfAbsent(
+                identifier,
+                stepState
+        )
+        stepState
     }
 
 /**
@@ -318,9 +336,13 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
 
         MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
             currentStep.mutableSubWorkflowState :
-            currentStep.createMutableSubWorkflowState(null, 0)
+            currentStep.getOrCreateMutableSubWorkflowState(null, 0)
         //recursively update subworkflow state for the step in the subcontext
         subflow.updateStateForStep(identifier, index + 1, stepStateChange, timestamp);
+        if (currentStep.ownerStepState) {
+            //also update state for parameterized step owner
+            descendUpdateStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+        }
     }
 /**
      * Descend into a sub workflow to update state
@@ -333,12 +355,11 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                                           StepStateChange stepStateChange,
                                        Date timestamp) {
         //recurse to the workflow list to find the right index
-
-        MutableWorkflowState subflow = currentStep.hasSubWorkflow() ?
-            currentStep.mutableSubWorkflowState :
-            currentStep.createMutableSubWorkflowState(null, 0)
-        //recursively update subworkflow state for the step in the subcontext
-        subflow.touchStateForStep(identifier, index + 1,stepStateChange, timestamp);
+        currentStep.touchStateForSubStep(identifier, index, stepStateChange, timestamp)
+        if (currentStep.ownerStepState) {
+            transitionStateIfWaiting(identifier, currentStep.ownerStepState.mutableStepState)
+            descendTouchStateForStep(currentStep.ownerStepState, identifier, index, stepStateChange, timestamp)
+        }
     }
 
     /**
@@ -487,15 +508,17 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
         result
     }
 
-    private MutableWorkflowStepState locateStepWithContext(StepIdentifier identifier, int index,Map<Integer, MutableWorkflowStepState> states, boolean ignoreParameters=false) {
-        MutableWorkflowStepState currentStep
+    private MutableWorkflowStepState locateStepWithContext(
+            StepIdentifier identifier,
+            int index,
+            boolean ignoreParameters = false
+    ) {
         StepContextId subid = identifier.context[index]
         int ndx=subid.step-1
-        if (ndx >= states.size() || null == states[ndx]) {
-            states[ndx] = new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid))
-            stepCount = states.size()
-        }
-        currentStep = states[ndx]
+        mutableStepStates.computeIfAbsent(ndx, { new MutableWorkflowStepStateImpl(StateUtils.stepIdentifier(subid)) })
+        MutableWorkflowStepState currentStep = mutableStepStates[ndx]
+        stepCount = mutableStepStates.size()
+
         //parameterized substep
         if (!ignoreParameters && null != subid.params && subid.aspect != StepAspect.ErrorHandler) {
             currentStep = currentStep.getParameterizedStepState(StateUtils.stepIdentifier(subid), subid.params)
@@ -570,22 +593,20 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
                     identifier != null ? !(identifier.context.last().aspect.isMain()) : false)
         }
         if (null != nodenames && (null == mutableNodeSet || mutableNodeSet.size() < 1)) {
-            mutableNodeSet = new ArrayList<>(nodenames)
+            mutableNodeSet = new CopyOnWriteArrayList<>(nodenames)
             def mutableNodeStates=parent.mutableNodeStates
             def allNodes=parent.allNodes
             mutableNodeSet.each { node ->
-                if(!mutableNodeStates[node]){
-                    mutableNodeStates[node] = new MutableWorkflowNodeStateImpl(node)
-                }
+                mutableNodeStates.computeIfAbsent(node, { new MutableWorkflowNodeStateImpl(node) })
+                def nodeState = mutableNodeStates[node]
                 if(!allNodes.contains(node)){
                     allNodes<<node
                 }
-                mutableStepStates.keySet().each {int ident->
-                    if(mutableStepStates[ident].nodeStep){
-                        if(null==mutableStepStates[ident].mutableNodeStateMap[node]){
-                            mutableStepStates[ident].mutableNodeStateMap[node]=new MutableStepStateImpl()
-                        }
-                        mutableNodeStates[node].mutableStepStateMap[StateUtils.stepIdentifierAppend(identifier,StateUtils.stepIdentifier(ident + 1))]= mutableStepStates[ident].mutableNodeStateMap[node]
+                mutableStepStates.each { int ident, MutableWorkflowStepState wfStepState ->
+                    if (wfStepState.nodeStep) {
+                        def wfnodestate = wfStepState.getOrCreateMutableNodeState(node)
+                        def newIdent = StateUtils.stepIdentifierAppend(identifier, StateUtils.stepIdentifier(ident + 1))
+                        nodeState.mutableStepStateMap.putIfAbsent(newIdent, wfnodestate)
                     }
                 }
             }
@@ -737,13 +758,12 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
     synchronized void updateSubWorkflowState(StepIdentifier identifier, int index, boolean quellFinalState,
                                  ExecutionState executionState, Date timestamp, List<String> nodeNames, MutableWorkflowState parent) {
         touchWFState(identifier,timestamp)
-        Map<Integer, MutableWorkflowStepState> states = mutableStepStates;
         if (identifier.context.size() - index > 0) {
             //descend one step
-            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index, states)
+            MutableWorkflowStepState nextStep = locateStepWithContext(identifier, index)
             MutableWorkflowState nextWorkflow = nextStep.hasSubWorkflow() ?
                 nextStep.mutableSubWorkflowState :
-                nextStep.createMutableSubWorkflowState(null, 0)
+                nextStep.getOrCreateMutableSubWorkflowState(null, 0)
 
             transitionStateIfWaiting(identifier,nextStep.mutableStepState)
             if (nextStep.ownerStepState) {

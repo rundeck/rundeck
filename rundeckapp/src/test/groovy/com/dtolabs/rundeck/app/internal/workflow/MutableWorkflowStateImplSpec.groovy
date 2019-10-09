@@ -17,8 +17,10 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepContextId
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
 
@@ -189,4 +191,24 @@ class MutableWorkflowStateImplSpec extends Specification {
 
     }
 
+
+    def "locateStepWithContext"() {
+        given:
+            def wf = new MutableWorkflowStateImpl([], 5)
+            wf.mutableStepStates[2].getParameterizedStepState(stepIdentifierFromString('3@node=anode'), [node: 'anode'])
+        when:
+            def result = wf.locateStepWithContext(stepIdentifierFromString(stepId), ndx, ignore)
+        then:
+            result.stepIdentifier.toString() == expect
+        where:
+            stepId                 | ndx | ignore | expect
+            '1'                    | 0   | false  | '1'
+            '1/2/3/4/5'            | 0   | false  | '1'
+            '1/2/3/4/5'            | 1   | false  | '2'
+            '1/2/3/4/5'            | 2   | false  | '3'
+            '1/2/3@node=anode/4/5' | 2   | false  | '3@node=anode'
+            '1/2/3@node=anode/4/5' | 2   | true   | '3'
+            '1/2/3/4/5'            | 3   | false  | '4'
+            '1/2/3/4/5'            | 4   | false  | '5'
+    }
 }
