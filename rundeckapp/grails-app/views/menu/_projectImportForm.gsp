@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 
 <div class="col-xs-12">

@@ -1,4 +1,4 @@
-<%@ page import="rundeck.AuthToken; com.dtolabs.rundeck.core.common.AuthConstants" %>
+<%@ page import="rundeck.AuthToken; org.rundeck.core.auth.AuthConstants" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>

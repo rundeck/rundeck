@@ -17,7 +17,7 @@
 package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.FrameworkResource
 
 import javax.servlet.http.HttpServletResponse

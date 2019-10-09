@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.PluginDisabledException
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier

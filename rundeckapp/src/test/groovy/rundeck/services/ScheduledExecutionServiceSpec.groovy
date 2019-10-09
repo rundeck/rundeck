@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin

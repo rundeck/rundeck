@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager

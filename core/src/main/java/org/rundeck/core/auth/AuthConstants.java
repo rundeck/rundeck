@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtolabs.rundeck.core.common;
+package org.rundeck.core.auth;
 
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
 

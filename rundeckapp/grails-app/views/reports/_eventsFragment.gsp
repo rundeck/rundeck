@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants; rundeck.User" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.User" %>
 <g:set var="rkey" value="${g.rkey()}" />
 
 <g:if test="${session.user && User.findByLogin(session.user)?.reportfilters}">

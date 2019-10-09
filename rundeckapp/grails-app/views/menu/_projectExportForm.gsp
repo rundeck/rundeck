@@ -15,7 +15,7 @@
   --}%
 
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <script type="application/javascript">
     function select_all() {
         jQuery('.export_select_list input[type=checkbox]').prop('checked', true);

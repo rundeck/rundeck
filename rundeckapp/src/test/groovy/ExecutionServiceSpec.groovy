@@ -18,7 +18,7 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl

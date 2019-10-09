@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IRundeckProject

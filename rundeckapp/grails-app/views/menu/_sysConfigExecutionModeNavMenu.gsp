@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
         AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>

@@ -21,7 +21,7 @@
   Time: 4:16 PM
 --%>
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>

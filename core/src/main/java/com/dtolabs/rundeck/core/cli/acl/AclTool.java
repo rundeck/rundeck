@@ -22,7 +22,7 @@ import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.*;
 import com.dtolabs.rundeck.core.authorization.providers.*;
 import com.dtolabs.rundeck.core.cli.*;
-import com.dtolabs.rundeck.core.common.AuthConstants;
+import org.rundeck.core.auth.AuthConstants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.FrameworkProject;
 import org.apache.commons.cli.*;

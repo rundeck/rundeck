@@ -43,7 +43,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView

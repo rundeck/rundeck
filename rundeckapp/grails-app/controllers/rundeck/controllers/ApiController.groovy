@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
 import org.rundeck.util.Sizes

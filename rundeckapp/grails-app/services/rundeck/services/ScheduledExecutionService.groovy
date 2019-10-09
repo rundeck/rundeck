@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -43,7 +43,6 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
-import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent

@@ -33,7 +33,6 @@ import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -63,6 +62,7 @@ import grails.converters.JSON
 import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware

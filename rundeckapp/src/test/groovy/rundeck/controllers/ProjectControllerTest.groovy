@@ -18,9 +18,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.server.projects.RundeckProject
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*

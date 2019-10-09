@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.common.AuthConstants; rundeck.ScheduledExecution" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants; rundeck.ScheduledExecution" %>
 
 <div class="jobInfoSection">
     <g:if test="${scheduledExecution.groupPath}">

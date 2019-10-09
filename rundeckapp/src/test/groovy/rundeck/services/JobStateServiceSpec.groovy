@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.common.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 
 import static org.junit.Assert.*
 

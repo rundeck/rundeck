@@ -64,6 +64,7 @@ import org.grails.web.json.JSONObject
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.hibernate.type.StandardBasicTypes
+import org.rundeck.core.auth.AuthConstants
 import org.rundeck.storage.api.StorageException
 import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
