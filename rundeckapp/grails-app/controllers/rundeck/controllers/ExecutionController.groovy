@@ -774,6 +774,7 @@ class ExecutionController extends ControllerBase{
         def iterator = reader.reader
         iterator.openStream(0)
         def lineSep=System.getProperty("line.separator")
+        boolean nooutput = true
         iterator.each { LogEvent msgbuf ->
             if (msgbuf.eventType != LogUtil.EVENT_TYPE_LOG) {
                 return
@@ -785,9 +786,11 @@ class ExecutionController extends ControllerBase{
                 } catch (Exception exc) {
                 }
             }
+            nooutput = false
             appendOutput(response, (isFormatted?"${logFormater.format(msgbuf.datetime)} [${msgbuf.metadata?.user}@${msgbuf.metadata?.node} ${msgbuf.metadata?.stepctx?:'_'}][${msgbuf.loglevel}] ${message}" : message))
             appendOutput(response, lineSep)
         }
+        if(nooutput) appendOutput(response, "No output")
         iterator.close()
     }
 
