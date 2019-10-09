@@ -44,12 +44,12 @@ import grails.testing.spring.AutowiredTest
 import org.grails.events.bus.SynchronousEventBus
 import org.grails.plugins.metricsweb.MetricService
 import org.grails.web.json.JSONObject
+import org.rundeck.app.services.ExecutionFile
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.services.*
-import rundeck.services.logging.ExecutionFile
 import spock.lang.Specification
 import spock.lang.Unroll
 

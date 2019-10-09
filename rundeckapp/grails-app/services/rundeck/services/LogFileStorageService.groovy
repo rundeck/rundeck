@@ -2018,7 +2018,7 @@ class LogFileStorageService
      * @param file type
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-   Map removeLogFile(Execution e, String filetype) {
+   Map removeRemoteLogFile(Execution e, String filetype) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
 
        if(!plugin){
@@ -2031,8 +2031,7 @@ class LogFileStorageService
 
         if(remote){
             try{
-                plugin.deleteFile(filetype)
-                success=true
+                success = plugin.deleteFile(filetype)
             }catch(Exception ex){
                 errorMessage = "Failed retrieve log file: ${ex.message}"
                 log.warn("removing the remote log file failed: ${ex.message}")

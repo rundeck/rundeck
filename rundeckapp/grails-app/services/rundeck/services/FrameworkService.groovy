@@ -267,7 +267,7 @@ class FrameworkService implements ApplicationContextAware, AuthContextProcessor,
         log.info("removing cleaner executions job scheduled for ${project}")
         scheduledExecutionService.deleteCleanerExecutionsJob(project)
 
-        if(enabled && cleanerHistoryPeriod && cleanerHistoryPeriod > 0) {
+        if(enabled) {
             log.info("scheduling cleaner executions job for ${project}")
             scheduledExecutionService.scheduleCleanerExecutionsJob(project, cronExression,
                     [

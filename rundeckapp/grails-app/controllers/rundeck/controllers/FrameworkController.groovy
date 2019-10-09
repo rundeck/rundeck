@@ -1310,8 +1310,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps['project.execution.history.cleanup.enabled'] = cleanerHistoryEnabled.toString()
 
             if(featureService.featurePresent('cleanExecutionsHistoryJob', true)
-                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) <= 0){
-                cleanerHistoryPeriodError = "Days to keep executions should be greater than zero"
+                    && cleanerHistoryEnabled && params.cleanperiod && Integer.parseInt(params.cleanperiod) < 0){
+                cleanerHistoryPeriodError = "Days to keep executions should be greater or equal to zero"
                 errors << cleanerHistoryPeriodError
             }
 

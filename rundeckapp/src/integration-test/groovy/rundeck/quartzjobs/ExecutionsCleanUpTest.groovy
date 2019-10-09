@@ -22,6 +22,7 @@ import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
 import org.junit.Assert
 import org.junit.Test
+import org.rundeck.app.services.ExecutionFile
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -75,12 +76,7 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         int minimumExecutionsToKeep = 0
         int maximumDeletionSize = 500
         def logFileStorageService = new MockFor(LogFileStorageService)
-        logFileStorageService.demand.getFileForExecutionFiletype(1..999){Execution execution,
-                                                                           String filetype,
-                                                                            boolean useStoredPath,
-                                                                            boolean partial ->
-            null
-        }
+
         Date startDate = new Date(2015 - 1900, 2, 8)
         Date endDate = ExecutionQuery.parseRelativeDate("${maxDaysToKeep}d", startDate)
         ExecutionQuery.metaClass.static.parseRelativeDate = { String recentFilter ->
@@ -88,11 +84,17 @@ class ExecutionsCleanUpTest extends GroovyTestCase{
         }
         Date execDate = new Date(2015 - 1900, 02, 03)
         ScheduledExecution se = setupJob(projName)
-        Execution execution = setupExecution(se, projName, execDate, execDate)
         ExecutionsCleanUp job = new ExecutionsCleanUp()
+
+        def executionFile = new MockFor(ExecutionFile)
 
         List execIdsToExclude = job.searchExecutions(new FrameworkService(),
                 new ExecutionService(), new JobSchedulerService(), projName, maxDaysToKeep, minimumExecutionsToKeep, maximumDeletionSize, )
+
+
+        logFileStorageService.demand.getExecutionFiles(1..999) { e , filters, endpoint ->  [:] }
+
+        Execution execution = setupExecution(se, projName, execDate, execDate)
 
         Assert.assertEquals(true, execIdsToExclude.size() > 0)
 
