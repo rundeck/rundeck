@@ -45,6 +45,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.core.task.AsyncListenableTaskExecutor
 import org.springframework.core.task.AsyncTaskExecutor
+import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.TaskScheduler
 import org.springframework.util.concurrent.ListenableFuture
 import rundeck.Execution
@@ -100,6 +101,7 @@ class LogFileStorageService
     AsyncListenableTaskExecutor logFileTaskExecutor
     AsyncListenableTaskExecutor logFileStorageTaskExecutor
     TaskScheduler logFileStorageTaskScheduler
+    TaskExecutor logFileStorageDeleteRemoteTask
     def executorService
     def grailsApplication
     def grailsLinkGenerator
@@ -2018,20 +2020,25 @@ class LogFileStorageService
      * @param file type
      * @return Map containing success: true/false, and error: String indicating the error if there was one
      */
-   Map removeRemoteLogFile(Execution e, String filetype) {
+   Map removeRemoteLogFile(Execution e, String filetype, int delay=0) {
         def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
 
        if(!plugin){
-           return [success: false, error: "Not plugin enabled"]
+           return [started: false, error: "Not plugin enabled"]
        }
 
         def remote = plugin.isAvailable(filetype)
-        def success=false
+        def started=false
         def errorMessage=null
 
         if(remote){
             try{
-                success = plugin.deleteFile(filetype)
+                logFileStorageDeleteRemoteTask.execute({
+                    plugin.deleteFile(filetype)
+                })
+
+                started = true
+
             }catch(Exception ex){
                 errorMessage = "Failed retrieve log file: ${ex.message}"
                 log.warn("removing the remote log file failed: ${ex.message}")
@@ -2040,7 +2047,7 @@ class LogFileStorageService
             errorMessage = "Remote file is not available"
         }
 
-        return [success: success, error: errorMessage]
+        return [started: started, error: errorMessage]
     }
 
 

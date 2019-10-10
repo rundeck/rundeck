@@ -111,7 +111,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                 }
 
                 def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
-                if(!resultDeleteRemote.success){
+                if(!resultDeleteRemote.started){
                     logger.debug(resultDeleteRemote.error)
                 }
             }
@@ -184,20 +184,37 @@ class ExecutionsCleanUp implements InterruptableJob {
             logger.info("found ${totalFound} executions")
             if(totalToExclude >0) {
                 if (minimumExecutionToKeep > 0) {
+
                     int totalExecutions = this.totalAllExecutions(executionService, project)
                     int sub = totalExecutions - totalToExclude
+
                     logger.info("minimum executions to keep: ${minimumExecutionToKeep}")
                     logger.info("total exections of project ${project}: ${totalExecutions}")
                     logger.info("total to exclude: ${totalToExclude}")
 
-                    //minimumExecutionToKeep should be triggered if the number of execution to delete is lower than maximum delete size
-                    if (totalToExclude < maximumDeletionSize && sub < minimumExecutionToKeep) {
+                    boolean removeSubResult= false
+                    boolean dontRemove= false
+
+                    if(totalExecutions < minimumExecutionToKeep){
+                        dontRemove = true
+                    }
+
+                    if (sub < minimumExecutionToKeep) {
+                        removeSubResult= true
+                    }
+
+                    if (removeSubResult) {
                         int jump = minimumExecutionToKeep - sub
                         logger.info("${jump} executions can not be removed")
                         //remove the oldest executions
                         def finalIndex = result.size() - jump
-                        result = jump < result.size() ? result.subList(0, finalIndex - 1) : []
+                        result = jump < result.size() ? result.subList(0, finalIndex) : []
                         logger.info("${result.size()} executions will be removed")
+                    }
+
+                    if(dontRemove){
+                        logger.info("${result.size()} executions can not be removed ")
+                        result = []
                     }
                 }
 

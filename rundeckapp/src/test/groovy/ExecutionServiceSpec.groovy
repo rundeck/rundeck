@@ -462,8 +462,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                 willretry,
                 '1/1/1',
                 null,
-                succeededList, 
-                failedList, 
+                succeededList,
+                failedList,
                 filter
         )
 
@@ -1181,8 +1181,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false) >> file2
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true) >> file2
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -1243,8 +1243,8 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
             1 * getFileForExecutionFiletype(execution, 'state.json', false, false)
             1 * getFileForExecutionFiletype(execution, 'state.json', false, true)
             1 * getExecutionFiles(execution, [], false) >> executionFiles
-            1 * removeRemoteLogFile(execution, 'rdlog') >> [success: false, error: "not found"]
-            1 * removeRemoteLogFile(execution, 'state.json') >> [success: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'rdlog') >> [started: false, error: "not found"]
+            1 * removeRemoteLogFile(execution, 'state.json') >> [started: false, error: "not found"]
             0 * _(*_)
         }
 
@@ -4581,7 +4581,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
                            'framework.globalfilter.2.config.bgcolor': 'yellow']
 
     }
-  
+
     void "runnow execution with exclude filter"() {
 
         given:

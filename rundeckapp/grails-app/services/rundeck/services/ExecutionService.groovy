@@ -1789,7 +1789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 }
 
                 def resultDeleteRemote = logFileStorageService.removeRemoteLogFile(e, ftype)
-                if(!resultDeleteRemote.success){
+                if(!resultDeleteRemote.started){
                     log.debug(resultDeleteRemote.error)
                 }
             }
@@ -1813,7 +1813,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     deletedfiles++
                 }
             }
-
             log.debug("${deletedfiles} files removed")
             result = [success: true]
         } catch (Exception ex) {

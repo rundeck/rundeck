@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
+import org.springframework.core.task.TaskExecutor
 
 import static org.junit.Assert.*
 
@@ -1453,33 +1454,21 @@ class LogFileStorageServiceTests  {
         LogFileStorageRequest request = new LogFileStorageRequest(filetype: filetype,execution: e,pluginName:'test1',completed: false)
         request.validate()
         assertNotNull((request.errors.allErrors*.toString()).join(';'),request.save(flush:true))
+
+        def executor = new MockFor(TaskExecutor)
+        executor.demand.execute() { Closure clos1 ->
+        }
+
+        service.logFileStorageDeleteRemoteTask = executor.proxyInstance()
+
         if (null != clos) {
             service.with(clos)
         }
 
+
         return service.removeRemoteLogFile(e, filetype)
     }
 
-    void testRemovePluginWithoutDelete(){
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
-
-        def test = new testStoragePlugin()
-        test.storeLogFileSuccess=true
-        test.available=true
-        LogFileStorageService svc
-        assertTrue(testLogFile1.exists())
-
-        Map remove=performDeleteStorage(test, "rdlog", createExecution(), testLogFile1,[:]) { LogFileStorageService service ->
-            svc = service
-            assertFalse(test.storeLogFileCalled)
-            assertNull(test.storeFiletype)
-        }
-
-        assertFalse(remove.success)
-        assertTrue(testLogFile1.exists())
-
-    }
 
     void testRemovePluginWithDelete(){
         grailsApplication.config.clear()
@@ -1497,12 +1486,10 @@ class LogFileStorageServiceTests  {
             assertNull(test.storeFiletype)
         }
 
-        assertTrue(remove.success)
-        assertFalse(testLogFile1.exists())
+        assertTrue(remove.started)
 
     }
 
-    @DirtiesRuntime
     void testRemoveWithoutPlugin(){
         grailsApplication.config.clear()
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -1526,7 +1513,7 @@ class LogFileStorageServiceTests  {
 
         def result = service.removeRemoteLogFile(e,"rdlog")
         assertNotNull(result)
-        assertFalse(result.success)
+        assertFalse(result.started)
         assertEquals(result.error, "Not plugin enabled")
 
     }
