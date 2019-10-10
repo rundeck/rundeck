@@ -18,8 +18,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.server.projects.RundeckProject
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor

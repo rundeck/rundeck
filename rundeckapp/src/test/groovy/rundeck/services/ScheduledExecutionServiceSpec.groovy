@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
 import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
@@ -39,7 +40,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
@@ -3217,7 +3217,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
     def "not check scm_update permission if isnt a scm-import"() {
@@ -3251,7 +3251,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE],_) >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
     @Unroll
@@ -3285,7 +3285,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result.errjobs.size() == 1
         result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> false
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> false
     }
 
 
@@ -3307,7 +3307,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result
         result.success?.job
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_DELETE,AuthConstants.SCM_DELETE],_) >> true
+                [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
     @Unroll
@@ -3329,7 +3329,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !result.sucess
         result.error
         0 * service.frameworkService.authorizeProjectJobAll(_,_,
-                [AuthConstants.SCM_DELETE],_) >> true
+                [AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
     @Unroll
@@ -3350,9 +3350,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         result.jobs.size()==1
         1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
-                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],'AProject') >> true
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],'AProject') >> true
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],_) >> true
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],_) >> true
 
     }
 
@@ -3376,7 +3376,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE],'AProject') >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.SCM_CREATE],_) >> false
+                [AuthConstants.ACTION_SCM_CREATE],_) >> false
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE],_) >> true
 

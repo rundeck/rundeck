@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -42,12 +43,10 @@ import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
-import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.events.EventPublisher
 import grails.gorm.transactions.Transactional
@@ -1025,7 +1024,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def authActions = [AuthConstants.ACTION_DELETE]
         if (callingAction == 'scm-import') {
-            authActions << AuthConstants.SCM_DELETE
+            authActions << AuthConstants.ACTION_SCM_DELETE
         }
         if ((
             !frameworkService.authorizeProjectResourceAny(
@@ -1695,8 +1694,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def updateAuthActions = [AuthConstants.ACTION_UPDATE]
         def createAuthActions = [AuthConstants.ACTION_CREATE]
         if (changeinfo?.method == 'scm-import') {
-            updateAuthActions += [AuthConstants.SCM_UPDATE]
-            createAuthActions += [AuthConstants.SCM_CREATE]
+            updateAuthActions += [AuthConstants.ACTION_SCM_UPDATE]
+            createAuthActions += [AuthConstants.ACTION_SCM_CREATE]
         }
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
@@ -3402,7 +3401,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def actions = [AuthConstants.ACTION_CREATE]
         if(changeinfo?.method == 'scm-import'){
-            actions += [AuthConstants.SCM_CREATE]
+            actions += [AuthConstants.ACTION_SCM_CREATE]
         }
         if (!frameworkService.authorizeProjectJobAny(authContext, scheduledExecution, actions, scheduledExecution.project)) {
             scheduledExecution.discard()
