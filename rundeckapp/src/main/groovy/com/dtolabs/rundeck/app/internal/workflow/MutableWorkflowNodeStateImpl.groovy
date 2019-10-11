@@ -16,9 +16,12 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
-import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.execution.workflow.state.StepState
+import groovy.transform.CompileStatic
+
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * $INTERFACE is ...
@@ -26,6 +29,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.StepState
  * Date: 11/13/13
  * Time: 11:43 AM
  */
+@CompileStatic
 class MutableWorkflowNodeStateImpl implements MutableWorkflowNodeState {
     String nodeName
     MutableStepState mutableNodeState
@@ -35,7 +39,7 @@ class MutableWorkflowNodeStateImpl implements MutableWorkflowNodeState {
     MutableWorkflowNodeStateImpl(String nodeName) {
         this.nodeName = nodeName
         mutableNodeState=new MutableStepStateImpl()
-        mutableStepStateMap=new HashMap<StepIdentifier,MutableStepState>()
+        mutableStepStateMap = new ConcurrentHashMap<>()
     }
 
     public StepState getNodeState() {
