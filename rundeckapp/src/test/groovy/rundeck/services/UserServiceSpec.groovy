@@ -15,8 +15,10 @@
  */
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
@@ -57,6 +59,14 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         setup:
         String login = "theusername"
         String sessionId = "exampleSessionId01"
+        service.frameworkService = Mock(FrameworkService){
+            2 * getRundeckFramework() >> Mock(IFramework){
+                2 * getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(service.SESSION_ID_ENABLED) >> true
+                    getProperty(service.SESSION_ID_ENABLED) >> true
+                }
+            }
+        }
 
         when:
         User user = service.registerLogin(login, sessionId)
@@ -64,6 +74,30 @@ class UserServiceSpec extends Specification implements ServiceUnitTest<UserServi
         then:
         user.login == "theusername"
         user.lastLogin
+        user.lastSessionId == 'exampleSessionId01'
+        !user.lastLogout
+    }
+
+    def "registerLogin session id disabled"(){
+        setup:
+        String login = "theusername"
+        String sessionId = "exampleSessionId01"
+        service.frameworkService = Mock(FrameworkService){
+            2 * getRundeckFramework() >> Mock(IFramework){
+                2 * getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(service.SESSION_ID_ENABLED) >> true
+                    getProperty(service.SESSION_ID_ENABLED) >> false
+                }
+            }
+        }
+
+        when:
+        User user = service.registerLogin(login, sessionId)
+
+        then:
+        user.login == "theusername"
+        user.lastLogin
+        user.lastSessionId == null
         !user.lastLogout
     }
 

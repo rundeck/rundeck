@@ -28,8 +28,10 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -1267,10 +1269,19 @@ class MenuControllerSpec extends Specification {
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> true
+                }
+            }
+        }
         def userToSearch = 'admin'
         def email = 'test@test.com'
         def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
-        User u = new User(login: userToSearch)
+        def lastSessionId = 'exampleSessionId01'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
         u.save()
 
         ScheduledExecution job = new ScheduledExecution(
@@ -1303,6 +1314,7 @@ class MenuControllerSpec extends Specification {
         response.json.users
         response.json.users.find{it.login == userToSearch}
         response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.lastSessionId == lastSessionId
 
     }
 
@@ -1313,10 +1325,20 @@ class MenuControllerSpec extends Specification {
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> true
+                }
+            }
+        }
+
         def userToSearch = 'admin'
         def email = 'test@test.com'
         def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
-        User u = new User(login: userToSearch)
+        def lastSessionId = 'exampleSessionId02'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
         u.save()
 
         ScheduledExecution job = new ScheduledExecution(
@@ -1351,6 +1373,7 @@ class MenuControllerSpec extends Specification {
         response.json.users.find{it.login == userToSearch}
         response.json.users.find{it.login == userToSearch}.lastJob
         response.json.users.find{it.login == userToSearch}.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+        response.json.users.find{it.login == userToSearch}.lastSessionId == lastSessionId
 
     }
 
@@ -1485,5 +1508,63 @@ class MenuControllerSpec extends Specification {
         response.json.permalink  == 'gui/href'
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
+    }
+
+    def "loadUsersList summary with no session id"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> false
+                }
+            }
+        }
+
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        def lastSessionId = 'exampleSessionId02'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+        u.save()
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: userToSearch,
+                project: 'AProject'
+        ).save()
+
+        when:
+        def users = controller.loadUsersList()
+
+        then:
+        response.json.users
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+        response.json.users.find{it.login == userToSearch}.lastSessionId == null
+
     }
 }

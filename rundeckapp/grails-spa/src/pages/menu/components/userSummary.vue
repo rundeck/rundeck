@@ -29,7 +29,7 @@
                 >
               </div>
             </div>
-            <div class="col-xs-12 col-sm-4">
+            <div class="col-xs-12 col-sm-4" v-if="sessionIdEnabled">
               <div class="form-group">
                 <input
                   type="text"
@@ -101,7 +101,7 @@
                             <i class="glyphicon glyphicon-question-sign"></i>
                           </span>
                       </th>
-                      <th class="table-header">
+                      <th class="table-header" v-if="sessionIdEnabled">
                         {{ $t("message.pageUsersSessionIDLabel")}}
                       </th>
                       <th class="table-header">
@@ -146,9 +146,9 @@
                       </td>
                       <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNone")}}</span>
                       </td>
-                      <td v-if="user.lastSessionId">{{user.lastSessionId}}
+                      <td v-if="user.lastSessionId && sessionIdEnabled">{{user.lastSessionId}}
                       </td>
-                      <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
+                      <td v-else-if="sessionIdEnabled"><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
                       <td v-if="user.lastHostName">{{user.lastHostName}}
                       </td>
                       <td v-else><span class="text-primary small text-uppercase">{{ $t("message.pageUserNotSet")}}</span>
@@ -194,6 +194,7 @@
     ],
     data () {
       return {
+        sessionIdEnabled: false,
         users: [],
         loggedOnly: true,
         sessionIdFilter: "",
@@ -233,6 +234,7 @@
           this.pagination.max = response.data.maxRows
           this.pagination.total = response.data.totalRecords
           this.users = response.data.users
+          this.sessionIdEnabled = response.data.sessionIdEnabled
           this.loading = false
         })
       }

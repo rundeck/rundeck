@@ -20,7 +20,10 @@ class UserActionService implements LogoutHandler{
     @EventListener
     void handleAuthenticationSuccessEvent(AuthenticationSuccessEvent event) {
         if(extractUsername(event?.authentication) != null){
-            String sessionId = event.getSource()?.details?.sessionId
+            String sessionId = null
+            if(userService.isSessionIdRegisterEnabled()){
+                sessionId = event.getSource()?.details?.sessionId
+            }
             userService.registerLogin(extractUsername(event.authentication), sessionId)
         }else{
             log.error("Null user name on handleAuthenticationSuccessEvent")

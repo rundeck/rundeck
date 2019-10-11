@@ -3366,8 +3366,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.loginFilter && !params.loginFilter.trim().isEmpty()){
             filters << ["login" : params.loginFilter.trim()]
         }
-        if(params.sessionFilter && !params.sessionFilter.trim().isEmpty()){
-            filters << ["lastSessionId" : params.sessionFilter.trim()]
+        if(userService.isSessionIdRegisterEnabled()) {
+            if (params.sessionFilter && !params.sessionFilter.trim().isEmpty()) {
+                filters << ["lastSessionId": params.sessionFilter.trim()]
+            }
         }
         if(params.hostNameFilter && !params.hostNameFilter.trim().isEmpty()){
             filters << ["lastLoggedHostName" : params.hostNameFilter.trim()]
@@ -3401,7 +3403,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             obj.tokens = tokenList?.size()
             obj.loggedStatus = userService.getLoginStatus(it, obj.lastJob)
             obj.lastHostName = it.lastLoggedHostName
-            obj.lastSessionId = it.lastSessionId
+            if(userService.isSessionIdRegisterEnabled()) {
+                obj.lastSessionId = it.lastSessionId
+            }
             obj.loggedInTime = it.lastLogin
             if(loggedOnly && obj.loggedStatus.equals(UserService.LogginStatus.LOGGEDIN.value)){
                 userList.add(obj)
@@ -3411,10 +3415,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         render(contentType:'application/json',text:
                 ([
-                    users           : userList,
-                    totalRecords    : result.totalRecords,
-                    offset          : offset,
-                    maxRows         : max
+                    users               : userList,
+                    totalRecords        : result.totalRecords,
+                    offset              : offset,
+                    maxRows             : max,
+                    sessionIdEnabled    : userService.isSessionIdRegisterEnabled()
                 ] )as JSON
         )
     }

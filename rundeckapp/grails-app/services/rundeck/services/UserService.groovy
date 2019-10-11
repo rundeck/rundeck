@@ -28,6 +28,7 @@ class UserService {
 
     FrameworkService frameworkService
     private static final int DEFAULT_TIMEOUT = 30
+    private static final String SESSION_ID_ENABLED = 'framework.gui.user.summary.session.id.enabled'
 
     enum LogginStatus{
         LOGGEDIN('LOGGED IN'),LOGGEDOUT('LOGGED OUT'),ABANDONED('ABANDONED'),NOTLOGGED('NOT LOGGED')
@@ -59,7 +60,11 @@ class UserService {
         }
         user.lastLogin = new Date()
         user.lastLoggedHostName = InetAddress.getLocalHost().getHostName()
-        user.lastSessionId = sessionId
+        if(isSessionIdRegisterEnabled()){
+            user.lastSessionId = sessionId
+        }else{
+            user.lastSessionId = null
+        }
         if(!user.save(flush:true)){
             System.err.println("unable to save user: ${u}, ${u.errors.allErrors.join(',')}");
         }
@@ -280,6 +285,19 @@ class UserService {
             totalRecords:totalRecords,
             users       :users
         ]
+    }
+
+    /**
+     * It looks for property to enable session id related data to be stored at DB.
+     * @return boolean
+     */
+    def isSessionIdRegisterEnabled(){
+        if(frameworkService.getRundeckFramework().getPropertyLookup().hasProperty(SESSION_ID_ENABLED)
+                && Boolean.valueOf(frameworkService.getRundeckFramework().getPropertyLookup().getProperty(SESSION_ID_ENABLED))){
+            return true
+        }else{
+            return false
+        }
     }
 
 }
