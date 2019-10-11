@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.MutableExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
@@ -728,6 +730,7 @@ class MutableWorkflowStateImplTest  {
             try{
                 processStateChange(mutableWorkflowState,change)
             }catch (Throwable t){
+                t.printStackTrace(System.err)
                 fail("Error processing change: ${t}: ${ndx}: ${change}")
             }
         }

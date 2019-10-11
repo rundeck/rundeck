@@ -17,8 +17,10 @@
 package com.dtolabs.rundeck.app.internal.workflow
 
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
+import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepContextId
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static com.dtolabs.rundeck.core.execution.workflow.state.StateUtils.*
 
@@ -130,5 +132,83 @@ class MutableWorkflowStateImplSpec extends Specification {
 
     }
 
+    /**
+     * A workflow step (non-node-step) with subworkflow should be success after the workflow succeeds
+     */
+    def "workflow step subworkflow resolve"(){
+        given:
+        def date = new Date()
 
+        def nodeA='a'
+        def nodeB='b'
+
+        //step 1, a subworkflow
+        def mutableStep1 = new MutableWorkflowStepStateImpl(stepIdentifier(1))
+        mutableStep1.nodeStep = false
+        def mutableStep2 = new MutableWorkflowStepStateImpl(stepIdentifier(2))
+        mutableStep2.nodeStep=false
+
+
+        //top workflow runs on one node
+        MutableWorkflowStateImpl mutableWorkflowState = new MutableWorkflowStateImpl([nodeA], 2, [0: mutableStep1,1:mutableStep2], null, nodeA);
+
+        //workflow start
+        mutableWorkflowState.updateWorkflowState(ExecutionState.RUNNING, date, [nodeA])
+        //step 1 start
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0,stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //step1; sub workflow start
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.RUNNING, date, [nodeA], null)
+
+        //step 1 /1 start
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0,stepStateChange(stepState(ExecutionState.RUNNING)), date)
+
+        //step 1/1; start on node a
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0, stepStateChange(stepState(ExecutionState.RUNNING), nodeA), date)
+        //step 1/1: succeed on node a
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED), nodeA), date)
+        //step 1 /1 end
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1,1), 0,stepStateChange(stepState(ExecutionState.SUCCEEDED)), date)
+
+
+
+        when:
+
+
+        //step1; sub workflow end
+        mutableWorkflowState.updateSubWorkflowState(stepIdentifier(1), 0, false, ExecutionState.SUCCEEDED, date, [nodeA], null)
+        //node step finishes for nodeC
+        mutableWorkflowState.updateStateForStep(stepIdentifier(1), 0, stepStateChange(stepState(ExecutionState.SUCCEEDED),nodeA), date)
+
+
+        then:
+
+//        new StateMapping().mapOf(1L,mutableWorkflowState)==[:]
+
+        mutableWorkflowState.stepStates[0].subWorkflowState.stepStates[0].nodeStateMap[nodeA].executionState.toString()=='SUCCEEDED'
+        mutableWorkflowState.stepStates[0].subWorkflowState.executionState.toString()=='SUCCEEDED'
+        mutableWorkflowState.stepStates[0].stepState.executionState.toString()=='SUCCEEDED'
+
+    }
+
+
+    def "locateStepWithContext"() {
+        given:
+            def wf = new MutableWorkflowStateImpl([], 5)
+            wf.mutableStepStates[2].getParameterizedStepState(stepIdentifierFromString('3@node=anode'), [node: 'anode'])
+        when:
+            def result = wf.locateStepWithContext(stepIdentifierFromString(stepId), ndx, ignore)
+        then:
+            result.stepIdentifier.toString() == expect
+        where:
+            stepId                 | ndx | ignore | expect
+            '1'                    | 0   | false  | '1'
+            '1/2/3/4/5'            | 0   | false  | '1'
+            '1/2/3/4/5'            | 1   | false  | '2'
+            '1/2/3/4/5'            | 2   | false  | '3'
+            '1/2/3@node=anode/4/5' | 2   | false  | '3@node=anode'
+            '1/2/3@node=anode/4/5' | 2   | true   | '3'
+            '1/2/3/4/5'            | 3   | false  | '4'
+            '1/2/3/4/5'            | 4   | false  | '5'
+    }
 }
