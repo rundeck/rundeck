@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import static org.junit.Assert.*
+
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
@@ -55,7 +58,7 @@ class MutableWorkflowStepStateImplTest {
         assertNotNull(resultState)
         assertEquals(test, resultState.ownerStepState)
         assertEquals(identifier, resultState.stepIdentifier)
-        assertEquals([], resultState.mutableSubWorkflowState.nodeSet)
+        assertEquals(['test1'], resultState.mutableSubWorkflowState.nodeSet)
         assertEquals(1, resultState.mutableSubWorkflowState.stepCount)
     }
 }
