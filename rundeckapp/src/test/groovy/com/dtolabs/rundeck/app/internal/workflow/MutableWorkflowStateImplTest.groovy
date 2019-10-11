@@ -730,6 +730,7 @@ class MutableWorkflowStateImplTest  {
             try{
                 processStateChange(mutableWorkflowState,change)
             }catch (Throwable t){
+                t.printStackTrace(System.err)
                 fail("Error processing change: ${t}: ${ndx}: ${change}")
             }
         }
