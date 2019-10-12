@@ -24,6 +24,7 @@ module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
     'components/central': './src/components/central/main.ts',
+    'components/execution-log': './src/components/execution-log/main.js',
     'components/motd': './src/components/motd/main.js',
     'components/tour': './src/components/tour/main.js',
     'components/version-notification': './src/components/version-notification/main.js',
