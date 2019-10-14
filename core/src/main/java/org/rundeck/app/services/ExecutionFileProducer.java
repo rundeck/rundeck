@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,34 @@
  * limitations under the License.
  */
 
-package rundeck.services.logging
+package org.rundeck.app.services;
 
-import rundeck.Execution
+import com.dtolabs.rundeck.core.execution.ExecutionReference;
 
 /**
  * Produces files that need to be stored for an execution
  */
-interface ExecutionFileProducer {
+public interface ExecutionFileProducer {
     /**
      * @return the filetype string
      */
-    String getExecutionFileType()
+    String getExecutionFileType();
 
     /**
-     *
      * @return true if the file will be generated, false if it was previously generated
      */
-    boolean isExecutionFileGenerated()
-    boolean isCheckpointable()
+    boolean isExecutionFileGenerated();
+
+    /**
+     * @return true if the file can be written at checkpoints
+     */
+    boolean isCheckpointable();
 
     /**
      * @param e execution
      * @return the file to store
      */
-    ExecutionFile produceStorageFileForExecution(Execution e)
-    ExecutionFile produceStorageCheckpointForExecution(Execution e)
+    ExecutionFile produceStorageFileForExecution(ExecutionReference e);
+
+    ExecutionFile produceStorageCheckpointForExecution(ExecutionReference e);
 }

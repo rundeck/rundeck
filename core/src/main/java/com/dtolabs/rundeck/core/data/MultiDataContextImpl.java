@@ -26,7 +26,9 @@ import java.util.function.Predicate;
  * Created by greg on 6/3/16.
  */
 @ToString
-public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataContext> implements MultiDataContext<K, D> {
+public abstract class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataContext>
+        implements MultiDataContext<K, D>
+{
     Map<K, D> map;
     private MultiDataContext<K, D> base;
 
@@ -41,11 +43,6 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
     public MultiDataContextImpl(MultiDataContext<K, D> orig) {
         this(new HashMap<>());
         this.base = orig;
-    }
-
-
-    public static <K extends ViewTraverse<K>, D extends DataContext> MultiDataContextImpl<K, D> with(MultiDataContext<K, D> original) {
-        return new MultiDataContextImpl<>(original);
     }
 
     @Override
@@ -84,12 +81,13 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
         if (data == null) {
             throw new NullPointerException("data");
         }
-        if (map.containsKey(k)) {
-            map.get(k).merge(data);
-        } else {
-            map.put(k, data);
+        if (!map.containsKey(k)) {
+            map.put(k, newData());
         }
+        map.get(k).merge(data);
     }
+
+    protected abstract D newData();
 
     protected void setBase(MultiDataContext<K, D> base) {
         this.base = base;
@@ -106,15 +104,5 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
                 merge(k, data);
             }
         }
-    }
-
-    @Override
-    public MultiDataContext<K, D> consolidate() {
-        MultiDataContextImpl<K, D> consolidated = new MultiDataContextImpl<>();
-        if (null != base) {
-            consolidated.merge(base.consolidate());
-        }
-        consolidated.merge(this);
-        return consolidated;
     }
 }

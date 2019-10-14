@@ -16,6 +16,8 @@
 
 package rundeck
 
+import org.rundeck.app.gui.AuthMenuItem
+import org.grails.web.gsp.io.GrailsConventionGroovyPageLocator
 import org.rundeck.app.gui.MenuItem
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -62,6 +64,7 @@ class UtilityTagLib{
     def configurationService
     def scheduledExecutionService
     FrameworkService frameworkService
+    GrailsConventionGroovyPageLocator groovyPageLocator
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -1846,12 +1849,22 @@ ansi-bg-default'''))
         if (menuType.projectType && !project) {
             throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
         }
+        String execution = attrs.execution
+        if (menuType.executionType && !project && !execution) {
+            throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
+        }
+        def auth = session.subject ? (
+                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
+                frameworkService.getAuthContextForSubject(session.subject)
+        ) : null
+
+        def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
         applicationContext.getBeansOfType(MenuItem).
                 findAll { it.value.type == menuType }.
-                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
-            each { name, MenuItem item ->
-                out << body((var): item)
-            }
+                findAll { checkEnabled.apply(it.value) }.
+                each { name, MenuItem item ->
+                    out << body((var): item)
+                }
     }
 
     /**
@@ -1865,9 +1878,21 @@ ansi-bg-default'''))
         if (menuType.projectType && !project) {
             throw new IllegalArgumentException("project attr is required for PROJECT type menu items")
         }
+        String execution = attrs.execution
+        if (menuType.executionType && !project && !execution) {
+            throw new IllegalArgumentException("[project, execution] attrs is required for EXECUTION type menu items")
+        }
+        def auth = session.subject ? (
+                project ? frameworkService.getAuthContextForSubjectAndProject(session.subject, project) :
+                frameworkService.getAuthContextForSubject(session.subject)
+        ) : null
+
+        def checkEnabled = AuthMenuItem.getEnabledCheck(menuType, auth, project, execution)
+
         if (applicationContext.getBeansOfType(MenuItem).
-                findAll { menuType.projectType ? it.value.isEnabled(project) : it.value.enabled }.
-            any { it.value.type == MenuItem.MenuType.valueOf(type.toUpperCase()) }) {
+                findAll { it.value.type == menuType }.
+                any { checkEnabled.apply(it.value) }
+        ) {
             out << body()
         }
 
@@ -1879,6 +1904,14 @@ ansi-bg-default'''))
             shouldShowLocalLogin = frameworkService.getFirstLoginFile().exists()
         }
         if(shouldShowLocalLogin) {
+            out << body()
+        }
+    }
+
+    def templateExists = { attrs, body ->
+        if(!attrs.name) throw new IllegalArgumentException("name attr is required for templateExists tag")
+        boolean exists = groovyPageLocator.findTemplate(attrs.name) != null
+        if(exists) {
             out << body()
         }
     }

@@ -15,6 +15,7 @@
  */
 
 
+import com.dtolabs.rundeck.core.jobs.JobOption
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
@@ -35,7 +36,6 @@ import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.web.mapping.LinkGenerator
-import org.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Before
 import org.springframework.context.MessageSource
@@ -46,7 +46,7 @@ import rundeck.services.*
 @Mock([ScheduledExecution,Workflow,WorkflowStep,Execution,CommandExec,Option,User])
 @TestMixin(ControllerUnitTestMixin)
 class ExecutionServiceTests  {
-    
+
     @Before
     public void setup(){
         // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
@@ -72,6 +72,8 @@ class ExecutionServiceTests  {
         mock.demand.getRoles { roles }
         mock.proxyInstance()
     }
+
+
     void testCreateExecutionRunning(){
 
         ScheduledExecution se = new ScheduledExecution(
@@ -96,8 +98,24 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 //        Execution.metaClass.static.executeQuery = {q,h->[[id: 123]]}
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
         try{
             svc.createExecution(se,createAuthContext("user1"),null)
             fail("should fail")
@@ -132,8 +150,23 @@ class ExecutionServiceTests  {
 //        Execution.metaClass.static.createCriteria = {myCriteria }
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
         def execution=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user'])
         assertNotNull(execution)
     }
@@ -151,8 +184,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'scheduled'])
 
@@ -187,8 +235,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2 = svc.createExecution(
                 se,
@@ -223,8 +286,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user'])
 
@@ -253,8 +331,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user-scheduled'])
 
@@ -284,8 +377,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
 
@@ -348,9 +456,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
-
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
 
@@ -384,9 +506,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
-
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         try{
             Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
@@ -412,8 +548,23 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",filter:'name: monkey'])
 
@@ -443,8 +594,23 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
 
@@ -474,8 +640,23 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
 
@@ -512,8 +693,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e=svc.createExecution(se,createAuthContext('bob'),null,[executionType: 'user'])
 
@@ -549,8 +745,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType: 'user'])
 
@@ -568,28 +779,60 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
-
-            assertNull(se.executions)
-            Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test1 asdf -test2 val2b -test4 asdf4'])
-
-            assertNotNull(e)
-            assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
-            assertEquals(se, e.scheduledExecution)
-            assertNotNull(e.dateStarted)
-            assertNull(e.dateCompleted)
-            def execs=se.executions
-            assertNotNull(execs)
-            assertTrue(execs.contains(e))
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
         }
 
+        assertNull(se.executions)
+        Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test1 asdf -test2 val2b -test4 asdf4'])
+
+        assertNotNull(e)
+        assertEquals("secure option value should not be stored",'-test1 asdf -test2 val2b -test3 val3',e.argString)
+        assertEquals(se, e.scheduledExecution)
+        assertNotNull(e.dateStarted)
+        assertNull(e.dateCompleted)
+        def execs=se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e))
+    }
+
     void testCreateExecutionOptionsValidation2() {
+
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
         assertNull(se.executions)
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test4 asdf4'])
 
@@ -604,11 +847,28 @@ class ExecutionServiceTests  {
     }
 
     void testCreateExecutionOptionsValidation3() {
+
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
         assertNull(se.executions)
         Execution e=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',argString:'-test2 val2b -test3 monkey3'])
 
@@ -626,8 +886,24 @@ class ExecutionServiceTests  {
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
         def ms = new StubFor(MessageSource)
 ////        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
         ms.demand.asBoolean(0..99) { -> true  }
@@ -642,20 +918,37 @@ class ExecutionServiceTests  {
 //            }
 //        }
             //enforced value failure on test2
-            try {
-                Execution e = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',argString: '-test2 val2D -test3 monkey4'])
-                fail("shouldn't succeed")
-            } catch (ExecutionServiceException e) {
-                assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
-            }
+        try {
+            Execution e = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',argString: '-test2 val2D -test3 monkey4'])
+            fail("shouldn't succeed")
+        } catch (ExecutionServiceException e) {
+            assertTrue(e.message,e.message.contains("domain.Option.validation.allowed.invalid"))
         }
+    }
 
     void testCreateExecutionOptionsValidation5() {
+
         ScheduledExecution se = prepare()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
+
         def ms = new StubFor(MessageSource)
 //        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
         ms.demand.asBoolean(0..99) { -> true  }
@@ -700,13 +993,6 @@ class ExecutionServiceTests  {
         se
     }
 
-
-
-
-
-
-
-
     void testGenerateJobArgline() {
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
@@ -727,6 +1013,7 @@ class ExecutionServiceTests  {
         assertEquals "-test2 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test2': ['some value','another value']])
         assertEquals "-test3 \"some value,another value\"", ExecutionService.generateJobArgline(se2, ['test3': ['some value','another value']])
     }
+
     void testGenerateJobArglinePreservesOptionSortIndexOrder() {
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
@@ -745,6 +1032,7 @@ class ExecutionServiceTests  {
         assertEquals "-pst blah -zyx value", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah'])
         assertEquals "-pst blah -zyx value -abc elf", ExecutionService.generateJobArgline(se2, ['zyx': 'value','pst':'blah', abc:'elf'])
     }
+
     void testGenerateJobArglineQuotesBlanks() {
         ScheduledExecution se = new ScheduledExecution()
         def testService = new ExecutionService()
@@ -796,20 +1084,25 @@ class ExecutionServiceTests  {
                 null
             }
         }
+
+        service.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
+
+        }
+
         //create mock user
         User u1 = new User(login: 'testuser')
         u1.save()
 
 
-            Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            def val= service.createContext(se,null,null,null,null,null,(WorkflowExecutionListener)null)
-            assertNotNull(val)
-            assertNull(val.nodeSelector)
-            assertEquals("testproj",val.frameworkProject)
-            assertEquals("testuser",val.user)
-            assertEquals(1,val.loglevel)
-            assertNull(val.framework)
-            assertNull(val.executionListener)
+        Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
+        def val= service.createContext(se,null,null,null,null,null,(WorkflowExecutionListener)null)
+        assertNotNull(val)
+        assertNull(val.nodeSelector)
+        assertEquals("testproj",val.frameworkProject)
+        assertEquals("testuser",val.user)
+        assertEquals(1,val.loglevel)
+        assertNull(val.framework)
+        assertNull(val.executionListener)
     }
 
     /**
@@ -2088,8 +2381,23 @@ class ExecutionServiceTests  {
         se.save()
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user',('_replaceNodeFilters'):"true",nodeoverride: 'filter',nodefilter:'tags: linux'])
 
@@ -2121,8 +2429,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService=fsvc
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution ex=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
 
@@ -2166,9 +2489,23 @@ class ExecutionServiceTests  {
 
 
         ExecutionService svc = new ExecutionService()
-        FrameworkService fsvc = new FrameworkService()
+        FrameworkService fsvc = mockWith(FrameworkService){
+            getServerUUID(1..1){
+                null
+            }
+        }
+        svc.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            getNodes(1..1){ scheduledExecution, filter, authContext ->
+                null
+            }
+            getOptionsFromScheduleExecutionMap(1..1){scheduledExecutionMap ->
+                new TreeSet<JobOption>()
+            }
+        }
         svc.frameworkService = fsvc
-
+        svc.jobLifecyclePluginService = mockWith(JobLifecyclePluginService){
+            beforeJobExecution(1..1){job,event->}
+        }
 
         Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
 

@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
@@ -32,6 +33,7 @@ import com.dtolabs.rundeck.core.common.PluginControlService;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.execution.component.ContextComponent;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.jobs.JobService;
@@ -40,7 +42,11 @@ import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * ExecutionContext is ...
@@ -63,8 +69,11 @@ public interface ExecutionContext {
 
     /**
      * @return the authorization context
+     * @deprecated use {@link #getUserAndRolesAuthContext()}
      */
     public AuthContext getAuthContext();
+
+    public UserAndRolesAuthContext getUserAndRolesAuthContext();
     /**
      * @return the storage service
      */
@@ -81,6 +90,11 @@ public interface ExecutionContext {
      * @return the job service
      */
     public JobService getJobService();
+
+    /**
+     * @return context components
+     */
+    public List<ContextComponent<?>> getComponentList();
 
     /**
      * @return the node service
@@ -144,6 +158,36 @@ public interface ExecutionContext {
      */
     public Map<String, Map<String, String>> getDataContext();
     public DataContext getDataContextObject();
+
+    <T> Collection<T> componentsForType(Class<T> type);
+
+    /**
+     * apply the consumer to components of the given type, and remove "useOnce" components after use
+     *
+     * @param type
+     * @param consumer
+     * @param <T>
+     */
+    <T> int useAllComponentsOfType(Class<T> type, Consumer<T> consumer);
+
+    /**
+     * @param <T>
+     * @param type
+     * @return a single component for the given type
+     */
+    <T> Optional<T> componentForType(Class<T> type);
+
+    /**
+     * apply the consumer to a single component of the given type, and remove the component if it is "useOnce"
+     *
+     * @param <T>
+     * @param type
+     * @return a single component for the given type
+     */
+    <T> boolean useSingleComponentOfType(Class<T> type, Consumer<Optional<T>> consumer);
+
+    <T> Optional<T> useSingleComponentOfType(Class<T> type);
+
     /**
      * @return the node specific context data keyed by node name
      */

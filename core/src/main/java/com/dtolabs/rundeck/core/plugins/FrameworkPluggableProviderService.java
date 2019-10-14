@@ -54,12 +54,12 @@ public class FrameworkPluggableProviderService<T> extends BasePluggableProviderS
     }
 
     @Override
-    protected boolean hasValidProviderSignature(Class clazz) {
+    protected boolean hasValidProviderSignature(Class<?> clazz) {
 
         try {
-            final Constructor method = clazz.getDeclaredConstructor(new Class[]{Framework.class});
+            final Constructor method = clazz.getDeclaredConstructor(Framework.class);
             return null != method;
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignored) {
         }
         return super.hasValidProviderSignature(clazz);
     }
@@ -67,13 +67,13 @@ public class FrameworkPluggableProviderService<T> extends BasePluggableProviderS
     @Override
     protected T createProviderInstanceFromType(Class<? extends T> execClass, String providerName) throws ProviderCreationException {
         try {
-            final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[]{Framework.class});
+            final Constructor<? extends T> method = execClass.getDeclaredConstructor(Framework.class);
             return method.newInstance(framework);
-        } catch (NoSuchMethodException e) {
-            //ignore
+        } catch (NoSuchMethodException ignored) {
         } catch (Exception e) {
             throw new ProviderCreationException("Unable to create provider instance: " + e.getMessage(), e, getName(),
-                    providerName);
+                                                providerName
+            );
         }
         return super.createProviderInstanceFromType(execClass, providerName);
     }

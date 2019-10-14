@@ -34,12 +34,14 @@ import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
+import groovy.transform.PackageScope
 import groovy.xml.MarkupBuilder
 import org.apache.commons.httpclient.Header
 import org.apache.commons.httpclient.HttpClient
 import org.apache.commons.httpclient.methods.PostMethod
 import org.apache.commons.httpclient.methods.StringRequestEntity
 import org.apache.commons.httpclient.params.HttpClientParams
+import org.rundeck.app.AppConstants
 import org.grails.web.util.WebUtils
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
@@ -50,8 +52,7 @@ import rundeck.Execution
 import rundeck.Notification
 import rundeck.ScheduledExecution
 import rundeck.User
-import rundeck.controllers.ExecutionController
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 
 import javax.servlet.http.HttpSession
 import java.text.SimpleDateFormat
@@ -153,8 +154,8 @@ public class NotificationService implements ApplicationContextAware{
      */
     def File copyExecOutputToTempFile(Execution e, boolean isFormatted, String attachedExtension){
         def reader = loggingService.getLogReader(e)
-        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
-                ExecutionLogState.AVAILABLE) {
+        if (reader.state == ExecutionFileState.NOT_FOUND|| reader.state == ExecutionFileState.ERROR|| reader.state !=
+            ExecutionFileState.AVAILABLE) {
             return null
         }
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -187,8 +188,8 @@ public class NotificationService implements ApplicationContextAware{
 
         StringBuffer output = new StringBuffer()
         def reader = loggingService.getLogReader(e)
-        if (reader.state == ExecutionLogState.NOT_FOUND||reader.state == ExecutionLogState.ERROR||reader.state !=
-                ExecutionLogState.AVAILABLE) {
+        if (reader.state == ExecutionFileState.NOT_FOUND|| reader.state == ExecutionFileState.ERROR|| reader.state !=
+            ExecutionFileState.AVAILABLE) {
             return null
         }
         SimpleDateFormat logFormater = new SimpleDateFormat("HH:mm:ss", Locale.US);
@@ -285,6 +286,7 @@ public class NotificationService implements ApplicationContextAware{
                     }else if( grailsApplication.config.rundeck.mail.template.log.formatted in [true,'true']){
                         isFormatted = true
                     }
+                    boolean allowUnsanitized = checkAllowUnsanitized(exec.project)
                     StringBuffer outputBuffer = null
                     def attachlogbody = false
                     def attachlog=false
@@ -352,7 +354,11 @@ public class NotificationService implements ApplicationContextAware{
                             if(attachlogbody && templateLogOutput){
                                 //just attached the output if the template uses ${logoutput.data}
                                 outputBuffer=copyExecOutputToStringBuffer(exec,isFormatted)
-                                contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
+                                if(allowUnsanitized) {
+                                    contextOutput['logoutput'] = ["data":outputBuffer.toString()]
+                                } else {
+                                    contextOutput['logoutput'] = ["data":outputBuffer.toString().encodeAsSanitizedHTML()]
+                                }
                             }else if(templateLogOutput) {
                                 // add null value if template uses ${logoutput.data} and the attachlogbody is disabled
                                 contextOutput['logoutput'] = ["data":""]
@@ -431,6 +437,7 @@ public class NotificationService implements ApplicationContextAware{
                                                     execstate         : state,
                                                     nodestatus        : content.nodestatus,
                                                     jobref            : content.jobref,
+                                                    allowUnsanitized  : allowUnsanitized,
                                                     logOutput         : outputBuffer!=null? outputBuffer.toString(): null,
                                                     renderJobStats    : renderJobStats
                                             ]
@@ -760,4 +767,17 @@ public class NotificationService implements ApplicationContextAware{
         return [success:complete]
     }
 
+    @PackageScope
+    boolean checkAllowUnsanitized(String project) {
+        if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
+            if ("true" != frameworkService.getRundeckFramework().
+                    getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
+            def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
+            if(projectConfig.hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
+                return "true" == projectConfig.getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+            }
+            return false
+        }
+        return false
+    }
 }

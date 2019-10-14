@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <g:set var="authUpdate" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_UPDATE])}"/>
 <g:set var="authRead" value="${auth.jobAllowedTest(job: scheduledExecution, any: true, action: [AuthConstants.ACTION_READ])}"/>
 <g:set var="authDelete" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_DELETE])}"/>
@@ -189,7 +189,7 @@
     </li>
 </g:if>
 
-<g:if test="${authProjectExport && scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
+<g:if test="${scmExportEnabled && scmExportStatus?.get(scheduledExecution.extid)}">
     %{renderedActions++}%
     <g:if test="${authRead}">
         <li class="divider"></li>

@@ -5,6 +5,8 @@ import Vue2Filters from 'vue2-filters'
 import VueCookies from 'vue-cookies'
 import VueScrollTo from 'vue-scrollto'
 import VueFuse from 'vue-fuse'
+import VueI18n from 'vue-i18n'
+import uivLang from '../../utilities/uivi18n'
 import * as uiv from 'uiv'
 
 import store from './stores'
@@ -19,6 +21,25 @@ Vue.use(VueFuse)
 Vue.use(Vue2Filters)
 Vue.use(uiv)
 
+let locale = window._rundeck.locale || 'en_US'
+let lang = window._rundeck.language || 'en'
+
+// include any i18n injected in the page by the app
+let messages = {
+  [locale]: Object.assign({},
+    uivLang[locale] || uivLang[lang] || {},
+    window.Messages
+  )
+}
+
+console.log(messages)
+
+const i18n = new VueI18n({
+  silentTranslationWarn: true,
+  locale, // set locale
+  messages // set locale messages,
+})
+
 /* eslint-disable no-new */
 new Vue({
   el: '#repository-vue',
@@ -27,5 +48,6 @@ new Vue({
   components: {
     App
   },
-  template: '<App/>'
+  template: '<App/>',
+  i18n
 })

@@ -16,6 +16,7 @@ export API_KEY=letmein99
 export RD_TOKEN=$API_KEY
 export RD_URL="http://$RUNDECK_NODE:4440"
 export RD_COLOR=0
+export RD_HTTP_TIMEOUT=60
 export RD_OPTS="-Dfile.encoding=utf-8"
 if [ -n "$SETUP_SSL" ] ; then
   export RD_URL=https://$RUNDECK_NODE:4443

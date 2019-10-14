@@ -95,6 +95,13 @@ public interface IRundeckProject extends IRundeckProjectConfig {
     Date getConfigLastModifiedTime();
 
     /**
+     * @return creation time for configuration in epoch time
+     */
+    default Date getConfigCreatedTime(){
+        return null;
+    }
+
+    /**
      * @return the project nodes interface
      */
     IProjectNodes getProjectNodes();

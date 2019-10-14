@@ -102,7 +102,7 @@ public abstract class BasePluggableProviderService<T>
             ProviderCreationException {
 
         try {
-            final Constructor<? extends T> method = execClass.getDeclaredConstructor(new Class[0]);
+            final Constructor<? extends T> method = execClass.getDeclaredConstructor();
             return method.newInstance();
         } catch (NoSuchMethodException e) {
             throw new ProviderCreationException(
@@ -116,12 +116,12 @@ public abstract class BasePluggableProviderService<T>
         }
     }
 
-    protected boolean hasValidProviderSignature(final Class clazz) {
+    protected boolean hasValidProviderSignature(final Class<?> clazz) {
 
         try {
-            final Constructor method = clazz.getDeclaredConstructor(new Class[0]);
+            final Constructor method = clazz.getDeclaredConstructor();
             return null != method;
-        } catch (NoSuchMethodException e) {
+        } catch (NoSuchMethodException ignored) {
         }
         return false;
     }

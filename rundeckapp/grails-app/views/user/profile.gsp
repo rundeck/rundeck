@@ -1,4 +1,4 @@
-<%@ page import="rundeck.AuthToken; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.AuthToken; org.rundeck.core.auth.AuthConstants" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -21,12 +21,12 @@
 
     <g:set var="selfToken" value="${auth.resourceAllowedTest(
             kind: 'apitoken',
-            action: [AuthConstants.GENERATE_USER_TOKEN],
+            action: [AuthConstants.ACTION_GENERATE_USER_TOKEN],
             context: 'application'
     )}"/>
     <g:set var="serviceToken" value="${auth.resourceAllowedTest(
             kind: 'apitoken',
-            action: [AuthConstants.GENERATE_SERVICE_TOKEN],
+            action: [AuthConstants.ACTION_GENERATE_SERVICE_TOKEN],
             context: 'application'
     )}"/>
     <g:appTitle/> - <g:message code="userController.page.profile.title"/>: ${user.login}</title>

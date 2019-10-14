@@ -17,6 +17,7 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
@@ -44,6 +45,8 @@ class PluginApiService {
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     FeatureService featureService
+    ExecutionLifecyclePluginService executionLifecyclePluginService
+    JobLifecyclePluginService jobLifecyclePluginService
 
     def listPluginsDetailed() {
         //list plugins and config settings for project/framework props
@@ -89,6 +92,16 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
+        if(featureService.featurePresent("jobLifecycle-plugin")) {
+            pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
+        if(featureService.featurePresent("executionLifecycle-plugin")) {
+            pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
+                it.value.description
+            }.sort { a, b -> a.name <=> b.name }
+        }
         pluginDescs[notificationService.notificationPluginProviderService.name]=notificationService.listNotificationPlugins().collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
@@ -130,6 +143,9 @@ class PluginApiService {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
         pluginDescs['UI']= pluginService.listPlugins(UIPlugin, uiPluginProviderService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['WebhookEvent']=pluginService.listPlugins(WebhookEventPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
@@ -335,7 +351,7 @@ class PluginApiService {
 
     }
 
-    private long toEpoch(String dateString) {
+    private synchronized long toEpoch(String dateString) {
         try {
             return PLUGIN_DATE_FMT.parse(dateString).time
         } catch(Exception ex) {

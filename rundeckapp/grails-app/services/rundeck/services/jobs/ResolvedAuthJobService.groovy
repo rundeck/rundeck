@@ -83,9 +83,31 @@ class ResolvedAuthJobService implements JobService {
         authJobService.runJob(authContext, jobReference, jobArgString, jobFilter, asUser)
     }
 
+    ExecutionReference runJob(
+            JobReference jobReference,
+            String jobArgString,
+            String nodeFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, jobReference, jobArgString, nodeFilter, asUser, meta)
+    }
+
     ExecutionReference runJob(JobReference jobReference, Map optionData, String jobFilter, String asUser)
         throws JobNotFound, JobExecutionError {
         authJobService.runJob(authContext, jobReference, optionData, jobFilter, asUser)
+    }
+
+    ExecutionReference runJob(
+            JobReference jobReference,
+            Map optionData,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
+        authJobService.runJob(authContext, jobReference, optionData, jobFilter, asUser, meta)
     }
 
     Map deleteBulkExecutionIds(Collection ids, String asUser){

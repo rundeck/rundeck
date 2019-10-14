@@ -23,7 +23,7 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 <html>
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,

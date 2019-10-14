@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants" %>
 
 <g:render template="/common/errorFragment"/>
 <g:render template="editLogFilterModal"/>
@@ -65,7 +65,7 @@
                       class="btn btn-default reset_page_confirm"
                       action="Cancel"/>
       <g:actionSubmit value="${g.message(code: 'button.action.Save')}" action="Update" class="btn btn-primary reset_page_confirm "/>
-        <span data-bind="if: errorTabs().length" class="text-warning">
+        <span data-bind="if: inPageError()" class="text-warning">
             <g:message code="job.editor.workflow.unsavedchanges.warning" />
         </span>
     </div>

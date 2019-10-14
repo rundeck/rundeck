@@ -46,7 +46,7 @@ def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 //versions of dependency we want to verify
 def versions=[
         mysql:'5.1.47',
-        jetty:'9.4.11.v20180605',
+        jetty:'9.4.20.v20190813',
         servlet:'api-3.1.0'
 ]
 

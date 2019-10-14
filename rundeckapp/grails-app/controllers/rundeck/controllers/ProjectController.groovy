@@ -24,10 +24,10 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.app.api.ApiVersions
 import grails.converters.JSON
 import org.apache.commons.lang.StringUtils
+import org.rundeck.core.auth.AuthConstants
 import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
@@ -498,6 +498,9 @@ class ProjectController extends ControllerBase{
         delegate.'project'(pmap) {
             name(data.name)
             description(data.description)
+            if (vers >= ApiVersions.V33) {
+                created(data.created)
+            }
             if (vers >= ApiVersions.V26) {
                 if (pject.hasProperty("project.label")) {
                     label(data.label)
@@ -549,20 +552,22 @@ class ProjectController extends ControllerBase{
     }
 
     private Map basicProjectDetails(def pject, def version) {
+        def name = pject.name
+        def retMap = [
+                url:generateProjectApiUrl(pject.name),
+                name: name,
+                description: pject.getProjectProperties()?.get("project.description")?:''
+        ]
         if(version>=ApiVersions.V26){
-            [
-                    url:generateProjectApiUrl(pject.name),
-                    name:pject.name,
-                    description: pject.getProjectProperties()?.get("project.description")?:'',
-                    label: pject.getProjectProperties()?.get("project.label")?:''
-            ]
-        }else{
-            [
-                    url:generateProjectApiUrl(pject.name),
-                    name:pject.name,
-                    description: pject.getProjectProperties()?.get("project.description")?:''
-            ]
+            retMap.label = pject.getProjectProperties()?.get("project.label")?:''
         }
+        if(version>=ApiVersions.V33){
+            def created = pject.getConfigCreatedTime()
+            if(created){
+                retMap.created = created?:''
+            }
+        }
+        retMap
 
     }
 

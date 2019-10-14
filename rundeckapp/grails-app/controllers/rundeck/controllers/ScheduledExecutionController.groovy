@@ -26,16 +26,14 @@ import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.apache.commons.collections.list.TreeList
@@ -50,9 +48,7 @@ import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.log4j.Logger
-import org.apache.log4j.MDC
 import org.grails.web.json.JSONElement
-import org.grails.web.json.JSONObject
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
@@ -66,8 +62,8 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.*
+import rundeck.services.feature.FeatureService
 import rundeck.services.optionvalues.OptionValuesService
-import rundeck.utils.OptionsUtil
 
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
@@ -152,6 +148,8 @@ class ScheduledExecutionController  extends ControllerBase{
     def PluginService pluginService
     def FileUploadService fileUploadService
     OptionValuesService optionValuesService
+    FeatureService featureService
+    ExecutionLifecyclePluginService executionLifecyclePluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -292,7 +290,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                                  AuthConstants.ACTION_SCM_EXPORT])) {
                 if(scmService.projectHasConfiguredExportPlugin(params.project)) {
                     model.scmExportEnabled = true
                     model.scmExportStatus = scmService.exportStatusForJobs(authContext, [scheduledExecution])
@@ -301,7 +300,8 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(params.project),
-                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                                                                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                                  AuthConstants.ACTION_SCM_IMPORT])) {
                 if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                     model.scmImportEnabled = true
                     model.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
@@ -500,7 +500,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def projectResource = frameworkService.authResourceForProject(params.project)
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT,
+                                                              AuthConstants.ACTION_SCM_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
                 dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
@@ -509,7 +510,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         if (frameworkService.authorizeApplicationResourceAny(authContext,
                                                              projectResource,
-                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT])) {
+                                                             [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
+                                                              AuthConstants.ACTION_SCM_IMPORT])) {
             if(scmService.projectHasConfiguredPlugin('import',params.project)) {
                 dataMap.scmImportEnabled = true
                 dataMap.scmImportStatus = scmService.importStatusForJobs(authContext, [scheduledExecution])
@@ -1812,19 +1814,23 @@ class ScheduledExecutionController  extends ControllerBase{
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin).findAll{k,v->
             !pluginControlService?.isDisabledPlugin(k,'LogFilter')
         }
+
+        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+
         def fprojects = frameworkService.projectNames(authContext)
-        return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
-                notificationPlugins : notificationPlugins,
-                orchestratorPlugins : orchestratorPlugins,
-                strategyPlugins     : strategyPlugins,
-                nextExecutionTime   :scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
-                nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions    : stepTypes,
-                timeZones           : timeZones,
-                logFilterPlugins    : logFilterPlugins,
-                projectNames        : fprojects,
-                globalVars          : globals
+        return [scheduledExecution          : scheduledExecution, crontab:crontab, params:params,
+                notificationPlugins         : notificationPlugins,
+                orchestratorPlugins         : orchestratorPlugins,
+                strategyPlugins             : strategyPlugins,
+                nextExecutionTime           : scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                authorized                  : scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
+                nodeStepDescriptions        : nodeStepTypes,
+                stepDescriptions            : stepTypes,
+                timeZones                   : timeZones,
+                logFilterPlugins            : logFilterPlugins,
+                executionLifecyclePlugins   : executionLifecyclePlugins,
+                projectNames                : fprojects,
+                globalVars                  : globals
         ]
     }
 
@@ -1888,18 +1894,24 @@ class ScheduledExecutionController  extends ControllerBase{
                 !pluginControlService?.isDisabledPlugin(k, 'Notification')
             }
 
+            def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+
             def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
-            return render(view:'edit', model: [scheduledExecution:scheduledExecution,
-                       nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                    notificationValidation: params['notificationValidation'],
-                    nodeStepDescriptions: nodeStepTypes,
-                    stepDescriptions: stepTypes,
-                    strategyPlugins: strategyPlugins,
-                    notificationPlugins: notificationPlugins,
-                    orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                    params:params,
-                    globalVars:globals,
-                    logFilterPlugins:logFilterPlugins
+            return render(
+                    view: 'edit', model: [scheduledExecution        : scheduledExecution,
+                                          nextExecutionTime         : scheduledExecutionService.nextExecutionTime(
+                                                  scheduledExecution
+                                          ),
+                                          notificationValidation    : params['notificationValidation'],
+                                          nodeStepDescriptions      : nodeStepTypes,
+                                          stepDescriptions          : stepTypes,
+                                          strategyPlugins           : strategyPlugins,
+                                          notificationPlugins       : notificationPlugins,
+                                          orchestratorPlugins       : orchestratorPluginService.listDescriptions(),
+                                          params                    : params,
+                                          globalVars                : globals,
+                                          logFilterPlugins          : logFilterPlugins,
+                                          executionLifecyclePlugins : executionLifecyclePlugins
                    ])
         }else{
 
@@ -1986,25 +1998,28 @@ class ScheduledExecutionController  extends ControllerBase{
             !pluginControlService?.isDisabledPlugin(k,'Notification')
         }
 
+        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+
         def fprojects = frameworkService.projectNames(authContext)
         def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
 
         render(
                 view: 'create',
                 model: [
-                        scheduledExecution  : newScheduledExecution,
-                        crontab: crontab,
-                        params: params,
-                        iscopy              :true,
-                        authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
-                        nodeStepDescriptions: nodeStepTypes,
-                        stepDescriptions    : stepTypes,
-                        strategyPlugins     : strategyPlugins,
-                        notificationPlugins : notificationPlugins,
-                        orchestratorPlugins : orchestratorPluginService.listDescriptions(),
-                        logFilterPlugins    : logFilterPlugins,
-                        projectNames        : fprojects,
-                        globalVars          : globals
+                        scheduledExecution          : newScheduledExecution,
+                        crontab                     : crontab,
+                        params                      : params,
+                        iscopy                      : true,
+                        authorized                  : scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
+                        nodeStepDescriptions        : nodeStepTypes,
+                        stepDescriptions            : stepTypes,
+                        strategyPlugins             : strategyPlugins,
+                        notificationPlugins         : notificationPlugins,
+                        orchestratorPlugins         : orchestratorPluginService.listDescriptions(),
+                        logFilterPlugins            : logFilterPlugins,
+                        executionLifecyclePlugins   : executionLifecyclePlugins,
+                        projectNames                : fprojects,
+                        globalVars                  : globals
                 ]
         )
 
@@ -2151,19 +2166,22 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
 
+        def executionLifecyclePlugins = executionLifecyclePluginService.listEnabledExecutionLifecyclePlugins(pluginControlService)
+
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def timeZones = scheduledExecutionService.getTimeZones()
         def fprojects = frameworkService.projectNames(authContext)
 
-        return ['scheduledExecution':scheduledExecution, params:params, crontab:[:],
-                nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
-                notificationPlugins : notificationPlugins,
-                strategyPlugins     :strategyPlugins,
-                orchestratorPlugins : orchestratorPluginService.listDescriptions(),
-                logFilterPlugins    : logFilterPlugins,
-                projectNames        : fprojects,
-                globalVars          :globals,
-                timeZones           :timeZones]
+        return ['scheduledExecution'        : scheduledExecution, params:params, crontab:[:],
+                nodeStepDescriptions        : nodeStepTypes, stepDescriptions: stepTypes,
+                notificationPlugins         : notificationPlugins,
+                strategyPlugins             : strategyPlugins,
+                orchestratorPlugins         : orchestratorPluginService.listDescriptions(),
+                logFilterPlugins            : logFilterPlugins,
+                executionLifecyclePlugins   : executionLifecyclePlugins,
+                projectNames                : fprojects,
+                globalVars                  : globals,
+                timeZones                   : timeZones]
     }
 
     private clearEditSession(id='_new'){
@@ -2959,6 +2977,10 @@ class ScheduledExecutionController  extends ControllerBase{
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
 
+        if (params.meta instanceof Map) {
+            inputOpts['meta'] = new HashMap(params.meta)
+        }
+
         Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null
 
         //handle uploaded files
@@ -3481,6 +3503,10 @@ class ScheduledExecutionController  extends ControllerBase{
                     code: 'api.error.item.unsupported-format',
                     args: [response.format]
             ])
+        }
+
+        if (request.api_version > ApiVersions.V32 && params.meta instanceof Map) {
+            inputOpts.meta = new HashMap<>(params.meta)
         }
 
         def result

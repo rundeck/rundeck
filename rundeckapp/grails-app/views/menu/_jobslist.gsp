@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.ScheduledExecution; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.ScheduledExecution; rundeck.Execution; org.rundeck.core.auth.AuthConstants" %>
 
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">

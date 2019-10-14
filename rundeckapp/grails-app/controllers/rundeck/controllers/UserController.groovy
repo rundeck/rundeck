@@ -16,9 +16,10 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.rundeck.util.Sizes
@@ -130,6 +131,11 @@ class UserController extends ControllerBase{
             if (!tokenAdmin) {
                 eq("creator", u.login)
             }
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
+            }
+
         }
 
         int max = (params.max && params.max.isInteger()) ? params.max.toInteger() :
@@ -157,6 +163,10 @@ class UserController extends ControllerBase{
             }
             if (max) {
                 maxResults(max)
+            }
+            or {
+                eq("type", AuthTokenType.USER)
+                isNull("type")
             }
             order("dateCreated", "desc")
         }

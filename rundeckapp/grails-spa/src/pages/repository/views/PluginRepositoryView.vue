@@ -84,7 +84,7 @@ const FuseSearchOptions = {
   // distance: 100,
   // maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: ["display", "name"]
+  keys: ["display", "name", "title"]
 };
 
 export default {

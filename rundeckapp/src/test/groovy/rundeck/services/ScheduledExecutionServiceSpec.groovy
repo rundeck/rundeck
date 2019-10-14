@@ -16,7 +16,12 @@
 
 package rundeck.services
 
+import org.rundeck.core.auth.AuthConstants
+import com.dtolabs.rundeck.core.plugins.PluginConfigSet
+import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.core.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
+import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import org.apache.log4j.Logger
 import rundeck.ScheduledExecutionStats
 
@@ -35,12 +40,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
-import org.quartz.core.QuartzScheduler
 import org.springframework.context.MessageSource
 import rundeck.Execution
 import rundeck.CommandExec
@@ -76,12 +79,15 @@ class ScheduledExecutionServiceSpec extends Specification {
             getServerUUID()>>TEST_UUID1
             getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
             projectNames(*_)>>[]
+            getFrameworkNodeName() >> "testProject"
         }
         service.pluginService=Mock(PluginService)
         service.executionServiceBean=Mock(ExecutionService)
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -604,6 +610,94 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
 
+    }
+
+    def "parse job plugins params"() {
+        given:
+            def params = [keys: keys] + other
+        when:
+            def result = ScheduledExecutionService.parseExecutionLifecyclePluginsParams(params)
+        then:
+            result
+            result.service == 'ExecutionLifecyclePlugin'
+            result.pluginProviderConfigs!=null
+            result.pluginProviderConfigs.size()==expectSize
+            if(expectSize>0) {
+                result.pluginProviderConfigs.find { it.provider == 'aType' } != null
+                result.pluginProviderConfigs.find { it.provider == 'aType' }.configuration == [a: 'b']
+            }
+            if(expectSize>1){
+                result.pluginProviderConfigs.find{it.provider=='bType'}!=null
+                result.pluginProviderConfigs.find{it.provider=='bType'}.configuration==[b:'c']
+            }
+
+        where:
+            keys              | other  | expectSize
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
+            ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
+            ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true']] | 1
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true',asdf2:'false']] | 1
+            ['asdf', 'asdf2'] | [type: [asdf: 'aType', asdf2: 'bType'], asdf: [configMap: [a:'b']], asdf2: [configMap: [b:'c']], enabled:[asdf:'true',asdf2:'true']] | 2
+
+    }
+
+    def "do validate job plugins"() {
+        given:
+            setupDoValidate()
+            def params = baseJobParams()
+            params.executionLifecyclePlugins = [
+                    keys:['a','b'],
+                    enabled:['a':'true','b':'true'],
+                    type:[a:'aType',b:'bType'],
+                    'a': [
+                            configMap: [a: 'b']
+                    ],
+                    'b': [
+                            configMap: [b: 'c']
+                    ]
+            ]
+            service.frameworkService.getFrameworkProject(_)>>Mock(IRundeckProject){
+                getProperties()>>[:]
+            }
+        when:
+            def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+            1 * service.pluginService.validatePluginConfig('aType', ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:true)
+            1 * service.pluginService.validatePluginConfig('bType', ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
+            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            !results.failed
+
+    }
+    def "do validate job plugins invalid"() {
+        given:
+            setupDoValidate()
+            def params = baseJobParams()
+            params.executionLifecyclePlugins = [
+                    keys:['a','b'],
+                    enabled:['a':'true','b':'true'],
+                    type:[a:'aType',b:'bType'],
+                    'a': [
+                            configMap: [a: 'b']
+                    ],
+                    'b': [
+                            configMap: [b: 'c']
+                    ]
+            ]
+            service.frameworkService.getFrameworkProject(_)>>Mock(IRundeckProject){
+                getProperties()>>[:]
+            }
+        when:
+            def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+            1 * service.pluginService.validatePluginConfig('aType',ExecutionLifecyclePlugin,'AProject',[a:'b'])>>new ValidatedPlugin(valid:false)
+            1 * service.pluginService.validatePluginConfig('bType',ExecutionLifecyclePlugin,'AProject',[b:'c'])>>new ValidatedPlugin(valid:true)
+            0 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_,_)
+            results.failed
+            results.scheduledExecution.errors.hasFieldErrors('pluginConfig')
     }
     @Unroll
     def "do validate node-first strategy error handlers"() {
@@ -1175,6 +1269,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         uuid
     }
 
@@ -1204,7 +1299,10 @@ class ScheduledExecutionServiceSpec extends Specification {
                     }
                 }
             }
+            _ * filterAuthorizedNodes(*_) >> null
+            _ * frameworkNodeName () >> null
             _ * getFrameworkPropertyResolverWithProps(_, _)
+            _ * filterNodeSet(*_) >> null
         }
         service.executionServiceBean = Mock(ExecutionService) {
             _ * getExecutionsAreActive() >> false
@@ -1219,6 +1317,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             }
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
         uuid
     }
 
@@ -1793,7 +1892,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
-
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
 
 
         def params = new ScheduledExecution(jobName: 'monkey1', project: projectName, description: 'blah2',
@@ -1813,7 +1912,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                                             ]
         )
         when:
-        def results = service._doupdateJob(se.id, params, null)
+        def results = service._doupdateJob(se.id, params, mockAuth())
         def succeeded = results.success
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
@@ -2046,6 +2145,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: true,
         ]
         0 * service.frameworkService.validateDescription(*_)
+        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        1 * service.frameworkService.getFrameworkNodeName()
+        1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -2062,6 +2164,74 @@ class ScheduledExecutionServiceSpec extends Specification {
         pluginConfigMap                                | _
         [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
         [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
+    }
+
+    @Unroll
+    def "do update job job plugin valid"() {
+        given:
+            setupDoUpdateJob()
+            def se = new ScheduledExecution(createJobParams()).save()
+            def newJob = new ScheduledExecution(createJobParams())
+            def pluginService = service.pluginService
+            0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
+            PluginConfigSet.with(
+                    'ExecutionLifecyclePlugin',
+                    [
+                            SimplePluginConfiguration.builder().
+                                    provider('aPlugin').
+                                    configuration([some: 'config']).
+                                    build()
+                    ]
+            )
+            1 * service.frameworkService.getFrameworkNodeName()
+            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * _
+        when:
+            def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+            results.success
+
+            1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
+            new ValidatedPlugin(valid: true)
+            1 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+
+    }
+
+    @Unroll
+    def "do update job job plugin invalid"() {
+        given:
+            setupDoUpdateJob()
+            def se = new ScheduledExecution(createJobParams()).save()
+            def newJob = new ScheduledExecution(createJobParams())
+            def pluginService = service.pluginService
+            0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+            1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
+            PluginConfigSet.with(
+                    'ExecutionLifecyclePlugin',
+                    [
+                            SimplePluginConfiguration.builder().
+                                    provider('aPlugin').
+                                    configuration([some: 'config']).
+                                    build()
+                    ]
+            )
+            1 * service.frameworkService.getFrameworkNodeName()
+            0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+            0 * _
+        when:
+            def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+            !results.success
+
+            1 * service.pluginService.validatePluginConfig('aPlugin', ExecutionLifecyclePlugin, 'AProject', [some: 'config']) >>
+            new ValidatedPlugin(valid: false)
+            0 * service.executionLifecyclePluginService.setExecutionLifecyclePluginConfigSetForJob(_, _)
+
     }
 
 
@@ -2090,6 +2260,9 @@ class ScheduledExecutionServiceSpec extends Specification {
                 valid: false, report: 'bogus'
         ]
         0 * service.frameworkService.validateDescription(*_)
+        0 * service.jobLifecyclePluginService.beforeJobSave(_,_)
+        1 * service.frameworkService.getFrameworkNodeName()
+        1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(_)
         0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
@@ -3044,7 +3217,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result.jobs.size() == 1
         result.jobs[0].properties.description == 'milk duds'
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
     def "not check scm_update permission if isnt a scm-import"() {
@@ -3078,7 +3251,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_UPDATE],_) >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> true
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> true
     }
 
     @Unroll
@@ -3112,7 +3285,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result.errjobs.size() == 1
         result.errjobs[0].errmsg.startsWith("Unauthorized: Update Job")
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_UPDATE, AuthConstants.SCM_UPDATE],_) >> false
+                [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_SCM_UPDATE],_) >> false
     }
 
 
@@ -3134,7 +3307,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         result
         result.success?.job
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_DELETE,AuthConstants.SCM_DELETE],_) >> true
+                [AuthConstants.ACTION_DELETE,AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
     @Unroll
@@ -3156,7 +3329,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !result.sucess
         result.error
         0 * service.frameworkService.authorizeProjectJobAll(_,_,
-                [AuthConstants.SCM_DELETE],_) >> true
+                [AuthConstants.ACTION_SCM_DELETE],_) >> true
     }
 
     @Unroll
@@ -3177,9 +3350,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         result.jobs.size()==1
         1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
-                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],'AProject') >> true
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],'AProject') >> true
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.ACTION_CREATE,AuthConstants.SCM_CREATE],_) >> true
+                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_SCM_CREATE],_) >> true
 
     }
 
@@ -3203,7 +3376,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.authorizeProjectResourceAny(_,AuthConstants.RESOURCE_TYPE_JOB,
                 [AuthConstants.ACTION_CREATE],'AProject') >> true
         0 * service.frameworkService.authorizeProjectJobAny(_,_,
-                [AuthConstants.SCM_CREATE],_) >> false
+                [AuthConstants.ACTION_SCM_CREATE],_) >> false
         1 * service.frameworkService.authorizeProjectJobAny(_,_,
                 [AuthConstants.ACTION_CREATE],_) >> true
 
@@ -3325,38 +3498,5 @@ class ScheduledExecutionServiceSpec extends Specification {
         0 * service.quartzScheduler.scheduleJob(_, _)
         result == [null, null]
     }
-
-    @Unroll
-    def "do update job on cluster, a schedule changed or name changed must not call local quartz scheduleJob if a takeover message was sent"(){
-        given:
-        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
-        setupDoUpdate(true,serverUUID)
-
-        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
-        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
-        service.jobSchedulerService = Mock(JobSchedulerService)
-
-        when:
-        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
-
-        then:
-        results.success
-        results.scheduledExecution.serverNodeUUID == jobOwnerUuid
-        if(shouldChange) {
-            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> false
-            0 * service.quartzScheduler.scheduleJob(_,_,_)
-        }
-
-        where:
-        inparams                                        | shouldChange
-        [jobName: 'newName']                            | true
-        [jobName: 'newName', scheduled: false]          | true
-        [scheduled: true]                               | false
-        [groupPath: 'newGroup', timeZone: 'GMT+1']      | true
-        [groupPath: 'newGroup']                         | true
-        [dayOfMonth: '10']                              | true
-
-    }
-
 
 }

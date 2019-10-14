@@ -36,6 +36,10 @@ log4j.additivity.org.rundeck.project.events=false
 log4j.logger.org.rundeck.storage.events=INFO,storage
 log4j.additivity.org.rundeck.storage.events=false
 
+# Enable webhook logging
+log4j.logger.org.rundeck.webhook.events=INFO,webhook
+log4j.additivity.org.rundeck.webhook.events=false
+
 # Enable Project manager logging
 log4j.logger.grails.app.services.rundeck.services.ProjectManagerService=INFO,stdout
 log4j.additivity.grails.app.services.rundeck.services.ProjectManagerService=false
@@ -183,3 +187,14 @@ log4j.appender.cleanup.file=${rundeck.log.dir}${file.separator}rundeck.cleanup.l
 log4j.appender.cleanup.append=true
 log4j.appender.cleanup.layout=org.apache.log4j.PatternLayout
 log4j.appender.cleanup.layout.ConversionPattern=%d{ISO8601} [%t] %-5p %c - %m%n
+
+#
+# webhook log
+#
+# Logs Webhook Events
+#
+log4j.appender.webhook=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.webhook.file=${rundeck.log.dir}${file.separator}rundeck.webhook.log
+log4j.appender.webhook.append=true
+log4j.appender.webhook.layout=org.apache.log4j.PatternLayout
+log4j.appender.webhook.layout.ConversionPattern=[%d{ISO8601}] %-5p %c{2} - %m%n

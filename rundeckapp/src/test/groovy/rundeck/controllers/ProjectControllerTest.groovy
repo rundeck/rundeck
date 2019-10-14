@@ -18,8 +18,8 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.ApiVersions
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.server.projects.RundeckProject
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
@@ -2291,5 +2290,48 @@ class ProjectControllerTest {
         assertEquals 'application/zip', response.contentType
         assertEquals 'some data', response.text
 
+    }
+    @Test
+    void apiProjectList_json_date_v33_creation_time(){
+        def dbProjA = new Project(name: 'testproject')
+        dbProjA.save()
+        def prja = new MockFor(IRundeckProject)
+        prja.demand.getName(1..3) { -> 'testproject'}
+        prja.demand.getProjectProperties(1..2){ -> [:]}
+        prja.demand.getConfigCreatedTime(){->new Date()}
+        def dbProjB = new Project(name: 'testproject2')
+        dbProjB.save()
+        def prjb = new MockFor(IRundeckProject)
+        prjb.demand.getName(1..3) { -> 'testproject2'}
+        prjb.demand.getProjectProperties(1..2){ -> [:]}
+        prjb.demand.getConfigCreatedTime(){->new Date()}
+        controller.frameworkService = mockWith(FrameworkService) {
+            getAuthContextForSubject(1..1) { subj ->
+                null
+            }
+            projects(1..1) { auth ->
+                [
+                        prja.proxyInstance(),
+                        prjb.proxyInstance(),
+                ]
+            }
+        }
+        controller.apiService=mockWith(ApiService){
+            requireApi(1..1){req,resp->true}
+        }
+        request.setAttribute('api_version', 33)
+        response.format='json'
+        controller.apiProjectList()
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
+        assert response.status == HttpServletResponse.SC_OK
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[0].created != null
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].url==base+'/project/testproject2'
+        assert response.json[1].created != null
     }
 }

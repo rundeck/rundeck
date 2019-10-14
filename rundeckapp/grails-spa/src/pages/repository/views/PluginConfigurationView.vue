@@ -208,7 +208,8 @@
                             <div>{{prop.desc}}</div>
                             <div>
                               <strong>Configure Project:</strong>
-                              <code>project.plugin.{{details.provider.serviceName}}.{{details.response.name}}.{{prop.name}}={{prop.defaultValue}}</code>
+                              <code v-if="details.response.projectMapping[prop.name]">{{details.response.projectMapping[prop.name]}}={{prop.defaultValue || 'value'}}</code>
+                              <code v-else>project.plugin.{{details.provider.serviceName}}.{{details.response.name}}.{{prop.name}}={{prop.defaultValue || 'value'}}</code>
                             </div>
                             <div>
                               <strong>Configure Framework:</strong>
@@ -271,7 +272,8 @@
               <div>{{prop.desc}}</div>
               <div>
                 <strong>Configure Project:</strong>
-                <code>project.plugin.{{serviceName}}.{{provider.name}}.{{prop.name}}={{prop.defaultValue}}</code>
+                <code v-if="provider.projectMapping[prop.name]">{{provider.projectMapping[prop.name]}}={{prop.defaultValue || 'value'}}</code>
+                <code v-else>project.plugin.{{serviceName}}.{{provider.name}}.{{prop.name}}={{prop.defaultValue || 'value'}}</code>
               </div>
               <div>
                 <strong>Configure Framework:</strong>
@@ -314,7 +316,7 @@ const FuseSearchOptions = {
   // distance: 100,
   // maxPatternLength: 32,
   minMatchCharLength: 1,
-  keys: ["display", "name"]
+  keys: ["display", "name", "title"]
 };
 
 import axios from "axios";

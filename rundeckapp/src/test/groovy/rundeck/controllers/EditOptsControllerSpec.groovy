@@ -631,4 +631,28 @@ class EditOptsControllerSpec extends Specification {
         then:
         result.isEmpty()
     }
+
+    def "get Session opts convert value list to pass full object to session"(){
+        given:
+        def optClone = Mock(Option) {
+
+        }
+        def opt = Mock(Option){
+            getName() >> 'blah'
+            createClone() >> optClone
+        }
+        SortedSet options = new TreeSet( [opt] )
+        def sched = Mock(ScheduledExecution){
+            getOptions() >> options
+        }
+        params.scheduledExecutionId = 1L
+        params.sched = sched
+        when:
+
+        def result2 = controller.getSessionOptions(session,params)
+        then:
+        result2
+        result2.blah
+        1 * optClone.getOptionValues() >> ['a', 'b']
+    }
 }

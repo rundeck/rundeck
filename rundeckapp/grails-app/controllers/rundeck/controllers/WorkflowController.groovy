@@ -679,7 +679,8 @@ class WorkflowController extends ControllerBase {
     private Map cleanLineEndings(Map input){
         def result = [:]
         input.each {k,v->
-            result[k]=v.replaceAll(/\r?\n/,'\n')
+            if(v instanceof String)result[k]=v.replaceAll(/\r?\n/,'\n')
+            else if(v instanceof String[] || v instanceof Collection) result[k]=v.collect { it.replaceAll(/\r?\n/,'\n') }.join(",")
         }
         result
     }

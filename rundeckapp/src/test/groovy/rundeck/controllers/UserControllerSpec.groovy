@@ -1,10 +1,13 @@
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import grails.testing.gorm.DataTest
+import grails.testing.web.controllers.ControllerUnitTest
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.AuthToken
 import rundeck.Execution
@@ -19,10 +22,13 @@ import spock.lang.Unroll
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-@TestFor(UserController)
-@Mock([Execution, User, AuthToken])
-@TestMixin(GroovyPageUnitTestMixin)
-class UserControllerSpec extends Specification{
+class UserControllerSpec extends Specification implements ControllerUnitTest<UserController>, DataTest {
+
+    void setupSpec() {
+        mockDomain Execution
+        mockDomain User
+        mockDomain AuthToken
+    }
 
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
@@ -466,4 +472,40 @@ class UserControllerSpec extends Specification{
         response.status==200
     }
 
+    def "profile"() {
+        setup:
+        User user = new User(login: "admin")
+        user.save()
+        createAuthToken(user:user,type:null)
+        createAuthToken(user:user,type: AuthTokenType.USER)
+        createAuthToken(user:user,type: AuthTokenType.WEBHOOK)
+        def authCtx = Mock(UserAndRolesAuthContext)
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubject(_) >> authCtx
+            authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.apiService = Stub(ApiService)
+
+        controller.metaClass.unauthorizedResponse = { Object tst, String action, Object name, boolean fg -> false }
+        controller.metaClass.notFoundResponse = { Object tst, String action, Object name, boolean fg -> false }
+
+        when:
+        params.login = "admin"
+        def result = controller.profile()
+
+        then:
+        AuthToken.count() == 3
+        result.tokenTotal == 2
+        result.tokenList.size() == 2
+    }
+
+    private void createAuthToken(params) {
+        AuthToken tk = new AuthToken()
+        tk.authRoles = "admin"
+        tk.token = Math.random().toString()
+        params.each { k, v ->
+            tk[k] = v
+        }
+        tk.save()
+    }
 }

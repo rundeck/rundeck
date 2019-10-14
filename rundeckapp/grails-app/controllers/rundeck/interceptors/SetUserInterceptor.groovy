@@ -2,7 +2,9 @@ package rundeck.interceptors
 
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import grails.plugin.springsecurity.SpringSecurityUtils
+import groovy.transform.PackageScope
 import org.rundeck.web.infosec.AuthorizationRoleSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -61,7 +63,8 @@ class SetUserInterceptor {
         } else if (request.api_version && !session.user ) {
             //allow authentication token to be used
             def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
-            String user = lookupToken(authtoken, servletContext)
+            boolean webhookType = controllerName == "webhook" && actionName == "post"
+            String user = lookupToken(authtoken, servletContext, webhookType)
             List<String> roles = lookupTokenRoles(authtoken, servletContext)
 
             if (user){
@@ -155,7 +158,8 @@ class SetUserInterceptor {
      * @param context
      * @return
      */
-    private String lookupToken(String authtoken, ServletContext context) {
+    @PackageScope
+    String lookupToken(String authtoken, ServletContext context, boolean webhookType) {
         if(!authtoken){
             return null
         }
@@ -169,7 +173,20 @@ class SetUserInterceptor {
                 return user
             }
         }
-        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+
+        AuthToken tokenobj = null
+        if(webhookType) {
+            tokenobj = AuthToken.findByTokenAndType(authtoken,AuthTokenType.WEBHOOK)
+        } else {
+            tokenobj = AuthToken.createCriteria().get {
+                eq("token",authtoken)
+                or {
+                    eq("type", AuthTokenType.USER)
+                    isNull("type")
+                }
+            }
+        }
+
         if (tokenobj) {
             if (tokenobj.tokenIsExpired()) {
                 log.debug("loginCheck token is expired ${tokenobj?.user}, ${tokenobj}");

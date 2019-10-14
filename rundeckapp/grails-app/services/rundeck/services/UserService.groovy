@@ -130,4 +130,8 @@ class UserService {
 
         return roles
     }
+
+    boolean validateUserExists(String username) {
+        User.findByLogin(username) != null
+    }
 }

@@ -489,7 +489,7 @@
             </div>
 
             <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
-                <div class="input-group-addon">
+                <div class="input-group-addon" style="background-color:#e0e0e0;">
                     <g:message code="form.option.valuesDelimiter.label" />
                 </div>
                 <input type="text"
@@ -577,7 +577,7 @@
                     <g:radio id="option-hidden-no" name="hidden" value="false" checked="${!option || !option.hidden}"/>
                     <label for="option-hidden-no">
                         <g:message code="no" />
-                    </label>    
+                    </label>
                 </div>
                 <div class="radio radio-inline">
                     <g:radio id="option-hidden-yes" name="hidden" value="true" checked="${option?.hidden}"/>

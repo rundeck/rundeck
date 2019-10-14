@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.Execution; com.dtolabs.rundeck.server.authorization.AuthConstants; rundeck.ScheduledExecution" %>
+<%@ page import="org.rundeck.core.auth.AuthConstants; grails.util.Environment; rundeck.Execution; rundeck.ScheduledExecution" %>
 
 <html>
   <head>
@@ -367,8 +367,26 @@ search
                                               <g:message code="retry.failed.nodes"/>
                                           </g:link>
                                       </li>
+
+                                  %{--                              todo extra actions--}%
+
+                                      <g:ifMenuItems type="EXECUTION_RETRY"  project="${params.project}" execution="${execution.id.toString()}">
+                                          <li role="separator" class="divider"></li>
+                                          <g:forMenuItems type="EXECUTION_RETRY" var="item"  project="${params.project}" execution="${execution.id.toString()}">
+                                              <li>
+                                                  <a href="${enc(attr:item.getExecutionHref(params.project, execution.id.toString()))}"
+                                                     title="${enc(attr:g.message(code:item.titleCode,default:item.title))}">
+                                                      <span class="sidebar-mini"><i class="${enc(attr: item.iconCSS ?: 'fas fa-plug')}"></i></span>
+                                                      <span class="sidebar-normal">
+                                                          <g:message code="${item.titleCode}" default="${item.title}"/>
+                                                      </span>
+                                                  </a>
+                                              </li>
+                                          </g:forMenuItems>
+                                      </g:ifMenuItems>
                                   </ul>
                               </div>
+
                           </g:if>
 
                       </g:if>
@@ -472,7 +490,7 @@ search
                                 ]"/>
 
                       <g:if test="${execution.argString}">
-                          <section class=" section-space argstring-scrollable">
+                          <section class=" section-space exec-args-section argstring-scrollable">
                               <span class="text-secondary"><g:message code="options.prompt"/></span>
                               <g:render template="/execution/execArgString"
                                         model="[argString: execution.argString, inputFilesMap: inputFilesMap]"/>

@@ -26,12 +26,14 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
+import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
+import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory;
@@ -42,6 +44,7 @@ import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
 import com.dtolabs.rundeck.plugins.tours.TourLoaderPlugin;
 import com.dtolabs.rundeck.plugins.user.groups.UserGroupSourcePlugin;
+import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin;
 import org.rundeck.core.plugins.PluginProviderServices;
 import org.rundeck.core.plugins.PluginTypes;
 
@@ -89,6 +92,9 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.OptionValues, OptionValuesPlugin.class);
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
+        map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
+        map.put(ServiceNameConstants.ExecutionLifecyclePlugin, ExecutionLifecyclePlugin.class);
+        map.put(ServiceNameConstants.JobLifecyclePlugin, JobLifecyclePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }
@@ -120,6 +126,7 @@ public class ServiceTypes {
     private static ServiceLoader<PluginProviderServices>
         pluginProviderServiceLoader =
         ServiceLoader.load(PluginProviderServices.class);
+    private static final Object providerLoaderSync = new Object();
 
     /**
      * Get a pluggable service implementation for the given plugin type, if available via {@link ServiceLoader}
@@ -134,9 +141,11 @@ public class ServiceTypes {
         ServiceProviderLoader loader
     )
     {
-        for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
-            if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
-                return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+        synchronized (providerLoaderSync) {
+            for (PluginProviderServices pluginProviderServices : pluginProviderServiceLoader) {
+                if (pluginProviderServices.hasServiceFor(serviceType, serviceName)) {
+                    return pluginProviderServices.getServiceProviderFor(serviceType, serviceName, loader);
+                }
             }
         }
         return null;

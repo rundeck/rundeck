@@ -29,6 +29,13 @@ function JobEditor(data){
     self.workflowError=ko.pureComputed(function () {
         return self.errorTabs.indexOf('workflow') >= 0
     })
+    self.pluginsError=ko.pureComputed(function () {
+        return self.errorTabs.indexOf('plugins') >= 0
+    })
+    self.inPageError=ko.pureComputed(function () {
+        let opterr=self.optionError();
+        return self.workflowError() || opterr;
+    })
     self.clearError = function (name) {
         if (self.errorTabs.indexOf(name) >= 0) {
             self.errorTabs.remove(name)

@@ -1,10 +1,9 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig;
 import com.dtolabs.rundeck.core.common.ProviderService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -24,17 +23,17 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         PluggableProviderService<WorkflowStrategy>
 {
     private static final String SERVICE_NAME = ServiceNameConstants.WorkflowStrategy;
-    private final Framework framework;
+    private final IFramework framework;
     private final List<ProviderService<WorkflowStrategy>> serviceList;
     private final PluggableProviderService<WorkflowStrategy> pluginService;
     private final Map<String, String> builtinProviderSynonyms = new HashMap<>();
-    private final BaseProviderRegistryService<WorkflowStrategy> builtinService;
+    private final ProviderRegistryService<WorkflowStrategy> builtinService;
 
     public String getName() {
         return SERVICE_NAME;
     }
 
-    private WorkflowStrategyService(final Framework framework) {
+    private WorkflowStrategyService(final IFramework framework) {
         this.framework=framework;
         this.serviceList = new ArrayList<>();
         /*
@@ -50,13 +49,9 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
 
         builtinProviderSynonyms.put("step-first", SequentialWorkflowStrategy.PROVIDER_NAME);
 
-        builtinService = ServiceFactory.builtinService(
-                framework,
-                SERVICE_NAME,
-                builtinProviders
-        );
+        builtinService = ServiceFactory.builtinService(SERVICE_NAME, builtinProviders);
 
-        pluginService = ServiceFactory.pluginService(SERVICE_NAME, framework, WorkflowStrategy.class);
+        pluginService = ServiceFactory.pluginService(SERVICE_NAME, WorkflowStrategy.class, framework.getPluginManager());
 
 
         serviceList.add(builtinService);
@@ -88,7 +83,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
         return serviceList;
     }
 
-    public static WorkflowStrategyService getInstanceForFramework(Framework framework) {
+    public static WorkflowStrategyService getInstanceForFramework(IFramework framework) {
         if (null == framework.getService(SERVICE_NAME)) {
             final WorkflowStrategyService service = new WorkflowStrategyService(framework);
             framework.setService(SERVICE_NAME, service);

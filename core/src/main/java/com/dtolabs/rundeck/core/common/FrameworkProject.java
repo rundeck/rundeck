@@ -196,6 +196,11 @@ public class FrameworkProject extends FrameworkResource implements IRundeckProje
         return projectConfig.getConfigLastModifiedTime();
     }
 
+    @Override
+    public Date getConfigCreatedTime(){
+        return projectConfig.getConfigCreatedTime();
+    }
+
     /**
      * list the configurations of resource model providers.
      * @return a list of maps containing:

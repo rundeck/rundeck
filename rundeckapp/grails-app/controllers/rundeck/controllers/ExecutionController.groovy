@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.app.support.ExecutionQueryException
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.PluginDisabledException
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
@@ -37,34 +38,27 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.transform.PackageScope
-import org.hibernate.criterion.CriteriaSpecification
-import org.hibernate.type.StandardBasicTypes
 import org.quartz.JobExecutionContext
+import org.rundeck.app.AppConstants
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.*
 import rundeck.services.logging.ExecutionLogReader
-import rundeck.services.logging.ExecutionLogState
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.workflow.StateMapping
 
 import javax.servlet.http.HttpServletResponse
-import java.sql.Time
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.stream.Collectors
 
 /**
 * ExecutionController
 */
 class ExecutionController extends ControllerBase{
-    static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
-    static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
-
     FrameworkService frameworkService
     ExecutionService executionService
     LoggingService loggingService
@@ -405,18 +399,18 @@ class ExecutionController extends ControllerBase{
         )
         if (loader.state.isAvailableOrPartial()) {
             data.state = loader.workflowState
-        }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
+        }else if(loader.state in [ExecutionFileState.NOT_FOUND]) {
             data.state = [error: 'not found',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state,
                             default: "Not Found")]
-        }else if(loader.state in [ExecutionLogState.ERROR]) {
+        }else if(loader.state in [ExecutionFileState.ERROR]) {
             data.state = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
-        }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
-                ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+        }else if (loader.state in [ExecutionFileState.PENDING_LOCAL, ExecutionFileState.WAITING,
+                                   ExecutionFileState.AVAILABLE_REMOTE, ExecutionFileState.PENDING_REMOTE]) {
             data.completed = false
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
-        } else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE_PARTIAL]) {
+        } else if (loader.state in [ExecutionFileState.AVAILABLE_REMOTE_PARTIAL]) {
             data.completed = false
             data.state = [error       : 'pending',
                           errorMessage: g.message(
@@ -430,7 +424,7 @@ class ExecutionController extends ControllerBase{
                                   args: ["state: " + loader.state].toArray()
                           )]
         }
-        if (loader.state == ExecutionLogState.AVAILABLE_PARTIAL) {
+        if (loader.state == ExecutionFileState.AVAILABLE_PARTIAL) {
             data.completed = false
             data.state.partial = true
         }
@@ -480,14 +474,14 @@ class ExecutionController extends ControllerBase{
                     summary:loader.workflowState.nodeSummaries[selectedNode],
                     steps:loader.workflowState.nodeSteps[selectedNode]
             ]
-        }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
+        }else if(loader.state in [ExecutionFileState.NOT_FOUND]) {
             data = [error: 'not found',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state,
                             default: "Not Found")]
-        }else if(loader.state in [ExecutionLogState.ERROR]) {
+        }else if(loader.state in [ExecutionFileState.ERROR]) {
             data = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
-        }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
-                ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+        }else if (loader.state in [ExecutionFileState.PENDING_LOCAL, ExecutionFileState.WAITING,
+                                   ExecutionFileState.AVAILABLE_REMOTE, ExecutionFileState.PENDING_REMOTE]) {
             data = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         } else {
@@ -746,17 +740,17 @@ class ExecutionController extends ControllerBase{
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
-        if (reader.state==ExecutionLogState.NOT_FOUND) {
+        if (reader.state== ExecutionFileState.NOT_FOUND) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not found")
             return
-        }else if (reader.state == ExecutionLogState.ERROR) {
+        }else if (reader.state == ExecutionFileState.ERROR) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
             appendOutput(response, msg)
             return
-        }else if (reader.state != ExecutionLogState.AVAILABLE) {
+        }else if (reader.state != ExecutionFileState.AVAILABLE) {
             //TODO: handle other states
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not available")
@@ -815,17 +809,17 @@ class ExecutionController extends ControllerBase{
 
         def jobcomplete = e.dateCompleted!=null
         def reader = loggingService.getLogReader(e)
-        if (reader.state==ExecutionLogState.NOT_FOUND) {
+        if (reader.state== ExecutionFileState.NOT_FOUND) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not found")
             return
-        }else if (reader.state == ExecutionLogState.ERROR) {
+        }else if (reader.state == ExecutionFileState.ERROR) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR)
             def msg= g.message(code: reader.errorCode, args: reader.errorData)
             log.error("Output file reader error: ${msg}")
             appendOutput(response, msg)
             return
-        }else if(reader.state == ExecutionLogState.WAITING){
+        }else if(reader.state == ExecutionFileState.WAITING){
             if(params.reload=='true') {
                 response.setContentType("text/html")
                 appendOutput(response, '''<html>
@@ -854,7 +848,7 @@ class ExecutionController extends ControllerBase{
             }
             return
 
-        } else if (reader.state != ExecutionLogState.AVAILABLE) {
+        } else if (reader.state != ExecutionFileState.AVAILABLE) {
             //TODO: handle other states
             response.setStatus(HttpServletResponse.SC_NOT_FOUND)
             log.error("Output file not available")
@@ -949,12 +943,12 @@ setTimeout(function(){
     }
 
     boolean checkAllowUnsanitized(String project) {
-        if(frameworkService.getRundeckFramework().hasProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
+        if(frameworkService.getRundeckFramework().hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) {
             if ("true" != frameworkService.getRundeckFramework().
-                    getProperty(FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
+                    getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED)) return false
             def projectConfig = frameworkService.getRundeckFramework().projectManager.loadProjectConfig(project)
-            if(projectConfig.hasProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
-                return "true" == projectConfig.getProperty(PROJECT_OUTPUT_ALLOW_UNSANITIZED)
+            if(projectConfig.hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)) {
+                return "true" == projectConfig.getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED)
             }
             return false
         }
@@ -1253,12 +1247,12 @@ setTimeout(function(){
 
         ExecutionLogReader reader
         reader = loggingService.getLogReader(e)
-        def error = reader.state == ExecutionLogState.ERROR
+        def error = reader.state == ExecutionFileState.ERROR
         log.debug("Reader, state: ${reader.state}, reader: ${reader.reader}")
         if(error) {
             return apiError(reader.errorCode, reader.errorData, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        if (null == reader  || reader.state == ExecutionLogState.NOT_FOUND ) {
+        if (null == reader  || reader.state == ExecutionFileState.NOT_FOUND ) {
             def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
             def dataMap= [
@@ -1308,7 +1302,7 @@ setTimeout(function(){
             }
             return;
         }
-        else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
+        else if (null == reader || reader.state in [ExecutionFileState.PENDING_LOCAL, ExecutionFileState.PENDING_REMOTE, ExecutionFileState.WAITING]) {
             //pending data
             def dataMap=[
                     message       :"Pending",
@@ -1400,7 +1394,7 @@ setTimeout(function(){
                         unmodified    : true,
                         id            : params.id.toString(),
                         offset        : params.offset ? params.offset.toString() : "0",
-                        completed     : reader.state == ExecutionLogState.AVAILABLE,
+                        completed     : reader.state == ExecutionFileState.AVAILABLE,
                         execCompleted : jobcomplete,
                         hasFailedNodes:hasFailedNodes,
                         execState     : execState,
@@ -1500,8 +1494,8 @@ setTimeout(function(){
         }
         storeoffset= logread.offset
         //not completed if the reader state is only AVAILABLE_PARTIAL
-        completed = reader.state == ExecutionLogState.AVAILABLE &&
-                (logread.complete || (jobcomplete && storeoffset == totsize))
+        completed = reader.state == ExecutionFileState.AVAILABLE &&
+                    (logread.complete || (jobcomplete && storeoffset == totsize))
         log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
         if (storeoffset == offset) {
             //don't change last modified unless new data has been read
@@ -1817,12 +1811,12 @@ setTimeout(function(){
         def loader = workflowService.requestState(e)
         def state= loader.workflowState
         if(!loader.workflowState){
-            if(loader.state in [ExecutionLogState.WAITING, ExecutionLogState.AVAILABLE_REMOTE,
-                    ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE]) {
+            if(loader.state in [ExecutionFileState.WAITING, ExecutionFileState.AVAILABLE_REMOTE,
+                                ExecutionFileState.PENDING_LOCAL, ExecutionFileState.PENDING_REMOTE]) {
                 state = [error: 'pending']
             }else{
                 def errormap=[:]
-                if (loader.state in [ExecutionLogState.NOT_FOUND]) {
+                if (loader.state in [ExecutionFileState.NOT_FOUND]) {
                     errormap = [status: HttpServletResponse.SC_NOT_FOUND, code: "api.error.item.doesnotexist",
                             args: ['Execution State ID', params.id]]
                 }else {

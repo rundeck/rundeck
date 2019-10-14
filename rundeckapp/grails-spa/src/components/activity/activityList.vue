@@ -216,10 +216,10 @@
                     {{exec.job.name}}
                 </td>
 
-                <td class="eventargs" v-if="exec.job">
+                <td class="eventargs argstring-scrollable" v-if="exec.job">
                   <span v-if="exec.job.options">
                       <span v-for="(value,key) in exec.job.options" :key="key">
-                          {{key}}:
+                          <span class="optkey">{{key}}</span>
                           <code  class="optvalue">{{value}}</code>
                       </span>
                   </span>
@@ -306,8 +306,8 @@
                     <span class="exec-status-text custom-status" >{{rpt.execution.status}}</span>
                 </span>
             </td>
-            <td class="eventargs " >
-                <div class="argstring-scrollable">
+            <td class="eventargs argstring-scrollable" >
+
                 <span v-if="rpt.execution.jobArguments">
                     <span v-for="(value,key) in rpt.execution.jobArguments" :key="key">
                         {{key}}:
@@ -317,7 +317,7 @@
 
                 <span v-if="!rpt.execution.jobArguments">{{rpt.execution.argString}}</span>
 
-                </div>
+
             </td>
 
             <td class="text-right">

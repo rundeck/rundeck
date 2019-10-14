@@ -16,10 +16,11 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.transaction.Transactional
 import grails.web.JSONBuilder
@@ -91,7 +92,7 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration) {
+    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration, boolean webhookToken = false) {
 
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
@@ -104,7 +105,8 @@ class ApiService {
                 user: u,
                 expiration: expiration,
                 uuid: uuid,
-                creator: ownerUsername
+                creator: ownerUsername,
+                type: webhookToken ? AuthTokenType.WEBHOOK : AuthTokenType.USER
         )
 
         if (token.save(flush:true)) {
@@ -114,6 +116,7 @@ class ApiService {
             )
             return token
         } else {
+            println token.errors.allErrors.collect { messageSource.getMessage(it,null) }.join(",")
             throw new Exception("Failed to save token for User ${u.login}")
         }
     }
@@ -173,7 +176,9 @@ class ApiService {
             UserAndRolesAuthContext authContext,
             Integer tokenTimeSeconds,
             String username,
-            Set<String> roles
+            Set<String> roles,
+            boolean forceExpiration = true,
+            boolean webhookToken = false
     )
     {
         //check auth to edit profile
@@ -232,26 +237,29 @@ class ApiService {
             }
         }
 
-        Integer maxTokenDuration = maxTokenDurationConfig()
-        def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
-        if (generate.max) {
-            throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
+        Date newDate = null
+        if(forceExpiration) {
+            Integer maxTokenDuration = maxTokenDurationConfig()
+            def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
+            if (generate.max) {
+                throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
+            }
+            newDate = generate.date
         }
-        Date newDate = generate.date
 
         User u = userService.findOrCreateUser(createTokenUser)
         if (!u) {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
-        return generateAuthToken(authContext.username, u, roles, newDate)
+        return generateAuthToken(authContext.username, u, roles, newDate, webhookToken)
     }
 
     public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {
-        authorizedForTokenAction(authContext, AuthConstants.GENERATE_USER_TOKEN)
+        authorizedForTokenAction(authContext, AuthConstants.ACTION_GENERATE_USER_TOKEN)
     }
 
     public boolean hasTokenServiceGenerateAuth(UserAndRolesAuthContext authContext) {
-        authorizedForTokenAction(authContext, AuthConstants.GENERATE_SERVICE_TOKEN)
+        authorizedForTokenAction(authContext, AuthConstants.ACTION_GENERATE_SERVICE_TOKEN)
     }
 
     private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {

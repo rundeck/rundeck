@@ -2,6 +2,7 @@ package repository
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.plugins.PluginUtils
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.rundeck.repository.artifact.RepositoryArtifact
 import com.rundeck.repository.client.exceptions.ArtifactNotFoundException
@@ -188,8 +189,38 @@ class RepositoryController {
                     } catch(ArtifactNotFoundException anfe) {} //the repository does not have the artifact. That could be normal.
                     if(artifact) break;
                 }
-                if(!artifact) throw new Exception("Could not find artifact information for: ${params.artifactId}. Please check that the supplied artifact id is correct.")
-                repositoryPluginService.uninstallArtifact(artifact)
+                if(artifact) {
+                    repositoryPluginService.uninstallArtifact(artifact)
+                } else {
+                    log.warn("Could not find repository artifact information for: ${params.artifactId}. Could be a manually installed plugin. Attempting to uninstall from libext")
+
+                    String service = params.service
+                    String pluginName = params.name
+                    if(!(service || pluginName)) {
+                        for(def svc in pluginApiService.listPlugins()) {
+                            def plugin = svc.providers.find { p -> p.pluginId == params.artifactId }
+                            if(plugin) {
+                                service = svc.service
+                                pluginName = plugin.name
+                            }
+                        }
+                    }
+
+                    if(service && pluginName) {
+                        def providerMeta = frameworkService.getRundeckFramework().
+                                getPluginManager().
+                                getPluginMetadata(service, pluginName)
+
+                        if (providerMeta) {
+                            repositoryPluginService.removeOldPlugin(providerMeta.getFile())
+                        }
+                    } else {
+                        responseMsg.errors = [[code:"plugin.uninstall.failure", msg: "Unable to find plugin name or service."]]
+                        response.setStatus(400)
+                        return
+                    }
+                }
+
                 responseMsg.msg = "Plugin Uninstalled"
             } catch(Exception ex) {
                 log.error("Unable to uninstall plugin.",ex)

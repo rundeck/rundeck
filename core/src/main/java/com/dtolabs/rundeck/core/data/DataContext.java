@@ -31,6 +31,13 @@ public interface DataContext extends Map<String, Map<String, String>>, Mergable<
         return DataContextUtils.replaceDataReferencesConverter(getData());
     }
 
+    /**
+     * Create a deep copy
+     *
+     * @return a new object
+     */
+    DataContext copy();
+
 
     /**
      * Return a converter that can expand the property references within a string
