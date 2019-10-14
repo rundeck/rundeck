@@ -950,6 +950,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     }
 
+    def fileStorage(){
+
+    }
+
     def projectExport() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {

@@ -42,6 +42,7 @@ import grails.converters.JSON
 import groovy.transform.PackageScope
 import org.quartz.JobExecutionContext
 import org.rundeck.app.AppConstants
+import org.rundeck.storage.api.PathUtil
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
@@ -59,6 +60,10 @@ import java.text.SimpleDateFormat
 * ExecutionController
 */
 class ExecutionController extends ControllerBase{
+    static final String FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED = "framework.output.allowUnsanitized"
+    static final String PROJECT_OUTPUT_ALLOW_UNSANITIZED = "project.output.allowUnsanitized"
+
+    FileStorageService fileStorageService
     FrameworkService frameworkService
     ExecutionService executionService
     LoggingService loggingService
@@ -255,6 +260,12 @@ class ExecutionController extends ControllerBase{
 
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectsToCreate = []
+        String path = "files/${e.project}/${e.scheduledExecution?.jobName}/${e.id}"
+        def hasPath = fileStorageService.hasPath(authContext, path)
+        def pathIsNotEmpty = false
+        if(hasPath){
+            pathIsNotEmpty = fileStorageService.listDir(authContext, path)?.size() > 0
+        }
         projectNames.each{
             if(it != params.project && frameworkService.authorizeProjectResource(
                     authContext,
@@ -271,6 +282,7 @@ class ExecutionController extends ControllerBase{
                 execution             : e,
                 workflowTree          : workflowTree,
                 filesize              : filesize,
+                hasFile               : pathIsNotEmpty,
                 nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
                         e.scheduledExecution
                 ) : null,
@@ -364,8 +376,19 @@ class ExecutionController extends ControllerBase{
         }
         def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
                 frameworkService.getServerUUID()
+
+        def pathIsNotEmpty = false
+        String path = "files/${e.project}/${e.scheduledExecution?.jobName}/${e.id}"
+        if(jobcomplete){
+            def hasPath = fileStorageService.hasPath(authContext, path)
+
+            if(hasPath){
+                pathIsNotEmpty = fileStorageService.listDir(authContext, path)?.size() > 0
+            }
+        }
         def data=[
                 completed            : jobcomplete,
+                hasFile              : pathIsNotEmpty,
                 execDuration         : execDuration,
                 executionState       : execState.toUpperCase(),
                 executionStatusString: e.customStatusString,

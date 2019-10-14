@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2019 Rundeck, Inc. http://rundeck.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ext.pluginClassNames =  'com.dtolabs.rundeck.plugin.SaveFilePlugin'
+ext.pluginClassNames =  'com.dtolabs.rundeck.plugin.SaveFilePlugin,com.dtolabs.rundeck.plugin.DeleteFilePlugin'
 ext.pluginName = 'Save File Plugin'
 ext.pluginDescription = 'Save file on storage'
 

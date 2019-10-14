@@ -35,15 +35,17 @@ class SaveFilePlugin  implements StepPlugin {
             required = true)
     String name
 
+    @PluginProperty(title = "Content type",
+            description = "File content type. Default: ",
+            defaultValue = "text/plain",
+            required = true)
+    String contentType
+
     @PluginProperty(title = 'Overwrite if already exists', description = "Overwrite file if already exists")
     boolean overwrite = false
 
     @PluginProperty(title = 'Log content', description = "Log file content")
     boolean logContent = false
-
-    @PluginProperty(title = "File URL",
-            description = "URL to save a file from the filesystem")
-    String directoryFile
 
     @PluginProperty(title = "File content",
             description = "File content")
@@ -58,9 +60,10 @@ class SaveFilePlugin  implements StepPlugin {
     @Override
     void executeStep(PluginStepContext context, Map<String, Object> configuration) throws NodeStepException {
         Path filePath = PathUtil.asPath(path + "/" + name)
+        def dataContext = context.dataContextObject
         FileStorageTree fileStorageTree = context.executionContext.getFileStorageTree()
         byte[] fileContent = fileContent()
-        boolean hasFile = fileStorageTree.hasFile(filePath)
+        boolean hasFile = fileStorageTree.hasFileOnExecWorkpacePath(filePath, dataContext.job.project, dataContext.job.name, dataContext.job.execid)
 
         if(!overwrite && hasFile){
             context.getLogger().log(Constants.ERR_LEVEL, "File already exists")
@@ -71,12 +74,17 @@ class SaveFilePlugin  implements StepPlugin {
         }
 
         Map<String, String> map = [:]
+        if(contentType){
+            map[StorageUtil.RES_META_RUNDECK_CONTENT_TYPE] = contentType
+        }
+
         InputStream stream = new ByteArrayInputStream(fileContent)
 
         if(hasFile && overwrite){
             fileStorageTree.updateResource(
                     filePath,
-                    DataUtil.withStream(stream, map, StorageUtil.factory())
+                    DataUtil.withStream(stream, map, StorageUtil.factory()),
+                    dataContext.job.project, dataContext.job.name, dataContext.job.execid
             )
 
             this.writeLog(context)
@@ -86,14 +94,15 @@ class SaveFilePlugin  implements StepPlugin {
 
         fileStorageTree.createResource(
                 filePath,
-                DataUtil.withStream(stream, map, StorageUtil.factory())
+                DataUtil.withStream(stream, map, StorageUtil.factory()),
+                dataContext.job.project, dataContext.job.name, dataContext.job.execid
         )
 
         this.writeLog(context)
     }
 
     private byte[] fileContent(){
-        return directoryFile ? new File(directoryFile).getBytes() : content.getBytes()
+        return content.getBytes()
     }
 
     private void writeLog(PluginStepContext context){

@@ -176,10 +176,11 @@ function StorageUpload(storage){
        }
     });
 }
-function StorageBrowser(baseUrl, rootPath, fileSelect) {
+function StorageBrowser(baseUrl, rootPath, fileSelect, storageBrowse, storageDownload, storageDelete, executionParams) {
     var self = this;
     self.baseUrl = baseUrl;
     self.fileSelect=fileSelect;
+    self.executionParams=executionParams;
     self.rootPath = ko.observable(rootPath);
     self.staticRoot = ko.observable(false);
     self.errorMsg = ko.observable();
@@ -198,6 +199,10 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     self.allowSelection=ko.observable(true);
     self.allowNotFound=ko.observable(false);
     self.notFound=ko.observable(false);
+
+    storageBrowse = storageBrowse || appLinks.storageKeysBrowse;
+    storageDownload = storageDownload || appLinks.storageKeysDownload;
+    storageDelete = storageDelete || appLinks.storageKeysDelete;
 
     //computed properties
     self.files = ko.computed(function () {
@@ -229,7 +234,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     });
 
     self.selectedPathUrl=ko.computed(function(){
-        return _genUrl(appLinks.storageKeysBrowse + '/' + self.selectedPath());
+        return _genUrl(storageBrowse + '/' + self.selectedPath());
     });
 
     //functions
@@ -343,7 +348,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         if(self.selectedResource() && self.selectedResource().isPublicKey()){
             jQuery(btn).button('loading');
             jQuery.ajax({
-                url: _genUrl(appLinks.storageKeysDownload, {relativePath: self.relativePath(self.selectedPath())}),
+                url: _genUrl(storageDownload, {relativePath: self.relativePath(self.selectedPath())}),
                 success:function(data,jqxhr){
                     jQuery(btn).button('reset');
                     var found = jQuery('#' + destid);
@@ -359,7 +364,9 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     };
     self.download = function(){
         if(self.selectedPath()){
-            document.location = _genUrl(appLinks.storageKeysDownload, {relativePath:self.relativePath(self.selectedPath())});
+            var urlParams = {relativePath:self.relativePath(self.selectedPath())};
+            jQuery.extend(urlParams, self.executionParams);
+            document.location = _genUrl(storageDownload, urlParams);
         }
     };
     self.delete = function(){
@@ -369,7 +376,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         jQuery.ajax({
             dataType: "json",
             method: 'post',
-            url: _genUrl(appLinks.storageKeysDelete, {relativePath: self.relativePath(self.selectedPath()) } ),
+            url: _genUrl(storageDelete, {relativePath: self.relativePath(self.selectedPath()) } ),
             beforeSend: _createAjaxSendTokensHandler('storage_browser_token'),
             data: {},
             success: function (data, status, jqXHR) {
@@ -422,9 +429,12 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
         };
         self.loading(true);
         self.inputPath(self.relativePath(val));
+        var urlParams = {relativePath: self.relativePath(val)};
+        jQuery.extend(urlParams, self.executionParams);
+        console.log(urlParams);
         jQuery.ajax({
             dataType: "json",
-            url: _genUrl(self.baseUrl ,{relativePath: self.relativePath(val) } ),
+            url: _genUrl(self.baseUrl ,urlParams ),
             data: {},
             success: function (data, status, jqXHR) {
                 self.loading(false);

@@ -31,31 +31,35 @@ class StorageService {
     AuthStorageTree authRundeckStorageTree
 
     def hasPath(AuthContext context, String path) {
-        authRundeckStorageTree.hasPath(context, PathUtil.asPath(path))
+        getServiceTree().hasPath(context, PathUtil.asPath(path))
     }
 
     def hasResource(AuthContext context, String path) {
-        authRundeckStorageTree.hasResource(context, PathUtil.asPath(path))
+        getServiceTree().hasResource(context, PathUtil.asPath(path))
     }
 
     def getResource(AuthContext context, String path) {
-        authRundeckStorageTree.getPath(context, PathUtil.asPath(path))
+        getServiceTree().getPath(context, PathUtil.asPath(path))
     }
 
     def updateResource(AuthContext context, String path, Map<String, String> meta, InputStream data) {
-        authRundeckStorageTree.updateResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta,
+        getServiceTree().updateResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta,
                 StorageUtil.factory()))
     }
     def createResource(AuthContext context, String path, Map<String, String> meta, InputStream data) {
-        authRundeckStorageTree.createResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta, StorageUtil.factory()))
+        getServiceTree().createResource(context, PathUtil.asPath(path), DataUtil.withStream(data, meta, StorageUtil.factory()))
     }
 
     def listDir(AuthContext context, String path) {
-        authRundeckStorageTree.listDirectory(context, PathUtil.asPath(path))
+        getServiceTree().listDirectory(context, PathUtil.asPath(path))
     }
 
     def delResource(AuthContext context, String path) {
-        authRundeckStorageTree.deleteResource(context, PathUtil.asPath(path))
+        getServiceTree().deleteResource(context, PathUtil.asPath(path))
+    }
+
+    protected AuthStorageTree getServiceTree() {
+        return authRundeckStorageTree
     }
     /**
      * Return a tree using the authorization context

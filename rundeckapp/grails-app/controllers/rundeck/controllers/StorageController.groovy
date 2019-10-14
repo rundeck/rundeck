@@ -31,6 +31,7 @@ import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
+import rundeck.services.FileStorageService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 
@@ -55,6 +56,7 @@ class StorageController extends ControllerBase{
      */
     public static final Set<String> RES_META_MASKED = [StorageUtil.RES_META_RUNDECK_CONTENT_LENGTH]
     StorageService storageService
+    FileStorageService fileStorageService
     ApiService apiService
     FrameworkService frameworkService
     static allowedMethods = [
@@ -62,7 +64,10 @@ class StorageController extends ControllerBase{
             keyStorageAccess:['GET'],
             keyStorageDownload:['GET'],
             keyStorageUpload:['POST'],
-            keyStorageDelete:['POST']
+            keyStorageDelete:['POST'],
+            fileStorageAccess:['GET'],
+            fileStorageDownload:['GET'],
+            fileStorageDelete:['POST']
     ]
 
     private def pathUrl(path){
@@ -235,23 +240,47 @@ class StorageController extends ControllerBase{
         }
     }
 
+    private def storageAccess(StorageParams storageParams, String rootPath, StorageService service = storageService){
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/${rootPath}${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
+        }
+        getResource(storageParams, service)
+    }
+
+    public def fileStorageAccess(StorageParams storageParams){
+        String rootPath = "files"
+        if(params.project){
+            rootPath = "${rootPath}/${params.project}/${params.jobName}/${params.executionId}"
+        }
+        storageAccess(storageParams, rootPath, fileStorageService)
+    }
+
     /**
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageAccess(StorageParams storageParams){
-        if (!storageParams.resourcePath ) {
-            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
-        }
-        getResource(storageParams)
+        storageAccess(storageParams, 'keys')
     }
     /**
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageDownload(StorageParams storageParams){
-        if (!storageParams.resourcePath ) {
-            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
+        storageDownload(storageParams, 'keys')
+    }
+
+    public def fileStorageDownload(StorageParams storageParams){
+        String rootPath = "files"
+        if(params.project){
+            rootPath = "${rootPath}/${params.project}/${params.jobName}/${params.executionId}"
         }
-        getResource(storageParams,true)
+        storageDownload(storageParams, rootPath, fileStorageService)
+    }
+
+    private def storageDownload(StorageParams storageParams, String rootPath, StorageService service = storageService){
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/${rootPath}${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
+        }
+        getResource(storageParams,true, service)
     }
     /**
      * non-api action wrapper for apiKeys method
@@ -435,8 +464,16 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for deleteResource method
      */
     public def keyStorageDelete(StorageParams storageParams) {
+        storageDelete(storageParams, 'keys')
+    }
+
+    public def fileStorageDelete(StorageParams storageParams){
+        storageDelete(storageParams, 'files', fileStorageService)
+    }
+
+    private def storageDelete(StorageParams storageParams, String rootPath, StorageService service = storageService) {
         if (!storageParams.resourcePath ) {
-            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
+            storageParams.resourcePath = "/${rootPath}${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         def valid = false
         withForm {
@@ -453,7 +490,7 @@ class StorageController extends ControllerBase{
         if (!valid) {
             return
         }
-        deleteResource(storageParams)
+        deleteResource(storageParams, rootPath, service)
     }
     /**
      * Handle resource requests to the /ssh-key path
@@ -541,10 +578,10 @@ class StorageController extends ControllerBase{
         return deleteResource(storageParams)
     }
 
-    private def deleteResource(StorageParams storageParams) {
+    private def deleteResource(StorageParams storageParams, String rootPath = 'keys', StorageService service = storageService) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
-        storageParams.requireRoot('/keys/')
+        storageParams.requireRoot("/${rootPath}/")
         if (storageParams.hasErrors()) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
@@ -553,7 +590,7 @@ class StorageController extends ControllerBase{
             ]
             )
         }
-        if(!storageService.hasResource(authContext, resourcePath)) {
+        if(!service.hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
@@ -561,7 +598,7 @@ class StorageController extends ControllerBase{
             ])
         }
         try{
-            def deleted = storageService.delResource(authContext, resourcePath)
+            def deleted = service.delResource(authContext, resourcePath)
             if(deleted){
                 render(status: HttpServletResponse.SC_NO_CONTENT)
             }else{
@@ -642,7 +679,10 @@ class StorageController extends ControllerBase{
         return getResource(storageParams)
     }
 
-    private def getResource(StorageParams storageParams,boolean forceDownload=false) {
+    private def getResource(StorageParams storageParams, StorageService service) {
+        getResource(storageParams, false, service)
+    }
+    private def getResource(StorageParams storageParams,boolean forceDownload=false, StorageService service = storageService) {
         if (storageParams.hasErrors()) {
             apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_BAD_REQUEST,
@@ -652,16 +692,16 @@ class StorageController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = storageParams.resourcePath
-        def found = storageService.hasPath(authContext, resourcePath)
+        def found = service.hasPath(authContext, resourcePath)
         if(!found){
             response.status=404
             return renderError("resource not found: ${resourcePath}")
         }
         try{
-            def resource = storageService.getResource(authContext, resourcePath)
+            def resource = service.getResource(authContext, resourcePath)
             if (resource.directory) {
                 //list directory and render resources
-                def dirlist = storageService.listDir(authContext, resourcePath)
+                def dirlist = service.listDir(authContext, resourcePath)
                 return renderDirectory(request, response, resource,dirlist)
             } else {
                 return renderResourceFile(request, response, resource, forceDownload)
