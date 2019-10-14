@@ -180,7 +180,7 @@
                 name="bulk_edit"
                 :value="exec.id"
                 v-model="bulkSelectedIds"
-                :disabled="exec.status==='running'"
+                :disabled="exec.status==='running' || exec.status==='scheduled'"
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
