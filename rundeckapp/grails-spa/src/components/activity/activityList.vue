@@ -565,7 +565,7 @@ export default Vue.extend({
         }
       }else if(rpt.executionId){
         this.toggleSelectId(rpt.executionId)
-      }else if(rpt.id && rpt.status!=='running'){
+      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled'){
         this.toggleSelectId(rpt.id)
       }
     },
