@@ -193,10 +193,10 @@ class ExecutionsCleanUp implements InterruptableJob {
                     logger.info("total to exclude: ${totalToExclude}")
 
                     boolean removeSubResult= false
-                    boolean dontRemove= false
+                    boolean remove= true
 
                     if(totalExecutions < minimumExecutionToKeep){
-                        dontRemove = true
+                        remove = false
                     }
 
                     if (sub < minimumExecutionToKeep) {
@@ -212,7 +212,7 @@ class ExecutionsCleanUp implements InterruptableJob {
                         logger.info("${result.size()} executions will be removed")
                     }
 
-                    if(dontRemove){
+                    if(!remove){
                         logger.info("${result.size()} executions can not be removed ")
                         result = []
                     }
