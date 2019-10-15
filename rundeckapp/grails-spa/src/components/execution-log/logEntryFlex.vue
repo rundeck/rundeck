@@ -1,9 +1,12 @@
 <template>
     <div class="log-line">
-        <div class="log-gutter">
+        <div class="log-gutter" v-bind:class="{'gutter-error': (entry.level == 'error')}">
             <span class="gutter">{{entry.node}}</span>
+            <span class="gutter">{{entry.level}}</span>
+            <span class="gutter">{{entry.stepctx}}</span>
+            <span class="gutter">{{entry.time}}</span>
         </div>
-        <div class="log-content">
+        <div class="log-content" v-bind:class="{'log-content-error': (entry.level == 'error')}">
             <span v-if="entry.loghtml" v-html="entry.loghtml"/>
             <span v-if="!entry.loghtml">{{entry.log}}</span>
         </div>

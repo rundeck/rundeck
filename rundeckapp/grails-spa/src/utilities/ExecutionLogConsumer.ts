@@ -8,7 +8,7 @@ export class ExecutionLog {
     completed = false
 
     constructor(readonly id: string) {
-        this.client = new Rundeck(new TokenCredentialProvider('BO2uSfGKRd6qi1kqmKc0zR86EyhmO28E'), {baseUri: 'http://ubuntu:4440', withCredentials: true})
+        this.client = new Rundeck(new TokenCredentialProvider('VpP6MpnXs91fsmXbM3eylKbMp89WimlD'), {baseUri: 'http://ubuntu:4440'})
     }
 
     async getOutput(maxLines: number): Promise<ExecutionOutputGetResponse> {

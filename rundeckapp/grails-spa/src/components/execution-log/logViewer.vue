@@ -55,7 +55,7 @@ export default class LogViewer extends Vue {
     }
 
     async populateLogs() {
-        this.viewer = new ExecutionLog('2')
+        this.viewer = new ExecutionLog('5')
 
         let count = 0
 
@@ -137,11 +137,19 @@ body, html {
 .log-gutter {
   background-color: rgb(32, 56, 56);
   color: cornsilk;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(22, 36, 36);
 }
 
 .log-content {
   background-color: darkslategrey;
   color: bisque;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(39, 66, 66);
 }
 </style>
 
