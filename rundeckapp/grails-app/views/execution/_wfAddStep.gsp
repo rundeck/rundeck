@@ -190,20 +190,13 @@
     </div>
 </div>
 </div>
+
+    <g:set var="stepDescriptionsAll" value="${nodeStepDescriptions + (stepDescriptions?:[])}"/>
+    <g:set var="stepDescriptionsData" value="${stepDescriptionsAll.collect{[name:it.name,title:it.title,description:it.description,properties:it.properties.collect{[name:it.name,title:it.title,description:it.description]}] } }"/>
+    <g:embedJSON data="${stepDescriptionsData}" id="stepDescriptions_json"/>
     <g:javascript>
                 fireWhenReady('addStep_${enc(js: rkey)}',function(){
-
-                    function parseModelToJS(jsonString) {
-                        jsonString = jsonString.replace(/\"/g,'"');
-                        var jsonObject = JSON.parse(jsonString);
-                        return jsonObject
-                    };
-
-                    var nodeStepDescriptionsArray = parseModelToJS("${nodeStepDescriptions as JSON}");
-                    var stepDescriptionsArray = parseModelToJS("${stepDescriptions as JSON}");
-                    var pluginsDescriptions = nodeStepDescriptionsArray.concat(stepDescriptionsArray);
-                    var filter = new StepPluginsFilter({stepDescriptions:pluginsDescriptions});
-
+                    var filter = new StepPluginsFilter({stepDescriptions:loadJsonData('stepDescriptions_json')});
                     ko.applyBindings(filter,jQuery('#addStep_${enc(js:rkey)}')[0]);
                 });
     </g:javascript>
