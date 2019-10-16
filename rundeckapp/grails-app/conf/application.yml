@@ -211,8 +211,7 @@ rundeck:
             tail:
                 lines:
                     default: 20
-                    max: 2000
-
+                    max: 500
         job:
             description:
                 disableHTML: false
