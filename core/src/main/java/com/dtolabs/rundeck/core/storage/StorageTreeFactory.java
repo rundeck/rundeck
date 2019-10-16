@@ -53,9 +53,16 @@ public class StorageTreeFactory {
     private             Map<String, String> configuration                          = new HashMap<String, String>();
     private             Set<String>         defaultConverters                      = new HashSet<String>();
 
+    private StorageConverterPluginAdapter fileStorageConverterPluginAdapter;
     private PluggableProviderService<StoragePlugin> storagePluginProviderService;
     private PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService;
 
+    public StorageTreeFactory() {
+    }
+
+    public StorageTreeFactory(StorageConverterPluginAdapter fileStorageConverterPluginAdapter) {
+        this.fileStorageConverterPluginAdapter = fileStorageConverterPluginAdapter;
+    }
 
     public StorageTree createTree() throws Exception {
         if ( null == frameworkPropertyLookup) {
@@ -140,12 +147,7 @@ public class StorageTreeFactory {
         }
         if(null!=defaultConverters && defaultConverters.contains("FileStorageLayer")){
             logger.debug("Configuring base converter: FileStorageLayer" );
-            builder=builder.convert(
-                    new StorageConverterPluginAdapter(
-                            "builtin:file-storage",
-                            new FileStorageLayer()
-                    ), PathUtil.asPath("/files")
-            );
+            builder=builder.convert(fileStorageConverterPluginAdapter, PathUtil.asPath("/files"));
         }
         return builder;
     }

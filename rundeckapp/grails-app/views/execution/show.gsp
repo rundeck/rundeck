@@ -599,23 +599,6 @@ search
 
                               <span data-bind="visible: completed()" class="execution-action-links pull-right">
 
-                                  <span data-bind="visible: hasFile() ">
-                                      <g:set var="fieldid" value="${g.rkey()}"/>
-                                      <g:set var="execid" value="${execution.id}"/>
-                                      <g:set var="jobName" value="${scheduledExecution?.jobName}"/>
-                                      <g:set var="project" value="${execution.project}"/>
-                                      <g:set var="storageRoot" value="${'files'}"/>
-                                      <a class="btn btn-secondary btn-sm"
-                                         data-toggle="modal"
-                                         href="#storagebrowse"
-                                         data-storage-root="${enc(attr:storageRoot)}"
-                                         data-storage-filter=""
-                                         data-storage-execution-id="${execution.id}"
-                                         data-storage-job="${scheduledExecution?.jobName}"
-                                         data-storage-project="${execution.project}"
-                                         data-field="#${enc(attr:fieldid)}"
-                                      ><g:message code="storage.browse.files"/><i class="glyphicon glyphicon-folder-open"></i></a>
-                                  </span>
 
                                   <a href="#view-options-modal" class="btn btn-secondary btn-sm" data-toggle="modal">
                                       <g:message code="execution.page.view.options.title"/>
@@ -955,7 +938,6 @@ search
 
 
   </div>
-  <g:render template="/framework/storageBrowseModalKO" model="[type: 'files']"/>
   <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 

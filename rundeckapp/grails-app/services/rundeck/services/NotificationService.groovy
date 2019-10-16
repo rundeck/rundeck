@@ -25,7 +25,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import com.dtolabs.rundeck.core.storage.ResourceMeta
-import com.dtolabs.rundeck.core.storage.files.FileStorageTree
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
@@ -78,7 +77,6 @@ public class NotificationService implements ApplicationContextAware{
     def LoggingService loggingService
     def apiService
     def executionService
-    AuthStorageTree authFileRundeckStorageTree
     OrchestratorPluginService orchestratorPluginService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
@@ -442,20 +440,6 @@ public class NotificationService implements ApplicationContextAware{
                                                     renderJobStats    : renderJobStats
                                             ]
                                     )
-                                }
-                                if(attachExternalFile){
-                                    try{
-                                        Map ctx = generateContextData(content.execution, content)
-                                        String pathToFile = DataContextUtils.replaceDataReferencesInString(
-                                                attachExternalPathName, ctx, null, true)
-
-                                        FileStorageTree fileStorageTree = content.context?.getFileStorageTree()
-
-                                        byte[] contentAttatch = fileStorageTree?.readFile(PathUtil.asPath(pathToFile))
-                                        attachBytes "${PathUtil.pathName(pathToFile)}", fileStorageTree?.getContentType(PathUtil.asPath(pathToFile)), contentAttatch
-                                    } catch (IOException exp) {
-                                        log.error("Cannot attach file: $exp.message")
-                                    }
                                 }
                                 if(attachlog && outputfile != null){
                                     attachBytes "${source.jobName}-${exec.id}.${attachedExtension}", attachedContentType, outputfile.getText("UTF-8").bytes
