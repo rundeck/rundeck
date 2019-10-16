@@ -414,7 +414,6 @@ beans={
             //log filters
             MaskPasswordsFilterPlugin,
             SimpleDataFilterPlugin,
-            SaveFileFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
