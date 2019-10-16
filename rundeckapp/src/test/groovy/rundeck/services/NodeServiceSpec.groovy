@@ -38,6 +38,7 @@ import spock.lang.Unroll
  */
 @TestFor(NodeService)
 class NodeServiceSpec extends Specification {
+    private static final String RESOURCE_TMP_DIR = '/tmp/rundeckNodeServiceSpec'
     def "get nodes project DNE"() {
         given:
         service.frameworkService = Mock(FrameworkService)
@@ -65,6 +66,7 @@ class NodeServiceSpec extends Specification {
         nodeSet.putNode(new NodeEntryImpl('anode'))
         def properties = [
 
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
                 'resources.source.1.type'                            : 'file',
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
@@ -131,6 +133,7 @@ class NodeServiceSpec extends Specification {
         INodeSet nodeSet = new NodeSetImpl()
         nodeSet.putNode(new NodeEntryImpl('anode'))
         def properties = [
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
                 'resources.source.1.type'                            : 'file',
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
@@ -206,6 +209,7 @@ class NodeServiceSpec extends Specification {
         preloadedNodes.putNode(new NodeEntryImpl('bnode'))
 
         def properties = [
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
                 'resources.source.1.type'                            : 'file',
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
@@ -281,6 +285,7 @@ class NodeServiceSpec extends Specification {
         sourceNodes.putNode(new NodeEntryImpl("bnode"))
 
         def properties = [
+            'framework.var.dir'                                  : RESOURCE_TMP_DIR,
             'resources.source.1.type'                            : 'file',
             'resources.source.1.config.file'                     : '/tmp/test.xml',
             'resources.source.1.config.generateFileAutomatically': 'false',
@@ -367,7 +372,7 @@ class NodeServiceSpec extends Specification {
         modelNodes.putNode(new NodeEntryImpl('anode'))
 
         def properties = [
-
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
                 'resources.source.1.type'                            : 'file',
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
@@ -440,7 +445,7 @@ class NodeServiceSpec extends Specification {
         modelNodes.putNode(new NodeEntryImpl('anode'))
 
         def properties = [
-
+                'framework.var.dir'                                  : RESOURCE_TMP_DIR,
                 'resources.source.1.type'                            : 'file',
                 'resources.source.1.config.file'                     : '/tmp/test.xml',
                 'resources.source.1.config.generateFileAutomatically': 'false',
