@@ -1525,9 +1525,6 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
 
 
         ExecutionServiceValidationException e = thrown()
-        e.errors.each { k, v ->
-            println("${k} ${v}")
-        }
         e.errors.containsKey('test1')
 
 
