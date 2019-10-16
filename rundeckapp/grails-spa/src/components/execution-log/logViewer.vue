@@ -1,7 +1,7 @@
 <template>
   <div class="execution-log">
     <div class="stats">
-      <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} UpdateTime:{{frameTime}}ms TotalTime:{{totalTime/1000}}s</span>
+      <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
     </div>
     <div ref="mine" class="scroller"/>
   </div>
@@ -13,6 +13,7 @@ import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import { RecycleScroller, DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
+import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models';
 
 Vue.component("recycle-scroller",RecycleScroller)
 Vue.component("dynamic-scroller",DynamicScroller)
@@ -20,11 +21,13 @@ Vue.component("dynamic-sroller-item",DynamicScrollerItem)
 
 @Component
 export default class LogViewer extends Vue {
+    scrollTolerance = 5
+
     viewer!: ExecutionLog
 
     logEntries: Array<{log?: string, id: number}> = [{log: 'Foo', id: 0}]
 
-    follow = true
+    follow = false
 
     frameTime = 0
 
@@ -33,6 +36,8 @@ export default class LogViewer extends Vue {
     totalTime = 0
 
     private startTime = 0
+
+    private resp?: Promise<ExecutionOutputGetResponse>
 
     async mounted() {
       this.startTime = Date.now()
@@ -49,20 +54,30 @@ export default class LogViewer extends Vue {
           ev.returnValue = false
         }
         
-        if (this.scrollCount > 5)
+        if (this.scrollCount > this.scrollTolerance)
           this.follow = false
       }, {passive: false})
     }
 
     async populateLogs() {
-        this.viewer = new ExecutionLog('5')
+        this.viewer = new ExecutionLog('3')
 
         let count = 0
 
         let newVues: any = []
         
         while(true) {
-            const res = await this.viewer.getOutput(500)
+            if (!this.resp)
+              this.resp = this.viewer.getOutput(500)
+
+            const res = await this.resp
+            this.resp = undefined
+
+            if (!this.viewer.completed) {
+              this.resp = this.viewer.getOutput(500)
+              await new Promise((res, rej) => setTimeout(() => {res()},0))
+            }
+
             const newEntries = res.entries.map(e => {
               count++
               return {log: e.log, id: count}
@@ -88,28 +103,21 @@ export default class LogViewer extends Vue {
             const mine = this.$refs["mine"] as HTMLElement
             mine.appendChild(frag)
 
-            const time = Date.now()
-
-            window.requestAnimationFrame(() => {
-              this.frameTime = Date.now() - time
-              if (this.logEntries.length < 500) {
-                console.log('Resize!')
-                mine.style.display = 'none'
-                window.requestAnimationFrame(() => {
-                  mine.style.display = 'block'
-                })
-              }
-            })
+            // if (this.logEntries.length < 500) {
+            //   window.requestAnimationFrame(() => {
+            //     mine.style.display = 'none'
+            //     window.requestAnimationFrame(() => {
+            //       mine.style.display = 'block'
+            //     })
+            //   })
+            // }
 
             if (this.follow) {
-              window.requestAnimationFrame(() => {
                 const last = mine.lastChild!.lastChild as HTMLElement
                 if (last && this.follow) {
                   console.log('Scroll')
                   last.scrollIntoView()
                 }
-                })
-              mine.lastChild
             }
             
             if (this.viewer.completed)
@@ -151,6 +159,11 @@ body, html {
   border-width: 1px;
   border-color: rgb(39, 66, 66);
 }
+
+.log-chunk {
+  contain: layout;
+}
+
 </style>
 
 <style lang="scss" scoped>
@@ -158,11 +171,6 @@ body, html {
 
 .stats {
   flex: 0 0 100px;
-}
-
-.log-chunk {
-  width: 100%;
-  // contain: layout;
 }
 
 .scroller {
