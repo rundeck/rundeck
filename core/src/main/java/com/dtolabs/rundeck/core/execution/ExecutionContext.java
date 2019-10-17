@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
+import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
 import java.util.Collection;
@@ -77,6 +78,14 @@ public interface ExecutionContext {
      * @return the storage service
      */
     public StorageTree getStorageTree();
+    /**
+     * @return the file storage service
+     */
+    public StorageTree getFileStorageTree();
+    /**
+     * @return the file storage service
+     */
+    public AuthStorageTree getAuthStorageTree();
     /**
      * @return the job service
      */

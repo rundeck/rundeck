@@ -83,6 +83,7 @@ import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
+import rundeck.services.RundeckAuthStorageManager
 import rundeck.services.scm.ScmJobImporter
 import rundeckapp.init.ExternalStaticResourceConfigurer
 import rundeckapp.init.servlet.JettyServletContainerCustomizer
@@ -205,6 +206,8 @@ beans={
     rundeckJobScheduleManager(QuartzJobScheduleManager){
         quartzScheduler=ref('quartzScheduler')
     }
+
+    rundeckAuthStorageManager(RundeckAuthStorageManager)
 
     //cache for provider loaders bound to a file
     providerFileCache(PluginManagerService) { bean ->

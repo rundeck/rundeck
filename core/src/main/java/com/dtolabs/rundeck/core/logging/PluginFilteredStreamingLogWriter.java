@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
+import com.dtolabs.rundeck.core.storage.StorageTree;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.io.IOException;
@@ -55,7 +56,8 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                 directLogger,
                 context.getDataContextObject(),
                 context.getPrivateDataContextObject(),
-                context.getSharedDataContext()
+                context.getSharedDataContext(),
+                context.getFileStorageTree()
         );
     }
 
@@ -248,6 +250,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         DataContext dataContext;
         DataContext privateDataContext;
         MultiDataContext<ContextView, DataContext> sharedDataContext;
+        StorageTree fileStorageTree;
 
         /**
          * Return data context set
@@ -277,7 +280,8 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                 final ExecutionLogger logger,
                 final DataContext dataContext,
                 final DataContext privateDataContext,
-                final MultiDataContext<ContextView, DataContext> sharedDataContext
+                final MultiDataContext<ContextView, DataContext> sharedDataContext,
+                final StorageTree fileStorageTree
         )
         {
             this.outputContext = outputContext;
@@ -285,6 +289,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.dataContext = dataContext;
             this.privateDataContext = privateDataContext;
             this.sharedDataContext = sharedDataContext;
+            this.fileStorageTree = fileStorageTree;
         }
 
         @Override
@@ -305,6 +310,11 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         @Override
         public SharedOutputContext getOutputContext() {
             return outputContext;
+        }
+
+        @Override
+        public StorageTree getFileStorateTree() {
+            return this.fileStorageTree;
         }
     }
 
