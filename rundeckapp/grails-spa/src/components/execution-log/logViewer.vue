@@ -1,9 +1,15 @@
 <template>
   <div class="execution-log">
-    <div class="stats">
+    <div class="controls">
+      Consume:<input type="checkbox" v-model="consumeLogs"
+      />Stats:<input type="checkbox" v-model="showStats"
+      >Follow:<input type="checkbox" v-model="follow"
+      />Jump:<input v-model="jumpToLine" v-on:keyup.enter="handleJump">
+    </div>
+    <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
     </div>
-    <div ref="mine" class="scroller"/>
+    <div ref="scroller" class="scroller"/>
   </div>
 </template>
 
@@ -21,52 +27,128 @@ Vue.component("dynamic-sroller-item",DynamicScrollerItem)
 
 @Component
 export default class LogViewer extends Vue {
-    scrollTolerance = 5
+    @Prop()
+    executionId!: number
 
-    viewer!: ExecutionLog
+    @Prop()
+    consumeLogs: boolean = true
 
-    logEntries: Array<{log?: string, id: number}> = [{log: 'Foo', id: 0}]
+    @Prop()
+    showStats = true
 
+    @Prop()
     follow = false
 
-    frameTime = 0
+    @Prop()
+    jumpToLine?: number
 
-    private scrollCount = 0
+    scrollTolerance = 5
 
     totalTime = 0
+
+    private jumped = false
+
+    private viewer!: ExecutionLog
+
+    private logEntries: Array<{log?: string, id: number}> = []
+
+    private scrollCount = 0
 
     private startTime = 0
 
     private resp?: Promise<ExecutionOutputGetResponse>
 
-    async mounted() {
-      this.startTime = Date.now()
-      this.populateLogs()
+    private populateLogsProm?: Promise<void>
 
-      const mine = this.$refs["mine"] as HTMLElement
-      mine.addEventListener('wheel', (ev: UIEvent) => {
-        if (ev.isTrusted)
-          console.log('Scrolled!')
-          this.scrollCount++
+    private vues: any[] = []
 
-        if (this.follow) {
-          ev.preventDefault()
-          ev.returnValue = false
-        }
-        
-        if (this.scrollCount > this.scrollTolerance)
-          this.follow = false
-      }, {passive: false})
+    @Watch('consumeLogs')
+    toggleConsumeLogs(val: boolean, oldVal: boolean) {
+      if(val && !this.populateLogsProm) {
+        this.populateLogsProm = this.populateLogs()
+      }
     }
 
-    async populateLogs() {
-        this.viewer = new ExecutionLog('3')
+    async mounted() {
+        this.viewer = new ExecutionLog(this.executionId.toString())
+        this.startTime = Date.now()
+        this.addScrollBlocker()
+        this.populateLogsProm = this.populateLogs()
+    }
 
-        let count = 0
+    private addScrollBlocker() {
+        const scroller = this.$refs["scroller"] as HTMLElement
+        scroller.addEventListener('wheel', (ev: UIEvent) => {
+            this.scrollCount++
 
-        let newVues: any = []
-        
-        while(true) {
+            if (this.follow) {
+                ev.preventDefault()
+                ev.returnValue = false
+            }
+            
+            if (this.scrollCount > this.scrollTolerance)
+                this.follow = false
+        }, {passive: false})
+    }
+
+    private handleExecutionLogResp(res: ExecutionOutputGetResponse) {
+      let count = this.logEntries.length
+
+      const newEntries = res.entries.map(e => {
+        count++
+        return {id: count, ...e}
+      })
+
+      this.logEntries.push(...newEntries)
+
+      const chunk = document.createElement("DIV")
+      chunk.className = "log-chunk ansicolor-on"
+      const frag = document.createDocumentFragment()
+      frag.appendChild(chunk)
+
+      newEntries.forEach( e => {
+        const span = document.createElement("SPAN")
+
+        chunk.append(span)
+
+        const vue = new EntryFlex({el: span, propsData: {entry: e}})
+        vue.$on('line-select', this.handleLineSelect)
+        this.vues.push(vue)
+      })
+      
+      const scroller = this.$refs["scroller"] as HTMLElement
+      scroller.appendChild(frag)
+
+      if (this.follow) {
+          const last = scroller.lastChild!.lastChild as HTMLElement
+          if (last && this.follow) {
+            console.log('Scroll')
+            last.scrollIntoView()
+          }
+      }
+
+        if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
+            this.scrollToLine(this.jumpToLine)
+            this.jumped = true
+        }
+    }
+
+    scrollToLine(n: number | string) {
+        console.log(`Scroll to ${n}`)
+        const scroller = this.$refs["scroller"] as HTMLElement
+        this.vues[Number(n)-1].$el.scrollIntoView()
+    }
+
+    private handleLineSelect(e: any) {
+      alert(e)
+    }
+
+    private handleJump(e: string) {
+        this.scrollToLine(this.jumpToLine || 0)
+    }
+
+    private async populateLogs() {
+        while(this.consumeLogs) {
             if (!this.resp)
               this.resp = this.viewer.getOutput(500)
 
@@ -78,69 +160,19 @@ export default class LogViewer extends Vue {
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 
-            const newEntries = res.entries.map(e => {
-              count++
-              return {log: e.log, id: count}
-            })
+            this.handleExecutionLogResp(res)
 
-            this.logEntries.push(...newEntries)
-
-            const chunk = document.createElement("DIV")
-            chunk.className = "log-chunk ansicolor-on"
-            const frag = document.createDocumentFragment()
-            frag.appendChild(chunk)
-
-            res.entries.forEach( e => {
-              const span = document.createElement("SPAN")
-              // span.className = 'log-line'
-              // span.innerHTML = `${e.log}`
-
-              chunk.append(span)
-              
-              newVues.push(new Vue({el: span, render: h => h(EntryFlex, {props: {entry: e}})}))
-            })
-            
-            const mine = this.$refs["mine"] as HTMLElement
-            mine.appendChild(frag)
-
-            // if (this.logEntries.length < 500) {
-            //   window.requestAnimationFrame(() => {
-            //     mine.style.display = 'none'
-            //     window.requestAnimationFrame(() => {
-            //       mine.style.display = 'block'
-            //     })
-            //   })
-            // }
-
-            if (this.follow) {
-                const last = mine.lastChild!.lastChild as HTMLElement
-                if (last && this.follow) {
-                  console.log('Scroll')
-                  last.scrollIntoView()
-                }
-            }
-            
             if (this.viewer.completed)
                 break
         }
         this.totalTime = Date.now() - this.startTime
+        this.populateLogsProm = undefined
     }
 }
 </script>
 
 <style lang="scss">
 @import './ansi.css';
-
-body, html {
-  height: 100%;
-  margin: 0;
-}
-
-.execution-log {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
 
 .log-gutter {
   background-color: rgb(32, 56, 56);
@@ -167,10 +199,15 @@ body, html {
 </style>
 
 <style lang="scss" scoped>
-// @import '../../../node_modules/vue-virtual-scroller/dist/vue-virtual-scroller.css';
+
+.execution-log {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
 .stats {
-  flex: 0 0 100px;
+  flex: 0 0 1em;
 }
 
 .scroller {

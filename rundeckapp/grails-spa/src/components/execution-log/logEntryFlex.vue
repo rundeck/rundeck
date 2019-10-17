@@ -1,7 +1,7 @@
 <template>
     <div class="log-line">
         <div class="log-gutter" v-bind:class="{'gutter-error': (entry.level == 'error')}">
-            <span class="gutter">{{entry.node}} {{entry.time}}</span>
+            <span class="gutter line-number" v-on:click="lineSelect">{{entry.node}} {{entry.time}} {{entry.id}}</span>
         </div>
         <div class="log-content" v-bind:class="{'log-content-error': (entry.level == 'error')}">
             <span v-if="entry.loghtml" v-html="entry.loghtml"/>
@@ -14,7 +14,12 @@
 import Vue from 'vue'
 
 export default Vue.extend({
-    props: ['entry']
+    props: ['entry'],
+    methods: {
+        lineSelect: function() {
+            this.$emit('line-select', this.entry.id)
+        }
+    }
 })
 </script>
 
@@ -35,6 +40,10 @@ export default Vue.extend({
 
 .log-content {
     flex-grow: 1;
+}
+
+.line-number {
+    cursor: pointer;
 }
 
 </style>

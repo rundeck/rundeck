@@ -17,9 +17,9 @@ console.log(LogViewer)
 let messages =
     {
       [locale]: Object.assign(
-          {},
-          uivLang[locale] || uivLang[lang] || {},
-          window.Messages
+        {},
+        uivLang[locale] || uivLang[lang] || {},
+        window.Messages
       )
     }
 Vue.config.productionTip = false
@@ -55,6 +55,9 @@ for (var i = 0; i < els.length; i++) {
       }
     },
     i18n,
-    render: h => h(LogViewer)
+    render: h => h(LogViewer, {props: {
+      executionId: 1,
+      jumpToLine: 14092
+    }})
   })
 }
