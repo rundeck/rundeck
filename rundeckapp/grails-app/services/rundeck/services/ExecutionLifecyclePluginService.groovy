@@ -6,9 +6,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.IExecutionLifecyclePluginService
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
-import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
@@ -19,6 +18,7 @@ import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
+import groovy.transform.CompileStatic
 import rundeck.ScheduledExecution
 
 /**
@@ -60,23 +60,23 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      *
      * @param event job event
      * @param eventType type of event
-     * @return JobEventStatus response from plugin implementation
+     * @return ExecutionLifecycleStatus response from plugin implementation
      */
-    JobEventStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecyclePlugin> plugins) {
+    ExecutionLifecycleStatus handleEvent(def event, EventType eventType, List<NamedExecutionLifecyclePlugin> plugins) throws ExecutionLifecyclePluginException{
         if (!plugins) {
             return null
         }
         def errors = [:]
         def results = [:]
         Exception firstErr
-        JobEventStatus prevResult = null
+        ExecutionLifecycleStatus prevResult = null
         def prevEvent = event
         boolean success = true
         for (NamedExecutionLifecyclePlugin plugin : plugins) {
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
-                JobEventStatus result = handleEventForPlugin(eventType, plugin, curEvent)
+                ExecutionLifecycleStatus result = handleEventForPlugin(eventType, plugin, curEvent)
                 if (result != null && !result.successful) {
                     success = false
                     log.info("Result from plugin is false an exception will be thrown")
@@ -115,7 +115,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
 
     }
 
-    JobEventStatus handleEventForPlugin(
+    ExecutionLifecycleStatus handleEventForPlugin(
             EventType eventType,
             NamedExecutionLifecyclePlugin plugin,
             event
@@ -130,15 +130,15 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
 
     /**
      * Merge
-     * @param jobEventStatus
+     * @param status
      * @param jobEvent
      * @return
      */
-    Object mergeEvent(final JobEventStatus jobEventStatus, final Object jobEvent) {
+    Object mergeEvent(final ExecutionLifecycleStatus status, final Object jobEvent) {
         if (jobEvent instanceof JobExecutionEventImpl) {
             ExecutionContextImpl newContext = mergeExecutionEventContext(
                     jobEvent.executionContext,
-                    jobEventStatus
+                    status
             )
 
             return jobEvent.result != null ?
@@ -153,15 +153,15 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
     /**
      * Merge original event, event status result, return a new result
      * @param success overall success
-     * @param jobEventStatus result of plugin handling event
+     * @param status result of plugin handling event
      * @param jobEvent event
      * @return result with merged contents for the type of event
      */
-    JobEventStatus mergeEventResult(boolean success, final JobEventStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
+    ExecutionLifecycleStatus mergeEventResult(boolean success, final ExecutionLifecycleStatus status, final Object jobEvent, boolean useNewValues) {
         if (jobEvent instanceof JobExecutionEventImpl) {
-            ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, jobEventStatus)
+            ExecutionContextImpl newContext = mergeExecutionEventContext(jobEvent.executionContext, status)
 
-            return new JobEventStatusImpl(successful: success, executionContext: newContext)
+            return new ExecutionLifecycleStatusImpl(successful: success, executionContext: newContext)
         } else {
             throw new IllegalArgumentException("Unexpected type")
         }
@@ -170,16 +170,16 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
     /**
      * Merge the context with result of event
      * @param context original
-     * @param jobEventStatus result of event
+     * @param status result of event
      * @return merged context if the event has an executionContext value and useNewValues is true
      */
     ExecutionContextImpl mergeExecutionEventContext(
             StepExecutionContext context,
-            JobEventStatus jobEventStatus
+            ExecutionLifecycleStatus status
     ) {
         def newContextBuilder = ExecutionContextImpl.builder(context)
-        if (jobEventStatus && jobEventStatus.isUseNewValues() && jobEventStatus.executionContext) {
-            newContextBuilder.merge(ExecutionContextImpl.builder(jobEventStatus.executionContext))
+        if (status && status.isUseNewValues() && status.executionContext) {
+            newContextBuilder.merge(ExecutionContextImpl.builder(status.executionContext))
         }
         newContextBuilder.build()
     }
@@ -287,15 +287,15 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
     }
 }
 
+@CompileStatic
 class NamedExecutionLifecyclePlugin implements ExecutionLifecyclePlugin {
     @Delegate ExecutionLifecyclePlugin plugin
     String name
 }
 
-class JobEventStatusImpl implements JobEventStatus {
+@CompileStatic
+class ExecutionLifecycleStatusImpl implements ExecutionLifecycleStatus {
     boolean successful
-    Map optionsValues
     boolean useNewValues
     StepExecutionContext executionContext
-    SortedSet<JobOption> options
 }

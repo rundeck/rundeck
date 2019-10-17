@@ -13,6 +13,7 @@ import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
+import groovy.transform.CompileStatic
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.ScheduledExecution
 
@@ -333,9 +334,19 @@ class JobLifecyclePluginService implements ProjectConfigurable {
         }
     }
 
-    class NamedJobLifecyclePlugin implements JobLifecyclePlugin {
-        @Delegate JobLifecyclePlugin plugin
-        String name
-    }
 
+}
+
+@CompileStatic
+class NamedJobLifecyclePlugin implements JobLifecyclePlugin {
+    @Delegate JobLifecyclePlugin plugin
+    String name
+}
+
+@CompileStatic
+class JobEventStatusImpl implements JobEventStatus {
+    boolean successful
+    Map optionsValues
+    boolean useNewValues
+    SortedSet<JobOption> options
 }
