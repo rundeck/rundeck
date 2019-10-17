@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
@@ -619,7 +620,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             def result = ScheduledExecutionService.parseExecutionLifecyclePluginsParams(params)
         then:
             result
-            result.service == 'ExecutionLifecyclePlugin'
+            result.service == ServiceNameConstants.ExecutionLifecycle
             result.pluginProviderConfigs!=null
             result.pluginProviderConfigs.size()==expectSize
             if(expectSize>0) {
