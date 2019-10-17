@@ -1,6 +1,6 @@
 package com.dtolabs.rundeck.plugins.project;
 
-import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent;
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent;
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException;
@@ -18,7 +18,7 @@ public interface JobLifecyclePlugin {
      * @param event event execution data
      * @return JobEventStatus
      */
-    default JobEventStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecyclePluginException {
+    default JobLifecycleStatus beforeJobExecution(JobPreExecutionEvent event) throws JobLifecyclePluginException {
         return null;
     }
 
@@ -27,7 +27,7 @@ public interface JobLifecyclePlugin {
      * @param event event saving data
      * @return JobEventStatus
      */
-    default JobEventStatus beforeSaveJob(JobPersistEvent event) throws JobLifecyclePluginException {
+    default JobLifecycleStatus beforeSaveJob(JobPersistEvent event) throws JobLifecyclePluginException {
         return null;
     }
 }

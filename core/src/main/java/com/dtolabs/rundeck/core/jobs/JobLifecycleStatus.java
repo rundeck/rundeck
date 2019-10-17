@@ -10,7 +10,9 @@ import java.util.TreeSet;
 /**
  * Status result returned from job lifecycle event handlers
  */
-public interface JobEventStatus extends LifecycleStatus{
+public interface JobLifecycleStatus
+        extends LifecycleStatus
+{
 
     /**
      * @return option values to use when isUseNewValues is true

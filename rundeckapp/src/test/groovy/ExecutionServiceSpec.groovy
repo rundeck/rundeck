@@ -34,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
@@ -4831,7 +4831,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     def "execute job with secure remote option changed by job life cycle" () {
         given:
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
-            beforeJobExecution(_,_) >> Mock(JobEventStatus){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedOption1" : "secured option changed value"]
             }
@@ -4889,7 +4889,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     def "execute job with secure exposed option changed by job life cycle" () {
         given:
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
-            beforeJobExecution(_,_) >> Mock(JobEventStatus){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value"]
             }
@@ -4948,7 +4948,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
     def "execute job with secure remote and exposed options changed by job life cycle" () {
         given:
         service.jobLifecyclePluginService = Mock(JobLifecyclePluginService){
-            beforeJobExecution(_,_) >> Mock(JobEventStatus){
+            beforeJobExecution(_,_) >> Mock(JobLifecycleStatus){
                 1 * isUseNewValues() >> true
                 2 * getOptionsValues() >> ["securedExposedOption1" : "secured exposed option changed value",
                                            "securedOption1" : "secured option changed value"]

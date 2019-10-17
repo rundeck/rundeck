@@ -3,7 +3,6 @@ package com.dtolabs.rundeck.plugins.jobs;
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException;
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
-import com.dtolabs.rundeck.core.jobs.JobEventStatus;
 
 
 /**
