@@ -2,9 +2,9 @@
   <div class="execution-log">
     <div class="controls">
       Consume:<input type="checkbox" v-model="consumeLogs"
-      />Stats:<input type="checkbox" v-model="showStats"
-      >Follow:<input type="checkbox" v-model="follow"
-      />Jump:<input v-model="jumpToLine" v-on:keyup.enter="handleJump">
+      />&nbsp;&nbsp;&nbsp;&nbsp;Stats:<input type="checkbox" v-model="showStats"
+      >&nbsp;&nbsp;&nbsp;&nbsp;Follow:<input type="checkbox" v-model="follow"
+      />&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump">
     </div>
     <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
@@ -208,6 +208,10 @@ export default class LogViewer extends Vue {
 
 .stats {
   flex: 0 0 1em;
+}
+
+.controls {
+    contain: layout;
 }
 
 .scroller {

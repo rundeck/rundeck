@@ -13,6 +13,8 @@ let lang = window._rundeck.language || 'en'
 
 console.log(LogViewer)
 
+const VIEWER_CLASS = 'execution-log-viewer'
+
 // include any i18n injected in the page by the app
 let messages =
     {
@@ -30,7 +32,7 @@ Vue.use(uiv)
 
 /* eslint-disable no-new */
 
-const els = document.body.getElementsByClassName('execution-log')
+const els = document.body.getElementsByClassName(VIEWER_CLASS)
 
 for (var i = 0; i < els.length; i++) {
   const e = els[i]
@@ -56,8 +58,9 @@ for (var i = 0; i < els.length; i++) {
     },
     i18n,
     render: h => h(LogViewer, {props: {
-      executionId: 1,
-      jumpToLine: 14092
+      executionId: e.dataset.executionId,
+      follow: e.dataset.follow || false,
+      jumpToLine: e.dataset.jumpToLine
     }})
   })
 }
