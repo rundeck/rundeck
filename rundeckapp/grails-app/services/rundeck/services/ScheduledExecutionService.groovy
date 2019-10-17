@@ -2872,7 +2872,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map config = executionLifecyclePluginsParams[key]?.configMap ?: [:]
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
         }
-        PluginConfigSet.with ServiceNameConstants.ExecutionLifecyclePlugin, configs
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
     }
 
     /**

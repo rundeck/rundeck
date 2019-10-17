@@ -29,7 +29,7 @@ import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin;
  */
 public class ExecutionLifecyclePluginProviderService extends BasePluggableProviderService<ExecutionLifecyclePlugin> {
 
-    public static final String SERVICE_NAME = ServiceNameConstants.ExecutionLifecyclePlugin;
+    public static final String SERVICE_NAME = ServiceNameConstants.ExecutionLifecycle;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
     public ExecutionLifecyclePluginProviderService() {

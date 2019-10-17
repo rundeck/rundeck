@@ -225,7 +225,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
         }
 
         return pluginService.listPlugins(ExecutionLifecyclePlugin).findAll { k, v ->
-            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecyclePlugin)
+            !pluginControlService?.isDisabledPlugin(k, ServiceNameConstants.ExecutionLifecycle)
         }
     }
 
@@ -238,7 +238,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
         if (!featureService?.featurePresent('executionLifecycle-plugin', false)) {
             return null
         }
-        def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecyclePlugin
+        def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecycle
 
         if (!(pluginConfig instanceof Map)) {
             return null
@@ -248,7 +248,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
             configs << SimplePluginConfiguration.builder().provider(type).configuration(config).build()
         }
 
-        PluginConfigSet.with ServiceNameConstants.ExecutionLifecyclePlugin, configs
+        PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
     }
 
     /**
@@ -260,7 +260,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
         Map<String, Map<String, Object>> data = configSet.pluginProviderConfigs.collectEntries {
             [it.provider, it.configuration]
         }
-        job.setPluginConfigVal(ServiceNameConstants.ExecutionLifecyclePlugin, data)
+        job.setPluginConfigVal(ServiceNameConstants.ExecutionLifecycle, data)
     }
 
 
