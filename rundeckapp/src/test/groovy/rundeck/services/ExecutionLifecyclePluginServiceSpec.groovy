@@ -9,11 +9,12 @@ import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 import com.dtolabs.rundeck.server.plugins.services.ExecutionLifecyclePluginProviderService
@@ -61,12 +62,12 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
     static class ExecutionLifecyclePluginImpl implements ExecutionLifecyclePlugin {
 
         @Override
-        public JobEventStatus beforeJobStarts(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
+        public ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
             throw new ExecutionLifecyclePluginException("Test job life cycle exception")
         }
 
         @Override
-        public JobEventStatus afterJobEnds(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
+        public ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event)throws ExecutionLifecyclePluginException{
             throw new ExecutionLifecyclePluginException("Test job life cycle exception")
         }
     }
@@ -78,15 +79,15 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             service.frameworkService = frameworkService
             service.featureService = featureService
             def plugin = Mock(ExecutionLifecyclePluginImpl) {
-                beforeJobStarts(_) >> Mock(JobEventStatus) {
+                beforeJobStarts(_) >> Mock(ExecutionLifecycleStatus) {
                     isSuccessful() >> true
                 }
-                afterJobEnds(_) >> Mock(JobEventStatus) {
+                afterJobEnds(_) >> Mock(ExecutionLifecycleStatus) {
                     isSuccessful() >> true
                 }
             }
         when:
-            JobEventStatus result = service.handleEvent(
+            ExecutionLifecycleStatus result = service.handleEvent(
                     eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
@@ -108,15 +109,15 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             service.frameworkService = frameworkService
             service.featureService = featureService
             def plugin = Mock(ExecutionLifecyclePluginImpl) {
-                beforeJobStarts(_) >> Mock(JobEventStatus) {
+                beforeJobStarts(_) >> Mock(ExecutionLifecycleStatus) {
                     isSuccessful() >> false
                 }
-                afterJobEnds(_) >> Mock(JobEventStatus) {
+                afterJobEnds(_) >> Mock(ExecutionLifecycleStatus) {
                     isSuccessful() >> false
                 }
             }
         when:
-            JobEventStatus result = service.handleEvent(
+            ExecutionLifecycleStatus result = service.handleEvent(
                     eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
@@ -139,7 +140,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             service.featureService = featureService
             def plugin = new ExecutionLifecyclePluginImpl()
         when:
-            JobEventStatus result = service.handleEvent(
+            ExecutionLifecycleStatus result = service.handleEvent(
                     eventType == ExecutionLifecyclePluginService.EventType.BEFORE_RUN ?
                     JobExecutionEventImpl.beforeRun(executionContext, null, null) :
                     JobExecutionEventImpl.afterRun(executionContext, null, null),
@@ -157,7 +158,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
     def "create configured plugins with no project defaults"() {
         given:
             def configs = PluginConfigSet.with(
-                    'ExecutionLifecyclePlugin', [
+                    ServiceNameConstants.ExecutionLifecycle, [
                     SimplePluginConfiguration.builder().provider('typeA').configuration([a: 'b']).build()
             ]
             )
@@ -185,7 +186,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
         given:
             service.featureService = featureService
             def controlService = Mock(PluginControlService) {
-                isDisabledPlugin('typeA', 'ExecutionLifecyclePlugin') >> true
+                isDisabledPlugin('typeA', ServiceNameConstants.ExecutionLifecycle) >> true
             }
             service.pluginService = Mock(PluginService) {
                 listPlugins(ExecutionLifecyclePlugin) >> [
@@ -211,7 +212,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
             def ref = Mock(ExecutionReference)
             def wf = Mock(WorkflowExecutionItem)
             def event = JobExecutionEventImpl.beforeRun(ctx1, ref, wf)
-            def status = Mock(JobEventStatus) {
+            def status = Mock(ExecutionLifecycleStatus) {
                 isUseNewValues() >> useNewValues
                 getExecutionContext() >> Mock(StepExecutionContext) {
                     getLoglevel() >> 0
