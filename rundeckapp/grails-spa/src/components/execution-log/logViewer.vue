@@ -1,15 +1,25 @@
 <template>
-  <div class="execution-log">
-    <div class="controls">
+  <div class="execution-log"
+    v-if="this.$el.parentNode.display != 'none'"
+    v-bind:class="{'execution-log--dark': this.theme == 'dark', 'execution-log--light': this.theme == 'light' }"
+  >
+    <div class="execution-log__controls">
       Consume:<input type="checkbox" v-model="consumeLogs"
       />&nbsp;&nbsp;&nbsp;&nbsp;Stats:<input type="checkbox" v-model="showStats"
       >&nbsp;&nbsp;&nbsp;&nbsp;Follow:<input type="checkbox" v-model="follow"
-      />&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump">
+      />&nbsp;&nbsp;&nbsp;&nbsp;Theme:<select v-model="theme">
+        <option disabled value="">Theme</option>
+        <option>dark</option>
+        <option>light</option>
+        <option>none</option>
+      </select
+      >&nbsp;&nbsp;&nbsp;&nbsp;Jump:<input v-model="jumpToLine" v-on:keydown.enter="handleJump"
+      ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
     </div>
     <div class="stats" v-if="showStats">
       <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
     </div>
-    <div ref="scroller" class="scroller"/>
+    <div ref="scroller" class="execution-log__scroller"/>
   </div>
 </template>
 
@@ -42,7 +52,12 @@ export default class LogViewer extends Vue {
     @Prop()
     jumpToLine?: number
 
+    @Prop({default: 'dark'})
+    theme?: string
+
     scrollTolerance = 5
+
+    batchSize = 200
 
     totalTime = 0
 
@@ -102,7 +117,7 @@ export default class LogViewer extends Vue {
       this.logEntries.push(...newEntries)
 
       const chunk = document.createElement("DIV")
-      chunk.className = "log-chunk ansicolor-on"
+      chunk.className = "execution-log__chunk ansicolor-on"
       const frag = document.createDocumentFragment()
       frag.appendChild(chunk)
 
@@ -120,11 +135,7 @@ export default class LogViewer extends Vue {
       scroller.appendChild(frag)
 
       if (this.follow) {
-          const last = scroller.lastChild!.lastChild as HTMLElement
-          if (last && this.follow) {
-            console.log('Scroll')
-            last.scrollIntoView()
-          }
+          this.scrollToLine(this.vues.length)
       }
 
         if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
@@ -134,9 +145,12 @@ export default class LogViewer extends Vue {
     }
 
     scrollToLine(n: number | string) {
-        console.log(`Scroll to ${n}`)
         const scroller = this.$refs["scroller"] as HTMLElement
-        this.vues[Number(n)-1].$el.scrollIntoView()
+
+        const target = this.vues[Number(n)-1].$el
+        const parent = target.parentNode
+
+        scroller.scrollTop = target.offsetTop + parent.offsetTop
     }
 
     private handleLineSelect(e: any) {
@@ -147,16 +161,24 @@ export default class LogViewer extends Vue {
         this.scrollToLine(this.jumpToLine || 0)
     }
 
+    private handleJumpToEnd() {
+        this.scrollToLine(this.vues.length)
+    }
+
+    private handleJumpToStart() {
+        this.scrollToLine(1)
+    }
+
     private async populateLogs() {
         while(this.consumeLogs) {
             if (!this.resp)
-              this.resp = this.viewer.getOutput(500)
+              this.resp = this.viewer.getOutput(this.batchSize)
 
             const res = await this.resp
             this.resp = undefined
 
             if (!this.viewer.completed) {
-              this.resp = this.viewer.getOutput(500)
+              this.resp = this.viewer.getOutput(this.batchSize)
               await new Promise((res, rej) => setTimeout(() => {res()},0))
             }
 
@@ -174,25 +196,25 @@ export default class LogViewer extends Vue {
 <style lang="scss">
 @import './ansi.css';
 
-.log-gutter {
+.execution-log--dark .execution-log__gutter {
   background-color: rgb(32, 56, 56);
-  color: cornsilk;
+  color: bisque;
   box-sizing: border-box;
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(22, 36, 36);
 }
 
-.log-content {
+.execution-log--dark .execution-log__content {
   background-color: darkslategrey;
-  color: bisque;
+  color: cornsilk;
   box-sizing: border-box;
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(39, 66, 66);
 }
 
-.log-chunk {
+.execution-log__chunk {
   contain: layout;
 }
 
@@ -206,15 +228,15 @@ export default class LogViewer extends Vue {
   height: 100%;
 }
 
-.stats {
+.execution-log__stats {
   flex: 0 0 1em;
 }
 
-.controls {
+.execution-log__controls {
     contain: layout;
 }
 
-.scroller {
+.execution-log__scroller {
   // height: 100%;
   overflow-y: auto;
   will-change: transform;

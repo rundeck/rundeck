@@ -4,16 +4,16 @@ import Vue from 'vue'
 import * as uiv from 'uiv'
 import VueI18n from 'vue-i18n'
 import VueCookies from 'vue-cookies'
-import { EventBus } from '../../utilities/vueEventBus.js'
+
 import LogViewer from '@/components/execution-log/logViewer.vue'
 import uivLang from '../../utilities/uivi18n'
 
+const VIEWER_CLASS = 'execution-log-viewer'
+
+let MOUNTED = false
+
 let locale = window._rundeck.locale || 'en_US'
 let lang = window._rundeck.language || 'en'
-
-console.log(LogViewer)
-
-const VIEWER_CLASS = 'execution-log-viewer'
 
 // include any i18n injected in the page by the app
 let messages =
@@ -30,15 +30,34 @@ Vue.use(VueI18n)
 Vue.use(VueCookies)
 Vue.use(uiv)
 
-/* eslint-disable no-new */
-
 const els = document.body.getElementsByClassName(VIEWER_CLASS)
 
-for (var i = 0; i < els.length; i++) {
-  const e = els[i]
+/**
+ * Watches the parent element for style change and mounts
+ * the Vue component if it becomes visible
+ */
+let observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutationRecord) {
+    const parent = mutationRecord.target
+    if (parent.offsetParent !== null && !MOUNTED) {
+      console.log(parent, parent.display)
+      console.log(parent.firstElementChild)
+      MOUNTED = true
+      mount(parent.firstElementChild)
+    }
+  })
+})
 
-  console.log(e)
+for (let e of els) {
+  if (e.parentNode.offsetParent !== null) {
+    mount(e)
+  } else {
+    observer.observe(e.parentNode, {attributes: true, attributeFilter: ['style']})
+  }
+}
 
+function mount(e) {
+  console.log(e.dataset)
   // Create VueI18n instance with options
   const i18n = new VueI18n({
     silentTranslationWarn: true,
@@ -46,21 +65,15 @@ for (var i = 0; i < els.length; i++) {
     messages // set locale messages,
 
   })
-  new Vue({
+  /* eslint-disable no-new */
+  new LogViewer({
     el: e,
-    components: {
-      LogViewer
-    },
-    data() {
-      return {
-        EventBus
-      }
-    },
     i18n,
-    render: h => h(LogViewer, {props: {
+    propsData: {
       executionId: e.dataset.executionId,
       follow: e.dataset.follow || false,
-      jumpToLine: e.dataset.jumpToLine
-    }})
+      jumpToLine: e.dataset.jumpToLine,
+      theme: e.dataset.theme
+    }
   })
 }

@@ -65,7 +65,7 @@
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
-      <g:jsMessages codes="['execution.show.mode.Log.title','execution.page.show.tab.Nodes.title']"/>
+      <g:jsMessages codes="['execution.show.mode.Log.title','execution.show.mode.LogPlus.title','execution.page.show.tab.Nodes.title']"/>
 
       <asset:stylesheet href="static/css/pages/project-dashboard.css"/>
       <g:jsMessages code="jobslist.date.format.ko,select.all,select.none,delete.selected.executions,cancel.bulk.delete,cancel,close,all,bulk.delete,running"/>
@@ -174,6 +174,9 @@ search
 })
       </g:javascript>
       <asset:javascript src="static/pages/project-activity.js" defer="defer"/>
+      <asset:stylesheet href="static/css/components/execution-log.css"/>
+      <asset:javascript src="static/components/execution-log.js" defer="defer"/>
+
   </head>
   <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
@@ -593,6 +596,12 @@ search
                               <g:message code="execution.show.mode.Log.title"/> &raquo;
                           </a>
 
+                          <a href="#output-plus"
+                             data-bind="click: function(){activeTab('output-plus')}, visible: activeTab()!=='output-plus'"
+                             class="btn btn-sm">
+                              <g:message code="execution.show.mode.LogPlus.title"/> &raquo;
+                          </a>
+
                           <span data-bind="visible: activeTab()==='output'">
 
 
@@ -816,7 +825,8 @@ search
                            data-ko-bind="nodeflow"
                            data-mode="normal"
                            data-bind="attr: {'data-mode': logoutput().options.styleMode }, css: {'exec-output-bg': activeTab()==='output' }">
-                          <div class="card-content " data-bind="css: {tight: activeTab()==='output'}">
+
+                          <div class="card-content " data-bind="css: {tight: ['output','output-plus'].indexOf(activeTab()) > -1}">
                               <g:render template="/common/messages"/>
 
 
@@ -832,6 +842,16 @@ search
                                   <div class="tab-pane " id="output" data-bind="css: {active: activeTab()==='output'}">
                                       <g:render template="/execution/showFragment"
                                                 model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
+                                  </div>
+
+                                  <div style="height: calc(100vh - 250px)"
+                                       id="output-plus"
+                                       class="card-content-full-width"
+                                       data-bind="visible: activeTab()==='output-plus'"
+                                       style="display: none; contain: layout;"
+                                  >
+                                      <div class="execution-log-viewer" data-execution-id="${execution.id}" data-theme="dark"></div>
+
                                   </div>
 
                               </div>
@@ -1147,7 +1167,8 @@ search
         reloadInterval:1500,
             tabs:[
                 {id: 'nodes', title: message('execution.page.show.tab.Nodes.title')},
-                {id: 'output', title: message('execution.show.mode.Log.title')}
+                {id: 'output', title: message('execution.show.mode.Log.title')},
+                {id: 'output-plus', title: message('execution.show.mode.LogPlus.title')}
             ]
      });
 

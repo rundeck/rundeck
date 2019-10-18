@@ -1,11 +1,11 @@
 <template>
-    <div class="log-line">
-        <div class="log-gutter" v-bind:class="{'gutter-error': (entry.level == 'error')}">
+    <div class="execution-log__line">
+        <div class="execution-log__gutter">
             <span class="gutter line-number" v-on:click="lineSelect">{{entry.node}} {{entry.time}} {{entry.id}}</span>
-        </div>
-        <div class="log-content" v-bind:class="{'log-content-error': (entry.level == 'error')}">
-            <span v-if="entry.loghtml" v-html="entry.loghtml"/>
-            <span v-if="!entry.loghtml">{{entry.log}}</span>
+        </div
+        ><div class="execution-log__content" v-bind:class="{'execution-log__content--html': entry.loghtml}"
+            ><span v-if="entry.loghtml" v-html="entry.loghtml"
+            /><span v-if="!entry.loghtml">{{entry.log}}</span>
         </div>
     </div>
 </template>
@@ -24,25 +24,35 @@ export default Vue.extend({
 </script>
 
 <style lang="scss" scoped>
-.log-line {
+/** Only place critical layout and control here!
+ * Theming is handled at a higher level!
+ */
+
+.execution-log__line {
   display: flex;
   width: 100%;
   font-family: monospace;
   word-break: break-all;
 }
 
-.log-gutter {
+.execution-log__gutter {
     flex-shrink: 0;
     flex-grow: 0;
     flex-basis: 200px;
     user-select: none;
 }
 
-.log-content {
+.execution-log__content {
     flex-grow: 1;
+    white-space: pre-wrap;
 }
 
-.line-number {
+.execution-log__content--html {
+    flex-grow: 1;
+    white-space: pre-wrap;
+}
+
+.execution-log__line-number {
     cursor: pointer;
 }
 

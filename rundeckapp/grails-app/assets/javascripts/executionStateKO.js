@@ -931,7 +931,8 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
     self.activeTab = ko.observable("nodes")
     self.tabs = ko.observableArray(data.tabs || [
         {id: 'nodes', title: 'Nodes'},
-        {id: 'output', title: 'Log Output'}
+        {id: 'output', title: 'Log Output'},
+        {id: 'output-plus', title: 'Log Output++'}
     ])
     self.humanizedDisplay=ko.observable(false);
     self.logoutput = ko.observable(data.logoutput);
