@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
@@ -58,10 +59,11 @@ class JobLifecyclePluginService implements ProjectConfigurable {
             projectConfigProperties.add(
                     PropertyBuilder.builder().with {
                         booleanType 'jobLifecyclePlugin.' + name
-                        title('Enable ' + (describedPlugin.description?.title ?: name))
+                        title( (describedPlugin.description?.title ?: name))
+                        description(describedPlugin.description?.description)
                         required(false)
                         defaultValue null
-                        renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                        renderingOptions( ['icon:plugin:serviceName': ServiceNameConstants.JobLifecycle,'icon:plugin:provider':name])
                     }.build()
             )
             configPropertiesMapping.put('jobLifecyclePlugin.' + name , CONF_PROJECT_ENABLED + name)
