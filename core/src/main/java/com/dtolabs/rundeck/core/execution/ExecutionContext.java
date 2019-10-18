@@ -83,10 +83,6 @@ public interface ExecutionContext {
      */
     public StorageTree getFileStorageTree();
     /**
-     * @return the file storage service
-     */
-    public AuthStorageTree getAuthStorageTree();
-    /**
      * @return the job service
      */
     public JobService getJobService();

@@ -34,7 +34,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionConte
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
-import com.dtolabs.rundeck.core.storage.AuthStorageTree;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 import lombok.Getter;
 
