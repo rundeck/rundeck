@@ -223,7 +223,7 @@ public class Option implements Comparable{
         return map
     }
     public JobOption toJobOption(){
-        new JobOptionImpl(toMap())
+        JobOptionImpl.fromOptionMap(toMap())
     }
 
     public static Option fromMap(String name,Map data){

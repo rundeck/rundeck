@@ -17,10 +17,10 @@ class JobLifecyclePluginServiceSpec extends Specification {
         @Override
         SortedSet<JobOption> getOptions() {
             SortedSet<JobOption> jobOptions = new TreeSet<JobOption>()
-            jobOptions.add(new JobOptionImpl([
+            jobOptions.add(JobOptionImpl.fromOptionMap([
                     name: "newTestOption"
             ]))
-            jobOptions.add(new JobOptionImpl([
+            jobOptions.add(JobOptionImpl.fromOptionMap([
                     name: "newTestOption2"
             ]))
             return jobOptions
@@ -52,7 +52,7 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge options with new values"(){
         given:
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
-        initial.add(new JobOptionImpl([name: "oldTestOption"]))
+        initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
 
         when:
@@ -69,7 +69,7 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge options with new values, with no replace"(){
         given:
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
-        initial.add(new JobOptionImpl([name: "oldTestOption"]))
+        initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
         JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.useNewValues = false
 
