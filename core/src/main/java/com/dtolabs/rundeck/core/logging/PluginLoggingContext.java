@@ -53,5 +53,5 @@ public interface PluginLoggingContext extends ExecutionLogger {
      */
     public DataContext getPrivateDataContext();
 
-    public StorageTree getFileStorateTree();
+    public StorageTree getFileStorageTree();
 }

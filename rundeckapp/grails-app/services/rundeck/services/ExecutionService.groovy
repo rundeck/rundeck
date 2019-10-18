@@ -112,7 +112,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def WorkflowService workflowService
     def StorageService storageService
     def AuthStorageTreeService authStorageTreeService
-    def AuthStorageTree authFileRundeckStorageTree
 
     def ThreadBoundOutputStream sysThreadBoundOut
     def ThreadBoundOutputStream sysThreadBoundErr
@@ -1511,7 +1510,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             frameworkProject(origContext?.frameworkProject?:execMap.project)
             storageTree(storageService.storageTreeWithContext(authContext))
             fileStorageTree(authStorageTreeService.storageTreeWrapper(authContext))
-            authStorageTree(storageService.authRundeckStorageTree)
             jobService(jobStateService.jobServiceWithAuthContext(authContext))
             nodeService(rundeckNodeService)
             user(userName)

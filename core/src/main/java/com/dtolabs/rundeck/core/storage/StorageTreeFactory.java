@@ -53,6 +53,7 @@ public class StorageTreeFactory {
     private             Map<String, String> configuration                          = new HashMap<String, String>();
     private             Set<String>         defaultConverters                      = new HashSet<String>();
 
+    private StorageConverterPluginAdapter fileStorageConverterPluginAdapter;
     private PluggableProviderService<StoragePlugin> storagePluginProviderService;
     private PluggableProviderService<StorageConverterPlugin> storageConverterPluginProviderService;
 
@@ -137,6 +138,10 @@ public class StorageTreeFactory {
                             new KeyStorageLayer()
                     ), PathUtil.asPath("/keys")
             );
+        }
+        if(null!=fileStorageConverterPluginAdapter && null!=defaultConverters && defaultConverters.contains("FileStorageLayer")){
+            logger.debug("Configuring base converter: FileStorageLayer" );
+            builder=builder.convert(fileStorageConverterPluginAdapter, PathUtil.asPath("/files"));
         }
         return builder;
     }
@@ -437,5 +442,13 @@ public class StorageTreeFactory {
 
     public void setFrameworkPropertyLookup(final IPropertyLookup frameworkPropertyLookup) {
         this.frameworkPropertyLookup = frameworkPropertyLookup;
+    }
+
+    public StorageConverterPluginAdapter getFileStorageConverterPluginAdapter() {
+        return fileStorageConverterPluginAdapter;
+    }
+
+    public void setFileStorageConverterPluginAdapter(StorageConverterPluginAdapter fileStorageConverterPluginAdapter) {
+        this.fileStorageConverterPluginAdapter = fileStorageConverterPluginAdapter;
     }
 }

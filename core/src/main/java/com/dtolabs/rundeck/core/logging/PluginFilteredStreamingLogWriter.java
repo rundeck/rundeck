@@ -313,7 +313,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
 
         @Override
-        public StorageTree getFileStorateTree() {
+        public StorageTree getFileStorageTree() {
             return this.fileStorageTree;
         }
     }
