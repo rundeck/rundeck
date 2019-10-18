@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException;
-import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
@@ -32,7 +32,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin;
 
-@Plugin(name = "example", service = ServiceNameConstants.ExecutionLifecyclePlugin)
+@Plugin(name = "example", service = ServiceNameConstants.ExecutionLifecycle)
 @PluginDescription(title = "Example Execution life cycle Plugin", description = "Adds extra logging before/after the execution, and appends XKCD comic.")
 public class ExecutionLifeCycleTestPlugin implements ExecutionLifecyclePlugin
 {
@@ -46,7 +46,7 @@ public class ExecutionLifeCycleTestPlugin implements ExecutionLifecyclePlugin
     boolean enabled = false;
 
     @Override
-    public JobEventStatus beforeJobStarts(final JobExecutionEvent event) throws ExecutionLifecyclePluginException {
+    public ExecutionLifecycleStatus beforeJobStarts(final JobExecutionEvent event) throws ExecutionLifecyclePluginException {
         if (enabled) {
             String name = event.getUserName();
             event.getExecutionLogger().log(2, String.format("Beginning the job for %s!", name));
@@ -76,7 +76,7 @@ public class ExecutionLifeCycleTestPlugin implements ExecutionLifecyclePlugin
     }
 
     @Override
-    public JobEventStatus afterJobEnds(final JobExecutionEvent event) throws ExecutionLifecyclePluginException {
+    public ExecutionLifecycleStatus afterJobEnds(final JobExecutionEvent event) throws ExecutionLifecyclePluginException {
         if (enabled) {
             event.getExecutionLogger().log(2, "Finished the job!");
             String name = event.getUserName();
