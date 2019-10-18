@@ -1246,8 +1246,10 @@ search
         });
         followState();
         var outDetails = window.location.hash;
-        if(outDetails === '#output'){
+        if(outDetails === '#output') {
             nodeflowvm.activeTab("output");
+        } else if (outDetails === '#output-plus') {
+            nodeflowvm.activeTab("output-plus")
         } else if (outDetails === '#nodes') {
             nodeflowvm.activeTab("nodes");
         }else{
