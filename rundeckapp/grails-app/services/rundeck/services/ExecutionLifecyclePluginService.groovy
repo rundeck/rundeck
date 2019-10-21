@@ -50,7 +50,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return Map containing all of the ExecutionLifecyclePlugin implementations
      */
     Map listExecutionLifecyclePlugins(){
-        if(!featureService?.featurePresent('executionLifecycle-plugin', false)){
+        if(!featureService?.featurePresent('executionLifecyclePlugin', false)){
             return pluginService?.listPlugins(ExecutionLifecyclePlugin, executionLifecyclePluginProviderService)
         }
         return null
@@ -220,7 +220,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
     Map<String, DescribedPlugin<ExecutionLifecyclePlugin>> listEnabledExecutionLifecyclePlugins(
             PluginControlService pluginControlService
     ) {
-        if (!featureService.featurePresent('executionLifecycle-plugin', false)) {
+        if (!featureService.featurePresent('executionLifecyclePlugin', false)) {
             return null
         }
 
@@ -235,7 +235,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return PluginConfigSet for the ExecutionLifecyclePlugin service for the job, or null if not defined or not enabled
      */
     PluginConfigSet getExecutionLifecyclePluginConfigSetForJob(ScheduledExecution job) {
-        if (!featureService?.featurePresent('executionLifecycle-plugin', false)) {
+        if (!featureService?.featurePresent('executionLifecyclePlugin', false)) {
             return null
         }
         def pluginConfig = job.pluginConfigMap?.get ServiceNameConstants.ExecutionLifecycle
@@ -272,7 +272,7 @@ class ExecutionLifecyclePluginService implements IExecutionLifecyclePluginServic
      * @return execution event handler
      */
     ExecutionLifecyclePluginHandler getExecutionHandler(PluginConfigSet configurations, ExecutionReference executionReference) {
-        if (!featureService?.featurePresent('executionLifecycle-plugin', false)) {
+        if (!featureService?.featurePresent('executionLifecyclePlugin', false)) {
             return null
         }
         if (!configurations) {

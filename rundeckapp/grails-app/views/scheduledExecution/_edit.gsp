@@ -788,7 +788,7 @@
       </g:if>
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
-<feature:enabled name="executionLifecycle-plugin">
+<feature:enabled name="executionLifecyclePlugin">
     <g:if test="${executionLifecyclePlugins}">
         <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecyclePlugin')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">

@@ -88,8 +88,8 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
     void "list plugins life cycle plugins enabled"() {
         setup:
-        pluginApiService.grailsApplication.config.rundeck.feature.'jobLifecycle-plugin'.enabled=true
-        pluginApiService.grailsApplication.config.rundeck.feature.'executionLifecycle-plugin'.enabled=true
+        pluginApiService.grailsApplication.config.rundeck.feature.jobLifecyclePlugin.enabled=true
+        pluginApiService.grailsApplication.config.rundeck.feature.executionLifecyclePlugin.enabled=true
 
         when:
         def pluginList = pluginApiService.listPluginsDetailed()

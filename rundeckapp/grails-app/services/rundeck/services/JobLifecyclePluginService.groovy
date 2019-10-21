@@ -97,7 +97,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @return Map containing all of the JobLifecyclePlugin implementations
      */
     Map listJobLifecyclePlugins(){
-        if(featureService?.featurePresent('jobLifecycle-plugin', false)){
+        if(featureService?.featurePresent('jobLifecyclePlugin', false)){
             return pluginService?.listPlugins(JobLifecyclePlugin, jobLifecyclePluginProviderService)
         }
         return null

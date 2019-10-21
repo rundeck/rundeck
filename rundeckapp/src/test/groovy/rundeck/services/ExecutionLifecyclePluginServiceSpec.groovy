@@ -36,7 +36,7 @@ class ExecutionLifecyclePluginServiceSpec extends Specification {
 
     def item = Mock(WorkflowExecutionItem)
     def featureService = Mock(FeatureService){
-        featurePresent("executionLifecycle-plugin", false) >> true
+        featurePresent("executionLifecyclePlugin", false) >> true
     }
     def iRundeckProject = Mock(IRundeckProject){
         hasProperty("project.enable.executionLifecyclePlugin.TestPlugin") >> true

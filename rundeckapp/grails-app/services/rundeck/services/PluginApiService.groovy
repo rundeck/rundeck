@@ -92,12 +92,12 @@ class PluginApiService {
         }
 
         //web-app level plugin descriptions
-        if(featureService.featurePresent("jobLifecycle-plugin")) {
+        if(featureService.featurePresent("jobLifecyclePlugin")) {
             pluginDescs[jobLifecyclePluginService.jobLifecyclePluginProviderService.name]=jobLifecyclePluginService.listJobLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
         }
-        if(featureService.featurePresent("executionLifecycle-plugin")) {
+        if(featureService.featurePresent("executionLifecyclePlugin")) {
             pluginDescs[executionLifecyclePluginService.executionLifecyclePluginProviderService.name]=executionLifecyclePluginService.listExecutionLifecyclePlugins().collect {
                 it.value.description
             }.sort { a, b -> a.name <=> b.name }
