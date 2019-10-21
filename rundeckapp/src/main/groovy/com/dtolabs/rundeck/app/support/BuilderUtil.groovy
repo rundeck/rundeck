@@ -15,6 +15,9 @@
  */
 
 package com.dtolabs.rundeck.app.support
+
+import java.util.regex.Pattern
+
 /**
  * BuilderUtil assists in generating XML or any groovy builder structure
  * from a standard data structure consisting of Maps, Collections and Strings/other objects.
@@ -61,6 +64,7 @@ class BuilderUtil{
     public static PLURAL_SUFFIX="[s]"
     public static PLURAL_REPL="s"
     public static CDATA_SUFFIX="<cdata>"
+    public static DATAVALUE_SUFFIX = "<dataval>"
     public static NEW_LINE = System.getProperty('line.separator')
     Map<Class,Closure> converters=[:]
     ArrayList context
@@ -89,8 +93,60 @@ class BuilderUtil{
         }
         [key, [:]]
     }
+
+    /**
+     * Encode generic data structure into xml,
+     * @param key
+     * @param obj
+     * @param builder
+     * @see {@link com.dtolabs.rundeck.util.XmlParserUtil#toDataValue(groovy.util.Node)}
+     */
+    public dataObjToDom(obj, builder, attrs = [:]) {
+        if (obj instanceof Map) {
+            //encode as <map><entry key="name">$value</entry></map>
+            builder.map(attrs) {
+                obj.each { k, v ->
+                    dataObjToDom(v, builder, [key: k])
+                }
+            }
+        } else if (obj instanceof List) {
+            //encode as <list><entry>$value</entry></list>
+            builder.list(attrs) {
+                obj.each { v ->
+                    dataObjToDom(v, builder)
+                }
+            }
+        } else if (obj instanceof Collection) {
+            //encode as <set><entry>$value</entry></set>
+            builder.set(attrs) {
+                obj.each { v ->
+                    dataObjToDom(v, builder)
+                }
+            }
+        } else if (obj.metaClass.respondsTo(obj, 'toMap')) {
+            dataObjToDom(obj.toMap(), builder, attrs)
+        } else {
+            //string case or toString
+            String str = obj.toString()
+            //encode as <value>$string</value>
+            if (automaticMultilineCdata && str.indexOf(lineEndingChars) >= 0) {
+                builder."value"(attrs) {
+                    mkp.yieldUnescaped("<![CDATA[" + str.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
+                }
+            } else {
+                builder."value"(attrs, str)
+            }
+        }
+    }
     public objToDom(key,obj,builder){
         def elemAttrs = [:]
+        if (key.endsWith(DATAVALUE_SUFFIX)) {
+            (key, elemAttrs) = toValidKey(key - DATAVALUE_SUFFIX)
+            builder."$key"(elemAttrs + ['data': true]) {
+                dataObjToDom(obj, builder)
+            }
+            return
+        }
         if(null==obj){
             (key, elemAttrs) = toValidKey(key)
             builder."${key}"(elemAttrs)
@@ -238,6 +294,12 @@ class BuilderUtil{
      */
     public static String asCDATAName(String key){
         return key+CDATA_SUFFIX
+    }
+    /**
+     * Return the key name for use as generic data structure
+     */
+    public static String asDataValueKey(String key){
+        return key+DATAVALUE_SUFFIX
     }
     //	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] |
     //	[#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] |

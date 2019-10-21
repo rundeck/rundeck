@@ -40,6 +40,13 @@ public class XmlParserUtil {
         return [(data.name()): toObject()]
     }
     /**
+     * Given a node, produce a data value: map, list, set or string
+     */
+    Object toData() {
+        return toDataValue(data)
+    }
+
+    /**
      * Given a node, produce contents object
      */
     Object toObject() {
@@ -56,6 +63,9 @@ public class XmlParserUtil {
         def childs = data.value()
         def text = data.text()
         def attrs = data.attributes()
+        if (attrs['data'] == 'true' && childs instanceof Collection && childs.size()==1) {
+            return toDataValue(childs[0])
+        }
         def map = [:]
         if (data.text()) {
             map['<text>'] = analyze?XmlParserUtil.analyzeText(text):text
@@ -96,6 +106,39 @@ public class XmlParserUtil {
             map.remove('<text>')
         }
         return map
+    }
+    /**
+     * Generate data object from the node, not including the node name,
+     * reverse the result of {@link com.dtolabs.rundeck.app.support.BuilderUtil#dataObjToDom(java.lang.Object, java.lang.Object)}
+     */
+    static Object toDataValue(Node data) {
+        if (data.name() == 'map') {
+            def map = [:]
+            data.children().each { entry ->
+                if (entry['@key']) {
+                    map[entry['@key']] = toDataValue(entry)
+                }
+            }
+            return map
+        } else if (data.name() == 'list') {
+            List list = []
+            data.children().each { entry ->
+                list << toDataValue(entry)
+            }
+            return list
+        } else if (data.name() == 'set') {
+            Set set = new HashSet()
+            data.children().each { entry ->
+                set << toDataValue(entry)
+            }
+            return set
+        } else if (data.name() == 'value') {
+            if (data.children().size() == 1) {
+                def value = data.children()[0]
+                return value.toString()
+            }
+            return null
+        }
     }
     static Object analyzeText(String text){
         if(text=~/^\d+$/){

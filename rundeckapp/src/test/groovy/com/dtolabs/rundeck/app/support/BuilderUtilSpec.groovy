@@ -50,6 +50,57 @@ class BuilderUtilSpec extends Specification {
 
 
     @Unroll
+    def "data to dom"() {
+        given:
+            final StringWriter writer = new StringWriter()
+            def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer), "", false))
+            def bu = new BuilderUtil()
+
+        when:
+            bu.dataObjToDom(data, builder)
+            final String result = writer.toString()
+
+        then:
+            result == expected
+
+        where:
+            data                           | expected
+            'asdf'                         | '<value>asdf</value>'
+            'as<df'                        | '<value>as&lt;df</value>'
+            'as\ndf'                       | '<value><![CDATA[as\ndf]]></value>'
+            [a: 'b']                       | '<map><value key=\'a\'>b</value></map>'
+            [a: 'b', c: 'd']               | '<map><value key=\'a\'>b</value><value key=\'c\'>d</value></map>'
+            ['a', 'b']                     | '<list><value>a</value><value>b</value></list>'
+            ['a', 'b'].toSet()             | '<set><value>a</value><value>b</value></set>'
+            [[a: 'b'], ['b'].toSet(), 'c'] |
+            '<list><map><value key=\'a\'>b</value></map><set><value>b</value></set><value>c</value></list>'
+    }
+
+    @Unroll
+    def "decode data"() {
+        given:
+            final StringWriter writer = new StringWriter()
+            def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer), "", false))
+            def bu = new BuilderUtil()
+
+        when:
+            bu.dataObjToDom(data, builder)
+            final String result = writer.toString()
+
+        then:
+            result == expected
+
+        where:
+            data               | expected
+            'asdf'             | '<value>asdf</value>'
+            'as<df'            | '<value>as&lt;df</value>'
+            'as\ndf'           | '<value><![CDATA[as\ndf]]></value>'
+            [a: 'b']           | '<map><value key=\'a\'>b</value></map>'
+            ['a', 'b']         | '<list><value>a</value><value>b</value></list>'
+            ['a', 'b'].toSet() | '<set><value>a</value><value>b</value></set>'
+    }
+
+    @Unroll
     def "multiline strings output with original or forced line endings"() {
         given:
         final StringWriter writer = new StringWriter()

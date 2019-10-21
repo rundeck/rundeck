@@ -20,6 +20,37 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class XmlParserUtilSpec extends Specification {
+    @Unroll
+    def "decode data value"() {
+        given:
+
+            def doc = new XmlParser().parse(new StringReader(xml))
+        when:
+            final obj = new XmlParserUtil(doc).toData()
+        then:
+            obj == expected
+
+        where:
+            xml                                                                | expected
+            //basic
+            "<value>asdf</value>"                                              | 'asdf'
+            "<list><value>a</value><value>b</value></list>"                    | ['a', 'b']
+            "<set><value>b</value><value>c</value></set>"                      | ['b', 'c'].toSet()
+            "<map><value key='a'>b</value></map>"                              | ['a': 'b']
+            //map embed
+            "<map><map key='a'><value key='b'>c</value></map></map>"           | ['a': ['b': 'c']]
+            "<map><set key='a'><value>b</value><value>c</value></set></map>"   | ['a': ['b', 'c'].toSet()]
+            "<map><list key='a'><value>b</value><value>c</value></list></map>" | ['a': ['b', 'c']]
+            //set embed
+            "<set><map><value key='b'>c</value></map></set>"                   | [['b': 'c']].toSet()
+            "<set><set><value>c</value></set></set>"                           | [['c'].toSet()].toSet()
+            "<set><list><value>c</value></list></set>"                         | [['c']].toSet()
+            //list embed
+            "<list><map><value key='b'>c</value></map></list>"                 | [['b': 'c']]
+            "<list><set><value>c</value></set></list>"                         | [['c'].toSet()]
+            "<list><list><value>c</value></list></list>"                       | [['c']]
+    }
+
     def "simple toMap"() {
         given:
             def xml = "<test></test>"
