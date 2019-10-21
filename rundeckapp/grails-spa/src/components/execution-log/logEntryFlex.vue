@@ -33,7 +33,7 @@ export default Vue.extend({
   display: flex;
   width: 100%;
   font-family: monospace;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .execution-log__gutter {
