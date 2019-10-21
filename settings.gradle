@@ -32,14 +32,18 @@ include	'rundeck-storage',
            'plugins:orchestrator-plugin',
            'plugins:git-plugin',
            'plugins:upvar-plugin',
-           'rundeckapp',
-           'rundeckapp:metricsweb',
-           'rundeckapp:grails-spa',
+           'rundeck',
+           'rundeck:metricsweb',
+           'rundeck:grails-spa',
            'grails-persistlocale',
            'grails-securityheaders',
-           'rundeckapp:repository',
-           'rundeckapp:webhooks',
+           'rundeck:repository',
+           'rundeck:webhooks',
            'docker'
 rootProject.name = 'rundeck-project'
 
-project(":rundeckapp").name = "rundeck"
+project(":rundeck").projectDir = file("rundeckapp")
+project(":rundeck:metricsweb").projectDir = file("rundeckapp/metricsweb")
+project(":rundeck:grails-spa").projectDir = file("rundeckapp/grails-spa")
+project(":rundeck:repository").projectDir = file("rundeckapp/repository")
+project(":rundeck:webhooks").projectDir = file("rundeckapp/webhooks")
