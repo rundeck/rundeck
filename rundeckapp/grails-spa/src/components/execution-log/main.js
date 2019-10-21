@@ -40,24 +40,24 @@ let observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutationRecord) {
     const parent = mutationRecord.target
     if (parent.offsetParent !== null && !MOUNTED) {
-      console.log(parent, parent.display)
-      console.log(parent.firstElementChild)
+      console.log('Change!')
       MOUNTED = true
       mount(parent.firstElementChild)
     }
   })
 })
 
-for (let e of els) {
-  if (e.parentNode.offsetParent !== null) {
-    mount(e)
-  } else {
-    observer.observe(e.parentNode, {attributes: true, attributeFilter: ['style']})
+setTimeout(() => {
+  for (let e of els) {
+    if (window.getComputedStyle(e.parentElement).display !== 'none') {
+      mount(e)
+    } else {
+      observer.observe(e.parentNode, {attributes: true, attributeFilter: ['style']})
+    }
   }
-}
+}, 0)
 
 function mount(e) {
-  console.log(e.dataset)
   // Create VueI18n instance with options
   const i18n = new VueI18n({
     silentTranslationWarn: true,
