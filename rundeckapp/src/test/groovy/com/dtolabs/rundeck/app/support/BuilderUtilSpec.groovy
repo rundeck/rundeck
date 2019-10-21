@@ -26,6 +26,30 @@ import spock.lang.Unroll
 class BuilderUtilSpec extends Specification {
 
     @Unroll
+    def "element name with invalid chars"() {
+        given:
+            final StringWriter writer = new StringWriter()
+            def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer), "", false))
+            def bu = new BuilderUtil()
+
+            def map = [(key): value]
+
+        when:
+            bu.objToDom('test', map, builder)
+            final String result = writer.toString()
+
+        then:
+            result == expected
+
+        where:
+            key     | value       | expected
+            'asdf'  | 'zomething' | '<test><asdf>zomething</asdf></test>'
+            'as/df' | 'zomething' | '<test><element name=\'as/df\'>zomething</element></test>'
+
+    }
+
+
+    @Unroll
     def "multiline strings output with original or forced line endings"() {
         given:
         final StringWriter writer = new StringWriter()

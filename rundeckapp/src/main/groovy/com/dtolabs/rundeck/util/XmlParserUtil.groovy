@@ -70,13 +70,18 @@ public class XmlParserUtil {
             childs.each {gp ->
                 if (gp instanceof Node) {
                     sawElems=true
-                    if (null != map[gp.name()] && !(map[gp.name()] instanceof Collection)) {
-                        def v = map[gp.name()]
-                        map[gp.name()] = [v, toObject(gp,analyze)]
-                    } else if (map[gp.name()] instanceof Collection) {
-                        map[gp.name()] << toObject(gp, analyze)
+                    def name = gp.name()
+                    if(name=='element' && gp.attributes()['name']){
+                        name=gp.attributes()['name']
+                        gp.attributes().remove('name')
+                    }
+                    if (null != map[name] && !(map[name] instanceof Collection)) {
+                        def v = map[name]
+                        map[name] = [v, toObject(gp, analyze)]
+                    } else if (map[name] instanceof Collection) {
+                        map[name] << toObject(gp, analyze)
                     } else {
-                        map[gp.name()] = toObject(gp, analyze)
+                        map[name] = toObject(gp, analyze)
                     }
                 }
             }
