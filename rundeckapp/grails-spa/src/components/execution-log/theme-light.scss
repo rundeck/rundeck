@@ -1,4 +1,5 @@
 .execution-log--light .execution-log__gutter {
+  color: silver;
   background-color: whitesmoke;
   // color: bisque;
   box-sizing: border-box;
@@ -23,6 +24,7 @@
 }
 
 .execution-log--light .execution-log__node-badge {
+  color: cornflowerblue;
   background-color: whitesmoke;
   padding-left: 4px;
   border-bottom-left-radius: 5px;
