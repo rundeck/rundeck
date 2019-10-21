@@ -163,9 +163,17 @@ export default class LogViewer extends Vue {
         const scroller = this.$refs["scroller"] as HTMLElement
 
         const target = this.vues[Number(n)-1].$el
-        const parent = target.parentNode
+        let parent = target.parentNode
 
-        scroller.scrollTop = target.offsetTop + parent.offsetTop
+        let offset = target.offsetTop
+
+        // Traverse to root and accumulate offset
+        while (parent != scroller) {
+          offset += parent.offsetTop
+          parent = parent.parentNode
+        }
+
+        scroller.scrollTop = offset
     }
 
     private handleLineSelect(e: any) {
