@@ -239,6 +239,9 @@ rundeck:
         nodeCache:
             enabled: true
             spec: 'refreshInterval=30s'
+    feature:
+        webhooks:
+            enabled: true
 ---
 
 beans:
