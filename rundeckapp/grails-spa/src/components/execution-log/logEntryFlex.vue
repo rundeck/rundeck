@@ -1,20 +1,21 @@
 <template>
     <div class="execution-log__line">
         <div class="execution-log__gutter">
-            <span class="gutter line-number" v-on:click="lineSelect">{{entry.node}} {{entry.time}} {{entry.id}}</span>
+            <span class="gutter line-number" v-on:click="lineSelect">{{entry.time}} {{entry.stepctx}}</span>
         </div
         ><div class="execution-log__content" v-bind:class="{'execution-log__content--html': entry.loghtml}"
+            ><span v-if="nodeBadge" class="execution-log__node-badge"><i class="fas fa-hdd"/>{{entry.node}}</span
             ><span v-if="entry.loghtml" v-html="entry.loghtml"
-            /><span v-if="!entry.loghtml">{{entry.log}}</span>
-        </div>
-    </div>
+            /><span v-if="!entry.loghtml">{{entry.log}}</span
+        ></div
+    ></div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
 
 export default Vue.extend({
-    props: ['entry'],
+    props: ['entry', 'nodeBadge'],
     methods: {
         lineSelect: function() {
             this.$emit('line-select', this.entry.id)
@@ -54,6 +55,11 @@ export default Vue.extend({
 
 .execution-log__line-number {
     cursor: pointer;
+}
+
+.execution-log__node-badge {
+    float: right;
+    user-select: none;
 }
 
 </style>

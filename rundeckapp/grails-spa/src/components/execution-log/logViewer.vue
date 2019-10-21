@@ -17,7 +17,7 @@
       ><button v-on:click="handleJumpToStart">Start</button><button v-on:click="handleJumpToEnd">End</button>
     </div>
     <div class="stats" v-if="showStats">
-      <span>Following:{{follow}} Lines:{{logEntries.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
+      <span>Following:{{follow}} Lines:{{vues.length.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}} TotalTime:{{totalTime/1000}}s</span>
     </div>
     <div ref="scroller" class="execution-log__scroller"/>
   </div>
@@ -29,7 +29,9 @@ import { Component, Prop, Watch, Vue } from 'vue-property-decorator'
 import { RecycleScroller, DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import Entry from './logEntry.vue'
 import EntryFlex from './logEntryFlex.vue'
-import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models';
+import { ExecutionOutputGetResponse } from 'ts-rundeck/dist/lib/models'
+
+import {LogBuilder} from './logBuilder'
 
 Vue.component("recycle-scroller",RecycleScroller)
 Vue.component("dynamic-scroller",DynamicScroller)
@@ -65,6 +67,8 @@ export default class LogViewer extends Vue {
 
     private viewer!: ExecutionLog
 
+    private logBuilder!: LogBuilder
+
     private logEntries: Array<{log?: string, id: number}> = []
 
     private scrollCount = 0
@@ -85,7 +89,9 @@ export default class LogViewer extends Vue {
     }
 
     async mounted() {
+        const scroller = this.$refs["scroller"] as HTMLElement
         this.viewer = new ExecutionLog(this.executionId.toString())
+        this.logBuilder = new LogBuilder(scroller, {nodeIcon: true})
         this.startTime = Date.now()
         this.addScrollBlocker()
         this.populateLogsProm = this.populateLogs()
@@ -107,41 +113,50 @@ export default class LogViewer extends Vue {
     }
 
     private handleExecutionLogResp(res: ExecutionOutputGetResponse) {
-      let count = this.logEntries.length
+      // let count = this.logEntries.length
 
-      const newEntries = res.entries.map(e => {
-        count++
-        return {id: count, ...e}
-      })
+      // const newEntries = res.entries.map(e => {
+      //   count++
+      //   return {id: count, ...e}
+      // })
 
-      this.logEntries.push(...newEntries)
+      // this.logEntries.push(...newEntries)
 
-      const chunk = document.createElement("DIV")
-      chunk.className = "execution-log__chunk ansicolor-on"
-      const frag = document.createDocumentFragment()
-      frag.appendChild(chunk)
+      // const chunk = document.createElement("DIV")
+      // chunk.className = "execution-log__chunk ansicolor-on"
+      // const frag = document.createDocumentFragment()
+      // frag.appendChild(chunk)
 
-      newEntries.forEach( e => {
-        const span = document.createElement("SPAN")
+      // newEntries.forEach( e => {
+      //   console.log(e)
+      //   const span = document.createElement("SPAN")
 
-        chunk.append(span)
+      //   chunk.append(span)
 
-        const vue = new EntryFlex({el: span, propsData: {entry: e}})
-        vue.$on('line-select', this.handleLineSelect)
+      //   const vue = new EntryFlex({el: span, propsData: {entry: e}})
+      //   vue.$on('line-select', this.handleLineSelect)
+      //   this.vues.push(vue)
+      // })
+      
+      // const scroller = this.$refs["scroller"] as HTMLElement
+      // scroller.appendChild(frag)
+
+      /**
+       * Use Builder
+       */
+      res.entries.forEach(e => {
+        const vue = this.logBuilder.addLine(e)
         this.vues.push(vue)
       })
-      
-      const scroller = this.$refs["scroller"] as HTMLElement
-      scroller.appendChild(frag)
 
       if (this.follow) {
-          this.scrollToLine(this.vues.length)
+        this.scrollToLine(this.vues.length)
       }
 
-        if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
-            this.scrollToLine(this.jumpToLine)
-            this.jumped = true
-        }
+      if (this.jumpToLine && this.jumpToLine <= this.vues.length && !this.jumped) {
+        this.scrollToLine(this.jumpToLine)
+        this.jumped = true
+      }
     }
 
     scrollToLine(n: number | string) {
@@ -212,6 +227,16 @@ export default class LogViewer extends Vue {
   border-style: none none dotted none;
   border-width: 1px;
   border-color: rgb(39, 66, 66);
+}
+
+.execution-log--dark .execution-log__node-chunk {
+  border-style: none none solid none;
+  border-width: 1px;
+  border-color: darkolivegreen;
+}
+
+.execution-log__node-chunk {
+  contain: layout
 }
 
 .execution-log__chunk {
