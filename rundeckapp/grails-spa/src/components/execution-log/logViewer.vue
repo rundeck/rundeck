@@ -210,30 +210,8 @@ export default class LogViewer extends Vue {
 
 <style lang="scss">
 @import './ansi.css';
-
-.execution-log--dark .execution-log__gutter {
-  background-color: rgb(32, 56, 56);
-  color: bisque;
-  box-sizing: border-box;
-  border-style: none none dotted none;
-  border-width: 1px;
-  border-color: rgb(22, 36, 36);
-}
-
-.execution-log--dark .execution-log__content {
-  background-color: darkslategrey;
-  color: cornsilk;
-  box-sizing: border-box;
-  border-style: none none dotted none;
-  border-width: 1px;
-  border-color: rgb(39, 66, 66);
-}
-
-.execution-log--dark .execution-log__node-chunk {
-  border-style: none none solid none;
-  border-width: 1px;
-  border-color: darkolivegreen;
-}
+@import './theme-light.scss';
+@import './theme-dark.scss';
 
 .execution-log__node-chunk {
   contain: layout

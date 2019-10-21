@@ -1,0 +1,29 @@
+.execution-log--light .execution-log__gutter {
+  background-color: whitesmoke;
+  // color: bisque;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: rgb(223, 223, 223);
+}
+
+.execution-log--light .execution-log__content {
+  background-color: white;
+  // color: cornsilk;
+  box-sizing: border-box;
+  border-style: none none dotted none;
+  border-width: 1px;
+  border-color: #f1f1f1;
+}
+
+.execution-log--light .execution-log__node-chunk {
+  border-style: none none solid none;
+  border-width: 1px;
+  border-color: lightgray;
+}
+
+.execution-log--light .execution-log__node-badge {
+  background-color: whitesmoke;
+  padding-left: 4px;
+  border-bottom-left-radius: 5px;
+}
