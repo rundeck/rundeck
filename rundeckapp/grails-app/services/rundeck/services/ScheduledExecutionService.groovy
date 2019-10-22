@@ -2869,7 +2869,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (enabled != 'true') {
                 return
             }
-            Map config = executionLifecyclePluginsParams[key]?.configMap ?: [:]
+            Map config = [:]
+            def confprops = executionLifecyclePluginsParams[key]?.configMap ?: [:]
+            confprops.each { k, v ->
+                if (v != '' && v != null && !k.startsWith('_')) {
+                    config[k] = v
+                }
+            }
+
             configs << SimplePluginConfiguration.builder().provider(pluginType).configuration(config).build()
         }
         PluginConfigSet.with ServiceNameConstants.ExecutionLifecycle, configs
