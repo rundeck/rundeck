@@ -138,4 +138,37 @@ class ConfigurationServiceSpec extends Specification implements ServiceUnitTest<
         true  | _
         false | _
     }
+
+    void "get object"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.mail.complexConfig = [prop1:[sub1:"sub val"]]
+        service.setAppConfig(grailsApplication.config.rundeck)
+
+        when:
+        def val = service.getConfig("mail.complexConfig")
+
+        then:
+        val.prop1.sub1 == "sub val"
+
+    }
+
+    void "get deprecated"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.feature.'*'.enabled = false
+        grailsApplication.config.rundeck.feature.'option-values-plugin'.enabled = true
+        service.setAppConfig(grailsApplication.config.rundeck)
+
+        when:
+        def val = service.getBoolean(prop, false)
+
+        then:
+        val == expected
+
+        where:
+        prop | expected
+        "feature.optionValuesPlugin.enabled" | true
+        "feature.enableAll" | false
+    }
 }

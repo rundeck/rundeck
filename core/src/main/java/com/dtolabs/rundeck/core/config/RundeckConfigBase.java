@@ -153,6 +153,7 @@ public class RundeckConfigBase {
     public static class RundeckProjectManagerServiceConfig {
         ProjectCache projectCache;
 
+        @Data
         public static class ProjectCache {
             String spec;
         }
@@ -279,6 +280,8 @@ public class RundeckConfigBase {
         Enabled cleanExecutionsHistoryJob = new Enabled();
         Enabled workflowDynamicStepSummaryGUI = new Enabled();
         Enabled legacyProjectNodesUi = new Enabled();
+        Enabled jobLifecyclePlugin = new Enabled();
+        Enabled executionLifecyclePlugin = new Enabled();
 
         @Data
         public static class Enabled {
@@ -371,6 +374,7 @@ public class RundeckConfigBase {
 
     @Data
     public static class RundeckGuiConfig {
+        String instanceName;
         String startpage;
         String logo;
         String logoHires;

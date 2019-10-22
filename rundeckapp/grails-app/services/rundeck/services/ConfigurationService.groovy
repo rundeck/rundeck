@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import org.grails.config.NavigableMap
 import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 
@@ -55,7 +56,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     String getString(String property, String defval) {
-        def val = getValueFromRoot(property,appCfg)
+        def val = getValue(property)
         stringValue(defval, val)
     }
     /**
@@ -65,7 +66,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     int getInteger(String property, int defval) {
-        def val = getValueFromRoot(property,appCfg)
+        def val = getValue(property)
         intValue(defval, val)
     }
     /**
@@ -75,7 +76,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     long getLong(String property, long defval) {
-        def val = getValueFromRoot(property,appCfg)
+        def val = getValue(property)
         longValue(defval, val)
     }
     /**
@@ -85,7 +86,7 @@ class ConfigurationService implements InitializingBean {
      * @return
      */
     boolean getBoolean(String property, boolean defval) {
-        def val = getValueFromRoot(property,appCfg)
+        def val = getValue(property)
         booleanValue(defval, val)
     }
     /**
@@ -124,7 +125,7 @@ class ConfigurationService implements InitializingBean {
      */
     Object getValue(String property, Object defval = null) {
         def val = getValueFromRoot(property,appCfg)
-        if(val == null && deprecatedKeyTrx.containsKey(property)) {
+        if((val == null || isEmptyNavigableMap(val)) && deprecatedKeyTrx.containsKey(property)) {
             //try to get the value from the deprecated property
             val = getDeprecatedPropertyValue(property)
             if(val) {
@@ -133,7 +134,11 @@ class ConfigurationService implements InitializingBean {
             }
         }
 
-        return val ?: defval
+        return val == null ? defval : val
+    }
+
+    protected boolean isEmptyNavigableMap(def val) {
+        return val instanceof NavigableMap.NullSafeNavigator && val.isEmpty()
     }
 
     protected def getValueFromRoot(String property, def root) {

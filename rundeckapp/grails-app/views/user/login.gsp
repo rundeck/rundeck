@@ -83,7 +83,7 @@
       <div class="content">
         <div class="container">
           <div class="row">
-            <g:set var="userDefinedInstanceName" value="${grailsApplication.config.rundeck?.gui?.instanceName}"/>
+            <cfg:setVar var="userDefinedInstanceName" key="gui.instanceName" />
             <g:if test="${userDefinedInstanceName}">
               <div class="col-md-12" style="text-align:center;margin-bottom:3em;">
                   <span class="label label-white" style="padding:.8em;font-size: 20px; border-radius:3px;    box-shadow: 0 6px 10px -4px rgba(0, 0, 0, 0.15);">
@@ -101,7 +101,7 @@
                             <img src="${resource(dir: 'images', file: 'rundeck-full-logo-black.png')}" alt="Rundeck" style="height: 20px; width: auto;"/>
                           </a>
                           <g:set var="userDefinedLogo" value="${grailsApplication.config.rundeck?.gui?.logo}"/>
-                          <g:if test="${userDefinedLogo}">`
+                          <g:if test="${userDefinedLogo}">
                             <g:set var="userAssetBase" value="/user-assets" />
                             <g:set var="safeUserLogo" value="${userDefinedLogo.toString().encodeAsSanitizedHTML()}" />
                             <div style="margin-top:2em">
@@ -112,7 +112,6 @@
                     </h3>
                   </div>
                   <div class="card-content">
-%{--                    <g:set var="loginhtml" value="${grailsApplication.config.rundeck?.gui?.login?.welcomeHtml ?: ''}"/>--}%
                     <cfg:setVar var="loginhtml" key="gui.login.welcomeHtml" />
                     <g:if test="${loginhtml}">
                       <div style="margin-bottom:2em;">
