@@ -2560,7 +2560,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(null==optparams[opt.name] && opt.enforced && !opt.optionValues){
                     Map remoteOptions = scheduledExecutionService.loadOptionsRemoteValues(scheduledExecution, [option: opt.name, extra: [option: optparams]], authContext?.username)
                     if(!remoteOptions.err && remoteOptions.values){
-                        Map selectedOption = remoteOptions.values.find {Map value -> [true, 'true'].contains(value.selected)}
+                        Map selectedOption = remoteOptions.values.find {it instanceof Map && [true, 'true'].contains(it.selected)}
                         if(selectedOption){
                             defaultoptions[opt.name]=selectedOption.value
                         }
