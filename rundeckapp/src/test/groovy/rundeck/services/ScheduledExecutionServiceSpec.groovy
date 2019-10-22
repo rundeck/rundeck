@@ -2177,7 +2177,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
             PluginConfigSet.with(
-                    'ExecutionLifecyclePlugin',
+                    ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
                                     provider('aPlugin').
@@ -2211,7 +2211,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
             PluginConfigSet.with(
-                    'ExecutionLifecyclePlugin',
+                    ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
                                     provider('aPlugin').
