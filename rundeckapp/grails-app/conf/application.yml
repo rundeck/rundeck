@@ -178,6 +178,8 @@ rundeck:
                         form-action: 'self'
 
     storage:
+    files:
+        storage:
     execution:
         finalize:
             retryMax: 10
