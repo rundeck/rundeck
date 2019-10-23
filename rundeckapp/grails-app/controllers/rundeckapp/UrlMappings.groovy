@@ -87,6 +87,8 @@ class UrlMappings {
         "/api/$api_version/job/$id/scm/$integration/action/$actionId/input"(controller: 'scm', action: 'apiJobActionInput')
         "/api/$api_version/job/$id/scm/$integration/action/$actionId"(controller: 'scm', action: 'apiJobActionPerform')
 
+        "/api/$api_version/job/$id/workflow"(controller: 'scheduledExecution', action: 'apiJobWorkflow')
+
         "/api/$api_version/jobs/delete"(controller: 'scheduledExecution', action: 'apiJobDeleteBulk')
         "/api/$api_version/jobs/schedule/enable"(controller: 'scheduledExecution',action: 'apiFlipScheduleEnabledBulk') {
             status = true
