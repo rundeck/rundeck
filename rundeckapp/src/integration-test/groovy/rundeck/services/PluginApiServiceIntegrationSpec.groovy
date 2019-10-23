@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import grails.testing.mixin.integration.Integration
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
@@ -30,31 +31,31 @@ class PluginApiServiceIntegrationSpec extends Specification {
         then:
             pluginList.descriptions*.getKey().containsAll(
                     [
-                            'NodeExecutor',
-                            'FileCopier',
-                            'WorkflowNodeStep',
-                            'WorkflowStep',
-                            'ResourceModelSource',
-                            'NodeEnhancer',
-                            'ResourceFormatParser',
-                            'ResourceFormatGenerator',
-                            'Orchestrator',
-                            'ExecutionLifecyclePlugin',
-                            'Notification',
-                            'StreamingLogReader',
-                            'StreamingLogWriter',
-                            'ExecutionFileStorage',
-                            'Storage',
-                            'StorageConverter',
-                            'ScmExport',
-                            'ScmImport',
-                            'FileUpload',
-                            'LogFilter',
-                            'ContentConverter',
-                            'TourLoader',
-                            'UserGroupSource',
-                            'UI',
-                            'WebhookEvent'
+                            ServiceNameConstants.NodeExecutor,
+                            ServiceNameConstants.FileCopier,
+                            ServiceNameConstants.WorkflowNodeStep,
+                            ServiceNameConstants.WorkflowStep,
+                            ServiceNameConstants.ResourceModelSource,
+                            ServiceNameConstants.NodeEnhancer,
+                            ServiceNameConstants.ResourceFormatParser,
+                            ServiceNameConstants.ResourceFormatGenerator,
+                            ServiceNameConstants.Orchestrator,
+                            ServiceNameConstants.ExecutionLifecycle,
+                            ServiceNameConstants.Notification,
+                            ServiceNameConstants.StreamingLogReader,
+                            ServiceNameConstants.StreamingLogWriter,
+                            ServiceNameConstants.ExecutionFileStorage,
+                            ServiceNameConstants.Storage,
+                            ServiceNameConstants.StorageConverter,
+                            ServiceNameConstants.ScmExport,
+                            ServiceNameConstants.ScmImport,
+                            ServiceNameConstants.FileUpload,
+                            ServiceNameConstants.LogFilter,
+                            ServiceNameConstants.ContentConverter,
+                            ServiceNameConstants.TourLoader,
+                            ServiceNameConstants.UserGroupSource,
+                            ServiceNameConstants.UI,
+                            ServiceNameConstants.WebhookEvent
                     ]
             )
             pluginList.descriptions.size() == 25
@@ -87,8 +88,8 @@ class PluginApiServiceIntegrationSpec extends Specification {
 
     void "list plugins life cycle plugins enabled"() {
         setup:
-        pluginApiService.grailsApplication.config.rundeck.feature.'jobLifecycle-plugin'.enabled=true
-        pluginApiService.grailsApplication.config.rundeck.feature.'executionLifecycle-plugin'.enabled=true
+        pluginApiService.grailsApplication.config.rundeck.feature.jobLifecyclePlugin.enabled=true
+        pluginApiService.grailsApplication.config.rundeck.feature.executionLifecyclePlugin.enabled=true
 
         when:
         def pluginList = pluginApiService.listPluginsDetailed()

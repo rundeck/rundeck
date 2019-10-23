@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobEventResult
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler
 import com.dtolabs.rundeck.plugins.jobs.JobExecutionEventImpl
 
@@ -34,7 +34,7 @@ class ExecutionReferenceLifecyclePluginHandler implements ExecutionLifecyclePlug
     List<NamedExecutionLifecyclePlugin> plugins
 
     @Override
-    Optional<JobEventStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecyclePluginException {
+    Optional<ExecutionLifecycleStatus> beforeJobStarts(final StepExecutionContext executionContext, WorkflowExecutionItem item) throws ExecutionLifecyclePluginException {
         Optional.ofNullable executionLifecyclePluginService.handleEvent(
                 JobExecutionEventImpl.beforeRun(executionContext, executionReference, item),
                 ExecutionLifecyclePluginService.EventType.BEFORE_RUN,
@@ -44,7 +44,7 @@ class ExecutionReferenceLifecyclePluginHandler implements ExecutionLifecyclePlug
     }
 
     @Override
-    Optional<JobEventStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
+    Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
             throws ExecutionLifecyclePluginException {
         Optional.ofNullable executionLifecyclePluginService.handleEvent(
                 JobExecutionEventImpl.afterRun(executionContext, executionReference, result),

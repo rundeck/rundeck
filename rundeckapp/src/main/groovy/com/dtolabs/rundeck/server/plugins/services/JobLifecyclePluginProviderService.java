@@ -7,7 +7,7 @@ import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin;
 
 public class JobLifecyclePluginProviderService extends BasePluggableProviderService<JobLifecyclePlugin> {
 
-    public static final String SERVICE_NAME = ServiceNameConstants.JobLifecyclePlugin;
+    public static final String SERVICE_NAME = ServiceNameConstants.JobLifecycle;
     private ServiceProviderLoader rundeckServerServiceProviderLoader;
 
     public JobLifecyclePluginProviderService() {

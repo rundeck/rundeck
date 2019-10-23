@@ -1,4 +1,4 @@
-version = '3.1.1-SNAPSHOT'
+version = '3.2.0-SNAPSHOT'
 defaultTasks 'clean', 'build'
 apply plugin: 'java'
 apply plugin: 'idea'

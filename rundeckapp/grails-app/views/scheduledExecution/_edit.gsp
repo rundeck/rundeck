@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.ScheduledExecution; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; rundeck.ScheduledExecution; rundeck.User; org.rundeck.core.auth.AuthConstants" %>
 
 <g:jsonToken id="job_edit_tokens" url="${request.forwardURI}"/>
 
@@ -788,9 +788,9 @@
       </g:if>
   </section>%{--//Schedule--}%
 </div><!-- end#tab_schedule -->
-<feature:enabled name="executionLifecycle-plugin">
+<feature:enabled name="executionLifecyclePlugin">
     <g:if test="${executionLifecyclePlugins}">
-        <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecyclePlugin')?:[:]}"/>
+        <g:set var="executionLifecyclePluginConfigMap" value="${scheduledExecution?.pluginConfigMap?.get('ExecutionLifecycle')?:[:]}"/>
         <div class="tab-pane" id="tab_execution_plugins">
             <div class="help-block">
                 <g:message code="scheduledExecution.property.executionLifecyclePluginConfig.help.text" />
@@ -818,7 +818,7 @@
 
                                         <label for="executionLifecyclePluginEnabled_${prkey}">
                                             <g:render template="/framework/renderPluginDesc" model="${[
-                                                    serviceName    : 'ExecutionLifecyclePlugin',
+                                                    serviceName    : ServiceNameConstants.ExecutionLifecycle,
                                                     description    : pluginDescription,
                                                     showPluginIcon : true,
                                                     showNodeIcon   : false,
@@ -836,7 +836,7 @@
                             <g:if test="${pluginDescription?.properties}">
                                 <g:set var="prefix" value="executionLifecyclePlugins.${pluginKey}.configMap."/>
                                 <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                        service:'ExecutionLifecyclePlugin',
+                                        service:ServiceNameConstants.ExecutionLifecycle,
                                         provider:pluginDescription.name,
                                         properties:pluginDescription?.properties,
                                         report: params.executionLifecyclePluginValidation?.get(pluginType),

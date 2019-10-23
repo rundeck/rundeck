@@ -93,8 +93,8 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.NodeEnhancer, NodeEnhancerPlugin.class);
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
         map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
-        map.put(ServiceNameConstants.ExecutionLifecyclePlugin, ExecutionLifecyclePlugin.class);
-        map.put(ServiceNameConstants.JobLifecyclePlugin, JobLifecyclePlugin.class);
+        map.put(ServiceNameConstants.ExecutionLifecycle, ExecutionLifecyclePlugin.class);
+        map.put(ServiceNameConstants.JobLifecycle, JobLifecyclePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

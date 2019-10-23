@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.PluginConfigSet
 import com.dtolabs.rundeck.core.plugins.SimplePluginConfiguration
@@ -619,7 +620,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             def result = ScheduledExecutionService.parseExecutionLifecyclePluginsParams(params)
         then:
             result
-            result.service == 'ExecutionLifecyclePlugin'
+            result.service == ServiceNameConstants.ExecutionLifecycle
             result.pluginProviderConfigs!=null
             result.pluginProviderConfigs.size()==expectSize
             if(expectSize>0) {
@@ -634,6 +635,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         where:
             keys              | other  | expectSize
             'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b',z:'']], enabled:[asdf:'true']] | 1
+            'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b',_z:'asdf']], enabled:[asdf:'true']] | 1
             'asdf'            | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
             ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'true']] | 1
             ['asdf']          | [type: [asdf: 'aType'], asdf: [configMap: [a:'b']], enabled:[asdf:'false']] | 0
@@ -2176,7 +2179,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
             PluginConfigSet.with(
-                    'ExecutionLifecyclePlugin',
+                    ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
                                     provider('aPlugin').
@@ -2210,7 +2213,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
             1 * service.executionLifecyclePluginService.getExecutionLifecyclePluginConfigSetForJob(newJob) >>
             PluginConfigSet.with(
-                    'ExecutionLifecyclePlugin',
+                    ServiceNameConstants.ExecutionLifecycle,
                     [
                             SimplePluginConfiguration.builder().
                                     provider('aPlugin').

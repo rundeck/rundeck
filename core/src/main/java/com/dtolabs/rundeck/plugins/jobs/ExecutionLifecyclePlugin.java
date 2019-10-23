@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.plugins.jobs;
 
 import com.dtolabs.rundeck.core.execution.ExecutionLifecyclePluginException;
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.JobExecutionEvent;
-import com.dtolabs.rundeck.core.jobs.JobEventStatus;
 
 
 /**
@@ -18,7 +18,7 @@ public interface ExecutionLifecyclePlugin {
      * @param event event execution data
      * @return JobEventStatus
      */
-    default JobEventStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecyclePluginException {
+    default ExecutionLifecycleStatus beforeJobStarts(JobExecutionEvent event) throws ExecutionLifecyclePluginException {
         return null;
     }
 
@@ -27,8 +27,7 @@ public interface ExecutionLifecyclePlugin {
      * @param event event execution data
      * @return JobEventStatus
      */
-    default JobEventStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecyclePluginException {
+    default ExecutionLifecycleStatus afterJobEnds(JobExecutionEvent event) throws ExecutionLifecyclePluginException {
         return null;
     }
-
 }

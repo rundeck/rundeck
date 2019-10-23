@@ -48,7 +48,7 @@
                         <g:message code="job.edit.page.tab.notifications.title"/>
                     </a>
                 </li>
-                <feature:enabled name="executionLifecycle-plugin">
+                <feature:enabled name="executionLifecyclePlugin">
                     <g:if test="${executionLifecyclePlugins}">
                         <li>
                             <a href="#tab_execution_plugins" data-toggle="tab">

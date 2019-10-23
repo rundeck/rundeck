@@ -16,7 +16,7 @@ public interface ExecutionLifecyclePluginHandler {
      * @param executionContext input execution context
      * @throws ExecutionLifecyclePluginException
      */
-    Optional<JobEventStatus> beforeJobStarts(
+    Optional<ExecutionLifecycleStatus> beforeJobStarts(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem workflowItem
     ) throws ExecutionLifecyclePluginException;
@@ -28,6 +28,6 @@ public interface ExecutionLifecyclePluginHandler {
      * @param result           result of job execution
      * @throws ExecutionLifecyclePluginException
      */
-    Optional<JobEventStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
+    Optional<ExecutionLifecycleStatus> afterJobEnds(final StepExecutionContext executionContext, final JobEventResult result)
             throws ExecutionLifecyclePluginException;
 }

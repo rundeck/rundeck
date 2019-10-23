@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.execution.workflow.*;
-import com.dtolabs.rundeck.core.jobs.JobEventStatus;
+import com.dtolabs.rundeck.core.jobs.ExecutionLifecycleStatus;
 import com.dtolabs.rundeck.core.jobs.ExecutionLifecyclePluginHandler;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
@@ -84,8 +84,8 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
                 //TODO: check success and stop execution
                 StepExecutionContext newExecutionContext =
                         executionLifecyclePluginHandler.beforeJobStarts(context, weitem)
-                                       .map(JobEventStatus::getExecutionContext)
-                                       .orElse(null);
+                                                       .map(ExecutionLifecycleStatus::getExecutionContext)
+                                                       .orElse(null);
                 executionContext = newExecutionContext != null? newExecutionContext: executionContext;
             }
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);

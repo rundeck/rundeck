@@ -1,18 +1,20 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.core.jobs.JobPersistEvent
 import com.dtolabs.rundeck.core.jobs.JobPreExecutionEvent
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import com.dtolabs.rundeck.core.plugins.JobLifecyclePluginException
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.jobs.JobPersistEventImpl
 import com.dtolabs.rundeck.plugins.jobs.JobPreExecutionEventImpl
 import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.plugins.services.JobLifecyclePluginProviderService
+import groovy.transform.CompileStatic
 import org.rundeck.core.projects.ProjectConfigurable
 import rundeck.ScheduledExecution
 
@@ -57,10 +59,11 @@ class JobLifecyclePluginService implements ProjectConfigurable {
             projectConfigProperties.add(
                     PropertyBuilder.builder().with {
                         booleanType 'jobLifecyclePlugin.' + name
-                        title('Enable ' + (describedPlugin.description?.title ?: name))
+                        title( (describedPlugin.description?.title ?: name))
+                        description(describedPlugin.description?.description)
                         required(false)
                         defaultValue null
-                        renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+                        renderingOptions( ['icon:plugin:serviceName': ServiceNameConstants.JobLifecycle,'icon:plugin:provider':name])
                     }.build()
             )
             configPropertiesMapping.put('jobLifecyclePlugin.' + name , CONF_PROJECT_ENABLED + name)
@@ -94,7 +97,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @return Map containing all of the JobLifecyclePlugin implementations
      */
     Map listJobLifecyclePlugins(){
-        if(featureService?.featurePresent('jobLifecycle-plugin', false)){
+        if(featureService?.featurePresent('jobLifecyclePlugin', false)){
             return pluginService?.listPlugins(JobLifecyclePlugin, jobLifecyclePluginProviderService)
         }
         return null
@@ -106,7 +109,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobEventStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event) {
+    JobLifecycleStatus beforeJobExecution(ScheduledExecution job, JobPreExecutionEvent event) {
         def plugins = createConfiguredPlugins(job.project)
         handleEvent(event, EventType.PRE_EXECUTION, plugins)
     }
@@ -117,7 +120,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param event job event
      * @return JobEventStatus response from plugin implementation
      */
-    JobEventStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) {
+    JobLifecycleStatus beforeJobSave(ScheduledExecution job, JobPersistEvent event) {
         def plugins = createConfiguredPlugins(job.project)
         handleEvent(event, EventType.BEFORE_SAVE, plugins)
     }
@@ -156,21 +159,21 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param plugins list of NamedJobLifecyclePlugin
      * @return JobEventStatus response from plugin implementation
      */
-    JobEventStatus handleEvent(def event, EventType eventType, List<NamedJobLifecyclePlugin> plugins) {
+    JobLifecycleStatus handleEvent(def event, EventType eventType, List<NamedJobLifecyclePlugin> plugins) {
         if (!plugins) {
             return null
         }
         def errors = [:]
         def results = [:]
         Exception firstErr
-        JobEventStatus prevResult = null
+        JobLifecycleStatus prevResult = null
         def prevEvent = event
         boolean success = true
         for (NamedJobLifecyclePlugin plugin : plugins) {
             try {
 
                 def curEvent = mergeEvent(prevResult, prevEvent)
-                JobEventStatus result = handleEventForPlugin(eventType, plugin, curEvent)
+                JobLifecycleStatus result = handleEventForPlugin(eventType, plugin, curEvent)
                 if (result != null && !result.successful) {
                     success = false
                     log.info("Result from plugin is false an exception will be thrown")
@@ -216,7 +219,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param jobEvent event
      * @return result with merged contents for the type of event
      */
-    JobEventStatus mergeEventResult(boolean success, final JobEventStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
+    JobLifecycleStatus mergeEventResult(boolean success, final JobLifecycleStatus jobEventStatus, final Object jobEvent, boolean useNewValues) {
         if (jobEvent instanceof JobPreExecutionEvent) {
             HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
                     jobEvent.optionsValues,
@@ -245,7 +248,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param jobEvent
      * @return
      */
-    Object mergeEvent(final JobEventStatus jobEventStatus, final Object jobEvent) {
+    Object mergeEvent(final JobLifecycleStatus jobEventStatus, final Object jobEvent) {
         if (jobEvent instanceof JobPreExecutionEvent) {
             HashMap<String, String> newOptionsValues = mergePreExecutionOptionsValues(
                     jobEvent.optionsValues,
@@ -270,7 +273,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
         }
     }
 
-    JobEventStatus handleEventForPlugin(
+    JobLifecycleStatus handleEventForPlugin(
             EventType eventType,
             NamedJobLifecyclePlugin plugin,
             event
@@ -291,7 +294,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      */
     HashMap<String, String> mergePreExecutionOptionsValues(
             Map<String, String> optionsValues,
-            JobEventStatus jobEventStatus
+            JobLifecycleStatus jobEventStatus
     ) {
         def newOptionsValues = new HashMap<String, String>(optionsValues ?: [:])
         if (jobEventStatus && jobEventStatus.isUseNewValues() && jobEventStatus.optionsValues) {
@@ -307,7 +310,7 @@ class JobLifecyclePluginService implements ProjectConfigurable {
      * @param jobEventStatus result of event
      * @return merged set, or null
      */
-    TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobEventStatus jobEventStatus) {
+    TreeSet<JobOption> mergePersistOptions(SortedSet<JobOption> initial, JobLifecycleStatus jobEventStatus) {
         SortedSet<JobOption> options = initial ? new TreeSet<JobOption>(initial) : null
 
         if (jobEventStatus && jobEventStatus.isUseNewValues()) {
@@ -333,9 +336,19 @@ class JobLifecyclePluginService implements ProjectConfigurable {
         }
     }
 
-    class NamedJobLifecyclePlugin implements JobLifecyclePlugin {
-        @Delegate JobLifecyclePlugin plugin
-        String name
-    }
 
+}
+
+@CompileStatic
+class NamedJobLifecyclePlugin implements JobLifecyclePlugin {
+    @Delegate JobLifecyclePlugin plugin
+    String name
+}
+
+@CompileStatic
+class JobEventStatusImpl implements JobLifecycleStatus {
+    boolean successful
+    Map optionsValues
+    boolean useNewValues
+    SortedSet<JobOption> options
 }

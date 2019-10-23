@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.plugins.jobs;
 
 import com.dtolabs.rundeck.core.jobs.JobOption;
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException;
+import lombok.Builder;
 import lombok.Data;
 
 import java.net.MalformedURLException;
@@ -9,6 +10,7 @@ import java.net.URL;
 import java.util.*;
 
 @Data
+@Builder
 public class JobOptionImpl implements JobOption, Comparable {
     static final String DEFAULT_DELIMITER = ",";
     private String name;
@@ -20,7 +22,7 @@ public class JobOptionImpl implements JobOption, Comparable {
     private Boolean required;
     private Boolean isDate;
     private String dateFormat;
-    private TreeSet values;
+    private TreeSet<String> values;
     private URL realValuesUrl;
     private String label;
     private String regex;
@@ -38,90 +40,94 @@ public class JobOptionImpl implements JobOption, Comparable {
     private Boolean sortValues;
     private List<String> optionValues;
 
-    public JobOptionImpl(){}
 
-    public JobOptionImpl(LinkedHashMap option) throws ValidationException{
-        this.name = (String) option.get("name");
-        this.label = option.containsKey("label") ? (String) option.get("label") : null;
-        this.enforced = option.containsKey("enforced") && (boolean) option.get("enforced");
-        this.required = option.containsKey("required") && (boolean) option.get("required");
-        this.isDate = option.containsKey("isDate") && (boolean) option.get("isDate");
-        if(this.isDate){
-            this.dateFormat = (String) option.get("dateFormat");
+    public static JobOptionImpl fromOptionMap(LinkedHashMap option) throws ValidationException {
+        JobOptionImplBuilder builder = JobOptionImpl.builder();
+        builder.name((String) option.get("name"));
+        builder.label(option.containsKey("label") ? (String) option.get("label") : null);
+        builder.enforced = option.containsKey("enforced") && (boolean) option.get("enforced");
+        builder.required = option.containsKey("required") && (boolean) option.get("required");
+        builder.isDate = option.containsKey("isDate") && (boolean) option.get("isDate");
+        if (builder.isDate) {
+            builder.dateFormat = (String) option.get("dateFormat");
         }
         if (option.containsKey("type")) {
-            this.optionType = (String) option.get("type");
+            builder.optionType = (String) option.get("type");
         }
         if(option.containsKey("description")){
-            this.description = (String) option.get("description");
+            builder.description = (String) option.get("description");
         }
         if(option.containsKey("sortIndex")){
-            this.sortIndex = (Integer) option.get("sortIndex");
+            builder.sortIndex = (Integer) option.get("sortIndex");
         }
         if(option.containsKey("value")){
-            this.defaultValue = (String) option.get("value");
+            builder.defaultValue = (String) option.get("value");
         }
         if(option.containsKey("storagePath")){
-            this.defaultStoragePath = (String) option.get("storagePath");
+            builder.defaultStoragePath = (String) option.get("storagePath");
         }
         if(option.containsKey("valuesUrl")){
             try {
-                this.realValuesUrl = new URL((String)option.get("valuesUrl"));
+                builder.realValuesUrl = new URL((String) option.get("valuesUrl"));
             } catch (MalformedURLException e) {
                 throw new ValidationException(e.getMessage());
             }
         }
         if(option.containsKey("regex")){
-            this.regex = (String) option.get("regex");
+            builder.regex = (String) option.get("regex");
         }
         if(option.containsKey("values")){
-            this.values = option.get("values") instanceof Collection ? new TreeSet<>((Collection)option.get("values")):new TreeSet((SortedSet)option.get("values"));
+            builder.values =
+                    option.get("values") instanceof Collection
+                    ? new TreeSet<>((Collection) option.get("values"))
+                    : new TreeSet((SortedSet) option.get("values"));
             if(option.containsKey("valuesListDelimiter")){
-                this.valuesListDelimiter = (String) option.get("valuesListDelimiter");
+                builder.valuesListDelimiter = (String) option.get("valuesListDelimiter");
             }else{
-                this.valuesListDelimiter = DEFAULT_DELIMITER;
+                builder.valuesListDelimiter = DEFAULT_DELIMITER;
             }
-            this.valuesList = produceValuesList();
-            this.values = null;
+            builder.valuesList = produceValuesList(builder);
+            builder.values = null;
         }
         if(option.containsKey("multivalued")){
-            this.multivalued = (Boolean) option.get("multivalued");
-            if(this.multivalued){
+            builder.multivalued = (Boolean) option.get("multivalued");
+            if (builder.multivalued) {
                 if(option.containsKey("delimiter")){
-                    this.delimiter = (String) option.get("delimiter");
+                    builder.delimiter = (String) option.get("delimiter");
                 }
                 if(option.containsKey("multivalueAllSelected")){
-                    this.multivalueAllSelected = (Boolean) option.get("multivalueAllSelected");
+                    builder.multivalueAllSelected = (Boolean) option.get("multivalueAllSelected");
                 }
             }
         }
         if(option.containsKey("secure")){
-            this.secureInput = (Boolean) option.get("secure");
+            builder.secureInput = (Boolean) option.get("secure");
         }else{
-            this.secureInput = false;
+            builder.secureInput = false;
         }
-        if(this.secureInput && option.containsKey("valueExposed")){
-            this.secureExposed = (Boolean) option.get("valueExposed");
+        if (builder.secureInput && option.containsKey("valueExposed")) {
+            builder.secureExposed = (Boolean) option.get("valueExposed");
         }else{
-            this.secureExposed = false;
+            builder.secureExposed = false;
         }
         if(option.containsKey("optionValuesPluginType")) {
-            this.optionValuesPluginType = (String) option.get("optionValuesPluginType");
+            builder.optionValuesPluginType = (String) option.get("optionValuesPluginType");
         }
         if(option.containsKey("hidden")){
-            this.hidden = (Boolean) option.get("hidden");
+            builder.hidden = (Boolean) option.get("hidden");
         }
+        return builder.build();
     }
 
 
-    private String produceValuesList(){
-        if(this.values != null){
-            if(this.valuesListDelimiter == null){
-                this.valuesListDelimiter = DEFAULT_DELIMITER;
+    static private String produceValuesList(JobOptionImplBuilder builder) {
+        if (builder.values != null) {
+            if (builder.valuesListDelimiter == null) {
+                builder.valuesListDelimiter = DEFAULT_DELIMITER;
             }
-            this.valuesList = String.join(this.valuesListDelimiter,this.values);
-            this.values = null;
-            return this.valuesList;
+            builder.valuesList = String.join(builder.valuesListDelimiter, builder.values);
+            builder.values = null;
+            return builder.valuesList;
         }else{
             return "";
         }

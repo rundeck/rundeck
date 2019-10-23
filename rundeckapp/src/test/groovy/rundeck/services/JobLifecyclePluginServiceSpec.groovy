@@ -1,7 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.jobs.JobEventStatus
+import com.dtolabs.rundeck.core.jobs.JobLifecycleStatus
 import com.dtolabs.rundeck.core.jobs.JobOption
 import com.dtolabs.rundeck.plugins.jobs.JobOptionImpl
 import grails.test.mixin.TestFor
@@ -10,17 +10,17 @@ import spock.lang.Specification
 @TestFor(JobLifecyclePluginService)
 class JobLifecyclePluginServiceSpec extends Specification {
 
-    class JobEventStatusImplTest implements JobEventStatus{
+    class JobLifecycleStatusImplTest implements JobLifecycleStatus{
 
         boolean useNewValues = true
         Map newOptionValues = ["firstKey":"newModifiedValue", "secondKey":"secondValue"]
         @Override
         SortedSet<JobOption> getOptions() {
             SortedSet<JobOption> jobOptions = new TreeSet<JobOption>()
-            jobOptions.add(new JobOptionImpl([
+            jobOptions.add(JobOptionImpl.fromOptionMap([
                     name: "newTestOption"
             ]))
-            jobOptions.add(new JobOptionImpl([
+            jobOptions.add(JobOptionImpl.fromOptionMap([
                     name: "newTestOption2"
             ]))
             return jobOptions
@@ -52,8 +52,8 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge options with new values"(){
         given:
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
-        initial.add(new JobOptionImpl([name: "oldTestOption"]))
-        JobEventStatus jobEventStatus = new JobEventStatusImplTest()
+        initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
+        JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
 
         when:
         def result = service.mergePersistOptions(initial, jobEventStatus)
@@ -69,8 +69,8 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge options with new values, with no replace"(){
         given:
         SortedSet<JobOption> initial = new TreeSet<JobOption>()
-        initial.add(new JobOptionImpl([name: "oldTestOption"]))
-        JobEventStatus jobEventStatus = new JobEventStatusImplTest()
+        initial.add(JobOptionImpl.fromOptionMap([name: "oldTestOption"]))
+        JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.useNewValues = false
 
         when:
@@ -86,7 +86,7 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge option values, modifing value" (){
         given:
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
-        JobEventStatus jobEventStatus = new JobEventStatusImplTest()
+        JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
 
         when:
         def result = service.mergePreExecutionOptionsValues(optionsValues, jobEventStatus)
@@ -100,7 +100,7 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge option values, adding value" (){
         given:
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
-        JobEventStatus jobEventStatus = new JobEventStatusImplTest()
+        JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.newOptionValues << ["thirdKey":"new third value"]
 
         when:
@@ -115,7 +115,7 @@ class JobLifecyclePluginServiceSpec extends Specification {
     def "merge option values, without new values" (){
         given:
         Map<String, String> optionsValues = ["firstKey":"firstValue"]
-        JobEventStatus jobEventStatus = new JobEventStatusImplTest()
+        JobLifecycleStatus jobEventStatus = new JobLifecycleStatusImplTest()
         jobEventStatus.newOptionValues << ["thirdKey":"new third value"]
         jobEventStatus.useNewValues = false
 
