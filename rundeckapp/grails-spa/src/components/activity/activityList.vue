@@ -180,7 +180,7 @@
                 name="bulk_edit"
                 :value="exec.id"
                 v-model="bulkSelectedIds"
-                :disabled="exec.status==='running'"
+                :disabled="exec.status==='running' || exec.status==='scheduled'"
                 class="_defaultInput"/>
             </td>
                  <td class="eventicon " :title="executionState(exec.status)" >
@@ -565,7 +565,7 @@ export default Vue.extend({
         }
       }else if(rpt.executionId){
         this.toggleSelectId(rpt.executionId)
-      }else if(rpt.id && rpt.status!=='running'){
+      }else if(rpt.id && rpt.status!=='running' && rpt.status!=='scheduled'){
         this.toggleSelectId(rpt.id)
       }
     },
