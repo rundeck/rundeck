@@ -45,6 +45,22 @@ class PluginTagLib {
         out << "Plugin " + (step.nodeStep ? "Node" : "") + " Step (${step.type})"
     }
 
+    /**
+     * @attr prop REQUIRED Property object
+     */
+    def propertyIcon = { attrs, body ->
+        def prop = attrs.get('prop')
+        def options=prop.renderingOptions?:[:]
+        if (options.get('glyphicon')) {
+            out << "<i class=\"glyphicon glyphicon-${enc(attr: options.get('glyphicon'))}\"></i>"
+        } else if (options.get('faicon')) {
+            out << "<i class=\"fas fa-${enc(attr: options.get('faicon'))}\"></i>"
+        } else if (options.get('fabicon')) {
+            out << "<i class=\"fab fa-${enc(attr: options.get('fabicon'))}\"></i>"
+        } else if(options.get('icon:plugin:serviceName') && options.get('icon:plugin:provider')) {
+            out << pluginIcon(service: options.get('icon:plugin:serviceName'), name: options.get('icon:plugin:provider'), body)
+        }
+    }
     def pluginIcon = { attrs, body ->
         def service = attrs.get('service')
         def name = attrs.get('name')

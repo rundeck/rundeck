@@ -18,25 +18,21 @@
 
 package rundeck.services
 
+
 import groovy.mock.interceptor.MockFor
 import groovy.mock.interceptor.StubFor
 
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.TestMixin
 import grails.test.runtime.DirtiesRuntime
-import org.grails.plugins.databinding.DataBindingGrailsPlugin;
-
-
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.web.ControllerUnitTestMixin;
 
 import org.junit.Assert
-import org.junit.Before;
 import org.quartz.*
 import org.quartz.impl.matchers.GroupMatcher
 import org.quartz.spi.JobFactory
@@ -55,7 +51,7 @@ import rundeck.controllers.ScheduledExecutionController
 @TestFor(ScheduledExecutionService)
 @Mock([Execution, FrameworkService, WorkflowStep, CommandExec, JobExec, PluginStep, Workflow, ScheduledExecution, Option, Notification])
 @TestMixin(ControllerUnitTestMixin)
-class ScheduledExServiceTests {
+    class ScheduledExServiceTests {
 
 
 
@@ -196,6 +192,9 @@ class ScheduledExServiceTests {
                 return projectMock
             }
             projectNames{authContext -> []}
+            getFrameworkNodeName(0..1){ -> "testProject"}
+            filterNodeSet(0..1){nodeselector, project -> null}
+            filterAuthorizedNodes(0..1){project, actions, unfiltered, authContext -> null}
         }
     }
     def setupDoUpdateJob(sec){
@@ -280,7 +279,7 @@ class ScheduledExServiceTests {
 
 
 
-    public void testDoUpdateScheduledInvalidDayOfMonth() {
+    public void ScheduledInvalidDayOfMonth() {
         //test set scheduled with invalid crontabString (invalid dayOfMonth/dayOfWeek combo)
         def results = assertUpdateCrontabFailure('0 21 */4 */4 */6 3 2010-2040')
 
@@ -609,15 +608,16 @@ class ScheduledExServiceTests {
                 return projectMock
             }
             projectNames{authContext -> []}
-            getFrameworkFromUserSession { session, request -> return null }
-            getCommand { project, type, command, framework ->
+            getFrameworkFromUserSession(0..1) { session, request -> return null }
+            getCommand(0..1) { project, type, command, framework ->
                 assertEquals 'testProject', project
                 assertEquals 'aType', type
                 assertEquals 'aCommand', command
                 return null
             }
-            getFrameworkFromUserSession { session, request -> return null }
-            getFrameworkFromUserSession { session, request -> return null }
+            getFrameworkNodeName(0..1){ -> "testProject"}
+            filterNodeSet(0..1){nodeselector, project -> null}
+            filterAuthorizedNodes(0..1){project, actions, unfiltered, authContext -> null}
         }
 
 

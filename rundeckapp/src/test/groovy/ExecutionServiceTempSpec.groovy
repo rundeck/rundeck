@@ -14,40 +14,13 @@
  * limitations under the License.
  */
 
-
-import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.common.SelectorUtils
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils
-import com.dtolabs.rundeck.core.dispatcher.ContextView
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.execution.ExecutionListener
-import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import com.dtolabs.rundeck.execution.JobRefCommand
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import grails.test.mixin.Mock
-import org.grails.plugins.metricsweb.MetricService
-import org.junit.Assert
-import org.rundeck.storage.api.PathUtil
-import org.rundeck.storage.api.StorageException
-import org.springframework.context.MessageSource
 import rundeck.*
 import rundeck.services.*
 import spock.lang.Specification
-import spock.lang.Unroll
-
-import java.time.ZoneId
 
 /**
  * Created by greg on 2/17/15.
@@ -56,7 +29,9 @@ import java.time.ZoneId
 class ExecutionServiceTempSpec extends Specification{
     ExecutionService service
     def setup(){
-         service = new ExecutionService()
+        service = new ExecutionService()
+        service.executionLifecyclePluginService = Mock(ExecutionLifecyclePluginService)
+        service.jobLifecyclePluginService = Mock(JobLifecyclePluginService)
     }
 
     def "loadSecureOptionStorageDefaults replace job vars"() {
@@ -291,6 +266,9 @@ class ExecutionServiceTempSpec extends Specification{
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+        }
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            getNodes(_,_) >> null
         }
         when:
         Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12', executionType: 'user'])

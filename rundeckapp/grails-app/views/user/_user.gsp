@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.AuthToken; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
+<%@ page import="rundeck.AuthToken; org.rundeck.core.auth.AuthConstants" %>
 <%--
    _user.gsp
 

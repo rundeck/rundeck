@@ -2,6 +2,7 @@ package com.dtolabs.rundeck.core.rules
 
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
 
@@ -15,11 +16,15 @@ class WorkflowEngineSpec extends Specification {
     class TestOpCompleted implements WorkflowSystem.OperationCompleted<Map> {
         StateObj newState
         Map result
+        String identity
+        boolean success
     }
 
     class TestOpCompletedB implements WorkflowSystem.OperationCompleted<WFSharedContext> {
         StateObj newState
         WFSharedContext result
+        String identity
+        boolean success
     }
 
     class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {
@@ -33,6 +38,7 @@ class WorkflowEngineSpec extends Specification {
         Long id
         boolean hasRun = false
         Map input = null
+        String identity
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -76,6 +82,7 @@ class WorkflowEngineSpec extends Specification {
         Long id
         boolean hasRun = false
         WFSharedContext input = null
+        String identity
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -426,8 +433,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            shared.addData(WFSharedContext.with(ContextView.global(), new BaseDataContext(map)))
-                            return new TestOpCompletedB(newState: States.state('akey', 'avalue'), result: null)
+                            return new TestOpCompletedB(newState: States.state('akey', 'avalue'), result: WFSharedContext.with(ContextView.global(), new BaseDataContext(map)))
                         }
                 ),
                 new TestOperationB(
@@ -453,7 +459,7 @@ class WorkflowEngineSpec extends Specification {
         [export: [a: "b"]]          | 'export.a'    | 'b'
     }
 
-    static class SharedMap implements WorkflowSystem.SharedData<Map> {
+    static class SharedMap implements WorkflowSystem.SharedData<Map, Map> {
         List<Map> addedData = []
 
         @Override
@@ -465,19 +471,30 @@ class WorkflowEngineSpec extends Specification {
         Map produceNext() {
             addedData.isEmpty() ? [:] : addedData.last()
         }
+
+        @Override
+        Map produceState() {
+            [:]
+        }
     }
 
-    static class Sharedcontext implements WorkflowSystem.SharedData<WFSharedContext> {
+    static class Sharedcontext implements WorkflowSystem.SharedData<WFSharedContext, Map<String, String>> {
         WFSharedContext data = new WFSharedContext()
-
+        Map<String, String> state = [:]
         @Override
         void addData(final WFSharedContext item) {
             data.merge(item)
+            state.putAll(DataContextUtils.flattenDataContext(item.getData(ContextView.global())))
         }
 
         @Override
         WFSharedContext produceNext() {
             data
+        }
+
+        @Override
+        Map<String, String> produceState() {
+            state
         }
     }
 

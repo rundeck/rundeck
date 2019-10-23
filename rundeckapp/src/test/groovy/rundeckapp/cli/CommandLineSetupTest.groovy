@@ -93,4 +93,33 @@ class CommandLineSetupTest extends Specification {
         output[output.length -1 ].startsWith("crypt:")
 
     }
+
+    def "EncryptPassword with Hidden Input"() {
+        when:
+        int linesWrittenRL = 0
+        def console = new Console()
+        console.metaClass.readLine = { ->
+            if(linesWrittenRL++ == 0) return "username\n"
+            return "\n"
+        }
+        console.metaClass.readPassword = { -> return "thepassword".toCharArray() }
+        System.metaClass.static.console = { -> console }
+        CommandLineSetup setup = new CommandLineSetup()
+        Exception ex
+        try {
+            setup.runSetup("--encryptpwd", "Hidden Input")
+        } catch(Exception tex) {
+            ex = tex
+        }
+
+        def output = sysOut.toString().split('\\n')
+
+        then:
+        ex.message == "system.exit 0"
+        output[output.length -4 ] == "==ENCRYPTED OUTPUT=="
+        output[output.length -3 ].startsWith("obfuscate:")
+        output[output.length -2 ].startsWith("crypt:")
+        output[output.length -1 ].startsWith("md5:")
+
+    }
 }

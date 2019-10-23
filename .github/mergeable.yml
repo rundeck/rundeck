@@ -1,10 +1,20 @@
+version: 2
 mergeable:
-  pull_requests:
-    stale:
-      days: 14
-    label:
-      must_exclude:
-        regex: '(needs documentation)'
-        message: 'This PR needs documentation. Please submit a PR to the https://github.com/rundeck/docs project with your documentation.'        
-    description:
-      no-empty: true
+  - when: pull_request.*
+    validate:
+      - do: label
+        must_exclude:
+          regex: '(needs documentation)'
+          message: 'This PR needs documentation. Please submit a PR to the https://github.com/rundeck/docs project with your documentation.'
+  - when: pull_request.*
+    validate:
+      - do: description
+        no_empty:
+          enabled: true
+          message: 'Please describe the changes'
+  - when: pull_request.*
+    validate:
+      - do: milestone
+        no_empty:
+          enabled: true # Cannot be empty when true.
+          message: 'Milestone must be assigned before merging.'

@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
@@ -57,7 +58,6 @@ import com.dtolabs.rundeck.plugins.scm.ScmImportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportTrackedItem
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.SynchState
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
 import com.dtolabs.rundeck.app.api.ApiVersions
@@ -622,7 +622,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(scm.project, [action,scmAction], action)
         if (!authContext) {
@@ -738,7 +738,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(scm.project, [action,scmAction], action)
         if (!authContext) {
@@ -915,7 +915,7 @@ class ScmController extends ControllerBase {
     private BasicInputView validateView(String project, ActionRequest scm) {
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(project, [action,scmAction], action)
         if (!authContext) {
@@ -1114,7 +1114,7 @@ class ScmController extends ControllerBase {
 
 
         def requiredAction = integration == 'export' ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def requiredActionScm = integration == 'export' ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def requiredActionScm = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(project),
@@ -1222,7 +1222,7 @@ class ScmController extends ControllerBase {
         )
         def requiredAction = integration == 'export' ? AuthConstants.ACTION_EXPORT :
                 AuthConstants.ACTION_IMPORT
-        def requiredActionScm = integration == 'export' ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def requiredActionScm = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(project),
@@ -1397,7 +1397,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(scheduledExecution.project, [action,scmAction], action)
 
@@ -1510,7 +1510,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(job.project, [action,scmAction], action)
         if (!authContext) {
@@ -1613,7 +1613,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(scheduledExecution.project, [action,scmAction], action)
         if (!authContext) {
@@ -1644,7 +1644,7 @@ class ScmController extends ControllerBase {
 
         def isExport = scm.integration == 'export'
         def action = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def scmAction = isExport ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def scmAction = isExport ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
 
         def authContext = apiAuthorize(scheduledExecution.project, [action,scmAction], action)
         if (!authContext) {
@@ -1701,7 +1701,7 @@ class ScmController extends ControllerBase {
 
         def isExport = integration == 'export'
         def diffAction = isExport ? AuthConstants.ACTION_EXPORT : AuthConstants.ACTION_IMPORT
-        def diffScmAction = integration == 'export' ? AuthConstants.SCM_EXPORT : AuthConstants.SCM_IMPORT
+        def diffScmAction = integration == 'export' ? AuthConstants.ACTION_SCM_EXPORT : AuthConstants.ACTION_SCM_IMPORT
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                                                                  frameworkService.authResourceForProject(project),

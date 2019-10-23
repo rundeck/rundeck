@@ -19,7 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authentication.tokens.AuthTokenType
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.rundeck.util.Sizes

@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import org.rundeck.core.auth.AuthConstants
+
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
@@ -24,7 +26,6 @@ import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -369,7 +370,7 @@ class JobStateServiceSpec extends Specification {
             ).save()
 
         service.frameworkService=Mock(FrameworkService){
-            1 * authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],projectName) >> false
+            1 * authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],projectName) >> false
             0 * _(*_)
         }
 

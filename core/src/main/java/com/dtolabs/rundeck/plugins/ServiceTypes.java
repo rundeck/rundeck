@@ -27,12 +27,14 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin;
+import com.dtolabs.rundeck.plugins.jobs.ExecutionLifecyclePlugin;
 import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin;
 import com.dtolabs.rundeck.plugins.nodes.NodeEnhancerPlugin;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.plugins.option.OptionValuesPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
+import com.dtolabs.rundeck.plugins.project.JobLifecyclePlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory;
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory;
@@ -93,6 +95,8 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UserGroupSource, UserGroupSourcePlugin.class);
         map.put(ServiceNameConstants.WebhookEvent, WebhookEventPlugin.class);
         map.put(ServiceNameConstants.PasswordUtilityEncrypter, PasswordUtilityEncrypterPlugin.class);
+        map.put(ServiceNameConstants.ExecutionLifecycle, ExecutionLifecyclePlugin.class);
+        map.put(ServiceNameConstants.JobLifecycle, JobLifecyclePlugin.class);
 
         TYPES = Collections.unmodifiableMap(map);
     }

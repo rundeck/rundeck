@@ -16,9 +16,10 @@
 
 package org.rundeck.app.authorization
 
-
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.NodeExecutionService
+import com.dtolabs.rundeck.core.execution.logstorage.AsyncExecutionFileLoaderService
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileLoaderService
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.storage.keys.KeyStorageTree
 import groovy.transform.CompileStatic
@@ -27,6 +28,7 @@ import org.rundeck.app.spi.AuthorizedServicesProvider
 import org.rundeck.app.spi.Services
 import org.rundeck.app.spi.ServicesProvider
 import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.AuthedLogFileLoaderService
 import rundeck.services.DirectNodeExecutionService
 import rundeck.services.JobStateService
 import rundeck.services.StorageService
@@ -34,10 +36,12 @@ import rundeck.services.StorageService
 @CompileStatic
 class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
     @Autowired JobStateService jobStateService
+    @Autowired AuthedLogFileLoaderService authedLogFileLoaderService
     @Autowired StorageService storageService
     @Autowired DirectNodeExecutionService directNodeExecutionService
     ServicesProvider baseServices
-    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)NodeExecutionService]
+    private static List<Class> SERVICE_TYPES = [(Class) JobService, (Class) KeyStorageTree, (Class)
+            NodeExecutionService, (Class) ExecutionFileLoaderService, (Class) AsyncExecutionFileLoaderService]
 
     @Override
     Services getServicesWith(final UserAndRolesAuthContext authContext) {
@@ -71,6 +75,12 @@ class RundeckAuthorizedServicesProvider implements AuthorizedServicesProvider {
             }
             if (type == NodeExecutionService) {
                 return (T) directNodeExecutionService.nodeExecutionServiceWithAuth(authContext)
+            }
+            if (type == ExecutionFileLoaderService) {
+                return (T) authedLogFileLoaderService.serviceWithAuth(authContext)
+            }
+            if (type == AsyncExecutionFileLoaderService) {
+                return (T) authedLogFileLoaderService.serviceWithAuth(authContext)
             }
             throw new IllegalStateException("Required service " + type.getName() + " was not available");
         }
