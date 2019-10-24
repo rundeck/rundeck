@@ -20,49 +20,21 @@ import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.rules.StateObj;
 import com.dtolabs.rundeck.core.rules.WorkflowSystem;
+import lombok.Value;
 
 /**
  * Successful result of a workflow step operation
  */
+@Value
 public class OperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedContext> {
+    private String identity;
     private int stepNum;
-    private BaseWorkflowExecutor.StepResultCapture stepResultCapture;
     private StateObj newState;
-
-    OperationCompleted(
-            final int stepNum,
-            final StateObj newState, BaseWorkflowExecutor.StepResultCapture stepResultCapture
-    )
-    {
-
-        this.stepNum = stepNum;
-        this.newState = newState;
-        this.stepResultCapture = stepResultCapture;
-    }
+    private BaseWorkflowExecutor.StepResultCapture stepResultCapture;
+    private boolean success;
 
     @Override
     public WFSharedContext getResult() {
         return stepResultCapture.getResultData();
-    }
-    public BaseWorkflowExecutor.StepResultCapture getStepResultCapture() {
-        return stepResultCapture;
-    }
-
-    @Override
-    public StateObj getNewState() {
-        return newState;
-    }
-
-    @Override
-    public String toString() {
-        return "StepSuccess{" +
-               "stepNum=" + stepNum +
-               ", stepResultCapture=" + stepResultCapture +
-               ", newState=" + newState +
-               '}';
-    }
-
-    public int getStepNum() {
-        return stepNum;
     }
 }

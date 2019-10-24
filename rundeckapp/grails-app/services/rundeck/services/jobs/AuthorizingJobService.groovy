@@ -56,6 +56,16 @@ interface AuthorizingJobService {
         throws JobNotFound, JobExecutionError
 
     ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            String jobArgString,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError
+
+    ExecutionReference runJob(
         UserAndRolesAuthContext auth,
         JobReference jobReference,
         Map optionData,
@@ -63,6 +73,16 @@ interface AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError
+
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            Map optionData,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError
 
     Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
 

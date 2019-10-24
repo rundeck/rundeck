@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
+import lombok.Getter;
 
 import java.util.Set;
 
@@ -29,14 +30,15 @@ import java.util.Set;
  * operation for running a step
  */
 public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,OperationCompleted> {
-    private int stepNum;
-    private String label;
-    private Set<Condition> startTriggerConditions;
-    private Set<Condition> skipTriggerConditions;
+    @Getter private int stepNum;
+    @Getter private String label;
+    @Getter private Set<Condition> startTriggerConditions;
+    @Getter private Set<Condition> skipTriggerConditions;
     private StepCallable callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
-    private boolean didRun = false;
+    @Getter private boolean didRun = false;
+    @Getter private final String identity;
 
     public StepOperation(
             final int stepNum,
@@ -51,6 +53,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         this.stepNum = stepNum;
         this.label = label;
         this.callable = callable;
+        this.identity = String.format("[%d]%s", stepNum, label != null ? label : "");
         this.startTriggerState = startTriggerState;
         this.startTriggerConditions = startTriggerConditions;
         this.skipTriggerConditions = skipTriggerConditions;
@@ -152,7 +155,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             }
         }
 
-        return new OperationCompleted(stepNum, stateChanges, stepResultCapture);
+        return new OperationCompleted(getIdentity(), stepNum, stateChanges, stepResultCapture, success);
     }
 
     @Override
@@ -200,27 +203,11 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
         return stateChanges;
     }
 
-    public boolean isDidRun() {
-        return didRun;
-    }
-
     @Override
     public String toString() {
         return "Step{" +
                "stepNum=" + stepNum +
                ", label='" + label + '\'' +
                '}';
-    }
-
-    public int getStepNum() {
-        return stepNum;
-    }
-
-    public Set<Condition> getStartTriggerConditions() {
-        return startTriggerConditions;
-    }
-
-    public Set<Condition> getSkipTriggerConditions() {
-        return skipTriggerConditions;
     }
 }

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationFactory
 import com.dtolabs.rundeck.core.cluster.ClusterInfoService
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.NodeSupport
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileManagerService
 import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.JarPluginScanner
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
@@ -47,7 +48,6 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.core.storage.StorageTreeFactory
 import grails.plugin.springsecurity.SpringSecurityUtils
 import groovy.io.FileType
-import org.grails.spring.beans.factory.InstanceFactoryBean
 import org.rundeck.app.api.ApiInfo
 import org.rundeck.app.authorization.RundeckAuthContextEvaluator
 import org.rundeck.app.authorization.RundeckAuthorizedServicesProvider
@@ -70,7 +70,6 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
-import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
 import org.springframework.security.core.session.SessionRegistryImpl
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler
@@ -82,7 +81,6 @@ import org.springframework.security.web.authentication.session.SessionFixationPr
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.security.web.session.ConcurrentSessionFilter
 import rundeck.services.DirectNodeExecutionService
-import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -184,8 +182,9 @@ beans={
 
     rundeckSpiBaseServicesProvider(RundeckSpiBaseServicesProvider) {
         services = [
-                (ClusterInfoService): ref('clusterInfoService'),
-                (ApiInfo)           : ref('rundeckApiInfoService')
+                (ClusterInfoService)         : ref('clusterInfoService'),
+                (ApiInfo)                    : ref('rundeckApiInfoService'),
+                (ExecutionFileManagerService): ref('logFileStorageService')
         ]
     }
 
@@ -234,6 +233,20 @@ beans={
         cachedir = cacheDir
         cache = filePluginCache
         serviceAliases = [WorkflowNodeStep: 'RemoteScriptNodeStep']
+    }
+
+    /**
+     * the Job life cycle plugin provider service
+     */
+    jobLifecyclePluginProviderService(JobLifecyclePluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
+    }
+
+    /**
+     * the Execution life cycle plugin provider service
+     */
+    executionLifecyclePluginProviderService(ExecutionLifecyclePluginProviderService){
+        rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
     }
 
     /**

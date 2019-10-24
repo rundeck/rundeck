@@ -16,16 +16,20 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.domain.EmbeddedJsonData
 import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.util.XmlParserUtil
 import rundeck.services.ExecutionService
+import rundeck.services.JobReferenceImpl
+import rundeck.services.execution.ExecutionReferenceImpl
 
 /**
 * Execution
 */
-class Execution extends ExecutionContext {
+class Execution extends ExecutionContext implements EmbeddedJsonData {
 
     ScheduledExecution scheduledExecution
     Date dateStarted
@@ -47,9 +51,11 @@ class Execution extends ExecutionContext {
     String serverNodeUUID
     Integer nodeThreadcount=1
     Long retryOriginalId
+    Long retryPrevId
+    String extraMetadata
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients = ['executionState', 'customStatusString', 'userRoles']
+    static transients = ['executionState', 'customStatusString', 'userRoles', 'extraMetadataMap']
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
@@ -107,7 +113,9 @@ class Execution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
+        retryPrevId(nullable: true)
         excludeFilterUncheck(nullable: true)
+        extraMetadata(nullable: true)
     }
 
     static mapping = {
@@ -138,6 +146,7 @@ class Execution extends ExecutionContext {
         retry( type: 'text')
         userRoleList(type: 'text')
         serverNodeUUID(type: 'string')
+        extraMetadata(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
@@ -169,6 +178,15 @@ class Execution extends ExecutionContext {
     public String toString() {
         return "Workflow execution: ${workflow}"
     }
+
+    Map getExtraMetadataMap() {
+        extraMetadata ? asJsonMap(extraMetadata) : [:]
+    }
+
+    void setExtraMetadataMap(Map config) {
+        extraMetadata = config ? serializeJsonMap(config) : null
+    }
+
 
     public setUserRoles(List l) {
         setUserRoleList(l?.join(","))
@@ -285,6 +303,9 @@ class Execution extends ExecutionContext {
         if(this.retryOriginalId){
             map.retryOriginalId=retryOriginalId
         }
+        if (this.retryPrevId) {
+            map.retryPrevId = retryPrevId
+        }
         if(this.retry){
             map.retry=this.retry
         }
@@ -318,6 +339,9 @@ class Execution extends ExecutionContext {
 		if(this.orchestrator){
 			map.orchestrator=this.orchestrator.toMap();
 		}
+        if (this.extraMetadata) {
+            map.extra = this.extraMetadataMap
+        }
         map
     }
     static Execution fromMap(Map data, ScheduledExecution job=null){
@@ -346,6 +370,9 @@ class Execution extends ExecutionContext {
         }
         if(data.retryOriginalId){
             exec.retryOriginalId= Long.valueOf(data.retryOriginalId)
+        }
+        if (data.retryPrevId) {
+            exec.retryPrevId = Long.valueOf(data.retryPrevId)
         }
         if(data.retry){
             exec.retry=data.retry
@@ -405,7 +432,43 @@ class Execution extends ExecutionContext {
         if(data.orchestrator){
             exec.orchestrator = Orchestrator.fromMap(data.orchestrator)
         }
+        if (data.extra instanceof Map) {
+            exec.extraMetadataMap = data.extra
+        }
         exec
+    }
+
+    ExecutionReference asReference(Closure<String> genTargetNodes = null) {
+        JobReferenceImpl jobRef = null
+        String adhocCommand = null
+        if (scheduledExecution) {
+            jobRef = new JobReferenceImpl(
+                    id: scheduledExecution.extid,
+                    jobName: scheduledExecution.jobName,
+                    groupPath: scheduledExecution.groupPath,
+                    project: scheduledExecution.project
+            )
+        } else if (workflow && workflow.commands && workflow.commands[0]) {
+            adhocCommand = workflow.commands[0].summarize()
+        }
+        String targetNodes = genTargetNodes?.call(this)
+        return new ExecutionReferenceImpl(
+                project: project,
+                id: id,
+                retryOriginalId: retryOriginalId?.toString(),
+                retryPrevId: retryPrevId?.toString(),
+                retryNextId: retryExecution?.id?.toString(),
+                options: argString,
+                filter: filter,
+                job: jobRef,
+                adhocCommand: adhocCommand,
+                dateStarted: dateStarted,
+                status: status,
+                succeededNodeList: succeededNodeList,
+                failedNodeList: failedNodeList,
+                targetNodes: targetNodes,
+                metadata: extraMetadataMap
+        )
     }
 }
 

@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.api.tokens.ListTokens
 import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.extension.ApplicationExtension
 import grails.web.mapping.LinkGenerator
 import org.rundeck.util.Sizes
@@ -28,7 +29,6 @@ import rundeck.AuthToken
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.app.api.ApiVersions
 
 /**

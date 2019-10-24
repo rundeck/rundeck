@@ -37,7 +37,7 @@ class MultiDataContextSpec extends Specification {
         base.merge(ContextView.step(1), new BaseDataContext([test: [blah2: "basestep1"]]))
         base.merge(ContextView.nodeStep(1, "bnode"), new BaseDataContext([test: [blah2: "basebnode step 1"]]))
 
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
+            MultiDataContextImpl<ContextView, DataContext> context = new WFSharedContext(
                 base
         )
         context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
@@ -88,7 +88,7 @@ class MultiDataContextSpec extends Specification {
         base1.merge(ContextView.step(1), new BaseDataContext([test: [blah2: "basestep1"]]))
         base1.merge(ContextView.nodeStep(1, "bnode"), new BaseDataContext([test: [blah2: "basebnode step 1"]]))
 
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
+            MultiDataContextImpl<ContextView, DataContext> context = new WFSharedContext(
                 base1
         )
         context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
@@ -114,7 +114,7 @@ class MultiDataContextSpec extends Specification {
     @Unroll
     def "resolve basic with strict #view key=#key def #defval expect #expect"() {
         given:
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>()
+            MultiDataContextImpl<ContextView, DataContext> context = new WFSharedContext()
 
         context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
         context.merge(ContextView.node("anode"), new BaseDataContext([test: [blah: "anode"]]))
@@ -146,7 +146,7 @@ class MultiDataContextSpec extends Specification {
     @Unroll
     def "resolve expand view #view find #key expect #expect"() {
         given:
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
+            MultiDataContextImpl<ContextView, DataContext> context = new WFSharedContext(
                 WFSharedContext.with(ContextView.global(), new BaseDataContext([test: [blah: "base", blee: "base"]]))
         )
         context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
@@ -181,7 +181,7 @@ class MultiDataContextSpec extends Specification {
     @Unroll
     def "resolve expand key view #view #key"() {
         given:
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
+            MultiDataContextImpl<ContextView, DataContext> context = new WFSharedContext(
                 WFSharedContext.with(
                         ContextView.global(),
                         new BaseDataContext([test: [blah: "base", base: "base value"]])
@@ -210,5 +210,55 @@ class MultiDataContextSpec extends Specification {
         ContextView.nodeStep(1, "anode") | "step"     | "step value"
         ContextView.nodeStep(1, "anode") | "global"   | "global value"
         ContextView.nodeStep(1, "anode") | "base"     | "base value"
+    }
+
+    def "merge does deep copy"() {
+        given:
+            WFSharedContext ctxA = new WFSharedContext()
+            WFSharedContext ctxB = new WFSharedContext()
+        when:
+            ctxA.merge(ContextView.global(), DataContextUtils.context("a", [z: "q"]))
+            ctxB.merge(ContextView.global(), DataContextUtils.context("b", [t: "p"]))
+            ctxA.merge(ctxB)
+            ctxA.merge(ContextView.global(), DataContextUtils.context("a", [x: "y"]))
+        then:
+            ctxB.getData(ContextView.global()).getData() == [b: [t: "p"]]
+            ctxA.getData(ContextView.global()).getData() == [b: [t: "p"], a: [z: 'q', x: 'y']]
+    }
+
+    def "merge does deep copy with base"() {
+        given:
+            WFSharedContext ctxC = new WFSharedContext()
+            WFSharedContext ctxA = new WFSharedContext(ctxC)
+            WFSharedContext ctxB = new WFSharedContext()
+        when:
+            ctxC.merge(ContextView.global(), DataContextUtils.context("a", [w: "d"]))
+
+            ctxA.merge(ContextView.global(), DataContextUtils.context("a", [z: "q"]))
+
+            ctxB.merge(ContextView.global(), DataContextUtils.context("b", [t: "p"]))
+
+            ctxA.merge(ctxB)
+            ctxA.merge(ContextView.global(), DataContextUtils.context("a", [x: "y"]))
+        then:
+            ctxB.getData(ContextView.global()).getData() == [b: [t: "p"]]
+            ctxA.getData(ContextView.global()).getData() == [b: [t: "p"], a: [z: 'q', x: 'y']]
+    }
+
+    def "consolidate does deep copy"() {
+        given:
+            WFSharedContext ctxA = new WFSharedContext()
+            ctxA.merge(ContextView.global(), DataContextUtils.context("a", [z: "q"]))
+            WFSharedContext ctxB = new WFSharedContext(ctxA)
+            ctxB.merge(ContextView.global(), DataContextUtils.context("b", [t: "p"]))
+        when:
+            def result = ctxB.consolidate()
+            ctxA.merge(ContextView.global(), DataContextUtils.context("b", [s: "u"]))
+            ctxB.merge(ContextView.global(), DataContextUtils.context("c", [r: "v"]))
+        then:
+            result.getData(ContextView.global()).getData() == [b: [t: "p"], a: [z: "q"]]
+            ctxB.getData(ContextView.global()).getData() == [b: [t: "p"], c: [r: 'v']]
+            ctxA.getData(ContextView.global()).getData() == [a: [z: "q"], b: [s: 'u']]
+            ctxB.consolidate().getData(ContextView.global()).getData() == [a: [z: "q"], b: [t: 'p', s: 'u'], c: [r: 'v']]
     }
 }

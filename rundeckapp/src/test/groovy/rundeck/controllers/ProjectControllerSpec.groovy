@@ -17,7 +17,6 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authentication.Group
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -37,12 +36,12 @@ import spock.lang.Unroll
 
 import javax.security.auth.Subject
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_IMPORT
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDATE
+import static org.rundeck.core.auth.AuthConstants.ACTION_ADMIN
+import static org.rundeck.core.auth.AuthConstants.ACTION_CREATE
+import static org.rundeck.core.auth.AuthConstants.ACTION_DELETE
+import static org.rundeck.core.auth.AuthConstants.ACTION_IMPORT
+import static org.rundeck.core.auth.AuthConstants.ACTION_READ
+import static org.rundeck.core.auth.AuthConstants.ACTION_UPDATE
 
 /**
  * Created by greg on 2/26/15.

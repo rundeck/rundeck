@@ -21,12 +21,12 @@ import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateListener
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
-import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.app.internal.workflow.ExceptionHandlingMutableWorkflowState
 import com.dtolabs.rundeck.app.support.ExecutionContext
-import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.state.*
@@ -42,10 +42,10 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
-import rundeck.services.logging.ExecutionFile
-import rundeck.services.logging.ExecutionFileDeletePolicy
-import rundeck.services.logging.ExecutionFileProducer
-import rundeck.services.logging.ExecutionLogState
+import org.rundeck.app.services.ExecutionFile
+
+import org.rundeck.app.services.ExecutionFileProducer
+import com.dtolabs.rundeck.core.execution.logstorage.ExecutionFileState
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
@@ -94,38 +94,44 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     @Override
+    ExecutionFile produceStorageFileForExecution(final ExecutionReference e) {
+        File localfile = getStateFileForExecution(e)
+        new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFile.DeletePolicy.WHEN_RETRIEVABLE)
+    }
+
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getStateFileForExecution(e)
-        new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
+        new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFile.DeletePolicy.WHEN_RETRIEVABLE)
     }
 
     @Override
-    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+    ExecutionFile produceStorageCheckpointForExecution(final ExecutionReference e) {
+        long eid=Long.parseLong(e.id)
         File tempFile
-        if (activeStates[e.id]) {
-            tempFile = Files.createTempFile("WorkflowService-storage-${e.id}", ".json").toFile()
-            persistExecutionStateCheckpoint(e.id, activeStates[e.id], tempFile)
+        if (activeStates[eid]) {
+            tempFile = Files.createTempFile("WorkflowService-storage-${eid}", ".json").toFile()
+            persistExecutionStateCheckpoint(eid, activeStates[eid], tempFile)
             return new ProducedExecutionFile(
                     localFile: tempFile,
-                    fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS
+                    fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS
             )
         }
         File localfile = getStateFileForExecution(e)
 
         def localproduced = new ProducedExecutionFile(
                 localFile: getStateFileForExecution(e),
-                fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE
+                fileDeletePolicy: ExecutionFile.DeletePolicy.WHEN_RETRIEVABLE
         )
         if (e.dateCompleted != null && localfile.exists()) {
             return localproduced
         }
-        def statemap = stateCache.getIfPresent(e.id)
+        def statemap = stateCache.getIfPresent(eid)
         if (statemap) {
-            tempFile = Files.createTempFile("WorkflowService-storage-${e.id}", ".json").toFile()
-            serializeStateDataJson(e.id, statemap, tempFile)
+            tempFile = Files.createTempFile("WorkflowService-storage-${eid}", ".json").toFile()
+            serializeStateDataJson(eid, statemap, tempFile)
             return new ProducedExecutionFile(
                     localFile: tempFile,
-                    fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS
+                    fileDeletePolicy: ExecutionFile.DeletePolicy.ALWAYS
             )
         }
         return localproduced
@@ -142,7 +148,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @return
      */
     def MutableWorkflowState createStateForWorkflow(ExecutionContext execContext, Workflow wf, String project,
-                                                    Framework framework, AuthContext authContext, Map jobcontext,
+                                                    Framework framework,
+                                                    UserAndRolesAuthContext authContext,
+                                                    Map jobcontext,
                                                     Map secureOptions) {
         //create a context used for workflow execution
         def context = executionService.createContext(execContext, null, framework,authContext, execContext.user,
@@ -220,8 +228,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * Create and return a listener for changes to the workflow state for an execution
      * @param execution
      */
-    def WorkflowExecutionListener createWorkflowStateListenerForExecution(Execution execution, Framework framework,
-            AuthContext authContext, Map jobcontext, Map secureOpts) {
+    def WorkflowExecutionListener createWorkflowStateListenerForExecution(
+            Execution execution,
+            Framework framework,
+            UserAndRolesAuthContext authContext,
+            Map jobcontext,
+            Map secureOpts
+    ) {
         final long id = execution.id
 
         MutableWorkflowState state = createStateForWorkflow(execution, execution.workflow, execution.project, framework,
@@ -273,6 +286,15 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, false, false)
     }
 
+    /**
+     * Return the file for the state.json for the execution
+     * @param execution
+     * @return
+     */
+    public File getStateFileForExecution(ExecutionReference execution) {
+        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, false)
+    }
+
     def persistExecutionStateCheckpoint(Long id, WorkflowState state, File file) {
         Map data = serializeStateJson(id, state, file)
     }
@@ -313,13 +335,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def state1 = activeStates[e.id]
         if (state1) {
             def state= stateMapping.mapOf(e.id, state1)
-            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionFileState.AVAILABLE)
         }
 
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
         if (statemap) {
-            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionFileState.AVAILABLE)
         }
 
         //request file via file storage
@@ -355,14 +377,14 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if (state1) {
             def state= stateMapping.mapOf(e.id, state1)
             state=stateMapping.summarize(new HashMap(state),nodes,selectedOnly,stepStates)
-            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: state, state: ExecutionFileState.AVAILABLE)
         }
 
         //look for cached local data
         def statemap=stateCache.getIfPresent(e.id)
         if (statemap) {
             statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly,stepStates)
-            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionLogState.AVAILABLE)
+            return new WorkflowStateFileLoader(workflowState: statemap, state: ExecutionFileState.AVAILABLE)
         }
 
         //request file via file storage
@@ -371,7 +393,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if (loader.file) {
             //cache local data
             statemap = deserializeState(loader.file)
-            if (loader.state == ExecutionLogState.AVAILABLE) {
+            if (loader.state == ExecutionFileState.AVAILABLE) {
                 //final state, so cache result.  If AVAILABLE_PARTIAL, do not cache it
                 stateCache.put(e.id, statemap)
             }

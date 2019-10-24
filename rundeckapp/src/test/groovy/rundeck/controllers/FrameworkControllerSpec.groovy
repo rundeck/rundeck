@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
 import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
@@ -47,7 +46,7 @@ import rundeck.services.feature.FeatureService
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.*
+import static org.rundeck.core.auth.AuthConstants.*
 
 /**
  * Created by greg on 7/28/15.
@@ -80,7 +79,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
+            1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[action,ACTION_ADMIN])>>false
         }
         when:
         params.project='monkey'
@@ -117,7 +116,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(null,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
+            1 * authorizeApplicationResourceAny(null,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN])>>true
         }
         when:
         params.path='elf'
@@ -135,7 +134,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -164,7 +163,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -192,7 +191,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -220,7 +219,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -253,7 +252,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_, RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ, ACTION_ADMIN]) >> true
             0*_(*_)
         }
         controller.apiService=Mock(ApiService){
@@ -285,7 +284,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-                         1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+                         1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
             0*_(*_)
         }
         controller.apiService=Mock(ApiService){
@@ -319,7 +318,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -355,7 +354,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -393,7 +392,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -437,7 +436,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_UPDATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -473,7 +472,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -501,7 +500,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_DELETE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -529,7 +528,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+            1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -572,7 +571,7 @@ class FrameworkControllerSpec extends Specification {
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
-                         1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
+                         1 * authorizeApplicationResourceAny(_,RESOURCE_TYPE_SYSTEM_ACL,[ACTION_CREATE,ACTION_ADMIN]) >> true
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
@@ -1147,7 +1146,7 @@ class FrameworkControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
@@ -1198,7 +1197,7 @@ class FrameworkControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             listDescriptions()>>[Mock(ResourceModelSourceService),Mock(NodeExecutorService),Mock(FileCopierService)]
         }
@@ -1268,6 +1267,28 @@ class FrameworkControllerSpec extends Specification {
 
 
         def description = '(1) Project Desc'
+        params.newproject = "TestSaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==302
+        request.errors == null
+        response.redirectedUrl == "/project/projName/nodes/sources"
+
+    }
+
+    def "create project description that includes unicode characters"(){
+        setup:
+        controller.featureService = Mock(FeatureService)
+        setupNewProjectWithDescriptionOkTest()
+
+
+        def description = 'Project Desc À'
         params.newproject = "TestSaveProject"
         params.description=description
 
@@ -1378,7 +1399,7 @@ class FrameworkControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             getRundeckFramework() >> rdframework
             1 * getAuthContextForSubject(_) >> null
-            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * authorizeApplicationResourceTypeAll(null,'project',[ACTION_CREATE])>>true
             1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
             1 * createFrameworkProject(_,_)>>[project, null]
             1 * refreshSessionProjects(_,_)>>null

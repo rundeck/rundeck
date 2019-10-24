@@ -11,7 +11,7 @@ jobName=""
 jobId=""
 
 generate_projectName_and_jobName(){
-    projectName="project-$(date "+%s")"
+    projectName="scheduler-bug-project-$(date "+%s")"
     jobName="job-$(date "+%s")"
 }
 

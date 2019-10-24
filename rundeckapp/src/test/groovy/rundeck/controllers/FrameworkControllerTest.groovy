@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import groovy.mock.interceptor.MockFor
+
 import rundeck.services.PluginService
 import rundeck.services.feature.FeatureService
 
@@ -28,7 +28,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor

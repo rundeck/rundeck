@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.common.PluginControlService
 import groovy.mock.interceptor.MockFor
+import rundeck.services.ExecutionLifecyclePluginService
 import rundeck.services.optionvalues.OptionValuesService
 import rundeck.ScheduledExecutionStats
 
@@ -1983,12 +1984,8 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
             fwkControl.demand.getPluginControlService { null }
-            fwkControl.demand.projectNames { [] }
+            fwkControl.demand.projectNames { _ -> return []}
             fwkControl.demand.getProjectGlobals { [:] }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.projects { return [] }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getRundeckFramework {-> return null }
             sec.frameworkService = fwkControl.proxyInstance()
             def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
@@ -2009,6 +2006,10 @@ class ScheduledExecutionControllerTests  {
             sec.notificationService = pControl.proxyInstance()
             sec.pluginService = mockWith(PluginService){
                 listPlugins(){[]}
+            }
+
+            sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
+                listEnabledExecutionLifecyclePlugins{ctrl->[:]}
             }
 
             def params = [id: se.id.toString()]
@@ -3359,7 +3360,7 @@ class ScheduledExecutionControllerTests  {
         fwkControl.demand.getNodeStepPluginDescriptions { [[name:'test'],[name:'test2']] }
         fwkControl.demand.getStepPluginDescriptions { [] }
         fwkControl.demand.getProjectGlobals { [:] }
-        fwkControl.demand.projectNames { [] }
+        fwkControl.demand.projectNames { _ -> return []}
         sec.frameworkService = fwkControl.proxyInstance()
         def seServiceControl = new MockFor(ScheduledExecutionService, true)
         sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
@@ -3376,6 +3377,10 @@ class ScheduledExecutionControllerTests  {
         sec.notificationService = pControl.proxyInstance()
         sec.pluginService = mockWith(PluginService){
             listPlugins(){[]}
+        }
+
+        sec.executionLifecyclePluginService = mockWith(ExecutionLifecyclePluginService){
+            listEnabledExecutionLifecyclePlugins{ctrl->[:]}
         }
         def params = [id: se.id.toString()]
         sec.params.putAll(params)

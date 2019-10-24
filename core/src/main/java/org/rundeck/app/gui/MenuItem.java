@@ -16,6 +16,10 @@
 
 package org.rundeck.app.gui;
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext;
+
+import java.util.function.Function;
+
 /**
  * Define a menu item with a link
  */
@@ -25,23 +29,46 @@ public interface MenuItem {
      */
     public MenuType getType();
 
+    enum MenuDomain {
+        SYSTEM,
+        PROJECT,
+        EXECUTION
+        //todo
+    }
     enum MenuType {
         /**
          *
          */
-        PROJECT(true),
-        PROJECT_CONFIG(true),
-        SYSTEM_CONFIG(false),
-        USER_MENU(false);
+        PROJECT(MenuDomain.PROJECT),
+        PROJECT_CONFIG(MenuDomain.PROJECT),
+        SYSTEM_CONFIG(MenuDomain.SYSTEM),
+        USER_MENU(MenuDomain.SYSTEM),
+        EXECUTION_RETRY(MenuDomain.EXECUTION);
 
-        MenuType(final boolean projectType) {
-            this.projectType = projectType;
+        MenuType(final MenuDomain domain) {
+            this.domain = domain;
         }
 
-        private final boolean projectType;
+        private final MenuDomain domain;
 
         public boolean isProjectType() {
-            return projectType;
+            return domain == MenuDomain.PROJECT;
+        }
+
+        public boolean isExecutionType() {
+            return domain == MenuDomain.EXECUTION;
+        }
+
+        public boolean isSystemType() {
+            return domain == MenuDomain.SYSTEM;
+        }
+
+        public Function<MenuItem, Boolean> getEnabledCheck(
+                String project,
+                String executionId
+        )
+        {
+            return MenuItem.getEnabledCheck(this, project, executionId);
         }
     }
 
@@ -68,6 +95,9 @@ public interface MenuItem {
     default String getProjectHref(String project) {
         return null;
     }
+    default String getExecutionHref(String project, String executionId) {
+        return null;
+    }
 
     /**
      * @return css class string for icon in certain menu locations, or null for a default, e.g. 'fas fa-check' for
@@ -92,4 +122,34 @@ public interface MenuItem {
         return true;
     }
 
+    /**
+     * @param project name for project oriented items
+     * @param executionId execution Id for Execution menu items
+     * @return true if enabled, false if disabled
+     */
+    default boolean isEnabledExecution(String project, String executionId) {
+        return true;
+    }
+
+    /**
+     * @param menuType    menu types to check
+     * @param project     project name, if available and project type should be checked
+     * @param executionId execution ID string, if available and execution type should be checked
+     * @return enabled check function given the input values
+     */
+    static Function<MenuItem, Boolean> getEnabledCheck(
+            MenuItem.MenuType menuType,
+            String project,
+            String executionId
+    )
+    {
+        //item is enabled with out auth check
+        return (item) ->
+                item.getType().isProjectType() && menuType.isProjectType() ? item.isEnabled(project) :
+                item.getType().isExecutionType() && menuType.isExecutionType() ? item.isEnabledExecution(
+                        project,
+                        executionId
+                ) :
+                item.isEnabled();
+    }
 }

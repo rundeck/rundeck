@@ -20,11 +20,10 @@ import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.Framework
-import com.dtolabs.rundeck.core.common.INodeEntry
+import org.rundeck.core.auth.AuthConstants
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeFilter
-import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -34,7 +33,6 @@ import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.core.utils.NodeSet
-import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.transaction.Transactional
 import org.rundeck.util.Sizes
 import rundeck.Execution
@@ -177,45 +175,29 @@ class JobStateService implements AuthorizingJobService {
         }
         executions = frameworkService.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
 
-        ArrayList<ExecutionReference> list = new ArrayList<>()
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         def frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
         INodeSet allNodes = frameworkProject.getNodeSet()
-
-        executions.each { exec ->
-            ScheduledExecution job = exec.scheduledExecution
-            JobReferenceImpl jobRef = null
-            if(job) {
-                jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
-                        groupPath: job.groupPath, project: job.project)
+        def fwkNode = framework.frameworkNodeName
+        def genTargetNode = { Execution exec ->
+            if (!exec.filter) {
+                return fwkNode
+            } else {
+                NodeSet filterNodeSet = filtersAsNodeSet(
+                        [
+                                filter               : exec.filter,
+                                nodeExcludePrecedence: exec.nodeExcludePrecedence,
+                                nodeThreadcount      : exec.nodeThreadcount,
+                                nodeKeepgoing        : exec.nodeKeepgoing
+                        ]
+                )
+                INodeSet nodeSet = NodeFilter.filterNodes(filterNodeSet, allNodes)
+                return nodeSet.nodes*.nodename.join(',')
             }
-            StringBuilder targetNode = new StringBuilder()
-            if(!exec.filter){
-                targetNode.append(framework.getFrameworkNodeName())
-            }else{
-                NodeSet filterNodeSet = filtersAsNodeSet([
-                        filter:exec.filter,
-                        nodeExcludePrecedence:exec.nodeExcludePrecedence,
-                        nodeThreadcount: exec.nodeThreadcount,
-                        nodeKeepgoing: exec.nodeKeepgoing
-                ])
-                INodeSet nodeSet =  NodeFilter.filterNodes(filterNodeSet, allNodes)
-                Iterator<INodeEntry> it = nodeSet.getNodes().iterator()
-                while(it.hasNext()){
-                    INodeEntry node = it.next()
-                    targetNode.append(node.nodename)
-                    if(it.hasNext()){
-                        targetNode.append(',')
-                    }
-                }
-            }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
-                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, status: exec.status,
-                    succeededNodeList: exec.succeededNodeList, failedNodeList: exec.failedNodeList,
-                    targetNodes: targetNode.toString())
-            list.add(execRef)
         }
-        return list
+        return executions.collect { exec ->
+            exec.asReference genTargetNode
+        }
     }
 
     NodeSet filtersAsNodeSet(Map econtext) {
@@ -250,16 +232,7 @@ class JobStateService implements AuthorizingJobService {
         if(!isAuth){
             throw new ExecutionNotFound("Execution not found", id, project)
         }
-
-        JobReferenceImpl jobRef
-        if(se) {
-            jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
-                    project: se.project)
-        }
-        new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
-                dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList,
-                dateCompleted:exec.dateCompleted, failedNodeList: exec.failedNodeList)
-
+        return exec.asReference()
     }
 
 
@@ -272,8 +245,21 @@ class JobStateService implements AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError {
+        runJob(auth, jobReference, jobArgString, jobFilter, asUser, null)
+    }
+
+    @Override
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            String jobArgString,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
         def inputOpts = ["argString": jobArgString]
-        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, meta)
     }
 
     @Override
@@ -285,19 +271,43 @@ class JobStateService implements AuthorizingJobService {
         String asUser
     )
         throws JobNotFound, JobExecutionError {
+        runJob(auth, jobReference, optionData, jobFilter, asUser, null)
+    }
+
+    @Override
+    ExecutionReference runJob(
+            UserAndRolesAuthContext auth,
+            JobReference jobReference,
+            Map optionData,
+            String jobFilter,
+            String asUser,
+            Map<String, ?> meta
+    )
+            throws JobNotFound, JobExecutionError {
         def inputOpts = [:]
         optionData.each { k, v ->
-            inputOpts['option.'+k] = v
+            inputOpts['option.' + k] = v
         }
         return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
     }
 
     ExecutionReference doRunJob(
-        String jobFilter,
-        Map inputOpts,
-        JobReference jobReference,
-        UserAndRolesAuthContext auth,
-        String asUser
+            String jobFilter,
+            Map inputOpts,
+            JobReference jobReference,
+            UserAndRolesAuthContext auth,
+            String asUser
+    ) {
+        doRunJob(jobFilter, inputOpts, jobReference, auth, asUser, null)
+    }
+
+    ExecutionReference doRunJob(
+            String jobFilter,
+            Map inputOpts,
+            JobReference jobReference,
+            UserAndRolesAuthContext auth,
+            String asUser,
+            Map<String, ?> meta
     ) {
         if (jobFilter) {
             inputOpts.filter = jobFilter
@@ -319,15 +329,22 @@ class JobStateService implements AuthorizingJobService {
         )) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
+        if (meta) {
+            inputOpts['meta'] = meta
+        }
         def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
-        if (result && result.success && result.executionId) {
-            return new ExecutionReferenceImpl(
-                id: result.executionId,
-                job: jobReference,
-                filter: jobFilter,
-                options: result.execution?.argString,
-                dateStarted: result.execution?.dateStarted
-            )
+        if (result && result.success) {
+            if (result.execution) {
+                return result.execution.asReference()
+            } else if (result.executionId) {
+                return new ExecutionReferenceImpl(
+                        id: result.executionId,
+                        job: jobReference,
+                        filter: jobFilter,
+                        options: result.execution?.argString,
+                        dateStarted: result.execution?.dateStarted
+                )
+            }
         } else {
             throw new JobExecutionError(
                 result?.message ?: result?.error ?: "Unknown: ${result}",
@@ -414,25 +431,7 @@ class JobStateService implements AuthorizingJobService {
         def total=results.total
         //filter query results to READ authorized executions
         def filtered = frameworkService.filterAuthorizedProjectExecutionsAll(auth,result,[AuthConstants.ACTION_READ])
-        def idList = []
-        filtered.each { Execution exec->
-            ScheduledExecution se = exec.scheduledExecution
-            JobReferenceImpl jobRef
-            if(se){
-                jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
-                        project: se.project)
-            } else {
-                jobRef = null
-            }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
-                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, dateCompleted:exec.dateCompleted,
-                    status: exec.status, succeededNodeList: exec.succeededNodeList,
-                    failedNodeList: exec.failedNodeList)
-            if(!se && exec.workflow && exec.workflow.commands && exec.workflow.commands[0]){
-                execRef.adhocCommand = exec.workflow.commands[0].summarize()
-            }
-            idList.push(execRef)
-        }
-        return [result:idList, total:idList.size()]
+        def reflist = filtered.collect { it.asReference() }
+        return [result:reflist, total:reflist.size()]
     }
 }
