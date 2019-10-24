@@ -20,7 +20,7 @@ import com.dtolabs.rundeck.app.support.ExecQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
-import com.dtolabs.rundeck.server.authorization.AuthConstants
+import org.rundeck.core.auth.AuthConstants
 import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport

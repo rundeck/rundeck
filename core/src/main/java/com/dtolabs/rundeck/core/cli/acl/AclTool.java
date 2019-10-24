@@ -981,7 +981,7 @@ public class AclTool extends BaseTool {
                     AuthConstants.ACTION_SCM_UPDATE,
                     AuthConstants.ACTION_SCM_CREATE,
                     AuthConstants.ACTION_SCM_DELETE,
-                    ACLConstants.VIEW_HISTORY
+                    AuthConstants.VIEW_HISTORY
             );
     static final List<String> projectJobKindActions =
             Arrays.asList(
