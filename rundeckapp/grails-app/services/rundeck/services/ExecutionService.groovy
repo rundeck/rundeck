@@ -88,8 +88,10 @@ import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 import java.util.stream.Collectors
 
@@ -1588,7 +1590,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (frameworkService.isClusterModeEnabled() && !forceIncomplete) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
-                def eresult = null
+                CompletableFuture<AbortResult> fresult = new CompletableFuture<>()
                 sendAndReceive(
                         'cluster.abortExecution',
                         [
@@ -1609,12 +1611,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
                     ]
                     if (resp && resp instanceof Map) {
-                        eresult = new AbortResult(abortresult + resp)
+                        fresult.complete(new AbortResult(abortresult + resp))
                     } else {
-                        eresult = new AbortResult(abortresult)
+                        fresult.complete(new AbortResult(abortresult))
                     }
                 }
-                if(eresult) return eresult
+                AbortResult result = fresult.get(30, TimeUnit.SECONDS)
+                if(result) return result
             }
         }
         def result = new AbortResult()
