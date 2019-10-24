@@ -28,8 +28,10 @@ import com.dtolabs.rundeck.core.authorization.providers.Policy
 import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import org.rundeck.core.auth.AuthConstants
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.core.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -56,12 +58,13 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
+import java.awt.Frame
 
 /**
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution, User, AuthToken, ScheduledExecutionStats, UserService])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -1256,23 +1259,29 @@ class MenuControllerSpec extends Specification {
 
         then:
         model
-        model.users
-        model.users.admin
-        model.users.admin.login=='admin'
 
     }
 
-    def "user summary with last exec"() {
+    def "loadUsersList summary with last exec"() {
         given:
         UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_)>>auth
             1 * authorizeApplicationResourceType(_,_,_) >> true
         }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> true
+                }
+            }
+        }
         def userToSearch = 'admin'
         def email = 'test@test.com'
         def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
-        User u = new User(login: userToSearch)
+        def lastSessionId = 'exampleSessionId01'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
         u.save()
 
         ScheduledExecution job = new ScheduledExecution(
@@ -1299,13 +1308,72 @@ class MenuControllerSpec extends Specification {
         ).save()
 
         when:
-        def model = controller.userSummary()
+        def users = controller.loadUsersList()
 
         then:
-        model
-        model.users
-        model.users.admin
-        model.users.admin.lastJob
+        response.json.users
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.lastSessionId == lastSessionId
+
+    }
+
+    def "loadUsersList summary with logged in status"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> true
+                }
+            }
+        }
+
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        def lastSessionId = 'exampleSessionId02'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+        u.save()
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: userToSearch,
+                project: 'AProject'
+        ).save()
+
+        when:
+        def users = controller.loadUsersList()
+
+
+        then:
+        response.json.users
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+        response.json.users.find{it.login == userToSearch}.lastSessionId == lastSessionId
 
     }
 
@@ -1440,5 +1508,63 @@ class MenuControllerSpec extends Specification {
         response.json.permalink  == 'gui/href'
         response.json.futureScheduledExecutions != null
         response.json.futureScheduledExecutions.size() == 1
+    }
+
+    def "loadUsersList summary with no session id"() {
+        given:
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext)
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceType(_,_,_) >> true
+        }
+        controller.userService.frameworkService = Mock(FrameworkService){
+            getRundeckFramework() >> Mock(IFramework){
+                getPropertyLookup() >> Mock(IPropertyLookup){
+                    hasProperty(UserService.SESSION_ID_ENABLED) >> true
+                    getProperty(UserService.SESSION_ID_ENABLED) >> false
+                }
+            }
+        }
+
+        def userToSearch = 'admin'
+        def email = 'test@test.com'
+        def text = '{email:\''+email+'\',firstName:\'The\', lastName:\'Admin\'}'
+        def lastSessionId = 'exampleSessionId02'
+        User u = new User(login: userToSearch, lastSessionId: lastSessionId)
+        u.save()
+
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        def exec = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: userToSearch,
+                project: 'AProject'
+        ).save()
+
+        when:
+        def users = controller.loadUsersList()
+
+        then:
+        response.json.users
+        response.json.users.find{it.login == userToSearch}
+        response.json.users.find{it.login == userToSearch}.lastJob
+        response.json.users.find{it.login == userToSearch}.loggedStatus == UserService.LogginStatus.LOGGEDIN.value
+        response.json.users.find{it.login == userToSearch}.lastSessionId == null
+
     }
 }

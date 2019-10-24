@@ -49,3 +49,6 @@ rundeck.server.uuid = @rundeck.server.uuid@
 # Expands to ${globals.var2}
 #framework.globals.var2 = value2
 
+# Enables storage of session id on the DB and displays it in user summary page
+framework.gui.user.summary.session.id.enabled=false
+
