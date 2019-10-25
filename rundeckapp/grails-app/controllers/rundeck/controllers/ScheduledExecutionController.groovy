@@ -184,7 +184,8 @@ class ScheduledExecutionController  extends ControllerBase{
             apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
             apiJobUpdateSingle           : 'PUT',
-            apiJobRetry                  : 'POST'
+            apiJobRetry                  : 'POST',
+            apiJobWorkflow               : 'GET',
     ]
 
     def cancel (){
@@ -608,12 +609,19 @@ class ScheduledExecutionController  extends ControllerBase{
         dataMap
     }
 
-    public def workflowJson (){
+    public def apiJobWorkflow (){
+        if (!apiService.requireVersion(request, response, ApiVersions.V33)) {
+            return
+        }
+
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
-            return
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                                                           code  : 'api.error.item.doesnotexist',
+                                                           args  : ['Job ID', params.id]])
         }
+
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
                 session.subject,
                 scheduledExecution.project
@@ -641,6 +649,11 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat {
             json {
                 render(contentType: 'application/json') {
+                    workflow wfdata
+                }
+            }
+            xml {
+                render(contentType: 'application/xml') {
                     workflow wfdata
                 }
             }
