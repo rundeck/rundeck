@@ -1609,6 +1609,7 @@ class ExecutionServiceSpec extends Specification implements ServiceUnitTest<Exec
         defaultValue | optValue                                       | remoteValues
         "B"          | "B"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
         null         | "A"                                            | [new JSONObject(name: "a", value:"A", selected: true), new JSONObject(name:"b", value:"B"), new JSONObject(name:"c", value:"C")]
+        null         | null                                           | ['A','B','C']
 
     }
 
