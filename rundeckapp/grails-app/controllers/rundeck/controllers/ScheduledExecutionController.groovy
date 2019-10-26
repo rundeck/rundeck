@@ -635,7 +635,11 @@ class ScheduledExecutionController  extends ControllerBase{
                 ),
                 AuthConstants.ACTION_VIEW, 'Job', params.id
         )) {
-            return
+            return apiService.renderErrorFormat(response,
+                    [status: HttpServletResponse.SC_FORBIDDEN,
+                     code  : 'api.error.item.unauthorized', args: ['View', 'Job ' +
+                     'ID', params.id]]
+            )
         }
         def maxDepth=3
 
