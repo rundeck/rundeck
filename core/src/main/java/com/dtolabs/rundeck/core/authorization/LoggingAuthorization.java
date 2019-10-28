@@ -1,6 +1,7 @@
 package com.dtolabs.rundeck.core.authorization;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import java.text.MessageFormat;
@@ -10,8 +11,8 @@ import java.util.Set;
 public class LoggingAuthorization
         implements AclRuleSetAuthorization
 {
-    private static Logger logger = Logger.getLogger(LoggingAuthorization.class);
-    private AclRuleSetAuthorization authorization;
+    private static Logger                  logger = LoggerFactory.getLogger(LoggingAuthorization.class);
+    private        AclRuleSetAuthorization authorization;
 
     public LoggingAuthorization(final AclRuleSetAuthorization authorization) {
         this.authorization = authorization;

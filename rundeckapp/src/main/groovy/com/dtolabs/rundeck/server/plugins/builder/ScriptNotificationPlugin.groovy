@@ -21,7 +21,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * ScriptNotificationPlugin is a {@link NotificationPlugin} implementation based on a set
@@ -31,7 +32,7 @@ import org.apache.log4j.Logger
  * Time: 4:40 PM
  */
 class ScriptNotificationPlugin implements NotificationPlugin, Describable, Configurable {
-    static Logger logger = Logger.getLogger(ScriptNotificationPlugin)
+    static Logger logger = LoggerFactory.getLogger(ScriptNotificationPlugin)
     Map<String, Closure> triggers
     Map configuration
     private Description description;

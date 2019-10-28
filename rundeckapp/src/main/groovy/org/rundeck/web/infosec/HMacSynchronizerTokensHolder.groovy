@@ -16,8 +16,9 @@
 
 package org.rundeck.web.infosec
 
-import org.apache.log4j.Logger
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 import javax.servlet.http.HttpSession
 
@@ -35,7 +36,7 @@ import javax.servlet.http.HttpSession
  */
 class HMacSynchronizerTokensHolder extends SynchronizerTokensHolder implements Serializable{
     private static final long serialVersionUID = 1L;
-    static Logger logger = Logger.getLogger(HMacSynchronizerTokensHolder.class.name)
+    static Logger logger = LoggerFactory.getLogger(HMacSynchronizerTokensHolder.class.name)
     public static final String HOLDER = "TOKENS_HOLDER"
     public static final String TOKEN_KEY = "TOKEN_KEY"
     public static final String TOKEN_TIMESTAMP = "TOKEN_TIMESTAMP"

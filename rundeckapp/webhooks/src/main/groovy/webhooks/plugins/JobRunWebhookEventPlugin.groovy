@@ -38,7 +38,8 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventContext
 import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.text.SimpleTemplateEngine
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 import org.rundeck.utils.UUIDPropertyValidator
 
 @Plugin(name='webhook-run-job',service= ServiceNameConstants.WebhookEvent)
@@ -46,7 +47,7 @@ import org.rundeck.utils.UUIDPropertyValidator
 class JobRunWebhookEventPlugin implements WebhookEventPlugin {
     static final ObjectMapper mapper = new ObjectMapper()
 
-    static Logger log = Logger.getLogger(JobRunWebhookEventPlugin)
+    static Logger log = LogManager.getLogger(JobRunWebhookEventPlugin)
 
 
     @PluginProperty(required = true, title = 'Job', description = 'Job to run.', validatorClass = UUIDPropertyValidator)

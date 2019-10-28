@@ -17,7 +17,8 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.utils.FileUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -50,7 +51,7 @@ public class FrameworkResource implements IFrameworkResource {
         }
         this.name = name;
         baseDir = dir;
-        logger = Logger.getLogger(this.getClass().getName());
+        logger = LoggerFactory.getLogger(this.getClass().getName());
     }
 
     protected Logger getLogger() {

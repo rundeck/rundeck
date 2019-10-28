@@ -23,10 +23,11 @@ import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.rundeck.core.utils.PropertyUtil;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
-import org.apache.log4j.Logger;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.Tree;
 import org.rundeck.storage.conf.TreeBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,14 +35,14 @@ import java.util.Map;
 import java.util.Set;
 
 public class StorageTreeFactory {
-    public static final String              ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
-    public static final String              LOGGER_NAME                            = "loggerName";
-    static              Logger              logger                                 = Logger.getLogger(StorageTreeFactory.class);
-    public static final String              TYPE                                   = "type";
-    public static final String              PATH                                   = "path";
-    public static final String              CONFIG                                 = "config";
-    public static final String              SEP                                    = ".";
-    public static final String              REMOVE_PATH_PREFIX                     = "removePathPrefix";
+    public static final String ORG_RUNDECK_STORAGE_EVENTS_LOGGER_NAME = "org.rundeck.storage.events";
+    public static final String LOGGER_NAME                            = "loggerName";
+    static              Logger logger                                 = LoggerFactory.getLogger(StorageTreeFactory.class);
+    public static final String TYPE                                   = "type";
+    public static final String PATH                                   = "path";
+    public static final String CONFIG                                 = "config";
+    public static final String SEP                                    = ".";
+    public static final String REMOVE_PATH_PREFIX                     = "removePathPrefix";
     public static final String              RESOURCE_SELECTOR                      = "resourceSelector";
     private             IPropertyLookup     frameworkPropertyLookup;
     private             PluginRegistry      pluginRegistry;

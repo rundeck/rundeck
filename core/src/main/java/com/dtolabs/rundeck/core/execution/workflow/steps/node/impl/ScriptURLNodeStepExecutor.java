@@ -47,7 +47,8 @@ import com.dtolabs.rundeck.core.utils.Converter;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.httpclient.URIException;
 import org.apache.commons.httpclient.util.URIUtil;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -62,7 +63,7 @@ import java.security.NoSuchAlgorithmException;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
-    public static final Logger logger = Logger.getLogger(ScriptURLNodeStepExecutor.class.getName());
+    public static final Logger logger                      = LoggerFactory.getLogger(ScriptURLNodeStepExecutor.class.getName());
     public static final String SERVICE_IMPLEMENTATION_NAME = "script-url";
 
     private static final int DEFAULT_TIMEOUT = 30;

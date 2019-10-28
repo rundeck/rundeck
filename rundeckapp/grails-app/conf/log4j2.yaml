@@ -1,0 +1,26 @@
+Configuration:
+    status: warn
+    name: Rundeck Logging Configuration
+    appenders:
+        Console:
+            name: STDOUT
+            PatternLayout:
+                Pattern: "%d %p %c{1.} [%t] %m%n"
+
+    Loggers:
+        logger:
+            -
+                name: rundeck.interceptors
+                level: debug
+                additivity: false
+                AppenderRef:
+                    ref: STDOUT
+            -   name: rundeckapp.BootStrap
+                level: info
+                additivity: false
+                AppenderRef:
+                    ref: STDOUT
+        Root:
+            level: info
+            AppenderRef:
+                ref: STDOUT

@@ -50,11 +50,12 @@ import org.apache.commons.httpclient.params.HttpClientParams
 import org.apache.commons.httpclient.params.HttpMethodParams
 import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
-import org.apache.log4j.Logger
 import org.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -71,7 +72,7 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
-    static Logger logger = Logger.getLogger(ScheduledExecutionController)
+    static Logger logger = LoggerFactory.getLogger(ScheduledExecutionController)
 
     public static final String NOTIFY_ONSUCCESS_EMAIL = 'notifyOnsuccessEmail'
     public static final String NOTIFY_ONFAILURE_EMAIL = 'notifyOnfailureEmail'

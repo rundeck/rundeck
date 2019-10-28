@@ -35,8 +35,10 @@ configurations {
 
 dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile "org.springframework.boot:spring-boot-starter-log4j2"
+    compile("org.springframework.boot:spring-boot-autoconfigure") {
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
     compile("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }
@@ -65,6 +67,7 @@ dependencies {
         exclude(group:"com.squareup.okhttp3", module:"okhttp")
         exclude(group:"javax.mail", module:"mailapi")
         exclude(group:"org.codehaus.groovy", module:"groovy-all")
+        exclude(group: 'ch.qos.logback', module: 'logback-classic')
     }
 
     compile 'org.yaml:snakeyaml:1.24'

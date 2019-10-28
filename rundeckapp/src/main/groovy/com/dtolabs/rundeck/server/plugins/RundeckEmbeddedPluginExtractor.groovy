@@ -21,7 +21,8 @@ import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
 import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
 import com.dtolabs.utils.Streams
 import grails.spring.BeanBuilder
-import org.apache.log4j.Logger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.beans.factory.annotation.Autowire
@@ -34,7 +35,7 @@ import org.springframework.context.ApplicationContextAware
  * @since 3/7/17
  */
 class RundeckEmbeddedPluginExtractor implements ApplicationContextAware, InitializingBean {
-    public static Logger log = Logger.getLogger(RundeckEmbeddedPluginExtractor.class.name)
+    public static Logger log = LoggerFactory.getLogger(RundeckEmbeddedPluginExtractor.class.name)
 
     ApplicationContext applicationContext
     File pluginTargetDir

@@ -33,7 +33,8 @@ import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -50,9 +51,9 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class URLResourceModelSource implements ResourceModelSource, Configurable {
-    static final Logger logger = Logger.getLogger(URLResourceModelSource.class.getName());
-    public static final int DEFAULT_TIMEOUT = 30;
-    final private Framework framework;
+    static final        Logger    logger          = LoggerFactory.getLogger(URLResourceModelSource.class.getName());
+    public static final int       DEFAULT_TIMEOUT = 30;
+    final private       Framework framework;
     Configuration configuration;
     private File destinationTempFile;
     private File destinationCacheData;

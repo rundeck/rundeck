@@ -2,11 +2,12 @@ package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
 import org.quartz.InterruptableJob
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.quartz.UnableToInterruptJobException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.ReferencedExecution
@@ -14,7 +15,7 @@ import rundeck.services.*
 import rundeck.services.jobs.ResolvedAuthJobService
 
 class ExecutionsCleanUp implements InterruptableJob {
-    static Logger logger = Logger.getLogger(ExecutionsCleanUp)
+    static Logger logger = LoggerFactory.getLogger(ExecutionsCleanUp)
     def boolean wasInterrupted
 
     void interrupt() throws UnableToInterruptJobException {

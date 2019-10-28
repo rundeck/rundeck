@@ -18,8 +18,9 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import groovy.transform.PackageScope
-import org.apache.log4j.Logger
 import org.rundeck.core.auth.AuthConstants
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
@@ -32,7 +33,7 @@ import java.util.regex.PatternSyntaxException
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController extends ControllerBase{
-    static Logger logger = Logger.getLogger(EditOptsController)
+    static Logger logger = LoggerFactory.getLogger(EditOptsController)
     def FrameworkService frameworkService
     def fileUploadService
     def optionValuesService

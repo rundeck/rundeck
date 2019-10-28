@@ -9,9 +9,10 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.audit.AuditEventListener
 import com.dtolabs.rundeck.plugins.audit.AuditEventListenerPlugin
 import groovy.transform.PackageScope
-import org.apache.log4j.Logger
 import org.grails.web.servlet.mvc.GrailsWebRequest
 import org.grails.web.util.WebUtils
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
 import org.springframework.core.task.AsyncTaskExecutor
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
@@ -37,7 +38,7 @@ import java.util.stream.Collectors
 class AuditEventsService
         implements LogoutHandler {
 
-    static final Logger LOG = Logger.getLogger(AuditEventsService.class)
+    static final Logger LOG = LoggerFactory.getLogger(AuditEventsService.class)
 
     FrameworkService frameworkService
 

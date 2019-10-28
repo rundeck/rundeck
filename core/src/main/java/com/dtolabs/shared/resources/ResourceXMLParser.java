@@ -27,9 +27,10 @@ import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
 
 import org.dom4j.*;
 import org.dom4j.io.SAXReader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.InputSource;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.*;
@@ -51,7 +52,7 @@ import java.util.*;
  * @version $Revision$
  */
 public class ResourceXMLParser {
-    static Logger log4j = Logger.getLogger(ResourceXMLParser.class.getName());
+    static Logger log4j = LoggerFactory.getLogger(ResourceXMLParser.class.getName());
 
     private File file;
     private InputStream input;

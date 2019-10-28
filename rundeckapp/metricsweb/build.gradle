@@ -41,8 +41,10 @@ dependencies {
     compile "io.dropwizard.metrics:metrics-jmx:4.0.7"
 
     // Added by create-app
-    compile "org.springframework.boot:spring-boot-starter-logging"
-    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile "org.springframework.boot:spring-boot-starter-log4j2"
+    compile("org.springframework.boot:spring-boot-autoconfigure") {
+        exclude group: 'ch.qos.logback', module: 'logback-classic'
+    }
     compile("org.grails:grails-core") {
         exclude(group:"org.yaml",module:"snakeyaml")
     }

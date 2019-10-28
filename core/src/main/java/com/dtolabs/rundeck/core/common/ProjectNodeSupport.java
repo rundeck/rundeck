@@ -26,7 +26,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Delegate;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -40,12 +41,12 @@ import java.util.stream.Collectors;
  * Manage node source loading for a project
  */
 public class ProjectNodeSupport implements IProjectNodes, Closeable {
-    private static final Logger logger = Logger.getLogger(ProjectNodeSupport.class);
-    public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
-    public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
-    public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
-    public static final String NODE_ENHANCER_PROP_PREFIX = "nodes.plugin";
-    public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
+    private static final Logger logger                                  = LoggerFactory.getLogger(ProjectNodeSupport.class);
+    public static final  String PROJECT_RESOURCES_URL_PROPERTY          = "project.resources.url";
+    public static final  String PROJECT_RESOURCES_FILE_PROPERTY         = "project.resources.file";
+    public static final  String RESOURCES_SOURCE_PROP_PREFIX            = "resources.source";
+    public static final  String NODE_ENHANCER_PROP_PREFIX               = "nodes.plugin";
+    public static final  String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
 
     private IRundeckProjectConfig                                                  projectConfig;
     private final Map<String, Throwable>                                           nodesSourceExceptions;

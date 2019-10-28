@@ -18,10 +18,11 @@ package com.dtolabs.launcher;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.cli.CLIToolLogger;
-import org.apache.log4j.Logger;
 import org.apache.tools.ant.types.FilterSet;
 import org.apache.tools.ant.types.FilterSetCollection;
 import org.apache.tools.ant.util.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.Arrays;
@@ -33,11 +34,11 @@ import java.util.Properties;
  * blindly pass arguments along with the java.home, rdeck.base.
  */
 public class Setup implements CLIToolLogger {
-    public static final Logger logger = Logger.getLogger(Setup.class);
+    public static final Logger logger      = LoggerFactory.getLogger(Setup.class);
     /**
      * basic bootstrapped rdeck.base
      */
-    public static String RDECK_BASE = Constants.getSystemBaseDir();
+    public static       String RDECK_BASE  = Constants.getSystemBaseDir();
     /**
      * setup usage statement
      */

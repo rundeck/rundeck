@@ -17,7 +17,6 @@
 package com.dtolabs.rundeck.core.authorization
 
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
-//import org.apache.log4j.Logger
 import spock.lang.Specification
 import spock.lang.Unroll
 

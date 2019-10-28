@@ -29,7 +29,8 @@ import com.dtolabs.rundeck.core.plugins.ScriptDataContextUtil;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
 import com.dtolabs.rundeck.core.plugins.configuration.Configurable;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,9 +42,9 @@ import java.util.Properties;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 class ScriptPluginResourceModelSource implements ResourceModelSource, Configurable {
-    static Logger logger = Logger.getLogger(ScriptPluginResourceModelSource.class.getName());
-    final ScriptPluginProvider provider;
-    final private Framework framework;
+    static        Logger               logger = LoggerFactory.getLogger(ScriptPluginResourceModelSource.class.getName());
+    final         ScriptPluginProvider provider;
+    final private Framework            framework;
     Properties configuration;
     private String format;
     private String project;

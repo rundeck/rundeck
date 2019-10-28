@@ -25,7 +25,8 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 import com.dtolabs.rundeck.core.utils.cache.FileCache;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -39,8 +40,8 @@ import static com.dtolabs.rundeck.core.utils.cache.FileCache.memoize;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public abstract class DirPluginScanner implements PluginScanner {
-    static Logger log = Logger.getLogger(DirPluginScanner.class.getName());
-    final File extdir;
+    static Logger log = LoggerFactory.getLogger(DirPluginScanner.class.getName());
+    final  File   extdir;
 
     final FileCache<ProviderLoader> filecache;
     private HashSet<FileCache.MemoFile> scannedFiles = new HashSet<>();

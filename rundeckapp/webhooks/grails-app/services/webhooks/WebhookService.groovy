@@ -18,13 +18,14 @@ import com.dtolabs.rundeck.plugins.webhook.WebhookEventPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 import grails.gorm.transactions.Transactional
 import groovy.transform.PackageScope
-import org.apache.log4j.Logger
+import org.apache.logging.log4j.LogManager
+import org.apache.logging.log4j.Logger
 
 import javax.servlet.http.HttpServletRequest
 
 @Transactional
 class WebhookService {
-    private static final Logger LOG4J_LOGGER = Logger.getLogger("org.rundeck.webhook.events")
+    private static final Logger LOG4J_LOGGER = LogManager.getLogger("org.rundeck.webhook.events")
     private static final ObjectMapper mapper = new ObjectMapper()
     private static final String KEY_STORE_PREFIX = "\${KS:"
     private static final String END_MARKER = "}"

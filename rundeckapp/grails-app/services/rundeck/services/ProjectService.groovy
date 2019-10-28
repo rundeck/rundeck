@@ -43,7 +43,6 @@ import groovy.transform.CompileStatic
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
-import org.apache.log4j.Logger
 import org.rundeck.app.components.project.BuiltinExportComponents
 import org.rundeck.app.components.project.BuiltinImportComponents
 import org.rundeck.app.components.project.ProjectComponent
@@ -52,6 +51,8 @@ import org.rundeck.util.Toposort
 import org.rundeck.app.components.RundeckJobDefinitionManager
 import org.rundeck.app.components.jobs.JobDefinitionException
 import org.rundeck.app.components.jobs.JobFormat
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.context.ApplicationContext
@@ -99,7 +100,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer, EventPu
     RundeckJobDefinitionManager rundeckJobDefinitionManager
     static transactional = false
 
-    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
+    static Logger projectLogger = LoggerFactory.getLogger("org.rundeck.project.events")
 
     private exportJob(ScheduledExecution job, Writer writer, String stripJobRef = null)
         throws ProjectServiceException {
