@@ -782,43 +782,6 @@ class ExecutionControllerSpec extends Specification {
         'gzip'       | 'gzip'
         null         | null
     }
-<<<<<<< HEAD
-=======
-
-    @Unroll
-    def "checkAllowUnsanitized"() {
-
-        when:
-        def prjCfg = Mock(IRundeckProjectConfig) {
-            hasProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> projectHasProp
-            getProperty(AppConstants.PROJECT_OUTPUT_ALLOW_UNSANITIZED) >> project
-        }
-        def prjMgr = Mock(ProjectManager) {
-            loadProjectConfig("proj1") >> prjCfg
-        }
-        def fwk = Mock(Framework) {
-            hasProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> frameworkHasProp
-            getProperty(AppConstants.FRAMEWORK_OUTPUT_ALLOW_UNSANITIZED) >> framework
-            getProjectManager() >> prjMgr
-        }
-        controller.frameworkService = Mock(FrameworkService) {
-            getRundeckFramework() >> fwk
-        }
-        boolean val = controller.checkAllowUnsanitized("proj1")
-
-        then:
-        val == expected
-
-        where:
-        frameworkHasProp | framework   | projectHasProp | project | expected
-            false        | null        |  true          | "true"  | false
-            true         | "true"      |  true          | "true"  | true
-            true         | "false"     |  true          | "true"  | false
-            true         | "false"     |  true          | "false" | false
-            true         | "true"      |  true          | "false" | false
-            true         | "true"      |  false         | null    | false
-
-    }
 
     void "downloadOutput with no entries in log"(){
 
@@ -837,7 +800,7 @@ class ExecutionControllerSpec extends Specification {
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
         e1.save()
         controller.loggingService = Mock(LoggingService) {
-            getLogReader(_) >> new ExecutionLogReader(state: ExecutionFileState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat()))
+            getLogReader(_) >> new ExecutionLogReader(state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat()))
         }
         controller.frameworkService = Mock(FrameworkService) {
             getFrameworkPropertyResolver(_,_) >> null
@@ -853,5 +816,4 @@ class ExecutionControllerSpec extends Specification {
         then:
         response.text == "No output"
     }
->>>>>>> f07fd7952d... Fixes #5358. If there are no log entries in the log then "No output" will be written to the output stream to avoid triggering a grails error.
 }
