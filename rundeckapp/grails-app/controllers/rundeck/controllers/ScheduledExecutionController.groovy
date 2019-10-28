@@ -610,7 +610,11 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     public def apiJobWorkflow (){
-        if (!apiService.requireVersion(request, response, ApiVersions.V33)) {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiVersions.V34)) {
             return
         }
 
